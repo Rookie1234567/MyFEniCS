@@ -275,9 +275,105 @@ def test_a1_actual_main_records_ledger_before_mesh_boundary(
     assert terminal["continuation"]["iteration"] is False
 
 
+@pytest.mark.parametrize("preserve_terminal", (False, True))
+def test_a1_actual_main_rejects_nonempty_root_without_touching_it(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, preserve_terminal: bool
+) -> None:
+    """A refused root preserves every valid preexisting output byte."""
+
+    if not all(path.is_file() for path in (_V2_R10_PLAN, _V2_ACCEPTANCE, _V2_SELECTION)):
+        pytest.skip("frozen A1 candidate inputs are ignored workstation artifacts")
+
+    from benchmarks.task43_hp_adaptivity import h100_anchor
+
+    phase_path = tmp_path / "watchdog" / "workflow_phase.json"
+    phase_path.parent.mkdir()
+    monkeypatch.setenv("PHYSICAL_WATCHDOG_PHASE_PATH", str(phase_path.resolve()))
+    monkeypatch.setenv("PHYSICAL_WATCHDOG_PARENT_PID", str(os.getppid()))
+
+    run_directory = tmp_path / "existing_a1_run"
+    solve_directory = run_directory / "solve"
+    solve_directory.mkdir(parents=True)
+    (solve_directory / "run_summary.json").write_text(
+        json.dumps(
+            {
+                "schema": "task43.solve.run-summary.v1",
+                "case_status": "completed",
+                "official_result": True,
+                "passed": True,
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    (run_directory / "task43_v2_a1_endpoint.json").write_text(
+        json.dumps(
+            {
+                "schema": "task43.v2.a1.endpoint.v1",
+                "status": "COMPLETED",
+                "pass": True,
+                "official_result": True,
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    if preserve_terminal:
+        from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+            task43_v3_partial_terminal_record,
+        )
+
+        old_terminal = task43_v3_partial_terminal_record(
+            phase="A1_q",
+            source_identity={"git_head": "previous-fixture-head"},
+            error="previous preserved failure",
+            primary_before_extra_packet=None,
+            primary_q_samples={},
+            primary_q8_q10_bundle=None,
+            pre_validation_checkpoint=None,
+        )
+        (run_directory / "task43_v3_partial_terminal.json").write_text(
+            json.dumps(old_terminal, sort_keys=True), encoding="utf-8"
+        )
+    before_files = {
+        str(path.relative_to(run_directory)): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in run_directory.rglob("*")
+        if path.is_file()
+    }
+    mesh_calls: list[object] = []
+    solver_calls: list[object] = []
+
+    def fail_if_mesh_called(*_args: object, **_kwargs: object) -> None:
+        mesh_calls.append(object())
+        raise AssertionError("mesh must not be called for a nonempty output root")
+
+    def fail_if_solver_called(*_args: object, **_kwargs: object) -> None:
+        solver_calls.append(object())
+        raise AssertionError("solver must not be called for a nonempty output root")
+
+    monkeypatch.setattr(h100_anchor, "build_airbox_mesh_3d", fail_if_mesh_called)
+    monkeypatch.setattr(
+        h100_anchor, "run_stage4b_block_grating_3d_case", fail_if_solver_called
+    )
+    with pytest.raises(RuntimeError, match="refusing to overwrite nonempty output root"):
+        h100_anchor.main(_a1_v3_main_args(run_directory))
+
+    after_files = {
+        str(path.relative_to(run_directory)): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in run_directory.rglob("*")
+        if path.is_file()
+    }
+    assert after_files == before_files
+    assert not mesh_calls
+    assert not solver_calls
+
+
 @pytest.mark.parametrize("identity_failure", ["missing_phase", "wrong_parent"])
 def test_a1_actual_main_rejects_missing_phase_or_wrong_watchdog_parent(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, identity_failure: str
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    identity_failure: str,
 ) -> None:
     """Fail at CLI preflight before any run directory or mesh is created."""
 
@@ -296,4 +392,10 @@ def test_a1_actual_main_rejects_missing_phase_or_wrong_watchdog_parent(
     with pytest.raises(SystemExit) as error:
         h100_anchor.main(_a1_v3_main_args(run_directory))
     assert error.value.code == 2
+    expected_message = (
+        "V3 A1 requires native watchdog parent and phase identity"
+        if identity_failure == "missing_phase"
+        else "V3 A1 worker is not the direct child registered by its native watchdog"
+    )
+    assert expected_message in capsys.readouterr().err
     assert not run_directory.exists()

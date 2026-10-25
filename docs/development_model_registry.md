@@ -1,6 +1,23 @@
 # Task43：accepted9/R9冻结，最终空间精度未达
 
-## Task43 V4最新状态：无新dispatch；有限整改不改变数值资格（2026-10-25）
+## Task43 V5最新状态：有限文件保护与文档收口，无新增正式计算（2026-10-25）
+
+Review V4 F1–F4整改只涉及失败写入资格、comparison原件路径和测试内联合读取约定，以及文档。没有改变方程、默认数值行为或端点；本轮新增正式PDE/dispatch/attempt/READY均为0。Task43研究状态为 `PARTIAL / CONTROLLED_NEGATIVE`：accepted9/R9仍是最后接受状态，最终精度未过；A1组2/2、A2组3/3、总计5/6已耗，最后一槽封存。
+
+| 项目 | 当前结论 | 证据与边界 |
+|---|---|---|
+| F1 A1写入资格 | 失败记录只允许本次成功取得空run root后写入；非空root拒绝的两个 fixture 保留整个目录和逐文件hash | 25个最小定向案例通过；纯文件/真实main入口fixture，未构网格、装配或求解；不能回填A1_q2现场G2遗漏 |
+| F2 A2原件身份 | 降权comparison的`original_record_path`指向不可变sidecar，原comparison位置单独记录 | 故障fixture按字节和SHA验证；测量值、primary及历史终态不改 |
+| F3联合读取 | 测试约定使用真实字段形状，并逐项检查terminal、进程退出、权限、绑定与hash | 完整合成控制仅表示没有这些工程否决，不是物理资格；当前没有生产consumer、A2_R或新controller |
+| 正式模型历史 | A1_q2已构网并进入装配，但真实入口没有WorkflowLedger，主控据此受控停止；A2_q3建立native ledger，7200秒门后INCOMPLETE，extra full-active residual`1.1972486318e−11→1.2068417985e−11`未严格下降 | V5修复与组件测试不改变两次终态；未获完整q/R端点资格或production merge approval |
+| 五项能力与下游 | 空间/选择`PARTIAL`；精度`NOT_PASSED`；同精度成本`NOT_ESTABLISHED`；迭代`NOT_RUN / NOT_QUALIFIED`；0.7 nm未运行 | A1_R/A2_R/B/C及成本campaign保持锁定；余下formal槽封存 |
+| 空cmdline历史 | 三段共26条观察：两段`other_or_unknown`各9条，一段`MPI_runtime` 8条 | 仅按相同PID/start_ticks的前序身份关联；缺失命令保持缺失，原resources不改 |
+
+六个V5受监控driver依次为2次preflight误报、25项最小测试通过、focused 30 passed/1 failed、一次Ruff在pytest前失败、一次两节点恢复通过；whole-wall合计84.8460884406秒，最大树RSS采样峰263839744B，task swap峰0且均清理。三条样本affinity为CPU0、一条Z态样本缺affinity，严格全程CPU1结论为`NOT_PASSED`，原因未证；两次未监控metadata检查还分别以断言和KeyError失败，wall未测。各次原命令、日志、hash和分次结果见[Task43 V5回应](task43_hp_adaptivity/response_v5.md)、[V5 validation compact](task43_hp_adaptivity/outcomes/records/v5_focused_validation_v1.json)和[独立资源复核](task43_hp_adaptivity/outcomes/records/v5_root_resource_recheck.json)。这些是支持测试费用，不与正式模型wall合并，也不是全campaign总成本；不存在一次完整31项focused全通过运行。
+
+本轮没有重新读取旧V4 support原始记录或A2_q3场/向量NPZ。上轮主控交付消息/工具输出曾提及“104项hash一致”，但没有持久逐项清单；本轮未重建，也不将它称为外部独立核验。旧Stage1 overlay的59/66路径及23/27核心/共享路径同字节范围不覆盖当前四个改动Python文件，不能给其新资格。
+
+## Task43 V4历史状态：无新dispatch；有限整改不改变数值资格（2026-10-25）
 
 V4依Review V3 §9只执行N1–N6非PDE工程和文档收口。本轮新增正式dispatch为0；累计仍为5/6，A1 2/2、A2 3/3、最后1槽封存。A1_q2真实入口缺WorkflowLedger的历史现场问题及主控错误放行责任不追溯改写；A2_q3 native ledger路线真实成立，但其端点仍 `INCOMPLETE_NOT_OFFICIAL`，且extra full-active residual未严格下降。新增component验证没有授予新的正式计算或production资格。
 
@@ -8,7 +25,7 @@ V4依Review V3 §9只执行N1–N6非PDE工程和文档收口。本轮新增正�
 |---|---|---|
 | A1真实入口账本 | main mesh-boundary sentinel检查phase/stages/failure terminal；mesh后端只到sentinel，assembly/solver为0；缺phase/错parent在构网前拒绝 | 新fixture不是A1正式attempt，不能回填V3现场G2 |
 | A2失败权限与extra留证 | comparison/summary两种OSError路径保持原异常、比较原件sidecar/hash、数值字段和primary hash，当前authority与continuation关闭；extra小数组packet在后续恢复/transport/q10故障前已可读并重算 | 不调用真实factor，不产生新物理端点；A2_q3旧extra严格下降负项保持 |
-| watchdog与旧生命周期审计 | 测试覆盖有后代清理超时及无后代cache等待超时；旧A2 CPU/阶段区间从已存5971条资源样本重算 | 历史A2 `LIMITED`不改分类；两个末尾空cmdline区间的身份关联及非重叠成本窗口限制保留 |
+| watchdog与旧生命周期审计 | 测试覆盖有后代清理超时及无后代cache等待超时；旧A2 CPU/阶段区间从已存5971条资源样本重算 | 历史A2 `LIMITED`不改分类；旧V4曾写成两个空cmdline尾段，当前核对为三段：`other_or_unknown`两段各9条、`MPI_runtime`一段8条。身份仅按PID/start_ticks的前序观察关联，非重叠成本窗口限制保留 |
 | 总资格 | 五项能力不变；空间/选择 `PARTIAL`，精度 `NOT_PASSED`，同精度成本 `NOT_ESTABLISHED`，迭代 `NOT_RUN / NOT_QUALIFIED` | 无READY、无新正式dispatch、未批准生产合并；完整说明及log/hash见[Response V4](task43_hp_adaptivity/response_v4.md)与[V4 validation compact](task43_hp_adaptivity/outcomes/records/v4_focused_validation_v1.json) |
 
 ## Task43 V3历史状态：五次正式dispatch，完整端点未资格化（2026-10-24）

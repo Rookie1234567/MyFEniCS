@@ -48,7 +48,7 @@
 | [`task035c_hybrid_channel_memory_closure/README.md`](task035c_hybrid_channel_memory_closure/README.md) | Task035c：修复 Full3D–Hybrid 离散 phase/traction 合同；p6/h10 六路径 12/12+12/12；static Hybrid M120 峰值下降31.89%，50%目标未达 |
 | [`task037c_hybrid_iterative_robustness/response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md) | Task037c白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5 的授权 research extension；M_robust=120，preferred RSS未过，不是production-qualified |
 | [`task038_input_driven_configuration/response_v1.md`](task038_input_driven_configuration/response_v1.md) | Task038：单一 `.dat` input-driven configuration；11 migrated/6 retained，ordinary数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 由用户授权 controlled stop |
-| [`task43_hp_adaptivity/outcomes/summary.md`](task43_hp_adaptivity/outcomes/summary.md) | Task43：R9仍为最后接受态；V2/V3累计5次正式dispatch；A1_q2因真实ledger接线缺失受控停止，A2_q3受7200秒门停止且extra full-active残差未严格下降；等待外审 |
+| [`task43_hp_adaptivity/outcomes/summary.md`](task43_hp_adaptivity/outcomes/summary.md) | Task43：R9仍为最后接受态；V2/V3累计5次正式dispatch，V5 F1–F4新增dispatch为0；A1_q2真实ledger接线缺失受控停止，A2_q3在7200秒门后不完整且extra full-active残差未严格下降；最终精度未达，等待外审 |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -79,7 +79,7 @@
 | Task037b | frozen Hybrid iterative M10 | 白名单能力已选择性进入 master；仍为 explicit-opt-in research capability，ordinary defaults不变，not production-qualified |
 | Task037c | Hybrid iterative robustness | 白名单能力已选择性进入 master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过，仍not production-qualified |
 | Task038 | 单一 `.dat` input-driven configuration | 已按 Review V1 白名单选择性进入 master；11 migrated/6 retained，ordinary defaults 不变；source-branch full pytest 1119 passed/48 skipped，integration full 为用户授权 controlled stop |
-| Task43 | 局部 h/p 自适应 Maxwell | accepted9/R9 为最后接受态；V2/V3累计5/6正式dispatch且均无完整q/R端点资格；A1_q2因真实WorkflowLedger接线缺失被停止，A2_q3性能受控停止且extra full-active residual未严格下降；最终精度、同精度FE/成本目标未达，等待外审 |
+| Task43 | 局部 h/p 自适应 Maxwell | accepted9/R9 为最后接受态；V2/V3累计5/6正式dispatch且均无完整q/R端点资格；V5 F1–F4只有有限组件/文档整改；A1_q2因真实WorkflowLedger接线缺失受控停止，A2_q3性能受控停止且extra full-active residual未严格下降；最终精度、同精度FE/成本目标未达，等待外审 |
 
 ## 当前任务
 
@@ -102,7 +102,7 @@
 | Task037b | `task037b_hybrid_fem_modal_iterative/` | 白名单能力已选择性进入master；frozen M10仍为explicit-opt-in research capability，ordinary defaults不变；Case101 compact、runner/watchdog/checker与V7边界见下方 |
 | Task037c | `task037c_hybrid_iterative_robustness/` | 白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过；not production-qualified |
 | Task038 | `task038_input_driven_configuration/` | 单一 `.dat` 普通入口；11 migrated/6 retained；ordinary 数值算法不变；final full pytest 1119 passed/48 skipped |
-| Task43 | [`task43_hp_adaptivity/README.md`](task43_hp_adaptivity/README.md) | PARTIAL / CONTROLLED_NEGATIVE；accepted9/R9 frozen；R10 rejected；同精度目标未证明；等待ChatGPT外部审阅，无merge approval |
+| Task43 | [`task43_hp_adaptivity/README.md`](task43_hp_adaptivity/README.md) | PARTIAL / CONTROLLED_NEGATIVE；accepted9/R9 frozen；R10 rejected；V5 F1–F4非PDE整改完成但不改数值资格；同精度目标未证明；等待ChatGPT外部审阅，无merge approval |
 
 ## Task28 审计入口
 
@@ -214,7 +214,7 @@ Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcom
 
 ## Task43 自适应 h/p 入口
 
-Task43现为`PARTIAL / CONTROLLED_NEGATIVE`，分支`task43_hp_adaptivity`、冻结base `405e3aff42ac421a4c99315df1ed9b96941ecbe4`。R1–R9九次p-up接受，R9仍为最后状态；R10因G改善未超过冻结参考噪声而拒绝。V2/V3共五次formal dispatch；A1_q2因真实入口未接WorkflowLedger而受控停止，A2_q3进入native流程后在7200秒门停止，extra full-active explicit residual未严格下降，完整端点比较未产出。最终精度、相近精度更少FE及同精度全过程成本均未建立；后验六场比较不反馈选择。执行分支等待ChatGPT外部审阅，无merge approval。
+Task43现为`PARTIAL / CONTROLLED_NEGATIVE`，分支`task43_hp_adaptivity`、冻结base `405e3aff42ac421a4c99315df1ed9b96941ecbe4`。R1–R9九次p-up接受，R9仍为最后状态；R10因G改善未超过冻结参考噪声而拒绝。V2/V3共五次formal dispatch；V5 F1–F4仅有限工程与文档整改，新增正式计算为0。A1_q2因真实入口未接WorkflowLedger而受控停止，A2_q3进入native流程后在7200秒门停止，extra full-active explicit residual未严格下降，完整端点比较未产出。最终精度、相近精度更少FE及同精度全过程成本均未建立；后验六场比较不反馈选择。五项能力与未解锁下游保持原状态，执行分支等待ChatGPT外部审阅，无merge approval。
 
 | 文件 | 内容与当前边界 |
 |---|---|

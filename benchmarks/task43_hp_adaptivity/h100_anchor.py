@@ -3278,6 +3278,7 @@ def _run_impl(
     comm.Barrier()
     if _failure_context is not None:
         _failure_context["run_root"] = run_root
+        _failure_context["run_root_acquired"] = True
 
     v3_workflow_ledger = None
     if v3_failure_evidence_enabled and comm.rank == 0:
@@ -4915,6 +4916,7 @@ def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
     v3_enabled = bool(arguments.get("v3_failure_evidence_enabled", False))
     context: dict[str, Any] = {
         "run_root": arguments.get("run_root"),
+        "run_root_acquired": False,
         "phase": arguments.get("v2_diagnostic_phase"),
         "source_identity": {},
         "captured": {},
@@ -4928,6 +4930,7 @@ def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
         terminal_record = None
         if (
             v3_enabled
+            and context.get("run_root_acquired") is True
             and run_root is not None
             and Path(run_root).is_dir()
             and MPI.COMM_WORLD.rank == 0

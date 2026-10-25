@@ -687,6 +687,11 @@ def test_a2_adapter_postprocess_exception_demotes_native_result(
     current_comparison = json.loads(comparison_path.read_text(encoding="utf-8"))
     assert current_comparison["endpoint_qualified"] is False
     assert current_comparison["same_group_R_factor_may_continue"] is False
+    original_record_path = Path(current_comparison["original_record_path"])
+    assert original_record_path.read_bytes() == original_comparison_bytes
+    assert hashlib.sha256(original_record_path.read_bytes()).hexdigest() == (
+        current_comparison["original_record_sha256"]
+    )
     assert current_comparison["measured_R_total"] == 0.25000001
     assert current_comparison["original_record_sha256"] == sidecar_ref["sha256"]
     assert (
@@ -695,6 +700,373 @@ def test_a2_adapter_postprocess_exception_demotes_native_result(
     )
     assert demoted["task43_v3_postprocess_failure"]["exception_type"] == "OSError"
     assert demoted["task43_v2_comparison"]["endpoint_qualified_before_failure"] is True
+
+
+def _write_synthetic_joint_authority_files(
+    root: Path,
+    *,
+    summary_path: Path | None = None,
+    comparison_path: Path | None = None,
+    primary_path: Path | None = None,
+    terminal_path: Path | None = None,
+) -> tuple[Path, Path, Path]:
+    """Create coherent files for a test-only, non-scientific joint-read rule."""
+
+    root.mkdir(parents=True, exist_ok=True)
+    primary_path = primary_path or root / "primary_fixture.npz"
+    primary_path.parent.mkdir(parents=True, exist_ok=True)
+    source_sha = "a" * 40
+    identity = {"contract_sha256": "b" * 64, "plan_sha256": "c" * 64}
+    primary_ref = write_v3_primary_before_extra_packet(
+        primary_path,
+        {"primary_solution": np.asarray([0.25 + 0.5j], dtype=np.complex128)},
+        identity={"source_sha": source_sha, **identity},
+    )
+    comparison_path = comparison_path or root / "comparison.json"
+    comparison_path.parent.mkdir(parents=True, exist_ok=True)
+    comparison = {
+        "status": "COMPLETED",
+        "official_result": True,
+        "passed": True,
+        "endpoint_qualified": True,
+        "authority": "FIXTURE_ONLY_NO_SCIENTIFIC_QUALIFICATION",
+        "measured_R_total": 0.25000001,
+        "source_sha": source_sha,
+        "frozen_v3_contract_sha256": identity["contract_sha256"],
+        "frozen_v3_plan_sha256": identity["plan_sha256"],
+    }
+    comparison_path.write_text(json.dumps(comparison, sort_keys=True), encoding="utf-8")
+    comparison_ref = {
+        "path": str(comparison_path),
+        "sha256": hashlib.sha256(comparison_path.read_bytes()).hexdigest(),
+    }
+    summary_path = summary_path or root / "summary.json"
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+    summary = {
+        "status": "COMPLETED",
+        "official_result": True,
+        "passed": True,
+        "authority": "FIXTURE_ONLY_NO_SCIENTIFIC_QUALIFICATION",
+        "measured_R_total": 0.25000001,
+        "source_sha": source_sha,
+        "task43_v3_diagnostic_identity": identity,
+        "task43_v3_primary_before_extra_packet": primary_ref,
+        "task43_v2_comparison": {
+            **comparison_ref,
+            "endpoint_qualified": True,
+            "official_result": True,
+            "passed": True,
+            "authority": "FIXTURE_ONLY_NO_SCIENTIFIC_QUALIFICATION",
+        },
+        "task43_v3_endpoint_authority": {"official_result": True, "passed": True},
+    }
+    summary_path.write_text(json.dumps(summary, sort_keys=True), encoding="utf-8")
+    terminal_path = terminal_path or root / "terminal.json"
+    terminal_path.parent.mkdir(parents=True, exist_ok=True)
+    terminal = {
+        "status": "COMPLETED",
+        "official_result": True,
+        "passed": True,
+        "source_identity": {
+            "source_sha": source_sha,
+            "frozen_v3_contract_sha256": identity["contract_sha256"],
+            "frozen_v3_plan_sha256": identity["plan_sha256"],
+        },
+        "primary_before_extra_packet": primary_ref,
+    }
+    terminal_path.write_text(json.dumps(terminal, sort_keys=True), encoding="utf-8")
+    summary["task43_v3_partial_terminal"] = {
+        "path": str(terminal_path),
+        "sha256": hashlib.sha256(terminal_path.read_bytes()).hexdigest(),
+    }
+    summary_path.write_text(json.dumps(summary, sort_keys=True), encoding="utf-8")
+    return summary_path, comparison_path, terminal_path
+
+
+def _synthetic_joint_read_has_no_engineering_veto(
+    summary_path: Path,
+    terminal_path: Path,
+    *,
+    process_exit_code: int | None,
+) -> bool:
+    """Test-only file rule; a true result is not scientific qualification."""
+
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        terminal = json.loads(terminal_path.read_text(encoding="utf-8"))
+        comparison_ref = summary["task43_v2_comparison"]
+        comparison_path = Path(comparison_ref["path"])
+        comparison = json.loads(comparison_path.read_text(encoding="utf-8"))
+        primary_ref = summary["task43_v3_primary_before_extra_packet"]
+        terminal_primary_ref = terminal["primary_before_extra_packet"]
+        primary_path = Path(primary_ref["npz_path"])
+        actual_comparison_sha = hashlib.sha256(comparison_path.read_bytes()).hexdigest()
+        actual_primary_sha = hashlib.sha256(primary_path.read_bytes()).hexdigest()
+        with np.load(primary_path, allow_pickle=False) as primary_npz:
+            primary_record = json.loads(
+                primary_npz["__task43_record_json__"].tobytes()
+            )
+    except (OSError, KeyError, TypeError, json.JSONDecodeError):
+        return False
+
+    identity = summary.get("task43_v3_diagnostic_identity")
+    summary_comparison = summary.get("task43_v2_comparison", {})
+    source_identity = {
+        "source_sha": summary.get("source_sha"),
+        "frozen_v3_contract_sha256": (
+            identity.get("contract_sha256") if isinstance(identity, dict) else None
+        ),
+        "frozen_v3_plan_sha256": (
+            identity.get("plan_sha256") if isinstance(identity, dict) else None
+        ),
+    }
+    return bool(
+        process_exit_code == 0
+        and summary.get("status") == "COMPLETED"
+        and terminal.get("status") == "COMPLETED"
+        and terminal.get("official_result") is True
+        and terminal.get("passed") is True
+        and summary.get("task43_v3_endpoint_authority")
+        == {"official_result": True, "passed": True}
+        and summary.get("official_result") is True
+        and summary.get("passed") is True
+        and summary.get("authority") == "FIXTURE_ONLY_NO_SCIENTIFIC_QUALIFICATION"
+        and summary.get("task43_v2_comparison", {}).get("endpoint_qualified") is True
+        and summary.get("task43_v2_comparison", {}).get("official_result") is True
+        and summary.get("task43_v2_comparison", {}).get("passed") is True
+        and summary.get("task43_v2_comparison", {}).get("authority")
+        == "FIXTURE_ONLY_NO_SCIENTIFIC_QUALIFICATION"
+        and comparison.get("status") == "COMPLETED"
+        and comparison.get("official_result") is True
+        and comparison.get("passed") is True
+        and comparison.get("endpoint_qualified") is True
+        and comparison.get("authority") == "FIXTURE_ONLY_NO_SCIENTIFIC_QUALIFICATION"
+        and comparison_ref.get("sha256") == actual_comparison_sha
+        and summary_comparison.get("path") == str(comparison_path)
+        and summary_comparison.get("sha256") == actual_comparison_sha
+        and terminal.get("source_identity") == source_identity
+        and summary.get("task43_v3_partial_terminal", {}).get("path")
+        == str(terminal_path)
+        and summary.get("task43_v3_partial_terminal", {}).get("sha256")
+        == hashlib.sha256(terminal_path.read_bytes()).hexdigest()
+        and terminal_primary_ref == primary_ref
+        and primary_ref.get("npz_sha256") == actual_primary_sha
+        and primary_record.get("identity") == primary_ref.get("identity")
+        and primary_record.get("identity", {}).get("source_sha")
+        == summary.get("source_sha")
+        and primary_record.get("identity", {}).get("contract_sha256")
+        == source_identity["frozen_v3_contract_sha256"]
+        and primary_record.get("identity", {}).get("plan_sha256")
+        == source_identity["frozen_v3_plan_sha256"]
+        and comparison.get("source_sha") == summary.get("source_sha")
+        and comparison.get("frozen_v3_contract_sha256")
+        == source_identity["frozen_v3_contract_sha256"]
+        and comparison.get("frozen_v3_plan_sha256")
+        == source_identity["frozen_v3_plan_sha256"]
+    )
+
+
+def test_synthetic_joint_authority_fixture_passes_only_as_a_coherent_bundle(
+    tmp_path: Path,
+) -> None:
+    summary_path, _comparison_path, terminal_path = _write_synthetic_joint_authority_files(
+        tmp_path / "joint"
+    )
+
+    assert _synthetic_joint_read_has_no_engineering_veto(
+        summary_path, terminal_path, process_exit_code=0
+    )
+
+
+@pytest.mark.parametrize(
+    "defect",
+    (
+        "failed_terminal",
+        "nonzero_exit",
+        "unknown_exit",
+        "summary_demotion",
+        "summary_status_demotion",
+        "summary_authority_demotion",
+        "comparison_demotion",
+        "terminal_demotion",
+        "missing_comparison_file",
+        "missing_binding",
+        "wrong_hash",
+        "source_identity_mismatch",
+    ),
+)
+def test_synthetic_joint_authority_fixture_rejects_each_failure_independently(
+    tmp_path: Path, defect: str
+) -> None:
+    summary_path, comparison_path, terminal_path = _write_synthetic_joint_authority_files(
+        tmp_path / defect
+    )
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    comparison = json.loads(comparison_path.read_text(encoding="utf-8"))
+    terminal = json.loads(terminal_path.read_text(encoding="utf-8"))
+    process_exit_code: int | None = 0
+
+    if defect == "failed_terminal":
+        terminal["status"] = "FAILED"
+    elif defect == "nonzero_exit":
+        process_exit_code = 1
+    elif defect == "unknown_exit":
+        process_exit_code = None
+    elif defect == "summary_demotion":
+        summary["task43_v3_endpoint_authority"]["official_result"] = False
+    elif defect == "summary_status_demotion":
+        summary["status"] = "FAILED"
+    elif defect == "summary_authority_demotion":
+        summary["authority"] = "DIAGNOSTIC_ONLY_PARTIAL_NONOFFICIAL"
+    elif defect == "comparison_demotion":
+        comparison["endpoint_qualified"] = False
+    elif defect == "terminal_demotion":
+        terminal["official_result"] = False
+    elif defect == "missing_comparison_file":
+        comparison_path.unlink()
+    elif defect == "missing_binding":
+        summary.pop("task43_v2_comparison")
+    elif defect == "wrong_hash":
+        summary["task43_v2_comparison"]["sha256"] = "f" * 64
+    elif defect == "source_identity_mismatch":
+        comparison["source_sha"] = "c" * 40
+
+    if defect not in {"missing_comparison_file"}:
+        comparison_path.write_text(json.dumps(comparison, sort_keys=True), encoding="utf-8")
+    if defect == "comparison_demotion" or defect == "source_identity_mismatch":
+        summary["task43_v2_comparison"]["sha256"] = hashlib.sha256(
+            comparison_path.read_bytes()
+        ).hexdigest()
+    if defect in {"failed_terminal", "terminal_demotion"}:
+        summary["task43_v3_partial_terminal"]["sha256"] = hashlib.sha256(
+            json.dumps(terminal, sort_keys=True).encode()
+        ).hexdigest()
+    summary_path.write_text(json.dumps(summary, sort_keys=True), encoding="utf-8")
+    terminal_path.write_text(json.dumps(terminal, sort_keys=True), encoding="utf-8")
+
+    assert not _synthetic_joint_read_has_no_engineering_veto(
+        summary_path,
+        terminal_path,
+        process_exit_code=process_exit_code,
+    )
+
+
+@pytest.mark.parametrize(
+    "writer_failure", ("sidecar", "comparison_demotion", "summary_demotion")
+)
+def test_a2_postprocess_writer_failures_keep_original_error_and_primary(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    writer_failure: str,
+) -> None:
+    from benchmarks.task43_hp_adaptivity import candidate_checkpoints
+    from benchmarks.task43_hp_adaptivity.a2_native_p6_diagnostic import (
+        _task43_v3_postprocess_fail_closed,
+    )
+
+    run_directory = tmp_path / "writer_failure"
+    numerical = run_directory / "numerical_output"
+    numerical.mkdir(parents=True)
+    summary_path = run_directory / "p6_condensed_direct_summary.json"
+    comparison_path = run_directory / "comparison_record.json"
+    summary_path, comparison_path, terminal_path = _write_synthetic_joint_authority_files(
+        run_directory / "fixture_root",
+        summary_path=summary_path,
+        comparison_path=comparison_path,
+        primary_path=numerical / "primary_before_extra.npz",
+        terminal_path=numerical / "task43_v3_partial_terminal.json",
+    )
+    assert _synthetic_joint_read_has_no_engineering_veto(
+        summary_path, terminal_path, process_exit_code=0
+    )
+    synthetic_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    primary = synthetic_summary["task43_v3_primary_before_extra_packet"]
+    primary_path = Path(primary["npz_path"])
+    primary_bytes = primary_path.read_bytes()
+    primary_sha = hashlib.sha256(primary_bytes).hexdigest()
+    original_summary_bytes = summary_path.read_bytes()
+    original_comparison = comparison_path.read_bytes()
+    original_sha = hashlib.sha256(original_comparison).hexdigest()
+    sidecar_path = comparison_path.with_name(
+        f"{comparison_path.name}.pre_failure.{original_sha}.json"
+    )
+    callback_error = OSError("original adapter failure remains authoritative")
+    writer_error = OSError(f"injected {writer_failure} write failure")
+
+    # A prior terminal would correctly refuse overwrite. Remove only the
+    # synthetic control terminal so the production failure writer can create
+    # this run's terminal after the baseline joint read has passed.
+    terminal_path.unlink()
+
+    real_write_atomic_bytes = candidate_checkpoints.write_atomic_bytes
+    real_write_atomic_json = candidate_checkpoints.write_atomic_json
+
+    def injected_write_atomic_bytes(path, payload, **kwargs):
+        if writer_failure == "sidecar" and Path(path) == sidecar_path:
+            raise writer_error
+        return real_write_atomic_bytes(path, payload, **kwargs)
+
+    def injected_write_atomic_json(path, record, **kwargs):
+        path = Path(path)
+        if writer_failure == "comparison_demotion" and path == comparison_path:
+            raise writer_error
+        if writer_failure == "summary_demotion" and path == summary_path:
+            raise writer_error
+        return real_write_atomic_json(path, record, **kwargs)
+
+    monkeypatch.setattr(candidate_checkpoints, "write_atomic_bytes", injected_write_atomic_bytes)
+    monkeypatch.setattr(candidate_checkpoints, "write_atomic_json", injected_write_atomic_json)
+
+    def fail_callback():
+        raise callback_error
+
+    with pytest.raises(OSError) as raised:
+        _task43_v3_postprocess_fail_closed(
+            fail_callback,
+            summary_path=summary_path,
+            run_directory=run_directory,
+            phase="A2_q",
+            comparison_path=comparison_path,
+        )
+    assert raised.value is callback_error
+    captured = capsys.readouterr()
+    if writer_failure == "summary_demotion":
+        assert "could not persist its fail-closed summary" in captured.err
+    else:
+        assert "failure-record warnings" in captured.err
+        assert str(writer_error) in captured.err
+
+    terminal = json.loads(terminal_path.read_text(encoding="utf-8"))
+    assert terminal["status"] == "FAILED"
+    assert terminal["official_result"] is False
+    assert terminal["error"] == str(callback_error)
+    assert primary_path.read_bytes() == primary_bytes
+    assert hashlib.sha256(primary_path.read_bytes()).hexdigest() == primary_sha
+    assert not _synthetic_joint_read_has_no_engineering_veto(
+        summary_path, terminal_path, process_exit_code=1
+    )
+    assert not _synthetic_joint_read_has_no_engineering_veto(
+        summary_path, terminal_path, process_exit_code=0
+    )
+    assert json.loads(comparison_path.read_text(encoding="utf-8"))[
+        "measured_R_total"
+    ] == 0.25000001
+    if writer_failure == "sidecar":
+        assert not sidecar_path.exists()
+        assert comparison_path.read_bytes() == original_comparison
+    elif writer_failure == "comparison_demotion":
+        assert sidecar_path.read_bytes() == original_comparison
+        assert hashlib.sha256(sidecar_path.read_bytes()).hexdigest() == original_sha
+        assert comparison_path.read_bytes() == original_comparison
+    else:
+        assert sidecar_path.read_bytes() == original_comparison
+        assert json.loads(comparison_path.read_text(encoding="utf-8"))[
+            "endpoint_qualified"
+        ] is False
+        # The failed atomic summary replacement leaves its prior bytes intact;
+        # the terminal and current comparison remain independent denial records.
+        assert summary_path.read_bytes() == original_summary_bytes
 
 
 def test_a2_adapter_guard_wraps_full_postprocess_callback():
@@ -1145,16 +1517,17 @@ def test_outer_v3_guard_records_escaped_postsolve_exception(tmp_path, failure):
 
     run_root = tmp_path / "A1_q"
     solve_dir = run_root / "solve"
-    solve_dir.mkdir(parents=True)
     run_summary_path = solve_dir / "run_summary.json"
-    run_summary_path.write_text(
-        json.dumps({"official_result": True, "case_status": "completed"}),
-        encoding="utf-8",
-    )
 
     def fake_runner(**kwargs):
-        kwargs["_failure_context"]["run_root"].mkdir(parents=True, exist_ok=True)
         context = kwargs["_failure_context"]
+        context["run_root"].mkdir(parents=True)
+        solve_dir.mkdir()
+        run_summary_path.write_text(
+            json.dumps({"official_result": True, "case_status": "completed"}),
+            encoding="utf-8",
+        )
+        context["run_root_acquired"] = True
         context["source_identity"] = {"git_head": "fixture-head"}
         if "bcast" in failure:
             packet = write_v3_primary_before_extra_packet(

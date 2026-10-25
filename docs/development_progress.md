@@ -1,6 +1,21 @@
 # Task43 当前收口（2026-10-25）：PARTIAL / CONTROLLED_NEGATIVE
 
-## V4：按 Review V3 §9 完成有限非PDE整改
+## V5：Review V4 F1–F4有限整改与记录收口
+
+本轮只修改A1失败写入资格、A2 comparison原件路径和测试内联合读取约定，并更新当前文档；没有改变数值方程、默认数值行为、历史合同或原始终态。新增正式PDE、dispatch、attempt、READY均为0。A1 2/2、A2 3/3、累计5/6已耗，最后一槽封存。
+
+| 范围 | 实际结论 | 限制 |
+|---|---|---|
+| F1 A1失败写入 | 只有本次成功取得空输出根后，wrapper才可在该根写失败终态；两种非空root真实main fixture核对文件集合和逐文件SHA不变，并确认mesh/solver sentinel为0 | A1_q2历史真实入口缺`WorkflowLedger`，在已构网和进入装配后受控停止；V5 fixture不回填现场证据 |
+| F2 A2原件路径 | 降权comparison的`original_record_path`现在指向不可变sidecar，故障测试核原字节/hash | 原测量、primary和旧terminal不改 |
+| F3 二次写失败读取 | 测试内联合约定对一致合成包及每项独立否决进行检查；覆盖sidecar、comparison降权和summary降权写故障，保留异常与primary字节 | 无production consumer、无A2_R/controller；合成control不是数值通过 |
+| 正式终态 | A1_q2 G2失效由真实入口未建账导致，A2_q3 native ledger成立但7200秒门后不完整，extra full-active残差未严格下降 | 不归因数值方法失败，也不升级为完整端点资格 |
+
+25项最小定向节点通过；之后31项focused首轮30 passed/1 failed，因检查helper成为pytest直接父进程，不能通过真实watchdog父身份断言。窄恢复第一次被Ruff RUF059挡在pytest前，变量名局部修正后第二次两个相关节点通过；没有一次干净的31项全通过运行。六个受监控driver whole-watchdog wall合计`84.8460884406s`、最大进程树RSS采样峰`263839744B`、task swap峰0并清理；但三条成员样本affinity为CPU0，另一个Z态样本没有affinity，故严格全程CPU1门`NOT_PASSED`、原因未证。另两次未监控metadata检查分别断言和KeyError失败，耗时未测。逐次命令、source/test/driver hash、日志和状态见[Response V5](task43_hp_adaptivity/response_v5.md)、[V5 validation compact](task43_hp_adaptivity/outcomes/records/v5_focused_validation_v1.json)及[资源复核](task43_hp_adaptivity/outcomes/records/v5_root_resource_recheck.json)。未运行full suite、p6 FFCx witness、旧场采样/积分或PDE。
+
+旧A2 affinity原件共有三段空cmdline尾段：两段`other_or_unknown`各9条观察，另一段`MPI_runtime` 8条，共26条。仅能按相同PID/start_ticks关联前序身份，未补造命令。上轮主控交付消息/工具输出曾提及104项hash一致，但没有持久逐项列表；本轮不重建、不称外部独立核验。旧V4 support原始记录和A2_q3场/向量NPZ也未重读。Stage1 overlay历史59/66及23/27同字节范围不资格化本轮四个Python变更。
+
+## V4历史：按 Review V3 §9 完成有限非PDE整改
 
 V4 未新增正式 PDE、dispatch、attempt 或 READY。N1 在 A1 实际 main 路径接入 WorkflowLedger 并以首次 mesh-builder sentinel 验证 phase/stages/失败 terminal；N2 对 A2 后处理 comparison/summary 异常实现原子记录及权限一致降级；N3 将 extra raw residual/RHS/solution packet 前移到物理输出恢复与采样之前，并在小数组上重算 returned condensed、A6 和 full-active residual；N4 watchdog 分辨残留后代与无后代时 cache 不稳定两类停止；N5 只读拆解旧 A2 资源时间区间。各项边界、失败重跑和费用见[Response V4](task43_hp_adaptivity/response_v4.md)及[V4验证compact](task43_hp_adaptivity/outcomes/records/v4_focused_validation_v1.json)。
 

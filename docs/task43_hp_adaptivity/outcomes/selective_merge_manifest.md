@@ -1,6 +1,19 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V4 当前范围：整改代码仍为 research-only
+## V5 当前整改范围：组件与文档证据，不授予合并资格
+
+V5回应Review V4的F1–F4，只修改四个Python文件并更新收口文档/compact；无数值方程或默认native数值行为变化，无新正式dispatch/PDE。25项最小driver通过；31项focused首轮30 passed/1 failed，父子进程拓扑问题局部恢复后另两节点通过，未有单次31项全通过。六个受监控driver的strict CPU1全程门为`NOT_PASSED`，虽wall/RSS/swap/cleanup满足其支持限额；两次metadata检查未监控且失败。完整命令、source/test/driver hash、测试stdout、资源峰及静态检查结果见[V5 validation compact](records/v5_focused_validation_v1.json)及[独立资源复核](records/v5_root_resource_recheck.json)。
+
+| V5依赖组 | 文件范围与作用 | 测试、fresh PDE evidence与资格 | 合并建议 |
+|---|---|---|---|
+| A1失败保护（research-only） | `benchmarks/task43_hp_adaptivity/h100_anchor.py`；`src/test/test_task43_v3_native_workflow_ledger.py`。只有本次成功建立空root后才允许failure wrapper写终态；已有非空root拒绝时保护所有旧文件 | 真实main边界/非空root/身份拒绝fixture；25项driver中相关节点通过；无网格、装配、求解或fresh PDE。A1_q2现场G2缺ledger的历史事实不变 | 只保留为research V3 opt-in；不提升为production default，不回填旧A1现场资格 |
+| A2原件路径与联合故障读取（research/check fixture） | `benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py`；`src/test/test_task43_v3_failure_safe_order.py`；复用`candidate_checkpoints.py`原子writer | original path/hash字节绑定；合成完整文件控制与独立否决项；sidecar/comparison/summary写故障保留原异常和primary。联合约定只在测试中，无production消费者、无A2_R、无fresh PDE；fixture不授予科学资格 | 留在research-only；不增设consumer/controller，不用fixture代替端点验收 |
+| V5 compact docs/evidence | `response_v5.md`、Task43 README/summary/manifest、`docs/development_model_registry.md`、`docs/development_progress.md`、validation compact及root resource recheck | 最小driver 25 passed；focused 30/1 failed；首次窄恢复在pytest前Ruff失败；第二窄恢复2 passed并完成四文件Ruff/compile/文档检查。CPU1全程门NOT_PASSED，metadata检查两次失败且not_measured | 作为有限审阅证据；不代表无条件F1–F4验收或merge approval |
+| 禁止提升 | V3 observer、A2 adapter、测试内联合约定及V5 writer/failure path | 不提供production/default数值资格；formal quota remains 5/6，剩余1封存 | Do-not-merge为production；不得用旧READY、旧overlay或组件通过绕过剩余锁定 |
+
+Q03旧Stage1 overlay只有59/66路径同字节、核心/共享路径23/27同字节；四个变化共享数值文件仍是`common_3d_case_flow.py`、`dtn_port_3d.py`、`hcurl_variable_p_reduction.py`、`solve_maxwell_3d_stage_4b_block_grating.py`。这份历史闭包没有资格化本轮四个修改Python字节，也不覆盖A1/A2最终共享依赖。V5没有重新宣称旧overlay或V1 PDE为新代码资格。正式预算仍为A1 2/2、A2 3/3、5/6；剩余槽封存，A1_R/A2_R/B/C与所有下游保持关闭。
+
+## V4历史范围：整改代码仍为 research-only
 
 V4按Review V3 §9仅做N1–N6整改，正式PDE/dispatch新增0、READY新增0。N1–N4涉及 `benchmarks/task43_hp_adaptivity/h100_anchor.py`、`a2_native_p6_diagnostic.py`、`candidate_checkpoints.py`、`src/runners/p6_condensed_direct.py`、`benchmarks/subreaper_watchdog.py`及相应failure-safe、native ledger和watchdog tests；改动为V3显式diagnostic路径的ledger/原子留证/失败权限/extra原向量时序，以及watchdog对停止原因的分类。默认 native runner数值路径不作为本次数值资格对象；新测试只覆盖隔离的CLI入口 sentinel、小数组和子进程。V4运行命令、日志、source/test hash与具体raw断言见[validation compact](records/v4_focused_validation_v1.json)。
 

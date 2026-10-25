@@ -128,7 +128,8 @@ def _preserve_and_demote_v3_comparison(
 
     demoted.update(
         {
-            "original_record_path": str(comparison_path),
+            "original_record_path": original_ref["path"],
+            "current_record_path_before_demotion": str(comparison_path),
             "original_record_sha256": original_sha256,
             "original_endpoint_qualified": previous_qualification,
             "postprocess_failure": {

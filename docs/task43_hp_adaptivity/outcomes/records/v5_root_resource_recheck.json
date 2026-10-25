@@ -1,0 +1,174 @@
+{
+  "scope": "six V5 support raw logs only; read-only arithmetic, unmonitored and not a pytest/driver run",
+  "prior_unmonitored_checks": [
+    {
+      "result": "FAILED_ASSERTION",
+      "reason": "assumed all observed members affinity [1]; raw rows contradict it",
+      "persistent_script_or_stdout": null,
+      "source": "root tool output; not a monitored driver"
+    },
+    {
+      "result": "FAILED_KEYERROR",
+      "reason": "assumed affinity field exists for zombie record",
+      "persistent_script_or_stdout": null,
+      "source": "root tool output; not a monitored driver"
+    }
+  ],
+  "runs": [
+    {
+      "run": "minimal_attempt1",
+      "classification": "WORKER_FAILED",
+      "worker_exit": 1,
+      "wall_seconds": 8.914583516307175,
+      "samples": 13,
+      "rss_bytes": 164892672,
+      "swap_bytes": 0,
+      "affinity_exceptions": [],
+      "cleanup": true,
+      "raw_paths_and_sha256": {
+        "benchmarks/artifacts/task43/v5_support/minimal_attempt1/watchdog/summary.json": "87828e3ea374a815a7b21858e4b358b98f16aeaa6bbd56f20e8accf26232fa9d",
+        "benchmarks/artifacts/task43/v5_support/minimal_attempt1/watchdog/resources.jsonl": "62ea4fcba2ecc17bad4cb1062cbb28f8f759aa1065eca4ac5ae3dec0c37066df",
+        "benchmarks/artifacts/task43/v5_support/minimal_attempt1/watchdog/worker.log": "748125bff676f8520798ec4b898c9433ade366ccbbf533033d00225f1db8b742"
+      }
+    },
+    {
+      "run": "minimal_attempt2",
+      "classification": "WORKER_FAILED",
+      "worker_exit": 1,
+      "wall_seconds": 4.417637757025659,
+      "samples": 9,
+      "rss_bytes": 163442688,
+      "swap_bytes": 0,
+      "affinity_exceptions": [
+        {
+          "zero_based_sample_index": 2,
+          "pid": 3727682,
+          "start_ticks": 283474809,
+          "ppid": 3727671,
+          "comm": "python",
+          "cmdline": "python benchmarks/artifacts/task43/v5_support/worker_abi_preflight_attempt2.py",
+          "state": "R",
+          "affinity": [
+            0
+          ],
+          "timestamp_ns": 1792909754819774665
+        }
+      ],
+      "cleanup": true,
+      "raw_paths_and_sha256": {
+        "benchmarks/artifacts/task43/v5_support/minimal_attempt2/watchdog/summary.json": "56b89af6a7ef05b9137c04945c888943096d750cc839667ae9a8654e3034b426",
+        "benchmarks/artifacts/task43/v5_support/minimal_attempt2/watchdog/resources.jsonl": "650f813d1308564c9b243d49ad7c1851ab229438145176b82484ada12e5004c2",
+        "benchmarks/artifacts/task43/v5_support/minimal_attempt2/watchdog/worker.log": "e2d06981c27975e0d277483afc9e714ad632daaa6d2e8c118641c0ea76ff18ff"
+      }
+    },
+    {
+      "run": "minimal_attempt3",
+      "classification": "COMPLETED",
+      "worker_exit": 0,
+      "wall_seconds": 19.871055574156344,
+      "samples": 28,
+      "rss_bytes": 259756032,
+      "swap_bytes": 0,
+      "affinity_exceptions": [
+        {
+          "zero_based_sample_index": 12,
+          "pid": 3728219,
+          "start_ticks": 283480222,
+          "ppid": 3728187,
+          "comm": "python",
+          "cmdline": "python -u -m pytest -q --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v5_support/minimal_attempt3/pytest src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_records_ledger_before_mesh_boundary src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_rejects_nonempty_root_without_touching_it src/test/test_task43_v3_native_workflow_ledger.py::test_a1_actual_main_rejects_missing_phase_or_wrong_watchdog_parent src/test/test_task43_v3_failure_safe_order.py::test_outer_v3_guard_records_escaped_postsolve_exception src/test/test_task43_v3_failure_safe_order.py::test_a2_adapter_postprocess_exception_demotes_native_result src/test/test_task43_v3_failure_safe_order.py::test_synthetic_joint_authority_fixture_passes_only_as_a_coherent_bundle src/test/test_task43_v3_failure_safe_order.py::test_synthetic_joint_authority_fixture_rejects_each_failure_independently src/test/test_task43_v3_failure_safe_order.py::test_a2_postprocess_writer_failures_keep_original_error_and_primary",
+          "state": "S",
+          "affinity": [
+            0
+          ],
+          "timestamp_ns": 1792909816510865059
+        }
+      ],
+      "cleanup": true,
+      "raw_paths_and_sha256": {
+        "benchmarks/artifacts/task43/v5_support/minimal_attempt3/watchdog/summary.json": "ecd81873b8374d3325f601490eaff325ac0d36866eca79e98c1952577de95afc",
+        "benchmarks/artifacts/task43/v5_support/minimal_attempt3/watchdog/resources.jsonl": "d98133420945f1f1ee3846e0fcf86296d9773ac2f297b320b43e3e6dbb9eda40",
+        "benchmarks/artifacts/task43/v5_support/minimal_attempt3/watchdog/worker.log": "6bcaf89153c2325bf604aaf537384c8571fb79592502c2d239ae4475c50eef23"
+      }
+    },
+    {
+      "run": "focused_attempt1",
+      "classification": "WORKER_FAILED",
+      "worker_exit": 1,
+      "wall_seconds": 15.243286705110222,
+      "samples": 23,
+      "rss_bytes": 263839744,
+      "swap_bytes": 0,
+      "affinity_exceptions": [],
+      "cleanup": true,
+      "raw_paths_and_sha256": {
+        "benchmarks/artifacts/task43/v5_support/focused_attempt1/watchdog/summary.json": "ac7ab7c63660e9c1f82b35e64fb07407dc7d9f3f1664cf5b8f80109390834a06",
+        "benchmarks/artifacts/task43/v5_support/focused_attempt1/watchdog/resources.jsonl": "1d8dd23b22aace9b167bad001873d659541c86944d5976e99d1f96b77694bb9c",
+        "benchmarks/artifacts/task43/v5_support/focused_attempt1/watchdog/worker.log": "74fa34b93bd726b45cf5ed14bb9236c34456517eb366016c5d8a07f3ee06030b"
+      }
+    },
+    {
+      "run": "focused_recovery1",
+      "classification": "WORKER_FAILED",
+      "worker_exit": 1,
+      "wall_seconds": 8.28013485390693,
+      "samples": 12,
+      "rss_bytes": 158900224,
+      "swap_bytes": 0,
+      "affinity_exceptions": [
+        {
+          "zero_based_sample_index": 6,
+          "pid": 3755876,
+          "start_ticks": 283560945,
+          "ppid": 3755865,
+          "comm": "python",
+          "cmdline": "",
+          "state": "Z",
+          "affinity": null,
+          "timestamp_ns": 1792910619652552983
+        }
+      ],
+      "cleanup": true,
+      "raw_paths_and_sha256": {
+        "benchmarks/artifacts/task43/v5_support/focused_recovery1/watchdog/summary.json": "d83940130439154ec7cee9bdfd4b115c8934630f22243f31544dc1768d1351fb",
+        "benchmarks/artifacts/task43/v5_support/focused_recovery1/watchdog/resources.jsonl": "45cef2136428861db5e5489b5283726e5d64d8515f0f2bb42362b57bf7f36ec9",
+        "benchmarks/artifacts/task43/v5_support/focused_recovery1/watchdog/worker.log": "132c3aef1215823ce249f42ffe36a656e30c09fcdc0ca7b08af12c7d3426c342"
+      }
+    },
+    {
+      "run": "focused_recovery2",
+      "classification": "COMPLETED",
+      "worker_exit": 0,
+      "wall_seconds": 28.119390034116805,
+      "samples": 33,
+      "rss_bytes": 255451136,
+      "swap_bytes": 0,
+      "affinity_exceptions": [
+        {
+          "zero_based_sample_index": 3,
+          "pid": 3757211,
+          "start_ticks": 283567338,
+          "ppid": 3757192,
+          "comm": "python",
+          "cmdline": "python benchmarks/artifacts/task43/v5_support/worker_abi_preflight_attempt3.py",
+          "state": "R",
+          "affinity": [
+            0
+          ],
+          "timestamp_ns": 1792910681308054216
+        }
+      ],
+      "cleanup": true,
+      "raw_paths_and_sha256": {
+        "benchmarks/artifacts/task43/v5_support/focused_recovery2/watchdog/summary.json": "78848aaefd641393aee18333a98e868d41e4331491b5362215855b9062c01904",
+        "benchmarks/artifacts/task43/v5_support/focused_recovery2/watchdog/resources.jsonl": "65cc5b29bb4101694505d063553c936ff26c8557187fcce0a7fed3bdc1a89139",
+        "benchmarks/artifacts/task43/v5_support/focused_recovery2/watchdog/worker.log": "af7aa7a63cddaeb0073b8e40259b627e32d5f2002f524d90e5e36b0785856b24"
+      }
+    }
+  ],
+  "total_whole_watchdog_seconds": 84.84608844062313,
+  "max_tree_rss_bytes": 263839744,
+  "strict_all_time_cpu1_status": "NOT_PASSED",
+  "cause_of_affinity_deviations": "not_established",
+  "interpretation": "launch taskset CPU1 and successful end-of-preflight CPU1 do not establish continuous affinity; three CPU0 member observations and one zombie observation with affinity missing. No test or environment rerun authorized by this check."
+}

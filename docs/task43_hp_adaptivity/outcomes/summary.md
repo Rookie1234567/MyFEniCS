@@ -1,6 +1,22 @@
 # Task43 结果：部分完成，受控负结果
 
-## 最新收口：V4 按 Review V3 §9 完成非PDE有限整改（2026-10-25）
+## 最新收口：V5 按 Review V4 F1–F4 完成有限工程整改（2026-10-25）
+
+V5只处理真实入口的失败写入资格、comparison原件身份和二次写失败的联合读取范围，并更新当前文档；不改数值方程、默认native路线或历史冻结合同。WorkflowLedger记录入口实际执行阶段，原子写入避免单份JSON半写，primary/extra保留额外同因子回代前后的原向量；这些机制降低后处理故障造成的证据损失，但不提升空间精度。
+
+| Review项 | 实际状态 | 边界 |
+|---|---|---|
+| F1 非空root保护 | 写入资格仅在本次成功创建空root后开启；真实main在首个mesh-builder sentinel、非空root拒绝及身份缺失路径有定向测试 | 非空root有/无旧terminal均要求整目录文件集合与逐文件hash不变；无真实mesh/assembly/solver |
+| F2 comparison原件追溯 | `original_record_path`绑定不可变sidecar，当前比较路径另列；两条失败注入读取sidecar原字节/hash核对 | 测量值、primary和异常身份保持，不授予endpoint qualification |
+| F3 二次写失败边界 | 25项最小driver包含合成一致包对照、各工程否决条件独立负例、sidecar/comparison/summary三类writer故障 | 联合约定仅在test中；没有production consumer、A2_R或controller；合成control不是科学通过 |
+| formal dispatch / 配额 | 新增0；累计5/6，A1 2/2、A2 3/3、最后1槽封存 | A1_R/A2_R/B/C、成本campaign、迭代和0.7nm仍锁定 |
+| 五项能力 | 空间/选择 `PARTIAL`；精度 `NOT_PASSED`；同精度成本 `NOT_ESTABLISHED`；迭代 `NOT_RUN / NOT_QUALIFIED` | accepted9/R9仍为最后接受状态，最终空间精度未通过 |
+
+25项最小定向driver通过（11.59s）。随后31项focused driver为30 passed/1 failed：真实A1入口parent-identity节点由检查helper嵌套启动pytest，观察到的直接父PID不是watchdog；这是driver拓扑及审查遗漏，未到网格/装配/求解。第一窄恢复在pytest前被新增Ruff RUF059阻止；修复一个未用变量名后，第二窄恢复的两个受影响节点通过（2 passed/10.11s）并完成静态收口。没有一次干净的31项全通过运行。六个受监控driver的whole-wall依次为8.9145835163、4.4176377570、19.8710555742、15.2432867051、8.2801348539和28.1193900341秒，合计84.8460884406秒；同时进程树RSS峰为164892672、163442688、259756032、263839744、158900224和255451136字节，最大263839744B。六次task swap峰均0且后代均清理。严格全程CPU1约束未通过：三条成员样本affinity为[0]，一条Z态记录缺affinity字段，成因未确证；具体PID、cmdline、原始资源SHA见[独立资源复核](records/v5_root_resource_recheck.json)。另两次未监控metadata检查脚本失败（一次断言，一次KeyError），无持久脚本/stdout且wall未测。完整命令、日志与分次结果见[V5 validation compact](records/v5_focused_validation_v1.json)。未运行full suite、p6 FFCx witness、旧场采样/积分或PDE。
+
+旧A2 affinity表中的空cmdline尾段共三段：`other_or_unknown`两段各9条成员观察，`MPI_runtime`一段8条，共26条。只能按相同PID/start_ticks的前序身份关联，不能补造缺失命令；原resources与V4 root audit保持不变。完整历史范围见[Response V5](../response_v5.md)。本轮没有full repository pytest、p6 FFCx witness、旧场采样/积分、网格构建或求解。
+
+## V4历史收口：按 Review V3 §9 完成非PDE有限整改（2026-10-25）
 
 本轮未新增正式 PDE、dispatch、attempt 或 READY。N1 将 `WorkflowLedger` 接入 A1 的真实 opt-in main，并以首次 mesh-builder 边界 sentinel 验证 phase、stages 与失败 terminal；N2 针对 comparison 成功写出后回调异常、以及 summary 截断后记录异常，实施原子保存和 fail-closed authority demotion；N3 在 extra 独立 A6/full-active 计算后、物理输出恢复和采样前保存 raw packet；N4 区分“后代仍未清除”与“无后代但 cache metadata 未稳定”；N5 只读审计旧 A2 资源/阶段记录；N6 更新当前文档和验证索引。组件测试不改变 V3 正式终态，也不能把工程验证提升为数值或生产资格。
 
