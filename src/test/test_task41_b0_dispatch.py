@@ -433,8 +433,8 @@ def test_task41_b0_dispatch_binds_contract_and_preserves_mixed_reference_checks(
     monkeypatch.setattr(
         iterative,
         "_task41_b0_dispatch_binding",
-        lambda data, *, source_sha: original_binding(
-            data, source_sha=source_sha, current_root=tmp_path
+        lambda data, *, source_sha, run_directory=None: original_binding(
+            data, source_sha=source_sha, run_directory=run_directory, current_root=tmp_path
         ),
     )
     calls: list[dict[str, Any]] = []
@@ -476,8 +476,8 @@ def test_task41_b0_v9_dispatch_binds_and_passes_same_lu_strategy_to_worker(
     monkeypatch.setattr(
         iterative,
         "_task41_b0_dispatch_binding",
-        lambda data, *, source_sha: original_binding(
-            data, source_sha=source_sha, current_root=tmp_path
+        lambda data, *, source_sha, run_directory=None: original_binding(
+            data, source_sha=source_sha, run_directory=run_directory, current_root=tmp_path
         ),
     )
     calls: list[dict[str, Any]] = []

@@ -33,6 +33,7 @@ def _task41_b0_dispatch_binding(
     *,
     source_sha: str,
     current_root: str | Path | None = None,
+    run_directory: str | Path | None = None,
 ) -> dict[str, Any]:
     """Bind the B0 dispatcher handoff to its current-source contract and window."""
     from src.geometry.task41_phi90_profile import task41_payload_errors
@@ -46,6 +47,8 @@ def _task41_b0_dispatch_binding(
         TASK41_B0_V14_SAVED_RHS_CANDIDATE_WINDOW_RELATIVE,
         TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
         TASK41_B0_V9_WINDOW_RELATIVE,
+        TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+        TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
         load_task41_p0_fixed_window,
         require_task41_p0_contract,
     )
@@ -111,6 +114,20 @@ def _task41_b0_dispatch_binding(
     contract_window = contract_window.resolve()
     v9_window = (root / TASK41_B0_V9_WINDOW_RELATIVE).resolve()
     v14_window = (root / TASK41_B0_V14_SAVED_RHS_CANDIDATE_WINDOW_RELATIVE).resolve()
+    v15_window = (root / TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE).resolve()
+    v15_scope = contract.get("execution_scope")
+    v15_strategy = {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v2",
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+        "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        "refinement_max_steps": 2,
+    }
+    is_v15_full_acceptance = contract_window == v15_window
+    if is_v15_full_acceptance and (
+        numerical_settings != v15_strategy
+        or v15_scope != TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
+    ):
+        raise ValueError("Task41 B0 V15 dispatcher contract differs from the exact full-acceptance scope")
     if contract_window == v14_window and numerical_settings == {
         "schema": "task41.p0.b0.internal_rhs_strategy.v1",
         "internal_rhs_strategy": "same_lu_rhs_solve",
@@ -142,17 +159,21 @@ def _task41_b0_dispatch_binding(
     if numerical_strategy == "same_lu_rhs_solve" and contract_window not in {
         v9_window,
         v14_window,
+        v15_window,
     }:
-        raise ValueError("same_lu_rhs_solve is allowed only through the V9 or V14 B0 contract")
+        raise ValueError("same_lu_rhs_solve is allowed only through the V9, V14, or V15 B0 contract")
     if refinement_steps:
+        v14_refinement = (
+            contract_window == v14_window
+            and contract.get("execution_scope") == TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE
+        )
         if (
             refinement_steps != 2
             or refinement_strategy != TASK41_B0_V14_RHS_REFINEMENT_STRATEGY
-            or contract_window != v14_window
             or numerical_strategy != "same_lu_rhs_solve"
-            or contract.get("execution_scope") != TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE
+            or not (v14_refinement or is_v15_full_acceptance)
         ):
-            raise ValueError("two-step same-LU refinement is bound only to the exact V14 saved-candidate contract")
+            raise ValueError("two-step same-LU refinement requires the exact V14 saved or V15 full-acceptance scope")
     elif refinement_strategy is not None:
         raise ValueError("Task41 B0 refinement strategy requires its explicit two-step limit")
     if contract_window == v14_window and refinement_steps != 2:
@@ -165,6 +186,28 @@ def _task41_b0_dispatch_binding(
         or os.environ.get("TASK41_P0_EXECUTION_WINDOW_SHA256") != window.sha256
     ):
         raise RuntimeError("Task41 B0 dispatcher fixed window differs from its service environment")
+    v15_output_directory: Path | None = None
+    v15_quota_claim_path: Path | None = None
+    if is_v15_full_acceptance:
+        if os.environ.get("TASK41_P0_V15_FULL_ACCEPTANCE") != "1":
+            raise RuntimeError("Task41 V15 dispatcher requires the explicit full-acceptance service selector")
+        if run_directory is None:
+            raise RuntimeError("Task41 V15 dispatcher requires its newly allocated output directory")
+        v15_output_directory = Path(run_directory).resolve(strict=True)
+        expected_output_parent = Path(
+            str(resolved_payload.get("provenance", {}).get("expected_output_parent", ""))
+        ).resolve(strict=True)
+        results_root = (root / "results" / str(case["model_id"])).resolve(strict=True)
+        if (
+            v15_output_directory.parent != expected_output_parent
+            or not v15_output_directory.is_relative_to(results_root)
+            or Path(os.environ.get("TASK41_P0_V15_OUTPUT_DIRECTORY", "")).resolve()
+            != v15_output_directory
+        ):
+            raise ValueError("Task41 V15 dispatcher output directory differs from its service binding")
+        v15_quota_claim_path = window.accounting_path.with_name(
+            window.accounting_path.name + ".v15_full_owner_claim.json"
+        ).resolve()
     binding = {
         "schema": (
             "task41.p0.dispatch_binding.v3"
@@ -189,13 +232,29 @@ def _task41_b0_dispatch_binding(
         "window_sha256": window.sha256,
         "saved_surface_donor": saved_surface_donor,
         "internal_rhs_strategy": numerical_strategy,
+        "execution_scope": (
+            deepcopy(dict(contract["execution_scope"]))
+            if isinstance(contract.get("execution_scope"), Mapping)
+            else None
+        ),
         "comparison_binding": None,
     }
+    if run_directory is not None:
+        binding["run_directory"] = str(Path(run_directory).resolve())
     if refinement_steps:
         binding.update(
             {
                 "internal_rhs_refinement_max_steps": refinement_steps,
                 "internal_rhs_refinement_strategy": refinement_strategy,
+            }
+        )
+    if is_v15_full_acceptance:
+        binding.update(
+            {
+                "execution_scope": deepcopy(dict(v15_scope)),
+                "full_owner_quota_claim_path": str(v15_quota_claim_path),
+                "full_owner_quota_scope": "fixed_window_across_attempts",
+                "run_directory": str(v15_output_directory),
             }
         )
     return binding
@@ -254,6 +313,7 @@ def run_full3d_iterative(
         contract_binding = _task41_b0_dispatch_binding(
             resolved_payload,
             source_sha=source_sha,
+            run_directory=run_directory,
         )
         dispatch_payload = deepcopy(dict(resolved_payload))
         if not isinstance(solver, Mapping):

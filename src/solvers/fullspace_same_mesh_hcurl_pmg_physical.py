@@ -1355,6 +1355,7 @@ def build_same_mesh_physical_action(
     research_phase_override: tuple[complex, complex] | None = None,
     stage_callback: Callable[[Mapping[str, Any]], None] | None = None,
     pre_donor_qualification_callback: Callable[[Mapping[str, Any]], Mapping[str, Any]] | None = None,
+    stop_after_pre_donor_qualification: bool = False,
 ) -> dict[str, Any]:
     """Build one physical action from an existing same-mesh level.
 
@@ -1386,6 +1387,10 @@ def build_same_mesh_physical_action(
     from .fullspace_physical_action import FullspacePhysicalAction
     from .fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
 
+    if stop_after_pre_donor_qualification and (
+        pre_donor_qualification_callback is None or saved_surface_donor is None
+    ):
+        raise ValueError("acceptance-only exit requires a saved donor and qualification callback")
     if stage_callback is not None and not callable(stage_callback):
         raise TypeError("same-mesh physical action stage callback must be callable")
     if surface_functional_checkpoint is not None and (
@@ -1737,6 +1742,27 @@ def build_same_mesh_physical_action(
             )
             if not isinstance(pre_donor_qualification, Mapping):
                 raise TypeError("pre-donor qualification callback must return its owner and evidence mapping")
+            if stop_after_pre_donor_qualification:
+                # Explicit acceptance-only scope: transfer the live native volume owner.
+                # No full carrier is opened and this bundle is not a physical A6 action.
+                accepted_volume = volume_action
+                bundle = {
+                    "schema": "task038.same_mesh_hcurl_pmg.volume-qualification.v1",
+                    "setup": setup,
+                    "cfg": cfg,
+                    "degree": degree,
+                    "action": accepted_volume,
+                    "volume_action": accepted_volume,
+                    "pre_donor_qualification": dict(pre_donor_qualification),
+                    "modes": modes,
+                    "mode_rows": mode_rows,
+                    "mode_sha256": mode_sha,
+                    "dtn_phase_gauge": dtn_phase_gauge,
+                    "acceptance_only": True,
+                    "full_carrier_constructed": False,
+                }
+                volume_action = None
+                return bundle
         if saved_surface_donor is not None:
             if not isinstance(saved_surface_support, _Task41SavedSurfaceSupport):
                 raise RuntimeError("Task41 B0 saved donor has no fresh FE support inventory")

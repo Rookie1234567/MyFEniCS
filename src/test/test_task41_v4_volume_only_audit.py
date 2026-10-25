@@ -1283,6 +1283,9 @@ def _task41_v9_compact_terminal_fixture(
     action_passes: bool,
     missing_numerical_output: bool = False,
     service_repo_root=None,
+    terminal_layout: str = "v9_full",
+    recovery_passes: bool = True,
+    stop_after_action_column: bool = False,
 ):
     from src.runners import task41_p0_checker, task41_p0_contract
     from src.solvers import task41_v4_volume_only_audit as audit
@@ -1296,6 +1299,7 @@ def _task41_v9_compact_terminal_fixture(
         "TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES",
         2 * (2 + 2) * 2 * 16 + 6 * 13 * 16 + 10 * 4096,
     )
+    monkeypatch.setattr(audit, "TASK41_V15_TERMINAL_EVIDENCE_RESERVE_BYTES", 8 * 4096 + 4 * 4 * 16 + 4 * 13 * 16)
     monkeypatch.setattr(audit, "TASK41_V5_FROZEN_DENOMINATORS", (11.0, 13.0))
     monkeypatch.setattr(audit.shutil, "disk_usage", lambda _path: SimpleNamespace(free=10**12))
     monkeypatch.setattr(
@@ -1305,6 +1309,7 @@ def _task41_v9_compact_terminal_fixture(
     )
     owner = case.owner
     owner.internal_rhs_strategy = "same_lu_rhs_solve"
+    owner.internal_rhs_refinement_max_steps = 2
     owner.build_audit = {"geometry_policy": "mesh_actual_exact"}
     owner.trace_constraints.owned_active_original_dofs = np.asarray([10, 11], dtype=np.int64)
     donor = case.donor
@@ -1372,13 +1377,13 @@ def _task41_v9_compact_terminal_fixture(
         def __init__(self, condensed, *, H_p):
             assert condensed.appended_rows == 0
             assert H_p.shape == (0, 0)
+            self.audit = {"apply_count": 0, "same_lu_rhs_operation_costs": {}}
 
-        @staticmethod
-        def apply(_source):
+        def apply(self, _source):
+            self.audit["apply_count"] += 1
             return np.zeros(2, dtype=np.complex128)
 
-        @staticmethod
-        def reduce_rhs(_rhs, *, rhs_is_mpc_dual):
+        def reduce_rhs(self, _rhs, *, rhs_is_mpc_dual):
             assert rhs_is_mpc_dual is True
             return np.zeros(2, dtype=np.complex128) if action_passes else np.ones(2, dtype=np.complex128)
 
@@ -1457,95 +1462,281 @@ def _task41_v9_compact_terminal_fixture(
             "dtype": str(array.dtype),
         }
 
-    report = audit._task41_v9_compact_volume_identity(
-        owner,
-        donor,
-        allocation_gate=lambda *_args: None,
-        progress_callback=lambda _event: None,
-        persist_array=persist_array,
-        output_directory=evidence_directory,
-        native_volume_apply=lambda values: np.zeros_like(values),
-        artifact_prefix="fixture_v9",
-        candidate_identity="task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
-        candidate_cache_identity="fixture-cache-identity",
-        recovery_refinement_max_steps=3,
-        reserved_followup_evidence_bytes=audit.TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES,
-    )
-    identity_path = evidence_directory / "identity.json"
-    identity_path.write_text(json.dumps(report, sort_keys=True, allow_nan=False), encoding="utf-8")
-    live_check = task41_p0_checker.check_task41_b0_v9_compact_volume_audit(
-        report,
-        donor,
-        output_directory=evidence_directory,
-        native_volume_apply=lambda values: np.zeros_like(values),
-        expected_candidate_identity="task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
-        expected_cache_identity="fixture-cache-identity",
-    )
-    checker_path = evidence_directory / "independent.json"
-    checker_path.write_text(json.dumps(live_check, sort_keys=True, allow_nan=False), encoding="utf-8")
+    if terminal_layout == "v15_terminal_sufficient":
+        from src.runners import task41_p0_v4_volume_only_audit as v11_identity
 
-    fake_repo = Path(service_repo_root) if service_repo_root is not None else tmp_path / "fake-repo"
-    fake_checker_path = fake_repo / "src/runners/task41_p0_checker.py"
-    fake_checker_path.parent.mkdir(parents=True)
-    fake_checker_path.write_text("# fixture repo root", encoding="ascii")
-    source_path = fake_repo / "src/candidate_qmetric.c"
-    source_path.parent.mkdir(parents=True, exist_ok=True)
-    source_path.write_text("candidate source fixture", encoding="ascii")
-    donor_relative = (
-        Path("results/frozen-v4-donor")
-        if service_repo_root is None
-        else task41_p0_contract.TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE
-    )
-    donor_run = fake_repo / donor_relative
-    donor_run.mkdir(parents=True, exist_ok=True)
-    donor_summary_path = donor_run / "task40_v10_p6_candidate_summary.json"
-    if not donor_summary_path.is_file():
-        donor_summary_path.write_text("frozen donor summary fixture", encoding="ascii")
-    monkeypatch.setattr(task41_p0_checker, "__file__", str(fake_checker_path))
-    monkeypatch.setattr(task41_p0_checker, "load_task41_v4_volume_only_donor", lambda **_kwargs: donor)
-    monkeypatch.setattr(task41_p0_contract, "TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE", donor_relative)
-
-    def file_binding(path):
-        return {
-            "path": str(path),
-            "bytes": path.stat().st_size,
-            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        fake_repo = Path(service_repo_root) if service_repo_root is not None else tmp_path / "fake-repo-v15"
+        fake_checker_path = fake_repo / "src/runners/task41_p0_checker.py"
+        fake_checker_path.parent.mkdir(parents=True, exist_ok=True)
+        fake_checker_path.write_text("# fixture repo root", encoding="ascii")
+        monkeypatch.setattr(task41_p0_checker, "__file__", str(fake_checker_path))
+        baseline_relative = Path("results/frozen-v9-baseline")
+        monkeypatch.setattr(
+            task41_p0_checker,
+            "TASK41_P0_V15_SAME_S_BASELINE_RUN_RELATIVE",
+            baseline_relative,
+        )
+        baseline_root = fake_repo / baseline_relative
+        baseline_root.mkdir(parents=True, exist_ok=True)
+        baseline_array = np.asarray(
+            donor["attribution"]["joint"]["p6_result"], dtype=np.complex128
+        )
+        baseline_array_path = baseline_root / "frozen_same_s_action.npy"
+        np.save(baseline_array_path, baseline_array, allow_pickle=False)
+        baseline_array_sha = hashlib.sha256(
+            np.ascontiguousarray(baseline_array).tobytes()
+        ).hexdigest()
+        baseline_array_ref = {
+            "path": str(baseline_array_path.resolve()),
+            "bytes": baseline_array_path.stat().st_size,
+            "sha256": hashlib.sha256(baseline_array_path.read_bytes()).hexdigest(),
+            "array_sha256": baseline_array_sha,
+            "shape": list(baseline_array.shape),
+            "dtype": str(baseline_array.dtype),
+        }
+        baseline_report_path = baseline_root / "task41_p0_b0_v9_compact_volume_audit.json"
+        baseline_report = {
+            "schema": "task41.p0.b0.v9.compact_volume_identity.v1",
+            "status": "GATE_FAILED",
+            "official_result": False,
+            "candidate_evaluator_identity": "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
+            "candidate_evaluator_cache_identity": "fixture-cache-identity",
+            "donor_manifest_sha256": donor["manifest_sha256"],
+            "candidate_full_action_gate": {
+                "full_action_artifact": baseline_array_ref,
+            },
+        }
+        baseline_report_path.write_text(
+            json.dumps(baseline_report, sort_keys=True), encoding="utf-8"
+        )
+        monkeypatch.setattr(
+            v11_identity,
+            "TASK41_P0_V11_V9_COMPACT_REPORT_SHA256",
+            hashlib.sha256(baseline_report_path.read_bytes()).hexdigest(),
+        )
+        monkeypatch.setattr(
+            v11_identity,
+            "TASK41_P0_V11_V9_FULL_ACTION_ARRAY_SHA256",
+            baseline_array_ref["sha256"],
+        )
+        donor["same_s_action_reference"] = baseline_array
+        donor["same_s_action_reference_binding"] = {
+            "report_path": str(baseline_report_path.resolve()),
+            "report_sha256": hashlib.sha256(baseline_report_path.read_bytes()).hexdigest(),
+            "artifact": dict(baseline_array_ref),
+            "source_reassigned": False,
         }
 
-    summary = {
-        "campaign_authority": {"internal_rhs_strategy": "same_lu_rhs_solve"},
-        "b0_v9_volume_donor_binding": {
-            "relative_path": donor_relative.as_posix(),
-            "attempt_id": donor_relative.name,
-            "summary_bytes": donor_summary_path.stat().st_size,
-            "summary_sha256": hashlib.sha256(donor_summary_path.read_bytes()).hexdigest(),
-            "manifest_sha256": donor["manifest_sha256"],
-            "existing_evidence_bytes": donor["existing_evidence_bytes"],
-            "prior_new_evidence_bytes": donor["prior_new_evidence_bytes"],
-        },
-        "b0_v9_saved_prefix_binding": {
-            "c_source_path": str(source_path),
-            "c_source_sha256": hashlib.sha256(source_path.read_bytes()).hexdigest(),
-            "candidate_evaluator_identity": report["candidate_evaluator_identity"],
-            "candidate_cache_identity": report["candidate_evaluator_cache_identity"],
-            "owner_internal_rhs_strategy": "same_lu_rhs_solve",
-            "owner_geometry_policy": "mesh_actual_exact",
-            "appended_rows": 2,
-            "loaded_v7_payloads": False,
-        },
-        "b0_v9_compact_volume_audit": {
-            **file_binding(identity_path),
-            "schema": report["schema"],
-            "status": report["status"],
-            "action_gate": report["candidate_full_action_gate"],
-            "recovery_gate": report["candidate_recovery_gate"],
-        },
-        "b0_v9_independent_check": {
-            **live_check,
-            **file_binding(checker_path),
-        },
+    actual_k_lu_identity = {
+        "schema": "task41.p0.b0.v15_actual_k_lu_generation_identity.v1",
+        "actual_k_and_lu_share_generation_token_for_every_class": True,
     }
-    return task41_p0_checker, summary, numerical_output, identity_path
+    checkpoint = {
+        "schema": "task41.p0.b0.v15_terminal_sufficient_checkpoint.v1",
+        "status": "IN_PROGRESS",
+        "layout": "v15_terminal_sufficient",
+        "run_directory": str(run_root.resolve()),
+        "source_sha": "a" * 40,
+        "contract_path": "/fixture/execution_contract.json",
+        "contract_sha256": "b" * 64,
+        "window_path": "/fixture/execution_window.json",
+        "window_sha256": "c" * 64,
+        "owner_quota_claim": {"actual_k_lu_identity": actual_k_lu_identity},
+        "actual_k_lu_identity": actual_k_lu_identity,
+        "candidate_evaluator_identity": "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
+        "candidate_evaluator_cache_identity": "fixture-cache-identity",
+        "refinement_strategy": "same_lu_binary64_products_real_imag_fsum",
+        "refinement_max_steps": 2,
+        "artifacts": [],
+        "completed_action_columns": [],
+        "completed_recovery_columns": [],
+        "operation_counts": {},
+    }
+
+    if terminal_layout == "v15_terminal_sufficient":
+        checkpoint["same_s_action_reference_binding"] = dict(donor["same_s_action_reference_binding"])
+
+    def save_terminal_checkpoint(event):
+        facts = dict(event)
+        if isinstance(facts.get("artifacts"), list):
+            checkpoint["artifacts"] = [dict(item) for item in facts["artifacts"]]
+        if facts.get("event") == "action_column_completed":
+            completed = checkpoint["completed_action_columns"]
+            if facts["column"] not in completed:
+                completed.append(facts["column"])
+        elif facts.get("event") == "action_gate_completed":
+            checkpoint["action_gate"] = facts["candidate_action_gate"]
+            checkpoint["completed_action_columns"] = list(facts["completed_action_columns"])
+        elif facts.get("event") == "recovery_column_completed":
+            checkpoint["completed_recovery_columns"].append(facts["column"])
+            checkpoint.setdefault("recovery_columns", []).append(
+                dict(facts["recovery_column"])
+            )
+        if isinstance(facts.get("operation_counts"), dict):
+            checkpoint["operation_counts"] = dict(facts["operation_counts"])
+        checkpoint["last_event"] = facts
+        if (
+            stop_after_action_column
+            and facts.get("event") == "action_column_completed"
+            and facts.get("column") == 0
+        ):
+            raise RuntimeError("fixture interruption after first V15 action column")
+
+    audit_arguments = {
+        "owner": owner,
+        "donor": donor,
+        "allocation_gate": lambda *_args: None,
+        "progress_callback": lambda _event: None,
+        "persist_array": persist_array,
+        "output_directory": evidence_directory,
+        "native_volume_apply": (
+            (lambda values: np.eye(1, values.size, 0, dtype=np.complex128).reshape(-1))
+            if not recovery_passes
+            else (lambda values: np.zeros_like(values))
+        ),
+        "artifact_prefix": (
+            "task41_p0_b0_v9_compact_candidate"
+            if terminal_layout == "v15_terminal_sufficient"
+            else "fixture_v9"
+        ),
+        "candidate_identity": "task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
+        "candidate_cache_identity": "fixture-cache-identity",
+        "recovery_refinement_max_steps": 3,
+        "reserved_followup_evidence_bytes": (
+            audit.TASK41_V15_TERMINAL_EVIDENCE_RESERVE_BYTES
+            if terminal_layout == "v15_terminal_sufficient"
+            else audit.TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES
+        ),
+    }
+    if terminal_layout == "v15_terminal_sufficient":
+        audit_arguments.update(
+            compact_evidence_layout=terminal_layout,
+            actual_k_lu_identity=actual_k_lu_identity,
+            refinement_strategy="same_lu_binary64_products_real_imag_fsum",
+            terminal_evidence_callback=save_terminal_checkpoint,
+        )
+    try:
+        report = audit._task41_v9_compact_volume_identity(**audit_arguments)
+    except RuntimeError as exc:
+        if not stop_after_action_column or str(exc) != "fixture interruption after first V15 action column":
+            raise
+        return task41_p0_checker, None, donor, checkpoint, run_root
+    if terminal_layout == "v15_terminal_sufficient":
+        checkpoint["status"] = report["status"]
+        return task41_p0_checker, report, donor, checkpoint, run_root
+    else:
+        identity_path = evidence_directory / "identity.json"
+        identity_path.write_text(json.dumps(report, sort_keys=True, allow_nan=False), encoding="utf-8")
+        live_check = task41_p0_checker.check_task41_b0_v9_compact_volume_audit(
+            report,
+            donor,
+            output_directory=evidence_directory,
+            native_volume_apply=lambda values: np.zeros_like(values),
+            expected_candidate_identity="task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
+            expected_cache_identity="fixture-cache-identity",
+        )
+        checker_path = evidence_directory / "independent.json"
+        checker_path.write_text(json.dumps(live_check, sort_keys=True, allow_nan=False), encoding="utf-8")
+
+        # Preserve the legacy fixture return shape used by existing V9 tests.
+        fake_repo = Path(service_repo_root) if service_repo_root is not None else tmp_path / "fake-repo"
+        fake_checker_path = fake_repo / "src/runners/task41_p0_checker.py"
+        fake_checker_path.parent.mkdir(parents=True, exist_ok=True)
+        fake_checker_path.write_text("# fixture repo root", encoding="ascii")
+        source_path = fake_repo / "src/candidate_qmetric.c"
+        source_path.parent.mkdir(parents=True, exist_ok=True)
+        source_path.write_text("candidate source fixture", encoding="ascii")
+        donor_relative = (
+            Path("results/frozen-v4-donor")
+            if service_repo_root is None
+            else task41_p0_contract.TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE
+        )
+        donor_run = fake_repo / donor_relative
+        donor_run.mkdir(parents=True, exist_ok=True)
+        donor_summary_path = donor_run / "task40_v10_p6_candidate_summary.json"
+        if not donor_summary_path.is_file():
+            donor_summary_path.write_text("frozen donor summary fixture", encoding="ascii")
+        monkeypatch.setattr(task41_p0_checker, "__file__", str(fake_checker_path))
+        monkeypatch.setattr(task41_p0_checker, "load_task41_v4_volume_only_donor", lambda **_kwargs: donor)
+        monkeypatch.setattr(task41_p0_contract, "TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE", donor_relative)
+
+        def file_binding(path):
+            return {
+                "path": str(path),
+                "bytes": path.stat().st_size,
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            }
+
+        summary = {
+            "campaign_authority": {"internal_rhs_strategy": "same_lu_rhs_solve"},
+            "b0_v9_volume_donor_binding": {
+                "relative_path": donor_relative.as_posix(),
+                "attempt_id": donor_relative.name,
+                "summary_bytes": donor_summary_path.stat().st_size,
+                "summary_sha256": hashlib.sha256(donor_summary_path.read_bytes()).hexdigest(),
+                "manifest_sha256": donor["manifest_sha256"],
+                "existing_evidence_bytes": donor["existing_evidence_bytes"],
+                "prior_new_evidence_bytes": donor["prior_new_evidence_bytes"],
+            },
+            "b0_v9_saved_prefix_binding": {
+                "c_source_path": str(source_path),
+                "c_source_sha256": hashlib.sha256(source_path.read_bytes()).hexdigest(),
+                "candidate_evaluator_identity": report["candidate_evaluator_identity"],
+                "candidate_cache_identity": report["candidate_evaluator_cache_identity"],
+                "owner_internal_rhs_strategy": "same_lu_rhs_solve",
+                "owner_geometry_policy": "mesh_actual_exact",
+                "appended_rows": 2,
+                "loaded_v7_payloads": False,
+            },
+            "b0_v9_compact_volume_audit": {
+                **file_binding(identity_path),
+                "schema": report["schema"],
+                "status": report["status"],
+                "action_gate": report["candidate_full_action_gate"],
+                "recovery_gate": report["candidate_recovery_gate"],
+            },
+            "b0_v9_independent_check": {**live_check, **file_binding(checker_path)},
+        }
+        return task41_p0_checker, summary, numerical_output, identity_path
+
+
+def test_v15_terminal_sufficient_producer_and_checker_classify_complete_and_partial(
+    tmp_path, monkeypatch
+):
+    from src.runners import task41_p0_checker
+
+    cases = (
+        ("pass", True, True, False, "PASS", True, True),
+        ("action_fail", False, True, False, "NUMERICAL_FAIL", False, None),
+        ("recovery_fail", True, False, False, "NUMERICAL_FAIL", True, False),
+        ("partial", True, True, True, "PARTIAL", None, None),
+    )
+    for name, action_ok, recovery_ok, interrupted, status, action_passed, recovery_passed in cases:
+        case_root = tmp_path / name
+        case_root.mkdir()
+        checker, report, donor, checkpoint, run_root = _task41_v9_compact_terminal_fixture(
+            case_root,
+            monkeypatch,
+            action_passes=action_ok,
+            terminal_layout="v15_terminal_sufficient",
+            recovery_passes=recovery_ok,
+            stop_after_action_column=interrupted,
+        )
+        result = checker.check_task41_p0_b0_v15_terminal_sufficient_audit(
+            report,
+            donor,
+            output_directory=run_root,
+            checkpoint=checkpoint,
+            expected_candidate_identity="task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
+            expected_cache_identity="fixture-cache-identity",
+        )
+        assert result["status"] == status, result["errors"]
+        assert result["audit_completed"] is (status != "PARTIAL"), result
+        assert result["data_integrity"] is True, result
+        assert result["action_passed"] is action_passed, result
+        assert result["recovery_passed"] is recovery_passed, result
+        assert result["official_result"] is False
+        assert result["scientific_qualified"] is False
 
 
 @pytest.mark.parametrize("action_passes", (True, False))
@@ -2207,3 +2398,122 @@ def test_v11_metadata_only_selected_row_persists_incident_metadata_without_numer
     assert gates[1][1]["incident_cells"] == [52]
     assert checkpoints[-1] == ("selected_trace_star_metadata_only", result)
     assert progress_events[-1]["status"] == "COMPLETED"
+
+
+@pytest.mark.parametrize("action_ok", (True, False))
+def test_v15_prepared_contract_compact_terminal_run_chain(tmp_path, monkeypatch, action_ok):
+    """Only FE/array donors are tiny substitutes; new contract/claim/audit stay real."""
+    from src.test.test_task41_p0_contract import (
+        test_task41_v15_full_acceptance_prepare_binds_36h_scope_and_raw_policy,
+    )
+    from src.runners import task41_p0_contract as contracts
+    from src.runners import task40_v10_worker as worker
+    from src.io import load_and_resolve
+    from src.io.execution_plan import resolved_config_bytes
+    from scripts.task40_v20_service_workflow import _task41_v15_terminal_decision
+
+    test_task41_v15_full_acceptance_prepare_binds_36h_scope_and_raw_policy(tmp_path, monkeypatch)
+    contract_path, = (tmp_path / contracts.TASK41_B0_CONTROLLER_RELATIVE).glob(
+        "execution_contract_source_*_v15_full_two_column_acceptance_36h.json")
+    contract, digest = contracts.require_task41_p0_contract(contract_path, current_root=tmp_path)
+    checker, report, donor, checkpoint, run = _task41_v9_compact_terminal_fixture(
+        tmp_path / "tiny-numerics", monkeypatch, action_passes=action_ok,
+        terminal_layout="v15_terminal_sufficient", missing_numerical_output=True,
+        service_repo_root=tmp_path,
+    )
+    assert not (run / "numerical_output").exists()
+    case = contract["case"]
+    window = contracts.load_task41_p0_fixed_window(contract, current_root=tmp_path)
+    claim_path = window.accounting_path.with_name(window.accounting_path.name + ".v15_full_owner_claim.json")
+    authority = {
+        "case_id": "B0", "model_id": case["model_id"], "run_id": case["run_id"],
+        "source_sha": contract["source"]["sha"], "input_sha256": case["input_sha256"],
+        "run_directory": str(run.resolve()), "execution_scope": contract["execution_scope"],
+        "task41_contract_path": str(contract_path), "task41_contract_sha256": digest,
+        "campaign_window_path": str(window.path), "campaign_window_sha256": window.sha256,
+        "campaign_accounting_path": str(window.accounting_path),
+        "full_owner_quota_claim_path": str(claim_path), "full_owner_quota_scope": "fixed_window_across_attempts",
+        "actual_k_lu_identity_required": True,
+        "internal_rhs_strategy": contract["numerical_strategy"]["internal_rhs_strategy"],
+        "internal_rhs_refinement_strategy": contract["numerical_strategy"]["refinement_strategy"],
+        "internal_rhs_refinement_max_steps": contract["numerical_strategy"]["refinement_max_steps"],
+    }
+    token = object()
+    owner = SimpleNamespace(
+        actual_internal_matrix_identity_by_class={0: token},
+        interior_lu_matrix_identity_by_class={0: token},
+        retained_actual_internal_matrix_by_class={0: np.eye(1, dtype=np.complex128)},
+        interior_lu_by_class={0: (np.eye(1, dtype=np.complex128), np.zeros(1, dtype=np.int32))},
+    )
+    bundle, claim = worker._task41_b0_build_v15_full_owner_once(
+        authority, run_directory=run, owner_builder=lambda: {"condensed": owner}, current_root=tmp_path,
+    )
+    checkpoint.update(
+        source_sha=authority["source_sha"], contract_path=str(contract_path), contract_sha256=digest,
+        window_path=str(window.path), window_sha256=window.sha256,
+        owner_quota_claim=claim, actual_k_lu_identity=claim["actual_k_lu_identity"],
+    )
+    # The compact producer's same generation identity is persisted with its output.
+    report["actual_k_lu_identity"] = claim["actual_k_lu_identity"]
+    report_path = run / "task41_p0_b0_v9_compact_volume_audit.json"
+    def write_json(path, payload):
+        path.write_text(json.dumps(payload, sort_keys=True, allow_nan=False))
+    def binding(path):
+        return {"path": str(path), "bytes": path.stat().st_size, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+    write_json(report_path, report)
+    checkpoint["identity_audit"] = dict(binding(report_path), status=report["status"])
+    checkpoint_path = run / "task41_p0_b0_v15_terminal_sufficient_checkpoint.json"
+    write_json(checkpoint_path, checkpoint)
+    donor_path = tmp_path / contracts.TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE / "task40_v10_p6_candidate_summary.json"
+    summary = {
+        "run_id": case["run_id"], "source_sha": authority["source_sha"],
+        "campaign_authority": authority, "v15_actual_k_lu_identity": claim["actual_k_lu_identity"],
+        "b0_v15_terminal_sufficient_checkpoint": binding(checkpoint_path),
+        "b0_v9_volume_donor_binding": {
+            "relative_path": contracts.TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE.as_posix(),
+            "attempt_id": donor_path.parent.name, "summary_bytes": donor_path.stat().st_size,
+            "summary_sha256": hashlib.sha256(donor_path.read_bytes()).hexdigest(),
+            "manifest_sha256": donor["manifest_sha256"], "existing_evidence_bytes": donor["existing_evidence_bytes"],
+        },
+        "v15_cleanup": {"completed": True, "passed": True, "errors": []},
+    }
+    summary_path = run / "task40_v10_p6_candidate_summary.json"
+    write_json(summary_path, summary)
+    runtime_authority = {
+        "classification": "COMPLETED" if action_ok else "WORKER_FAILED", "leader_exit_code": 0 if action_ok else 4,
+        "descendants_cleared": True, "remaining_child_pids": [],
+        "process_tree_swap_gate_enforced": True, "sampled_process_tree_swap_peak_bytes": 0,
+        "job_cgroup_swap_gate_enforced": True, "job_cgroup_swap": {"passed": True},
+    }
+    launcher = {"run_id": case["run_id"], "output_directory": str(run),
+                "resource_authority": runtime_authority, "job_swap_qualification": "qualified_zero"}
+    write_json(run / "run_summary.json", launcher)
+    manifest_path = run / "run_manifest.json"
+    write_json(manifest_path, dict(case, source_sha=authority["source_sha"], output_directory=str(run),
+                                   numerical_output_directory=str(run / "numerical_output")))
+    input_path = tmp_path / contracts.TASK41_B0_INPUT_RELATIVE
+    (run / "input_original.dat").write_bytes(input_path.read_bytes())
+    (run / "resolved_config.json").write_bytes(resolved_config_bytes(load_and_resolve(input_path)))
+    monkeypatch.setattr(checker, "load_task41_v4_volume_only_donor", lambda **_kwargs: donor)
+    output_path = tmp_path / contract["evidence"]["service_directory"] / "task41_p0_checker_result.json"
+    result = checker.check_task41_p0_b0_v15_terminal_run(
+        run_root=run, summary_path=summary_path, manifest_path=manifest_path,
+        contract_path=contract_path, contract_sha256=digest, output_path=output_path, repo_root=tmp_path,
+    )
+    assert result["audit_completed"] is True, result
+    assert result["acceptance_qualified"] is action_ok, result
+    checker_authority = dict(runtime_authority, classification="COMPLETED", leader_exit_code=0)
+    decision = _task41_v15_terminal_decision(checker_authority, result)
+    assert decision["acceptance_qualified"] is action_ok
+    assert decision["official_result"] is False
+    with pytest.raises(ValueError, match="quota is already consumed"):
+        worker._task41_b0_build_v15_full_owner_once(
+            authority, run_directory=run, owner_builder=lambda: pytest.fail("second owner forbidden"), current_root=tmp_path)
+    summary["v15_cleanup"]["passed"] = False
+    write_json(summary_path, summary)
+    bad = checker.check_task41_p0_b0_v15_terminal_run(
+        run_root=run, summary_path=summary_path, manifest_path=manifest_path,
+        contract_path=contract_path, contract_sha256=digest, output_path=output_path, repo_root=tmp_path,
+    )
+    assert bad["acceptance_qualified"] is False
+    assert bad["audit_completed"] is True

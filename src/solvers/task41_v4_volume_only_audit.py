@@ -47,6 +47,11 @@ TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES = (
     + 6 * TASK41_V4_FULL_STORAGE_ROWS * 16
     + 10 * 4096
 )
+TASK41_V15_TERMINAL_EVIDENCE_PAYLOAD_BYTES = 1_552_201_216
+TASK41_V15_TERMINAL_EVIDENCE_RESERVE_BYTES = (
+    TASK41_V15_TERMINAL_EVIDENCE_PAYLOAD_BYTES + 8 * 4096
+)
+TASK41_V15_NEW_RAW_EVIDENCE_LIMIT_BYTES = 1_900_000_000
 
 
 def _class_key(value: Sequence[Any]) -> tuple[Any, ...]:
@@ -1760,6 +1765,10 @@ def _task41_v9_compact_volume_identity(
     candidate_cache_identity: str | None,
     recovery_refinement_max_steps: int,
     reserved_followup_evidence_bytes: int,
+    compact_evidence_layout: str = "v9_full",
+    actual_k_lu_identity: Mapping[str, Any] | None = None,
+    refinement_strategy: str | None = None,
+    terminal_evidence_callback: Callable[[Mapping[str, Any]], Any] | None = None,
 ) -> dict[str, Any]:
     """Replay the two full volume actions and retain compact recovery evidence."""
 
@@ -1777,8 +1786,32 @@ def _task41_v9_compact_volume_identity(
     ):
         raise ValueError("Task41 V9 same-LU recovery refinement must be bounded to 0..3 steps")
     recovery_refinement_max_steps = int(recovery_refinement_max_steps)
-    if int(reserved_followup_evidence_bytes) != TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES:
-        raise ValueError("Task41 V9 compact evidence must use its frozen full reservation")
+    if compact_evidence_layout not in {"v9_full", "v15_terminal_sufficient"}:
+        raise ValueError("Task41 compact evidence layout is not registered")
+    if compact_evidence_layout == "v9_full":
+        expected_reserve = TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES
+    else:
+        expected_reserve = TASK41_V15_TERMINAL_EVIDENCE_RESERVE_BYTES
+        if (
+            recovery_refinement_max_steps != 3
+            or int(getattr(owner, "internal_rhs_refinement_max_steps", -1)) != 2
+            or not isinstance(actual_k_lu_identity, Mapping)
+            or actual_k_lu_identity.get("schema")
+            != "task41.p0.b0.v15_actual_k_lu_generation_identity.v1"
+            or actual_k_lu_identity.get(
+                "actual_k_and_lu_share_generation_token_for_every_class"
+            ) is not True
+            or refinement_strategy != "same_lu_binary64_products_real_imag_fsum"
+        ):
+            raise ValueError(
+                "V15 terminal evidence requires refinement-v2 and the retained actual-K/LU identity"
+            )
+    if int(reserved_followup_evidence_bytes) != expected_reserve:
+        raise ValueError("Task41 compact evidence reservation differs from its selected layout")
+    if compact_evidence_layout == "v15_terminal_sufficient" and not callable(
+        terminal_evidence_callback
+    ):
+        raise ValueError("V15 terminal evidence requires an incremental hash-bound checkpoint callback")
 
     columns = tuple(donor.get("columns", ()))
     joint = donor.get("attribution", {}).get("joint", {})
@@ -1824,7 +1857,12 @@ def _task41_v9_compact_volume_identity(
     if artifact_prefix is None:
         artifact_prefix = "task41_p0_b0_v9_compact_candidate"
 
-    new_evidence_upper = TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES
+    new_evidence_upper = expected_reserve
+    if (
+        compact_evidence_layout == "v15_terminal_sufficient"
+        and new_evidence_upper > TASK41_V15_NEW_RAW_EVIDENCE_LIMIT_BYTES
+    ):
+        raise MemoryError("Task41 V15 terminal evidence exceeds its new-raw-artifact limit")
     prior_new_bytes = int(donor.get("prior_new_evidence_bytes", 0))
     existing_bytes = int(donor["existing_evidence_bytes"])
     cumulative_upper = existing_bytes + prior_new_bytes + new_evidence_upper
@@ -1848,6 +1886,17 @@ def _task41_v9_compact_volume_identity(
             "active_rows": active_rows,
             "appended_rows": port_rows,
             "new_evidence_bytes_upper": new_evidence_upper,
+            "new_evidence_limit_bytes": (
+                TASK41_V15_NEW_RAW_EVIDENCE_LIMIT_BYTES
+                if compact_evidence_layout == "v15_terminal_sufficient"
+                else None
+            ),
+            "compact_evidence_layout": compact_evidence_layout,
+            "terminal_payload_bytes": (
+                TASK41_V15_TERMINAL_EVIDENCE_PAYLOAD_BYTES
+                if compact_evidence_layout == "v15_terminal_sufficient"
+                else None
+            ),
             "cumulative_evidence_bytes_upper": cumulative_upper,
             "free_space_bytes": free_bytes,
         }
@@ -1857,7 +1906,8 @@ def _task41_v9_compact_volume_identity(
         {
             "additional_payload_bytes": 0,
             "workspace_bytes": (
-                4 * full_rows * np.dtype(np.complex128).itemsize
+                (16 if compact_evidence_layout == "v15_terminal_sufficient" else 4)
+                * full_rows * np.dtype(np.complex128).itemsize
                 + action_matrix_bytes
                 + 2 * active_rows * np.dtype(np.complex128).itemsize
             ),
@@ -1870,6 +1920,16 @@ def _task41_v9_compact_volume_identity(
             "free_space_floor_bytes": TASK41_V4_FREE_SPACE_FLOOR_BYTES,
             "native_volume_action_calls_upper": 8,
             "maximum_same_lu_corrections_per_column": recovery_refinement_max_steps,
+            "actual_k_lu_identity": (
+                dict(actual_k_lu_identity)
+                if compact_evidence_layout == "v15_terminal_sufficient"
+                else None
+            ),
+            "action_operation_counts_expected": {
+                "full_action_columns": 2,
+                "p6_apply_calls": 2,
+                "p6_reduce_rhs_calls": 2,
+            },
             "ports_scanned_or_replayed": False,
         },
     )
@@ -1881,6 +1941,104 @@ def _task41_v9_compact_volume_identity(
     persisted_bytes = 0
     artifacts: list[dict[str, Any]] = []
     column_reports: list[dict[str, Any]] = []
+    action_artifacts_by_column: list[dict[str, Any]] = []
+    action_operation_counts = {
+        "full_action_columns_completed": 0,
+        "p6_apply_calls": 0,
+        "p6_reduce_rhs_calls": 0,
+        "streamed_action_lu_solve_count": 0,
+        "streamed_recovery_lu_solve_count": 0,
+        "actual_rhs_getrs_count": 0,
+        "actual_rhs_getrs_seconds": 0.0,
+        "actual_rhs_initial_getrs_count": 0,
+        "actual_rhs_initial_getrs_seconds": 0.0,
+        "actual_rhs_correction_getrs_count": 0,
+        "actual_rhs_correction_getrs_seconds": 0.0,
+        "actual_rhs_refinement_steps": 0,
+        "actual_rhs_residual_evaluation_count": 0,
+        "actual_rhs_residual_seconds": 0.0,
+        "actual_rhs_update_seconds": 0.0,
+        "actual_rhs_j_matvec_seconds": 0.0,
+        "actual_rhs_core_seconds": 0.0,
+        "actual_rhs_recovery_getrs_count": 0,
+        "actual_rhs_recovery_getrs_seconds": 0.0,
+        "actual_rhs_recovery_initial_getrs_count": 0,
+        "actual_rhs_recovery_initial_getrs_seconds": 0.0,
+        "actual_rhs_recovery_correction_getrs_count": 0,
+        "actual_rhs_recovery_correction_getrs_seconds": 0.0,
+        "actual_rhs_recovery_refinement_steps": 0,
+        "actual_rhs_recovery_residual_evaluation_count": 0,
+        "actual_rhs_recovery_residual_seconds": 0.0,
+        "actual_rhs_recovery_update_seconds": 0.0,
+        "actual_rhs_recovery_j_matvec_seconds": 0.0,
+        "actual_rhs_recovery_core_seconds": 0.0,
+        "native_recovery_correction_getrs_count": 0,
+        "native_recovery_correction_getrs_seconds": 0.0,
+        "native_volume_action_calls": 0,
+    }
+
+    def action_counter_snapshot() -> dict[str, int | float]:
+        current = dict(action.audit)
+        costs = current.get("same_lu_rhs_operation_costs", {})
+        snapshot: dict[str, int] = {
+            "p6_apply_calls": int(current.get("apply_count", 0)),
+            "streamed_action_lu_solve_count": int(
+                current.get("streamed_action_lu_solve_count", 0)
+            ),
+            "streamed_recovery_lu_solve_count": int(
+                current.get("streamed_recovery_lu_solve_count", 0)
+            ),
+            "native_recovery_correction_getrs_count": int(
+                current.get("native_recovery_correction_getrs_count", 0)
+            ),
+            "native_recovery_correction_getrs_seconds": float(
+                current.get("native_recovery_correction_getrs_seconds", 0.0)
+            ),
+        }
+        for purpose in ("actual_rhs", "actual_rhs_recovery"):
+            item = costs.get(purpose, {}) if isinstance(costs, Mapping) else {}
+            prefix = purpose
+            for name in (
+                "getrs_count",
+                "getrs_seconds",
+                "initial_getrs_count",
+                "initial_getrs_seconds",
+                "correction_getrs_count",
+                "correction_getrs_seconds",
+                "refinement_steps",
+                "residual_evaluation_count",
+                "residual_seconds",
+                "update_seconds",
+                "j_matvec_seconds",
+                "core_seconds",
+            ):
+                snapshot[f"{prefix}_{name}"] = (
+                    float(item.get(name, 0.0))
+                    if name.endswith("_seconds")
+                    else int(item.get(name, 0))
+                )
+        return snapshot
+
+    def record_action_counter_delta(
+        before: Mapping[str, int | float],
+    ) -> dict[str, int | float]:
+        after = action_counter_snapshot()
+        delta = {
+            name: (
+                float(after.get(name, 0.0) - before.get(name, 0.0))
+                if name.endswith("_seconds")
+                else int(after.get(name, 0) - before.get(name, 0))
+            )
+            for name in after
+        }
+        for name, value in delta.items():
+            output_name = name
+            if name.endswith("_getrs_count"):
+                output_name = name
+            action_operation_counts[output_name] = (
+                action_operation_counts.get(output_name, 0) + value
+            )
+        return delta
 
     def persist(name: str, values: np.ndarray) -> dict[str, Any]:
         nonlocal persisted_bytes
@@ -1895,6 +2053,21 @@ def _task41_v9_compact_volume_identity(
             raise MemoryError("Task41 V9 compact output exceeded its admitted evidence reservation")
         artifact = {"name": name, **record}
         artifacts.append(artifact)
+        if compact_evidence_layout == "v15_terminal_sufficient":
+            terminal_evidence_callback(
+                {
+                    "schema": "task41.p0.b0.v15_terminal_sufficient_checkpoint.v1",
+                    "event": "artifact_persisted",
+                    "layout": compact_evidence_layout,
+                    "artifact": artifact,
+                    "artifacts": list(artifacts),
+                    "new_evidence_bytes": persisted_bytes,
+                    "new_evidence_bytes_upper": new_evidence_upper,
+                    "cumulative_evidence_bytes": (
+                        existing_bytes + prior_new_bytes + persisted_bytes
+                    ),
+                }
+            )
         return artifact
 
     def any_nonzero(values: np.ndarray, rows: np.ndarray) -> bool:
@@ -1902,6 +2075,10 @@ def _task41_v9_compact_volume_identity(
             if np.any(np.asarray(values[rows[start : start + 262_144]]) != 0.0):
                 return True
         return False
+
+    def tracked_native_volume_apply(values: np.ndarray) -> np.ndarray:
+        action_operation_counts["native_volume_action_calls"] += 1
+        return np.asarray(native_volume_apply(values), dtype=np.complex128)
 
     try:
         prepared_columns: list[dict[str, Any]] = []
@@ -1940,9 +2117,11 @@ def _task41_v9_compact_volume_identity(
             progress_callback(
                 {"phase": "task41_v9_full_action", "status": "STARTED", "column": column_index}
             )
+            action_counters_before = action_counter_snapshot()
             active_source = np.array(known[active_original], dtype=np.complex128, copy=True)
             full_trace_action = action.apply(active_source)
             full_trace_rhs = action.reduce_rhs(native_rhs, rhs_is_mpc_dual=True)
+            action_operation_counts["p6_reduce_rhs_calls"] += 1
             if (
                 full_trace_action.shape != (active_rows,)
                 or full_trace_rhs.shape != (active_rows,)
@@ -1953,6 +2132,41 @@ def _task41_v9_compact_volume_identity(
             np.add.at(full_trace_action, b_active, b_values)
             candidate_p6[:active_rows, column_index] = full_trace_action
             candidate_reduced[:active_rows, column_index] = full_trace_rhs
+            action_operation_counts["full_action_columns_completed"] += 1
+            column_operation_delta = record_action_counter_delta(action_counters_before)
+            if compact_evidence_layout == "v15_terminal_sufficient":
+                # Persist each completed full column before starting the next one.  A later
+                # interruption therefore leaves a checkable partial product, while the
+                # V9 default retains its historical two-matrix layout below.
+                action_artifacts_by_column.append(
+                    {
+                        "column": column_index,
+                        "full_action_artifact": persist(
+                            f"{artifact_prefix}_full_action_col{column_index}",
+                            np.asarray(candidate_p6[:, column_index]),
+                        ),
+                        "full_reduced_rhs_artifact": persist(
+                            f"{artifact_prefix}_full_reduced_rhs_col{column_index}",
+                            np.asarray(candidate_reduced[:, column_index]),
+                        ),
+                        "p6_apply_calls": 1,
+                        "p6_reduce_rhs_calls": 1,
+                        "operation_counts": column_operation_delta,
+                    }
+                )
+                terminal_evidence_callback(
+                    {
+                        "schema": "task41.p0.b0.v15_terminal_sufficient_checkpoint.v1",
+                        "event": "action_column_completed",
+                        "layout": compact_evidence_layout,
+                        "column": column_index,
+                        "column_artifacts": action_artifacts_by_column[-1],
+                        "completed_action_columns": [
+                            int(item["column"]) for item in action_artifacts_by_column
+                        ],
+                        "operation_counts": dict(action_operation_counts),
+                    }
+                )
             prepared_columns.append(
                 {
                     "column": column,
@@ -1970,8 +2184,11 @@ def _task41_v9_compact_volume_identity(
         port_rhs_unchanged = np.array_equal(candidate_p6[active_rows:], saved_port_rhs) and np.array_equal(
             candidate_reduced[active_rows:], saved_port_rhs
         )
-        full_p6_ref = persist(f"{artifact_prefix}_full_p6", candidate_p6)
-        full_reduced_ref = persist(f"{artifact_prefix}_full_reduced_rhs", candidate_reduced)
+        full_p6_ref = None
+        full_reduced_ref = None
+        if compact_evidence_layout == "v9_full":
+            full_p6_ref = persist(f"{artifact_prefix}_full_p6", candidate_p6)
+            full_reduced_ref = persist(f"{artifact_prefix}_full_reduced_rhs", candidate_reduced)
         action_columns = []
         for column_index, frozen_denominator in enumerate(TASK41_V5_FROZEN_DENOMINATORS):
             difference = _task41_v9_chunked_metrics(
@@ -1984,9 +2201,18 @@ def _task41_v9_compact_volume_identity(
             )
             dynamic_relative = difference["absolute_l2"] / dynamic_denom
             frozen_relative = difference["absolute_l2"] / frozen_denominator
+            same_s_metrics = None
+            if compact_evidence_layout == "v15_terminal_sufficient":
+                reference = np.asarray(donor.get("same_s_action_reference"))
+                if reference.shape != candidate_p6.shape or reference.dtype != np.complex128:
+                    raise ValueError("V15 same-S old output is not bound to the complete two-column layout")
+                same_s_metrics = _task41_v9_chunked_metrics(candidate_p6[:, column_index], reference[:, column_index])
+                same_s_metrics["array_equal"] = bool(np.array_equal(candidate_p6[:, column_index], reference[:, column_index]))
+                same_s_metrics["interpretation"] = "same frozen S/input output comparison; any difference is not attributed to RHS correction"
             action_columns.append(
                 {
                     "column": column_index,
+                    "same_s_saved_output_comparison": same_s_metrics,
                     "difference": difference,
                     "dynamic_denominator": dynamic_denom,
                     "dynamic_denominator_relative": dynamic_relative,
@@ -2010,12 +2236,35 @@ def _task41_v9_compact_volume_identity(
             "status": "PASS" if action_passed else "GATE_FAILED",
             "relative_tolerance": TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE,
             "columns": action_columns,
-            "full_action_artifact": full_p6_ref,
-            "full_reduced_rhs_artifact": full_reduced_ref,
+            **(
+                {
+                    "full_action_artifact": full_p6_ref,
+                    "full_reduced_rhs_artifact": full_reduced_ref,
+                }
+                if compact_evidence_layout == "v9_full"
+                else {"column_artifacts": action_artifacts_by_column}
+            ),
+            "compact_evidence_layout": compact_evidence_layout,
+            "operation_counts": dict(action_operation_counts),
             "saved_port_rows_unchanged": bool(
                 port_action_unchanged and port_reduced_unchanged and port_rhs_unchanged
             ),
+            **({"same_s_action_reference_binding": dict(donor["same_s_action_reference_binding"])}
+               if compact_evidence_layout == "v15_terminal_sufficient" else {}),
         }
+        if compact_evidence_layout == "v15_terminal_sufficient":
+            terminal_evidence_callback(
+                {
+                    "schema": "task41.p0.b0.v15_terminal_sufficient_checkpoint.v1",
+                    "event": "action_gate_completed",
+                    "layout": compact_evidence_layout,
+                    "candidate_action_gate": candidate_action_gate,
+                    "completed_action_columns": [
+                        int(item["column"]) for item in action_artifacts_by_column
+                    ],
+                    "operation_counts": dict(action_operation_counts),
+                }
+            )
         progress_callback(
             {
                 "phase": "task41_v9_full_action_gate",
@@ -2052,6 +2301,20 @@ def _task41_v9_compact_volume_identity(
                 "free_space_floor_bytes": TASK41_V4_FREE_SPACE_FLOOR_BYTES,
                 "persisted_artifacts": artifacts,
                 "candidate_full_action_gate": candidate_action_gate,
+                "compact_evidence_layout": compact_evidence_layout,
+                "actual_k_lu_identity": (
+                    dict(actual_k_lu_identity)
+                    if compact_evidence_layout == "v15_terminal_sufficient"
+                    else None
+                ),
+                "operation_counts": dict(action_operation_counts),
+                "refinement_strategy": refinement_strategy,
+                "refinement_max_steps": int(
+                    getattr(owner, "internal_rhs_refinement_max_steps", 0)
+                ),
+                "same_lu_native_recovery_max_corrections_per_column": (
+                    recovery_refinement_max_steps
+                ),
                 "candidate_recovery_gate": {
                     "status": "NOT_RUN_ACTION_GATE_FAILED",
                     "relative_forward_tolerance": 1.0e-11,
@@ -2074,11 +2337,12 @@ def _task41_v9_compact_volume_identity(
                     "maximum_corrections": recovery_refinement_max_steps,
                 }
             )
+            recovery_counters_before = action_counter_snapshot()
             initial_storage = action.recover_storage(
                 known[active_original], full_rhs=volume_rhs, expand_trace=False
             )
             initial_volume_action = np.array(
-                native_volume_apply(initial_storage), dtype=np.complex128, copy=True
+                tracked_native_volume_apply(initial_storage), dtype=np.complex128, copy=True
             )
             if (
                 initial_volume_action.shape != (full_rows,)
@@ -2087,10 +2351,17 @@ def _task41_v9_compact_volume_identity(
                 raise ValueError("Task41 V9 native volume action returned an invalid initial vector")
             initial_residual = np.asarray(volume_rhs - initial_volume_action, dtype=np.complex128)
             initial_storage_sha256 = _task41_v9_array_sha256(initial_storage)
-            initial_ref: dict[str, Any] = {
-                "kind": "artifact",
-                **persist(f"{artifact_prefix}_initial_storage_col{column_index}", initial_storage),
-            }
+            initial_ref: dict[str, Any] | None = (
+                {
+                    "kind": "artifact",
+                    **persist(
+                        f"{artifact_prefix}_initial_storage_col{column_index}",
+                        initial_storage,
+                    ),
+                }
+                if compact_evidence_layout == "v9_full"
+                else None
+            )
             step_records: list[dict[str, Any]] = []
 
             def capture_step(
@@ -2125,7 +2396,7 @@ def _task41_v9_compact_volume_identity(
             refined = action.refine_internal_storage_with_native_volume_residual(
                 initial_storage,
                 volume_rhs,
-                native_volume_apply,
+                tracked_native_volume_apply,
                 max_steps=recovery_refinement_max_steps,
                 initial_volume_action=initial_volume_action,
                 initial_residual=initial_residual,
@@ -2134,30 +2405,66 @@ def _task41_v9_compact_volume_identity(
             )
             if _task41_v9_array_sha256(initial_storage) != initial_storage_sha256:
                 raise ValueError("Task41 V9 recovery refinement mutated the frozen initial storage")
+            recovery_operation_delta = record_action_counter_delta(
+                recovery_counters_before
+            )
             final_storage = np.asarray(refined["storage_solution"], dtype=np.complex128)
-            final_residual = np.asarray(refined["native_volume_residual"], dtype=np.complex128)
             final_volume_action = np.asarray(refined["native_volume_action"], dtype=np.complex128)
+            if (
+                final_storage.shape != (full_rows,)
+                or final_volume_action.shape != (full_rows,)
+                or final_storage.dtype != np.dtype(np.complex128)
+                or final_volume_action.dtype != np.dtype(np.complex128)
+                or not np.isfinite(final_storage).all()
+                or not np.isfinite(final_volume_action).all()
+            ):
+                raise ValueError("Task41 compact recovery returned an invalid final storage/action pair")
+            final_residual = np.asarray(volume_rhs - final_volume_action, dtype=np.complex128)
+            reported_residual = np.asarray(refined["native_volume_residual"], dtype=np.complex128)
+            if (
+                reported_residual.shape != (full_rows,)
+                or not np.array_equal(final_residual, reported_residual)
+            ):
+                raise ValueError("Task41 native residual differs from the saved RHS/action subtraction")
             initial_matches_known = np.array_equal(initial_storage, known)
-            if np.array_equal(final_storage, known):
+            if compact_evidence_layout == "v15_terminal_sufficient":
+                final_ref = {
+                    "kind": "artifact",
+                    **persist(
+                        f"{artifact_prefix}_final_storage_col{column_index}",
+                        final_storage,
+                    ),
+                }
+                final_native_action_ref = {
+                    "kind": "artifact",
+                    **persist(
+                        f"{artifact_prefix}_final_native_volume_action_col{column_index}",
+                        final_volume_action,
+                    ),
+                }
+                residual_ref = None
+            elif np.array_equal(final_storage, known):
                 final_ref: dict[str, Any] = {"kind": "v4_donor_known_field", "column": column_index}
             elif not initial_matches_known and np.array_equal(final_storage, initial_storage):
+                assert initial_ref is not None
                 final_ref = dict(initial_ref)
             else:
                 final_ref = {
                     "kind": "artifact",
                     **persist(f"{artifact_prefix}_final_storage_col{column_index}", final_storage),
                 }
-            donor_initial_residual = np.asarray(column["states"][0]["native_volume_residual"])
-            if np.array_equal(final_residual, donor_initial_residual):
-                residual_ref: dict[str, Any] = {
-                    "kind": "v4_donor_initial_native_volume_residual",
-                    "column": column_index,
-                }
-            else:
-                residual_ref = {
-                    "kind": "artifact",
-                    **persist(f"{artifact_prefix}_final_native_volume_residual_col{column_index}", final_residual),
-                }
+            if compact_evidence_layout == "v9_full":
+                donor_initial_residual = np.asarray(column["states"][0]["native_volume_residual"])
+                if np.array_equal(final_residual, donor_initial_residual):
+                    residual_ref = {
+                        "kind": "v4_donor_initial_native_volume_residual",
+                        "column": column_index,
+                    }
+                else:
+                    residual_ref = {
+                        "kind": "artifact",
+                        **persist(f"{artifact_prefix}_final_native_volume_residual_col{column_index}", final_residual),
+                    }
             forward = _task41_v9_chunked_metrics(final_storage, known)
             forward_relative = forward["absolute_l2"] / max(
                 _vector_norm(known), np.finfo(float).tiny
@@ -2191,7 +2498,14 @@ def _task41_v9_compact_volume_identity(
                     "initial_storage_artifact": initial_ref,
                     "initial_storage_sha256": initial_storage_sha256,
                     "final_storage_artifact": final_ref,
-                    "final_native_volume_residual_artifact": residual_ref,
+                    **(
+                        {"final_native_volume_residual_artifact": residual_ref}
+                        if compact_evidence_layout == "v9_full"
+                        else {
+                            "final_native_volume_action_artifact": final_native_action_ref,
+                            "final_native_volume_residual_recomputed_from_rhs_and_action": True,
+                        }
+                    ),
                     "forward_error_absolute_l2": forward["absolute_l2"],
                     "forward_error_relative": forward_relative,
                     "forward_gate_tolerance": 1.0e-11,
@@ -2221,6 +2535,21 @@ def _task41_v9_compact_volume_identity(
                     "native_volume_residual_relative": residual_relative,
                 }
             )
+            if compact_evidence_layout == "v15_terminal_sufficient":
+                terminal_evidence_callback(
+                    {
+                        "schema": "task41.p0.b0.v15_terminal_sufficient_checkpoint.v1",
+                        "event": "recovery_column_completed",
+                        "layout": compact_evidence_layout,
+                        "column": column_index,
+                        "recovery_column": column_reports[-1],
+                        "completed_recovery_columns": [
+                            int(item["column"]) for item in column_reports
+                        ],
+                        "operation_counts": dict(action_operation_counts),
+                        "column_operation_counts": recovery_operation_delta,
+                    }
+                )
             del initial_storage, initial_volume_action, initial_residual
             del final_storage, final_residual, final_volume_action, refined
 
@@ -2252,6 +2581,25 @@ def _task41_v9_compact_volume_identity(
             "free_space_floor_bytes": TASK41_V4_FREE_SPACE_FLOOR_BYTES,
             "persisted_artifacts": artifacts,
             "candidate_full_action_gate": candidate_action_gate,
+            "compact_evidence_layout": compact_evidence_layout,
+            "new_evidence_limit_bytes": (
+                TASK41_V15_NEW_RAW_EVIDENCE_LIMIT_BYTES
+                if compact_evidence_layout == "v15_terminal_sufficient"
+                else None
+            ),
+            "actual_k_lu_identity": (
+                dict(actual_k_lu_identity)
+                if compact_evidence_layout == "v15_terminal_sufficient"
+                else None
+            ),
+            "refinement_strategy": refinement_strategy,
+            "refinement_max_steps": int(
+                getattr(owner, "internal_rhs_refinement_max_steps", 0)
+            ),
+            "same_lu_native_recovery_max_corrections_per_column": (
+                recovery_refinement_max_steps
+            ),
+            "operation_counts": dict(action_operation_counts),
             "candidate_recovery_gate": {
                 "status": "PASS" if recovery_passed else "GATE_FAILED",
                 "relative_forward_tolerance": 1.0e-11,
@@ -2259,6 +2607,9 @@ def _task41_v9_compact_volume_identity(
                 "maximum_same_lu_corrections_per_column": recovery_refinement_max_steps,
                 "recovery_source": "saved native_volume_rhs with the current exact-geometry same-LU owner",
                 "native_volume_action_calls": sum(item["native_volume_action_calls"] for item in column_reports),
+                "same_lu_corrections_total": sum(
+                    int(item["same_lu_corrections"]) for item in column_reports
+                ),
                 "columns": column_reports,
             },
         }
@@ -2288,6 +2639,10 @@ def audit_task41_v4_volume_identity(
     candidate_identity: str | None = None,
     candidate_cache_identity: str | None = None,
     compact_evidence: bool = False,
+    compact_evidence_layout: str = "v9_full",
+    actual_k_lu_identity: Mapping[str, Any] | None = None,
+    refinement_strategy: str | None = None,
+    terminal_evidence_callback: Callable[[Mapping[str, Any]], Any] | None = None,
     recovery_refinement_max_steps: int = 0,
     reserved_followup_evidence_bytes: int = 0,
 ) -> dict[str, Any]:
@@ -2314,7 +2669,18 @@ def audit_task41_v4_volume_identity(
             candidate_cache_identity=candidate_cache_identity,
             recovery_refinement_max_steps=recovery_refinement_max_steps,
             reserved_followup_evidence_bytes=reserved_followup_evidence_bytes,
+            compact_evidence_layout=compact_evidence_layout,
+            actual_k_lu_identity=actual_k_lu_identity,
+            refinement_strategy=refinement_strategy,
+            terminal_evidence_callback=terminal_evidence_callback,
         )
+    if (
+        compact_evidence_layout != "v9_full"
+        or actual_k_lu_identity is not None
+        or refinement_strategy is not None
+        or terminal_evidence_callback is not None
+    ):
+        raise ValueError("compact evidence layout metadata requires compact evidence mode")
     if reserved_followup_evidence_bytes:
         raise ValueError("follow-up evidence reservation is only valid for compact V9 evidence")
     columns = tuple(donor["columns"])

@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import signal
 import shutil
 import sys
@@ -8656,21 +8657,236 @@ def _task41_destroy_pending_condensed(
                     {"type": type(exc).__name__, "message": str(exc)}
                 )
 
+def _task41_v15_existing_raw_inventory(
+    repo_root: Path, *, frozen_through_v7_bytes: int,
+) -> dict[str, Any]:
+    """Stat the explicitly scoped later raw files; do not traverse carrier storage."""
+    from src.runners.task41_p0_contract import TASK41_B0_V15_POST_V7_RAW_EVIDENCE_ROOTS
+
+    root = repo_root.resolve(strict=True)
+    seen: set[tuple[int, int]] = set()
+    rows = []
+    for relative in TASK41_B0_V15_POST_V7_RAW_EVIDENCE_ROOTS:
+        directory = (root / "results" / "task41extra_phi90_p50x50_g17x20" / relative).resolve(strict=True)
+        if not directory.is_relative_to(root / "results"):
+            raise ValueError("V15 raw inventory escaped the registered results root")
+        count = size = 0
+        for path in directory.rglob("*.npy"):
+            resolved = path.resolve(strict=True)
+            if not resolved.is_relative_to(directory):
+                raise ValueError("V15 raw inventory contains an escaped backing")
+            stat = resolved.stat()
+            key = (stat.st_dev, stat.st_ino)
+            if key not in seen:
+                seen.add(key)
+                count += 1
+                size += stat.st_size
+        rows.append({"path": str(directory), "npy_count": count, "bytes": size})
+    return {
+        "frozen_through_v7_bytes": int(frozen_through_v7_bytes),
+        "later_unique_npy_bytes": sum(row["bytes"] for row in rows),
+        "cumulative_bytes": int(frozen_through_v7_bytes) + sum(row["bytes"] for row in rows),
+        "method": "frozen donor/V6/V7 binding plus path-contained inode-unique later NPY stat",
+        "roots": rows,
+    }
+
+
 def _task41_b0_require_full_owner_scope(
-    campaign_authority: Mapping[str, Any], *, refinement_max_steps: int
+    campaign_authority: Mapping[str, Any],
+    *,
+    refinement_max_steps: int,
+    run_directory: str | Path | None = None,
 ) -> bool:
-    """Reject refined P6 owner construction unless validated scope permits it."""
+    """Accept a full owner only for the exact V15 contract, never a bool flag."""
 
     if isinstance(refinement_max_steps, bool) or type(refinement_max_steps) is not int:
         raise ValueError("Task41 B0 refinement step limit must be a strict integer")
     if refinement_max_steps not in (0, 2):
         raise ValueError("Task41 B0 refinement step limit must be 0 or 2")
-    authorized = campaign_authority.get("full_owner_scope_authorized") is True
-    if refinement_max_steps == 2 and not authorized:
+    if refinement_max_steps == 0:
+        return False
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+        TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
+    )
+
+    root = Path(__file__).resolve().parents[2]
+    expected_window = (root / TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE).resolve()
+    accounting_path = Path(
+        str(campaign_authority.get("campaign_accounting_path", ""))
+    ).resolve()
+    expected_claim_path = accounting_path.with_name(
+        accounting_path.name + ".v15_full_owner_claim.json"
+    )
+    if (
+        campaign_authority.get("execution_scope")
+        != TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
+        or campaign_authority.get("campaign_window_path") != str(expected_window)
+        or campaign_authority.get("internal_rhs_strategy") != "same_lu_rhs_solve"
+        or campaign_authority.get("internal_rhs_refinement_strategy")
+        != TASK41_B0_V14_RHS_REFINEMENT_STRATEGY
+        or campaign_authority.get("internal_rhs_refinement_max_steps") != 2
+        or campaign_authority.get("full_owner_quota_scope")
+        != "fixed_window_across_attempts"
+        or Path(
+            str(campaign_authority.get("full_owner_quota_claim_path", ""))
+        ).resolve()
+        != expected_claim_path
+        or campaign_authority.get("actual_k_lu_identity_required") is not True
+        or run_directory is None
+        or campaign_authority.get("run_directory")
+        != str(Path(run_directory).resolve())
+    ):
         raise ValueError(
-            "Task41 V14 saved-candidate window does not authorize a P6 full owner"
+            "Task41 B0 full owner requires the exact V15 full-acceptance contract"
         )
-    return authorized
+    return True
+
+
+def _task41_b0_actual_k_lu_identity(condensed: Any) -> dict[str, Any]:
+    """Summarize the retained actual-K/LU generation identity without rebuilding it."""
+
+    actual_ids = getattr(condensed, "actual_internal_matrix_identity_by_class", None)
+    lu_ids = getattr(condensed, "interior_lu_matrix_identity_by_class", None)
+    actual_k = getattr(condensed, "retained_actual_internal_matrix_by_class", None)
+    lu_by_class = getattr(condensed, "interior_lu_by_class", None)
+    if not all(isinstance(value, Mapping) for value in (actual_ids, lu_ids, actual_k, lu_by_class)):
+        raise ValueError("Task41 V15 owner lacks the retained actual K/LU identity maps")
+    keys = set(actual_ids)
+    if not keys or any(set(value) != keys for value in (lu_ids, actual_k, lu_by_class)):
+        raise ValueError("Task41 V15 actual K/LU identity maps have different class coverage")
+    if any(actual_ids[key] is not lu_ids[key] for key in keys):
+        raise ValueError("Task41 V15 actual K and LU factors do not share one build generation")
+    key_digest = hashlib.sha256(
+        "\n".join(sorted(repr(key) for key in keys)).encode("utf-8")
+    ).hexdigest()
+    return {
+        "schema": "task41.p0.b0.v15_actual_k_lu_generation_identity.v1",
+        "class_count": len(keys),
+        "class_key_set_sha256": key_digest,
+        "actual_k_and_lu_share_generation_token_for_every_class": True,
+        "identity_source": "AssemblyTimeCondensedSystem retained actual K/LU identity maps",
+    }
+
+
+def _task41_b0_build_v15_full_owner_once(
+    campaign_authority: Mapping[str, Any],
+    *,
+    run_directory: str | Path,
+    owner_builder: Callable[[], Any],
+    claim_started_callback: Callable[[Mapping[str, Any]], None] | None = None,
+    owner_built_callback: Callable[[Any], None] | None = None,
+    current_root: str | Path | None = None,
+) -> tuple[Any, dict[str, Any]]:
+    """Persist one fixed-window BUILD_STARTED claim immediately before owner build."""
+
+    import fcntl
+    from uuid import uuid4
+
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+        TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
+    )
+
+    root = Path(current_root or Path(__file__).resolve().parents[2]).resolve()
+    expected_window = (root / TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE).resolve()
+    window_path = Path(str(campaign_authority.get("campaign_window_path", ""))).resolve()
+    output_root = Path(run_directory).resolve(strict=True)
+    model_id = str(campaign_authority.get("model_id", ""))
+    results_root = (root / "results" / model_id).resolve(strict=True)
+    accounting_path = Path(str(campaign_authority.get("campaign_accounting_path", ""))).resolve()
+    claim_path = accounting_path.with_name(
+        accounting_path.name + ".v15_full_owner_claim.json"
+    )
+    expected_claim_path = Path(
+        str(campaign_authority.get("full_owner_quota_claim_path", ""))
+    ).resolve()
+    if (
+        campaign_authority.get("execution_scope") != TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
+        or window_path != expected_window
+        or campaign_authority.get("full_owner_quota_scope")
+        != "fixed_window_across_attempts"
+        or expected_claim_path != claim_path
+        or not output_root.is_relative_to(results_root)
+        or campaign_authority.get("run_directory") != str(output_root)
+        or not re.fullmatch(r"[0-9a-f]{64}", str(campaign_authority.get("task41_contract_sha256", "")))
+        or not re.fullmatch(r"[0-9a-f]{40}", str(campaign_authority.get("source_sha", "")))
+        or not re.fullmatch(r"[0-9a-f]{64}", str(campaign_authority.get("input_sha256", "")))
+    ):
+        raise ValueError("Task41 V15 full-owner quota claim is not bound to its contract/window/output")
+
+    claim_path.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = claim_path.with_name(claim_path.name + ".lock")
+    claim_id = uuid4().hex
+    record: dict[str, Any] = {
+        "schema": "task41.p0.b0.v15_full_owner_quota_claim.v1",
+        "claim_id": claim_id,
+        "status": "BUILD_STARTED",
+        "full_owner_build_count": 1,
+        "quota_scope": "fixed_window_across_attempts",
+        "contract_path": str(campaign_authority["task41_contract_path"]),
+        "contract_sha256": str(campaign_authority["task41_contract_sha256"]),
+        "source_sha": str(campaign_authority["source_sha"]),
+        "input_sha256": str(campaign_authority["input_sha256"]),
+        "window_path": str(window_path),
+        "window_sha256": str(campaign_authority["campaign_window_sha256"]),
+        "accounting_path": str(accounting_path),
+        "output_directory": str(output_root),
+        "execution_scope": dict(TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE),
+    }
+
+    def replace_record(updated: Mapping[str, Any], *, exclusive: bool) -> None:
+        temporary = claim_path.with_name(claim_path.name + f".{claim_id}.tmp")
+        descriptor = os.open(
+            temporary,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+            0o600,
+        )
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+                stream.write(json.dumps(dict(updated), sort_keys=True, separators=(",", ":")) + "\n")
+                stream.flush()
+                os.fsync(stream.fileno())
+            if exclusive:
+                os.link(temporary, claim_path)
+                temporary.unlink()
+            else:
+                os.replace(temporary, claim_path)
+            directory_fd = os.open(claim_path.parent, os.O_RDONLY)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+        finally:
+            if temporary.exists():
+                temporary.unlink()
+
+    with lock_path.open("a+b") as lock_stream:
+        fcntl.flock(lock_stream.fileno(), fcntl.LOCK_EX)
+        if claim_path.exists():
+            raise ValueError("Task41 V15 fixed-window full-owner quota is already consumed")
+        replace_record(record, exclusive=True)
+
+    if claim_started_callback is not None:
+        claim_started_callback(record)
+    owner_result = owner_builder()
+    if owner_built_callback is not None:
+        owner_built_callback(owner_result)
+    condensed = owner_result.get("condensed") if isinstance(owner_result, Mapping) else None
+    identity = _task41_b0_actual_k_lu_identity(condensed)
+    completed_record = {
+        **record,
+        "status": "BUILD_COMPLETED",
+        "actual_k_lu_identity": identity,
+    }
+    with lock_path.open("a+b") as lock_stream:
+        fcntl.flock(lock_stream.fileno(), fcntl.LOCK_EX)
+        current = json.loads(claim_path.read_text(encoding="utf-8"))
+        if current.get("claim_id") != claim_id or current.get("status") != "BUILD_STARTED":
+            raise ValueError("Task41 V15 full-owner claim changed during its build")
+        replace_record(completed_record, exclusive=False)
+    return owner_result, completed_record
 
 
 def _task41_iterative_candidate_contract(
@@ -8682,6 +8898,7 @@ def _task41_iterative_candidate_contract(
     profile_identity: str,
     source_sha: str,
     task41_contract_binding: Mapping[str, Any] | None = None,
+    run_directory: str | Path | None = None,
     current_root: str | Path | None = None,
 ) -> dict[str, Any]:
     from src.geometry.task41_phi90_profile import (
@@ -8691,6 +8908,7 @@ def _task41_iterative_candidate_contract(
         TASK41_B0_PRECONDITIONER,
         TASK41_B0_RUN_ID,
         TASK41_B0_COMPARISON_GROUP,
+        TASK41_MODEL_ID,
     )
     from src.io.execution_plan import resolved_config_bytes
     from src.io.input_validation import load_and_resolve
@@ -8703,6 +8921,8 @@ def _task41_iterative_candidate_contract(
         TASK41_B0_INPUT_RELATIVE,
         TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
         TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+        TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
         _task41_case,
         load_task41_p0_fixed_window,
         require_task41_p0_contract,
@@ -8711,6 +8931,10 @@ def _task41_iterative_candidate_contract(
     from benchmarks.subreaper_watchdog import PHYSICAL_MEMORY_PRESSURE_POLICY
 
     root = Path(current_root or Path(__file__).resolve().parents[2]).resolve()
+    expected_v15_window = (
+        root / TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE
+    ).resolve()
+    is_v15_full_acceptance = False
     if case_id not in {"A2", "B0"}:
         raise ValueError("Task41 iterative candidate contract requires case A2 or B0")
     case_spec = _task41_case(case_id)
@@ -8961,6 +9185,7 @@ def _task41_iterative_candidate_contract(
             and contract_binding.get("window_sha256") == window.sha256
             and contract_binding.get("saved_surface_donor")
             == contract.get("preparation", {}).get("existing_surface_donor")
+            and contract_binding.get("execution_scope") == contract.get("execution_scope")
             and dispatch_strategy == contract_rhs_strategy
             and dispatch_refinement_steps == contract_refinement_steps
             and dispatch_refinement_strategy == contract_refinement_strategy
@@ -8972,6 +9197,40 @@ def _task41_iterative_candidate_contract(
             and contract.get("q_csr_reuse") is None
             and contract_binding.get("comparison_binding") is None
         )
+        contract_window = Path(str(contract.get("window", {}).get("path", "")))
+        if not contract_window.is_absolute():
+            contract_window = root / contract_window
+        is_v15_full_acceptance = (
+            contract_window.resolve() == expected_v15_window
+            and contract.get("execution_scope") == TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
+        )
+        if is_v15_full_acceptance:
+            expected_output = Path(str(run_directory or "")).resolve()
+            expected_claim = Path(str(contract.get("window", {}).get("accounting_path", "")))
+            if not expected_claim.is_absolute():
+                expected_claim = root / expected_claim
+            expected_claim = expected_claim.with_name(
+                expected_claim.name + ".v15_full_owner_claim.json"
+            ).resolve()
+            checks["v15_full_owner_dispatch_binding"] = bool(
+                run_directory is not None
+                and contract.get("case", {}).get("model_id") == TASK41_MODEL_ID
+                and contract_binding.get("run_directory") == str(expected_output)
+                and contract_binding.get("full_owner_quota_claim_path")
+                == str(expected_claim)
+                and contract_binding.get("full_owner_quota_scope")
+                == "fixed_window_across_attempts"
+                and contract_binding.get("execution_scope")
+                == TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
+                and os.environ.get("TASK41_P0_V15_FULL_ACCEPTANCE") == "1"
+                and Path(os.environ.get("TASK41_P0_V15_OUTPUT_DIRECTORY", "")).resolve()
+                == expected_output
+            )
+        else:
+            checks["no_unbound_v15_full_owner_route"] = bool(
+                contract_binding.get("full_owner_quota_claim_path") is None
+                and contract_binding.get("full_owner_quota_scope") is None
+            )
     failed = [name for name, passed in checks.items() if not passed]
     if failed:
         raise ValueError(f"Task41 {case_id} candidate contract failed: {failed}")
@@ -8993,6 +9252,8 @@ def _task41_iterative_candidate_contract(
         "source_sha": source_sha,
         "task41_contract_path": str(Path(contract_path).resolve()),
         "task41_contract_sha256": contract_sha256,
+        "model_id": case["model_id"],
+        "input_sha256": case["input_sha256"],
         "campaign_window_path": str(window.path),
         "campaign_window_sha256": window.sha256,
         "campaign_accounting_path": str(window.accounting_path),
@@ -9015,9 +9276,38 @@ def _task41_iterative_candidate_contract(
         ),
         # Carry only the validated execution-scope fact forward so the owner
         # construction path cannot infer authorization from profile facts.
+        "execution_scope": (
+            dict(contract["execution_scope"])
+            if isinstance(contract.get("execution_scope"), Mapping)
+            else None
+        ),
         "full_owner_scope_authorized": bool(
-            isinstance(contract.get("execution_scope"), Mapping)
-            and contract["execution_scope"].get("full_owner") is True
+            contract.get("execution_scope") == TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
+            and Path(str(contract.get("window", {}).get("path", ""))).resolve()
+            == expected_v15_window
+        ),
+        "actual_k_lu_identity_required": bool(
+            is_v15_full_acceptance
+            and TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE.get(
+                "actual_k_lu_identity_required"
+            ) is True
+        ),
+        "full_owner_quota_scope": (
+            contract_binding.get("full_owner_quota_scope")
+            if is_v15_full_acceptance and isinstance(contract_binding, Mapping)
+            else None
+        ),
+        "full_owner_quota_claim_path": (
+            contract_binding.get("full_owner_quota_claim_path")
+            if is_v15_full_acceptance and isinstance(contract_binding, Mapping)
+            else None
+        ),
+        "run_directory": (
+            str(Path(run_directory).resolve())
+            if run_directory is not None
+            else contract_binding.get("run_directory")
+            if isinstance(contract_binding, Mapping)
+            else None
         ),
         "task41_dispatch_binding_schema": (
             task41_contract_binding.get("schema")
@@ -9476,6 +9766,7 @@ def _candidate_contract(
     v31_effective_factor_lifecycle_strategy: str | None = None,
     task41_source_sha: str | None = None,
     task41_contract_binding: Mapping[str, Any] | None = None,
+    run_directory: str | Path | None = None,
     current_root: str | Path | None = None,
 ) -> dict[str, Any]:
     from src.geometry.task41_phi90_profile import (
@@ -9495,6 +9786,7 @@ def _candidate_contract(
             profile_identity=profile_identity,
             source_sha=task41_source_sha,
             task41_contract_binding=task41_contract_binding,
+            run_directory=run_directory,
             current_root=current_root,
         )
     from src.geometry.task40_nonseparable_plan import (
@@ -10546,6 +10838,7 @@ def run_task40_v10_p6_reference_worker(
     target_condensed = None
     task41_internal_rhs_strategy = "stored_T"
     task41_internal_rhs_refinement_max_steps = 0
+    task41_v15_acceptance_only = False
     mode_identity: dict[str, Any] = {}
     mode_inventory_preflight: dict[str, Any] = {}
     task41_mode_inventory: tuple[Any, Any, str] | None = None
@@ -10660,6 +10953,7 @@ def run_task40_v10_p6_reference_worker(
             ),
             task41_source_sha=(source_sha if is_task41_p0_iterative else None),
             task41_contract_binding=task41_contract_binding,
+            run_directory=directory,
         )
         if is_task41_b0:
             campaign_authority = summary.get("campaign_authority")
@@ -10706,6 +11000,11 @@ def run_task40_v10_p6_reference_worker(
             full_owner_scope_authorized = _task41_b0_require_full_owner_scope(
                 campaign_authority,
                 refinement_max_steps=task41_internal_rhs_refinement_max_steps,
+                run_directory=directory,
+            )
+            task41_v15_acceptance_only = bool(
+                full_owner_scope_authorized
+                and os.environ.get("TASK41_P0_V15_FULL_ACCEPTANCE") == "1"
             )
             summary["internal_rhs_refinement_binding"] = {
                 "strategy": campaign_authority.get(
@@ -10763,6 +11062,29 @@ def run_task40_v10_p6_reference_worker(
                 runtime.marker("v10_strict_allocation_admission", record)
                 runtime.marker("v10_strict_allocation_admission_complete", record)
                 return record
+            if task41_v15_acceptance_only and label == "mesh_actual_exact_full_admission":
+                remaining = max(0.0, float(runtime.workflow_reserved_seconds)
+                                - float(runtime.workflow_clock_interval()["budget_seconds"]))
+                remaining_build = float(facts["projected_remaining_class_build_seconds_upper"])
+                # Planning reserves, not measured costs or extra per-phase kill deadlines.
+                rhs_fsum_reserve = 20_496.0
+                other_acceptance_reserve = 14_400.0
+                projection = {
+                    "remaining_numerical_seconds": remaining,
+                    "measured_prefix_based_remaining_build_seconds": remaining_build,
+                    "four_rhs_fsum_scenario_upper_seconds": rhs_fsum_reserve,
+                    "other_action_native_recovery_save_checker_planning_reserve_seconds": other_acceptance_reserve,
+                    "other_reserve_is_measured": False,
+                    "other_reserve_basis": "four-hour conservative planning allowance; actual exclusive costs remain separately measured",
+                    "total_projected_seconds": remaining_build + rhs_fsum_reserve + other_acceptance_reserve,
+                    "fixed_cutoff_unchanged": True,
+                }
+                summary["v15_build_and_acceptance_time_admission"] = projection
+                runtime.marker("task41_v15_build_and_acceptance_time_admission", projection)
+                if not np.isfinite(remaining_build) or remaining_build < 0:
+                    raise ValueError("V15 measured prefix returned an invalid build-time projection")
+                if projection["total_projected_seconds"] > remaining:
+                    raise V14ResourceStop("V15 fixed window cannot admit remaining build plus full action/recovery/save/checker budget")
             amount = int(facts.get(
                 "additional_payload_bytes",
                 facts.get("matrix_payload_bytes", facts.get("workspace_bytes", 0)),
@@ -11382,6 +11704,7 @@ def run_task40_v10_p6_reference_worker(
                         )
                         from src.runners.task41_p0_contract import (
                             TASK41_B0_V6_WINDOW_SHA256,
+                            TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
                             TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE,
                         )
                         from src.runners.task41_p0_v4_volume_only_audit import (
@@ -11391,6 +11714,7 @@ def run_task40_v10_p6_reference_worker(
                         )
                         from src.solvers.task41_v4_volume_only_audit import (
                             TASK41_V4_DONOR_NPY_BYTES,
+                            TASK41_V15_TERMINAL_EVIDENCE_RESERVE_BYTES,
                             TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES,
                             build_task41_v4_volume_only_owner,
                             audit_task41_v4_volume_identity,
@@ -11438,6 +11762,30 @@ def run_task40_v10_p6_reference_worker(
                             saved_operands["prior_array_payload_bytes"]
                             - donor["existing_evidence_bytes"]
                         )
+                        if task41_v15_acceptance_only:
+                            raw_inventory = _task41_v15_existing_raw_inventory(
+                                repo_root,
+                                frozen_through_v7_bytes=int(saved_operands["prior_array_payload_bytes"]),
+                            )
+                            donor["prior_new_evidence_bytes"] = (
+                                raw_inventory["cumulative_bytes"] - int(donor["existing_evidence_bytes"])
+                            )
+                            summary["v15_raw_inventory_before_owner"] = raw_inventory
+                            from src.runners.task41_p0_contract import TASK41_B0_V15_FULL_ACCEPTANCE_NEW_RAW_BYTES
+                            if raw_inventory["cumulative_bytes"] + TASK41_B0_V15_FULL_ACCEPTANCE_NEW_RAW_BYTES > 16 * 1024**3:
+                                raise MemoryError("V15 cumulative raw inventory plus new evidence ceiling exceeds 16 GiB")
+                            # Monitoring output remains physical disk usage, not free or part of NPY payload.
+                            disk_reserve = TASK41_B0_V15_FULL_ACCEPTANCE_NEW_RAW_BYTES + 4 * 1024**3 + 256 * 1024**2
+                            free = __import__("shutil").disk_usage(directory).free
+                            summary["v15_disk_admission"] = {
+                                "free_bytes": int(free), "new_raw_ceiling_bytes": TASK41_B0_V15_FULL_ACCEPTANCE_NEW_RAW_BYTES,
+                                "monitoring_log_reserve_bytes": 4 * 1024**3,
+                                "metadata_reserve_bytes": 256 * 1024**2,
+                                "free_space_floor_bytes": 2 * 1024**3,
+                                "log_reserve_basis": "derived conservative 36h allowance from V9 1.567GB/19.44h; not measured V15",
+                            }
+                            if free - disk_reserve < 2 * 1024**3:
+                                raise OSError("V15 raw/metadata/monitoring reservation breaches the disk floor")
                         donor_binding["prior_new_evidence_bytes"] = int(
                             donor["prior_new_evidence_bytes"]
                         )
@@ -11589,6 +11937,40 @@ def run_task40_v10_p6_reference_worker(
                                 ],
                             }
 
+                        if task41_v15_acceptance_only:
+                            from src.runners.task41_p0_v4_volume_only_audit import (
+                                TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+                                TASK41_P0_V11_V9_FULL_ACTION_ARRAY_SHA256,
+                            )
+                            baseline_root = repo_root / "results/task41extra_phi90_p50x50_g17x20" / (
+                                "task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261022T052401.200732Z"
+                            )
+                            baseline_path = baseline_root / "task41_p0_b0_v9_compact_volume_audit.json"
+                            if sha256_file(baseline_path) != TASK41_P0_V11_V9_COMPACT_REPORT_SHA256:
+                                raise ValueError("V15 same-S baseline compact hash changed")
+                            baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+                            if (
+                                baseline.get("candidate_evaluator_identity") != saved_evaluator_identity
+                                or baseline.get("candidate_evaluator_cache_identity") != saved_evaluator_cache_identity
+                                or baseline.get("donor_manifest_sha256") != donor["manifest_sha256"]
+                            ):
+                                raise ValueError("V15 same-S baseline evaluator/input identity differs")
+                            baseline_record = baseline["candidate_full_action_gate"]["full_action_artifact"]
+                            baseline_array_path = Path(baseline_record["path"]).resolve(strict=True)
+                            if (not baseline_array_path.is_relative_to(baseline_root.resolve())
+                                or baseline_record["sha256"] != TASK41_P0_V11_V9_FULL_ACTION_ARRAY_SHA256
+                                or baseline_array_path.stat().st_size != baseline_record["bytes"]
+                                or sha256_file(baseline_array_path) != baseline_record["sha256"]):
+                                raise ValueError("V15 same-S saved action array path/hash/bytes differs")
+                            same_s = np.load(baseline_array_path, mmap_mode="r", allow_pickle=False)
+                            if same_s.shape != (5_752_120, 2) or same_s.dtype != np.complex128:
+                                raise ValueError("V15 same-S saved action layout differs")
+                            donor["same_s_action_reference"] = same_s
+                            donor["same_s_action_reference_binding"] = {
+                                "report_path": str(baseline_path), "report_sha256": TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+                                "artifact": dict(baseline_record), "source_reassigned": False,
+                            }
+
                         c_source_path, c_source_sha256 = _task41_v9_frozen_c_source_binding(
                             prefix_report,
                             repo_root=repo_root,
@@ -11598,36 +11980,59 @@ def run_task40_v10_p6_reference_worker(
                             context["volume_form"],
                             jit_options=dict(SAME_MESH_JIT_OPTIONS),
                         )
-                        owner_result = build_task41_v4_volume_only_owner(
-                            cfg,
-                            donor,
-                            directory,
-                            allocation_gate=allocation_gate,
-                            progress_callback=lambda event: runtime.marker(
-                                "task41_b0_v9_volume_owner", dict(event)
-                            ),
-                            persist_array=lambda name, values: (_ for _ in ()).throw(
-                                RuntimeError(
-                                    "V9 same-owner qualification must not persist duplicate V4 selected arrays"
-                                )
-                            ),
-                            geometry_policy="mesh_actual_exact",
-                            raw_tensor_evaluator_kind="actual_qmetric_blocked_gram",
-                            ffcx_c_source_path=c_source_path,
-                            internal_rhs_strategy="same_lu_rhs_solve",
-                            internal_rhs_refinement_max_steps=(
-                                task41_internal_rhs_refinement_max_steps
-                            ),
-                            levels=target_levels,
-                            volume_form=context["volume_form"],
-                            compiled_form=compiled_form,
-                            appended_support_owned_cell_groups=context["support_groups"],
-                            appended_support_group_by_row=context["support_rows"],
-                            persist_selected_evidence=False,
-                            reserved_followup_evidence_bytes=TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES,
-                            required_prefix_cells=TASK41_P0_V6_PREFIX_CELLS,
-                            prefix_cell_validator=validate_v9_prefix_cell,
-                        )
+                        def build_volume_owner() -> Mapping[str, Any]:
+                            return build_task41_v4_volume_only_owner(
+                                cfg,
+                                donor,
+                                directory,
+                                allocation_gate=allocation_gate,
+                                progress_callback=lambda event: runtime.marker(
+                                    "task41_b0_v9_volume_owner", dict(event)
+                                ),
+                                persist_array=lambda name, values: (_ for _ in ()).throw(
+                                    RuntimeError(
+                                        "V9 same-owner qualification must not persist duplicate V4 selected arrays"
+                                    )
+                                ),
+                                geometry_policy="mesh_actual_exact",
+                                raw_tensor_evaluator_kind="actual_qmetric_blocked_gram",
+                                ffcx_c_source_path=c_source_path,
+                                internal_rhs_strategy="same_lu_rhs_solve",
+                                internal_rhs_refinement_max_steps=(
+                                    task41_internal_rhs_refinement_max_steps
+                                ),
+                                levels=target_levels,
+                                volume_form=context["volume_form"],
+                                compiled_form=compiled_form,
+                                appended_support_owned_cell_groups=context["support_groups"],
+                                appended_support_group_by_row=context["support_rows"],
+                                persist_selected_evidence=False,
+                                reserved_followup_evidence_bytes=(
+                                    TASK41_V15_TERMINAL_EVIDENCE_RESERVE_BYTES if task41_v15_acceptance_only
+                                    else TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES
+                                ),
+                                required_prefix_cells=TASK41_P0_V6_PREFIX_CELLS,
+                                prefix_cell_validator=validate_v9_prefix_cell,
+                            )
+
+                        if full_owner_scope_authorized:
+                            def preserve_built_owner(result: Any) -> None:
+                                nonlocal owner_result
+                                owner_result = result
+
+                            owner_result, quota_claim = _task41_b0_build_v15_full_owner_once(
+                                campaign_authority,
+                                run_directory=directory,
+                                owner_builder=build_volume_owner,
+                                claim_started_callback=lambda claim: summary.__setitem__(
+                                    "v15_full_owner_quota_claim", dict(claim)
+                                ),
+                                owner_built_callback=preserve_built_owner,
+                                current_root=repo_root,
+                            )
+                            summary["v15_full_owner_quota_claim"] = quota_claim
+                        else:
+                            owner_result = build_volume_owner()
                         condensed = owner_result["condensed"]
                         if (
                             owner_result["levels"] is not target_levels
@@ -11638,6 +12043,22 @@ def run_task40_v10_p6_reference_worker(
                         ):
                             raise ValueError(
                                 "Task41 V9 owner did not reuse the pre-donor target FE/J setup"
+                            )
+                        actual_k_lu_identity = None
+                        if task41_v15_acceptance_only:
+                            actual_k_lu_identity = _task41_b0_actual_k_lu_identity(
+                                condensed
+                            )
+                            if (
+                                not isinstance(quota_claim, Mapping)
+                                or quota_claim.get("actual_k_lu_identity")
+                                != actual_k_lu_identity
+                            ):
+                                raise ValueError(
+                                    "Task41 V15 worker actual K/LU identity differs from its fixed-window owner claim"
+                                )
+                            summary["v15_actual_k_lu_identity"] = dict(
+                                actual_k_lu_identity
                             )
                         evaluator_audit = condensed.build_audit.get("raw_tensor_evaluator")
                         if not isinstance(evaluator_audit, Mapping):
@@ -11730,6 +12151,136 @@ def run_task40_v10_p6_reference_worker(
                             if facts.get("status") in {"STARTED", "COMPLETED", "GATE_FAILED"}:
                                 runtime.sample("task41_b0_v9_compact_volume_audit_progress")
 
+                        v15_checkpoint_path = directory / (
+                            "task41_p0_b0_v15_terminal_sufficient_checkpoint.json"
+                        )
+                        v15_checkpoint: dict[str, Any] | None = None
+                        if task41_v15_acceptance_only:
+                            v15_checkpoint = {
+                                "schema": "task41.p0.b0.v15_terminal_sufficient_checkpoint.v1",
+                                "status": "IN_PROGRESS",
+                                "layout": "v15_terminal_sufficient",
+                                "run_directory": str(directory.resolve()),
+                                "source_sha": source_sha,
+                                "contract_path": str(
+                                    campaign_authority["task41_contract_path"]
+                                ),
+                                "contract_sha256": str(
+                                    campaign_authority["task41_contract_sha256"]
+                                ),
+                                "window_path": str(
+                                    campaign_authority["campaign_window_path"]
+                                ),
+                                "window_sha256": str(
+                                    campaign_authority["campaign_window_sha256"]
+                                ),
+                                "owner_quota_claim": dict(quota_claim),
+                                "actual_k_lu_identity": dict(actual_k_lu_identity),
+                                "candidate_evaluator_identity": str(
+                                    evaluator_audit["implementation"]
+                                ),
+                                "candidate_evaluator_cache_identity": str(
+                                    evaluator_audit["cache_identity"]
+                                ),
+                                "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+                                "refinement_max_steps": 2,
+                                "artifacts": [],
+                                "completed_action_columns": [],
+                                "completed_recovery_columns": [],
+                                "operation_counts": {},
+                                "same_s_action_reference_binding": dict(
+                                    donor["same_s_action_reference_binding"]
+                                ),
+                            }
+
+                            def save_v15_terminal_checkpoint(
+                                event: Mapping[str, Any],
+                            ) -> None:
+                                assert v15_checkpoint is not None
+                                facts = dict(event)
+                                if isinstance(facts.get("artifacts"), list):
+                                    v15_checkpoint["artifacts"] = [
+                                        dict(item)
+                                        for item in facts["artifacts"]
+                                        if isinstance(item, Mapping)
+                                    ]
+                                if facts.get("event") == "action_column_completed":
+                                    completed = v15_checkpoint.setdefault(
+                                        "completed_action_columns", []
+                                    )
+                                    if facts.get("column") not in completed:
+                                        completed.append(facts.get("column"))
+                                elif facts.get("event") == "action_gate_completed":
+                                    v15_checkpoint["action_gate"] = facts.get(
+                                        "candidate_action_gate"
+                                    )
+                                    v15_checkpoint["completed_action_columns"] = list(
+                                        facts.get("completed_action_columns", [])
+                                    )
+                                elif facts.get("event") == "recovery_column_completed":
+                                    completed = v15_checkpoint.setdefault(
+                                        "completed_recovery_columns", []
+                                    )
+                                    if facts.get("column") not in completed:
+                                        completed.append(facts.get("column"))
+                                    rows = v15_checkpoint.setdefault(
+                                        "recovery_columns", []
+                                    )
+                                    rows.append(dict(facts["recovery_column"]))
+                                elif facts.get("event") == "identity_audit_completed":
+                                    v15_checkpoint["status"] = str(
+                                        facts.get("audit_status", "COMPLETED")
+                                    )
+                                    v15_checkpoint["identity_audit"] = dict(
+                                        facts.get("identity_audit", {})
+                                    )
+                                if isinstance(facts.get("operation_counts"), Mapping):
+                                    v15_checkpoint["operation_counts"] = dict(
+                                        facts["operation_counts"]
+                                    )
+                                v15_checkpoint["last_event"] = facts
+                                v15_checkpoint["new_evidence_bytes"] = facts.get(
+                                    "new_evidence_bytes",
+                                    v15_checkpoint.get("new_evidence_bytes"),
+                                )
+                                _write_json(v15_checkpoint_path, v15_checkpoint)
+                                summary["b0_v15_terminal_sufficient_checkpoint"] = {
+                                    "path": str(v15_checkpoint_path.resolve()),
+                                    "bytes": int(v15_checkpoint_path.stat().st_size),
+                                    "sha256": sha256_file(v15_checkpoint_path),
+                                    "status": v15_checkpoint.get("status"),
+                                    "completed_action_columns": list(
+                                        v15_checkpoint.get(
+                                            "completed_action_columns", []
+                                        )
+                                    ),
+                                    "completed_recovery_columns": list(
+                                        v15_checkpoint.get(
+                                            "completed_recovery_columns", []
+                                        )
+                                    ),
+                                }
+                                _write_json(
+                                    directory / "task40_v10_p6_candidate_summary.json",
+                                    summary,
+                                )
+                        else:
+                            save_v15_terminal_checkpoint = None
+                        if v15_checkpoint is not None:
+                            _write_json(v15_checkpoint_path, v15_checkpoint)
+                            summary["b0_v15_terminal_sufficient_checkpoint"] = {
+                                "path": str(v15_checkpoint_path.resolve()),
+                                "bytes": int(v15_checkpoint_path.stat().st_size),
+                                "sha256": sha256_file(v15_checkpoint_path),
+                                "status": v15_checkpoint["status"],
+                                "completed_action_columns": [],
+                                "completed_recovery_columns": [],
+                            }
+                            _write_json(
+                                directory / "task40_v10_p6_candidate_summary.json",
+                                summary,
+                            )
+
                         identity_report = audit_task41_v4_volume_identity(
                             condensed,
                             donor,
@@ -11742,34 +12293,95 @@ def run_task40_v10_p6_reference_worker(
                             candidate_identity=str(evaluator_audit["implementation"]),
                             candidate_cache_identity=str(evaluator_audit["cache_identity"]),
                             compact_evidence=True,
+                            compact_evidence_layout=(
+                                "v15_terminal_sufficient"
+                                if task41_v15_acceptance_only
+                                else "v9_full"
+                            ),
+                            actual_k_lu_identity=(
+                                actual_k_lu_identity
+                                if task41_v15_acceptance_only
+                                else None
+                            ),
+                            refinement_strategy=(
+                                TASK41_B0_V14_RHS_REFINEMENT_STRATEGY
+                                if task41_v15_acceptance_only
+                                else None
+                            ),
+                            terminal_evidence_callback=save_v15_terminal_checkpoint,
                             recovery_refinement_max_steps=3,
-                            reserved_followup_evidence_bytes=TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES,
+                            reserved_followup_evidence_bytes=(
+                                TASK41_V15_TERMINAL_EVIDENCE_RESERVE_BYTES
+                                if task41_v15_acceptance_only
+                                else TASK41_V9_COMPACT_EVIDENCE_RESERVE_BYTES
+                            ),
                         )
                         identity_path = directory / "task41_p0_b0_v9_compact_volume_audit.json"
                         _write_json(identity_path, identity_report)
-                        allocation_gate(
-                            "task41_v9_independent_terminal_checker",
-                            {
-                                "additional_payload_bytes": 0,
-                                "workspace_bytes": 2
-                                * condensed.full_rows
-                                * np.dtype(np.complex128).itemsize,
-                                "native_volume_action_calls": 2,
-                                "saved_surface_or_carrier_reads": 0,
-                                "reopens_compact_artifacts": True,
-                                "runs_before_full_surface_donor_scan": True,
-                            },
-                        )
-                        independent_check = check_task41_b0_v9_compact_volume_audit(
-                            identity_report,
-                            donor,
-                            output_directory=directory,
-                            native_volume_apply=native_volume_apply,
-                            expected_candidate_identity=str(evaluator_audit["implementation"]),
-                            expected_cache_identity=str(evaluator_audit["cache_identity"]),
-                        )
+                        if task41_v15_acceptance_only:
+                            save_v15_terminal_checkpoint(
+                                {
+                                    "schema": "task41.p0.b0.v15_terminal_sufficient_checkpoint.v1",
+                                    "event": "identity_audit_completed",
+                                    "audit_status": identity_report.get("status"),
+                                    "identity_audit": {
+                                        "path": str(identity_path.resolve()),
+                                        "bytes": int(identity_path.stat().st_size),
+                                        "sha256": sha256_file(identity_path),
+                                        "status": identity_report.get("status"),
+                                        "official_result": False,
+                                    },
+                                    "operation_counts": identity_report.get(
+                                        "operation_counts", {}
+                                    ),
+                                }
+                            )
                         checker_path = directory / "task41_p0_b0_v9_compact_independent_check.json"
-                        _write_json(checker_path, independent_check)
+                        if task41_v15_acceptance_only:
+                            independent_check = {
+                                "schema": "task41.p0.b0.v15_original_service_terminal_audit_pending.v1",
+                                "status": "PENDING_ORIGINAL_SERVICE_TERMINAL_AUDIT",
+                                "passed": None,
+                                "official_result": False,
+                                "audit_command_owner": "original_task41_p0_service",
+                                "completed_action_gate": identity_report.get(
+                                    "candidate_full_action_gate", {}
+                                ).get("status"),
+                                "completed_recovery_gate": identity_report.get(
+                                    "candidate_recovery_gate", {}
+                                ).get("status"),
+                            }
+                            checker_path = directory / (
+                                "task41_p0_b0_v15_terminal_audit_pending.json"
+                            )
+                            _write_json(checker_path, independent_check)
+                            if identity_report.get("completed") is not True:
+                                raise ValueError(
+                                    "Task41 V15 compact audit did not complete; original-service audit will classify partial products"
+                                )
+                        else:
+                            allocation_gate(
+                                "task41_v9_independent_terminal_checker",
+                                {
+                                    "additional_payload_bytes": 0,
+                                    "workspace_bytes": 2
+                                    * condensed.full_rows
+                                    * np.dtype(np.complex128).itemsize,
+                                    "native_volume_action_calls": 2,
+                                    "saved_surface_or_carrier_reads": 0,
+                                    "reopens_compact_artifacts": True,
+                                    "runs_before_full_surface_donor_scan": True,
+                                },
+                            )
+                            independent_check = check_task41_b0_v9_compact_volume_audit(
+                                identity_report,
+                                donor,
+                                output_directory=directory,
+                                native_volume_apply=native_volume_apply,
+                                expected_candidate_identity=str(evaluator_audit["implementation"]),
+                                expected_cache_identity=str(evaluator_audit["cache_identity"]),
+                            )
+                            _write_json(checker_path, independent_check)
                         summary["b0_v9_compact_volume_audit"] = {
                             "schema": identity_report["schema"],
                             "status": identity_report["status"],
@@ -11788,18 +12400,31 @@ def run_task40_v10_p6_reference_worker(
                             "sha256": sha256_file(checker_path),
                             "native_volume_action_calls_total": native_volume_action_calls,
                         }
+                        if task41_v15_acceptance_only:
+                            summary["b0_v15_terminal_sufficient_audit"] = {
+                                "schema": identity_report["schema"],
+                                "status": identity_report["status"],
+                                "path": str(identity_path.resolve()),
+                                "bytes": int(identity_path.stat().st_size),
+                                "sha256": sha256_file(identity_path),
+                                "layout": identity_report.get(
+                                    "compact_evidence_layout"
+                                ),
+                                "terminal_audit_status": "PENDING_ORIGINAL_SERVICE",
+                                "official_result": False,
+                            }
                         runtime.marker(
                             "task41_b0_v9_compact_volume_qualification",
                             {
                                 "audit_status": identity_report["status"],
                                 "independent_checker_status": independent_check["status"],
-                                "independent_checker_passed": independent_check["passed"],
+                                "independent_checker_passed": independent_check.get("passed"),
                                 "audit_path": str(identity_path),
                                 "checker_path": str(checker_path),
                                 "before_full_surface_donor_scan": True,
                             },
                         )
-                        if (
+                        if not task41_v15_acceptance_only and (
                             identity_report.get("status") != "PASS"
                             or independent_check.get("passed") is not True
                         ):
@@ -11856,6 +12481,7 @@ def run_task40_v10_p6_reference_worker(
                     else None
                 ),
                 pre_donor_qualification_callback=pre_donor_qualification_callback,
+                stop_after_pre_donor_qualification=task41_v15_acceptance_only,
                 stage_callback=target_stage_callback,
             )
             target_condensed = _task41_b0_v9_pre_donor_condensed(target_bundle)
@@ -11866,6 +12492,73 @@ def run_task40_v10_p6_reference_worker(
                 )
             if tuple(map(int, cfg.mesh_axis_cell_counts_requested or ())) != periodic_profile.global_cell_axes:
                 raise ValueError(f"{case_label} resolved mesh axes differ from its p6 profile")
+
+            if task41_v15_acceptance_only:
+                pre_donor_state = target_bundle.get("pre_donor_qualification")
+                if not isinstance(pre_donor_state, Mapping):
+                    raise ValueError(
+                        "Task41 V15 acceptance-only route has no completed same-owner qualification"
+                    )
+                identity_report = pre_donor_state.get("identity_report")
+                independent_check = pre_donor_state.get("independent_check")
+                if (
+                    not isinstance(identity_report, Mapping)
+                    or identity_report.get("completed") is not True
+                    or not isinstance(independent_check, Mapping)
+                    or independent_check.get("status")
+                    != "PENDING_ORIGINAL_SERVICE_TERMINAL_AUDIT"
+                ):
+                    raise ValueError(
+                        "Task41 V15 acceptance-only route lacks complete compact evidence for service audit"
+                    )
+                action_status = str(
+                    identity_report.get("candidate_full_action_gate", {}).get(
+                        "status", "INCOMPLETE"
+                    )
+                )
+                recovery_status = str(
+                    identity_report.get("candidate_recovery_gate", {}).get(
+                        "status", "NOT_RUN"
+                    )
+                )
+                result_classification = (
+                    "NUMERICAL_GATES_PASSED_AUDIT_PENDING"
+                    if action_status == "PASS" and recovery_status == "PASS"
+                    else "FULL_ACTION_GATE_FAILED"
+                    if action_status != "PASS"
+                    else "FULL_RECOVERY_GATE_FAILED"
+                )
+                summary.update(
+                    status="ACCEPTANCE_ONLY_AUDIT_PENDING",
+                    result_classification=result_classification,
+                    official_result=False,
+                    numerical_product_terminal="acceptance_only",
+                    full_action_gate_status=action_status,
+                    full_recovery_gate_status=recovery_status,
+                    original_service_terminal_audit_required=True,
+                    full_owner_quota_claim=summary.get(
+                        "v15_full_owner_quota_claim"
+                    ),
+                )
+                runtime.marker(
+                    "task41_b0_v15_acceptance_only_exit",
+                    {
+                        "status": "TERMINAL_AUDIT_PENDING",
+                        "result_classification": result_classification,
+                        "action_gate_status": action_status,
+                        "recovery_gate_status": recovery_status,
+                        "official_result": False,
+                        "downstream_200q_started": False,
+                    },
+                )
+                worker_result = {
+                    "passed": True,
+                    "status": "acceptance_only_terminal_audit_pending",
+                    "official_result": False,
+                    "errors": [],
+                    "summary": summary,
+                }
+                return worker_result
 
             regular_cfg = (
                 _task40_v10_regular_reference_cfg(cfg, fill_y_period=True)
@@ -15428,6 +16121,14 @@ def run_task40_v10_p6_reference_worker(
                     summary["allocation_gate_invocation_count"] = int(
                         allocation_gate_invocation_count
                     )
+                if task41_v15_acceptance_only:
+                    summary["v15_cleanup"] = {
+                        "completed": True,
+                        "passed": not summary.get("cleanup_errors"),
+                        "errors": list(summary.get("cleanup_errors", ())),
+                        "scope": "worker_owned_actions_levels_and_runtime_post_cleanup_sample",
+                        "descendants_checked_by": "independent_launcher_watchdog",
+                    }
                 _write_json(directory / "task40_v10_p6_candidate_summary.json", summary)
                 runtime.marker("v10_candidate_worker_complete", summary)
                 if is_v16 or is_v17:

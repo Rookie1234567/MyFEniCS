@@ -1,0 +1,99 @@
+{
+  "schema": "task41.v15.p0_preparation.v1",
+  "status": "P0_READY_PENDING_36H_USER_AUTHORIZATION",
+  "review_head": "611f3497c4b977b10e783444bcd9c9a8aea9a9c5",
+  "result_base": "de2353b9ce46fbbb2c6fd4498ea24139b39d162f",
+  "tested_source_diff_sha256": "1b4fa69e92c0109e9478478670816e0da89225d6af124ed6f8c649a451e54faa",
+  "tested_against_head": "611f3497c4b977b10e783444bcd9c9a8aea9a9c5",
+  "tests": {
+    "passed": 31,
+    "failed": 0,
+    "wall_seconds": 7.42,
+    "scope": "only changed contracts,compact/checker,service,owner lifecycle and directly affected V14 nodes",
+    "ci": false
+  },
+  "prior_engineering_failures": [
+    {
+      "unit": 5,
+      "passed": 8,
+      "failed": 1,
+      "seconds": 2.53,
+      "cause": "tiny fixture retained production-size V15 evidence reserve against its 2 MB fixture cap",
+      "remote_log": "/tmp/task41_v15_p0_unit5_tests.log"
+    },
+    {
+      "unit": 6,
+      "passed": 2,
+      "failed": 1,
+      "seconds": 2.85,
+      "cause": "zero-output fixture exposed NumPy bool versus Python bool identity comparison in action metrics",
+      "remote_log": "/tmp/task41_v15_p0_unit6_tests.log"
+    }
+  ],
+  "execution": {
+    "host": "fenics-ws01",
+    "cwd": "/home/fenics/Projects/laptop_share",
+    "abi_receipt_sha256": "1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
+    "scalar": "complex128",
+    "int": "int32",
+    "mpi": 1,
+    "math_threads": 1
+  },
+  "formal": {
+    "window_created": false,
+    "authorization_received": false,
+    "owner_builds": 0,
+    "action": "NOT_RUN",
+    "recovery": "NOT_RUN",
+    "official_result": false,
+    "success_exit": "acceptance_only",
+    "downstream_authorized": false
+  },
+  "budget": {
+    "total_seconds_proposal": 129600,
+    "numeric_seconds_proposal": 128400,
+    "closeout_seconds": 1200,
+    "local_payload_derived_bytes": 526373172000,
+    "new_K_derived_bytes": 90720000000,
+    "task_cap_bytes": 1649267441664,
+    "host_reserve_bytes": 68719476736,
+    "task_swap_limit_bytes": 0,
+    "raw_cap_bytes": 17179869184,
+    "raw_existing_stat_bytes": 15234897312,
+    "raw_remaining_bytes": 1944971872,
+    "new_terminal_array_payload_bytes": 1552201216,
+    "new_raw_ceiling_bytes": 1900000000,
+    "log_disk_planning_reserve_bytes": 4294967296,
+    "nonraw_metadata_reserve_bytes": 268435456,
+    "free_disk_floor_bytes": 2147483648,
+    "four_rhs_fsum_scenario_seconds": [
+      13104,
+      20496
+    ],
+    "other_acceptance_planning_reserve_seconds": 14400,
+    "other_acceptance_reserve_measured": false,
+    "full_stage_rss_admission": "must re-read at formal start and real build allocation gates"
+  },
+  "cost": {
+    "formal_seconds": 0,
+    "engineering_total_seconds": "UNKNOWN",
+    "test_seconds_not_additive_to_engineering_parent": 7.42
+  },
+  "files": [
+    {
+      "path": "task41_v15_checker_help.txt",
+      "bytes": 3829,
+      "sha256": "447c11d1732a7b63c5dcba242a16923f1b81c79fc9c6acc1e4ff3e3d37f76503"
+    },
+    {
+      "path": "task41_v15_p0_final_tests.log",
+      "bytes": 99,
+      "sha256": "35fe363ae9122860d9ab5f34e0ee9ea16c509080d849ecfe07956ba36e73c10d"
+    },
+    {
+      "path": "task41_v15_prepare_help.txt",
+      "bytes": 1304,
+      "sha256": "ca1acc27311ecaaba65f53937da6a5b7d599a305cc0082b679b4c1b89bf1a0cd"
+    }
+  ]
+}

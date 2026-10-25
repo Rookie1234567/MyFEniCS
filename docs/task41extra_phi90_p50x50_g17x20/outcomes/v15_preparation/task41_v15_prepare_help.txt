@@ -1,0 +1,28 @@
+usage: task41_p0_contract.py [-h] (--launcher-values | --prepare)
+                             [--contract CONTRACT]
+                             [--saved-output-continuation]
+                             [--runtime-prefix RUNTIME_PREFIX]
+                             [--abi-receipt ABI_RECEIPT]
+                             [--jit-cache JIT_CACHE] [--b0-v3-continuation]
+                             [--b0-v6-continuation] [--b0-v9-continuation]
+                             [--b0-saved-diagnostics-6h]
+                             [--b0-saved-diagnostics-instance {v12_two_cell_candidate_replay,v14_same_lu_rhs_candidate_6h,v15_full_two_column_acceptance_36h}]
+                             [--case {A1,A2,B0}]
+                             [--a2-q-csr-manifest A2_Q_CSR_MANIFEST]
+
+options:
+  -h, --help            show this help message and exit
+  --launcher-values
+  --prepare
+  --contract CONTRACT
+  --saved-output-continuation
+  --runtime-prefix RUNTIME_PREFIX
+  --abi-receipt ABI_RECEIPT
+  --jit-cache JIT_CACHE
+  --b0-v3-continuation
+  --b0-v6-continuation
+  --b0-v9-continuation
+  --b0-saved-diagnostics-6h
+  --b0-saved-diagnostics-instance {v12_two_cell_candidate_replay,v14_same_lu_rhs_candidate_6h,v15_full_two_column_acceptance_36h}
+  --case {A1,A2,B0}
+  --a2-q-csr-manifest A2_Q_CSR_MANIFEST

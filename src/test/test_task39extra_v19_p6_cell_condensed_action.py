@@ -734,6 +734,8 @@ def test_same_lu_internal_correction_updates_only_cell_interior_rows() -> None:
         np.testing.assert_array_equal(corrected[2:], storage[2:])
         assert np.all(np.isfinite(corrected))
         assert block["Vii"].shape == (2, 2)
+        assert action.audit["native_recovery_correction_getrs_count"] == 1
+        assert action.audit["native_recovery_correction_getrs_seconds"] >= 0.0
     finally:
         action.destroy()
 

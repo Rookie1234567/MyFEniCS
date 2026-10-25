@@ -30,6 +30,7 @@ from src.io import load_and_resolve
 from src.runners.task41_p0_contract import (
     TASK41_A1_COMPARISON_BINDING_RELATIVE,
     TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
+    TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
     TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
     TASK41_B0_RUN_ID,
     TASK41_B0_V9_WINDOW_RELATIVE,
@@ -52,6 +53,11 @@ from src.runners.task41_p0_comparison import (
 CHECKER_SCHEMA = "task41.p0.direct_checker.v1"
 A2_CHECKER_SCHEMA = "task41.p0.a2_iterative_checker.v1"
 B0_CHECKER_SCHEMA = "task41.p0.b0_iterative_checker.v1"
+TASK41_P0_V15_SAME_S_BASELINE_RUN_RELATIVE = Path(
+    "results/task41extra_phi90_p50x50_g17x20/"
+    "task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/"
+    "20261022T052401.200732Z"
+)
 TASK41_P0_V5_FROZEN_DENOMINATORS = (2225.481253487629, 2225.4807123031883)
 TASK41_P0_V5_RELATIVE_TOLERANCE = 1.0e-11
 TASK41_P0_V5_GEOMETRY_REFERENCE_SHA256 = (
@@ -5050,6 +5056,10 @@ def check_task41_b0_v9_compact_volume_audit(
         TASK41_V5_FROZEN_DENOMINATORS,
         TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE,
     )
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+        TASK41_P0_V11_V9_FULL_ACTION_ARRAY_SHA256,
+    )
 
     root = Path(output_directory).resolve(strict=True)
     columns = tuple(donor.get("columns", ()))
@@ -5209,8 +5219,8 @@ def check_task41_b0_v9_compact_volume_audit(
             )
             dynamic_relative = difference / dynamic_denom
             frozen_relative = difference / frozen_denominator
-            dynamic_passed = dynamic_relative <= TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE
-            frozen_passed = frozen_relative <= TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE
+            dynamic_passed = bool(dynamic_relative <= TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE)
+            frozen_passed = bool(frozen_relative <= TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE)
             action_columns.append(bool(dynamic_passed and frozen_passed))
             if not isinstance(reported_action_columns, list) or len(reported_action_columns) != 2:
                 continue
@@ -5485,6 +5495,1287 @@ def check_task41_b0_v9_compact_volume_audit(
         "native_action_receipts_reused": reused_action_receipts,
         "errors": errors,
     }
+
+
+def check_task41_p0_b0_v15_terminal_sufficient_audit(
+    report: Mapping[str, Any] | None,
+    donor: Mapping[str, Any],
+    *,
+    output_directory: str | Path,
+    checkpoint: Mapping[str, Any] | None = None,
+    expected_candidate_identity: str | None = None,
+    expected_cache_identity: str | None = None,
+) -> dict[str, Any]:
+    """Independently audit V15 per-column y/g and terminal recovery arrays.
+
+    V15 stores each completed action column and, after the action gate passes,
+    each final storage/native-action pair.  The native residual is deliberately
+    reconstructed here as ``donor RHS - saved native action`` rather than read
+    from a second full-size residual artifact.
+    """
+    from src.solvers.task41_v4_volume_only_audit import (
+        TASK41_V4_ACTIVE_TRACE_ROWS,
+        TASK41_V4_APPENDED_ROWS,
+        TASK41_V4_FULL_STORAGE_ROWS,
+        TASK41_V5_FROZEN_DENOMINATORS,
+        TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE,
+    )
+
+    from src.runners.task41_p0_v4_volume_only_audit import (
+        TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+        TASK41_P0_V11_V9_FULL_ACTION_ARRAY_SHA256,
+    )
+
+    checkpoint_schema = "task41.p0.b0.v15_terminal_sufficient_checkpoint.v1"
+    compact_schema = "task41.p0.b0.v9.compact_volume_identity.v1"
+    result: dict[str, Any] = {
+        "schema": "task41.p0.b0.v15.terminal_sufficient_independent_check.v1",
+        "status": "INCOMPLETE",
+        "classification": "TERMINAL_EVIDENCE_INVALID",
+        "audit_completed": False,
+        "data_integrity": False,
+        "action_passed": None,
+        "recovery_passed": None,
+        "official_result": False,
+        "scientific_qualified": False,
+        "checks": {},
+        "action_columns": [],
+        "recovery_columns": [],
+        "errors": [],
+    }
+    checks: dict[str, bool] = {}
+    errors: list[str] = []
+    action_passed: bool | None = None
+    recovery_passed: bool | None = None
+    action_columns_checked: list[dict[str, Any]] = []
+    recovery_columns_checked: list[dict[str, Any]] = []
+
+    def require(condition: bool, name: str, message: str) -> None:
+        checks[name] = bool(condition)
+        if not condition:
+            raise ValueError(message)
+
+    def sha256_array(values: np.ndarray) -> str:
+        array = np.asarray(values)
+        if array.ndim not in (1, 2):
+            raise ValueError("V15 terminal arrays must be one- or two-dimensional")
+        digest = hashlib.sha256()
+        for start in range(0, array.shape[0], 262_144):
+            block = np.ascontiguousarray(array[start : start + 262_144])
+            digest.update(memoryview(block).cast("B"))
+        return digest.hexdigest()
+
+    def finite_array(values: np.ndarray) -> bool:
+        return all(
+            bool(np.isfinite(np.asarray(values[start : start + 262_144])).all())
+            for start in range(0, values.size, 262_144)
+        )
+
+    def norm_squared(values: np.ndarray) -> float:
+        total = 0.0
+        for start in range(0, values.size, 262_144):
+            chunk = np.asarray(values[start : start + 262_144], dtype=np.complex128)
+            total += float(np.vdot(chunk, chunk).real)
+        return total
+
+    def difference_squared(left: np.ndarray, right: np.ndarray) -> float:
+        if left.shape != right.shape:
+            raise ValueError("V15 terminal comparison arrays have different shapes")
+        total = 0.0
+        for start in range(0, left.size, 262_144):
+            stop = min(left.size, start + 262_144)
+            delta = np.asarray(left[start:stop], dtype=np.complex128) - np.asarray(
+                right[start:stop], dtype=np.complex128
+            )
+            total += float(np.vdot(delta, delta).real)
+        return total
+
+    def close_float(actual: Any, expected: float) -> bool:
+        if isinstance(actual, bool) or not isinstance(actual, (int, float)):
+            return False
+        actual_float = float(actual)
+        return bool(
+            np.isfinite(actual_float)
+            and abs(actual_float - expected)
+            <= 5.0e-13 * max(abs(expected), 1.0e-300) + 5.0e-15
+        )
+
+    def valid_digest(value: Any, length: int) -> bool:
+        return isinstance(value, str) and re.fullmatch(rf"[0-9a-f]{{{length}}}", value) is not None
+
+    try:
+        root = Path(output_directory).resolve(strict=True)
+        require(root.is_dir(), "run_root", "V15 audit output directory is not a directory")
+
+        if checkpoint is None and isinstance(report, Mapping) and report.get("schema") == checkpoint_schema:
+            checkpoint = report
+            report = None
+        if checkpoint is not None:
+            require(
+                checkpoint.get("schema") == checkpoint_schema
+                and checkpoint.get("layout") == "v15_terminal_sufficient"
+                and Path(str(checkpoint.get("run_directory", ""))).resolve() == root,
+                "checkpoint_identity",
+                "V15 checkpoint schema, layout, or run directory differs",
+            )
+            require(
+                valid_digest(checkpoint.get("source_sha"), 40)
+                and isinstance(checkpoint.get("contract_path"), str)
+                and bool(checkpoint.get("contract_path"))
+                and valid_digest(checkpoint.get("contract_sha256"), 64)
+                and isinstance(checkpoint.get("window_path"), str)
+                and bool(checkpoint.get("window_path"))
+                and valid_digest(checkpoint.get("window_sha256"), 64)
+                and isinstance(checkpoint.get("owner_quota_claim"), Mapping),
+                "checkpoint_source_contract_window",
+                "V15 checkpoint source, contract, window, or owner binding is incomplete",
+            )
+            checkpoint_identity = checkpoint.get("actual_k_lu_identity")
+            require(
+                isinstance(checkpoint_identity, Mapping)
+                and checkpoint_identity.get("schema")
+                == "task41.p0.b0.v15_actual_k_lu_generation_identity.v1"
+                and checkpoint_identity.get(
+                    "actual_k_and_lu_share_generation_token_for_every_class"
+                )
+                is True
+                and checkpoint.get("refinement_strategy")
+                == TASK41_B0_V14_RHS_REFINEMENT_STRATEGY
+                and checkpoint.get("refinement_max_steps") == 2,
+                "checkpoint_algorithm_identity",
+                "V15 checkpoint K/LU or two-step RHS refinement identity differs",
+            )
+            require(
+                isinstance(checkpoint.get("candidate_evaluator_identity"), str)
+                and bool(checkpoint.get("candidate_evaluator_identity"))
+                and isinstance(checkpoint.get("candidate_evaluator_cache_identity"), str)
+                and bool(checkpoint.get("candidate_evaluator_cache_identity")),
+                "checkpoint_evaluator_identity",
+                "V15 checkpoint evaluator/cache identity is missing",
+            )
+
+            checkpoint_artifacts = checkpoint.get("artifacts", [])
+            require(
+                isinstance(checkpoint_artifacts, list),
+                "checkpoint_artifact_inventory",
+                "V15 checkpoint artifact inventory is malformed",
+            )
+            artifact_by_name: dict[str, Mapping[str, Any]] = {}
+            for item in checkpoint_artifacts:
+                if not isinstance(item, Mapping) or not isinstance(item.get("name"), str):
+                    raise ValueError("V15 checkpoint contains an unnamed artifact")
+                name = str(item["name"])
+                if name in artifact_by_name:
+                    raise ValueError("V15 checkpoint repeats an artifact name")
+                artifact_by_name[name] = item
+
+            identity_ref = checkpoint.get("identity_audit")
+            if identity_ref is not None:
+                require(
+                    isinstance(identity_ref, Mapping),
+                    "checkpoint_identity_audit_ref",
+                    "V15 checkpoint identity-audit reference is malformed",
+                )
+                identity_path = Path(str(identity_ref.get("path", ""))).resolve(strict=True)
+                require(
+                    identity_path.is_relative_to(root)
+                    and type(identity_ref.get("bytes")) is int
+                    and identity_path.stat().st_size == identity_ref["bytes"]
+                    and valid_digest(identity_ref.get("sha256"), 64)
+                    and sha256_file(identity_path) == identity_ref.get("sha256"),
+                    "checkpoint_identity_audit_hash",
+                    "V15 checkpoint identity-audit file is outside the run or changed",
+                )
+                checkpoint_report = _json_object(identity_path, "V15 compact identity audit")
+                if report is None:
+                    report = checkpoint_report
+                else:
+                    require(
+                        dict(report) == checkpoint_report,
+                        "checkpoint_identity_audit_content",
+                        "V15 supplied report differs from the hash-bound checkpoint report",
+                    )
+                require(
+                    identity_ref.get("status") == checkpoint_report.get("status")
+                    and checkpoint.get("status") == checkpoint_report.get("status"),
+                    "checkpoint_terminal_status",
+                    "V15 checkpoint and identity report terminal statuses differ",
+                )
+
+        is_compact_report = isinstance(report, Mapping) and report.get("schema") == compact_schema
+        if report is not None and not is_compact_report:
+            raise ValueError("V15 terminal checker received an unsupported report schema")
+        if is_compact_report:
+            require(
+                report.get("compact_evidence_layout") == "v15_terminal_sufficient"
+                and report.get("internal_rhs_strategy") == "same_lu_rhs_solve"
+                and report.get("geometry_policy") == "mesh_actual_exact"
+                and report.get("official_result") is False
+                and report.get("refinement_strategy")
+                == TASK41_B0_V14_RHS_REFINEMENT_STRATEGY
+                and report.get("refinement_max_steps") == 2
+                and report.get("same_lu_native_recovery_max_corrections_per_column") == 3,
+                "compact_report_identity",
+                "V15 compact report strategy, layout, or recovery limit differs",
+            )
+            require(
+                isinstance(report.get("candidate_evaluator_identity"), str)
+                and bool(report.get("candidate_evaluator_identity"))
+                and isinstance(report.get("candidate_evaluator_cache_identity"), str)
+                and bool(report.get("candidate_evaluator_cache_identity"))
+                and (
+                    expected_candidate_identity is None
+                    or report.get("candidate_evaluator_identity") == expected_candidate_identity
+                )
+                and (
+                    expected_cache_identity is None
+                    or report.get("candidate_evaluator_cache_identity") == expected_cache_identity
+                ),
+                "compact_evaluator_identity",
+                "V15 compact report evaluator/cache identity differs",
+            )
+            require(
+                report.get("donor_manifest_sha256") == donor.get("manifest_sha256")
+                and report.get("existing_evidence_bytes") == donor.get("existing_evidence_bytes"),
+                "compact_donor_identity",
+                "V15 compact report is not bound to the loaded donor manifest/byte count",
+            )
+            report_identity = report.get("actual_k_lu_identity")
+            require(
+                isinstance(report_identity, Mapping)
+                and report_identity.get("schema")
+                == "task41.p0.b0.v15_actual_k_lu_generation_identity.v1"
+                and report_identity.get(
+                    "actual_k_and_lu_share_generation_token_for_every_class"
+                )
+                is True
+                and (
+                    checkpoint is None
+                    or dict(report_identity) == dict(checkpoint["actual_k_lu_identity"])
+                ),
+                "compact_k_lu_identity",
+                "V15 compact report actual K/LU generation identity differs",
+            )
+
+        columns = donor.get("columns")
+        joint = donor.get("attribution", {}).get("joint", {})
+        require(
+            isinstance(columns, (list, tuple))
+            and len(columns) == 2
+            and isinstance(joint, Mapping),
+            "donor_two_column_layout",
+            "V15 donor must contain the frozen two-column volume data",
+        )
+        full_rows = TASK41_V4_FULL_STORAGE_ROWS
+        active_rows = TASK41_V4_ACTIVE_TRACE_ROWS
+        appended_rows = TASK41_V4_APPENDED_ROWS
+        candidate_rows = active_rows + appended_rows
+        require(
+            len(TASK41_V5_FROZEN_DENOMINATORS) == 2
+            and full_rows >= active_rows + appended_rows,
+            "frozen_layout_constants",
+            "V15 frozen row counts or denominators are inconsistent",
+        )
+        saved_action = np.asarray(joint.get("p6_result"))
+        saved_reduced = np.asarray(joint.get("reduced_rhs"))
+        saved_port_rhs = np.asarray(joint.get("port_rhs"))
+        require(
+            saved_action.shape == (candidate_rows, 2)
+            and saved_reduced.shape == saved_action.shape
+            and saved_port_rhs.shape == (appended_rows, 2)
+            and all(
+                array.dtype == np.dtype(np.complex128) and finite_array(array)
+                for array in (saved_action, saved_reduced, saved_port_rhs)
+            ),
+            "donor_action_arrays",
+            "V15 donor action/reduced RHS arrays have invalid layout or values",
+        )
+
+        donor_columns: list[dict[str, np.ndarray]] = []
+        for column_index, item in enumerate(columns):
+            if not isinstance(item, Mapping):
+                raise ValueError(f"V15 donor column {column_index} is malformed")
+            known = np.asarray(item.get("known_field"))
+            rhs = np.asarray(item.get("native_volume_rhs"))
+            active = np.asarray(item.get("active_original_rows"))
+            slave = np.asarray(item.get("slave_rows"))
+            if (
+                known.shape != (full_rows,)
+                or rhs.shape != (full_rows,)
+                or known.dtype != np.dtype(np.complex128)
+                or rhs.dtype != np.dtype(np.complex128)
+                or not finite_array(known)
+                or not finite_array(rhs)
+                or active.shape != (active_rows,)
+                or active.dtype.kind not in "iu"
+                or slave.ndim != 1
+                or slave.dtype.kind not in "iu"
+                or (active.size and (np.any(active < 0) or np.any(active >= full_rows)))
+                or (slave.size and (np.any(slave < 0) or np.any(slave >= full_rows)))
+            ):
+                raise ValueError(f"V15 donor column {column_index} has an invalid full-space layout")
+            if column_index and (
+                not np.array_equal(active, donor_columns[0]["active_original_rows"])
+                or not np.array_equal(slave, donor_columns[0]["slave_rows"])
+            ):
+                raise ValueError("V15 donor columns disagree on active/slave row maps")
+            donor_columns.append(
+                {
+                    "known_field": known,
+                    "native_volume_rhs": rhs,
+                    "active_original_rows": active,
+                    "slave_rows": slave,
+                }
+            )
+
+        def load_array(binding: Mapping[str, Any], label: str, shape: tuple[int, ...]) -> np.ndarray:
+            raw_path = Path(str(binding.get("path", "")))
+            path = (raw_path if raw_path.is_absolute() else root / raw_path).resolve(strict=True)
+            require(
+                path.is_relative_to(root)
+                and type(binding.get("bytes")) is int
+                and path.stat().st_size == binding["bytes"]
+                and valid_digest(binding.get("sha256"), 64)
+                and sha256_file(path) == binding.get("sha256")
+                and binding.get("shape") == list(shape)
+                and binding.get("dtype") == "complex128",
+                f"{label}_file_binding",
+                f"V15 {label} path, byte count, file hash, shape, or dtype differs",
+            )
+            values = np.load(path, mmap_mode="r", allow_pickle=False)
+            require(
+                isinstance(values, np.ndarray)
+                and tuple(values.shape) == shape
+                and values.dtype == np.dtype(np.complex128)
+                and values.flags.c_contiguous
+                and finite_array(values)
+                and valid_digest(binding.get("array_sha256"), 64)
+                and sha256_array(values) == binding.get("array_sha256"),
+                f"{label}_array_binding",
+                f"V15 {label} array hash, shape, dtype, or finite-value check failed",
+            )
+            return values
+
+        artifact_index: dict[str, Mapping[str, Any]] = {}
+        if checkpoint is not None:
+            for name, record in artifact_by_name.items():
+                artifact_index[name] = record
+
+        def checkpoint_artifact(name: str, label: str, shape: tuple[int, ...]) -> np.ndarray:
+            record = artifact_index.get(name)
+            if not isinstance(record, Mapping):
+                raise ValueError(f"V15 checkpoint omits completed artifact {name}")
+            return load_array(record, label, shape)
+
+        def checkpoint_binding(name: str) -> Mapping[str, Any]:
+            record = artifact_index.get(name)
+            if not isinstance(record, Mapping):
+                raise ValueError(f"V15 checkpoint omits completed artifact {name}")
+            return record
+
+        report_action_gate = (
+            report.get("candidate_full_action_gate") if is_compact_report else None
+        )
+        checkpoint_action_gate = (
+            checkpoint.get("action_gate") if checkpoint is not None else None
+        )
+        action_gate = report_action_gate or checkpoint_action_gate
+        synthesized_partial_action_gate = False
+        same_s_reference: np.ndarray | None = None
+        same_s_metrics: list[dict[str, Any]] = []
+        same_s_binding = (
+            action_gate.get("same_s_action_reference_binding")
+            if isinstance(action_gate, Mapping)
+            else checkpoint.get("same_s_action_reference_binding")
+            if checkpoint is not None
+            else None
+        )
+        if (
+            is_compact_report
+            or isinstance(checkpoint_action_gate, Mapping)
+            or (checkpoint is not None and same_s_binding is not None)
+        ):
+            require(
+                isinstance(same_s_binding, Mapping)
+                and same_s_binding.get("source_reassigned") is False,
+                "same_s_reference_binding",
+                "V15 action gate omits its frozen same-S saved-output binding",
+            )
+            baseline_root = (
+                Path(__file__).resolve().parents[2]
+                / TASK41_P0_V15_SAME_S_BASELINE_RUN_RELATIVE
+            ).resolve(strict=True)
+            baseline_report_path = Path(str(same_s_binding.get("report_path", ""))).resolve(
+                strict=True
+            )
+            require(
+                baseline_report_path
+                == baseline_root / "task41_p0_b0_v9_compact_volume_audit.json"
+                and same_s_binding.get("report_sha256")
+                == TASK41_P0_V11_V9_COMPACT_REPORT_SHA256
+                and sha256_file(baseline_report_path)
+                == TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+                "same_s_report_binding",
+                "V15 same-S baseline report path or SHA-256 differs",
+            )
+            baseline_report = _json_object(baseline_report_path, "V15 same-S baseline report")
+            baseline_gate = baseline_report.get("candidate_full_action_gate")
+            baseline_ref = (
+                baseline_gate.get("full_action_artifact")
+                if isinstance(baseline_gate, Mapping)
+                else None
+            )
+            binding_ref = same_s_binding.get("artifact")
+            require(
+                baseline_report.get("schema")
+                == "task41.p0.b0.v9.compact_volume_identity.v1"
+                and baseline_report.get("candidate_evaluator_identity")
+                == (report if is_compact_report else checkpoint).get("candidate_evaluator_identity")
+                and baseline_report.get("candidate_evaluator_cache_identity")
+                == (report if is_compact_report else checkpoint).get("candidate_evaluator_cache_identity")
+                and baseline_report.get("donor_manifest_sha256")
+                == donor.get("manifest_sha256")
+                and isinstance(baseline_ref, Mapping)
+                and isinstance(binding_ref, Mapping)
+                and all(
+                    baseline_ref.get(key) == binding_ref.get(key)
+                    for key in ("path", "bytes", "sha256", "array_sha256", "shape", "dtype")
+                ),
+                "same_s_report_identity",
+                "V15 same-S baseline report identity or artifact reference differs",
+            )
+            baseline_array_path = Path(str(binding_ref.get("path", ""))).resolve(strict=True)
+            require(
+                baseline_array_path.is_relative_to(baseline_root)
+                and type(binding_ref.get("bytes")) is int
+                and baseline_array_path.stat().st_size == binding_ref.get("bytes")
+                and binding_ref.get("sha256") == TASK41_P0_V11_V9_FULL_ACTION_ARRAY_SHA256
+                and sha256_file(baseline_array_path) == binding_ref.get("sha256")
+                and binding_ref.get("shape") == [candidate_rows, 2]
+                and binding_ref.get("dtype") == "complex128",
+                "same_s_array_binding",
+                "V15 same-S baseline array path/hash/shape/dtype differs",
+            )
+            same_s_reference = np.load(
+                baseline_array_path, mmap_mode="r", allow_pickle=False
+            )
+            same_s_array_sha256 = sha256_array(same_s_reference)
+            require(
+                same_s_reference.shape == (candidate_rows, 2)
+                and same_s_reference.dtype == np.dtype(np.complex128)
+                and finite_array(same_s_reference)
+                and valid_digest(binding_ref.get("array_sha256"), 64)
+                and same_s_array_sha256 == binding_ref.get("array_sha256"),
+                "same_s_array_integrity",
+                "V15 same-S baseline array bytes are invalid",
+            )
+        if action_gate is not None and not isinstance(action_gate, Mapping):
+            raise ValueError("V15 action gate record is malformed")
+        reported_action_rows = (
+            action_gate.get("columns") if isinstance(action_gate, Mapping) else None
+        )
+        if reported_action_rows is not None and (
+            not isinstance(reported_action_rows, list) or len(reported_action_rows) != 2
+        ):
+            raise ValueError("V15 action gate must contain two per-column metric records")
+
+        if checkpoint is not None:
+            completed_action_indices = checkpoint.get("completed_action_columns", [])
+            if (
+                not isinstance(completed_action_indices, list)
+                or completed_action_indices != list(range(len(completed_action_indices)))
+                or len(completed_action_indices) > 2
+            ):
+                raise ValueError("V15 checkpoint completed action columns are not a prefix")
+        elif isinstance(action_gate, Mapping):
+            action_refs = action_gate.get("column_artifacts", [])
+            completed_action_indices = [item.get("column") for item in action_refs if isinstance(item, Mapping)]
+        else:
+            completed_action_indices = []
+
+        # Before the action gate is complete, the checkpoint records each
+        # persisted y/g pair in its artifact inventory but has no aggregate
+        # ``column_artifacts`` row yet. Reconstruct only those completed rows
+        # from the fixed artifact names so an interrupted run remains a valid
+        # partial audit instead of being mislabeled as corrupt evidence.
+        if checkpoint is not None and action_gate is None and completed_action_indices:
+            partial_refs: list[dict[str, Any]] = []
+            for column_index in completed_action_indices:
+                partial_refs.append(
+                    {
+                        "column": column_index,
+                        "full_action_artifact": checkpoint_binding(
+                            f"task41_p0_b0_v9_compact_candidate_full_action_col{column_index}"
+                        ),
+                        "full_reduced_rhs_artifact": checkpoint_binding(
+                            f"task41_p0_b0_v9_compact_candidate_full_reduced_rhs_col{column_index}"
+                        ),
+                        "p6_apply_calls": 1,
+                        "p6_reduce_rhs_calls": 1,
+                    }
+                )
+            action_gate = {
+                "column_artifacts": partial_refs,
+                "relative_tolerance": TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE,
+                "operation_counts": {
+                    "full_action_columns_completed": len(partial_refs),
+                    "p6_apply_calls": len(partial_refs),
+                    "p6_reduce_rhs_calls": len(partial_refs),
+                },
+            }
+            synthesized_partial_action_gate = True
+
+        if is_compact_report:
+            require(
+                report.get("completed") is True
+                and completed_action_indices == [0, 1],
+                "complete_report_action_columns",
+                "A completed V15 compact report must contain both action columns",
+            )
+        if isinstance(action_gate, Mapping):
+            require(
+                action_gate.get("relative_tolerance") == TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE,
+                "action_gate_tolerance",
+                "V15 action gate tolerance differs from the frozen value",
+            )
+            refs = action_gate.get("column_artifacts")
+            if not isinstance(refs, list) or len(refs) != len(completed_action_indices):
+                raise ValueError("V15 action artifact list differs from completed columns")
+            for expected_column, item in enumerate(refs):
+                if not isinstance(item, Mapping) or item.get("column") != expected_column:
+                    raise ValueError("V15 action artifacts are not in canonical column order")
+
+        port_rows_unchanged = True
+        for column_index in completed_action_indices:
+            artifact_row: Mapping[str, Any] | None = None
+            if isinstance(action_gate, Mapping):
+                refs = action_gate.get("column_artifacts", [])
+                artifact_row = refs[column_index]
+            if artifact_row is None:
+                raise ValueError("V15 completed action column has no artifact record")
+            if checkpoint is not None:
+                y_ref = checkpoint_binding(
+                    f"task41_p0_b0_v9_compact_candidate_full_action_col{column_index}"
+                )
+                g_ref = checkpoint_binding(
+                    f"task41_p0_b0_v9_compact_candidate_full_reduced_rhs_col{column_index}"
+                )
+                for reference, inventory, label in (
+                    (artifact_row.get("full_action_artifact"), y_ref, "action y"),
+                    (artifact_row.get("full_reduced_rhs_artifact"), g_ref, "action g"),
+                ):
+                    if not isinstance(reference, Mapping) or any(
+                        reference.get(key) != inventory.get(key)
+                        for key in ("path", "bytes", "sha256", "array_sha256", "shape", "dtype")
+                    ):
+                        raise ValueError(f"V15 {label} report ref differs from its checkpoint inventory")
+            y = load_array(
+                artifact_row.get("full_action_artifact", {}),
+                f"action_y_column_{column_index}",
+                (candidate_rows,),
+            )
+            g = load_array(
+                artifact_row.get("full_reduced_rhs_artifact", {}),
+                f"action_g_column_{column_index}",
+                (candidate_rows,),
+            )
+            difference = float(np.sqrt(max(0.0, difference_squared(y, g))))
+            y_norm = float(np.sqrt(max(0.0, norm_squared(y))))
+            g_norm = float(np.sqrt(max(0.0, norm_squared(g))))
+            dynamic_denominator = max(y_norm, g_norm, np.finfo(float).tiny)
+            dynamic_relative = difference / dynamic_denominator
+            frozen_denominator = float(TASK41_V5_FROZEN_DENOMINATORS[column_index])
+            frozen_relative = difference / frozen_denominator
+            dynamic_passed = bool(dynamic_relative <= TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE)
+            frozen_passed = bool(frozen_relative <= TASK41_V5_FULL_ACTION_RELATIVE_TOLERANCE)
+            port_equal = bool(
+                np.array_equal(y[active_rows:], saved_action[active_rows:, column_index])
+                and np.array_equal(g[active_rows:], saved_reduced[active_rows:, column_index])
+                and np.array_equal(y[active_rows:], saved_port_rhs[:, column_index])
+                and np.array_equal(g[active_rows:], saved_port_rhs[:, column_index])
+            )
+            port_rows_unchanged = port_rows_unchanged and port_equal
+            same_s_comparison: dict[str, Any] | None = None
+            if same_s_reference is not None:
+                old_output = np.asarray(same_s_reference[:, column_index])
+                same_s_difference_squared = difference_squared(y, old_output)
+                same_s_reference_norm = float(np.sqrt(max(0.0, norm_squared(old_output))))
+                same_s_max_abs = 0.0
+                same_s_max_row: int | None = None
+                for start in range(0, candidate_rows, 262_144):
+                    stop = min(candidate_rows, start + 262_144)
+                    delta = np.asarray(y[start:stop], dtype=np.complex128) - np.asarray(
+                        old_output[start:stop], dtype=np.complex128
+                    )
+                    if delta.size:
+                        local_index = int(np.argmax(np.abs(delta)))
+                        local_max = float(abs(delta[local_index]))
+                        if local_max > same_s_max_abs:
+                            same_s_max_abs = local_max
+                            same_s_max_row = start + local_index
+                same_s_comparison = {
+                    "absolute_l2": float(np.sqrt(max(0.0, same_s_difference_squared))),
+                    "reference_l2": same_s_reference_norm,
+                    "max_abs": same_s_max_abs,
+                    "max_row": same_s_max_row,
+                    "array_equal": bool(np.array_equal(y, old_output)),
+                    "interpretation": (
+                        "same frozen S/input output comparison; any difference is not attributed to RHS correction"
+                    ),
+                }
+                if reported_action_rows is not None:
+                    reported_same_s = reported_action_rows[column_index].get(
+                        "same_s_saved_output_comparison"
+                    )
+                    if (
+                        not isinstance(reported_same_s, Mapping)
+                        or not close_float(
+                            reported_same_s.get("absolute_l2"),
+                            same_s_comparison["absolute_l2"],
+                        )
+                        or not close_float(
+                            reported_same_s.get("reference_l2"),
+                            same_s_comparison["reference_l2"],
+                        )
+                        or not close_float(
+                            reported_same_s.get("max_abs"), same_s_max_abs
+                        )
+                        or reported_same_s.get("max_row") != same_s_max_row
+                        or reported_same_s.get("array_equal")
+                        is not same_s_comparison["array_equal"]
+                        or reported_same_s.get("interpretation")
+                        != same_s_comparison["interpretation"]
+                    ):
+                        raise ValueError(
+                            "V15 reported same-S saved-output comparison differs from the baseline array"
+                        )
+                same_s_metrics.append(same_s_comparison)
+            if reported_action_rows is not None:
+                reported = reported_action_rows[column_index]
+                if not isinstance(reported, Mapping):
+                    raise ValueError("V15 action metric row is malformed")
+                reported_difference = reported.get("difference")
+                if (
+                    reported.get("column") != column_index
+                    or reported.get("frozen_denominator") != frozen_denominator
+                    or reported.get("dynamic_gate_passed") is not dynamic_passed
+                    or reported.get("frozen_gate_passed") is not frozen_passed
+                    or not close_float(reported.get("dynamic_denominator"), dynamic_denominator)
+                    or not close_float(reported.get("dynamic_denominator_relative"), dynamic_relative)
+                    or not close_float(reported.get("frozen_denominator_relative"), frozen_relative)
+                    or not isinstance(reported_difference, Mapping)
+                    or not close_float(reported_difference.get("absolute_l2"), difference)
+                    or not close_float(reported_difference.get("reference_l2"), g_norm)
+                ):
+                    raise ValueError("V15 reported action metrics differ from array recalculation")
+            for name, value in (
+                ("p6_apply_calls", artifact_row.get("p6_apply_calls")),
+                ("p6_reduce_rhs_calls", artifact_row.get("p6_reduce_rhs_calls")),
+            ):
+                if type(value) is not int or value != 1:
+                    raise ValueError(f"V15 action column has an invalid {name}")
+            action_columns_checked.append(
+                {
+                    "column": column_index,
+                    "absolute_l2": difference,
+                    "dynamic_denominator": dynamic_denominator,
+                    "dynamic_denominator_relative": dynamic_relative,
+                    "frozen_denominator": frozen_denominator,
+                    "frozen_denominator_relative": frozen_relative,
+                    "dynamic_gate_passed": bool(dynamic_passed),
+                    "frozen_gate_passed": bool(frozen_passed),
+                    "saved_port_rows_unchanged": port_equal,
+                    "same_s_saved_output_comparison": same_s_comparison,
+                    "passed": bool(dynamic_passed and frozen_passed and port_equal),
+                }
+            )
+
+        if synthesized_partial_action_gate:
+            action_gate["saved_port_rows_unchanged"] = port_rows_unchanged
+        if isinstance(action_gate, Mapping):
+            action_operation_counts = action_gate.get("operation_counts")
+            if not isinstance(action_operation_counts, Mapping):
+                raise ValueError("V15 action gate omits actual operation counts")
+            require(
+                action_operation_counts.get("full_action_columns_completed")
+                == len(completed_action_indices)
+                and action_operation_counts.get("p6_apply_calls") == len(completed_action_indices)
+                and action_operation_counts.get("p6_reduce_rhs_calls") == len(completed_action_indices)
+                and action_gate.get("saved_port_rows_unchanged") is port_rows_unchanged,
+                "action_operation_counts",
+                "V15 action operation counts or saved port-row status differ",
+            )
+            if report_action_gate is not None and checkpoint_action_gate is not None:
+                require(
+                    dict(report_action_gate) == dict(checkpoint_action_gate),
+                    "checkpoint_action_gate_match",
+                    "V15 action gate differs between compact report and checkpoint",
+                )
+        if len(action_columns_checked) == 2:
+            action_passed = bool(port_rows_unchanged and all(row["passed"] for row in action_columns_checked))
+            if isinstance(action_gate, Mapping):
+                require(
+                    action_gate.get("status") == ("PASS" if action_passed else "GATE_FAILED"),
+                    "reported_action_gate_status",
+                    "V15 reported action status differs from independent array gates",
+                )
+
+        recovery_gate = report.get("candidate_recovery_gate") if is_compact_report else None
+        checkpoint_recovery_rows = checkpoint.get("recovery_columns", []) if checkpoint is not None else []
+        if not isinstance(checkpoint_recovery_rows, list):
+            raise ValueError("V15 checkpoint recovery rows are malformed")
+        if recovery_gate is not None and not isinstance(recovery_gate, Mapping):
+            raise ValueError("V15 recovery gate record is malformed")
+        if recovery_gate is not None:
+            recovery_rows = recovery_gate.get("columns")
+            if not isinstance(recovery_rows, list):
+                raise ValueError("V15 recovery gate omits its column records")
+            if checkpoint is not None and checkpoint_recovery_rows:
+                require(
+                    checkpoint_recovery_rows == recovery_rows,
+                    "checkpoint_recovery_rows_match",
+                    "V15 recovery rows differ between compact report and checkpoint",
+                )
+        else:
+            recovery_rows = checkpoint_recovery_rows
+
+        if checkpoint is not None:
+            completed_recovery_indices = checkpoint.get("completed_recovery_columns", [])
+            if (
+                not isinstance(completed_recovery_indices, list)
+                or completed_recovery_indices != list(range(len(completed_recovery_indices)))
+                or len(completed_recovery_indices) > 2
+                or len(recovery_rows) != len(completed_recovery_indices)
+            ):
+                raise ValueError("V15 checkpoint recovery columns are not a completed prefix")
+        else:
+            completed_recovery_indices = [
+                item.get("column") for item in recovery_rows if isinstance(item, Mapping)
+            ]
+        if is_compact_report:
+            require(
+                report.get("completed") is True
+                and action_passed is not None,
+                "complete_report_action_gate",
+                "Completed V15 compact report lacks an independently complete action gate",
+            )
+            if action_passed:
+                require(
+                    completed_recovery_indices == [0, 1],
+                    "complete_report_recovery_columns",
+                    "A completed V15 report with passing action must contain both recoveries",
+                )
+
+        if action_passed is False and (recovery_rows or completed_recovery_indices):
+            raise ValueError("V15 recovery products exist even though the action gate failed")
+        if action_passed is True:
+            for column_index, item in enumerate(recovery_rows):
+                if not isinstance(item, Mapping) or item.get("column") != column_index:
+                    raise ValueError("V15 recovery columns are not in canonical order")
+                storage_ref = item.get("final_storage_artifact")
+                action_ref = item.get("final_native_volume_action_artifact")
+                if (
+                    not isinstance(storage_ref, Mapping)
+                    or storage_ref.get("kind") != "artifact"
+                    or not isinstance(action_ref, Mapping)
+                    or action_ref.get("kind") != "artifact"
+                    or item.get("final_native_volume_residual_recomputed_from_rhs_and_action") is not True
+                    or item.get("initial_storage_artifact") is not None
+                ):
+                    raise ValueError("V15 recovery row does not use the terminal-sufficient array layout")
+                if checkpoint is not None:
+                    for reference, artifact_name, label in (
+                        (
+                            storage_ref,
+                            f"task41_p0_b0_v9_compact_candidate_final_storage_col{column_index}",
+                            "final storage",
+                        ),
+                        (
+                            action_ref,
+                            f"task41_p0_b0_v9_compact_candidate_final_native_volume_action_col{column_index}",
+                            "final native action",
+                        ),
+                    ):
+                        inventory = checkpoint_binding(artifact_name)
+                        if any(
+                            reference.get(key) != inventory.get(key)
+                            for key in ("path", "bytes", "sha256", "array_sha256", "shape", "dtype")
+                        ):
+                            raise ValueError(f"V15 recovery {label} differs from checkpoint inventory")
+                final_storage = load_array(
+                    storage_ref,
+                    f"final_storage_column_{column_index}",
+                    (full_rows,),
+                )
+                final_native_action = load_array(
+                    action_ref,
+                    f"final_native_action_column_{column_index}",
+                    (full_rows,),
+                )
+                known = donor_columns[column_index]["known_field"]
+                rhs = donor_columns[column_index]["native_volume_rhs"]
+                active = donor_columns[column_index]["active_original_rows"]
+                slave = donor_columns[column_index]["slave_rows"]
+                forward_squared = difference_squared(final_storage, known)
+                known_norm = float(np.sqrt(max(0.0, norm_squared(known))))
+                forward_relative = float(
+                    np.sqrt(max(0.0, forward_squared)) / max(known_norm, np.finfo(float).tiny)
+                )
+                rhs_squared = norm_squared(rhs)
+                residual_squared = 0.0
+                residual_digest = hashlib.sha256()
+                residual_slave_zero = True
+                slave_set = set(int(row) for row in slave)
+                for start in range(0, full_rows, 262_144):
+                    stop = min(full_rows, start + 262_144)
+                    residual = np.asarray(rhs[start:stop], dtype=np.complex128) - np.asarray(
+                        final_native_action[start:stop], dtype=np.complex128
+                    )
+                    residual_squared += float(np.vdot(residual, residual).real)
+                    residual_digest.update(
+                        memoryview(np.ascontiguousarray(residual)).cast("B")
+                    )
+                    if residual_slave_zero and slave_set:
+                        block_slave = [row for row in slave if start <= int(row) < stop]
+                        if block_slave:
+                            block_indices = np.asarray(block_slave, dtype=np.int64) - start
+                            residual_slave_zero = not bool(
+                                np.any(residual[block_indices] != 0.0)
+                            )
+                residual_norm = float(np.sqrt(max(0.0, residual_squared)))
+                rhs_norm = float(np.sqrt(max(0.0, rhs_squared)))
+                residual_relative = residual_norm / max(rhs_norm, np.finfo(float).tiny)
+                trace_exact = True
+                for start in range(0, active.size, 262_144):
+                    rows = active[start : start + 262_144]
+                    if not np.array_equal(final_storage[rows], known[rows]):
+                        trace_exact = False
+                        break
+                final_slave_zero = True
+                for start in range(0, slave.size, 262_144):
+                    if np.any(final_storage[slave[start : start + 262_144]] != 0.0):
+                        final_slave_zero = False
+                        break
+                storage_sha = sha256_array(final_storage)
+                native_action_sha = sha256_array(final_native_action)
+                residual_sha = residual_digest.hexdigest()
+                steps = item.get("step_records")
+                calls = item.get("native_volume_action_calls")
+                corrections = item.get("same_lu_corrections")
+                if (
+                    not isinstance(steps, list)
+                    or not steps
+                    or len(steps) > 4
+                    or type(calls) is not int
+                    or calls != len(steps)
+                    or type(corrections) is not int
+                    or corrections != len(steps) - 1
+                    or corrections > 3
+                    or item.get("maximum_same_lu_corrections") != 3
+                ):
+                    raise ValueError("V15 recovery correction/action count is malformed or exceeds three")
+                for step_index, step in enumerate(steps):
+                    if (
+                        not isinstance(step, Mapping)
+                        or step.get("step") != step_index
+                        or step.get("native_volume_action_calls") != step_index + 1
+                        or not valid_digest(step.get("storage_sha256"), 64)
+                        or not valid_digest(step.get("residual_sha256"), 64)
+                        or type(step.get("active_trace_unchanged")) is not bool
+                        or type(step.get("slave_rows_zero")) is not bool
+                        or not isinstance(step.get("forward_relative_error"), (int, float))
+                        or not isinstance(step.get("native_volume_residual_relative"), (int, float))
+                    ):
+                        raise ValueError("V15 recovery step records are not a consecutive bounded sequence")
+                if (
+                    steps[0].get("storage_sha256") != item.get("initial_storage_sha256")
+                    or steps[-1].get("storage_sha256") != storage_sha
+                    or steps[-1].get("residual_sha256") != residual_sha
+                    or item.get("final_storage_sha256") != storage_sha
+                    or item.get("final_native_action_sha256") != native_action_sha
+                    or item.get("final_native_residual_sha256") != residual_sha
+                ):
+                    raise ValueError("V15 recovery terminal hashes do not match the saved arrays")
+                recovery_column_passed = bool(
+                    np.isfinite(forward_relative)
+                    and forward_relative <= 1.0e-11
+                    and np.isfinite(residual_relative)
+                    and residual_relative <= 1.0e-10
+                    and trace_exact
+                    and final_slave_zero
+                    and residual_slave_zero
+                    and calls <= 4
+                    and all(
+                        step.get("active_trace_unchanged") is True
+                        and step.get("slave_rows_zero") is True
+                        for step in steps
+                    )
+                )
+                if (
+                    item.get("forward_gate_tolerance") != 1.0e-11
+                    or item.get("native_volume_residual_gate_tolerance") != 1.0e-10
+                    or not close_float(item.get("forward_error_relative"), forward_relative)
+                    or not close_float(item.get("native_volume_residual_absolute_l2"), residual_norm)
+                    or not close_float(item.get("native_volume_residual_relative"), residual_relative)
+                    or item.get("active_trace_exact") is not trace_exact
+                    or item.get("slave_rows_zero") is not final_slave_zero
+                    or item.get("residual_slave_rows_zero") is not residual_slave_zero
+                    or item.get("passed") is not recovery_column_passed
+                ):
+                    raise ValueError("V15 recovery report differs from independent terminal array checks")
+                recovery_columns_checked.append(
+                    {
+                        "column": column_index,
+                        "forward_error_relative": forward_relative,
+                        "native_volume_residual_absolute_l2": residual_norm,
+                        "native_volume_residual_relative": residual_relative,
+                        "active_trace_exact": trace_exact,
+                        "slave_rows_zero": final_slave_zero,
+                        "residual_slave_rows_zero": residual_slave_zero,
+                        "native_volume_action_calls": calls,
+                        "same_lu_corrections": corrections,
+                        "passed": recovery_column_passed,
+                    }
+                )
+
+        if action_passed is False:
+            recovery_passed = None
+            if recovery_gate is not None:
+                require(
+                    recovery_gate.get("status") == "NOT_RUN_ACTION_GATE_FAILED"
+                    and recovery_gate.get("columns") == []
+                    and recovery_gate.get("native_volume_action_calls") == 0,
+                    "recovery_skipped_after_action_failure",
+                    "V15 recovery did not remain unrun after a failed action gate",
+                )
+        elif action_passed is True and len(recovery_columns_checked) == 2:
+            recovery_passed = all(item["passed"] for item in recovery_columns_checked)
+            if recovery_gate is not None:
+                expected_recovery_status = "PASS" if recovery_passed else "GATE_FAILED"
+                require(
+                    recovery_gate.get("status") == expected_recovery_status
+                    and recovery_gate.get("relative_forward_tolerance") == 1.0e-11
+                    and recovery_gate.get("native_volume_residual_relative_tolerance") == 1.0e-10
+                    and recovery_gate.get("maximum_same_lu_corrections_per_column") == 3
+                    and recovery_gate.get("native_volume_action_calls")
+                    == sum(item["native_volume_action_calls"] for item in recovery_columns_checked),
+                    "reported_recovery_gate",
+                    "V15 recovery gate status, tolerance, or action count differs",
+                )
+        else:
+            recovery_passed = None
+
+        if is_compact_report:
+            expected_identity_status = (
+                "PASS" if action_passed is True and recovery_passed is True else "GATE_FAILED"
+            )
+            require(
+                report.get("status") == expected_identity_status,
+                "compact_terminal_status",
+                "V15 compact report status differs from the independently recomputed gates",
+            )
+        if checkpoint is not None and checkpoint.get("status") in {"PASS", "GATE_FAILED"}:
+            expected_checkpoint_status = (
+                "PASS" if action_passed is True and recovery_passed is True else "GATE_FAILED"
+            )
+            require(
+                checkpoint.get("status") == expected_checkpoint_status,
+                "checkpoint_terminal_status_recalculation",
+                "V15 checkpoint terminal status differs from the independently recomputed gates",
+            )
+
+        audit_completed = bool(
+            len(action_columns_checked) == 2
+            and (action_passed is False or len(recovery_columns_checked) == 2)
+        )
+        data_integrity = all(checks.values())
+        if not data_integrity:
+            errors.append("one or more V15 terminal evidence integrity checks failed")
+        elif audit_completed:
+            if action_passed is True and recovery_passed is True:
+                status = "PASS"
+                classification = "FULL_ACTION_RECOVERY_QUALIFIED"
+            else:
+                status = "NUMERICAL_FAIL"
+                classification = (
+                    "FULL_ACTION_GATE_FAILED"
+                    if action_passed is False
+                    else "FULL_RECOVERY_GATE_FAILED"
+                )
+        else:
+            has_terminal_products = bool(
+                action_columns_checked
+                or recovery_columns_checked
+                or (checkpoint is not None and checkpoint.get("artifacts"))
+            )
+            status = "PARTIAL" if has_terminal_products else "INCOMPLETE"
+            classification = (
+                "PARTIAL_TERMINAL_PRODUCTS"
+                if has_terminal_products
+                else "NO_TERMINAL_PRODUCTS"
+            )
+    except (OSError, ValueError, RuntimeError, KeyError, TypeError, IndexError, AttributeError) as exc:
+        errors.append(f"{type(exc).__name__}: {exc}")
+        status = "INCOMPLETE"
+        classification = "TERMINAL_EVIDENCE_INVALID"
+        audit_completed = False
+        data_integrity = False
+
+    result.update(
+        {
+            "status": status,
+            "classification": classification,
+            "audit_completed": bool(audit_completed),
+            "data_integrity": bool(data_integrity),
+            "action_passed": action_passed,
+            "recovery_passed": recovery_passed,
+            "checks": checks,
+            "action_columns": action_columns_checked,
+            "recovery_columns": recovery_columns_checked,
+            "errors": errors,
+        }
+    )
+    return result
+
+
+def check_task41_p0_b0_v15_terminal_run(
+    *,
+    run_root: str | Path,
+    summary_path: str | Path,
+    manifest_path: str | Path,
+    contract_path: str | Path,
+    contract_sha256: str,
+    output_path: str | Path,
+    repo_root: str | Path | None = None,
+) -> dict[str, Any]:
+    """Bind a V15 run and donor, then independently audit its compact checkpoint."""
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+        TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
+        TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE,
+        load_task41_p0_fixed_window,
+    )
+
+    root = Path(repo_root or Path(__file__).resolve().parents[2]).resolve(strict=True)
+    run = Path(run_root).resolve(strict=True)
+    summary_file = Path(summary_path).resolve(strict=True)
+    manifest_file = Path(manifest_path).resolve(strict=True)
+    output = Path(output_path).resolve()
+    contract_file = Path(contract_path)
+    contract_file = (
+        contract_file if contract_file.is_absolute() else root / contract_file
+    ).resolve(strict=True)
+    contract, contract_digest = require_task41_p0_contract(
+        contract_file,
+        expected_sha256=contract_sha256,
+        current_root=root,
+        require_clean_source=False,
+        check_current_source=False,
+        case_id="B0",
+    )
+    case = contract["case"]
+    source_sha = contract["source"]["sha"]
+    expected_window_path = (root / TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE).resolve()
+    contract_window_path = Path(str(contract["window"].get("path", "")))
+    contract_window_path = (
+        contract_window_path
+        if contract_window_path.is_absolute()
+        else root / contract_window_path
+    ).resolve()
+    if (
+        contract.get("execution_scope") != TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
+        or contract.get("numerical_strategy")
+        != {
+            "schema": "task41.p0.b0.internal_rhs_strategy.v2",
+            "internal_rhs_strategy": "same_lu_rhs_solve",
+            "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+            "refinement_max_steps": 2,
+        }
+        or contract_window_path != expected_window_path
+    ):
+        raise ValueError("V15 terminal audit contract is not the fixed full-acceptance contract")
+    window = load_task41_p0_fixed_window(
+        contract, current_root=root, require_current_boot=False
+    )
+    if window.sha256 != contract["window"].get("sha256"):
+        raise ValueError("V15 terminal audit fixed-window hash differs")
+
+    results_root = (root / "results" / str(case["model_id"])).resolve()
+    service_directory = (
+        root / str(contract["evidence"]["service_directory"])
+    ).resolve()
+    expected_output = service_directory / "task41_p0_checker_result.json"
+    if (
+        not run.is_relative_to(results_root)
+        or summary_file != run / "task40_v10_p6_candidate_summary.json"
+        or manifest_file != run / "run_manifest.json"
+        or output != expected_output
+    ):
+        raise ValueError("V15 terminal audit output or input paths differ from the registered contract")
+    summary = _json_object(summary_file, "V15 candidate summary")
+    manifest = _json_object(manifest_file, "V15 run manifest")
+    launcher = _json_object(run / "run_summary.json", "V15 launcher summary")
+    expected_manifest = {
+        key: case.get(key)
+        for key in (
+            "model_id",
+            "run_id",
+            "method",
+            "mpi_size",
+            "input_sha256",
+            "physical_model_sha256",
+            "resolved_config_sha256",
+        )
+    }
+    if (
+        any(manifest.get(key) != value for key, value in expected_manifest.items())
+        or manifest.get("source_sha") != source_sha
+        or Path(str(manifest.get("output_directory", ""))).resolve() != run
+        or Path(str(manifest.get("numerical_output_directory", ""))).resolve()
+        != run / "numerical_output"
+        or summary.get("run_id") != case["run_id"]
+        or summary.get("source_sha") != source_sha
+        or launcher.get("run_id") != case["run_id"]
+        or Path(str(launcher.get("output_directory", ""))).resolve() != run
+    ):
+        raise ValueError("V15 run manifest, summary, or source identity differs from contract")
+    campaign = summary.get("campaign_authority")
+    if (
+        not isinstance(campaign, Mapping)
+        or campaign.get("case_id") != "B0"
+        or campaign.get("run_id") != case["run_id"]
+        or campaign.get("source_sha") != source_sha
+        or Path(str(campaign.get("task41_contract_path", ""))).resolve()
+        != contract_file
+        or campaign.get("task41_contract_sha256") != contract_digest
+        or Path(str(campaign.get("campaign_window_path", ""))).resolve()
+        != expected_window_path
+        or campaign.get("campaign_window_sha256") != window.sha256
+        or campaign.get("execution_scope") != TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
+        or campaign.get("actual_k_lu_identity_required") is not True
+        or campaign.get("internal_rhs_strategy") != "same_lu_rhs_solve"
+        or campaign.get("internal_rhs_refinement_strategy")
+        != TASK41_B0_V14_RHS_REFINEMENT_STRATEGY
+        or campaign.get("internal_rhs_refinement_max_steps") != 2
+    ):
+        raise ValueError("V15 summary is not bound to the authorized contract/window/refinement")
+    if (
+        sha256_file(run / "input_original.dat") != case["input_sha256"]
+        or sha256_file(run / "resolved_config.json") != case["resolved_config_sha256"]
+    ):
+        raise ValueError("V15 run input/config copies differ from the contract")
+
+    donor_binding = summary.get("b0_v9_volume_donor_binding")
+    donor_run = (root / TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE).resolve(strict=True)
+    donor_summary_path = donor_run / "task40_v10_p6_candidate_summary.json"
+    if (
+        not isinstance(donor_binding, Mapping)
+        or donor_binding.get("relative_path")
+        != TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE.as_posix()
+        or donor_binding.get("attempt_id") != donor_run.name
+        or donor_binding.get("summary_bytes") != donor_summary_path.stat().st_size
+        or donor_binding.get("summary_sha256") != sha256_file(donor_summary_path)
+    ):
+        raise ValueError("V15 terminal audit donor summary binding differs")
+    donor = load_task41_v4_volume_only_donor(
+        summary_path=donor_summary_path,
+        numerical_output=donor_run / "numerical_output",
+    )
+    if (
+        donor_binding.get("manifest_sha256") != donor.get("manifest_sha256")
+        or donor_binding.get("existing_evidence_bytes") != donor.get("existing_evidence_bytes")
+    ):
+        raise ValueError("V15 terminal audit donor manifest or byte count differs")
+
+    checkpoint_path = run / "task41_p0_b0_v15_terminal_sufficient_checkpoint.json"
+    checkpoint_ref = summary.get("b0_v15_terminal_sufficient_checkpoint")
+    if not isinstance(checkpoint_ref, Mapping) or not checkpoint_path.is_file():
+        raise ValueError("V15 run has no hash-bound terminal-sufficient checkpoint")
+    checkpoint = _json_object(checkpoint_path, "V15 terminal-sufficient checkpoint")
+    if (
+        Path(str(checkpoint_ref.get("path", ""))).resolve() != checkpoint_path.resolve()
+        or type(checkpoint_ref.get("bytes")) is not int
+        or checkpoint_ref.get("bytes") != checkpoint_path.stat().st_size
+        or checkpoint_ref.get("sha256") != sha256_file(checkpoint_path)
+        or checkpoint.get("source_sha") != source_sha
+        or Path(str(checkpoint.get("contract_path", ""))).resolve()
+        != contract_file
+        or checkpoint.get("contract_sha256") != contract_digest
+        or Path(str(checkpoint.get("window_path", ""))).resolve()
+        != expected_window_path
+        or checkpoint.get("window_sha256") != window.sha256
+        or checkpoint.get("actual_k_lu_identity")
+        != summary.get("v15_actual_k_lu_identity")
+        or checkpoint.get("owner_quota_claim", {}).get("actual_k_lu_identity")
+        != checkpoint.get("actual_k_lu_identity")
+    ):
+        raise ValueError("V15 checkpoint source/window/K-LU identity differs from its run binding")
+    claim_path = Path(str(campaign.get("full_owner_quota_claim_path", ""))).resolve(strict=True)
+    claim = _json_object(claim_path, "V15 full-owner quota claim")
+    if (
+        claim != checkpoint.get("owner_quota_claim")
+        or claim.get("schema") != "task41.p0.b0.v15_full_owner_quota_claim.v1"
+        or claim.get("status") != "BUILD_COMPLETED"
+        or claim.get("full_owner_build_count") != 1
+        or claim.get("quota_scope") != "fixed_window_across_attempts"
+        or claim.get("source_sha") != source_sha
+        or claim.get("contract_sha256") != contract_digest
+        or claim.get("window_sha256") != window.sha256
+        or Path(str(claim.get("output_directory", ""))).resolve() != run
+    ):
+        raise ValueError("V15 full-owner quota claim differs from the checkpoint identity")
+
+    result = check_task41_p0_b0_v15_terminal_sufficient_audit(
+        None,
+        donor,
+        output_directory=run,
+        checkpoint=checkpoint,
+        expected_candidate_identity=checkpoint.get("candidate_evaluator_identity"),
+        expected_cache_identity=checkpoint.get("candidate_evaluator_cache_identity"),
+    )
+    result["run_binding"] = {
+        "source_sha": source_sha,
+        "contract_path": str(contract_file),
+        "contract_sha256": contract_digest,
+        "window_path": str(expected_window_path),
+        "window_sha256": window.sha256,
+        "summary_sha256": sha256_file(summary_file),
+        "manifest_sha256": sha256_file(manifest_file),
+        "checkpoint_sha256": sha256_file(checkpoint_path),
+        "actual_k_lu_identity": checkpoint.get("actual_k_lu_identity"),
+        "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        "refinement_max_steps": 2,
+    }
+    cleanup_errors = summary.get("cleanup_errors", [])
+    cleanup = summary.get("v15_cleanup", {})
+    result["producer_cleanup_passed"] = bool(
+        isinstance(cleanup, Mapping) and cleanup.get("completed") is True
+        and cleanup.get("passed") is True and cleanup.get("errors") == []
+        and isinstance(cleanup_errors, list) and not cleanup_errors
+    )
+    result["producer_cleanup_errors"] = cleanup_errors
+    authority = launcher.get("resource_authority", {})
+    result["producer_runtime_passed"] = bool(
+        isinstance(authority, Mapping)
+        and authority.get("classification") == "COMPLETED"
+        and authority.get("leader_exit_code") == 0
+        and authority.get("descendants_cleared") is True
+        and authority.get("remaining_child_pids") == []
+        and authority.get("process_tree_swap_gate_enforced") is True
+        and authority.get("sampled_process_tree_swap_peak_bytes") == 0
+        and authority.get("job_cgroup_swap_gate_enforced") is True
+        and authority.get("job_cgroup_swap", {}).get("passed") is True
+        and launcher.get("job_swap_qualification") == "qualified_zero"
+    )
+    result["producer_runtime_classification"] = authority.get("classification")
+    result["acceptance_qualified"] = bool(
+        result.get("audit_completed") is True
+        and result.get("data_integrity") is True
+        and result.get("action_passed") is True
+        and result.get("recovery_passed") is True
+        and result["producer_cleanup_passed"] and result["producer_runtime_passed"]
+    )
+    return result
 
 
 def _task41_mesh_actual_exact_candidate_profile(
@@ -14057,6 +15348,7 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--saved-b0-y-g-comparison", action="store_true")
     mode.add_argument("--v9-saved-star-screen", action="store_true")
     mode.add_argument("--v9-failed-terminal-audit", action="store_true")
+    mode.add_argument("--v15-terminal-audit", action="store_true")
     mode.add_argument("--v11-candidate-replay-saved-check", action="store_true")
     mode.add_argument("--v13-saved-adjoint-diagnostic", action="store_true")
     mode.add_argument("--v13-saved-adjoint-diagnostic-check", action="store_true")
@@ -14092,6 +15384,144 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--v13-diagnostic-sha256")
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[2]
+    if args.v15_terminal_audit:
+        forbidden = (
+            args.input,
+            args.saved_output_continuation_input,
+            args.numerical_output,
+            args.consumer_contract,
+            args.consumer_contract_sha256,
+            args.checker_contract,
+            args.checker_contract_sha256,
+            args.mesh_actual_exact_report,
+            args.mesh_actual_exact_report_sha256,
+            args.v8_report,
+            args.v8_report_sha256,
+            args.v8_checker_result,
+            args.v8_checker_result_sha256,
+            args.v6_report,
+            args.v6_report_sha256,
+            args.v9_report,
+            args.v9_report_sha256,
+            args.v9_summary,
+            args.v9_summary_sha256,
+            args.v9_service_receipt,
+            args.v9_service_receipt_sha256,
+            args.v11_report,
+            args.v11_report_sha256,
+            args.v13_diagnostic,
+            args.v13_diagnostic_sha256,
+        )
+        if (
+            args.summary is None
+            or args.manifest is None
+            or args.run_root is None
+            or args.donor_summary_sha256 is not None
+            or any(value is not None for value in forbidden)
+            or args.saved_b0_evidence_audit
+            or args.saved_b0_y_g_comparison
+            or args.v9_saved_star_screen
+            or args.v9_failed_terminal_audit
+            or args.v11_candidate_replay_saved_check
+            or args.v13_saved_adjoint_diagnostic
+            or args.v13_saved_adjoint_diagnostic_check
+        ):
+            parser.error(
+                "V15 terminal audit requires --run-root, --summary, --manifest, "
+                "the fixed --contract/--contract-sha256, and --output only"
+            )
+        try:
+            run = args.run_root.resolve(strict=True)
+            output = args.output.resolve()
+            contract, _ = require_task41_p0_contract(
+                args.contract,
+                expected_sha256=args.contract_sha256,
+                current_root=root,
+                require_clean_source=False,
+                check_current_source=False,
+                case_id="B0",
+            )
+            service_directory = (
+                root / str(contract["evidence"]["service_directory"])
+            ).resolve()
+            if (
+                output != service_directory / "task41_p0_checker_result.json"
+                or output.exists()
+            ):
+                raise ValueError(
+                    "V15 checker output must be a new task41_p0_checker_result.json in the contract service directory"
+                )
+            result = check_task41_p0_b0_v15_terminal_run(
+                run_root=run,
+                summary_path=args.summary,
+                manifest_path=args.manifest,
+                contract_path=args.contract,
+                contract_sha256=args.contract_sha256,
+                output_path=output,
+                repo_root=root,
+            )
+        except (OSError, ValueError, RuntimeError, KeyError, TypeError, IndexError, AttributeError) as exc:
+            result = {
+                "schema": "task41.p0.b0.v15.terminal_sufficient_independent_check.v1",
+                "status": "INCOMPLETE",
+                "classification": "TERMINAL_EVIDENCE_INVALID",
+                "audit_completed": False,
+                "data_integrity": False,
+                "action_passed": None,
+                "recovery_passed": None,
+                "official_result": False,
+                "scientific_qualified": False,
+                "errors": [f"{type(exc).__name__}: {exc}"],
+                "raw_evidence_retained": True,
+            }
+        if args.run_root is not None:
+            try:
+                output = args.output.resolve()
+                contract, _ = require_task41_p0_contract(
+                    args.contract,
+                    expected_sha256=args.contract_sha256,
+                    current_root=root,
+                    require_clean_source=False,
+                    check_current_source=False,
+                    case_id="B0",
+                )
+                service_directory = (
+                    root / str(contract["evidence"]["service_directory"])
+                ).resolve()
+                if (
+                    output == service_directory / "task41_p0_checker_result.json"
+                    and not output.exists()
+                ):
+                    output.parent.mkdir(parents=True, exist_ok=True)
+                    with tempfile.NamedTemporaryFile(
+                        mode="w",
+                        encoding="utf-8",
+                        dir=output.parent,
+                        prefix=f".{output.name}.",
+                        suffix=".tmp",
+                        delete=False,
+                    ) as stream:
+                        temporary = Path(stream.name)
+                        stream.write(
+                            json.dumps(
+                                result,
+                                ensure_ascii=False,
+                                sort_keys=True,
+                                indent=2,
+                                allow_nan=False,
+                            )
+                            + "\n"
+                        )
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    try:
+                        os.link(temporary, output)
+                    finally:
+                        temporary.unlink(missing_ok=True)
+            except (OSError, ValueError, TypeError):
+                pass
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        return 0 if result.get("audit_completed") is True else 2
     if args.v13_saved_adjoint_diagnostic_check:
         if (
             args.summary is None

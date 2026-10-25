@@ -13,7 +13,7 @@ import time
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, MutableMapping
 
 from benchmarks.task034_wsl_resources import (
     current_cgroup_path,
@@ -5568,6 +5568,29 @@ def _run_worker(
     }
 
 
+def _bind_task41_v15_output_directory(
+    run_directory: str | Path,
+    *,
+    environment: MutableMapping[str, str],
+) -> str:
+    """Bind V15 to the already allocated output directory in a process environment."""
+    if environment.get("TASK41_P0_V15_FULL_ACCEPTANCE") != "1":
+        raise InputError("Task41 V15 output binding requires its exact service selector")
+    actual = Path(run_directory).resolve(strict=True)
+    if not actual.is_dir():
+        raise InputError("Task41 V15 allocated output path is not a directory")
+    prior = environment.get("TASK41_P0_V15_OUTPUT_DIRECTORY")
+    if prior is not None:
+        try:
+            prior_path = Path(prior).resolve(strict=True)
+        except OSError as exc:
+            raise InputError("Task41 V15 inherited output binding does not resolve") from exc
+        if prior_path != actual:
+            raise InputError("Task41 V15 output binding differs from the allocated directory")
+    environment["TASK41_P0_V15_OUTPUT_DIRECTORY"] = str(actual)
+    return str(actual)
+
+
 def launch_specification(
     specification: RunSpecification,
     *,
@@ -5654,6 +5677,8 @@ def launch_specification(
     task41_p0_contract = None
     task41_p0_contract_digest = None
     task41_p0_window = None
+    task41_p0_v15_full_acceptance = False
+    task41_p0_v15_output_directory: str | None = None
     if task41_p0_identity:
         from .task41_p0_contract import task41_case_id_for_run_id
 
@@ -5666,6 +5691,9 @@ def launch_specification(
         ):
             raise InputError("registered Task41 P0 cases require their exact P0 contract and cannot use a Task40 window")
         from .task41_p0_contract import (
+            TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+            TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+            TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
             load_task41_p0_fixed_window,
             require_task41_p0_contract,
             validate_task41_specification,
@@ -5692,6 +5720,46 @@ def launch_specification(
                 current_root=Path(__file__).resolve().parents[2],
             )
             task41_env = os.environ
+            repo_root = Path(__file__).resolve().parents[2]
+            contract_window_path = Path(
+                str(task41_p0_contract.get("window", {}).get("path", ""))
+            )
+            if not contract_window_path.is_absolute():
+                contract_window_path = repo_root / contract_window_path
+            is_v15_full_acceptance_contract = bool(
+                task41_case_id == "B0"
+                and task41_p0_contract.get("execution_scope")
+                == TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
+                and contract_window_path.resolve()
+                == (repo_root / TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE).resolve()
+                and task41_p0_contract.get("numerical_strategy")
+                == {
+                    "schema": "task41.p0.b0.internal_rhs_strategy.v2",
+                    "internal_rhs_strategy": "same_lu_rhs_solve",
+                    "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+                    "refinement_max_steps": 2,
+                }
+            )
+            v15_selector = task41_env.get("TASK41_P0_V15_FULL_ACCEPTANCE")
+            v15_output_directory = task41_env.get("TASK41_P0_V15_OUTPUT_DIRECTORY")
+            if v15_selector == "1":
+                if contract_probe or not is_v15_full_acceptance_contract:
+                    raise InputError(
+                        "Task41 V15 full-acceptance selector differs from its exact contract"
+                    )
+                if v15_output_directory is not None:
+                    raise InputError(
+                        "Task41 V15 output directory must be bound after actual allocation"
+                    )
+                task41_p0_v15_full_acceptance = True
+            elif v15_selector is not None or v15_output_directory is not None:
+                raise InputError(
+                    "Task41 V15 environment markers are forbidden without its explicit selector"
+                )
+            elif is_v15_full_acceptance_contract:
+                raise InputError(
+                    "Task41 V15 full-acceptance contract requires its explicit service selector"
+                )
             task41_resource_contract = task41_p0_contract["resources"]
             if (
                 task41_env.get("TASK41_P0_STRICT_EXECUTION") != "1"
@@ -6145,6 +6213,8 @@ def launch_specification(
         specification.solver.get('preconditioner') in PROFILES
         or task41_p0_contract is not None
     ) and not contract_probe
+    if task41_p0_v15_full_acceptance and not physical_candidate:
+        raise InputError("Task41 V15 full acceptance requires its physical run path")
     joint = physical_candidate and specification.solver.get('preconditioner') == JOINT_PROFILE
     light = physical_candidate and specification.solver.get('preconditioner') in (LIGHT_PROFILE, JOINT_PROFILE)
     if task41_p0_profile:
@@ -6478,6 +6548,11 @@ def launch_specification(
                 "Task41 P0 formal launch requires the supervised user-service cgroup"
             )
         run_directory = _timestamp_directory(specification, timestamp)
+        if task41_p0_v15_full_acceptance:
+            task41_p0_v15_output_directory = _bind_task41_v15_output_directory(
+                run_directory,
+                environment=os.environ,
+            )
     try:
         physical_source = (_physical_source_gate(Path(__file__).resolve().parents[2], source)
                            if physical_candidate else None)
@@ -7009,6 +7084,27 @@ def launch_specification(
                                     ),
                                 }
                             )
+                            if task41_p0_v15_full_acceptance:
+                                if task41_p0_v15_output_directory is None:
+                                    raise InputError(
+                                        "Task41 V15 allocated output directory has no launcher binding"
+                                    )
+                                watchdog_environment["TASK41_P0_V15_FULL_ACCEPTANCE"] = "1"
+                                worker_output_directory = _bind_task41_v15_output_directory(
+                                    run_directory,
+                                    environment=watchdog_environment,
+                                )
+                                if worker_output_directory != task41_p0_v15_output_directory:
+                                    raise InputError(
+                                        "Task41 V15 worker output directory differs from the launcher allocation"
+                                    )
+                            else:
+                                watchdog_environment.pop(
+                                    "TASK41_P0_V15_FULL_ACCEPTANCE", None
+                                )
+                                watchdog_environment.pop(
+                                    "TASK41_P0_V15_OUTPUT_DIRECTORY", None
+                                )
                         else:
                             watchdog_environment.update(
                                 {

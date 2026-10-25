@@ -1,0 +1,74 @@
+usage: task41_p0_checker.py [-h]
+                            (--input INPUT | --saved-output-continuation-input SAVED_OUTPUT_CONTINUATION_INPUT | --saved-b0-evidence-audit | --saved-b0-y-g-comparison | --v9-saved-star-screen | --v9-failed-terminal-audit | --v15-terminal-audit | --v11-candidate-replay-saved-check | --v13-saved-adjoint-diagnostic | --v13-saved-adjoint-diagnostic-check)
+                            [--summary SUMMARY]
+                            [--donor-summary-sha256 DONOR_SUMMARY_SHA256]
+                            [--manifest MANIFEST]
+                            [--numerical-output NUMERICAL_OUTPUT]
+                            [--run-root RUN_ROOT] --contract CONTRACT
+                            --contract-sha256 CONTRACT_SHA256
+                            [--consumer-contract CONSUMER_CONTRACT]
+                            [--consumer-contract-sha256 CONSUMER_CONTRACT_SHA256]
+                            [--checker-contract CHECKER_CONTRACT]
+                            [--checker-contract-sha256 CHECKER_CONTRACT_SHA256]
+                            --output OUTPUT
+                            [--mesh-actual-exact-report MESH_ACTUAL_EXACT_REPORT]
+                            [--mesh-actual-exact-report-sha256 MESH_ACTUAL_EXACT_REPORT_SHA256]
+                            [--v8-report V8_REPORT]
+                            [--v8-report-sha256 V8_REPORT_SHA256]
+                            [--v8-checker-result V8_CHECKER_RESULT]
+                            [--v8-checker-result-sha256 V8_CHECKER_RESULT_SHA256]
+                            [--v6-report V6_REPORT]
+                            [--v6-report-sha256 V6_REPORT_SHA256]
+                            [--v9-report V9_REPORT]
+                            [--v9-report-sha256 V9_REPORT_SHA256]
+                            [--v9-summary V9_SUMMARY]
+                            [--v9-summary-sha256 V9_SUMMARY_SHA256]
+                            [--v9-service-receipt V9_SERVICE_RECEIPT]
+                            [--v9-service-receipt-sha256 V9_SERVICE_RECEIPT_SHA256]
+                            [--v11-report V11_REPORT]
+                            [--v11-report-sha256 V11_REPORT_SHA256]
+                            [--v13-diagnostic V13_DIAGNOSTIC]
+                            [--v13-diagnostic-sha256 V13_DIAGNOSTIC_SHA256]
+
+options:
+  -h, --help            show this help message and exit
+  --input INPUT
+  --saved-output-continuation-input SAVED_OUTPUT_CONTINUATION_INPUT
+  --saved-b0-evidence-audit
+  --saved-b0-y-g-comparison
+  --v9-saved-star-screen
+  --v9-failed-terminal-audit
+  --v15-terminal-audit
+  --v11-candidate-replay-saved-check
+  --v13-saved-adjoint-diagnostic
+  --v13-saved-adjoint-diagnostic-check
+  --summary SUMMARY
+  --donor-summary-sha256 DONOR_SUMMARY_SHA256
+  --manifest MANIFEST
+  --numerical-output NUMERICAL_OUTPUT
+  --run-root RUN_ROOT
+  --contract CONTRACT
+  --contract-sha256 CONTRACT_SHA256
+  --consumer-contract CONSUMER_CONTRACT
+  --consumer-contract-sha256 CONSUMER_CONTRACT_SHA256
+  --checker-contract CHECKER_CONTRACT
+  --checker-contract-sha256 CHECKER_CONTRACT_SHA256
+  --output OUTPUT
+  --mesh-actual-exact-report MESH_ACTUAL_EXACT_REPORT
+  --mesh-actual-exact-report-sha256 MESH_ACTUAL_EXACT_REPORT_SHA256
+  --v8-report V8_REPORT
+  --v8-report-sha256 V8_REPORT_SHA256
+  --v8-checker-result V8_CHECKER_RESULT
+  --v8-checker-result-sha256 V8_CHECKER_RESULT_SHA256
+  --v6-report V6_REPORT
+  --v6-report-sha256 V6_REPORT_SHA256
+  --v9-report V9_REPORT
+  --v9-report-sha256 V9_REPORT_SHA256
+  --v9-summary V9_SUMMARY
+  --v9-summary-sha256 V9_SUMMARY_SHA256
+  --v9-service-receipt V9_SERVICE_RECEIPT
+  --v9-service-receipt-sha256 V9_SERVICE_RECEIPT_SHA256
+  --v11-report V11_REPORT
+  --v11-report-sha256 V11_REPORT_SHA256
+  --v13-diagnostic V13_DIAGNOSTIC
+  --v13-diagnostic-sha256 V13_DIAGNOSTIC_SHA256

@@ -1338,6 +1338,8 @@ class P6CellCondensedAction:
         }
         self._streamed_action_lu_solve_count = 0
         self._streamed_recovery_lu_solve_count = 0
+        self._native_recovery_correction_getrs_count = 0
+        self._native_recovery_correction_getrs_seconds = 0.0
         self._streamed_hhat_lu_solve_count = 0
         self._streamed_max_local_scratch_bytes = 0
         self._generated_callback_call_count = 0
@@ -1949,6 +1951,12 @@ class P6CellCondensedAction:
         )
         self._audit["streamed_recovery_lu_solve_count"] = int(
             self._streamed_recovery_lu_solve_count
+        )
+        self._audit["native_recovery_correction_getrs_count"] = int(
+            self._native_recovery_correction_getrs_count
+        )
+        self._audit["native_recovery_correction_getrs_seconds"] = float(
+            self._native_recovery_correction_getrs_seconds
         )
         self._audit["streamed_hhat_lu_solve_count"] = int(
             self._streamed_hhat_lu_solve_count
@@ -3492,11 +3500,16 @@ class P6CellCondensedAction:
         for cell in self._cells:
             rows = cell.original_interiors
             if rows.size:
-                current[rows] += lu_solve(
+                started = time.perf_counter()
+                correction = lu_solve(
                     cell.interior_lu,
                     np.asarray(residual[rows], dtype=np.complex128),
                     check_finite=True,
                 )
+                elapsed = max(0.0, time.perf_counter() - started)
+                self._native_recovery_correction_getrs_count += 1
+                self._native_recovery_correction_getrs_seconds += elapsed
+                current[rows] += correction
         return current
 
     def refine_internal_storage_with_native_volume_residual(

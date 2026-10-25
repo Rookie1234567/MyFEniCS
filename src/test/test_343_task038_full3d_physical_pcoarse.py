@@ -369,7 +369,8 @@ def test_physical_action_builder_selects_requested_level_and_keeps_p6_entrypoint
     assert tuple(old_signature.parameters) == ("cfg", "comm", "stage_callback")
 
 
-def test_saved_donor_volume_qualification_runs_before_source_scan(tmp_path, monkeypatch):
+@pytest.mark.parametrize("acceptance_only", (False, True))
+def test_saved_donor_volume_qualification_runs_before_source_scan(tmp_path, monkeypatch, acceptance_only):
     from src.solvers import (
         directional_boundary,
         dtn_boundary_phase_gauge,
@@ -559,10 +560,15 @@ def test_saved_donor_volume_qualification_runs_before_source_scan(tmp_path, monk
         saved_surface_offset_index_path=tmp_path / "offsets.i64",
         stage_callback=lambda _facts: None,
         pre_donor_qualification_callback=qualify,
+        stop_after_pre_donor_qualification=acceptance_only,
     )
     try:
         assert bundle["pre_donor_qualification"] == {"fixture_qualification": "PASS"}
-        assert order == ["volume_qualification", "source_scan"]
+        assert order == (["volume_qualification"] if acceptance_only else ["volume_qualification", "source_scan"])
+        if acceptance_only:
+            assert bundle["full_carrier_constructed"] is False
+            assert bundle["action"] is bundle["volume_action"]
+            assert "physical_action" not in bundle
     finally:
         destroy_same_mesh_physical_action(bundle)
 

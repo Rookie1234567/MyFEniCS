@@ -14416,6 +14416,48 @@ def _task41_p0_checker_only_snapshot_identity(
     return producer_run_root, consumer_source_sha
 
 
+def _task41_v15_terminal_decision(
+    checker_authority: Mapping[str, Any], checker_payload: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Keep a completed negative audit separate from scientific/resource qualification."""
+    payload = checker_payload or {}
+    checker_runtime_passed = bool(
+        checker_authority.get("classification") == "COMPLETED"
+        and checker_authority.get("leader_exit_code") == 0
+        and checker_authority.get("descendants_cleared") is True
+        and checker_authority.get("remaining_child_pids") == []
+        and checker_authority.get("process_tree_swap_gate_enforced") is True
+        and checker_authority.get("sampled_process_tree_swap_peak_bytes") == 0
+        and checker_authority.get("job_cgroup_swap_gate_enforced") is True
+        and checker_authority.get("job_cgroup_swap", {}).get("passed") is True
+    )
+    audit_complete = bool(
+        checker_runtime_passed and payload.get("audit_completed") is True
+        and payload.get("data_integrity") is True
+        and payload.get("official_result") is False
+    )
+    qualified = bool(audit_complete and payload.get("acceptance_qualified") is True)
+    numerical_fail = bool(
+        audit_complete and (
+            payload.get("action_passed") is False or payload.get("recovery_passed") is False
+        )
+    )
+    return {
+        "audit_completed": audit_complete,
+        "checker_runtime_passed": checker_runtime_passed,
+        "acceptance_qualified": qualified,
+        "action_passed": payload.get("action_passed"),
+        "recovery_passed": payload.get("recovery_passed"),
+        "official_result": False,
+        "result_classification": (
+            "FULL_ACTION_RECOVERY_QUALIFIED" if qualified
+            else "SUPERVISED_NUMERICAL_FAIL" if numerical_fail
+            else "SUPERVISED_RESOURCE_OR_CLEANUP_FAILURE" if audit_complete
+            else "SUPERVISED_TERMINAL_AUDIT_INCOMPLETE"
+        ),
+    }
+
+
 def _run_task41_p0_service(
     *,
     unit: str,
@@ -14425,12 +14467,16 @@ def _run_task41_p0_service(
     case_args: list[str],
     contract_path: Path,
     repo_root: Path,
+    v15_full_acceptance_selector: bool = False,
 ) -> int:
     """Run one registered Task41 P0 case through the existing worker/watchdog path."""
     service_start_sample = clock_sample(include_boot_id=True)
     from benchmarks.task034_wsl_resources import cgroup_snapshot
     from benchmarks.subreaper_watchdog import PHYSICAL_MEMORY_PRESSURE_POLICY, supervise
     from src.runners.task41_p0_contract import (
+        TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+        TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
         TASK41_P0_AUTH_SCHEMA,
         load_task41_p0_fixed_window,
         require_task41_p0_contract,
@@ -15010,11 +15056,34 @@ def _run_task41_p0_service(
         ),
         require_clean_source=True,
     )
+    case_id = task41_case_id_for_run_id(str(contract["case"]["run_id"]))
+    strategy = contract.get("numerical_strategy")
+    expected_strategy = {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v2",
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+        "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        "refinement_max_steps": 2,
+    }
+    contract_window = Path(str(contract.get("window", {}).get("path", "")))
+    if not contract_window.is_absolute():
+        contract_window = repo_root / contract_window
+    is_v15_full_acceptance = bool(
+        case_id == "B0"
+        and contract.get("execution_scope") == TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
+        and contract_window.resolve()
+        == (repo_root / TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE).resolve()
+        and strategy == expected_strategy
+    )
+    if v15_full_acceptance_selector != is_v15_full_acceptance:
+        raise ValueError(
+            "Task41 V15 full acceptance requires both its exact contract and explicit service selector"
+        )
     saved_scope = contract.get("execution_scope")
     if saved_scope is not None and not (
         b0_v9_failed_terminal_audit_mode
         or b0_saved_y_g_comparison_mode
         or b0_v14_saved_rhs_candidate_mode
+        or v15_full_acceptance_selector
         or b0_v8_selected_trace_star_metadata_only_mode
         or b0_v8_selected_trace_star_candidate_replay_mode
         or b0_v11_candidate_report_replayed_read_only_mode
@@ -15069,7 +15138,6 @@ def _run_task41_p0_service(
             raise ValueError(
                 "Task41 V5 geometry-reference path or SHA-256 differs from the frozen receipt"
             )
-    case_id = task41_case_id_for_run_id(str(contract["case"]["run_id"]))
     continuation_source_sha: str | None = None
     checker_source_sha: str | None = None
     if saved_output_mode:
@@ -15655,6 +15723,17 @@ def _run_task41_p0_service(
         or os.environ.get("TASK41_P0_EXPECTED_SOURCE_SHA") != contract["source"]["sha"]
     ):
         raise ValueError("Task41 service environment differs from the fixed contract")
+    if is_v15_full_acceptance:
+        if (
+            os.environ.get("TASK41_P0_V15_FULL_ACCEPTANCE") != "1"
+            or os.environ.get("TASK41_P0_V15_OUTPUT_DIRECTORY") is not None
+        ):
+            raise ValueError("Task41 V15 service selector environment is not exact and unbound")
+    elif (
+        os.environ.get("TASK41_P0_V15_FULL_ACCEPTANCE") is not None
+        or os.environ.get("TASK41_P0_V15_OUTPUT_DIRECTORY") is not None
+    ):
+        raise ValueError("Task41 V15 service environment is forbidden outside its exact selector")
     expected_input = Path(str(contract["case"]["input_path"]))
     expected_input = (expected_input if expected_input.is_absolute() else repo_root / expected_input).resolve()
     if saved_output_mode:
@@ -15687,6 +15766,12 @@ def _run_task41_p0_service(
         "TASK41_P0_MEMORY_SWAP_MAX_BYTES": str(contract["resources"]["memory_swap_max_bytes"]),
         "TASK41_P0_EXPECTED_SOURCE_SHA": contract["source"]["sha"],
     })
+    if is_v15_full_acceptance:
+        environment["TASK41_P0_V15_FULL_ACCEPTANCE"] = "1"
+        environment.pop("TASK41_P0_V15_OUTPUT_DIRECTORY", None)
+    else:
+        environment.pop("TASK41_P0_V15_FULL_ACCEPTANCE", None)
+        environment.pop("TASK41_P0_V15_OUTPUT_DIRECTORY", None)
     if continuation_mode:
         environment.update({
             "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
@@ -16056,7 +16141,10 @@ def _run_task41_p0_service(
             summary_path = Path(str(launch_payload["summary"])).resolve()
             manifest_path = Path(str(launch_payload["manifest"])).resolve()
             manifest = read_json_object(manifest_path, "Task41 run manifest")
-            numerical_output = Path(str(manifest["numerical_output_directory"])).resolve()
+            numerical_output = (
+                summary_path.parent if v15_full_acceptance_selector
+                else Path(str(manifest["numerical_output_directory"])).resolve()
+            )
             numerical_summary_path = (
                 summary_path.parent / "task40_v10_p6_candidate_summary.json"
                 if case_id in {"A2", "B0"}
@@ -16073,7 +16161,21 @@ def _run_task41_p0_service(
                 "--output", str(checker_result_path),
             ]
             required_inputs = [input_path, summary_path, manifest_path, numerical_summary_path]
-            terminal_route = select_task41_p0_b0_v9_failed_terminal_audit_route(
+            if v15_full_acceptance_selector:
+                checker_command = [
+                    str(runtime_prefix / "bin/python"), "-m", "src.runners.task41_p0_checker",
+                    "--v15-terminal-audit", "--run-root", str(summary_path.parent.resolve()),
+                    "--summary", str(numerical_summary_path), "--manifest", str(manifest_path),
+                    "--contract", str(contract_path.resolve()), "--contract-sha256", contract_sha,
+                    "--output", str(checker_result_path),
+                ]
+                required_inputs = [numerical_summary_path, manifest_path]
+                terminal_product = summary_path.parent / "task41_p0_b0_v9_compact_volume_audit.json"
+                if not terminal_product.is_file():
+                    terminal_product = summary_path.parent / "task41_p0_b0_v15_terminal_sufficient_checkpoint.json"
+                if terminal_product.is_file():
+                    required_inputs.append(terminal_product)
+            terminal_route = None if v15_full_acceptance_selector else select_task41_p0_b0_v9_failed_terminal_audit_route(
                 contract=contract,
                 run_case_returncode=run_case_code,
                 run_root=summary_path.parent,
@@ -16183,7 +16285,10 @@ def _run_task41_p0_service(
                     "schema": TASK41_P0_AUTH_SCHEMA,
                     "phase": "closeout",
                     "purpose": "registered_read_only_required_checker",
-                    "checker_kind": task41_p0_checker_kind_for_case(case_id),
+                    "checker_kind": (
+                        "task41_p0_b0_v15_terminal_checker" if v15_full_acceptance_selector
+                        else task41_p0_checker_kind_for_case(case_id)
+                    ),
                     "command_sha256": hashlib.sha256(
                         json.dumps(checker_command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
                     ).hexdigest(),
@@ -16232,15 +16337,31 @@ def _run_task41_p0_service(
                     and checker_payload.get("full_pass") is True
                     and checker_payload.get("official_result") is True
                 )
+                if v15_full_acceptance_selector:
+                    terminal_decision = _task41_v15_terminal_decision(
+                        checker_authority, checker_payload
+                    )
+                    audit_complete = terminal_decision["audit_completed"]
+                    checker_passed = terminal_decision["acceptance_qualified"]
+                    record.update(terminal_decision)
                 record.update(
-                    required_checker_status="passed" if checker_passed else "failed",
+                    required_checker_status=(
+                        "audit_completed" if v15_full_acceptance_selector and audit_complete
+                        else "passed" if checker_passed else "failed"
+                    ),
                     required_checker_command=checker_command,
                     required_checker_authorization=checker_authorization,
                     required_checker_authority=checker_authority,
                     required_checker_result=checker_payload,
                     required_checker_result_path=str(checker_result_path),
                 )
-                return_code = 0 if checker_passed and run_case_code == 0 else 3
+                return_code = (
+                    (0 if checker_passed or (
+                        audit_complete and terminal_decision["result_classification"]
+                        == "SUPERVISED_NUMERICAL_FAIL"
+                    ) else 3) if v15_full_acceptance_selector
+                    else (0 if checker_passed and run_case_code == 0 else 3)
+                )
         service_end_sample = clock_sample(include_boot_id=True)
         record["service_elapsed_seconds"] = checked_interval(
             service_start_sample,
@@ -16274,6 +16395,26 @@ def run_service(
 ) -> int:
     if case_args and case_args[0] == "--":
         case_args = case_args[1:]
+    v15_selector_token = "--task41-p0-b0-v15-full-acceptance"
+    v15_selector_count = case_args.count(v15_selector_token)
+    if v15_selector_count > 1:
+        raise ValueError("Task41 V15 full-acceptance selector may appear only once")
+    v15_full_acceptance_selector = v15_selector_count == 1
+    if v15_full_acceptance_selector:
+        saved_routes = {
+            "--task41-p0-saved-output-continuation",
+            "--task41-p0-saved-output-checker-only",
+            "--task41-p0-saved-b0-evidence-audit",
+            "--task41-p0-saved-b0-volume-only-attribution",
+            "--task41-p0-saved-b0-selected-trace-star-audit",
+            "--task41-p0-saved-b0-v9-star-screen",
+            "--task41-p0-saved-b0-v9-failed-terminal-audit",
+            "--task41-p0-saved-b0-y-g-comparison",
+            "--v14-saved-rhs-candidate",
+        }
+        if any(argument in saved_routes for argument in case_args):
+            raise ValueError("Task41 V15 full acceptance cannot be combined with a saved-output route")
+        case_args = [argument for argument in case_args if argument != v15_selector_token]
     case_args, task41_contract_path = _extract_v29_path_arg(
         case_args, "--task41-p0-execution-contract"
     )
@@ -16286,7 +16427,10 @@ def run_service(
             case_args=case_args,
             contract_path=task41_contract_path,
             repo_root=repo_root,
+            v15_full_acceptance_selector=v15_full_acceptance_selector,
         )
+    if v15_full_acceptance_selector:
+        raise ValueError("Task41 V15 full-acceptance selector requires its Task41 P0 execution contract")
     case_args, v29_contract_path = _extract_v29_path_arg(
         case_args, "--task40-v29-execution-contract"
     )

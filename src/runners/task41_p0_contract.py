@@ -292,6 +292,51 @@ TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE = Path(
     "/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna"
     "/20261019T053402.514018Z"
 )
+TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE = "v15_full_two_column_acceptance_36h"
+TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE / "execution_window_v15_full_two_column_acceptance_36h.json"
+)
+TASK41_B0_V15_FULL_ACCEPTANCE_AUTH_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE / "full_acceptance_v15_user_authorization.json"
+)
+TASK41_B0_V15_FULL_ACCEPTANCE_ACCOUNTING_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v15_full_two_column_acceptance_36h.jsonl"
+)
+TASK41_B0_V15_FULL_ACCEPTANCE_TOTAL_SECONDS = 129_600.0
+TASK41_B0_V15_FULL_ACCEPTANCE_NUMERICAL_SECONDS = 128_400.0
+TASK41_B0_V15_FULL_ACCEPTANCE_NEW_RAW_BYTES = 1_900_000_000
+TASK41_B0_V15_FULL_ACCEPTANCE_SINGLE_ARTIFACT_BYTES = 512 * 1024**2
+TASK41_B0_V15_FULL_ACCEPTANCE_NON_RAW_RESERVE_BYTES = 256 * 1024**2
+TASK41_B0_V15_POST_V7_RAW_EVIDENCE_ROOTS = [
+    "task41_b0_v8_selected_star_35fd1bbf_20261021T072801Z_attempt1",
+    "task41_b0_v8_saved_checker_3ce1a158_20261021T092516Z_attempt4",
+    "task41_p0_saved_diagnostics_6h",
+    "task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261022T052401.200732Z",
+]
+TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE = {
+    "kind": "full_two_column_action_recovery_acceptance_only",
+    "actions": ["full_two_column_action_recovery_and_independent_terminal_audit"],
+    "columns": [0, 1],
+    "internal_rhs_strategy": TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
+    "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+    "refinement_max_steps": 2,
+    "full_owner": True,
+    "max_full_owner_builds": 1,
+    "owner_quota_scope": "fixed_window_across_attempts",
+    "actual_k_lu_identity_required": True,
+    "independent_terminal_audit_required": True,
+    "success_exit": "acceptance_only",
+    "new_evidence_limit_bytes": TASK41_B0_V15_FULL_ACCEPTANCE_NEW_RAW_BYTES,
+    "single_package_limit_bytes": TASK41_B0_V15_FULL_ACCEPTANCE_SINGLE_ARTIFACT_BYTES,
+    "non_raw_output_reserve_bytes": TASK41_B0_V15_FULL_ACCEPTANCE_NON_RAW_RESERVE_BYTES,
+    "cumulative_raw_artifact_limit_bytes": 16 * 1024**3,
+    "raw_artifact_accounting": "frozen_v6_v7_donor_prefix_plus_explicit_post_v7_roots_by_inode_v1",
+    "raw_artifact_roots": TASK41_B0_V15_POST_V7_RAW_EVIDENCE_ROOTS,
+    "monitoring_log_accounting": "measured_separately_from_raw_npy_cap_and_included_in_free_space_gate",
+    "free_space_floor_bytes": 2 * 1024**3,
+    "carrier_replay": False,
+    "full_q_scan": False,
+}
 
 TASK41_COMPARISON_GROUP = "task41extra_phi90_p50x50_g17x20_g13_a1a2"
 TASK41_TOTAL_SECONDS = 172_800.0
@@ -321,6 +366,8 @@ def _task41_saved_diagnostics_instance(instance: str | None = None) -> dict[str,
                 TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v9_24h.jsonl"
             ),
             "t0_basis": "user_approved_saved_diagnostics_6h",
+            "total_seconds": TASK41_B0_SAVED_DIAGNOSTICS_TOTAL_SECONDS,
+            "numerical_seconds": TASK41_B0_SAVED_DIAGNOSTICS_NUMERICAL_SECONDS,
         }
     if instance == TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE:
         return {
@@ -335,6 +382,8 @@ def _task41_saved_diagnostics_instance(instance: str | None = None) -> dict[str,
                 TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_saved_diagnostics_6h.jsonl"
             ),
             "t0_basis": "user_approved_v12_two_cell_candidate_replay_6h",
+            "total_seconds": TASK41_B0_SAVED_DIAGNOSTICS_TOTAL_SECONDS,
+            "numerical_seconds": TASK41_B0_SAVED_DIAGNOSTICS_NUMERICAL_SECONDS,
         }
     if instance == TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE:
         return {
@@ -348,6 +397,23 @@ def _task41_saved_diagnostics_instance(instance: str | None = None) -> dict[str,
             "prior_ledger_relative": TASK41_B0_V12_CANDIDATE_REPLAY_ACCOUNTING_RELATIVE,
             "t0_basis": "user_approved_v14_same_lu_saved_candidate_6h",
             "requires_preexisting_user_authorization": True,
+            "total_seconds": TASK41_B0_SAVED_DIAGNOSTICS_TOTAL_SECONDS,
+            "numerical_seconds": TASK41_B0_SAVED_DIAGNOSTICS_NUMERICAL_SECONDS,
+        }
+    if instance == TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE:
+        return {
+            "instance": instance,
+            "window_relative": TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
+            "authorization_relative": TASK41_B0_V15_FULL_ACCEPTANCE_AUTH_RELATIVE,
+            "accounting_relative": TASK41_B0_V15_FULL_ACCEPTANCE_ACCOUNTING_RELATIVE,
+            "scope": TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+            "authorization": "user_explicit_v15_full_two_column_acceptance_36h",
+            "prior_window_relative": TASK41_B0_V14_SAVED_RHS_CANDIDATE_WINDOW_RELATIVE,
+            "prior_ledger_relative": TASK41_B0_V14_SAVED_RHS_CANDIDATE_ACCOUNTING_RELATIVE,
+            "t0_basis": "user_approved_v15_full_two_column_acceptance_36h",
+            "requires_preexisting_user_authorization": True,
+            "total_seconds": TASK41_B0_V15_FULL_ACCEPTANCE_TOTAL_SECONDS,
+            "numerical_seconds": TASK41_B0_V15_FULL_ACCEPTANCE_NUMERICAL_SECONDS,
         }
     raise Task41ContractError(f"unknown saved-diagnostics instance: {instance!r}")
 
@@ -360,6 +426,7 @@ def _task41_saved_diagnostics_instance_for_path(
         None,
         TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
         TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE,
+        TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE,
     ):
         config = _task41_saved_diagnostics_instance(instance)
         if resolved == (root / config["window_relative"]).resolve():
@@ -1231,6 +1298,7 @@ def contract_relative_path(
         None: "",
         TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE: f"_{TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE}",
         TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE: f"_{TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE}",
+        TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE: f"_{TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE}",
     }
     if saved_diagnostics_instance not in suffix_by_instance:
         raise Task41ContractError("unknown saved-diagnostics contract filename instance")
@@ -1264,7 +1332,7 @@ def require_task41_p0_contract(
             raise Task41ContractError("Task41 contract is outside a registered P0 controller directory")
     case_spec = _task41_case(case_id)
     if relative.parent != case_spec["controller_relative"] or not re.fullmatch(
-        r"execution_contract_source_[0-9a-f]{40}(?:_v12_two_cell_candidate_replay|_v14_same_lu_rhs_candidate_6h)?\.json",
+        r"execution_contract_source_[0-9a-f]{40}(?:_v12_two_cell_candidate_replay|_v14_same_lu_rhs_candidate_6h|_v15_full_two_column_acceptance_36h)?\.json",
         relative.name,
     ):
         raise Task41ContractError("Task41 contract is not in the registered P0 controller directory")
@@ -1387,6 +1455,11 @@ def require_task41_p0_contract(
         and saved_diagnostics_config["instance"]
         == TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE
     )
+    is_v15_full_acceptance_contract = bool(
+        is_saved_diagnostics_contract
+        and saved_diagnostics_config["instance"]
+        == TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE
+    )
     expected_same_lu_strategy = {
         "schema": "task41.p0.b0.internal_rhs_strategy.v1",
         "internal_rhs_strategy": TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
@@ -1397,7 +1470,12 @@ def require_task41_p0_contract(
         "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
         "refinement_max_steps": 2,
     }
-    if is_v14_rhs_candidate_contract:
+    if is_v15_full_acceptance_contract:
+        if numerical_strategy != expected_v14_refined_strategy:
+            raise Task41ContractError(
+                "Task41 V15 full acceptance requires the exact same-LU binary64/fsum refinement-v2 strategy"
+            )
+    elif is_v14_rhs_candidate_contract:
         if numerical_strategy not in (
             expected_same_lu_strategy,
             expected_v14_refined_strategy,
@@ -1584,8 +1662,8 @@ def task41_window_spec(contract: Mapping[str, Any], root: Path) -> tuple[Path, f
             or window_info.get("authorization_sha256") != authorization_sha
             or window_info.get("scope") != expected_scope
             or window_info.get("entry_source_sha") != authorization["source_at_entry"]
-            or payload.get("total_seconds") != TASK41_B0_SAVED_DIAGNOSTICS_TOTAL_SECONDS
-            or payload.get("numerical_seconds") != TASK41_B0_SAVED_DIAGNOSTICS_NUMERICAL_SECONDS
+            or payload.get("total_seconds") != saved_diagnostics_config["total_seconds"]
+            or payload.get("numerical_seconds") != saved_diagnostics_config["numerical_seconds"]
             or payload.get("closeout_seconds") != TASK41_CLOSEOUT_SECONDS
             or payload.get("prior_window_path") != authorization["prior_window_path"]
             or payload.get("prior_window_sha256") != authorization["prior_window_sha256"]
@@ -1604,8 +1682,8 @@ def task41_window_spec(contract: Mapping[str, Any], root: Path) -> tuple[Path, f
             )
         return (
             path,
-            TASK41_B0_SAVED_DIAGNOSTICS_TOTAL_SECONDS,
-            TASK41_B0_SAVED_DIAGNOSTICS_NUMERICAL_SECONDS,
+            saved_diagnostics_config["total_seconds"],
+            saved_diagnostics_config["numerical_seconds"],
             True,
         )
     if path != (root / case["window_relative"]).resolve():
@@ -1772,7 +1850,7 @@ def _task41_v9_authorization(root: Path) -> tuple[dict[str, Any], str]:
 def _task41_saved_diagnostics_authorization(
     root: Path, *, instance: str | None = None
 ) -> tuple[dict[str, Any], str]:
-    """Validate one explicit six-hour saved-diagnostics authorization instance."""
+    """Validate one explicit saved-diagnostics authorization instance."""
     config = _task41_saved_diagnostics_instance(instance)
     path = root / config["authorization_relative"]
     try:
@@ -1780,7 +1858,7 @@ def _task41_saved_diagnostics_authorization(
         payload = json.loads(raw)
     except (OSError, json.JSONDecodeError) as exc:
         raise Task41ContractError(
-            "saved-diagnostics window requires its explicit six-hour authorization record"
+            "saved-diagnostics window requires its explicit authorization record"
         ) from exc
     expected_fields = {
         "schema", "authorization", "source_at_entry", "preparation_started_utc",
@@ -1803,8 +1881,8 @@ def _task41_saved_diagnostics_authorization(
         or payload.get("schema") != TASK41_B0_SAVED_DIAGNOSTICS_AUTH_SCHEMA
         or payload.get("authorization") != config["authorization"]
         or not re.fullmatch(r"[0-9a-f]{40}", str(payload.get("source_at_entry", "")))
-        or payload.get("total_seconds") != TASK41_B0_SAVED_DIAGNOSTICS_TOTAL_SECONDS
-        or payload.get("numerical_seconds") != TASK41_B0_SAVED_DIAGNOSTICS_NUMERICAL_SECONDS
+        or payload.get("total_seconds") != config["total_seconds"]
+        or payload.get("numerical_seconds") != config["numerical_seconds"]
         or payload.get("closeout_seconds") != TASK41_CLOSEOUT_SECONDS
         or payload.get("scope") != config["scope"]
         or not isinstance(prior_window, Mapping)
@@ -2192,12 +2270,29 @@ def task41_raw_artifact_limit_bytes(contract: Mapping[str, Any]) -> int:
         "free_space_floor_bytes": 2 << 30,
         "authorization": "user_20261019_16gib_evidence_only",
     }
-    if contract.get("execution_scope") in (
+    execution_scope = contract.get("execution_scope")
+    if execution_scope in (
         TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
         TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
         TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
     ):
         expected["new_evidence_limit_bytes"] = TASK41_B0_SAVED_DIAGNOSTICS_NEW_EVIDENCE_LIMIT_BYTES
+    elif execution_scope == TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE:
+        expected.update(
+            {
+                "new_evidence_limit_bytes": TASK41_B0_V15_FULL_ACCEPTANCE_NEW_RAW_BYTES,
+                "single_package_limit_bytes": TASK41_B0_V15_FULL_ACCEPTANCE_SINGLE_ARTIFACT_BYTES,
+                "non_raw_output_reserve_bytes": TASK41_B0_V15_FULL_ACCEPTANCE_NON_RAW_RESERVE_BYTES,
+                "raw_artifact_accounting": TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE[
+                    "raw_artifact_accounting"
+                ],
+                "monitoring_log_accounting": TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE[
+                    "monitoring_log_accounting"
+                ],
+                "raw_artifact_roots": TASK41_B0_V15_POST_V7_RAW_EVIDENCE_ROOTS,
+                "success_exit": TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE["success_exit"],
+            }
+        )
     if contract.get("case", {}).get("run_id") != TASK41_B0_RUN_ID or policy != expected:
         raise Task41ContractError("Task41 raw evidence policy differs from the authorized B0 override")
     return 16 << 30
@@ -2280,8 +2375,13 @@ def prepare_task41_p0(
         saved_auth_path = root / saved_diagnostics_config["authorization_relative"]
         if not saved_auth_path.exists():
             if saved_diagnostics_config.get("requires_preexisting_user_authorization"):
+                route_name = (
+                    "V15 full-acceptance"
+                    if saved_diagnostics_instance == TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE
+                    else "V14 saved-candidate"
+                )
                 raise Task41ContractError(
-                    "V14 saved-candidate prepare requires an existing explicit user authorization; "
+                    f"{route_name} prepare requires an existing explicit user authorization; "
                     "no authorization, T0, window, or accounting file was created"
                 )
             prior_window_path = root / saved_diagnostics_config["prior_window_relative"]
@@ -2309,8 +2409,8 @@ def prepare_task41_p0(
                 "preparation_started_utc": _utc_text_from_ns(
                     int(preparation_sample["utc_ns"])
                 ),
-                "total_seconds": TASK41_B0_SAVED_DIAGNOSTICS_TOTAL_SECONDS,
-                "numerical_seconds": TASK41_B0_SAVED_DIAGNOSTICS_NUMERICAL_SECONDS,
+                "total_seconds": saved_diagnostics_config["total_seconds"],
+                "numerical_seconds": saved_diagnostics_config["numerical_seconds"],
                 "closeout_seconds": TASK41_CLOSEOUT_SECONDS,
                 "scope": saved_diagnostics_config["scope"],
                 "prior_window_path": str(saved_diagnostics_config["prior_window_relative"]),
@@ -2349,13 +2449,13 @@ def prepare_task41_p0(
             "source_sha": saved_diagnostics_authorization["source_at_entry"],
             "t0_utc": _utc_text_from_ns(t0_ns),
             "numerical_deadline_utc": _utc_text_from_ns(
-                t0_ns + int(TASK41_B0_SAVED_DIAGNOSTICS_NUMERICAL_SECONDS * 1e9)
+                t0_ns + int(saved_diagnostics_config["numerical_seconds"] * 1e9)
             ),
             "deadline_utc": _utc_text_from_ns(
-                t0_ns + int(TASK41_B0_SAVED_DIAGNOSTICS_TOTAL_SECONDS * 1e9)
+                t0_ns + int(saved_diagnostics_config["total_seconds"] * 1e9)
             ),
-            "total_seconds": TASK41_B0_SAVED_DIAGNOSTICS_TOTAL_SECONDS,
-            "numerical_seconds": TASK41_B0_SAVED_DIAGNOSTICS_NUMERICAL_SECONDS,
+            "total_seconds": saved_diagnostics_config["total_seconds"],
+            "numerical_seconds": saved_diagnostics_config["numerical_seconds"],
             "closeout_seconds": TASK41_CLOSEOUT_SECONDS,
             "anchor": anchor,
             "accounting_path": str(
@@ -2725,8 +2825,27 @@ def prepare_task41_p0(
         }
         if saved_diagnostics_config is not None:
             contract["evidence"]["raw_disk_policy"]["new_evidence_limit_bytes"] = (
-                TASK41_B0_SAVED_DIAGNOSTICS_NEW_EVIDENCE_LIMIT_BYTES
+                int(saved_diagnostics_config["scope"]["new_evidence_limit_bytes"])
             )
+            if saved_diagnostics_instance == TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE:
+                contract["evidence"]["raw_disk_policy"].update(
+                    {
+                        "single_package_limit_bytes": TASK41_B0_V15_FULL_ACCEPTANCE_SINGLE_ARTIFACT_BYTES,
+                        "non_raw_output_reserve_bytes": TASK41_B0_V15_FULL_ACCEPTANCE_NON_RAW_RESERVE_BYTES,
+                        "raw_artifact_accounting": TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE[
+                            "raw_artifact_accounting"
+                        ],
+                        "monitoring_log_accounting": TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE[
+                            "monitoring_log_accounting"
+                        ],
+                        "raw_artifact_roots": list(
+                            TASK41_B0_V15_POST_V7_RAW_EVIDENCE_ROOTS
+                        ),
+                        "success_exit": TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE[
+                            "success_exit"
+                        ],
+                    }
+                )
     if b0_v9_continuation or saved_diagnostics_config is not None:
         contract["numerical_strategy"] = {
             "schema": "task41.p0.b0.internal_rhs_strategy.v1",
@@ -2735,7 +2854,10 @@ def prepare_task41_p0(
         if (
             saved_diagnostics_config is not None
             and saved_diagnostics_config["instance"]
-            == TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE
+            in {
+                TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE,
+                TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE,
+            }
         ):
             contract["numerical_strategy"].update(
                 {
@@ -2790,13 +2912,15 @@ def prepare_task41_p0(
         ),
         "service_command": (
             None
-            if saved_diagnostics_enabled
+            if saved_diagnostics_enabled and saved_diagnostics_instance != TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE
             else [
                 "bash",
                 "scripts/run_case_in_user_service.sh",
                 str(case_spec["input_relative"]),
                 "--task41-p0-execution-contract",
                 str(contract_path.relative_to(root)),
+                *(["--task41-p0-b0-v15-full-acceptance"]
+                  if saved_diagnostics_instance == TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE else []),
             ]
         ),
         "saved_diagnostics_output_root": (
@@ -2804,7 +2928,7 @@ def prepare_task41_p0(
                 (root / "results" / TASK41_MODEL_ID
                  / "task41_p0_saved_diagnostics_6h" / window_sha).relative_to(root)
             )
-            if saved_diagnostics_enabled
+            if saved_diagnostics_enabled and saved_diagnostics_instance != TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE
             else None
         ),
         "saved_surface_donor": saved_surface_donor,
@@ -3088,6 +3212,7 @@ def main(argv: list[str] | None = None) -> int:
         choices=(
             TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
             TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE,
+            TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE,
         ),
     )
     parser.add_argument("--case", choices=("A1", "A2", "B0"), default="A1")

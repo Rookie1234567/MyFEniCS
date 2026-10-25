@@ -1050,26 +1050,173 @@ def test_task41_watchdog_authorizes_checker_kind_and_command_for_bound_case(
 
 def test_task41_refinement_requires_validated_full_owner_scope():
     from src.runners.task40_v10_worker import _task41_b0_require_full_owner_scope
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
+        TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+        TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
+    )
 
     assert _task41_b0_require_full_owner_scope(
         {"full_owner_scope_authorized": False}, refinement_max_steps=0
     ) is False
+    root = Path(__file__).resolve().parents[2]
+    accounting_path = root / "test-fixture" / "campaign_accounting.jsonl"
+    run_directory = root / "results" / TASK41_MODEL_ID / "v15_guard_fixture"
+    authority = {
+        "execution_scope": TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+        "campaign_window_path": str(
+            (root / TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE).resolve()
+        ),
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+        "internal_rhs_refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        "internal_rhs_refinement_max_steps": 2,
+        "full_owner_quota_scope": "fixed_window_across_attempts",
+        "full_owner_quota_claim_path": str(
+            accounting_path.with_name(
+                accounting_path.name + ".v15_full_owner_claim.json"
+            )
+        ),
+        "actual_k_lu_identity_required": True,
+        "campaign_accounting_path": str(accounting_path),
+        "run_directory": str(run_directory),
+    }
     assert _task41_b0_require_full_owner_scope(
-        {"full_owner_scope_authorized": True}, refinement_max_steps=2
+        authority, refinement_max_steps=2, run_directory=run_directory
     ) is True
-    with pytest.raises(ValueError, match="does not authorize a P6 full owner"):
+    with pytest.raises(ValueError, match="exact V15 full-acceptance contract"):
         _task41_b0_require_full_owner_scope(
-            {"full_owner_scope_authorized": False}, refinement_max_steps=2
+            {"full_owner_scope_authorized": True},
+            refinement_max_steps=2,
+            run_directory=run_directory,
+        )
+    v14_authority = dict(
+        authority,
+        execution_scope=TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
+    )
+    with pytest.raises(ValueError, match="exact V15 full-acceptance contract"):
+        _task41_b0_require_full_owner_scope(
+            v14_authority, refinement_max_steps=2, run_directory=run_directory
         )
     for invalid in (True, 2.0):
         with pytest.raises(ValueError, match="strict integer"):
             _task41_b0_require_full_owner_scope(
-                {"full_owner_scope_authorized": True}, refinement_max_steps=invalid
+                authority, refinement_max_steps=invalid, run_directory=run_directory
             )
     with pytest.raises(ValueError, match="0 or 2"):
         _task41_b0_require_full_owner_scope(
-            {"full_owner_scope_authorized": True}, refinement_max_steps=1
+            authority, refinement_max_steps=1, run_directory=run_directory
         )
+
+
+def test_task41_v15_owner_quota_is_claimed_once_and_audits_actual_k_lu(tmp_path):
+    from types import SimpleNamespace
+
+    from src.runners.task40_v10_worker import _task41_b0_build_v15_full_owner_once
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+        TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
+    )
+
+    accounting_path = tmp_path / "campaign" / "accounting.jsonl"
+    window_path = tmp_path / TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE
+    output_root = tmp_path / "results" / TASK41_MODEL_ID / "attempt-v15"
+    output_root.mkdir(parents=True)
+    accounting_path.parent.mkdir(parents=True)
+    claim_path = accounting_path.with_name(
+        accounting_path.name + ".v15_full_owner_claim.json"
+    )
+    authority = {
+        "execution_scope": TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+        "campaign_window_path": str(window_path),
+        "campaign_window_sha256": "a" * 64,
+        "campaign_accounting_path": str(accounting_path),
+        "full_owner_quota_claim_path": str(claim_path),
+        "full_owner_quota_scope": "fixed_window_across_attempts",
+        "model_id": TASK41_MODEL_ID,
+        "run_directory": str(output_root.resolve()),
+        "task41_contract_path": str(tmp_path / "contract.json"),
+        "task41_contract_sha256": "b" * 64,
+        "source_sha": "c" * 40,
+        "input_sha256": "d" * 64,
+    }
+    generation = object()
+    condensed = SimpleNamespace(
+        actual_internal_matrix_identity_by_class={"class-0": generation},
+        interior_lu_matrix_identity_by_class={"class-0": generation},
+        retained_actual_internal_matrix_by_class={"class-0": object()},
+        interior_lu_by_class={"class-0": object()},
+    )
+    built = {"condensed": condensed}
+    calls = 0
+
+    def owner_builder():
+        nonlocal calls
+        calls += 1
+        return built
+
+    owner, claim = _task41_b0_build_v15_full_owner_once(
+        authority,
+        run_directory=output_root,
+        owner_builder=owner_builder,
+        current_root=tmp_path,
+    )
+    assert owner is built
+    assert claim["status"] == "BUILD_COMPLETED"
+    assert claim["full_owner_build_count"] == 1
+    assert claim["actual_k_lu_identity"][
+        "actual_k_and_lu_share_generation_token_for_every_class"
+    ] is True
+    assert json.loads(claim_path.read_text(encoding="utf-8"))["status"] == "BUILD_COMPLETED"
+    with pytest.raises(ValueError, match="quota is already consumed"):
+        _task41_b0_build_v15_full_owner_once(
+            authority,
+            run_directory=output_root,
+            owner_builder=owner_builder,
+            current_root=tmp_path,
+        )
+    assert calls == 1
+
+
+def test_task41_v15_owner_is_preserved_when_postbuild_identity_audit_fails(tmp_path):
+    from src.runners.task40_v10_worker import _task41_b0_build_v15_full_owner_once
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+        TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
+    )
+
+    accounting_path = tmp_path / "campaign" / "accounting.jsonl"
+    output_root = tmp_path / "results" / TASK41_MODEL_ID / "attempt-v15"
+    output_root.mkdir(parents=True)
+    claim_path = accounting_path.with_name(
+        accounting_path.name + ".v15_full_owner_claim.json"
+    )
+    authority = {
+        "execution_scope": TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+        "campaign_window_path": str(tmp_path / TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE),
+        "campaign_window_sha256": "a" * 64,
+        "campaign_accounting_path": str(accounting_path),
+        "full_owner_quota_claim_path": str(claim_path),
+        "full_owner_quota_scope": "fixed_window_across_attempts",
+        "model_id": TASK41_MODEL_ID,
+        "run_directory": str(output_root.resolve()),
+        "task41_contract_path": str(tmp_path / "contract.json"),
+        "task41_contract_sha256": "b" * 64,
+        "source_sha": "c" * 40,
+        "input_sha256": "d" * 64,
+    }
+    owner = {"condensed": object()}
+    registered = []
+    with pytest.raises(ValueError, match="retained actual K/LU identity maps"):
+        _task41_b0_build_v15_full_owner_once(
+            authority,
+            run_directory=output_root,
+            owner_builder=lambda: owner,
+            owner_built_callback=registered.append,
+            current_root=tmp_path,
+        )
+    assert registered == [owner]
+    assert json.loads(claim_path.read_text(encoding="utf-8"))["status"] == "BUILD_STARTED"
 
 
 @pytest.mark.parametrize("case_id", ("A2", "B0", "B0_V3"))
@@ -1838,3 +1985,371 @@ def test_task41_v6_service_cli_keeps_saved_volume_selector_first(monkeypatch, tm
     assert captured["case_args"] == case_args[:1] + case_args[3:]
     assert captured["case_args"][0] == "--task41-p0-saved-b0-volume-only-attribution"
     assert len(captured["case_args"]) == 19
+
+
+def test_task41_v15_full_acceptance_prepare_binds_36h_scope_and_raw_policy(
+    tmp_path, monkeypatch
+):
+    import src.runners.task41_p0_contract as module
+
+    original_contract_path, fixture_contract = _write_contract(tmp_path, "B0")
+    original_contract_path.unlink()
+    source_sha = "a" * 40
+    config = module._task41_saved_diagnostics_instance(
+        module.TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE
+    )
+
+    prior_window_path = tmp_path / config["prior_window_relative"]
+    prior_ledger_path = tmp_path / config["prior_ledger_relative"]
+    prior_window_path.parent.mkdir(parents=True, exist_ok=True)
+    prior_ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    prior_ledger_path.write_bytes(b"frozen V14 accounting fixture\n")
+    prior_window_path.write_text(
+        json.dumps({"accounting_path": str(prior_ledger_path.resolve())}),
+        encoding="utf-8",
+    )
+
+    preparation_started_ns = int(clock_sample(include_boot_id=True)["utc_ns"])
+    preparation_started_utc = module._utc_text_from_ns(preparation_started_ns)
+    authorization_payload = {
+        "schema": module.TASK41_B0_SAVED_DIAGNOSTICS_AUTH_SCHEMA,
+        "authorization": config["authorization"],
+        "source_at_entry": source_sha,
+        "preparation_started_utc": preparation_started_utc,
+        "total_seconds": module.TASK41_B0_V15_FULL_ACCEPTANCE_TOTAL_SECONDS,
+        "numerical_seconds": module.TASK41_B0_V15_FULL_ACCEPTANCE_NUMERICAL_SECONDS,
+        "closeout_seconds": module.TASK41_CLOSEOUT_SECONDS,
+        "scope": config["scope"],
+        "prior_window_path": str(config["prior_window_relative"]),
+        "prior_window_sha256": hashlib.sha256(prior_window_path.read_bytes()).hexdigest(),
+        "prior_ledger_path": str(config["prior_ledger_relative"]),
+        "prior_ledger_sha256": hashlib.sha256(prior_ledger_path.read_bytes()).hexdigest(),
+    }
+    authorization_path = tmp_path / config["authorization_relative"]
+    authorization_path.parent.mkdir(parents=True, exist_ok=True)
+    authorization_path.write_text(
+        json.dumps(authorization_payload, sort_keys=True), encoding="utf-8"
+    )
+
+    def fake_git(_root, *args):
+        if args == ("rev-parse", "HEAD"):
+            return source_sha
+        if args == ("branch", "--show-current"):
+            return TASK41_BRANCH
+        if args == ("status", "--porcelain", "--untracked-files=normal"):
+            return ""
+        raise AssertionError(f"unexpected git query: {args}")
+
+    anchor = dict(clock_sample(include_boot_id=True))
+    anchor["utc_ns"] = preparation_started_ns + 1_000_000_000
+    monkeypatch.setattr(module, "_git", fake_git)
+    monkeypatch.setattr(module, "clock_sample", lambda **_kwargs: dict(anchor))
+    monkeypatch.setattr(
+        module,
+        "_check_task41_native_receipt",
+        lambda receipt_path, *_args: hashlib.sha256(Path(receipt_path).read_bytes()).hexdigest(),
+    )
+    monkeypatch.setattr(
+        module, "verify_task41_b0_saved_surface_donor", lambda *_args, **_kwargs: None
+    )
+
+    prepared = prepare_task41_p0(
+        current_root=tmp_path,
+        case_id="B0",
+        b0_saved_diagnostics_instance=module.TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE,
+        runtime_prefix=fixture_contract["runtime"]["runtime_prefix"],
+        abi_receipt=fixture_contract["runtime"]["abi_receipt_path"],
+        jit_cache=fixture_contract["runtime"]["jit_cache"],
+    )
+
+    window_path = tmp_path / prepared["window_path"]
+    window = json.loads(window_path.read_text(encoding="utf-8"))
+    assert window["source_sha"] == source_sha
+    assert window["t0_utc"] == preparation_started_utc
+    assert window["total_seconds"] == 129_600.0
+    assert window["numerical_seconds"] == 128_400.0
+    assert window["closeout_seconds"] == module.TASK41_CLOSEOUT_SECONDS
+    assert (tmp_path / config["authorization_relative"]).read_bytes() == (
+        authorization_path.read_bytes()
+    )
+
+    contract_path = tmp_path / prepared["contract_path"]
+    contract, _contract_sha = require_task41_p0_contract(
+        contract_path, current_root=tmp_path
+    )
+    assert prepared["service_command"] == [
+        "bash", "scripts/run_case_in_user_service.sh", str(module.TASK41_B0_INPUT_RELATIVE),
+        "--task41-p0-execution-contract", prepared["contract_path"],
+        "--task41-p0-b0-v15-full-acceptance",
+    ]
+    assert prepared["saved_diagnostics_output_root"] is None
+    assert contract["execution_scope"] == module.TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
+    assert contract["time"] == {
+        "total_seconds": 129_600.0,
+        "numerical_seconds": 128_400.0,
+        "closeout_seconds": module.TASK41_CLOSEOUT_SECONDS,
+    }
+    assert contract["numerical_strategy"] == {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v2",
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+        "refinement_strategy": module.TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        "refinement_max_steps": 2,
+    }
+    assert contract["evidence"]["raw_disk_policy"] == {
+        "scope": "task41_b0_v3_recovery_evidence",
+        "raw_artifact_limit_bytes": 16 << 30,
+        "free_space_floor_bytes": 2 << 30,
+        "authorization": "user_20261019_16gib_evidence_only",
+        "new_evidence_limit_bytes": module.TASK41_B0_V15_FULL_ACCEPTANCE_NEW_RAW_BYTES,
+        "single_package_limit_bytes": module.TASK41_B0_V15_FULL_ACCEPTANCE_SINGLE_ARTIFACT_BYTES,
+        "non_raw_output_reserve_bytes": module.TASK41_B0_V15_FULL_ACCEPTANCE_NON_RAW_RESERVE_BYTES,
+        "raw_artifact_accounting": module.TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE[
+            "raw_artifact_accounting"
+        ],
+        "monitoring_log_accounting": module.TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE[
+            "monitoring_log_accounting"
+        ],
+        "raw_artifact_roots": module.TASK41_B0_V15_POST_V7_RAW_EVIDENCE_ROOTS,
+        "success_exit": "acceptance_only",
+    }
+
+
+def test_task41_v15_prepare_requires_existing_user_authorization_without_window_creation(
+    tmp_path, monkeypatch
+):
+    import src.runners.task41_p0_contract as module
+
+    original_contract_path, fixture_contract = _write_contract(tmp_path, "B0")
+    original_contract_path.unlink()
+    source_sha = fixture_contract["source"]["sha"]
+
+    def fake_git(_root, *args):
+        if args == ("rev-parse", "HEAD"):
+            return source_sha
+        if args == ("branch", "--show-current"):
+            return TASK41_BRANCH
+        if args == ("status", "--porcelain", "--untracked-files=normal"):
+            return ""
+        raise AssertionError(f"unexpected git query: {args}")
+
+    monkeypatch.setattr(module, "_git", fake_git)
+    monkeypatch.setattr(
+        module,
+        "clock_sample",
+        lambda **_kwargs: pytest.fail("missing V15 authorization must fail before T0 sampling"),
+    )
+    monkeypatch.setattr(
+        module, "verify_task41_b0_saved_surface_donor", lambda *_args, **_kwargs: None
+    )
+
+    config = module._task41_saved_diagnostics_instance(
+        module.TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE
+    )
+    with pytest.raises(Task41ContractError, match="requires an existing explicit user authorization"):
+        prepare_task41_p0(
+            current_root=tmp_path,
+            case_id="B0",
+            b0_saved_diagnostics_instance=module.TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE,
+            runtime_prefix=fixture_contract["runtime"]["runtime_prefix"],
+            abi_receipt=fixture_contract["runtime"]["abi_receipt_path"],
+            jit_cache=fixture_contract["runtime"]["jit_cache"],
+        )
+    assert not (tmp_path / config["authorization_relative"]).exists()
+    assert not (tmp_path / config["window_relative"]).exists()
+
+
+def test_task41_v15_service_selector_is_consumed_and_requires_its_contract(
+    monkeypatch, tmp_path
+):
+    import scripts.task40_v20_service_workflow as workflow
+
+    captured = {}
+    monkeypatch.setattr(
+        workflow,
+        "_run_task41_p0_service",
+        lambda **kwargs: captured.update(kwargs) or 0,
+    )
+    contract_path = tmp_path / "v15-contract.json"
+    input_path = tmp_path / "case.dat"
+    args = [
+        str(input_path),
+        "--task41-p0-b0-v15-full-acceptance",
+        "--task41-p0-execution-contract",
+        str(contract_path),
+    ]
+    assert workflow.run_service(
+        unit="task41-v15-selector-test.service",
+        runtime_prefix=tmp_path / ".venv",
+        abi_receipt=tmp_path / "abi.json",
+        jit_cache=tmp_path / "jit",
+        case_args=args,
+        repo_root=tmp_path,
+    ) == 0
+    assert captured["case_args"] == [str(input_path)]
+    assert captured["v15_full_acceptance_selector"] is True
+    assert captured["contract_path"] == contract_path
+
+    with pytest.raises(ValueError, match="requires its Task41 P0 execution contract"):
+        workflow.run_service(
+            unit="task41-v15-selector-without-contract.service",
+            runtime_prefix=tmp_path / ".venv",
+            abi_receipt=tmp_path / "abi.json",
+            jit_cache=tmp_path / "jit",
+            case_args=[str(input_path), "--task41-p0-b0-v15-full-acceptance"],
+            repo_root=tmp_path,
+        )
+
+    with pytest.raises(ValueError, match="may appear only once"):
+        workflow.run_service(
+            unit="task41-v15-duplicate-selector.service",
+            runtime_prefix=tmp_path / ".venv",
+            abi_receipt=tmp_path / "abi.json",
+            jit_cache=tmp_path / "jit",
+            case_args=[
+                str(input_path),
+                "--task41-p0-b0-v15-full-acceptance",
+                "--task41-p0-b0-v15-full-acceptance",
+                "--task41-p0-execution-contract",
+                str(contract_path),
+            ],
+            repo_root=tmp_path,
+        )
+
+
+def test_task41_v15_output_binding_propagates_the_actual_allocated_path(
+    tmp_path
+):
+    from src.io.input_loader import InputError
+    from src.runners.task038_launcher import _bind_task41_v15_output_directory
+
+    allocated = tmp_path / "results" / TASK41_MODEL_ID / "attempt-from-launcher"
+    allocated.mkdir(parents=True)
+    process_environment = {"TASK41_P0_V15_FULL_ACCEPTANCE": "1"}
+    actual = _bind_task41_v15_output_directory(
+        allocated, environment=process_environment
+    )
+    assert actual == str(allocated.resolve())
+    assert process_environment["TASK41_P0_V15_OUTPUT_DIRECTORY"] == actual
+
+    worker_environment = {"TASK41_P0_V15_FULL_ACCEPTANCE": "1"}
+    assert _bind_task41_v15_output_directory(
+        allocated, environment=worker_environment
+    ) == actual
+    assert worker_environment["TASK41_P0_V15_OUTPUT_DIRECTORY"] == actual
+
+    wrong_environment = {
+        "TASK41_P0_V15_FULL_ACCEPTANCE": "1",
+        "TASK41_P0_V15_OUTPUT_DIRECTORY": str(tmp_path / "wrong-output"),
+    }
+    with pytest.raises(InputError, match="does not resolve"):
+        _bind_task41_v15_output_directory(allocated, environment=wrong_environment)
+    with pytest.raises(InputError, match="exact service selector"):
+        _bind_task41_v15_output_directory(allocated, environment={})
+
+@pytest.mark.parametrize("product", ["compact", "partial", "absent"])
+def test_task41_v15_prepared_contract_authorizes_actual_terminal_watchdog_without_physical_output(tmp_path, monkeypatch, product):
+    import benchmarks.subreaper_watchdog as watchdog
+    import src.runners.task41_p0_contract as module
+
+    test_task41_v15_full_acceptance_prepare_binds_36h_scope_and_raw_policy(tmp_path, monkeypatch)
+    paths = list((tmp_path / module.TASK41_B0_CONTROLLER_RELATIVE).glob(
+        "execution_contract_source_*_v15_full_two_column_acceptance_36h.json"))
+    assert len(paths) == 1
+    contract_path = paths[0]
+    contract, digest = module.require_task41_p0_contract(contract_path, current_root=tmp_path)
+    run_root = tmp_path / "results" / module.TASK41_MODEL_ID / "launcher-allocated-fixture"
+    run_root.mkdir(parents=True)
+    summary = run_root / "task40_v10_p6_candidate_summary.json"
+    manifest = run_root / "run_manifest.json"
+    summary.write_text('{}\n')
+    manifest.write_text('{}\n')
+    inputs = [summary, manifest]
+    if product != "absent":
+        record = run_root / ("task41_p0_b0_v9_compact_volume_audit.json" if product == "compact"
+                             else "task41_p0_b0_v15_terminal_sufficient_checkpoint.json")
+        record.write_text('{}\n')
+        inputs.append(record)
+    output = tmp_path / contract["evidence"]["service_directory"] / "task41_p0_checker_result.json"
+    python = Path(contract["runtime"]["runtime_prefix"]) / "bin/python"
+    command = [str(python), "-m", "src.runners.task41_p0_checker", "--v15-terminal-audit",
+               "--run-root", str(run_root), "--summary", str(summary), "--manifest", str(manifest),
+               "--contract", str(contract_path), "--contract-sha256", digest, "--output", str(output)]
+    environment = {"TASK41_P0_STRICT_EXECUTION": "1", "TASK41_P0_CONTRACT_PATH": str(contract_path),
+                   "TASK41_P0_CONTRACT_SHA256": digest, "TASK41_P0_V15_FULL_ACCEPTANCE": "1"}
+    window = SimpleNamespace(path=tmp_path / contract["window"]["path"], sha256=contract["window"]["sha256"])
+    auth = {"schema": module.TASK41_P0_AUTH_SCHEMA, "phase": "closeout",
+            "purpose": "registered_read_only_required_checker", "checker_kind": "task41_p0_b0_v15_terminal_checker",
+            "command_sha256": hashlib.sha256(json.dumps(command, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest(),
+            "input_paths": [str(p) for p in inputs], "input_sha256s": [module.sha256_file(p) for p in inputs],
+            "expected_channel_count": None, "campaign_window_sha256": window.sha256,
+            "task41_contract_sha256": digest, "source_sha": contract["source"]["sha"],
+            "source_branch": module.TASK41_BRANCH, "source_clean": True}
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(watchdog.sys, "executable", str(python))
+    def fake_git(command, **kwargs):
+        value = {('git','rev-parse','HEAD'): contract['source']['sha'],
+                 ('git','branch','--show-current'): module.TASK41_BRANCH,
+                 ('git','status','--porcelain','--untracked-files=normal'): ''}[tuple(command)]
+        return SimpleNamespace(returncode=0, stdout=value+'\n', stderr='')
+    monkeypatch.setattr(watchdog.subprocess, "run", fake_git)
+    assert watchdog._validate_campaign_closeout_authorization(
+        command=command, campaign=window, authorization=auth, worker_environment=environment) == auth
+    assert not (run_root / "numerical_output").exists()
+    wrong = dict(environment, TASK41_P0_V15_FULL_ACCEPTANCE="0")
+    with pytest.raises(ValueError, match="exact full-acceptance"):
+        watchdog._validate_campaign_closeout_authorization(
+            command=command, campaign=window, authorization=auth, worker_environment=wrong)
+    inputs[0].write_text('{"changed":true}\n')
+    with pytest.raises(ValueError):
+        watchdog._validate_campaign_closeout_authorization(
+            command=command, campaign=window, authorization=auth, worker_environment=environment)
+
+
+def test_task41_v15_raw_inventory_counts_later_unique_backings_without_carrier(tmp_path, monkeypatch):
+    import os
+    import src.runners.task41_p0_contract as module
+    from src.runners.task40_v10_worker import _task41_v15_existing_raw_inventory
+    root = tmp_path / "results" / module.TASK41_MODEL_ID
+    for name in module.TASK41_B0_V15_POST_V7_RAW_EVIDENCE_ROOTS:
+        (root / name).mkdir(parents=True)
+    a = root / module.TASK41_B0_V15_POST_V7_RAW_EVIDENCE_ROOTS[0] / "a.npy"
+    a.write_bytes(b'abc')
+    os.link(a, root / module.TASK41_B0_V15_POST_V7_RAW_EVIDENCE_ROOTS[1] / "alias.npy")
+    (root / "unrelated_carrier.npy").write_bytes(b'not in authorized scope')
+    report = _task41_v15_existing_raw_inventory(tmp_path, frozen_through_v7_bytes=100)
+    assert report['cumulative_bytes'] == 103
+    assert sum(item['npy_count'] for item in report['roots']) == 1
+
+
+@pytest.mark.parametrize("failure", (None, "numerical", "cleanup", "swap", "descendants", "missing_resource"))
+def test_task41_v15_terminal_service_separates_numerical_and_resource_results(failure):
+    from scripts.task40_v20_service_workflow import _task41_v15_terminal_decision
+
+    authority = {
+        "classification": "COMPLETED", "leader_exit_code": 0,
+        "descendants_cleared": True, "remaining_child_pids": [],
+        "process_tree_swap_gate_enforced": True, "sampled_process_tree_swap_peak_bytes": 0,
+        "job_cgroup_swap_gate_enforced": True, "job_cgroup_swap": {"passed": True},
+    }
+    payload = {
+        "audit_completed": True, "data_integrity": True, "official_result": False,
+        "action_passed": True, "recovery_passed": True, "acceptance_qualified": True,
+    }
+    if failure == "numerical":
+        payload.update(action_passed=False, recovery_passed=None, acceptance_qualified=False)
+    elif failure == "cleanup":
+        payload["acceptance_qualified"] = False
+    elif failure == "swap":
+        authority["sampled_process_tree_swap_peak_bytes"] = 4096
+    elif failure == "descendants":
+        authority.update(descendants_cleared=False, remaining_child_pids=[123])
+    elif failure == "missing_resource":
+        authority.pop("job_cgroup_swap_gate_enforced")
+    result = _task41_v15_terminal_decision(authority, payload)
+    assert result["acceptance_qualified"] is (failure is None)
+    assert result["audit_completed"] is (failure in (None, "numerical", "cleanup"))
+    assert result["official_result"] is False
+    if failure == "numerical":
+        assert result["result_classification"] == "SUPERVISED_NUMERICAL_FAIL"
+    if failure == "cleanup":
+        assert result["result_classification"] == "SUPERVISED_RESOURCE_OR_CLEANUP_FAILURE"

@@ -272,6 +272,7 @@ def _validate_campaign_closeout_authorization(
         'task41_p0_b0_v9_saved_star_screen_checker',
         'task41_p0_b0_v9_failed_terminal_audit_checker',
         'task41_p0_b0_saved_y_g_comparison_checker',
+        'task41_p0_b0_v15_terminal_checker',
         'task41_p0_v11_selected_cell_saved_array_checker',
         'task41_p0_v13_saved_adjoint_diagnostic_independent_check',
     }:
@@ -282,7 +283,39 @@ def _validate_campaign_closeout_authorization(
             Path(str(contract.get('runtime', {}).get('runtime_prefix', '')))
             / 'bin/python'
         ).resolve()
-        if checker_kind in {
+        if checker_kind == 'task41_p0_b0_v15_terminal_checker':
+            from src.runners.task41_p0_contract import TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
+
+            if (
+                contract.get('execution_scope') != TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
+                or environment.get('TASK41_P0_V15_FULL_ACCEPTANCE') != '1'
+                or len(argv) != 16
+                or argv[1:4] != ['-m', 'src.runners.task41_p0_checker', '--v15-terminal-audit']
+                or argv[4::2] != ['--run-root', '--summary', '--manifest', '--contract', '--contract-sha256', '--output']
+                or argv[13] != contract_sha
+                or authorization.get('expected_channel_count') is not None
+            ):
+                raise ValueError('V15 closeout requires the exact full-acceptance contract and command')
+            run_root, summary_path, manifest_path = (Path(argv[i]).resolve() for i in (5, 7, 9))
+            results_root = (root / 'results' / str(contract['case']['model_id'])).resolve()
+            service_root = Path(str(contract['evidence']['service_directory']))
+            if not service_root.is_absolute():
+                service_root = root / service_root
+            if (
+                not run_root.is_relative_to(results_root)
+                or summary_path != run_root / 'task40_v10_p6_candidate_summary.json'
+                or manifest_path != run_root / 'run_manifest.json'
+                or Path(argv[11]).resolve() != Path(str(contract_path)).resolve()
+                or Path(argv[15]).resolve() != (service_root / 'task41_p0_checker_result.json').resolve()
+            ):
+                raise ValueError('V15 terminal audit paths differ from this run or service')
+            input_paths = [str(summary_path), str(manifest_path)]
+            product = run_root / 'task41_p0_b0_v9_compact_volume_audit.json'
+            if not product.is_file():
+                product = run_root / 'task41_p0_b0_v15_terminal_sufficient_checkpoint.json'
+            if product.is_file():
+                input_paths.append(str(product))
+        elif checker_kind in {
             'task41_p0_b0_v9_failed_terminal_audit_checker',
             'task41_p0_b0_saved_y_g_comparison_checker',
         }:
