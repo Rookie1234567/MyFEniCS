@@ -1,0 +1,401 @@
+{
+  "schema": "task43_v8_d3_preparation_closeout_v1",
+  "reviewed_document": "docs/task43_hp_adaptivity/review_report_v7.md",
+  "review_head": "dc6c3c59cabebefec76f928f261a25670a2a8857",
+  "status": "PREPARATION_NOT_QUALIFIED_STOPPED",
+  "formal_pde_dispatches_this_turn": 0,
+  "d3_support_dispatches": 0,
+  "d3_support_budget": "0/1 consumed; this preparation stopped and does not authorize a run",
+  "formal_budget": {
+    "total": "5/6",
+    "A1": "2/2",
+    "A2": "3/3",
+    "remaining_slot": "sealed"
+  },
+  "run_status": {
+    "candidate_sanity": "NOT_RUN",
+    "native_import": "NOT_RUN",
+    "full_abi_preflight": "NOT_REACHED",
+    "fixed_20_tests": "NOT_RUN",
+    "formal_pde": "NOT_RUN",
+    "formal_output_root_created": false,
+    "merge_approval": false
+  },
+  "preparation_gate": {
+    "required_order": "Complete the review §9.2 static input/ELF work before generating the unique candidate.",
+    "actual_order": "The candidate was mechanically produced before the §9.2 static input/ELF work was complete.",
+    "qualification": "FAILED_BY_ORDER; do not retroactively qualify the candidate because its resulting hashes match the appendix.",
+    "additional_failure": "The first mechanical patch/copy command exited 1 after patch edited preserved-D2 in place and the subsequent copy source path did not exist. A later relocation command produced the expected candidate bytes, but this does not repair the order violation.",
+    "responsibility": "The execution agent generated the candidate too early; staged oversight did not stop that ordering error before the remaining static work. This is an execution/oversight failure, not an environment or numerical failure."
+  },
+  "candidate_draft": {
+    "shell_path": "/tmp/task43_v7_d3_proposal/run_d3.sh",
+    "shell_sha256": "e84d2eb0bfcd257549fcd85b336d5ce9ea5f8faa72eef5261e7ca936d076127a",
+    "probe_path": "/tmp/task43_v7_d3_proposal/probe_import_affinity.py",
+    "probe_sha256": "fa0dea6e8e049134c77c68e356eb377afeabd6080246e11b2e6acf5fbad3e1d4",
+    "qualification": "UNQUALIFIED_DRAFT_RETAINED_FOR_REVIEW_ONLY",
+    "candidate_regenerated_after_stop": false,
+    "sanity_executed": false,
+    "durable_ignored_archive": [
+      {
+        "path": "benchmarks/artifacts/task43/v7_preparation_audit/candidate_draft/run_d3.sh",
+        "sha256": "e84d2eb0bfcd257549fcd85b336d5ce9ea5f8faa72eef5261e7ca936d076127a",
+        "bytes": 4166
+      },
+      {
+        "path": "benchmarks/artifacts/task43/v7_preparation_audit/candidate_draft/probe_import_affinity.py",
+        "sha256": "fa0dea6e8e049134c77c68e356eb377afeabd6080246e11b2e6acf5fbad3e1d4",
+        "bytes": 14891
+      },
+      {
+        "path": "benchmarks/artifacts/task43/v7_preparation_audit/candidate_draft/shell_candidate.patch",
+        "sha256": "6ab689218e31c4977afec560b55cacfb3e59e62b1416340f875fa4755e790497",
+        "bytes": 3075
+      },
+      {
+        "path": "benchmarks/artifacts/task43/v7_preparation_audit/candidate_draft/probe_appendix.patch",
+        "sha256": "2a5f8a0f139b9440bfe34703ff060dde7de7e608b0c420b60b1640eab2406eb4",
+        "bytes": 2747
+      }
+    ]
+  },
+  "partial_static_work": {
+    "activation_and_relevant_mca_inputs": {
+      "status": "PARTIAL_READ_ONLY_INSPECTION",
+      "raw_prefix": "benchmarks/artifacts/task43/v7_preparation_audit/raw/activation_mca_inspect",
+      "activation_sourced": false,
+      "native_import_performed": false
+    },
+    "plugin_discovery": {
+      "status": "FOUND_REQUESTED_MODULES; DIRECT_DEPENDENCY_CLOSURE_NOT_COMPLETED",
+      "raw_prefix": "benchmarks/artifacts/task43/v7_preparation_audit/raw/plugin_discovery"
+    },
+    "elf_metadata": {
+      "status": "PARTIAL; NOT_A_COMPLETE_REVIEW_9_2_INPUT_SET",
+      "inspected_target_count": 15,
+      "targets_file": "benchmarks/artifacts/task43/v7_preparation_audit/raw/elf_static_targets.txt",
+      "raw_prefix": "benchmarks/artifacts/task43/v7_preparation_audit/raw/elf_static_metadata",
+      "stdout_sha256": "a07109b4ccc6c55321f5cf73b2aed2ba61006c6a2901fc2e99dcde981560e739",
+      "metadata_summary_derivation": "The following table is parsed only from the preserved readelf/sha256sum/dpkg-query stdout; no ELF was loaded and no additional system scan was run.",
+      "metadata_summary_parse_wall_seconds": 0.07547461,
+      "objects": [
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0",
+          "sha256": "86dff44a023254d997cea910b9a51f35afefe6780f4b5530f974a2009ba47487",
+          "build_id": "a3560ac1dd1965c2da0a8fe8201219a3e4d274ee",
+          "needed": [
+            "libm.so.6",
+            "libudev.so.1",
+            "libc.so.6"
+          ],
+          "package": "libhwloc15:amd64",
+          "version": "2.10.0-1build1"
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/libinfinipath.so.4.0",
+          "sha256": "0b7ad2e8548318e954d22ca607ece353877614ebbbf5d8dc436319cbf28b8955",
+          "build_id": "eb3058c44de179d9a1b217cc64231c4a4e523d02",
+          "needed": [
+            "libc.so.6"
+          ],
+          "package": "libpsm-infinipath1",
+          "version": "3.3+20.604758e7-6.3build1"
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/libpsm2.so.2.2",
+          "sha256": "7adf30d691afa1b208f592d5bd6bdca8dc840cf745f01af80da715d34b2e9ba2",
+          "build_id": "1d3e92a2b5aea5781abd158ef8d6ff7347d58622",
+          "needed": [
+            "libnuma.so.1",
+            "libc.so.6"
+          ],
+          "package": "libpsm2-2",
+          "version": "11.2.185-2build1"
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/pmix2/lib/libpmix.so.2.13.1",
+          "sha256": "2d53cf2c1c1ed6e1ce241ba46d526267fa8f4ed8b9aab9d4dcc8ed319b90bbcc",
+          "build_id": "f197acdd29c17a252f6d04ed592d85ce04b0b485",
+          "needed": [
+            "libmunge.so.2",
+            "libevent_core-2.1.so.7",
+            "libevent_pthreads-2.1.so.7",
+            "libhwloc.so.15",
+            "libc.so.6"
+          ],
+          "package": "libpmix2t64:amd64",
+          "version": "5.0.1-4.1build1"
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3",
+          "sha256": "59c4d9b111cd3ec326a4df475a338daae050496087c67e86956187056fdc3051",
+          "build_id": "a47e105179b5e7ae33e552b705a1622e871b8e71",
+          "needed": [
+            "libhwloc.so.15",
+            "libevent_core-2.1.so.7",
+            "libevent_pthreads-2.1.so.7",
+            "libc.so.6"
+          ],
+          "package": "libopenmpi3t64:amd64",
+          "version": "4.1.6-7ubuntu2"
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3",
+          "sha256": "26467e1da428d31dab924ddbc50bc6ade75da47dbb82c77498a5f127a5466ba7",
+          "build_id": "4826ba55e31afbea8999110028f71f74e46cf626",
+          "needed": [
+            "libopen-pal.so.40",
+            "libz.so.1",
+            "libhwloc.so.15",
+            "libevent_core-2.1.so.7",
+            "libc.so.6"
+          ],
+          "package": "libopenmpi3t64:amd64",
+          "version": "4.1.6-7ubuntu2"
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6",
+          "sha256": "9055018b12757e830591aa0283e485e471f1f2a06d3bc0dd5fb35ab00386c172",
+          "build_id": "f45ae4118efa2894cd78b735f1028555c254f7c2",
+          "needed": [
+            "libopen-rte.so.40",
+            "libopen-pal.so.40",
+            "libm.so.6",
+            "libhwloc.so.15",
+            "libc.so.6"
+          ],
+          "package": "libopenmpi3t64:amd64",
+          "version": "4.1.6-7ubuntu2"
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pml_cm.so",
+          "sha256": "fc4f371d0bccf7d3e962e22aca35335747472b529a2988d253240e122d277b15",
+          "build_id": "44359298025a8437fead3355947d59209d3d098a",
+          "needed": [
+            "libmpi.so.40",
+            "libc.so.6"
+          ],
+          "package": "libopenmpi3t64:amd64",
+          "version": "4.1.6-7ubuntu2"
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pml_ob1.so",
+          "sha256": "cfa0e7399fa1f17534f59636479dd40ba750ceeec70a290ccc152744f2f00af3",
+          "build_id": "4a20d8128c2b1e7980bf5488713d92cc4ed0ae9f",
+          "needed": [
+            "libc.so.6"
+          ],
+          "package": "libopenmpi3t64:amd64",
+          "version": "4.1.6-7ubuntu2"
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pmix_ext3x.so",
+          "sha256": "ee05dac13a0f91dc8773400a240ac2d03d64745df1790c350e63481799c6e03b",
+          "build_id": "54315c484207ad8c6a7d4ee20e7ba0ff2f8f666e",
+          "needed": [
+            "libopen-pal.so.40",
+            "libpmix.so.2",
+            "libevent_core-2.1.so.7",
+            "libc.so.6"
+          ],
+          "package": "libopenmpi3t64:amd64",
+          "version": "4.1.6-7ubuntu2"
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_singleton.so",
+          "sha256": "2981b3b54893a5c9bb29d018857b874a18eb94b0f97b95b7d5fe514e26c860eb",
+          "build_id": "ce9137a5586d6eae48d97a66e2f9896fba655ff0",
+          "needed": [
+            "libopen-rte.so.40",
+            "libc.so.6"
+          ],
+          "package": "libopenmpi3t64:amd64",
+          "version": "4.1.6-7ubuntu2"
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_hnp.so",
+          "sha256": "3142c04c6feecca347002b5705f9e391721fb40e9e489539e3b3c6d5377da1ee",
+          "build_id": "797937f5508eb395e9ffa6377184bcf9c5d49476",
+          "needed": [
+            "libopen-rte.so.40",
+            "libevent_core-2.1.so.7",
+            "libc.so.6"
+          ],
+          "package": "libopenmpi3t64:amd64",
+          "version": "4.1.6-7ubuntu2"
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_mtl_psm.so",
+          "sha256": "d35396212bc1296e148517922b15b741cb21d30cb11abc781ba5f486f409d913",
+          "build_id": "510c173e7e7b3b397a3bf790409d31d45750ef16",
+          "needed": [
+            "libmpi.so.40",
+            "libpsm_infinipath.so.1",
+            "libc.so.6"
+          ],
+          "package": "libopenmpi3t64:amd64",
+          "version": "4.1.6-7ubuntu2"
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_mtl_psm2.so",
+          "sha256": "a42ccfeff6271b251721166610afe3f7ba33384bbf77ea18521e6f49a010d40a",
+          "build_id": "74c9831d790fdf03194fcb7f00cf1a0d25ed70a7",
+          "needed": [
+            "libmpi.so.40",
+            "libpsm2.so.2",
+            "libc.so.6"
+          ],
+          "package": "libopenmpi3t64:amd64",
+          "version": "4.1.6-7ubuntu2"
+        },
+        {
+          "path": "/usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_btl_ofi.so",
+          "sha256": "993f3f5cded7ee81cc18d950e0f88e4f2c13466a19901eb09183c803fb86b6fc",
+          "build_id": "607b908cba63f53b8d79c12d4f8290ac6dcbcd5e",
+          "needed": [
+            "libopen-pal.so.40",
+            "libmca_common_ofi.so.10",
+            "libfabric.so.1",
+            "libc.so.6",
+            "ld-linux-x86-64.so.2"
+          ],
+          "package": "libopenmpi3t64:amd64",
+          "version": "4.1.6-7ubuntu2"
+        }
+      ],
+      "missing": "Required direct-dependency closure and all §9.2 input items were not completed after the ordering failure."
+    }
+  },
+  "raw_artifacts_root": "benchmarks/artifacts/task43/v7_preparation_audit/raw/",
+  "candidate_workspace_root": "/tmp/task43_v7_d3_proposal/",
+  "preserved_raw_records": [
+    "activation_mca_inspect.sh/.stdout/.stderr/.exit_code/.time",
+    "plugin_discovery.sh/.stdout/.stderr/.exit_code/.time",
+    "elf_static_targets.txt",
+    "elf_static_metadata.sh/.stdout/.stderr/.exit_code/.time",
+    "v7_elf_paths_stdout.txt/v7_elf_paths_stderr.txt/v7_elf_paths.exit_code",
+    "v7_elf_paths_corrected.stdout/.stderr/.exit_code/.time",
+    "v7_elf_paths_final.stdout/.stderr/.exit_code/.time",
+    "mechanical_prepare.sh/.stdout/.stderr/.exit_code/.time",
+    "candidate_relocate.sh/.stdout/.stderr/.exit_code/.time",
+    "initial_git_status.txt/initial_head.txt/branch.txt/upstream.txt"
+  ],
+  "measured_wall_seconds": {
+    "mechanical_prepare_failed": 0.03,
+    "candidate_relocate": 0.05,
+    "activation_mca_inspect": 0.05,
+    "plugin_discovery": 0.11,
+    "v7_elf_paths_corrected": 0.06,
+    "v7_elf_paths_final": 0.06,
+    "elf_static_metadata_15_targets": 8.91,
+    "sum_of_individually_recorded_commands": 9.27,
+    "metadata_summary_parse_of_saved_stdout": 0.07547461,
+    "root_independent_candidate_hash_audit": 0.084304108,
+    "root_ledger_lookup_failed": 0.0342519,
+    "sum_of_explicitly_measured_actions_only": 9.464030618,
+    "scope_note": "The 9.27-second subtotal uses seven preserved timing files; the three additional actions use tool-reported wall times. The first ELF-path extraction and manual reading/review time were not independently timed; this is not a total campaign wall time. Later document editing, packaging, and Git closeout are outside this recorded preparation subtotal and have no comprehensive measured wall."
+  },
+  "failed_or_incomplete_preparation": [
+    {
+      "command_record": "benchmarks/artifacts/task43/v7_preparation_audit/raw/mechanical_prepare.sh",
+      "command_text": [
+        "#!/usr/bin/env bash",
+        "set -euo pipefail",
+        "repo=/home/fenics/Projects/NN-Lab-V2",
+        "prep=/tmp/task43_v7_d3_proposal",
+        "formal_root=\"$repo/benchmarks/artifacts/task43/v7_support/d3_pml_ob1_import_probe_attempt1\"",
+        "test ! -e \"$prep\"",
+        "test ! -e \"$formal_root\"",
+        "mkdir -p \"$prep/preserved-D2\" \"$prep/proposed-D3\"",
+        "cp \"$repo/docs/task43_hp_adaptivity/outcomes/records/v7_affinity_driver_sources/d2/run_d2.sh\" \"$prep/preserved-D2/run_d2.sh\"",
+        "cp \"$repo/docs/task43_hp_adaptivity/outcomes/records/v7_affinity_driver_sources/d2/probe_import_affinity.py\" \"$prep/preserved-D2/probe_import_affinity.py\"",
+        "cp \"$repo/docs/task43_hp_adaptivity/outcomes/records/v7_affinity_driver_sources/d2_to_d3_candidate.patch\" \"$prep/shell_candidate.patch\"",
+        "patch --batch --forward -p1 -d \"$prep\" < \"$prep/shell_candidate.patch\"",
+        "awk 'BEGIN { on=0 } /^--- a\\/preserved-D2\\/probe_import_affinity.py$/ { on=1 } on { print } on && /^```$/ { exit }' \"$repo/docs/task43_hp_adaptivity/review_report_v7.md\" | sed '$d' > \"$prep/probe_appendix.patch\"",
+        "test -s \"$prep/probe_appendix.patch\"",
+        "patch --batch --forward -p1 -d \"$prep\" < \"$prep/probe_appendix.patch\"",
+        "cp \"$prep/proposed-D3/run_d3.sh\" \"$prep/run_d3.sh\"",
+        "cp \"$prep/proposed-D3/probe_import_affinity.py\" \"$prep/probe_import_affinity.py\"",
+        "sha256sum \"$prep/run_d3.sh\" \"$prep/probe_import_affinity.py\" \"$prep/shell_candidate.patch\" \"$prep/probe_appendix.patch\"",
+        "wc -c -l \"$prep/run_d3.sh\" \"$prep/probe_import_affinity.py\""
+      ],
+      "stdout": "benchmarks/artifacts/task43/v7_preparation_audit/raw/mechanical_prepare.stdout",
+      "combined_excerpt": "patching file preserved-D2/run_d2.sh\npatching file preserved-D2/probe_import_affinity.py\ncp: cannot stat '/tmp/task43_v7_d3_proposal/proposed-D3/run_d3.sh': No such file or directory\nCommand exited with non-zero status 1\nelapsed_seconds=0.03 max_rss_kib=3300 exit=1\n",
+      "combined_excerpt_sources": [
+        "mechanical_prepare.stdout",
+        "mechanical_prepare.stderr",
+        "mechanical_prepare.time"
+      ],
+      "stderr": "benchmarks/artifacts/task43/v7_preparation_audit/raw/mechanical_prepare.stderr",
+      "exit_code_file": "benchmarks/artifacts/task43/v7_preparation_audit/raw/mechanical_prepare.exit_code",
+      "time_file": "benchmarks/artifacts/task43/v7_preparation_audit/raw/mechanical_prepare.time",
+      "exit_code": 1,
+      "elapsed_seconds": 0.03,
+      "classification": "PREPARATION_FAILURE; NOT A DRIVER, ABI, TEST, OR PDE ATTEMPT"
+    },
+    {
+      "command_record": "v7_elf_paths initial extraction output is retained under raw/v7_elf_paths_stdout.txt and raw/v7_elf_paths_stderr.txt",
+      "exit_code": 0,
+      "elapsed_seconds": null,
+      "classification": "OUTPUT FORMAT ATTEMPT; ORIGINAL COMMAND/TIMER NOT PRESERVED; NOT A DRIVER OR TEST",
+      "correction_note": "The initial and corrected stdout files contain literal backslash-n separators instead of 12 physical lines; only v7_elf_paths_final.stdout contains the 12 physical path lines. Preserve all three outputs and do not mark the earlier two as successful path inventories."
+    },
+    {
+      "command_text": "cat benchmarks/artifacts/task43/v7_preparation_audit/timing_ledger.json && sha256sum /tmp/task43_v7_d3_proposal/run_d3.sh /tmp/task43_v7_d3_proposal/probe_import_affinity.py",
+      "result": "The timing ledger did not yet exist, so cat failed and the &&-chained sha256sum did not run. A later, separate stdlib file hash audit succeeded; it did not depend on the timing ledger.",
+      "exit_code": 1,
+      "elapsed_seconds": 0.0342519,
+      "classification": "ROOT READ-ORDER FAILURE; NOT A SANITY, DRIVER, TEST, ABI, OR PDE ATTEMPT"
+    }
+  ],
+  "candidate_relocation_command": {
+    "script_path": "benchmarks/artifacts/task43/v7_preparation_audit/raw/candidate_relocate.sh",
+    "script_text": [
+      "#!/usr/bin/env bash",
+      "set -euo pipefail",
+      "repo=/home/fenics/Projects/NN-Lab-V2",
+      "prep=/tmp/task43_v7_d3_proposal",
+      "mkdir -p \"$prep/mechanical_attempt1_patched_in_place\"",
+      "cp \"$prep/preserved-D2/run_d2.sh\" \"$prep/mechanical_attempt1_patched_in_place/run_d3.sh\"",
+      "cp \"$prep/preserved-D2/probe_import_affinity.py\" \"$prep/mechanical_attempt1_patched_in_place/probe_import_affinity.py\"",
+      "cp \"$prep/mechanical_attempt1_patched_in_place/run_d3.sh\" \"$prep/run_d3.sh\"",
+      "cp \"$prep/mechanical_attempt1_patched_in_place/probe_import_affinity.py\" \"$prep/probe_import_affinity.py\"",
+      "cp \"$repo/docs/task43_hp_adaptivity/outcomes/records/v7_affinity_driver_sources/d2/run_d2.sh\" \"$prep/preserved-D2/run_d2.sh\"",
+      "cp \"$repo/docs/task43_hp_adaptivity/outcomes/records/v7_affinity_driver_sources/d2/probe_import_affinity.py\" \"$prep/preserved-D2/probe_import_affinity.py\"",
+      "sha256sum \"$prep/run_d3.sh\" \"$prep/probe_import_affinity.py\" \"$prep/preserved-D2/run_d2.sh\" \"$prep/preserved-D2/probe_import_affinity.py\""
+    ],
+    "stdout_path": "benchmarks/artifacts/task43/v7_preparation_audit/raw/candidate_relocate.stdout",
+    "stderr_path": "benchmarks/artifacts/task43/v7_preparation_audit/raw/candidate_relocate.stderr",
+    "exit_code": 0,
+    "elapsed_seconds": 0.05,
+    "classification": "CANDIDATE FILE RELOCATION AFTER THE PREPARATION FAILURE; DOES NOT RESTORE ORDER QUALIFICATION"
+  },
+  "command_output_hashes": {
+    "activation_mca_inspect.sh": "470617f93f6b32900bedf006e53d170c3ea7527076bd3a7b488d37fd40d2a9e3",
+    "activation_mca_inspect.stdout": "57cbae11c71370b9885f9dd6ccbd2c15802992f12f512363a29f50f2912e5081",
+    "plugin_discovery.sh": "c3c2e0707a9b21dfded18cd9bf61e2ac63db40070530ad7e70761a42eb12cb07",
+    "plugin_discovery.stdout": "9df30a02c1f13ec2137695d5451ffc59a9f3c47ec4f375f9ba7f440adcbf8b3e",
+    "elf_static_metadata.sh": "a7a80122b44e3b1f531953afddcb0e8fe244138836ce8547c70626761e6a0898",
+    "elf_static_metadata.stdout": "a07109b4ccc6c55321f5cf73b2aed2ba61006c6a2901fc2e99dcde981560e739",
+    "mechanical_prepare.sh": "ceeeace0abdfa7b0200e47946aa6ecb9a08c3d6bd63dc43bac6c435f4f7bfc9b",
+    "mechanical_prepare.stdout": "f261e03397609b4d7a60f295a9d79fd756c9f329f5e4a2f278792ffd137b781e",
+    "candidate_relocate.sh": "d6875199fb9705674bdfe23c0f09ac6462b04a50fae1edf4f0d9d263c3bd6091",
+    "candidate_relocate.stdout": "4cc4316e7b526d93038a913eb614b96e4d0473068d3f38c4cd49471d72123ff1",
+    "v7_elf_paths_corrected.stdout": "199dc54ad808b85e8edeefde86ab53cde791efc5c0fdbd663806fe004ef02283",
+    "v7_elf_paths_final.stdout": "c8b95ea61ca5b4e6a69f99f94e9968c5042fcf2bdd5793669a54708828b7e902"
+  },
+  "mechanical_stdout_boundary": "mechanical_prepare.stdout contains the two patch lines; mechanical_prepare.stderr contains the copy error; mechanical_prepare.time contains the nonzero-status and timing lines. The combined excerpt concatenates these three separate originals.",
+  "scope": "V8 records the failed preparation sequence and partial read-only work only. It does not change V7 records/review/contracts, qualify the candidate, or permit D3, tests, native imports, or formal computation.",
+  "root_closeout_review": {
+    "kind": "DOCUMENT_AND_PRESERVED_EVIDENCE_REVIEW_ONLY; NOT_CANDIDATE_SANITY",
+    "raw_hashes_checked": 12,
+    "elf_summary_objects_checked_against_saved_stdout": 15,
+    "mechanical_script_texts_checked": 2,
+    "mismatches": [],
+    "driver_started": false,
+    "source_snapshot_freeze": "NOT_COMPLETED",
+    "fixed_test_execution": "NOT_RUN",
+    "draft_record_issue": "Missing JSON comma in first draft corrected before final record parse; no test or driver involved.",
+    "time_scope": "Preparation subtotal is reported separately. Subsequent document editing, evidence packaging and Git closeout are not a measured whole-watchdog campaign."
+  }
+}

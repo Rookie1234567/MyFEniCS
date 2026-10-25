@@ -1,6 +1,20 @@
 # Task43 结果：部分完成，受控负结果
 
-## V7 最新收口：全部成功 setter 事件与静态装载审计（无新运行）
+## V8 当前收口：V7 D3 准备不合格并停止
+
+V7 review 条件性允许一次D3支持运行，但必须先按§9.2完成静态输入/ELF核查再生成候选。执行代理提前生成了候选；首次机械patch/copy又以exit 1结束。主控判定准备顺序门失败并停止，不追认后续候选字节与目标hash相同为资格。候选只保留在`/tmp/task43_v7_d3_proposal/`供审阅，没有正式输出目录。
+
+| 项目 | V8实际结论 | 证据与边界 |
+|---|---|---|
+| 新执行与额度 | 正式PDE 0、D3 dispatch 0/1、sanity `NOT_RUN`、native import `NOT_RUN`、完整ABI `NOT_REACHED`、固定20项 `NOT_RUN`；原5/6正式额度不变，A1 2/2、A2 3/3、最后1槽封存 | [V8回应](../response_v8.md)与[准备收口记录](records/v8_d3_preparation_closeout_v1.json)；无READY、merge approval或下游解锁 |
+| 准备顺序 | **未通过**：生成候选早于输入/ELF静态核查完成；机械复制失败与后续整理原件均保留 | `raw/mechanical_prepare.{sh,stdout,stderr,exit_code,time}`；失败是执行准备问题，不是环境/数值失败 |
+| 已完成的静态片段 | activation/MCA文本检查、插件发现及15个ELF对象静态元数据读取 | 直接依赖闭包与完整§9.2输入集未完成；不得宣称完整静态Gate通过 |
+| 路径输出格式 | 首次及修订版stdout含字面量`\\n`；只有final输出是12行路径 | 三版stdout与exit/time原件均保留，见准备收口record路径清单 |
+| 费用 | 七条准备命令9.27秒；加三条明确计时的整理/复核动作为9.464030618秒 | 首次路径提取及人工读审等未独立计时；该小计不是本轮总wall |
+
+执行代理承担过早生成候选的责任；分阶段主控监督未在静态输入核查结束前拦下该操作。发现后主控要求停止，故本次没有继续尝试sanity或D3。未造成新的测试、模型或科学结果。
+
+## V7 历史收口：全部成功 setter 事件与静态装载审计（无新运行）
 
 V7仅按Review V6 §9整理既有D1/D2证据、检查当前安装文件元数据，并写下一个未执行的worker-only候选差异。没有启动新driver、测试、导入、网格或PDE；formal dispatch仍为5/6，A1 2/2、A2 3/3，最后1槽封存。
 

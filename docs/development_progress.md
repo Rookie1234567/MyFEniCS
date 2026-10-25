@@ -1,6 +1,10 @@
 # Task43 当前收口（2026-10-25）：PARTIAL / CONTROLLED_NEGATIVE
 
-## V7最新状态：静态trace/装载审计，无新运行
+## Task43 V8当前状态：准备顺序未通过，未派发D3
+
+V8按V7 review §9准备唯一D3，但执行代理提前生成候选，首次机械复制失败；主控监督未及时拦下顺序偏差，现已裁决准备不合格并停止。候选hash符合目标仍只属未资格化草稿。15项ELF静态元数据已有记录，直接依赖闭包及完整输入核查未完成；sanity/native import/20项测试均`NOT_RUN`，完整ABI为`NOT_REACHED`，D3 dispatch为0/1。新增正式PDE、READY均为0，formal仍5/6、A1 2/2、A2 3/3、最后一槽封存。五项能力保持空间/选择PARTIAL、精度NOT_PASSED、同精度全过程成本NOT_ESTABLISHED、迭代NOT_RUN/NOT_QUALIFIED；全部既有下游锁定，不合并。新勘误订正V7进程归属、MPI初始化措辞及100秒工作停止/120秒含清理上限，历史原件不改。见[Response V8](task43_hp_adaptivity/response_v8.md)及[准备收口记录](task43_hp_adaptivity/outcomes/records/v8_d3_preparation_closeout_v1.json)。
+
+## V7历史状态：静态trace/装载审计，无新运行
 
 V7只读重核204条既有D1/D2成功affinity setter，保存六个V5 support根与两份V6 driver/probe/diff，并登记当前安装ELF/package信息。D1 200次（hwloc196、libinfinipath2、libpsm2 2）；D2 4次（两类网络库各2）。V6主控在批准D2前漏分类D1已有的四次网络库setter；D2只屏蔽hwloc x86组件后仍有网络调用。V6旧 `source_snapshot_all_match_manifest=false` 经新路径键比较为两个driver各8/8匹配；原生成器未留存，原标志成因不猜测。mca_ess_singleton SHA转录错误已更正，旧metadata inline stdout未保存，当前包信息不是历史映射文件证明。
 

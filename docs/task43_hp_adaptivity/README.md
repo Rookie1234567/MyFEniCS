@@ -5,7 +5,7 @@
 | 执行分支 | `task43_hp_adaptivity` |
 | 建立日期 | 2026-10-22 |
 | 源码基线 | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` |
-| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；accepted9/R9冻结，最终空间精度未达；正式dispatch 5/6（A1 2/2、A2 3/3），最后1槽封存。V6两次support因affinity偏离CPU1未到完整ABI/pytest；V7只做trace/ELF静态取证与候选文档，没有driver、测试或PDE。R9仍是最后接受态，无完整新endpoint、READY或production merge approval |
+| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；accepted9/R9冻结，最终空间精度未达；正式dispatch 5/6（A1 2/2、A2 3/3），最后1槽封存。V6两次support因affinity偏离CPU1未到完整ABI/pytest；V7 D3准备因违反§9.2先后顺序而停止，候选只留为未资格化草稿，无driver、测试或PDE。R9仍是最后接受态，无完整新endpoint、READY或production merge approval |
 | 第一目标 | 在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环 |
 | 第一验证波长 | 13.5 nm；小规模 direct 作数值核验 |
 | 后续方向 | 自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot |
@@ -51,6 +51,7 @@
 - [V5执行回应：Review V4 的 F1–F4有限整改](response_v5.md)；[V5验证与支持费用compact](outcomes/records/v5_focused_validation_v1.json)
 - [V6执行回应：affinity导入诊断与S2 helper静态修正](response_v6.md)；[V6支持compact](outcomes/records/v6_affinity_support_closeout_v1.json)
 - [V7执行回应：完整setter trace、静态装载身份与未执行的OB1假设](response_v7.md)；[204条trace事件索引](outcomes/records/v7_affinity_trace_event_inventory_v1.json)、[source/ELF审计](outcomes/records/v7_affinity_source_loader_audit_v1.json)
+- [V8执行回应：D3准备未通过顺序门，未派发](response_v8.md)；[V7 D3准备原件与收口记录](outcomes/records/v8_d3_preparation_closeout_v1.json)
 
 V1数值/比较代码及原focused/full pytest使用源码HEAD为 `3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0`；之后V2/V3入口和报告工具分别按各次source snapshot、测试及compact绑定。V2三次正式尝试在完整端点证据前遇到工程/输入绑定错误；V3的A1_q2实际路线漏接WorkflowLedger、A2_q3进入求解后被性能门停止。两项都没有完成完整新端点资格，且V1旧结果保留各自source/ABI/input身份。当前执行分支 `task43_hp_adaptivity` 等待外部审阅，未获merge approval，未合入master。
 
@@ -62,7 +63,11 @@ F1–F3有限修复和定向组件验证已完成：A1只有成功取得空输�
 
 原始授权不变：正式dispatch 5/6已耗用，A1 2/2、A2 3/3，最后1槽封存；A1_R/A2_R/B/C、成本campaign、迭代和0.7 nm仍锁定。R9最终精度未达，生产合并未批准。旧A2 resources中实际有三段空cmdline尾段：两个 other_or_unknown各9条观察，另一个 MPI_runtime有8条；仅按同PID/start_ticks前序身份关联，不能补造缺失命令。历史response_v4原字节保留，三段修正见当前Response V5。
 
-## Review V6 §9最新收口（V7，只读证据与候选文档）
+## Review V7 §9当前收口（V8准备阶段停止）
+
+V7原审阅给出的唯一D3支持许可以先完成§9.2静态核查为条件。本轮候选在输入/ELF核查完成前已被生成，随后首次机械patch/copy以exit 1结束。主控裁决准备不合格并停止；不把候选期望hash相同追认为顺序门通过。候选留在`/tmp/task43_v7_d3_proposal/`仅供审阅；sanity、native import、ABI、固定20项测试、D3 driver和正式PDE均未运行。V7要求的静态项也未全部完成：15个ELF对象有读取记录，但插件直接依赖闭包及完整输入集未完成。费用与原命令/输出见[Response V8](response_v8.md)和[准备收口记录](outcomes/records/v8_d3_preparation_closeout_v1.json)。本次没有merge approval。
+
+## Review V6 §9历史收口（V7，只读证据与候选文档）
 
 V7完整索引了D1/D2的204条成功affinity setter并只读核对八个V5/V6 support根、保存的启动器与当前安装ELF身份。D1为hwloc196、libinfinipath2、libpsm2 2；D2禁用hwloc x86组件后仍有两类网络库setter各2次。V6主控在D2前漏分类D1已有网络库调用，监督遗漏已明示。旧V6中的 `source_snapshot_all_match_manifest=false` 在本轮规范化路径键后8/8匹配；原比较生成器未留存，未推断原标志的确切成因。候选只是在D2 worker shell中追加 `OMPI_MCA_pml=ob1` 的静态diff；它没有创建或运行，也不证明CM组件或PSM setter会消失。
 

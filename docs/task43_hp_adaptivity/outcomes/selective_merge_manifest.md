@@ -1,6 +1,17 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V7 当前审阅：只读证据与未执行的worker假设
+## V8 当前状态：D3准备门失败，停止且不合入
+
+V7 review 的唯一D3支持许可要求先完成§9.2静态输入/ELF核查，再生成候选。候选过早生成，首次机械patch/copy失败；因此准备未通过，D3没有dispatch，候选仅是`/tmp/task43_v7_d3_proposal/`中的未资格化草稿。没有本轮源代码、测试、native导入或PDE改动；输入/ELF依赖闭包未完成。详见[Response V8](../response_v8.md)与[准备收口记录](records/v8_d3_preparation_closeout_v1.json)。
+
+| 合并组 | V8文件/作用 | 本轮证据 | 合并边界 |
+|---|---|---|---|
+| compact evidence/docs | `response_v8.md`、本manifest、README、summary、`docs/README.md`、模型总账、开发进展及`records/v8_d3_preparation_closeout_v1.json` | 原命令、失败stdout/exit、部分activation/MCA与15个ELF静态原件；候选准确字节但准备顺序失败 | 仅保留受控停止和准备负结果；不是D3测试、ABI或运行资格 |
+| research-only proposal | 唯一/tmp候选`run_d3.sh`及`probe_import_affinity.py` | 哈希与V7附录目标一致，但在§9.2步骤完成前生成；未运行sanity | 不纳入Git可执行入口，不授予支持、MPI、数值或生产资格 |
+| production numerical/core、runner/watchdog、checker | 无V8源码或测试改动 | 无V8动态运行或fresh PDE | 不因V8新增任何合入文件或改变原建议 |
+| do-not-merge / locked work | V7 review、V7 response、合同、READY与历史失败均保持不变 | 准备原件另记于V8 closeout；D3未启动 | formal预算仍5/6、A1 2/2、A2 3/3，最后1槽封存；无READY、merge approval或下游解锁 |
+
+## V7 历史审阅快照：只读证据与未执行的worker假设
 
 本轮新增仅为trace/ELF只读记录、历史启动器快照/diff及当前文档；没有源码行为改动、测试运行、driver、项目导入、PDE或READY。D1/D2停在首个显式`dolfinx`导入返回后的`native_import_complete`检查点；完整MPI/PETSc ABI为`NOT_REACHED`，S2的20个案例为`NOT_RUN`。12份完整raw trace留在ignored artifacts，Git仅保存204条事件表与代表栈摘录。完整入口见[Response V7](../response_v7.md)。
 
@@ -23,7 +34,7 @@ V6阶段按Review V5 §9仅新增一个test-only身份存在性修正与两次�
 
 D2前的监督审查未分类D1当时已经存在的两类网络库setter（`libinfinipath`和`libpsm2`，合计4次）；D2仅屏蔽hwloc x86组件后仍观察到这两类调用。此审查遗漏已在response和compact中如实记录。V6因此没有证明strict CPU1导入链可用，也没有证实V5早期样本的历史根因。task VmSwap采样峰与global `pswpin/pswpout`页计数分开记录；未监控静态检查不并入watchdog费用。
 
-## V5 当前整改范围：组件与文档证据，不授予合并资格
+## V5 历史整改范围：组件与文档证据，不授予合并资格
 
 V5回应Review V4的F1–F4，只修改四个Python文件并更新收口文档/compact；无数值方程或默认native数值行为变化，无新正式dispatch/PDE。25项最小driver通过；31项focused首轮30 passed/1 failed，父子进程拓扑问题局部恢复后另两节点通过，未有单次31项全通过。六个受监控driver的strict CPU1全程门为`NOT_PASSED`，虽wall/RSS/swap/cleanup满足其支持限额；两次metadata检查未监控且失败。完整命令、source/test/driver hash、测试stdout、资源峰及静态检查结果见[V5 validation compact](records/v5_focused_validation_v1.json)及[独立资源复核](records/v5_root_resource_recheck.json)。
 
