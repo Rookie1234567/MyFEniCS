@@ -1,5 +1,19 @@
 # Task43 结果：部分完成，受控负结果
 
+## V6最新收口：S2静态修复，affinity支持门未通过（2026-10-25）
+
+本轮按Review V5 §9只整理六个旧支持运行、静态修正测试内身份存在性helper，并进行了两次受限原生导入/affinity诊断。新增正式计算、dispatch、PDE、READY均为0；测试helper的20个案例未运行。正式预算仍为5/6（A1 2/2、A2 3/3），最后一槽封存；accepted9/R9、五项能力和下游锁定保持原状。
+
+| 项目 | 当前结论 | 证据与边界 |
+|---|---|---|
+| S1旧运行上下文 | 六个V5 support运行的affinity邻域与源快照只读整理 | [S1索引](records/v6_s1_v5_support_affinity_context_v1.json)；summary本身未存launcher exit，引用旧compact中的单独外层退出码 |
+| S2测试helper | source/contract/plan身份需为非空、格式正确的SHA字符串；新增4个共同缺字段负例 | [修改文件](../../../src/test/test_task43_v3_failure_safe_order.py) SHA256 `52f94e28306d2d7f83f602c5e654c8953e544f00091ae3013378d52d040b7a43`；20项均NOT_RUN，无production consumer改变 |
+| D1 | `dolfinx`导入期间捕获200次成功affinity setter：hwloc 196、libinfinipath 2、libpsm2 2；CPU1未通过 | whole-watchdog `10.266887816600502 s`，RSS峰`161480704 B`，task VmSwap采样峰0，global `pswpin/pswpout`增量0/0页，清理完成；MPI/PETSc完整ABI preflight未到达 |
+| D2 | worker shell内设`HWLOC_COMPONENTS=-x86`后仍捕获4次setter：libinfinipath 2、libpsm2 2；阶段采样TID均在CPU1，但trace出现两次CPU0并恢复 | whole-watchdog `10.469862679950893 s`，RSS峰`160063488 B`，task VmSwap采样峰0，global增量0/0页，清理完成；CPU1仍NOT_PASSED，pytest未进入 |
+| 合计与边界 | 两个支持driver whole-watchdog小计`20.736750496551394 s`；资源时限、RSS、task VmSwap采样峰及global swap页增量和清理门通过，严格CPU1门失败 | 主控在D2前未分类D1中已存在的两类网络库setter（合计4次）；该监督审查遗漏已明确保留。没有科学方法失败或新数值结论；没有第三个driver |
+
+精确阶段PID/TID、`trace_sync`、启动命令和脚本快照、逐文件源码hash、D1 `[30]/[33]` trace事件和对应resources成员样本、D2采样与四次setter、代表栈和原trace SHA见[V6 support compact](records/v6_affinity_support_closeout_v1.json)。S2动态案例未运行，历史V5样本根因仍未证实。未监控shell语法与JSON解析仅按现有报告列为静态检查；没有可留存命令/输出核实S2模块bytecode编译，不作该项通过声明。未监控检查耗时及RSS为`not_measured`，不计入watchdog wall。
+
 ## 最新收口：V5 按 Review V4 F1–F4 完成有限工程整改（2026-10-25）
 
 V5只处理真实入口的失败写入资格、comparison原件身份和二次写失败的联合读取范围，并更新当前文档；不改数值方程、默认native路线或历史冻结合同。WorkflowLedger记录入口实际执行阶段，原子写入避免单份JSON半写，primary/extra保留额外同因子回代前后的原向量；这些机制降低后处理故障造成的证据损失，但不提升空间精度。

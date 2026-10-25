@@ -59,3 +59,9 @@ V3单次A1_q attempt2已构网并进入装配路径，但在因子分解/求解�
 F1–F3有限修复和定向组件验证已完成：A1只有成功取得空输出根后才有权限写失败终态；A2降权 comparison 的原件路径现在指向 sidecar；测试内的联合读取约定覆盖 terminal、进程退出、权限、文件绑定和hash。25个最小案例通过；31项focused首轮30 passed/1 failed，失败来自支持驱动的父子进程拓扑，两个窄恢复节点通过，但没有一次干净的31项全通过运行。六个受监控driver的严格全程CPU1门未通过；wall/RSS/swap和清理通过，具体异常与两次未监控metadata检查失败见[Response V5](response_v5.md)、[V5 validation compact](outcomes/records/v5_focused_validation_v1.json)及[资源复核](outcomes/records/v5_root_resource_recheck.json)。这些fixture不含网格构建、装配或求解，不改变历史A1/A2终态。
 
 原始授权不变：正式dispatch 5/6已耗用，A1 2/2、A2 3/3，最后1槽封存；A1_R/A2_R/B/C、成本campaign、迭代和0.7 nm仍锁定。R9最终精度未达，生产合并未批准。旧A2 resources中实际有三段空cmdline尾段：两个 other_or_unknown各9条观察，另一个 MPI_runtime有8条；仅按同PID/start_ticks前序身份关联，不能补造缺失命令。历史response_v4原字节保留，三段修正见当前Response V5。
+
+## Review V5 §9最新收口（V6）
+
+本轮只修正测试内联合读取helper的身份存在性约束并核对旧support affinity上下文；S2计划的20个案例未运行。两个受限driver都在`dolfinx`导入时检测到成功的affinity setter偏离CPU1，MPI/PETSc完整ABI preflight及pytest均未到达。D1/D2 whole-watchdog合计`20.736750496551394s`，task VmSwap采样峰为0 B，global `pswpin/pswpout`增量均为0页；RSS/时限/清理满足支持门，但严格CPU1不通过。主控D2前漏分类了D1中已存在的两类网络库setter（合计4次）；该审查遗漏及两次driver的原栈证据已保留。无新正式dispatch/PDE/READY，额度仍5/6，最后一槽封存；科学结论与production资格不变。
+
+详见[Response V6](response_v6.md)、[V6 S1只读索引](outcomes/records/v6_s1_v5_support_affinity_context_v1.json)和[V6 affinity support compact](outcomes/records/v6_affinity_support_closeout_v1.json)。

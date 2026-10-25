@@ -1,5 +1,17 @@
 # Task43 选择性合并清单（待外部审阅）
 
+## V6有限支持结果：不授予新资格或合并批准
+
+Review V5 §9仅新增一个test-only身份存在性修正与两次受限import/affinity诊断。没有数值源码、默认行为、旧合同或历史正式记录变化；新增正式PDE/dispatch/READY为0。S2的20个动态案例未运行。D1/D2全在首个`dolfinx`导入内停止，完整MPI/PETSc ABI检查未到达，pytest、mesh、assembly和solver均未运行。
+
+| V6依赖组 | 文件与作用 | 测试 / fresh PDE evidence | 合并建议 |
+|---|---|---|---|
+| test-only身份helper | `src/test/test_task43_v3_failure_safe_order.py`：测试中的联合读取约定要求source SHA为40位、contract/plan SHA各为64位且非空；新增共同缺字段反例 | 静态修改；20例`NOT_RUN`。D1/D2未进入pytest；无fresh PDE、无production consumer | 仅作为待动态验证的测试修正审阅，不把它描述为production数值改动 |
+| V6 support evidence | `response_v6.md`、本页、summary/README/registry/progress、S1索引及[V6 affinity compact](records/v6_affinity_support_closeout_v1.json) | D1 200次、D2 4次成功affinity setter的有限trace；CPU1门`NOT_PASSED`，两次whole watchdog总计`20.736750496551394 s`；无模型计算 | 仅作为负向支持证据与状态说明，不授予任何求解/精度/生产资格 |
+| do-not-merge资格边界 | 保持S2联合helper无自动消费者，未新增A2_R/controller或数值入口 | A1 2/2、A2 3/3、正式额度5/6，剩余1封存；V6不新增dispatch | 不得据此开启formal重试、其他下游工作或master合并；Task43仍未获production merge approval |
+
+D2前的监督审查未分类D1当时已经存在的两类网络库setter（`libinfinipath`和`libpsm2`，合计4次）；D2仅屏蔽hwloc x86组件后仍观察到这两类调用。此审查遗漏已在response和compact中如实记录。V6因此没有证明strict CPU1导入链可用，也没有证实V5早期样本的历史根因。task VmSwap采样峰与global `pswpin/pswpout`页计数分开记录；未监控静态检查不并入watchdog费用。
+
 ## V5 当前整改范围：组件与文档证据，不授予合并资格
 
 V5回应Review V4的F1–F4，只修改四个Python文件并更新收口文档/compact；无数值方程或默认native数值行为变化，无新正式dispatch/PDE。25项最小driver通过；31项focused首轮30 passed/1 failed，父子进程拓扑问题局部恢复后另两节点通过，未有单次31项全通过。六个受监控driver的strict CPU1全程门为`NOT_PASSED`，虽wall/RSS/swap/cleanup满足其支持限额；两次metadata检查未监控且失败。完整命令、source/test/driver hash、测试stdout、资源峰及静态检查结果见[V5 validation compact](records/v5_focused_validation_v1.json)及[独立资源复核](records/v5_root_resource_recheck.json)。

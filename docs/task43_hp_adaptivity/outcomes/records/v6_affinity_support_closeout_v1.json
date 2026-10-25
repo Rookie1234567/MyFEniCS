@@ -1,0 +1,757 @@
+{
+  "S1": {
+    "previous_resource_recheck": "docs/task43_hp_adaptivity/outcomes/records/v5_root_resource_recheck.json",
+    "read_only_index": "docs/task43_hp_adaptivity/outcomes/records/v6_s1_v5_support_affinity_context_v1.json",
+    "sha256": "098332476031eb14b1ee03aa52f0950e24e4d682b42fb043b1694cd39ad475ab",
+    "summary": "Six V5 support runs and three recorded [0] affinity observations plus one Z-state missing-affinity observation retained. Launcher exits are separate historical records because watchdog summaries lacked that field."
+  },
+  "S2": {
+    "direct_case_inventory": {
+      "coherent_positive": 1,
+      "common_missing_identity": 4,
+      "independent_veto": 12,
+      "total": 20,
+      "writer_failure": 3
+    },
+    "dynamic_test_status": "NOT_RUN; D1/D2 stopped before pytest entry",
+    "file": "src/test/test_task43_v3_failure_safe_order.py",
+    "requirements": {
+      "frozen_v3_contract_sha256": "nonempty 64-hex string",
+      "frozen_v3_plan_sha256": "nonempty 64-hex string",
+      "source_sha": "nonempty 40-hex string"
+    },
+    "scope": "test-only identity-presence fix in existing helper; no production reader/consumer or frozen contract changed",
+    "sha256": "52f94e28306d2d7f83f602c5e654c8953e544f00091ae3013378d52d040b7a43"
+  },
+  "affinity_gate": {
+    "D1": "NOT_PASSED: 200 successful setters include masks [0] and other masks; stopped after dolfinx import",
+    "D2": "NOT_PASSED: with HWLOC_COMPONENTS=-x86, two [0] setter events remained and two restored to [1]; stopped before pytest",
+    "interpretation": "Stacks identify observed call paths in these two support imports. They do not prove the cause of older V5 sampled transitions or continuous per-thread affinity, and do not imply numerical/PDE failure.",
+    "required": [
+      1
+    ]
+  },
+  "cleanup_complete_both": true,
+  "formal_compute": {
+    "A1": "2/2",
+    "A2": "3/3",
+    "budget_used": "5/6",
+    "last_slot": "sealed",
+    "new_dispatches": 0,
+    "ready_issued": false
+  },
+  "limits": {
+    "CPU1": "NOT_PASSED in both drivers",
+    "MPI": 1,
+    "max_drivers": 2,
+    "max_total_seconds": 240,
+    "max_whole_watchdog_seconds_each": 120,
+    "numerical_threads": 1,
+    "rss_cap_bytes": 8589934592,
+    "swap_required_zero": true
+  },
+  "maximum_sampled_process_tree_rss_bytes": 161480704,
+  "no_retries_or_further_tests": true,
+  "review_oversight": "Before D2, the review isolated hwloc as the apparent local cause but did not classify all D1 events. Full D1 trace later showed two classes and four already-present network-library setter events: two libinfinipath and two libpsm2. D2 only scoped out the x86 hwloc component; those calls were not new. This was incomplete pre-D2 review by the supervising process, not an S2 or numerical-method failure.",
+  "review_scope": "review_report_v5.md §9; S1/S2/D1/D2 only",
+  "runs": [
+    {
+      "actual_launch": {
+        "command_text": "bash /tmp/task43_v6_d1_proposal/run_d1.sh",
+        "launch_script_sha256": "894ba384e2d12fd61e761467d9d5aace40a0d3267e50206b46c6602952d0c3b2",
+        "launch_script_snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/driver_snapshot/run_d1.sh",
+        "note": "Excerpts are copied from the exact driver snapshot; the complete snapshot is available at launch_script_snapshot/probe_script_snapshot.",
+        "probe_script_sha256": "d354eeaf7e2e00af652e1b131260b678f89221f6658e617e5d10472a3c6bd2b3",
+        "probe_script_snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/driver_snapshot/probe_import_affinity.py",
+        "watchdog_command_excerpt": [
+          "taskset -c 1 python -u -m benchmarks.subreaper_watchdog \\",
+          "--directory \"$watchdog_dir\" \\",
+          "--wall-seconds 100 \\",
+          "--interval 0.25 \\",
+          "--phase-path \"$watchdog_dir/workflow_phase.json\" \\",
+          "-- bash -lc '"
+        ],
+        "worker_command_excerpt": [
+          "source scripts/activate_task40_phi90_pord64.sh",
+          "source scripts/activate_task40_phi90_pord64.sh",
+          "exec taskset -c 1 strace -ff -ttt -k \\",
+          "-e trace=sched_setaffinity,sched_getaffinity \\",
+          "-o \"$TASK43_V6_D1_TRACE_PREFIX\" \\",
+          "python -u \"$TASK43_V6_D1_ROOT/driver_snapshot/probe_import_affinity.py\""
+        ]
+      },
+      "affinity_examples": [
+        {
+          "direct_caller": "libhwloc (verified from adjacent stack lines in raw trace)",
+          "event": "1792924213.885474 sched_setaffinity(0, 8, [33]) = 0",
+          "kind": "strace successful sched_setaffinity event; not a watchdog resource-sampler affinity row",
+          "mask": "[33]",
+          "trace_file": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/strace/sched.4071459",
+          "trace_file_sha256": "b7ca1dd6b12e452d54ba48b7c8e70e707e988901b4abd19b516696915b795e26"
+        },
+        {
+          "direct_caller": "libhwloc (verified from adjacent stack lines in raw trace)",
+          "event": "1792924213.804198 sched_setaffinity(0, 8, [30]) = 0",
+          "kind": "strace successful sched_setaffinity event; not a watchdog resource-sampler affinity row",
+          "mask": "[30]",
+          "trace_file": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/strace/sched.4071459",
+          "trace_file_sha256": "b7ca1dd6b12e452d54ba48b7c8e70e707e988901b4abd19b516696915b795e26"
+        }
+      ],
+      "artifact_paths": {
+        "artifact_root": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1",
+        "driver_snapshot_root": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/driver_snapshot",
+        "launch_command": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/launch_command.txt",
+        "launch_context": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/launch_context.txt",
+        "launcher_exit": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/launcher_exit_code.txt",
+        "probe_stages": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/probe_stages.jsonl",
+        "probe_terminal": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/probe_terminal.json",
+        "source_hash_manifest": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_sha256.txt",
+        "source_head": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_head.txt",
+        "source_snapshot_hash_manifest": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot_sha256.txt",
+        "source_status": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_status.txt",
+        "watchdog_resources": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/watchdog/resources.jsonl",
+        "watchdog_summary": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/watchdog/summary.json"
+      },
+      "command": "bash /tmp/task43_v6_d1_proposal/run_d1.sh",
+      "id": "D1",
+      "launch_context_text": "activation_marker=1\npython=/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python\nstrace=/usr/bin/strace\nPHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1\nPHYSICAL_NATIVE_NODE_CAP_BYTES=8589934592\nOMP_NUM_THREADS=1\nOPENBLAS_NUM_THREADS=1\nMKL_NUM_THREADS=1\nBLIS_NUM_THREADS=1\nNUMEXPR_NUM_THREADS=1\nVECLIB_MAXIMUM_THREADS=1\nwatchdog_wall_seconds=100\nwatchdog_phase_path=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/watchdog/workflow_phase.json\n",
+      "native_abi_and_pytest_boundary": {
+        "dolfinx_stage_identity": {
+          "affinity_by_tid": {
+            "4071459": [
+              1
+            ],
+            "4071491": [
+              1
+            ],
+            "4071492": [
+              1
+            ]
+          },
+          "pid": 4071459,
+          "ppid": 4071446,
+          "start_ticks": 284920539,
+          "tids": [
+            4071459,
+            4071491,
+            4071492
+          ],
+          "trace_sync": true
+        },
+        "explicit_import_sequence": [
+          "dolfinx",
+          "mpi4py",
+          "numpy",
+          "mpi4py.MPI",
+          "petsc4py.PETSc",
+          "petsc4py"
+        ],
+        "full_native_abi_preflight": "NOT_REACHED; probe stops on affinity setter evidence before _native_abi_check()",
+        "last_completed_import": "dolfinx",
+        "mesh_builder_assembly_solver": "NOT_RUN",
+        "pytest_cases": "NOT_RUN",
+        "pytest_entry": "NOT_REACHED",
+        "runtime_abi_status": "not measured by the full ABI check; launch_context.txt records activated shell settings and requested limits only",
+        "stop_stage": "native_import_complete"
+      },
+      "observed_probe_stages": [
+        {
+          "affinity_by_tid": {
+            "4071459": [
+              1
+            ]
+          },
+          "module": null,
+          "pid": 4071459,
+          "ppid": 4071446,
+          "stage": "python_startup_before_explicit_native_imports",
+          "start_ticks": 284920539,
+          "tids": [
+            4071459
+          ],
+          "trace_files": [
+            "sched.4071459"
+          ],
+          "trace_sync": true
+        },
+        {
+          "pid": 4071459,
+          "ppid": 4071446,
+          "stage": "native_module_preload_check",
+          "start_ticks": 284920539
+        },
+        {
+          "affinity_by_tid": {
+            "4071459": [
+              1
+            ],
+            "4071491": [
+              1
+            ],
+            "4071492": [
+              1
+            ]
+          },
+          "module": "dolfinx",
+          "pid": 4071459,
+          "ppid": 4071446,
+          "stage": "native_import_complete",
+          "start_ticks": 284920539,
+          "tids": [
+            4071459,
+            4071491,
+            4071492
+          ],
+          "trace_files": [
+            "sched.4071459",
+            "sched.4071475",
+            "sched.4071484",
+            "sched.4071487",
+            "sched.4071491",
+            "sched.4071492"
+          ],
+          "trace_sync": true
+        }
+      ],
+      "representative_complete_stacks": [
+        {
+          "complete_stack_excerpt": "1792924211.668721 sched_setaffinity(0, 8, [0]) = 0\n > /usr/lib/x86_64-linux-gnu/libc.so.6(sched_setaffinity+0xb) [0x10e87b]\n > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_set_tid_cpubind+0xc3) [0x361e3]\n > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_last_cpu_location+0xc7a5) [0x439a5]\n > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_last_cpu_location+0xceaf) [0x440af]\n > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_last_cpu_location+0xda46) [0x44c46]\n > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_topology_load+0x8de) [0xffbe]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_hwloc_base_get_topology+0x12a6) [0x7b976]\n > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_hnp.so() [0x4c56]\n > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_init+0x2aa) [0x9815a]\n > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_daemon+0xc80) [0x39540]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_init_first+0x8a) [0x2a1ca]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x2a28b]\n > /usr/bin/orted() [0x11c5]\n",
+          "direct_caller_category": "hwloc",
+          "one_based_line_range_including_complete_stack": [
+            29,
+            42
+          ],
+          "syscall_event": "1792924211.668721 sched_setaffinity(0, 8, [0]) = 0",
+          "trace_file": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/strace/sched.4071475",
+          "trace_file_sha256": "8460d00d2b5cc3d10d7d0b26497cf8df11146e4cdf813ad3e7f8015d362bac26"
+        },
+        {
+          "complete_stack_excerpt": "1792924215.983437 sched_setaffinity(0, 128, [0]) = 0\n > /usr/lib/x86_64-linux-gnu/libc.so.6(sched_setaffinity+0xb) [0x10e87b]\n > /usr/lib/x86_64-linux-gnu/libinfinipath.so.4.0() [0x39e2]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x142f) [0x571f]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x1534) [0x5824]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x132) [0x15b2]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_rtld_di_serinfo+0x2cac) [0xcd7c]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x9c) [0x151c]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_find_dso_for_object+0x184) [0xd164]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(dlmopen+0x104) [0x98284]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x9c) [0x151c]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x1e9) [0x1669]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(dlerror+0x2c3) [0x97d63]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(dlopen+0x6f) [0x9833f]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_stackframe_output+0xa32) [0x713b2]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_component_repository_open+0x1f2) [0x51752]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_component_find+0x3a5) [0x51fe5]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_components_register+0x32) [0x5e1a2]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_register+0x26b) [0x5e6ab]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_open+0x1e) [0x5e71e]\n > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pml_cm.so(mca_pml_cm_add_procs+0x13e) [0x7a4e]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_components_open+0x17d) [0x521dd]\n > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(mca_topo_base_dist_graph_neighbors_count+0x8e0) [0xd98d0]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_open+0x9d) [0x5e79d]\n > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(ompi_mpi_init+0x614) [0xec2b4]\n > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(PMPI_Init_thread+0x5c) [0x82eec]\n > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6(PetscInitialize+0xd2) [0x150454]\n > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so(__pyx_pw_8petsc4py_5PETSc_5_initialize+0x4ad) [0x34065d]\n > /usr/bin/python3.12(PyCMethod_New+0x65f) [0x18216f]\n > /usr/bin/python3.12(_PyObject_MakeTpCall+0x75) [0x148fb5]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xadf) [0x1d710f]\n > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]\n > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]\n > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]\n > /usr/bin/python3.12(PyObject_CallFunctionObjArgs+0x327) [0x149d87]\n > /usr/bin/python3.12(PyObject_CallMethodObjArgs+0xe3) [0x14b603]\n > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x395) [0x1fdab5]\n > /usr/bin/python3.12(_PyWeakref_ClearRef+0xa2a4) [0x1d3724]\n > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]\n > /usr/bin/python3.12(PyObject_CallFunctionObjArgs+0x327) [0x149d87]\n > /usr/bin/python3.12(PyObject_CallMethodObjArgs+0xe3) [0x14b603]\n > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x5eb) [0x1fdd0b]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x5e6e) [0x1dc49e]\n > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]\n > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]\n > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]\n > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]\n > /usr/bin/python3.12(PyRun_StringFlags+0x1f2) [0x208852]\n > /usr/bin/python3.12(_PyRun_SimpleFileObject+0x443) [0x2b50d3]\n > /usr/bin/python3.12(_PyRun_SimpleFileObject+0x1aa) [0x2b4e3a]\n > /usr/bin/python3.12(_PyRun_AnyFileObject+0x4f) [0x2b4c6f]\n > /usr/bin/python3.12(Py_RunMain+0x3b5) [0x2bccd5]\n > /usr/bin/python3.12(Py_BytesMain+0x2d) [0x2bc7bd]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_init_first+0x8a) [0x2a1ca]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x2a28b]\n > /usr/bin/python3.12(_start+0x25) [0x257a05]\n",
+          "direct_caller_category": "libinfinipath",
+          "one_based_line_range_including_complete_stack": [
+            5275,
+            5333
+          ],
+          "syscall_event": "1792924215.983437 sched_setaffinity(0, 128, [0]) = 0",
+          "trace_file": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/strace/sched.4071459",
+          "trace_file_sha256": "b7ca1dd6b12e452d54ba48b7c8e70e707e988901b4abd19b516696915b795e26"
+        },
+        {
+          "complete_stack_excerpt": "1792924216.231434 sched_setaffinity(0, 128, [0]) = 0\n > /usr/lib/x86_64-linux-gnu/libc.so.6(sched_setaffinity+0xb) [0x10e87b]\n > /usr/lib/x86_64-linux-gnu/libpsm2.so.2.2() [0x626a]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x142f) [0x571f]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x1534) [0x5824]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x132) [0x15b2]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_rtld_di_serinfo+0x2cac) [0xcd7c]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x9c) [0x151c]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_find_dso_for_object+0x184) [0xd164]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(dlmopen+0x104) [0x98284]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x9c) [0x151c]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x1e9) [0x1669]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(dlerror+0x2c3) [0x97d63]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(dlopen+0x6f) [0x9833f]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_stackframe_output+0xa32) [0x713b2]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_component_repository_open+0x1f2) [0x51752]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_component_find+0x3a5) [0x51fe5]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_components_register+0x32) [0x5e1a2]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_register+0x26b) [0x5e6ab]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_open+0x1e) [0x5e71e]\n > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pml_cm.so(mca_pml_cm_add_procs+0x13e) [0x7a4e]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_components_open+0x17d) [0x521dd]\n > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(mca_topo_base_dist_graph_neighbors_count+0x8e0) [0xd98d0]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_open+0x9d) [0x5e79d]\n > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(ompi_mpi_init+0x614) [0xec2b4]\n > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(PMPI_Init_thread+0x5c) [0x82eec]\n > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6(PetscInitialize+0xd2) [0x150454]\n > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so(__pyx_pw_8petsc4py_5PETSc_5_initialize+0x4ad) [0x34065d]\n > /usr/bin/python3.12(PyCMethod_New+0x65f) [0x18216f]\n > /usr/bin/python3.12(_PyObject_MakeTpCall+0x75) [0x148fb5]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xadf) [0x1d710f]\n > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]\n > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]\n > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]\n > /usr/bin/python3.12(PyObject_CallFunctionObjArgs+0x327) [0x149d87]\n > /usr/bin/python3.12(PyObject_CallMethodObjArgs+0xe3) [0x14b603]\n > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x395) [0x1fdab5]\n > /usr/bin/python3.12(_PyWeakref_ClearRef+0xa2a4) [0x1d3724]\n > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]\n > /usr/bin/python3.12(PyObject_CallFunctionObjArgs+0x327) [0x149d87]\n > /usr/bin/python3.12(PyObject_CallMethodObjArgs+0xe3) [0x14b603]\n > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x5eb) [0x1fdd0b]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x5e6e) [0x1dc49e]\n > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]\n > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]\n > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]\n > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]\n > /usr/bin/python3.12(PyRun_StringFlags+0x1f2) [0x208852]\n > /usr/bin/python3.12(_PyRun_SimpleFileObject+0x443) [0x2b50d3]\n > /usr/bin/python3.12(_PyRun_SimpleFileObject+0x1aa) [0x2b4e3a]\n > /usr/bin/python3.12(_PyRun_AnyFileObject+0x4f) [0x2b4c6f]\n > /usr/bin/python3.12(Py_RunMain+0x3b5) [0x2bccd5]\n > /usr/bin/python3.12(Py_BytesMain+0x2d) [0x2bc7bd]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_init_first+0x8a) [0x2a1ca]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x2a28b]\n > /usr/bin/python3.12(_start+0x25) [0x257a05]\n",
+          "direct_caller_category": "libpsm2",
+          "one_based_line_range_including_complete_stack": [
+            5511,
+            5569
+          ],
+          "syscall_event": "1792924216.231434 sched_setaffinity(0, 128, [0]) = 0",
+          "trace_file": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/strace/sched.4071459",
+          "trace_file_sha256": "b7ca1dd6b12e452d54ba48b7c8e70e707e988901b4abd19b516696915b795e26"
+        }
+      ],
+      "setter_summary": {
+        "direct_caller_counts": {
+          "libhwloc": 196,
+          "libinfinipath": 2,
+          "libpsm2": 2
+        },
+        "requested_masks": {
+          "[0]": 6,
+          "[1]": 10,
+          "other_masks": 184
+        },
+        "successful_sched_setaffinity_events": 200
+      },
+      "source_and_driver": {
+        "activation_source_sha256": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+        "driver_manifest_sha256": "042ee1e68703e10f82e4538d76c43d710c93ac31dec95151b83086cef70386b5",
+        "driver_script_sha256": "894ba384e2d12fd61e761467d9d5aace40a0d3267e50206b46c6602952d0c3b2",
+        "failure_safe_test_sha256": "52f94e28306d2d7f83f602c5e654c8953e544f00091ae3013378d52d040b7a43",
+        "import_probe_sha256": "d354eeaf7e2e00af652e1b131260b678f89221f6658e617e5d10472a3c6bd2b3",
+        "source_head": "b5a4b69c25c6be92faf0116e119904c438cbe297",
+        "source_manifest_sha256": "843aae3d9b8258ff84e20619e11608d784c17eac9985927504192579d0c38720",
+        "strace_file_sha256": {
+          "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/strace/sched.4071459": "b7ca1dd6b12e452d54ba48b7c8e70e707e988901b4abd19b516696915b795e26",
+          "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/strace/sched.4071475": "8460d00d2b5cc3d10d7d0b26497cf8df11146e4cdf813ad3e7f8015d362bac26",
+          "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/strace/sched.4071484": "c7df55a86379eff4c994f7719c015476531dc67fb765716392e4c65f6c529c93",
+          "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/strace/sched.4071487": "2c9927351ffff37b61a0685d447ababd0981ecb4d6206df74d2d5ee8a2a8d82b",
+          "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/strace/sched.4071491": "3cbf5d3a69b8d740124f9feb4317efdf27f5d1435c70786b28ae16d4d26022ca",
+          "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/strace/sched.4071492": "f6ed4b2c56de07f2618f01a467363efbb5ba7e84647711ce827fed2c9f436ed9"
+        },
+        "watchdog_source_sha256": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801"
+      },
+      "source_manifest_files_sha256": {
+        "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+        "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "b5c68b85448b9d3afd887d722f759c9e5a6dd1abc152bf98628c4772b9b90bbc",
+        "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "80b4b0ff1fb5ebf29a60588e01be203db7b3a2bed073eda6c87193f4f5f8f290",
+        "benchmarks/task43_hp_adaptivity/h100_anchor.py": "3296d5cab3a0ce5315acc8104eb6e0d2dc092a9681d53b8ce2fe011ed57ac790",
+        "docs/task43_hp_adaptivity/outcomes/records/workspace_environment_v1.json": "f95078139839551c508ff396114b16858537e8f1f5002c96f181c0cd988316d1",
+        "scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+        "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+        "src/test/test_task43_v3_failure_safe_order.py": "52f94e28306d2d7f83f602c5e654c8953e544f00091ae3013378d52d040b7a43"
+      },
+      "source_snapshot_all_match_manifest": false,
+      "source_snapshot_files_sha256": {
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "b5c68b85448b9d3afd887d722f759c9e5a6dd1abc152bf98628c4772b9b90bbc",
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "80b4b0ff1fb5ebf29a60588e01be203db7b3a2bed073eda6c87193f4f5f8f290",
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/h100_anchor.py": "3296d5cab3a0ce5315acc8104eb6e0d2dc092a9681d53b8ce2fe011ed57ac790",
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/docs/task43_hp_adaptivity/outcomes/records/workspace_environment_v1.json": "f95078139839551c508ff396114b16858537e8f1f5002c96f181c0cd988316d1",
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/src/test/test_task43_v3_failure_safe_order.py": "52f94e28306d2d7f83f602c5e654c8953e544f00091ae3013378d52d040b7a43"
+      },
+      "source_snapshot_paths": {
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/benchmarks/subreaper_watchdog.py": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/benchmarks/subreaper_watchdog.py",
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py",
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/candidate_checkpoints.py",
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/h100_anchor.py": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/h100_anchor.py",
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/docs/task43_hp_adaptivity/outcomes/records/workspace_environment_v1.json": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/docs/task43_hp_adaptivity/outcomes/records/workspace_environment_v1.json",
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/scripts/activate_task40_phi90_pord64.sh": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/scripts/activate_task40_phi90_pord64.sh",
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/src/io/native_capacity_profile.py": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/src/io/native_capacity_profile.py",
+        "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/src/test/test_task43_v3_failure_safe_order.py": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/source_snapshot/src/test/test_task43_v3_failure_safe_order.py"
+      },
+      "terminal": {
+        "exit_code": 23,
+        "pytest_mode": "not_run",
+        "reason": "dolfinx: successful sched_setaffinity event selected a mask other than [1]",
+        "sha256": "c0c25d58dc64f5a803aed5626025388f9bb0652b98d20461ec54a40f60b4cabf",
+        "status": "STOPPED_AFTER_IMPORT"
+      },
+      "watchdog": {
+        "classification": "WORKER_FAILED",
+        "descendants_cleared": true,
+        "global_swap_delta_pages": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "global_swap_scope": "WSL-global diagnostic, not dedicated job",
+        "launch_context_sha256": "144e4fffb8f837ef734bb5b5ca96d683d1d316ad9b560377bed593501037b35d",
+        "launcher_exit_record_sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+        "outer_launcher_exit_code": 2,
+        "remaining_child_pids": [],
+        "resource_member_observations": 51,
+        "resource_samples": 16,
+        "resources_jsonl_sha256": "5d3f969bb172724b5fbb9dda3e703a91bce75fdbd5e8d21ef0d164162e510645",
+        "sampled_process_tree_rss_peak_bytes": 161480704,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "stages_sha256": "8f71b38f0b591d0754f1b3e7ba7f81947375e3119d510114545e69b41b3b409a",
+        "task_swap_peak_bytes": 0,
+        "task_swap_scope": "process-tree sampled VmSwap peak; bytes, separate from global counters",
+        "watchdog_summary_sha256": "fe7885fc426a026118ea74db71ff3b962da028d2fbe6928413aaf2adc813c5ef",
+        "whole_wall_seconds": 10.266887816600502,
+        "worker_exit_code": 23,
+        "worker_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "worker_environment": {
+        "activation_marker": "1",
+        "native_resource_profile": "task43_hp_adaptivity_resource_v1",
+        "node_cap_bytes": 8589934592,
+        "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+        "run_scoped_environment_additions": {},
+        "thread_variables_all_one": true,
+        "watchdog_phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/watchdog/workflow_phase.json",
+        "watchdog_wall_seconds": 100
+      },
+      "worker_environment_scope_note": "launch_context.txt records the activated shell marker/path and requested thread/resource settings. Because the probe stopped during the first native import, these fields do not establish a completed ABI preflight."
+    },
+    {
+      "actual_launch": {
+        "command_text": "bash /tmp/task43_v6_d2_proposal/run_d2.sh",
+        "launch_script_sha256": "27c72228d06cff9db2eacd0b505ec871ca8ad50dd6d5705025e4c58db93eeb9d",
+        "launch_script_snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/driver_snapshot/run_d2.sh",
+        "note": "Excerpts are copied from the exact driver snapshot; the complete snapshot is available at launch_script_snapshot/probe_script_snapshot.",
+        "probe_script_sha256": "0ce0fd5d7bbcd20272a7d551b414a142ffcf5f859b23636384e906d5b2c553a1",
+        "probe_script_snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/driver_snapshot/probe_import_affinity.py",
+        "watchdog_command_excerpt": [
+          "taskset -c 1 python -u -m benchmarks.subreaper_watchdog \\",
+          "--directory \"$watchdog_dir\" \\",
+          "--wall-seconds 100 \\",
+          "--interval 0.25 \\",
+          "--phase-path \"$watchdog_dir/workflow_phase.json\" \\",
+          "-- bash -lc '"
+        ],
+        "worker_command_excerpt": [
+          "source scripts/activate_task40_phi90_pord64.sh",
+          "export HWLOC_COMPONENTS=-x86",
+          "source scripts/activate_task40_phi90_pord64.sh",
+          "exec taskset -c 1 strace -ff -ttt -k \\",
+          "-e trace=sched_setaffinity,sched_getaffinity \\",
+          "-o \"$TASK43_V6_D2_TRACE_PREFIX\" \\",
+          "python -u \"$TASK43_V6_D2_ROOT/driver_snapshot/probe_import_affinity.py\""
+        ]
+      },
+      "affinity_examples": {
+        "interpretation": "No CPU0 affinity appeared in the stage snapshot, but strace captured two successful [0] setter calls and two successful [1] restorations before the probe stopped.",
+        "resource_sample_at_dolfinx_import": {
+          "all_sampled_tids_on_cpu1": true,
+          "sampled_affinity_by_tid": {
+            "4076967": [
+              1
+            ],
+            "4077003": [
+              1
+            ],
+            "4077004": [
+              1
+            ]
+          },
+          "scope_limit": "one stage observation; not continuous affinity evidence",
+          "trace_sync": true
+        },
+        "successful_setter_events": [
+          {
+            "event": "1792924496.505904 sched_setaffinity(0, 128, [0]) = 0",
+            "mask": "[0]",
+            "trace_file": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/strace/sched.4076967",
+            "trace_file_sha256": "50d13b25dbde55425dff21406fba13af76fc2cb279664068ce91f5887f3422ec"
+          },
+          {
+            "event": "1792924496.634936 sched_setaffinity(0, 128, [1]) = 0",
+            "mask": "[1]",
+            "trace_file": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/strace/sched.4076967",
+            "trace_file_sha256": "50d13b25dbde55425dff21406fba13af76fc2cb279664068ce91f5887f3422ec"
+          },
+          {
+            "event": "1792924496.913518 sched_setaffinity(0, 128, [0]) = 0",
+            "mask": "[0]",
+            "trace_file": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/strace/sched.4076967",
+            "trace_file_sha256": "50d13b25dbde55425dff21406fba13af76fc2cb279664068ce91f5887f3422ec"
+          },
+          {
+            "event": "1792924497.103494 sched_setaffinity(0, 128, [1]) = 0",
+            "mask": "[1]",
+            "trace_file": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/strace/sched.4076967",
+            "trace_file_sha256": "50d13b25dbde55425dff21406fba13af76fc2cb279664068ce91f5887f3422ec"
+          }
+        ]
+      },
+      "artifact_paths": {
+        "artifact_root": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1",
+        "driver_snapshot_root": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/driver_snapshot",
+        "launch_command": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/launch_command.txt",
+        "launch_context": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/launch_context.txt",
+        "launcher_exit": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/launcher_exit_code.txt",
+        "probe_stages": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/probe_stages.jsonl",
+        "probe_terminal": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/probe_terminal.json",
+        "source_hash_manifest": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_sha256.txt",
+        "source_head": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_head.txt",
+        "source_snapshot_hash_manifest": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot_sha256.txt",
+        "source_status": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_status.txt",
+        "watchdog_resources": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/watchdog/resources.jsonl",
+        "watchdog_summary": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/watchdog/summary.json"
+      },
+      "command": "bash /tmp/task43_v6_d2_proposal/run_d2.sh",
+      "id": "D2",
+      "launch_context_text": "activation_marker=1\npython=/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python\nstrace=/usr/bin/strace\nPHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1\nPHYSICAL_NATIVE_NODE_CAP_BYTES=8589934592\nOMP_NUM_THREADS=1\nOPENBLAS_NUM_THREADS=1\nMKL_NUM_THREADS=1\nBLIS_NUM_THREADS=1\nNUMEXPR_NUM_THREADS=1\nVECLIB_MAXIMUM_THREADS=1\nHWLOC_COMPONENTS=-x86\nHWLOC_COMPONENTS_SCOPE=inner watchdog worker shell only\nwatchdog_wall_seconds=100\nwatchdog_phase_path=/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/watchdog/workflow_phase.json\n",
+      "native_abi_and_pytest_boundary": {
+        "dolfinx_stage_identity": {
+          "affinity_by_tid": {
+            "4076967": [
+              1
+            ],
+            "4077003": [
+              1
+            ],
+            "4077004": [
+              1
+            ]
+          },
+          "pid": 4076967,
+          "ppid": 4076949,
+          "start_ticks": 284948743,
+          "tids": [
+            4076967,
+            4077003,
+            4077004
+          ],
+          "trace_sync": true
+        },
+        "explicit_import_sequence": [
+          "dolfinx",
+          "mpi4py",
+          "numpy",
+          "mpi4py.MPI",
+          "petsc4py.PETSc",
+          "petsc4py"
+        ],
+        "full_native_abi_preflight": "NOT_REACHED; probe stops on affinity setter evidence before _native_abi_check()",
+        "last_completed_import": "dolfinx",
+        "mesh_builder_assembly_solver": "NOT_RUN",
+        "pytest_cases": "NOT_RUN",
+        "pytest_entry": "NOT_REACHED",
+        "runtime_abi_status": "not measured by the full ABI check; launch_context.txt records activated shell settings and requested limits only",
+        "stop_stage": "native_import_complete"
+      },
+      "observed_probe_stages": [
+        {
+          "affinity_by_tid": {
+            "4076967": [
+              1
+            ]
+          },
+          "module": null,
+          "pid": 4076967,
+          "ppid": 4076949,
+          "stage": "python_startup_before_explicit_native_imports",
+          "start_ticks": 284948743,
+          "tids": [
+            4076967
+          ],
+          "trace_files": [
+            "sched.4076967"
+          ],
+          "trace_sync": true
+        },
+        {
+          "pid": 4076967,
+          "ppid": 4076949,
+          "stage": "native_module_preload_check",
+          "start_ticks": 284948743
+        },
+        {
+          "affinity_by_tid": {
+            "4076967": [
+              1
+            ],
+            "4077003": [
+              1
+            ],
+            "4077004": [
+              1
+            ]
+          },
+          "module": "dolfinx",
+          "pid": 4076967,
+          "ppid": 4076949,
+          "stage": "native_import_complete",
+          "start_ticks": 284948743,
+          "tids": [
+            4076967,
+            4077003,
+            4077004
+          ],
+          "trace_files": [
+            "sched.4076967",
+            "sched.4076982",
+            "sched.4077001",
+            "sched.4077002",
+            "sched.4077003",
+            "sched.4077004"
+          ],
+          "trace_sync": true
+        }
+      ],
+      "representative_complete_stacks": [
+        {
+          "complete_stack_excerpt": "1792924496.505904 sched_setaffinity(0, 128, [0]) = 0\n > /usr/lib/x86_64-linux-gnu/libc.so.6(sched_setaffinity+0xb) [0x10e87b]\n > /usr/lib/x86_64-linux-gnu/libinfinipath.so.4.0() [0x39e2]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x142f) [0x571f]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x1534) [0x5824]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x132) [0x15b2]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_rtld_di_serinfo+0x2cac) [0xcd7c]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x9c) [0x151c]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_find_dso_for_object+0x184) [0xd164]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(dlmopen+0x104) [0x98284]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x9c) [0x151c]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x1e9) [0x1669]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(dlerror+0x2c3) [0x97d63]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(dlopen+0x6f) [0x9833f]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_stackframe_output+0xa32) [0x713b2]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_component_repository_open+0x1f2) [0x51752]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_component_find+0x3a5) [0x51fe5]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_components_register+0x32) [0x5e1a2]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_register+0x26b) [0x5e6ab]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_open+0x1e) [0x5e71e]\n > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pml_cm.so(mca_pml_cm_add_procs+0x13e) [0x7a4e]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_components_open+0x17d) [0x521dd]\n > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(mca_topo_base_dist_graph_neighbors_count+0x8e0) [0xd98d0]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_open+0x9d) [0x5e79d]\n > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(ompi_mpi_init+0x614) [0xec2b4]\n > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(PMPI_Init_thread+0x5c) [0x82eec]\n > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6(PetscInitialize+0xd2) [0x150454]\n > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so(__pyx_pw_8petsc4py_5PETSc_5_initialize+0x4ad) [0x34065d]\n > /usr/bin/python3.12(PyCMethod_New+0x65f) [0x18216f]\n > /usr/bin/python3.12(_PyObject_MakeTpCall+0x75) [0x148fb5]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xadf) [0x1d710f]\n > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]\n > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]\n > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]\n > /usr/bin/python3.12(PyObject_CallFunctionObjArgs+0x327) [0x149d87]\n > /usr/bin/python3.12(PyObject_CallMethodObjArgs+0xe3) [0x14b603]\n > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x395) [0x1fdab5]\n > /usr/bin/python3.12(_PyWeakref_ClearRef+0xa2a4) [0x1d3724]\n > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]\n > /usr/bin/python3.12(PyObject_CallFunctionObjArgs+0x327) [0x149d87]\n > /usr/bin/python3.12(PyObject_CallMethodObjArgs+0xe3) [0x14b603]\n > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x5eb) [0x1fdd0b]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x5e6e) [0x1dc49e]\n > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]\n > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]\n > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]\n > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]\n > /usr/bin/python3.12(PyRun_StringFlags+0x1f2) [0x208852]\n > /usr/bin/python3.12(_PyRun_SimpleFileObject+0x443) [0x2b50d3]\n > /usr/bin/python3.12(_PyRun_SimpleFileObject+0x1aa) [0x2b4e3a]\n > /usr/bin/python3.12(_PyRun_AnyFileObject+0x4f) [0x2b4c6f]\n > /usr/bin/python3.12(Py_RunMain+0x3b5) [0x2bccd5]\n > /usr/bin/python3.12(Py_BytesMain+0x2d) [0x2bc7bd]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_init_first+0x8a) [0x2a1ca]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x2a28b]\n > /usr/bin/python3.12(_start+0x25) [0x257a05]\n",
+          "direct_caller_category": "libinfinipath",
+          "one_based_line_range_including_complete_stack": [
+            624,
+            682
+          ],
+          "syscall_event": "1792924496.505904 sched_setaffinity(0, 128, [0]) = 0",
+          "trace_file": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/strace/sched.4076967",
+          "trace_file_sha256": "50d13b25dbde55425dff21406fba13af76fc2cb279664068ce91f5887f3422ec"
+        },
+        {
+          "complete_stack_excerpt": "1792924496.913518 sched_setaffinity(0, 128, [0]) = 0\n > /usr/lib/x86_64-linux-gnu/libc.so.6(sched_setaffinity+0xb) [0x10e87b]\n > /usr/lib/x86_64-linux-gnu/libpsm2.so.2.2() [0x626a]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x142f) [0x571f]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x1534) [0x5824]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x132) [0x15b2]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_rtld_di_serinfo+0x2cac) [0xcd7c]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x9c) [0x151c]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_find_dso_for_object+0x184) [0xd164]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(dlmopen+0x104) [0x98284]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x9c) [0x151c]\n > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x1e9) [0x1669]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(dlerror+0x2c3) [0x97d63]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(dlopen+0x6f) [0x9833f]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_stackframe_output+0xa32) [0x713b2]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_component_repository_open+0x1f2) [0x51752]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_component_find+0x3a5) [0x51fe5]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_components_register+0x32) [0x5e1a2]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_register+0x26b) [0x5e6ab]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_open+0x1e) [0x5e71e]\n > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pml_cm.so(mca_pml_cm_add_procs+0x13e) [0x7a4e]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_components_open+0x17d) [0x521dd]\n > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(mca_topo_base_dist_graph_neighbors_count+0x8e0) [0xd98d0]\n > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(mca_base_framework_open+0x9d) [0x5e79d]\n > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(ompi_mpi_init+0x614) [0xec2b4]\n > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(PMPI_Init_thread+0x5c) [0x82eec]\n > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6(PetscInitialize+0xd2) [0x150454]\n > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so(__pyx_pw_8petsc4py_5PETSc_5_initialize+0x4ad) [0x34065d]\n > /usr/bin/python3.12(PyCMethod_New+0x65f) [0x18216f]\n > /usr/bin/python3.12(_PyObject_MakeTpCall+0x75) [0x148fb5]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xadf) [0x1d710f]\n > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]\n > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]\n > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]\n > /usr/bin/python3.12(PyObject_CallFunctionObjArgs+0x327) [0x149d87]\n > /usr/bin/python3.12(PyObject_CallMethodObjArgs+0xe3) [0x14b603]\n > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x395) [0x1fdab5]\n > /usr/bin/python3.12(_PyWeakref_ClearRef+0xa2a4) [0x1d3724]\n > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]\n > /usr/bin/python3.12(PyObject_CallFunctionObjArgs+0x327) [0x149d87]\n > /usr/bin/python3.12(PyObject_CallMethodObjArgs+0xe3) [0x14b603]\n > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x5eb) [0x1fdd0b]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x5e6e) [0x1dc49e]\n > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]\n > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]\n > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]\n > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]\n > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]\n > /usr/bin/python3.12(PyRun_StringFlags+0x1f2) [0x208852]\n > /usr/bin/python3.12(_PyRun_SimpleFileObject+0x443) [0x2b50d3]\n > /usr/bin/python3.12(_PyRun_SimpleFileObject+0x1aa) [0x2b4e3a]\n > /usr/bin/python3.12(_PyRun_AnyFileObject+0x4f) [0x2b4c6f]\n > /usr/bin/python3.12(Py_RunMain+0x3b5) [0x2bccd5]\n > /usr/bin/python3.12(Py_BytesMain+0x2d) [0x2bc7bd]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_init_first+0x8a) [0x2a1ca]\n > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x2a28b]\n > /usr/bin/python3.12(_start+0x25) [0x257a05]\n",
+          "direct_caller_category": "libpsm2",
+          "one_based_line_range_including_complete_stack": [
+            860,
+            918
+          ],
+          "syscall_event": "1792924496.913518 sched_setaffinity(0, 128, [0]) = 0",
+          "trace_file": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/strace/sched.4076967",
+          "trace_file_sha256": "50d13b25dbde55425dff21406fba13af76fc2cb279664068ce91f5887f3422ec"
+        }
+      ],
+      "setter_summary": {
+        "direct_caller_counts": {
+          "libhwloc": 0,
+          "libinfinipath": 2,
+          "libpsm2": 2
+        },
+        "requested_masks": {
+          "[0]": 2,
+          "[1]": 2
+        },
+        "successful_sched_setaffinity_events": 4
+      },
+      "source_and_driver": {
+        "activation_source_sha256": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+        "driver_manifest_sha256": "13604fe4f81a7739bc35cce5fa1d05375c21017edf5699091eb8dcd3f307ecd3",
+        "driver_script_sha256": "27c72228d06cff9db2eacd0b505ec871ca8ad50dd6d5705025e4c58db93eeb9d",
+        "failure_safe_test_sha256": "52f94e28306d2d7f83f602c5e654c8953e544f00091ae3013378d52d040b7a43",
+        "import_probe_sha256": "0ce0fd5d7bbcd20272a7d551b414a142ffcf5f859b23636384e906d5b2c553a1",
+        "source_head": "b5a4b69c25c6be92faf0116e119904c438cbe297",
+        "source_manifest_sha256": "843aae3d9b8258ff84e20619e11608d784c17eac9985927504192579d0c38720",
+        "strace_file_sha256": {
+          "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/strace/sched.4076967": "50d13b25dbde55425dff21406fba13af76fc2cb279664068ce91f5887f3422ec",
+          "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/strace/sched.4076982": "d8ec5254737c4fe97c66a407751f9522e586be6db621028e0b67025d5ed92b16",
+          "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/strace/sched.4077001": "497868dc1a3fa2d358d9b2ee325738d4ad267cd87661849a56af1527feadd3ba",
+          "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/strace/sched.4077002": "b0df42394fd04639e6851687399e50f790216aebf958a69f9c4724e19cb123a9",
+          "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/strace/sched.4077003": "abcafefd032e8abfd295e3eae3784164f883ff4c50f6ea6821e3bb7060fbf48c",
+          "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/strace/sched.4077004": "d39414ca0af27a6660976cc980022a8e6c142aaa92b5657f5d3ac97ce30843bb"
+        },
+        "watchdog_source_sha256": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801"
+      },
+      "source_manifest_files_sha256": {
+        "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+        "benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "b5c68b85448b9d3afd887d722f759c9e5a6dd1abc152bf98628c4772b9b90bbc",
+        "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "80b4b0ff1fb5ebf29a60588e01be203db7b3a2bed073eda6c87193f4f5f8f290",
+        "benchmarks/task43_hp_adaptivity/h100_anchor.py": "3296d5cab3a0ce5315acc8104eb6e0d2dc092a9681d53b8ce2fe011ed57ac790",
+        "docs/task43_hp_adaptivity/outcomes/records/workspace_environment_v1.json": "f95078139839551c508ff396114b16858537e8f1f5002c96f181c0cd988316d1",
+        "scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+        "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+        "src/test/test_task43_v3_failure_safe_order.py": "52f94e28306d2d7f83f602c5e654c8953e544f00091ae3013378d52d040b7a43"
+      },
+      "source_snapshot_all_match_manifest": false,
+      "source_snapshot_files_sha256": {
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "b5c68b85448b9d3afd887d722f759c9e5a6dd1abc152bf98628c4772b9b90bbc",
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "80b4b0ff1fb5ebf29a60588e01be203db7b3a2bed073eda6c87193f4f5f8f290",
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/h100_anchor.py": "3296d5cab3a0ce5315acc8104eb6e0d2dc092a9681d53b8ce2fe011ed57ac790",
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/docs/task43_hp_adaptivity/outcomes/records/workspace_environment_v1.json": "f95078139839551c508ff396114b16858537e8f1f5002c96f181c0cd988316d1",
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/src/test/test_task43_v3_failure_safe_order.py": "52f94e28306d2d7f83f602c5e654c8953e544f00091ae3013378d52d040b7a43"
+      },
+      "source_snapshot_paths": {
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/benchmarks/subreaper_watchdog.py": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/benchmarks/subreaper_watchdog.py",
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/a2_native_p6_diagnostic.py",
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/candidate_checkpoints.py",
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/h100_anchor.py": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/benchmarks/task43_hp_adaptivity/h100_anchor.py",
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/docs/task43_hp_adaptivity/outcomes/records/workspace_environment_v1.json": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/docs/task43_hp_adaptivity/outcomes/records/workspace_environment_v1.json",
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/scripts/activate_task40_phi90_pord64.sh": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/scripts/activate_task40_phi90_pord64.sh",
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/src/io/native_capacity_profile.py": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/src/io/native_capacity_profile.py",
+        "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/src/test/test_task43_v3_failure_safe_order.py": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/source_snapshot/src/test/test_task43_v3_failure_safe_order.py"
+      },
+      "terminal": {
+        "exit_code": 23,
+        "pytest_mode": "not_run",
+        "reason": "dolfinx: successful sched_setaffinity event selected a mask other than [1]",
+        "sha256": "c0c25d58dc64f5a803aed5626025388f9bb0652b98d20461ec54a40f60b4cabf",
+        "status": "STOPPED_AFTER_IMPORT"
+      },
+      "watchdog": {
+        "classification": "WORKER_FAILED",
+        "descendants_cleared": true,
+        "global_swap_delta_pages": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        },
+        "global_swap_scope": "WSL-global diagnostic, not dedicated job",
+        "launch_context_sha256": "d566fd9d45d4ca4986038fae54f17cf2dcf971ad3ab1ae061303e5ca3e1f29f2",
+        "launcher_exit_record_sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+        "outer_launcher_exit_code": 2,
+        "remaining_child_pids": [],
+        "resource_member_observations": 40,
+        "resource_samples": 13,
+        "resources_jsonl_sha256": "681db86cd1be69a424866e429b385db60a8ad993a341d888638d621aac6ef591",
+        "sampled_process_tree_rss_peak_bytes": 160063488,
+        "sampled_process_tree_swap_peak_bytes": 0,
+        "stages_sha256": "9621e499697a40215eab5063e42722798ac502ff6d8a9a0544858df0367f9869",
+        "task_swap_peak_bytes": 0,
+        "task_swap_scope": "process-tree sampled VmSwap peak; bytes, separate from global counters",
+        "watchdog_summary_sha256": "ae982ad943b5787396ac66ebb60b6adea969c6f1aed8c34313dba0a4a92e0110",
+        "whole_wall_seconds": 10.469862679950893,
+        "worker_exit_code": 23,
+        "worker_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "worker_environment": {
+        "activation_marker": "1",
+        "native_resource_profile": "task43_hp_adaptivity_resource_v1",
+        "node_cap_bytes": 8589934592,
+        "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+        "run_scoped_environment_additions": {
+          "HWLOC_COMPONENTS": "-x86"
+        },
+        "thread_variables_all_one": true,
+        "watchdog_phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/watchdog/workflow_phase.json",
+        "watchdog_wall_seconds": 100
+      },
+      "worker_environment_scope_note": "launch_context.txt records the activated shell marker/path and requested thread/resource settings. Because the probe stopped during the first native import, these fields do not establish a completed ABI preflight."
+    }
+  ],
+  "schema": "task43.v6_affinity_support_closeout.v1",
+  "source_head": "b5a4b69c25c6be92faf0116e119904c438cbe297",
+  "support_driver_whole_wall_seconds_fsum": 20.736750496551394,
+  "task_swap_zero_both": true,
+  "unmonitored_static_checks": {
+    "note": "These lightweight checks were reported separately from D1/D2 watchdog costs; no pytest or numerical execution was included. Per-command persistent stdout is unavailable, so no independently measured duration or RSS is claimed.",
+    "reported_checks": [
+      "D1/D2 shell syntax check (reported; per-command output not retained)",
+      "JSON parsing for V6 records (reported; per-command output not retained)"
+    ],
+    "not_claimed": [
+      "S2 test-module bytecode compilation: no persistent command/output was available to verify this check."
+    ],
+    "rss_bytes": "not_measured",
+    "wall_seconds": "not_measured",
+    "watchdog_monitored": false
+  },
+  "resource_sample_affinity_audit": {
+    "schema": "task43.v6.resource-sample-affinity-audit.v1",
+    "scope": "Exact sparse watchdog resources.jsonl member snapshots only; does not replace strace setter events or establish continuous per-thread affinity.",
+    "runs": {
+      "D1": {
+        "resources_path": "benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/watchdog/resources.jsonl",
+        "resources_sha256": "5d3f969bb172724b5fbb9dda3e703a91bce75fdbd5e8d21ef0d164162e510645",
+        "sample_count": 16,
+        "member_observation_count": 51,
+        "member_observations_missing_affinity": 0,
+        "member_observations_affinity_not_exactly_cpu1": 2,
+        "snapshot_limitation": "Sampled observations, not continuous CPU-binding proof.",
+        "non_cpu1_resource_samples": [
+          {
+            "line_1based": 5,
+            "timestamp_ns": 1792924213882892026,
+            "stage": "workflow",
+            "member": {
+              "pid": 4071459,
+              "start_ticks": 284920539,
+              "ppid": 4071446,
+              "comm": "python",
+              "state": "t",
+              "affinity": [
+                33
+              ],
+              "cpu_seconds": 0.6,
+              "cmdline": "python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/driver_snapshot/probe_import_affinity.py"
+            },
+            "raw_line_sha256_without_newline": "8905bf180b1c9913e8ccc3e5925b3d1e4957cf274763d939d307a0dc3b362f10"
+          },
+          {
+            "line_1based": 7,
+            "timestamp_ns": 1792924215296776371,
+            "stage": "workflow",
+            "member": {
+              "pid": 4071459,
+              "start_ticks": 284920539,
+              "ppid": 4071446,
+              "comm": "python",
+              "state": "t",
+              "affinity": [
+                30
+              ],
+              "cpu_seconds": 0.81,
+              "cmdline": "python -u /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v6_support/d1_affinity_trace_attempt1/driver_snapshot/probe_import_affinity.py"
+            },
+            "raw_line_sha256_without_newline": "0857df37635a3e74ccae57d1bb05cd27442009f36cc40f730b0f1118d22464e9"
+          }
+        ]
+      },
+      "D2": {
+        "resources_path": "benchmarks/artifacts/task43/v6_support/d2_hwloc_x86_disabled_attempt1/watchdog/resources.jsonl",
+        "resources_sha256": "681db86cd1be69a424866e429b385db60a8ad993a341d888638d621aac6ef591",
+        "sample_count": 13,
+        "member_observation_count": 40,
+        "member_observations_missing_affinity": 0,
+        "member_observations_affinity_not_exactly_cpu1": 0,
+        "snapshot_limitation": "Sampled observations, not continuous CPU-binding proof.",
+        "non_cpu1_resource_samples": []
+      }
+    }
+  }
+}

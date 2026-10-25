@@ -1,5 +1,11 @@
 # Task43：accepted9/R9冻结，最终空间精度未达
 
+## Task43 V6最新支持状态：S2动态案例未运行，affinity门未通过
+
+Review V5 §9本轮只调整测试内source/contract/plan身份存在性helper，并对六份旧support和两次受限导入driver做证据收口。D1在`dolfinx`导入trace中记录200次成功affinity setter（hwloc196、libinfinipath 2、libpsm2 2）；D2屏蔽hwloc x86组件后仍有4次网络库setter。两次都在CPU1偏离时停止，完整MPI/PETSc ABI预检与pytest未到达；S2的20个案例`NOT_RUN`。whole-watchdog合计`20.736750496551394s`，task VmSwap采样峰为0 B、global `pswpin/pswpout`增量为0页；RSS及时限/清理通过，严格CPU1`NOT_PASSED`。D2前监督审查漏分类D1中已有的两类网络库调用（合计4次），详情在[Response V6](task43_hp_adaptivity/response_v6.md)和[V6 compact](task43_hp_adaptivity/outcomes/records/v6_affinity_support_closeout_v1.json)。
+
+该支持结果不改变模型注册结论：accepted9/R9仍为最后接受状态、最终精度未达；新formal dispatch为0，累计5/6（A1 2/2、A2 3/3），最后1槽封存。五项能力保持空间/选择`PARTIAL`、精度`NOT_PASSED`、同精度全过程成本`NOT_ESTABLISHED`、迭代`NOT_RUN / NOT_QUALIFIED`；0.7 nm未运行。没有生产合并批准。
+
 ## Task43 V5最新状态：有限文件保护与文档收口，无新增正式计算（2026-10-25）
 
 Review V4 F1–F4整改只涉及失败写入资格、comparison原件路径和测试内联合读取约定，以及文档。没有改变方程、默认数值行为或端点；本轮新增正式PDE/dispatch/attempt/READY均为0。Task43研究状态为 `PARTIAL / CONTROLLED_NEGATIVE`：accepted9/R9仍是最后接受状态，最终精度未过；A1组2/2、A2组3/3、总计5/6已耗，最后一槽封存。

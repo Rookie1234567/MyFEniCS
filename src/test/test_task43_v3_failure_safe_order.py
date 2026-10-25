@@ -820,6 +820,19 @@ def _synthetic_joint_read_has_no_engineering_veto(
             identity.get("plan_sha256") if isinstance(identity, dict) else None
         ),
     }
+    required_identity_lengths = (
+        (source_identity["source_sha"], 40),
+        (source_identity["frozen_v3_contract_sha256"], 64),
+        (source_identity["frozen_v3_plan_sha256"], 64),
+    )
+    if not all(
+        isinstance(value, str)
+        and len(value) == length
+        and all(character in "0123456789abcdefABCDEF" for character in value)
+        for value, length in required_identity_lengths
+    ):
+        return False
+
     return bool(
         process_exit_code == 0
         and summary.get("status") == "COMPLETED"
@@ -874,6 +887,100 @@ def test_synthetic_joint_authority_fixture_passes_only_as_a_coherent_bundle(
     )
 
     assert _synthetic_joint_read_has_no_engineering_veto(
+        summary_path, terminal_path, process_exit_code=0
+    )
+
+
+@pytest.mark.parametrize(
+    "missing_identities",
+    (
+        ("source_sha",),
+        ("contract_sha256",),
+        ("plan_sha256",),
+        ("source_sha", "contract_sha256", "plan_sha256"),
+    ),
+)
+def test_synthetic_joint_authority_fixture_rejects_common_missing_identity(
+    tmp_path: Path, missing_identities: tuple[str, ...]
+) -> None:
+    summary_path, comparison_path, terminal_path = _write_synthetic_joint_authority_files(
+        tmp_path / "missing_identity"
+    )
+    assert _synthetic_joint_read_has_no_engineering_veto(
+        summary_path, terminal_path, process_exit_code=0
+    )
+
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    comparison = json.loads(comparison_path.read_text(encoding="utf-8"))
+    terminal = json.loads(terminal_path.read_text(encoding="utf-8"))
+    primary_path = Path(
+        summary["task43_v3_primary_before_extra_packet"]["npz_path"]
+    )
+    original_primary_sha256 = hashlib.sha256(primary_path.read_bytes()).hexdigest()
+    with np.load(primary_path, allow_pickle=False) as primary_npz:
+        arrays = {
+            name: primary_npz[name].copy()
+            for name in primary_npz.files
+            if name != "__task43_record_json__"
+        }
+        primary_identity = json.loads(
+            primary_npz["__task43_record_json__"].tobytes()
+        )["identity"]
+
+    comparison_key_by_identity = {
+        "source_sha": "source_sha",
+        "contract_sha256": "frozen_v3_contract_sha256",
+        "plan_sha256": "frozen_v3_plan_sha256",
+    }
+    summary_identity = summary["task43_v3_diagnostic_identity"]
+    for identity_key in missing_identities:
+        if identity_key == "source_sha":
+            summary.pop("source_sha")
+        else:
+            summary_identity.pop(identity_key)
+        comparison.pop(comparison_key_by_identity[identity_key])
+        primary_identity.pop(identity_key)
+
+    missing_identity_primary_path = primary_path.with_name(
+        "primary_missing_identity.npz"
+    )
+    primary_ref = write_v3_primary_before_extra_packet(
+        missing_identity_primary_path, arrays, identity=primary_identity
+    )
+    summary["task43_v3_primary_before_extra_packet"] = primary_ref
+    terminal["primary_before_extra_packet"] = primary_ref
+    terminal["source_identity"] = {
+        "source_sha": summary.get("source_sha"),
+        "frozen_v3_contract_sha256": summary_identity.get("contract_sha256"),
+        "frozen_v3_plan_sha256": summary_identity.get("plan_sha256"),
+    }
+
+    comparison_path.write_text(json.dumps(comparison, sort_keys=True), encoding="utf-8")
+    summary["task43_v2_comparison"]["sha256"] = hashlib.sha256(
+        comparison_path.read_bytes()
+    ).hexdigest()
+    terminal_path.write_text(json.dumps(terminal, sort_keys=True), encoding="utf-8")
+    summary["task43_v3_partial_terminal"] = {
+        "path": str(terminal_path),
+        "sha256": hashlib.sha256(terminal_path.read_bytes()).hexdigest(),
+    }
+    summary_path.write_text(json.dumps(summary, sort_keys=True), encoding="utf-8")
+
+    # All file references and hashes remain mutually consistent; only the
+    # source/contract/plan identity values were removed from the whole bundle.
+    assert summary["status"] == comparison["status"] == terminal["status"] == "COMPLETED"
+    assert summary["measured_R_total"] == comparison["measured_R_total"] == 0.25000001
+    assert summary["task43_v2_comparison"]["sha256"] == hashlib.sha256(
+        comparison_path.read_bytes()
+    ).hexdigest()
+    assert summary["task43_v3_primary_before_extra_packet"]["npz_sha256"] == (
+        hashlib.sha256(missing_identity_primary_path.read_bytes()).hexdigest()
+    )
+    assert hashlib.sha256(primary_path.read_bytes()).hexdigest() == original_primary_sha256
+    assert summary["task43_v3_partial_terminal"]["sha256"] == hashlib.sha256(
+        terminal_path.read_bytes()
+    ).hexdigest()
+    assert not _synthetic_joint_read_has_no_engineering_veto(
         summary_path, terminal_path, process_exit_code=0
     )
 

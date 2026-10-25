@@ -1,5 +1,13 @@
 # Task43 当前收口（2026-10-25）：PARTIAL / CONTROLLED_NEGATIVE
 
+## V6最新状态：有限support收口，affinity门未通过
+
+Review V5 §9本轮仅静态修正测试helper的source/contract/plan身份存在性，并对六个旧V5 support记录和两次受限import诊断做只读收口。新增正式dispatch/PDE/READY为0，测试helper的20个直接案例均未运行。D1在首个`dolfinx`导入中trace到200次成功affinity设置（hwloc196、libinfinipath 2、libpsm2 2）；D2仅设置worker范围的`HWLOC_COMPONENTS=-x86`后仍看到两类网络库调用。两次均因成功设置偏离CPU1而在完整ABI检查及pytest之前停止，D1/D2 strict CPU1为`NOT_PASSED`。主控D2前漏分类了D1已有的两类网络库setter（合计4次），不能归咎数值方法、环境未知或S2 helper。
+
+两次whole-watchdog累计`20.736750496551394s`，最大树RSS采样峰`161480704B`，task VmSwap采样峰0 B，global `pswpin/pswpout`增量均0页，后代清理通过；完整PID/TID/affinity trace、命令/源码快照hash、分组栈和D1 `[30]/[33]`资源成员样本见[V6 closeout compact](task43_hp_adaptivity/outcomes/records/v6_affinity_support_closeout_v1.json)。旧V5六driver S1快照见[V6 S1索引](task43_hp_adaptivity/outcomes/records/v6_s1_v5_support_affinity_context_v1.json)；未监控静态检查耗时与RSS为`not_measured`。没有第三个driver或任何PDE。
+
+正式预算仍为5/6，A1 2/2、A2 3/3，最后1槽封存；五项能力及所有下游锁定维持V5状态，生产合并未批准。逐项回应见[Response V6](task43_hp_adaptivity/response_v6.md)。
+
 ## V5：Review V4 F1–F4有限整改与记录收口
 
 本轮只修改A1失败写入资格、A2 comparison原件路径和测试内联合读取约定，并更新当前文档；没有改变数值方程、默认数值行为、历史合同或原始终态。新增正式PDE、dispatch、attempt、READY均为0。A1 2/2、A2 3/3、累计5/6已耗，最后一槽封存。
