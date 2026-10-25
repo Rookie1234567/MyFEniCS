@@ -1,0 +1,26 @@
+{
+  "schema": "task41.v15.frozen_jit_preflight.v1",
+  "jit_cache": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache",
+  "qualified_existing_files": [
+    {
+      "role": "c_source",
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache/fenics/libffcx_forms_2f92c03a20c09db3cb8f0382bec2294daa94ab16.c",
+      "bytes": 108832231,
+      "sha256": "d3302fba22074b755ac3b7d4a0b361af926ae7801aac25a7f1cd1d69cbeb9f03"
+    },
+    {
+      "role": "compile_metadata",
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache/fenics/libffcx_forms_2f92c03a20c09db3cb8f0382bec2294daa94ab16.c.cached",
+      "bytes": 2760,
+      "sha256": "6d251ab5b31faa9ea4e49c7ceb6eb6a44f4b547c9f3df01dd470161d79dc0cb2"
+    },
+    {
+      "role": "module",
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache/fenics/libffcx_forms_2f92c03a20c09db3cb8f0382bec2294daa94ab16.cpython-312-x86_64-linux-gnu.so",
+      "bytes": 43650592,
+      "sha256": "a6c6105ed735a28434e891f151f34e29fddbf22f9a3f3faddc99225a886d6882"
+    }
+  ],
+  "compile_attempted": false,
+  "wrong_cache_rejected": "V15 frozen JIT c_source hash differs: /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/jit_cache/fenics/libffcx_forms_2f92c03a20c09db3cb8f0382bec2294daa94ab16.c; expected=d3302fba22074b755ac3b7d4a0b361af926ae7801aac25a7f1cd1d69cbeb9f03; actual=1025a1b5a6b4f7fae02d9d6a9983137d108f0e4d2b8a5bab5ee2b41ef87a77e4"
+}

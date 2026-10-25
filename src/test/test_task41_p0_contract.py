@@ -2215,6 +2215,11 @@ def test_task41_v15_full_acceptance_prepare_binds_36h_scope_and_raw_policy(
         module, "verify_task41_b0_saved_surface_donor", lambda *_args, **_kwargs: None
     )
 
+    monkeypatch.setattr(module, "verify_task41_v15_frozen_jit_cache", lambda path: {
+        "schema": "task41.v15.frozen_jit_preflight.v1", "jit_cache": str(path),
+        "qualified_existing_files": [], "compile_attempted": False,
+    })
+
     prepared = prepare_task41_p0(
         current_root=tmp_path,
         case_id="B0",
@@ -2515,3 +2520,26 @@ def test_task41_v15_terminal_service_separates_numerical_and_resource_results(fa
         assert result["result_classification"] == "SUPERVISED_NUMERICAL_FAIL"
     if failure == "cleanup":
         assert result["result_classification"] == "SUPERVISED_RESOURCE_OR_CLEANUP_FAILURE"
+
+
+def test_task41_v15_frozen_jit_preflight_rejects_new_compile_and_missing_module(tmp_path, monkeypatch):
+    import src.runners.task41_p0_contract as module
+    import src.solvers.task41_actual_qmetric_blocked_gram as evaluator
+    cache = tmp_path / "jit"
+    directory = cache / "fenics"
+    directory.mkdir(parents=True)
+    stem = "libffcx_forms_2f92c03a20c09db3cb8f0382bec2294daa94ab16"
+    with pytest.raises(Task41ContractError, match="no compile fallback"):
+        module.verify_task41_v15_frozen_jit_cache(cache)
+    for suffix, constant in ((".c", "EXPECTED_C_SOURCE_SHA256"),
+                             (".c.cached", "EXPECTED_C_CACHE_SHA256"),
+                             (".test.so", "EXPECTED_UFCX_MODULE_SHA256")):
+        raw = ("qualified" + suffix).encode()
+        (directory / (stem + suffix)).write_bytes(raw)
+        monkeypatch.setattr(evaluator, constant, hashlib.sha256(raw).hexdigest())
+    result = module.verify_task41_v15_frozen_jit_cache(cache)
+    assert result["compile_attempted"] is False
+    assert len(result["qualified_existing_files"]) == 3
+    (directory / (stem + ".test.so")).write_bytes(b"unqualified rebuild")
+    with pytest.raises(Task41ContractError, match="module hash differs"):
+        module.verify_task41_v15_frozen_jit_cache(cache)

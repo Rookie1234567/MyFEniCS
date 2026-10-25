@@ -2298,6 +2298,41 @@ def task41_raw_artifact_limit_bytes(contract: Mapping[str, Any]) -> int:
     return 16 << 30
 
 
+def verify_task41_v15_frozen_jit_cache(jit_cache: str | Path) -> dict[str, Any]:
+    """Read-only preflight of the already-qualified V6 cache, before FE/claim.
+
+    A matching form signature does not authorize a newly compiled binary.
+    Keep the evaluator's original C/metadata/module checks unchanged.
+    """
+    from src.solvers.task41_actual_qmetric_blocked_gram import (
+        EXPECTED_C_SOURCE_SHA256, EXPECTED_C_CACHE_SHA256,
+        EXPECTED_UFCX_MODULE_SHA256,
+    )
+    cache = Path(jit_cache).resolve(strict=True)
+    directory = cache / "fenics"
+    stem = "libffcx_forms_2f92c03a20c09db3cb8f0382bec2294daa94ab16"
+    modules = list(directory.glob(stem + ".*.so"))
+    if len(modules) != 1:
+        raise Task41ContractError("V15 JIT cache lacks the unique frozen V6 module; no compile fallback")
+    records = []
+    for role, path, expected in (
+        ("c_source", directory / (stem + ".c"), EXPECTED_C_SOURCE_SHA256),
+        ("compile_metadata", directory / (stem + ".c.cached"), EXPECTED_C_CACHE_SHA256),
+        ("module", modules[0], EXPECTED_UFCX_MODULE_SHA256),
+    ):
+        if not path.is_file() or not path.resolve().is_relative_to(cache):
+            raise Task41ContractError(f"V15 frozen JIT {role} is absent or outside selected cache")
+        actual = sha256_file(path)
+        if actual != expected:
+            raise Task41ContractError(
+                f"V15 frozen JIT {role} hash differs: {path}; expected={expected}; actual={actual}"
+            )
+        records.append({"role": role, "path": str(path.resolve()),
+                        "bytes": path.stat().st_size, "sha256": actual})
+    return {"schema": "task41.v15.frozen_jit_preflight.v1", "jit_cache": str(cache),
+            "qualified_existing_files": records, "compile_attempted": False}
+
+
 def prepare_task41_p0(
     *,
     runtime_prefix: str | Path,
@@ -2648,6 +2683,11 @@ def prepare_task41_p0(
     if not abi_path.is_file() or not jit_path.is_dir():
         raise Task41ContractError("Task41 ABI receipt or JIT cache path is missing")
     abi_sha = _check_task41_native_receipt(abi_path, runtime_path)
+    frozen_jit_preflight = (
+        verify_task41_v15_frozen_jit_cache(jit_path)
+        if saved_diagnostics_instance == TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE
+        else None
+    )
 
     input_path = (root / case_spec["input_relative"]).resolve()
     try:
@@ -2891,6 +2931,8 @@ def prepare_task41_p0(
                 "prior_ledger_sha256"
             ],
         }
+    if frozen_jit_preflight is not None:
+        contract["preparation"]["frozen_jit_preflight"] = frozen_jit_preflight
     if not _write_json_no_replace(contract_path, contract):
         raise Task41ContractError("a Task41 contract was concurrently created for this source SHA")
     contract_sha = sha256_file(contract_path)

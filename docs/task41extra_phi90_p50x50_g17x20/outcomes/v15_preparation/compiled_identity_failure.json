@@ -1,0 +1,111 @@
+{
+  "schema": "task41.v15.compiled_identity_failure.v1",
+  "run_root": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261025T145135.719911Z",
+  "source": "7ea7b912d36f9f248300a3a40b1b504deb181bd3",
+  "error": {
+    "message": "compiled FFCx module hash differs from frozen V6 profile",
+    "type": "NotImplementedError"
+  },
+  "volume_owner_events": [
+    {
+      "event": "task41_b0_v9_volume_owner",
+      "facts": {
+        "degree": 6,
+        "include_positive_coefficients": false,
+        "owned_cells": 28000,
+        "phase": "fresh_same_mesh_levels",
+        "status": "REUSED"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1792940679733280563
+    },
+    {
+      "event": "task41_b0_v9_volume_owner",
+      "facts": {
+        "phase": "direct_volume_form_compile",
+        "status": "STARTED"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1792940679734299373
+    },
+    {
+      "event": "task41_b0_v9_volume_owner",
+      "facts": {
+        "error": "NotImplementedError: compiled FFCx module hash differs from frozen V6 profile",
+        "phase": "direct_volume_form_compile",
+        "status": "FAILED"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1792940680074182557
+    }
+  ],
+  "owner_claim_status": "BUILD_STARTED",
+  "full_owner_build_count": 1,
+  "no_numerical_output_directory": true,
+  "saved_npy_count": 0,
+  "fresh_volume_owner_started": false,
+  "v15_cleanup": {
+    "completed": true,
+    "descendants_checked_by": "independent_launcher_watchdog",
+    "errors": [],
+    "passed": true,
+    "scope": "worker_owned_actions_levels_and_runtime_post_cleanup_sample"
+  },
+  "service_elapsed_seconds": 834.5192237100564,
+  "watchdog_elapsed_seconds": 791.5932392082177,
+  "tree_peak_rss_bytes": 5126782976,
+  "tree_swap_peak_bytes": 0,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "required_checker": {
+    "action_passed": null,
+    "audit_completed": false,
+    "classification": "TERMINAL_EVIDENCE_INVALID",
+    "data_integrity": false,
+    "errors": [
+      "ValueError: V15 run has no hash-bound terminal-sufficient checkpoint"
+    ],
+    "official_result": false,
+    "raw_evidence_retained": true,
+    "recovery_passed": null,
+    "schema": "task41.p0.b0.v15.terminal_sufficient_independent_check.v1",
+    "scientific_qualified": false,
+    "status": "INCOMPLETE"
+  },
+  "files": [
+    {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261025T145135.719911Z/task40_v10_p6_candidate_summary.json",
+      "bytes": 55763,
+      "sha256": "caeefb7fdb50d88e2b431f0f51e3459f28327028b0d30efa7451759b361ce8fd"
+    },
+    {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261025T145135.719911Z/watchdog/summary.json",
+      "bytes": 13087,
+      "sha256": "793b046cc70bbd6ecc46a4ce5dda459bf1adebc5f7c22a91f19624e648fb47d5"
+    },
+    {
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_7ea7b912d36f9f248300a3a40b1b504deb181bd3/task41_p0_checker_result.json",
+      "bytes": 446,
+      "sha256": "4f4366bbd920438c605efb9f4933e31376cf8d3615a619439507031adbaa92af"
+    },
+    {
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_7ea7b912d36f9f248300a3a40b1b504deb181bd3/task41_p0_service_receipt.json",
+      "bytes": 25047,
+      "sha256": "814ff8a159f2197e926457910c4066470e196558359724e2e41526f3cad7b059"
+    },
+    {
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v15_full_two_column_acceptance_36h.jsonl.v15_full_owner_claim.json",
+      "bytes": 2517,
+      "sha256": "a35431d3fffc896b9ca8e909b60b2f269d8d94f22d0a96e2ed3ef4a60e5659eb"
+    }
+  ],
+  "repair": {
+    "cause": "V15命令选择local_w0_wsl/jit_cache，未复用冻结local_v29_wsl/jit_cache；FFCx相同signature重新编译产生不同C/module内容，原身份门正确拒绝",
+    "fix": "prepare前只读验证选定缓存C/metadata/module三份原SHA；续作使用已存在原local_v29缓存；原evaluator身份检查不改",
+    "tests": "3 passed in 0.64s；真实冻结缓存通过，错误缓存拒绝",
+    "tested_patch_sha256": "d57de9a5d38aaf9aec9c53a2acbe35bcdaac40f438c41007f27d3ee7e4ddb19c",
+    "new_owner_started": false,
+    "quota": "旧BUILD_STARTED不删除或清零；第二次构建需用户明确决定",
+    "window": "保留2026-10-25T14:39:21.578055399Z，修复费用同账"
+  }
+}
