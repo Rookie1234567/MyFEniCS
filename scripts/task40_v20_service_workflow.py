@@ -9696,6 +9696,10 @@ def _task41_v11_candidate_replay_exit(record: dict[str, Any], *, worker_ok: bool
     return 0 if service_ok and finalization_ok and worker_ok and checker_ok else 3
 
 
+class _Task41P0V14DecimalRecheckComplete(Exception):
+    """Internal control flow to skip the numerical candidate worker."""
+
+
 def _parse_task41_p0_v14_candidate_suffix(case_args: Sequence[str]) -> tuple[Path, str, Path, str, Path, str, str]:
     """Parse the exact V14 saved-input suffix for the existing B0 audit service."""
     expected_suffix = [
@@ -9728,6 +9732,36 @@ def _parse_task41_p0_v14_candidate_suffix(case_args: Sequence[str]) -> tuple[Pat
     )
 
 
+def _parse_task41_p0_v14_decimal_recheck_suffix(
+    case_args: Sequence[str],
+) -> tuple[Path, str, Path, str, Path, str, str, Path, str, Path, str, Path, str]:
+    """Parse V14's prior candidate inputs plus the checker-only Decimal diagnostic bindings."""
+    if len(case_args) != 39:
+        raise ValueError("V14 Decimal recheck requires its exact checker-only evidence suffix")
+    base = _parse_task41_p0_v14_candidate_suffix(case_args[:26])
+    expected = [
+        "--v14-decimal-residual-recheck-only",
+        "--source-consumer-contract", None,
+        "--source-consumer-contract-sha256", None,
+        "--candidate-report", None,
+        "--candidate-report-sha256", None,
+        "--prior-independent-check", None,
+        "--prior-independent-check-sha256", None,
+    ]
+    suffix = case_args[26:]
+    if len(suffix) != len(expected) or any(
+        wanted is not None and got != wanted
+        for got, wanted in zip(suffix, expected, strict=True)
+    ):
+        raise ValueError("V14 Decimal recheck suffix labels/order differ")
+    return (
+        *base,
+        Path(suffix[2]).resolve(strict=True), suffix[4],
+        Path(suffix[6]).resolve(strict=True), suffix[8],
+        Path(suffix[10]).resolve(strict=True), suffix[12],
+    )
+
+
 def _run_task41_p0_saved_output_service(
     *,
     unit: str,
@@ -9749,6 +9783,13 @@ def _run_task41_p0_saved_output_service(
     b0_v9_failed_terminal_audit_mode: bool = False,
     b0_saved_y_g_comparison_mode: bool = False,
     b0_v14_saved_rhs_candidate_mode: bool = False,
+    b0_v14_decimal_residual_recheck_only_mode: bool = False,
+    v14_source_consumer_contract_path: Path | None = None,
+    v14_source_consumer_contract_sha256: str | None = None,
+    v14_saved_candidate_report_path: Path | None = None,
+    v14_saved_candidate_report_sha256: str | None = None,
+    v14_prior_independent_check_path: Path | None = None,
+    v14_prior_independent_check_sha256: str | None = None,
     v14_producer_report_path: Path | None = None,
     v14_producer_report_sha256: str | None = None,
     v14_accepted_checker_path: Path | None = None,
@@ -11058,6 +11099,22 @@ def _run_task41_p0_saved_output_service(
             v14_accepted_receipt_path=str(v14_accepted_receipt_path),
             v14_accepted_receipt_sha256=v14_accepted_receipt_sha256,
             v14_donor_summary_sha256=v14_donor_summary_sha256,
+            v14_decimal_residual_recheck_only=b0_v14_decimal_residual_recheck_only_mode,
+            v14_source_consumer_contract_path=(
+                str(v14_source_consumer_contract_path)
+                if v14_source_consumer_contract_path is not None else None
+            ),
+            v14_source_consumer_contract_sha256=v14_source_consumer_contract_sha256,
+            v14_saved_candidate_report_path=(
+                str(v14_saved_candidate_report_path)
+                if v14_saved_candidate_report_path is not None else None
+            ),
+            v14_saved_candidate_report_sha256=v14_saved_candidate_report_sha256,
+            v14_prior_independent_check_path=(
+                str(v14_prior_independent_check_path)
+                if v14_prior_independent_check_path is not None else None
+            ),
+            v14_prior_independent_check_sha256=v14_prior_independent_check_sha256,
         )
     if b0_v4_geometry_pair_mode:
         assert source_report_path is not None
@@ -11291,6 +11348,127 @@ def _run_task41_p0_saved_output_service(
             }
             record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget_check()
 
+            if b0_v14_decimal_residual_recheck_only_mode:
+                required_recheck = (
+                    v14_source_consumer_contract_path,
+                    v14_source_consumer_contract_sha256,
+                    v14_saved_candidate_report_path,
+                    v14_saved_candidate_report_sha256,
+                    v14_prior_independent_check_path,
+                    v14_prior_independent_check_sha256,
+                )
+                if any(value is None for value in required_recheck):
+                    raise ValueError("V14 Decimal checker-only route is missing an input binding")
+                assert v14_source_consumer_contract_path is not None
+                assert v14_source_consumer_contract_sha256 is not None
+                assert v14_saved_candidate_report_path is not None
+                assert v14_saved_candidate_report_sha256 is not None
+                assert v14_prior_independent_check_path is not None
+                assert v14_prior_independent_check_sha256 is not None
+                decimal_report_path = output_root / "task41_p0_v14_saved_rhs_decimal_residual_recheck.json"
+                checker_command = [
+                    python,
+                    "-m",
+                    "src.runners.task41_p0_v14_saved_rhs_checker",
+                    "--repo-root", str(repo_root),
+                    "--consumer-contract", str(v14_source_consumer_contract_path.resolve()),
+                    "--consumer-contract-sha256", v14_source_consumer_contract_sha256,
+                    "--producer-report", str(v14_producer_report_path.resolve()),
+                    "--producer-report-sha256", str(v14_producer_report_sha256),
+                    "--accepted-checker", str(v14_accepted_checker_path.resolve()),
+                    "--accepted-checker-sha256", str(v14_accepted_checker_sha256),
+                    "--accepted-receipt", str(v14_accepted_receipt_path.resolve()),
+                    "--accepted-receipt-sha256", str(v14_accepted_receipt_sha256),
+                    "--donor-summary", str(donor_summary_path.resolve()),
+                    "--donor-summary-sha256", str(v14_donor_summary_sha256),
+                    "--donor-contract", str(donor_contract_path.resolve()),
+                    "--donor-contract-sha256", donor_contract_sha256,
+                    "--candidate-report", str(v14_saved_candidate_report_path.resolve()),
+                    "--candidate-report-sha256", v14_saved_candidate_report_sha256,
+                    "--prior-independent-check", str(v14_prior_independent_check_path.resolve()),
+                    "--prior-independent-check-sha256", v14_prior_independent_check_sha256,
+                    "--review-contract", str(contract_path.resolve()),
+                    "--review-contract-sha256", contract_sha,
+                    "--decimal-residual-recheck-only",
+                    "--output", str(decimal_report_path),
+                ]
+                checker_watchdog = supervise(
+                    checker_command,
+                    service_directory / "v14_decimal_residual_checker_watchdog",
+                    wall_seconds=window.cutoff_seconds,
+                    phase_path=service_directory / "v14_decimal_residual_checker_phase.json",
+                    campaign_phase="numeric",
+                    **common_watchdog,
+                )
+                record["v14_decimal_residual_checker_command"] = checker_command
+                record["v14_decimal_residual_checker_watchdog"] = checker_watchdog
+                decimal_payload = (
+                    read_json_object(decimal_report_path, "V14 Decimal residual diagnostic")
+                    if decimal_report_path.is_file() else {}
+                )
+                decimal_check_ok = bool(
+                    checker_watchdog.get("classification") == "COMPLETED"
+                    and checker_watchdog.get("leader_exit_code") == 0
+                    and decimal_payload.get("schema")
+                    == "task41.p0.v14.saved_rhs_decimal_residual_recheck.v1"
+                    and decimal_payload.get("status")
+                    in {"LOCAL_CANDIDATE_PASS", "LOCAL_CANDIDATE_REJECTED", "INCONCLUSIVE"}
+                    and decimal_payload.get("check_completed") is True
+                    and decimal_payload.get("official_result") is False
+                    and decimal_payload.get("scientific_qualified") is False
+                    and decimal_payload.get("candidate_passed")
+                    in {True, False, None}
+                    and decimal_payload.get("conditional_star_coverage_unlocked")
+                    is (decimal_payload.get("candidate_passed") is True)
+                    and decimal_payload.get("full_owner_unlocked") is False
+                    and decimal_payload.get("getrs_invoked") == 0
+                    and decimal_payload.get("getrs_added") == 0
+                    and decimal_payload.get("prior_check_status") == "INCONCLUSIVE"
+                    and decimal_payload.get("candidate_report_sha256")
+                    == v14_saved_candidate_report_sha256
+                    and decimal_payload.get("review_contract_sha256") == contract_sha
+                    and decimal_payload.get("fixed_window_sha256") == window.sha256
+                    and decimal_payload.get("rhs_count") == 4
+                    and decimal_payload.get("state_count") == 8
+                    and decimal_payload.get("rows_per_state") == 450
+                )
+                record["v14_candidate_worker_attempted"] = False
+                record["v14_candidate_worker_started"] = False
+                record["v14_candidate_worker_completed"] = False
+                record["numerical_work_started"] = False
+                record["getrs_added"] = 0
+                record["v14_decimal_residual_check_path"] = str(decimal_report_path)
+                record["v14_decimal_residual_check_sha256"] = (
+                    sha256_file(decimal_report_path) if decimal_report_path.is_file() else None
+                )
+                record["v14_decimal_residual_check_completed"] = decimal_check_ok
+                record["required_checker_status"] = (
+                    "DECIMAL_SUPPLEMENTAL_CHECK_COMPLETED"
+                    if decimal_check_ok else "not_run_or_incomplete"
+                )
+                record["v14_candidate_passed"] = (
+                    decimal_payload.get("candidate_passed") if decimal_check_ok else None
+                )
+                record["conditional_star_coverage_unlocked"] = bool(
+                    decimal_check_ok
+                    and decimal_payload.get("conditional_star_coverage_unlocked") is True
+                )
+                record["full_owner_unlocked"] = False
+                record["official_result"] = False
+                record["scientific_qualified"] = False
+                record["result_classification"] = (
+                    "V14_DECIMAL_SUPPLEMENTAL_PASS"
+                    if decimal_check_ok and decimal_payload.get("candidate_passed") is True
+                    else "V14_DECIMAL_SUPPLEMENTAL_REJECTED"
+                    if decimal_check_ok and decimal_payload.get("candidate_passed") is False
+                    else "V14_DECIMAL_SUPPLEMENTAL_INCONCLUSIVE"
+                    if decimal_check_ok
+                    else "V14_DECIMAL_SUPPLEMENTAL_INCOMPLETE"
+                )
+                # A completed checker is a completed service even when its scientific
+                # classification is rejected or inconclusive.
+                result_code = 0 if decimal_check_ok else 3
+                raise _Task41P0V14DecimalRecheckComplete
             candidate_worker_command = [
                 python,
                 "-m",
@@ -11428,12 +11606,18 @@ def _run_task41_p0_saved_output_service(
                 else "V14_SAVED_RHS_CANDIDATE_INCOMPLETE"
             )
             result_code = 0 if candidate_worker_ok and independent_check_ok else 3
+        except _Task41P0V14DecimalRecheckComplete:
+            pass
         except Exception as exc:
             record["workflow_error"] = {"type": type(exc).__name__, "message": str(exc)}
             record["required_checker_status"] = "not_run_or_incomplete"
             record["official_result"] = False
             record["scientific_qualified"] = False
-            record["result_classification"] = "V14_SAVED_RHS_CANDIDATE_INCOMPLETE"
+            record["result_classification"] = (
+                "V14_DECIMAL_RESIDUAL_DIAGNOSTIC_INCOMPLETE"
+                if b0_v14_decimal_residual_recheck_only_mode
+                else "V14_SAVED_RHS_CANDIDATE_INCOMPLETE"
+            )
             result_code = 3
         finally:
             end_sample = clock_sample(include_boot_id=True)
@@ -14194,6 +14378,10 @@ def _run_task41_p0_service(
     b0_v14_saved_rhs_candidate_mode = bool(
         b0_evidence_audit_mode and "--v14-saved-rhs-candidate" in case_args
     )
+    b0_v14_decimal_residual_recheck_only_mode = bool(
+        b0_v14_saved_rhs_candidate_mode
+        and "--v14-decimal-residual-recheck-only" in case_args
+    )
     saved_output_mode = (
         continuation_mode
         or checker_only_mode
@@ -14252,6 +14440,12 @@ def _run_task41_p0_service(
     v14_accepted_receipt_path: Path | None = None
     v14_accepted_receipt_sha256: str | None = None
     v14_donor_summary_sha256: str | None = None
+    v14_source_consumer_contract_path: Path | None = None
+    v14_source_consumer_contract_sha256: str | None = None
+    v14_saved_candidate_report_path: Path | None = None
+    v14_saved_candidate_report_sha256: str | None = None
+    v14_prior_independent_check_path: Path | None = None
+    v14_prior_independent_check_sha256: str | None = None
     if b0_v9_saved_star_screen_mode:
         if (
             len(case_args) != 11
@@ -14340,7 +14534,7 @@ def _run_task41_p0_service(
     candidate_geometry_reference_path: Path | None = None
     if b0_evidence_audit_mode:
         if (
-            len(case_args) not in {11, 14, 15, 16, 18, 19, 20, 23, 26, 28}
+            len(case_args) not in {11, 14, 15, 16, 18, 19, 20, 23, 26, 28, 39}
             or case_args[1] != "--donor-contract"
             or case_args[3] != "--donor-contract-sha256"
             or case_args[5] != "--summary"
@@ -14356,15 +14550,32 @@ def _run_task41_p0_service(
         donor_numerical_output = Path(case_args[8]).resolve()
         continuation_output_root = Path(case_args[10]).resolve()
         if b0_v14_saved_rhs_candidate_mode:
-            (
-                v14_producer_report_path,
-                v14_producer_report_sha256,
-                v14_accepted_checker_path,
-                v14_accepted_checker_sha256,
-                v14_accepted_receipt_path,
-                v14_accepted_receipt_sha256,
-                v14_donor_summary_sha256,
-            ) = _parse_task41_p0_v14_candidate_suffix(case_args)
+            if b0_v14_decimal_residual_recheck_only_mode:
+                (
+                    v14_producer_report_path,
+                    v14_producer_report_sha256,
+                    v14_accepted_checker_path,
+                    v14_accepted_checker_sha256,
+                    v14_accepted_receipt_path,
+                    v14_accepted_receipt_sha256,
+                    v14_donor_summary_sha256,
+                    v14_source_consumer_contract_path,
+                    v14_source_consumer_contract_sha256,
+                    v14_saved_candidate_report_path,
+                    v14_saved_candidate_report_sha256,
+                    v14_prior_independent_check_path,
+                    v14_prior_independent_check_sha256,
+                ) = _parse_task41_p0_v14_decimal_recheck_suffix(case_args)
+            else:
+                (
+                    v14_producer_report_path,
+                    v14_producer_report_sha256,
+                    v14_accepted_checker_path,
+                    v14_accepted_checker_sha256,
+                    v14_accepted_receipt_path,
+                    v14_accepted_receipt_sha256,
+                    v14_donor_summary_sha256,
+                ) = _parse_task41_p0_v14_candidate_suffix(case_args)
             continuation_run_root = donor_summary_path.parent.resolve(strict=True)
         elif "--v14-saved-rhs-candidate" in case_args:
             raise ValueError("V14 candidate marker is only accepted in its explicit service route")
@@ -15481,6 +15692,15 @@ def _run_task41_p0_service(
             b0_v9_failed_terminal_audit_mode=b0_v9_failed_terminal_audit_mode,
             b0_saved_y_g_comparison_mode=b0_saved_y_g_comparison_mode,
             b0_v14_saved_rhs_candidate_mode=b0_v14_saved_rhs_candidate_mode,
+            b0_v14_decimal_residual_recheck_only_mode=(
+                b0_v14_decimal_residual_recheck_only_mode
+            ),
+            v14_source_consumer_contract_path=v14_source_consumer_contract_path,
+            v14_source_consumer_contract_sha256=v14_source_consumer_contract_sha256,
+            v14_saved_candidate_report_path=v14_saved_candidate_report_path,
+            v14_saved_candidate_report_sha256=v14_saved_candidate_report_sha256,
+            v14_prior_independent_check_path=v14_prior_independent_check_path,
+            v14_prior_independent_check_sha256=v14_prior_independent_check_sha256,
             v14_producer_report_path=v14_producer_report_path,
             v14_producer_report_sha256=v14_producer_report_sha256,
             v14_accepted_checker_path=v14_accepted_checker_path,

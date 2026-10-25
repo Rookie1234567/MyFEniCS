@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
+
+import numpy as np
 
 from src.runners import task41_p0_contract as contract_module
 from src.runners import task41_p0_v14_candidate_io as v14_io
@@ -15,6 +18,47 @@ from scripts import task40_v20_service_workflow as service_workflow
 def _write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, sort_keys=True) + "\n", encoding="utf-8")
+
+
+
+def test_v14_decimal_residual_metrics_cover_all_450_rows_with_rounding_bound():
+    matrix = np.zeros((450, 450), dtype=np.complex128)
+    matrix[0, 0], matrix[0, 1] = 1.0 + 2.0j, 3.0 - 1.0j
+    matrix[1, 0], matrix[1, 1] = -2.0 + 0.5j, 0.25 + 1.0j
+    rhs = np.zeros(450, dtype=np.complex128)
+    rhs[0], rhs[1] = 7.0 + 3.0j, -4.0 + 2.0j
+    state = np.zeros(450, dtype=np.complex128)
+    state[0], state[1] = 1.0 + 1.0j, 2.0 - 1.0j
+    from src.runners import task41_p0_v14_saved_rhs_checker as checker
+
+    precision_50 = checker._decimal_residual_metrics(matrix, rhs, state, precision=50)
+    precision_80 = checker._decimal_residual_metrics(matrix, rhs, state, precision=80)
+    assert precision_50["row_count"] == precision_80["row_count"] == 450
+    assert len(precision_50["row_residuals"]) == len(precision_80["row_residuals"]) == 450
+    assert precision_50["row_residuals"][0] == {
+        "row": 0, "real": "3", "imag": "5"
+    }
+    row1_precision_50 = precision_50["row_residuals"][1]
+    row1_precision_80 = precision_80["row_residuals"][1]
+    assert row1_precision_50["row"] == row1_precision_80["row"] == 1
+    assert Decimal(row1_precision_50["real"]) == Decimal(row1_precision_80["real"]) == -3
+    assert Decimal(row1_precision_50["imag"]) == Decimal(row1_precision_80["imag"]) == Decimal("1.75")
+    row449 = precision_50["row_residuals"][449]
+    assert row449["row"] == 449
+    assert Decimal(row449["real"]) == Decimal(row449["imag"]) == 0
+    assert precision_50["absolute_inf_row"] == 0
+    assert precision_50["unit_roundoff_decimal"] == "5E-50"
+    assert precision_80["unit_roundoff_decimal"] == "5E-80"
+    assert precision_50["rounding_mode"] == precision_80["rounding_mode"] == "ROUND_HALF_EVEN"
+    precision_delta = abs(
+        Decimal(precision_50["absolute_l2"]) - Decimal(precision_80["absolute_l2"])
+    )
+    paired_bound = (
+        Decimal(precision_50["conservative_decimal_arithmetic_bound"])
+        + Decimal(precision_80["conservative_decimal_arithmetic_bound"])
+    )
+    assert precision_delta <= paired_bound
+    assert Decimal(precision_50["conservative_decimal_arithmetic_bound"]) > 0
 
 
 def test_v14_exact_suffix_drives_two_supervised_workers_and_records_numeric_rejection(
@@ -226,15 +270,43 @@ def test_v14_exact_suffix_drives_two_supervised_workers_and_records_numeric_reje
             })
         elif module_name == "src.runners.task41_p0_v14_saved_rhs_checker":
             output_path = Path(command[command.index("--output") + 1])
-            _write_json(output_path, {
-                "schema": v14_io.V14_CANDIDATE_CHECK_SCHEMA,
-                "status": "LOCAL_CANDIDATE_REJECTED",
-                "check_completed": True,
-                "candidate_passed": False,
-                "official_result": False,
-                "scientific_qualified": False,
-                "candidate_report_sha256": command[command.index("--candidate-report-sha256") + 1],
-            })
+            if "--decimal-residual-recheck-only" in command:
+                _write_json(output_path, {
+                    "schema": "task41.p0.v14.saved_rhs_decimal_residual_recheck.v1",
+                    "status": "INCONCLUSIVE",
+                    "classification": "DECIMAL_SUPPLEMENTAL_INDEPENDENT_CHECK",
+                    "check_completed": True,
+                    "official_result": False,
+                    "scientific_qualified": False,
+                    "candidate_passed": None,
+                    "conditional_star_coverage_unlocked": False,
+                    "full_owner_unlocked": False,
+                    "getrs_invoked": 0,
+                    "getrs_added": 0,
+                    "prior_check_status": "INCONCLUSIVE",
+                    "candidate_report_sha256": command[
+                        command.index("--candidate-report-sha256") + 1
+                    ],
+                    "review_contract_sha256": command[
+                        command.index("--review-contract-sha256") + 1
+                    ],
+                    "fixed_window_sha256": new_window_sha,
+                    "rhs_count": 4,
+                    "state_count": 8,
+                    "rows_per_state": 450,
+                })
+            else:
+                _write_json(output_path, {
+                    "schema": v14_io.V14_CANDIDATE_CHECK_SCHEMA,
+                    "status": "LOCAL_CANDIDATE_REJECTED",
+                    "check_completed": True,
+                    "candidate_passed": False,
+                    "official_result": False,
+                    "scientific_qualified": False,
+                    "candidate_report_sha256": command[
+                        command.index("--candidate-report-sha256") + 1
+                    ],
+                })
         else:
             raise AssertionError(f"unexpected supervised module: {module_name}")
         return {
@@ -322,3 +394,150 @@ def test_v14_exact_suffix_drives_two_supervised_workers_and_records_numeric_reje
     assert receipt["conditional_star_coverage_unlocked"] is False
     assert receipt["official_result"] is False
     assert receipt["scientific_qualified"] is False
+
+
+    # The supplemental service route consumes the saved candidate/check only and
+    # supervises the Decimal checker; it must never launch the candidate worker.
+    source_consumer_contract_path = results_root / "attempt01" / "source_consumer_contract.json"
+    _write_json(source_consumer_contract_path, {
+        "schema": contract_module.TASK41_P0_CONTRACT_SCHEMA,
+        "source": {"sha": "7" * 40},
+        "window": {"path": str(window_path), "sha256": new_window_sha},
+    })
+    source_consumer_contract_sha = hashlib.sha256(
+        source_consumer_contract_path.read_bytes()
+    ).hexdigest()
+    saved_candidate_path = results_root / "attempt01" / "candidate" / "task41_p0_v14_saved_rhs_candidate.json"
+    saved_candidate_payload = {
+        "schema": v14_io.V14_CANDIDATE_REPORT_SCHEMA,
+        "status": "CANDIDATE_PRODUCED_PENDING_INDEPENDENT_CHECK",
+        "official_result": False,
+        "scientific_qualified": False,
+        "consumer_contract_path": str(source_consumer_contract_path),
+        "consumer_contract_sha256": source_consumer_contract_sha,
+        "consumer_window_sha256": new_window_sha,
+        "scope": {
+            "stage": "initial_screen",
+            "cells": list(v14_io.V14_CELLS),
+            "columns": list(v14_io.V14_COLUMNS),
+            "full_owner": False,
+        },
+        "candidate_rhs": [],
+        "getrs_count": 0,
+    }
+    saved_candidate_sha = hashlib.sha256(
+        json.dumps(saved_candidate_payload, sort_keys=True).encode()
+    ).hexdigest()
+    _write_json(saved_candidate_path, saved_candidate_payload)
+    saved_candidate_sha = hashlib.sha256(saved_candidate_path.read_bytes()).hexdigest()
+    prior_check_path = results_root / "attempt01" / "task41_p0_v14_saved_rhs_candidate_independent_check.json"
+    _write_json(prior_check_path, {
+        "schema": v14_io.V14_CANDIDATE_CHECK_SCHEMA,
+        "status": "INCONCLUSIVE",
+        "check_completed": True,
+        "candidate_passed": None,
+        "official_result": False,
+        "scientific_qualified": False,
+        "candidate_report_path": str(saved_candidate_path.resolve()),
+        "candidate_report_sha256": saved_candidate_sha,
+        "consumer_contract_sha256": source_consumer_contract_sha,
+        "consumer_window_sha256": new_window_sha,
+    })
+    prior_check_sha = hashlib.sha256(prior_check_path.read_bytes()).hexdigest()
+    decimal_output_root = (
+        results_root / "task41_p0_saved_diagnostics_6h" / new_window_sha
+        / "selected_incident_replay" / "attempt02"
+    )
+    decimal_suffix = [
+        *suffix[:10], str(decimal_output_root), *suffix[11:],
+        "--v14-decimal-residual-recheck-only",
+        "--source-consumer-contract", str(source_consumer_contract_path),
+        "--source-consumer-contract-sha256", source_consumer_contract_sha,
+        "--candidate-report", str(saved_candidate_path),
+        "--candidate-report-sha256", saved_candidate_sha,
+        "--prior-independent-check", str(prior_check_path),
+        "--prior-independent-check-sha256", prior_check_sha,
+    ]
+    parsed_decimal = service_workflow._parse_task41_p0_v14_decimal_recheck_suffix(
+        decimal_suffix
+    )
+    assert len(decimal_suffix) == 39
+    assert parsed_decimal[:7] == parsed
+    assert parsed_decimal[7:] == (
+        source_consumer_contract_path.resolve(), source_consumer_contract_sha,
+        saved_candidate_path.resolve(), saved_candidate_sha,
+        prior_check_path.resolve(), prior_check_sha,
+    )
+
+    decimal_result = service_workflow._run_task41_p0_saved_output_service(
+        unit="synthetic-v14-decimal-checker-only-service",
+        runtime_prefix=repo_root / ".venv",
+        environment=environment,
+        window=window,
+        contract=contract,
+        contract_path=contract_path,
+        contract_sha=contract_sha,
+        case_id="B0",
+        run_root=run_root,
+        output_root=decimal_output_root,
+        consumer_source_sha=consumer_sha,
+        checker_only=True,
+        checker_snapshot_path=None,
+        checker_snapshot_sha256=None,
+        b0_evidence_audit_mode=True,
+        b0_v14_saved_rhs_candidate_mode=True,
+        b0_v14_decimal_residual_recheck_only_mode=True,
+        v14_source_consumer_contract_path=parsed_decimal[7],
+        v14_source_consumer_contract_sha256=parsed_decimal[8],
+        v14_saved_candidate_report_path=parsed_decimal[9],
+        v14_saved_candidate_report_sha256=parsed_decimal[10],
+        v14_prior_independent_check_path=parsed_decimal[11],
+        v14_prior_independent_check_sha256=parsed_decimal[12],
+        v14_producer_report_path=parsed_decimal[0],
+        v14_producer_report_sha256=parsed_decimal[1],
+        v14_accepted_checker_path=parsed_decimal[2],
+        v14_accepted_checker_sha256=parsed_decimal[3],
+        v14_accepted_receipt_path=parsed_decimal[4],
+        v14_accepted_receipt_sha256=parsed_decimal[5],
+        v14_donor_summary_sha256=parsed_decimal[6],
+        donor_contract_path=donor_contract_path,
+        donor_contract_sha256=v14_io.V14_DONOR_CONTRACT_SHA256,
+        donor_summary_path=summary_path,
+        donor_numerical_output=numerical_output,
+        input_path=input_path,
+        activation_command=["activate", "synthetic"],
+        activation_identity="synthetic-qualified-activation",
+        preflight={"passed": True},
+        preflight_command=["python", "-m", "synthetic_preflight"],
+        cgroup_start={"dedicated_job_cgroup": True},
+        service_entry_accounting={"synthetic": True},
+        service_start_sample=service_workflow.clock_sample(include_boot_id=True),
+        repo_root=repo_root,
+        supervise=fake_supervise,
+        sha256_file=sha256_file,
+    )
+    assert decimal_result == 0
+    assert len(supervisor_calls) == 3
+    decimal_command, decimal_watchdog_dir, decimal_watchdog_args = supervisor_calls[-1]
+    assert decimal_command[2] == "src.runners.task41_p0_v14_saved_rhs_checker"
+    assert "--decimal-residual-recheck-only" in decimal_command
+    assert "src.runners.task41_p0_v14_saved_rhs_candidate" not in decimal_command
+    assert decimal_watchdog_dir.name == "v14_decimal_residual_checker_watchdog"
+    assert decimal_watchdog_args["campaign_window_path"] == window_path
+    assert decimal_watchdog_args["campaign_window_sha256"] == new_window_sha
+    decimal_receipt_path = (
+        decimal_output_root.with_name(decimal_output_root.name + ".service")
+        / "task41_p0_service_receipt.json"
+    )
+    decimal_receipt = json.loads(decimal_receipt_path.read_text(encoding="utf-8"))
+    assert decimal_receipt["result_classification"] == "V14_DECIMAL_SUPPLEMENTAL_INCONCLUSIVE"
+    assert decimal_receipt["required_checker_status"] == "DECIMAL_SUPPLEMENTAL_CHECK_COMPLETED"
+    assert decimal_receipt["v14_candidate_worker_attempted"] is False
+    assert decimal_receipt["v14_candidate_worker_started"] is False
+    assert decimal_receipt["v14_candidate_worker_completed"] is False
+    assert decimal_receipt["numerical_work_started"] is False
+    assert decimal_receipt["getrs_added"] == 0
+    assert decimal_receipt["conditional_star_coverage_unlocked"] is False
+    assert decimal_receipt["full_owner_unlocked"] is False
+    assert decimal_receipt["official_result"] is False
+    assert decimal_receipt["scientific_qualified"] is False

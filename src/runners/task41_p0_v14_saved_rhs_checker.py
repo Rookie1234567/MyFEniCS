@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from decimal import Decimal, ROUND_HALF_EVEN, localcontext
 import json
 import math
 import os
@@ -11,7 +12,12 @@ from typing import Any, Mapping
 
 import numpy as np
 
-from src.runners.task41_p0_contract import sha256_file
+from src.runners.task41_p0_contract import (
+    TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
+    load_task41_p0_fixed_window,
+    require_task41_p0_contract,
+    sha256_file,
+)
 from src.runners.task41_p0_v14_candidate_io import (
     V14_CANDIDATE_CHECK_SCHEMA,
     V14_CANDIDATE_REPORT_SCHEMA,
@@ -508,6 +514,363 @@ def check_v14_saved_candidate(
     return payload
 
 
+def _decimal_residual_metrics(
+    matrix: np.ndarray, rhs: np.ndarray, state: np.ndarray, *, precision: int
+) -> dict[str, Any]:
+    """Evaluate all complex residual rows from exact Decimal conversions of binary64 inputs."""
+    n = V14_EXPECTED_INTERNAL_ROWS
+    if (
+        matrix.shape != (n, n)
+        or rhs.shape != (n,)
+        or state.shape != (n,)
+        or matrix.dtype != np.dtype(np.complex128)
+        or rhs.dtype != np.dtype(np.complex128)
+        or state.dtype != np.dtype(np.complex128)
+    ):
+        raise ValueError("V14 Decimal residual inputs are not the frozen complex128 450-row layout")
+
+    def dec(value: float) -> Decimal:
+        return Decimal.from_float(float(value))
+
+    with localcontext() as context:
+        context.prec = precision
+        context.rounding = ROUND_HALF_EVEN
+        zero = Decimal(0)
+        residual_rows: list[dict[str, str | int]] = []
+        sum_residual_sq = zero
+        sum_rhs_sq = zero
+        sum_input_scale_sq = zero
+        max_row_sq = zero
+        max_row_index = -1
+        for row_index in range(n):
+            b_value = rhs[row_index]
+            b_real, b_imag = dec(b_value.real), dec(b_value.imag)
+            dot_real = dot_imag = zero
+            scale_real, scale_imag = abs(b_real), abs(b_imag)
+            for column in range(n):
+                a_value, z_value = matrix[row_index, column], state[column]
+                a_real, a_imag = dec(a_value.real), dec(a_value.imag)
+                z_real, z_imag = dec(z_value.real), dec(z_value.imag)
+                rr, ri = a_real * z_real, a_imag * z_imag
+                ir, ii = a_real * z_imag, a_imag * z_real
+                dot_real = dot_real + (rr - ri)
+                dot_imag = dot_imag + (ir + ii)
+                scale_real = scale_real + abs(rr) + abs(ri)
+                scale_imag = scale_imag + abs(ir) + abs(ii)
+            residual_real, residual_imag = b_real - dot_real, b_imag - dot_imag
+            row_sq = residual_real * residual_real + residual_imag * residual_imag
+            sum_residual_sq += row_sq
+            sum_rhs_sq += b_real * b_real + b_imag * b_imag
+            sum_input_scale_sq += scale_real * scale_real + scale_imag * scale_imag
+            if row_sq > max_row_sq:
+                max_row_sq, max_row_index = row_sq, row_index
+            residual_rows.append({
+                "row": row_index,
+                "real": str(residual_real),
+                "imag": str(residual_imag),
+            })
+        absolute_l2, absolute_inf = sum_residual_sq.sqrt(), max_row_sq.sqrt()
+        rhs_l2, input_scale_l2 = sum_rhs_sq.sqrt(), sum_input_scale_sq.sqrt()
+        relative_rhs_l2 = absolute_l2 / max(
+            rhs_l2, Decimal.from_float(float(np.finfo(float).tiny))
+        )
+        # Inflated standard round-to-nearest arithmetic-model bound. Decimal.from_float
+        # imports every complex128 component exactly; this excludes input/solver errors.
+        operations = 32 * n + 32
+        unit_roundoff = Decimal(5).scaleb(-precision)
+        gamma = operations * unit_roundoff / (Decimal(1) - operations * unit_roundoff)
+        arithmetic_bound = Decimal(2) * gamma * input_scale_l2
+        return {
+            "precision": precision,
+            "row_count": n,
+            "absolute_l2": str(absolute_l2),
+            "absolute_inf": str(absolute_inf),
+            "absolute_inf_row": max_row_index,
+            "relative_rhs_l2": str(relative_rhs_l2),
+            "componentwise_input_scale_l2": str(input_scale_l2),
+            "unit_roundoff_decimal": str(unit_roundoff),
+            "rounding_mode": "ROUND_HALF_EVEN",
+            "conservative_decimal_arithmetic_bound": str(arithmetic_bound),
+            "row_residuals": residual_rows,
+        }
+
+
+def check_v14_saved_candidate_decimal_residuals(
+    *,
+    repo_root: str | Path,
+    source: Mapping[str, Any],
+    candidate_report_path: str | Path,
+    candidate_report_sha256: str,
+    prior_independent_check_path: str | Path,
+    prior_independent_check_sha256: str,
+    review_contract_path: str | Path,
+    review_contract_sha256: str,
+    output_path: str | Path,
+) -> dict[str, Any]:
+    """Add a Decimal residual diagnostic without changing candidate qualification."""
+    root = Path(repo_root).resolve(strict=True)
+    results_root = Path(source["results_root"]).resolve(strict=True)
+    output = Path(output_path).resolve()
+    if not output.is_relative_to(results_root) or output.exists():
+        raise ValueError("V14 Decimal diagnostic output path is invalid or already exists")
+    wide_replay_path = output.with_name("task41_p0_v14_saved_rhs_decimal_wide_recheck.json")
+    if wide_replay_path.exists():
+        raise FileExistsError(f"V14 Decimal wide recheck already exists: {wide_replay_path}")
+    candidate_path = Path(candidate_report_path).resolve(strict=True)
+    prior_path = Path(prior_independent_check_path).resolve(strict=True)
+    if (
+        not candidate_path.is_relative_to(results_root)
+        or not prior_path.is_relative_to(results_root)
+        or candidate_path.stat().st_size > 16 * 1024**2
+        or prior_path.stat().st_size > 16 * 1024**2
+        or sha256_file(candidate_path) != candidate_report_sha256
+        or sha256_file(prior_path) != prior_independent_check_sha256
+    ):
+        raise ValueError("V14 Decimal diagnostic input path, size, or SHA-256 differs")
+
+    review_path = Path(review_contract_path).resolve(strict=True)
+    review_contract, review_digest = require_task41_p0_contract(
+        review_path,
+        expected_sha256=review_contract_sha256,
+        current_root=root,
+        check_current_source=True,
+        require_clean_source=True,
+        case_id="B0",
+    )
+    old_contract = source["consumer_contract"]
+    old_window = load_task41_p0_fixed_window(
+        old_contract, current_root=root, require_current_boot=False
+    )
+    review_window = load_task41_p0_fixed_window(
+        review_contract, current_root=root, require_current_boot=False
+    )
+    if (
+        review_contract.get("execution_scope") != TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE
+        or review_contract.get("source", {}).get("sha")
+        == old_contract.get("source", {}).get("sha")
+        or review_window.sha256 != old_window.sha256
+        or Path(review_window.path).resolve() != Path(old_window.path).resolve()
+        or review_window.sha256 != source["consumer_window_sha256"]
+    ):
+        raise ValueError("V14 Decimal review contract is not a new-source binding to the same fixed window")
+
+    candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+    prior = json.loads(prior_path.read_text(encoding="utf-8"))
+    if (
+        candidate.get("schema") != V14_CANDIDATE_REPORT_SCHEMA
+        or candidate.get("status") != "CANDIDATE_PRODUCED_PENDING_INDEPENDENT_CHECK"
+        or candidate.get("official_result") is not False
+        or candidate.get("scientific_qualified") is not False
+        or candidate.get("consumer_contract_path") != str(source["consumer_contract_path"])
+        or candidate.get("consumer_contract_sha256") != source["consumer_contract_sha256"]
+        or candidate.get("consumer_window_sha256") != source["consumer_window_sha256"]
+        or prior.get("schema") != V14_CANDIDATE_CHECK_SCHEMA
+        or prior.get("status") != "INCONCLUSIVE"
+        or prior.get("check_completed") is not True
+        or prior.get("candidate_passed") is not None
+        or prior.get("official_result") is not False
+        or prior.get("scientific_qualified") is not False
+        or prior.get("candidate_report_path") != str(candidate_path)
+        or prior.get("candidate_report_sha256") != candidate_report_sha256
+        or prior.get("consumer_contract_sha256") != source["consumer_contract_sha256"]
+        or prior.get("consumer_window_sha256") != source["consumer_window_sha256"]
+    ):
+        raise ValueError("V14 Decimal diagnostic is not bound to the original INCONCLUSIVE candidate/check")
+    scope, rows = candidate.get("scope"), candidate.get("candidate_rhs")
+    expected_keys = [(cell, column) for cell in V14_CELLS for column in V14_COLUMNS]
+    if (
+        not isinstance(scope, Mapping)
+        or scope.get("stage") != "initial_screen"
+        or scope.get("cells") != list(V14_CELLS)
+        or scope.get("columns") != list(V14_COLUMNS)
+        or scope.get("full_owner") is not False
+        or not isinstance(rows, list)
+        or len(rows) != len(expected_keys)
+    ):
+        raise ValueError("V14 Decimal diagnostic candidate scope or four-RHS inventory differs")
+    keys = [(int(row.get("cell_index", -1)), int(row.get("column", -1))) for row in rows]
+    if sorted(keys) != sorted(expected_keys) or len(set(keys)) != len(keys):
+        raise ValueError("V14 Decimal diagnostic candidate has missing or duplicate RHS entries")
+
+    package = candidate_path.parent.resolve(strict=True)
+    # Reuse the original checker unchanged for returned corrections and production-order y/g/d.
+    # Its saved-array replay performs no solve/GETRS and its output is kept beside this supplement.
+    wide_replay = check_v14_saved_candidate(
+        source=source,
+        candidate_report_path=candidate_path,
+        candidate_report_sha256=candidate_report_sha256,
+        output_path=wide_replay_path,
+    )
+    if (
+        wide_replay.get("getrs_count_rechecked") != candidate.get("getrs_count")
+        or wide_replay.get("full_owner_unlocked") is not False
+    ):
+        raise ValueError("V14 original saved-array checker replay did not preserve its bounded scope")
+
+    diagnostics: list[dict[str, Any]] = []
+    rejected: list[str] = []
+    inconclusive: list[str] = []
+    for item in wide_replay["production_order_d_checks"]:
+        column = int(item["column"])
+        if item["verdict"] == "worsened":
+            rejected.append(f"column{column}_d_worsened")
+        elif item["verdict"] == "inconclusive":
+            inconclusive.append(f"column{column}_d_change_within_wide_resolution")
+    for row in rows:
+        cell, column = int(row["cell_index"]), int(row["column"])
+        local, term = source["cells"][cell], source["cells"][cell]["column_terms"][column]
+        events = _load_event_log(
+            row.get("initial_and_step_log"), package=package,
+            label=f"cell{cell}/column{column}",
+        )
+        states = (
+            ("initial", _load_array_ref(
+                events[0].get("solved"), package=package,
+                label=f"cell{cell}/column{column}/initial_z",
+            )),
+            ("final", _load_array_ref(
+                row.get("final_z"), package=package,
+                label=f"cell{cell}/column{column}/final_z",
+            )),
+        )
+        state_results: list[dict[str, Any]] = []
+        for state_name, state in states:
+            result_50 = _decimal_residual_metrics(local["K"], term["b_i"], state, precision=50)
+            result_80 = _decimal_residual_metrics(local["K"], term["b_i"], state, precision=80)
+            with localcontext() as context:
+                context.prec = 100
+                l2_50, l2_80 = Decimal(result_50["absolute_l2"]), Decimal(result_80["absolute_l2"])
+                bound_50 = Decimal(result_50["conservative_decimal_arithmetic_bound"])
+                bound_80 = Decimal(result_80["conservative_decimal_arithmetic_bound"])
+                empirical_delta, paired_bound = abs(l2_50 - l2_80), bound_50 + bound_80
+                interval_50 = [max(Decimal(0), l2_50 - bound_50), l2_50 + bound_50]
+                interval_80 = [max(Decimal(0), l2_80 - bound_80), l2_80 + bound_80]
+            state_results.append({
+                "state": state_name,
+                "precision_50": result_50,
+                "precision_80": result_80,
+                "residual_l2_interval_precision_50": [str(value) for value in interval_50],
+                "residual_l2_interval_precision_80": [str(value) for value in interval_80],
+                "empirical_precision_delta_l2": str(empirical_delta),
+                "combined_conservative_decimal_arithmetic_bound": str(paired_bound),
+                "empirical_delta_within_combined_bound": empirical_delta <= paired_bound,
+                "precision_comparison_is_diagnostic_not_a_theorem": True,
+            })
+        state_by_name = {item["state"]: item for item in state_results}
+        initial_state = state_by_name["initial"]
+        final_state = state_by_name["final"]
+        initial_interval = [
+            min(
+                Decimal(initial_state["residual_l2_interval_precision_50"][0]),
+                Decimal(initial_state["residual_l2_interval_precision_80"][0]),
+            ),
+            max(
+                Decimal(initial_state["residual_l2_interval_precision_50"][1]),
+                Decimal(initial_state["residual_l2_interval_precision_80"][1]),
+            ),
+        ]
+        final_interval = [
+            min(
+                Decimal(final_state["residual_l2_interval_precision_50"][0]),
+                Decimal(final_state["residual_l2_interval_precision_80"][0]),
+            ),
+            max(
+                Decimal(final_state["residual_l2_interval_precision_50"][1]),
+                Decimal(final_state["residual_l2_interval_precision_80"][1]),
+            ),
+        ]
+        if final_interval[1] < initial_interval[0]:
+            residual_verdict = "credible_improvement"
+        elif final_interval[0] > initial_interval[1]:
+            residual_verdict = "worsened"
+        else:
+            residual_verdict = "inconclusive"
+        precision_bounds_ok = all(
+            item["empirical_delta_within_combined_bound"] for item in state_results
+        )
+        diagnostics.append({
+            "cell_index": cell,
+            "column": column,
+            "rhs_identity_sha256": row.get("b_i", {}).get("sha256"),
+            "initial_final_residuals": state_results,
+            "combined_precision_l2_intervals": {
+                "combination": "union_envelope_of_precision_50_and_precision_80",
+                "initial": [str(value) for value in initial_interval],
+                "final": [str(value) for value in final_interval],
+            },
+            "decimal_residual_verdict": residual_verdict,
+            "empirical_precision_deltas_within_bounds": precision_bounds_ok,
+        })
+        key = f"cell{cell}_column{column}"
+        if residual_verdict == "worsened":
+            rejected.append(f"{key}_true_residual_worsened")
+        elif residual_verdict == "inconclusive" or not precision_bounds_ok:
+            inconclusive.append(f"{key}_true_residual_not_credibly_improved")
+    if rejected:
+        status = "LOCAL_CANDIDATE_REJECTED"
+        passed: bool | None = False
+    elif inconclusive:
+        status = "INCONCLUSIVE"
+        passed = None
+    else:
+        status = "LOCAL_CANDIDATE_PASS"
+        passed = True
+    output.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "schema": "task41.p0.v14.saved_rhs_decimal_residual_recheck.v1",
+        "status": status,
+        "classification": "DECIMAL_SUPPLEMENTAL_INDEPENDENT_CHECK",
+        "check_completed": True,
+        "official_result": False,
+        "scientific_qualified": False,
+        "candidate_passed": passed,
+        "conditional_star_coverage_unlocked": passed is True,
+        "full_owner_unlocked": False,
+        "numerical_work_started": False,
+        "getrs_invoked": 0,
+        "getrs_added": 0,
+        "wide_replay_path": wide_replay["path"],
+        "wide_replay_sha256": wide_replay["sha256"],
+        "production_order_d_checks": wide_replay["production_order_d_checks"],
+        "rejection_reasons": rejected,
+        "inconclusive_reasons": inconclusive,
+        "prior_check_status": prior["status"],
+        "prior_independent_check_path": str(prior_path),
+        "prior_independent_check_sha256": prior_independent_check_sha256,
+        "candidate_report_path": str(candidate_path),
+        "candidate_report_sha256": candidate_report_sha256,
+        "consumer_contract_path": str(source["consumer_contract_path"]),
+        "consumer_contract_sha256": source["consumer_contract_sha256"],
+        "review_contract_path": str(review_path),
+        "review_contract_sha256": review_digest,
+        "fixed_window_path": str(review_window.path),
+        "fixed_window_sha256": review_window.sha256,
+        "source_sha": review_contract["source"]["sha"],
+        "arithmetic_method": (
+            "Decimal.from_float imports each complex128 component exactly; direct complex "
+            "matrix-vector residual over all 450 rows at precision 50 and 80."
+        ),
+        "conservative_bound_model": (
+            "2*gamma_m*L2(componentwise absolute input scales), u=5*10^-precision, "
+            "m=32*450+32, explicit ROUND_HALF_EVEN; a conservative standard arithmetic "
+            "model bound, not a theorem about source, discretization, or candidate-solve error."
+        ),
+        "rhs_count": len(diagnostics),
+        "state_count": sum(len(item["initial_final_residuals"]) for item in diagnostics),
+        "rows_per_state": V14_EXPECTED_INTERNAL_ROWS,
+        "diagnostics": diagnostics,
+    }
+    temporary = output.with_name(f".{output.name}.tmp")
+    with temporary.open("xb") as stream:
+        stream.write((json.dumps(payload, sort_keys=True, indent=2, allow_nan=False) + "\n").encode())
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, output)
+    payload["path"] = str(output)
+    payload["sha256"] = sha256_file(output)
+    return payload
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", type=Path, default=Path(__file__).resolve().parents[2])
@@ -526,6 +889,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--candidate-report", required=True, type=Path)
     parser.add_argument("--candidate-report-sha256", required=True)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--decimal-residual-recheck-only", action="store_true")
+    parser.add_argument("--review-contract", type=Path)
+    parser.add_argument("--review-contract-sha256")
+    parser.add_argument("--prior-independent-check", type=Path)
+    parser.add_argument("--prior-independent-check-sha256")
     return parser.parse_args(argv)
 
 
@@ -545,14 +913,36 @@ def main(argv: list[str] | None = None) -> int:
         donor_summary_sha256=args.donor_summary_sha256,
         donor_contract_path=args.donor_contract,
         donor_contract_sha256=args.donor_contract_sha256,
+        check_current_source=not args.decimal_residual_recheck_only,
+        require_clean_source=not args.decimal_residual_recheck_only,
     )
-    result = check_v14_saved_candidate(
-        source=source,
-        candidate_report_path=args.candidate_report,
-        candidate_report_sha256=args.candidate_report_sha256,
-        output_path=args.output,
-    )
-    print(json.dumps({key: value for key, value in result.items() if key != "rhs_checks"}, sort_keys=True))
+    if args.decimal_residual_recheck_only:
+        if (
+            args.review_contract is None
+            or args.review_contract_sha256 is None
+            or args.prior_independent_check is None
+            or args.prior_independent_check_sha256 is None
+        ):
+            raise ValueError("Decimal residual mode requires review-contract and prior-check bindings")
+        result = check_v14_saved_candidate_decimal_residuals(
+            repo_root=args.repo_root,
+            source=source,
+            candidate_report_path=args.candidate_report,
+            candidate_report_sha256=args.candidate_report_sha256,
+            prior_independent_check_path=args.prior_independent_check,
+            prior_independent_check_sha256=args.prior_independent_check_sha256,
+            review_contract_path=args.review_contract,
+            review_contract_sha256=args.review_contract_sha256,
+            output_path=args.output,
+        )
+    else:
+        result = check_v14_saved_candidate(
+            source=source,
+            candidate_report_path=args.candidate_report,
+            candidate_report_sha256=args.candidate_report_sha256,
+            output_path=args.output,
+        )
+    print(json.dumps({key: value for key, value in result.items() if key not in {"rhs_checks", "diagnostics"}}, sort_keys=True))
     return 0
 
 

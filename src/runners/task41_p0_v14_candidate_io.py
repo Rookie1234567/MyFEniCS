@@ -119,6 +119,8 @@ def load_v14_saved_candidate_inputs(
     donor_summary_sha256: str,
     donor_contract_path: str | Path,
     donor_contract_sha256: str,
+    check_current_source: bool = True,
+    require_clean_source: bool = True,
 ) -> dict[str, Any]:
     """Load only the four accepted V11 cell RHSs and their original K/J/LU."""
     root = Path(repo_root).resolve(strict=True)
@@ -128,8 +130,8 @@ def load_v14_saved_candidate_inputs(
         consumer_path,
         expected_sha256=consumer_contract_sha256,
         current_root=root,
-        check_current_source=True,
-        require_clean_source=True,
+        check_current_source=check_current_source,
+        require_clean_source=require_clean_source,
         case_id="B0",
     )
     if consumer.get("execution_scope") != TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE:
