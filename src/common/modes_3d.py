@@ -88,10 +88,29 @@ def enumerate_diffraction_orders_3d(
     *,
     max_m_override: int | None = None,
     max_n_override: int | None = None,
+    signed_bounds_override: tuple[int, int, int, int] | None = None,
 ) -> list[DiffractionOrder3D]:
-    """Enumerate the 2D Floquet lattice orders for a 3D periodic cell."""
+    """Enumerate a symmetric or explicitly signed 2D Floquet window."""
 
-    if max_m_override is not None or max_n_override is not None:
+    if signed_bounds_override is not None:
+        if max_m_override is not None or max_n_override is not None:
+            raise ValueError("signed bounds cannot be combined with symmetric overrides")
+        try:
+            bounds = tuple(signed_bounds_override)
+        except TypeError as exc:
+            raise ValueError("signed diffraction bounds must contain four integers") from exc
+        if len(bounds) != 4 or any(
+            isinstance(value, (bool, np.bool_))
+            or not isinstance(value, (int, np.integer))
+            for value in bounds
+        ):
+            raise ValueError("signed diffraction bounds must contain four integers")
+        m_min, m_max, n_min, n_max = (int(value) for value in bounds)
+        if m_min > m_max or n_min > n_max:
+            raise ValueError("signed diffraction bounds must be ordered min/max pairs")
+        m_values = range(m_min, m_max + 1)
+        n_values = range(n_min, n_max + 1)
+    elif max_m_override is not None or max_n_override is not None:
         max_m = 0 if max_m_override is None else int(max_m_override)
         max_n = 0 if max_n_override is None else int(max_n_override)
     elif cfg.diffraction_zero_order_only:
@@ -107,12 +126,15 @@ def enumerate_diffraction_orders_3d(
         )
         max_m = auto_max_m if cfg.diffraction_order_max_m is None else max(int(cfg.diffraction_order_max_m), auto_max_m)
         max_n = auto_max_n if cfg.diffraction_order_max_n is None else max(int(cfg.diffraction_order_max_n), auto_max_n)
-    if max_m < 0 or max_n < 0:
-        raise ValueError("diffraction_order_max_m/n must be non-negative.")
+    if signed_bounds_override is None:
+        if max_m < 0 or max_n < 0:
+            raise ValueError("diffraction_order_max_m/n must be non-negative.")
+        m_values = range(-int(max_m), int(max_m) + 1)
+        n_values = range(-int(max_n), int(max_n) + 1)
 
     orders: list[DiffractionOrder3D] = []
-    for m in range(-int(max_m), int(max_m) + 1):
-        for n in range(-int(max_n), int(max_n) + 1):
+    for m in m_values:
+        for n in n_values:
             alpha = complex(cfg.kx + 2.0 * np.pi * m / (cfg.x_max - cfg.x_min))
             gamma = complex(cfg.ky + 2.0 * np.pi * n / (cfg.y_max - cfg.y_min))
             dispersion_top = (cfg.k0 * complex(cfg.n_air)) ** 2 - alpha**2 - gamma**2
@@ -209,6 +231,25 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
     policy = cfg.stage4_dtn_order_policy.lower()
     if policy == "zero_order":
         orders = enumerate_diffraction_orders_3d(cfg, max_m_override=0, max_n_override=0)
+    elif policy == "explicit_signed_rectangle":
+        bounds = getattr(cfg, "task40_dtn_signed_rectangle_bounds_mn", None)
+        try:
+            signed_bounds = tuple(bounds)
+        except TypeError as exc:
+            raise ValueError(
+                "explicit_signed_rectangle requires four Task40 signed bounds"
+            ) from exc
+        if len(signed_bounds) != 4 or any(
+            isinstance(value, (bool, np.bool_))
+            or not isinstance(value, (int, np.integer))
+            for value in signed_bounds
+        ):
+            raise ValueError(
+                "explicit_signed_rectangle requires four integer Task40 signed bounds"
+            )
+        orders = enumerate_diffraction_orders_3d(
+            cfg, signed_bounds_override=tuple(int(value) for value in signed_bounds)
+        )
     elif policy == "explicit_rectangle":
         # Private profile-bound fields are assigned by the direct Task40 route;
         # this is a hard rectangle and deliberately does not apply the legacy
@@ -243,7 +284,7 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
     else:
         raise ValueError(
             "stage4_dtn_order_policy must be 'auto_propagating', 'zero_order', 'manual', "
-            "or the profile-bound 'explicit_rectangle'."
+            "or a profile-bound explicit rectangle policy."
         )
 
     modes: list[PortMode3D] = []
@@ -257,7 +298,7 @@ def outgoing_port_modes_3d(cfg: SimulationConfig3D) -> list[PortMode3D]:
             propagating = order.top_propagating if side == "top" else order.bottom_propagating
             rayleigh_warning = order.rayleigh_warning_top if side == "top" else order.rayleigh_warning_bottom
             selected = (order.m == 0 and order.n == 0) or bool(propagating)
-            if policy in {"manual", "explicit_rectangle"}:
+            if policy in {"manual", "explicit_rectangle", "explicit_signed_rectangle"}:
                 selected = True
             if not selected:
                 continue

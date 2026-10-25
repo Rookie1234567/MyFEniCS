@@ -139,6 +139,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
 
     from src.io.native_capacity_profile import (
         DISPERSION_FLAT_P6_PROFILES,
+        TASK40_PHI90_D07C_PROFILES,
         TASK40_PHI90_D5_PROFILES,
         TASK40_PHI90_D5C_PROFILES,
         TASK40_PHI90_D15_PROFILES,
@@ -181,6 +182,35 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             )
         ]
         truncated = active_mode_count != parent_mode_count
+        signed_bounds = None
+        if mode.get("policy") == "explicit_signed_rectangle_v1":
+            raw_signed_bounds = mode.get("active_signed_bounds_mn")
+            try:
+                signed_bounds = tuple(raw_signed_bounds)
+            except TypeError as exc:
+                raise ValueError("Task40 signed rectangle requires four bounds") from exc
+            if len(signed_bounds) != 4 or any(
+                isinstance(value, bool) or not isinstance(value, int)
+                for value in signed_bounds
+            ):
+                raise ValueError("Task40 signed rectangle bounds must be four integers")
+            m_min, m_max, n_min, n_max = signed_bounds
+            if m_min > m_max or n_min > n_max:
+                raise ValueError("Task40 signed rectangle bounds are reversed")
+            parent_signed_bounds = tuple(mode.get("parent_signed_bounds_mn", ()))
+            if signed_bounds != parent_signed_bounds:
+                raise ValueError("untruncated Task40 signed inventory must equal its finite parent")
+            expected_signed_count = 4 * (m_max - m_min + 1) * (n_max - n_min + 1)
+            if parent_mode_count != expected_signed_count or active_mode_count != expected_signed_count:
+                raise ValueError("Task40 signed inventory count differs from its frozen bounds")
+            if active_rectangle != [max(abs(m_min), abs(m_max)), max(abs(n_min), abs(n_max))]:
+                raise ValueError("Task40 signed bounds differ from the recorded absolute envelope")
+            required_evidence_keys = tuple(
+                (str(key[0]), int(key[1]), int(key[2]), str(key[3]))
+                for key in evidence.get("mode_keys", ())
+            )
+            if len(required_evidence_keys) != 6:
+                raise ValueError("Task40 signed-window factor evidence needs six bound mode keys")
         if truncated:
             if len(active_rectangle) != 2 or any(value < 1 for value in active_rectangle):
                 raise ValueError("Task40 modal rectangle requires positive m/n bounds")
@@ -219,13 +249,14 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         h15_case = profile_identity in TASK40_PHI90_H15_PROFILES
         d15_case = profile_identity in TASK40_PHI90_D15_PROFILES
         d5c_case = profile_identity in TASK40_PHI90_D5C_PROFILES
+        d07c_case = profile_identity in TASK40_PHI90_D07C_PROFILES
         d5_case = profile_identity in TASK40_PHI90_D5_PROFILES
         family_label = (
-            "d15" if d15_case else "d5c" if d5c_case else "d5" if d5_case
+            "d15" if d15_case else "d07c" if d07c_case else "d5c" if d5c_case else "d5" if d5_case
             else "h15" if h15_case else "d13"
         )
         route_label = (
-            "D15" if d15_case else "D5C" if d5c_case else "D5" if d5_case
+            "D15" if d15_case else "D07C" if d07c_case else "D5C" if d5c_case else "D5" if d5_case
             else "H15" if h15_case else "D13"
         )
         plan_id = mesh_case["mesh_plan_id"]
@@ -267,6 +298,9 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
             "parent_inventory_scope": mode["parent_inventory_scope"],
             "selection_policy": mode["policy"],
+            "signed_rectangle_bounds_mn": (
+                list(signed_bounds) if signed_bounds is not None else None
+            ),
             "mode_basis_scale_policy": mode.get(
                 "boundary_amplitude_scale_policy"
             ),
@@ -310,6 +344,11 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "surface_quadrature_degree": int(
                 options["surface_quadrature"]["degree"]
             ),
+            "surface_quadrature_reference_degree": options[
+                "surface_quadrature"
+            ].get("reference_degree"),
+            "expected_propagating_count": mode.get("expected_active_propagating_count"),
+            "expected_power_carrying_count": mode.get("expected_active_power_carrying_count"),
             "surface_quadrature_envelope_max_abs_m_n": [
                 options["surface_quadrature"]["fixed_comparison_envelope"]["max_abs_m"],
                 options["surface_quadrature"]["fixed_comparison_envelope"]["max_abs_n"],
@@ -324,25 +363,25 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "max_same_factor_corrections": 2,
             "expected_axis_cell_counts": expected_counts,
             "expected_global_cell_count": expected_cells,
-            "d13_case": case_name if not h15_case and not d5_case and not d5c_case and not d15_case else None,
+            "d13_case": case_name if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None,
             "changed_axis": mesh_case["changed_axis"],
-            "d13_mesh_plan_id": plan_id if not h15_case and not d5_case and not d5c_case and not d15_case else None,
-            "d13_mesh_plan_sha256": plan_sha if not h15_case and not d5_case and not d5c_case and not d15_case else None,
+            "d13_mesh_plan_id": plan_id if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None,
+            "d13_mesh_plan_sha256": plan_sha if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None,
             "d13_expected_axis_sha256_le_f64": (
-                expected_axis_hashes if not h15_case and not d5_case and not d5c_case and not d15_case else None
+                expected_axis_hashes if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None
             ),
             "d13_base_axis_sha256_le_f64": (
-                base_axis_hashes if not h15_case and not d5_case and not d5c_case and not d15_case else None
+                base_axis_hashes if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None
             ),
             "d13_axis_comparison_parent": mesh_case.get(
                 "axis_comparison_parent", "B"
-            ) if not h15_case and not d5_case and not d5c_case and not d15_case else None,
+            ) if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None,
             "d13_expected_material_tag_counts": (
-                expected_tag_counts if not h15_case and not d5_case and not d5c_case and not d15_case else None
+                expected_tag_counts if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None
             ),
             "diagnostic_scope": (
                 f"TASK40_{route_label}_{case_name}_"
-                f"{'5NM' if d5_case or d5c_case else '13P5NM'}_"
+                f"{'0P7NM' if d07c_case else '5NM' if d5_case or d5c_case else '13P5NM'}_"
                 f"{expected_cells}CELL_PHI90"
             ),
         }
@@ -488,6 +527,7 @@ def _direct_output_policy(route: Mapping[str, Any]) -> dict[str, Any]:
             "active_mode_count": route["active_count"],
             "active_mode_sha256": route["active_sha256"],
             "selection_policy": route["selection_policy"],
+            "active_signed_bounds_mn": route.get("signed_rectangle_bounds_mn"),
             "active_rectangle_max_abs_m_n": route["active_rectangle_max_abs_m_n"],
             "active_A6_scope": route["residual_scope"],
             "selected_parent_indices_sha256": route.get(
@@ -1599,6 +1639,84 @@ def _task40_d5c_mesh_evidence(
     }
 
 
+def _task40_d07c_mesh_evidence(
+    levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Check live D07C axes and midpoint material tags against the frozen plan."""
+    from src.geometry.task40_phi90_d07c_axis_plan import d07c_axis_plan
+
+    case_name = str(route["task40_mesh_case"])
+    plan = d07c_axis_plan(case_name)
+    msh = levels["mesh_data"].mesh
+    axes = {
+        axis: tuple(
+            float(value) for value in np.unique(np.asarray(msh.geometry.x)[:, index])
+        )
+        for index, axis in enumerate(("x", "y", "z"))
+    }
+    expected_axes = {
+        axis: tuple(float(value) for value in plan["axes_nm"][axis])
+        for axis in "xyz"
+    }
+    if axes != expected_axes:
+        raise ValueError(f"actual D07C-{case_name} coordinates differ from the frozen plan")
+    hashes = {
+        axis: hashlib.sha256(np.asarray(values, dtype="<f8").tobytes()).hexdigest()
+        for axis, values in axes.items()
+    }
+    if hashes != route["task40_expected_axis_sha256_le_f64"]:
+        raise ValueError(f"actual D07C-{case_name} axis hashes differ from profile facts")
+    if hashes != plan["axis_sha256_le_f64"]:
+        raise ValueError(f"actual D07C-{case_name} axis hashes differ from frozen plan")
+    if route.get("task40_parent_case") != "B":
+        raise ValueError(f"D07C-{case_name} must be derived independently from B")
+    if hashes != plan["parent_axis_sha256_le_f64"] and case_name == "B":
+        raise ValueError("D07C-B axes differ from their frozen baseline identity")
+    if case_name != "B":
+        if route.get("task40_changed_axis") != "y":
+            raise ValueError(f"D07C-{case_name} must change only y")
+        for axis in ("x", "z"):
+            if hashes[axis] != plan["parent_axis_sha256_le_f64"][axis]:
+                raise ValueError(f"D07C-{case_name} changed the frozen {axis} axis")
+    counts = tuple(len(axes[axis]) - 1 for axis in "xyz")
+    cells = int(msh.topology.index_map(msh.topology.dim).size_global)
+    if counts != tuple(route["expected_axis_cell_counts"]):
+        raise ValueError(f"actual D07C-{case_name} axis counts differ from profile")
+    if cells != int(route["expected_global_cell_count"]):
+        raise ValueError(f"actual D07C-{case_name} cell count differs from profile")
+    if str(msh.topology.cell_name()) != "hexahedron":
+        raise ValueError("Task40 D07C requires hexahedral cells")
+    tag_values = np.asarray(levels["mesh_data"].cell_tags.values, dtype=np.int64)
+    raw_tags = route["task40_expected_material_tag_counts"]
+    expected_tags = {
+        int(cfg.tags.air): int(raw_tags["1"]),
+        int(cfg.tags.substrate): int(raw_tags["2"]),
+        int(cfg.tags.grating): int(raw_tags["3"]),
+    }
+    actual_tags = {tag: int(np.count_nonzero(tag_values == tag)) for tag in expected_tags}
+    if tag_values.size != cells or actual_tags != expected_tags:
+        raise ValueError(
+            f"actual D07C-{case_name} material tags differ: {actual_tags} != {expected_tags}"
+        )
+    return {
+        "status": "PASS",
+        "profile": route["profile_identity"],
+        "family": "D07C_0p7nm_finite_signed_modes",
+        "case": case_name,
+        "parent_case": "B",
+        "changed_axis": route["task40_changed_axis"],
+        "cell_type": "hexahedron",
+        "actual_global_cell_count": cells,
+        "axis_cell_counts": list(counts),
+        "axis_sha256_le_f64": hashes,
+        "actual_axes_match_frozen_d07c_coordinates": True,
+        "material_tag_counts": {str(tag): count for tag, count in actual_tags.items()},
+        "expected_material_tag_counts": {str(tag): count for tag, count in expected_tags.items()},
+        "static_tag_prediction_is_not_substituted_for_live_mesh_qa": True,
+        "mpi_size": 1,
+    }
+
+
 def _task40_d5_mesh_evidence(
     levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
 ) -> dict[str, Any]:
@@ -2691,15 +2809,20 @@ def run_p6_condensed_direct(
         if not isinstance(cfg, SimulationConfig3D):
             raise TypeError("resolved direct input did not create SimulationConfig3D")
         if route["family"] == "task40_phi90":
-            # Input keeps the public auto policy unchanged.  This profile
-            # explicitly overrides it to its frozen finite rectangle.
-            cfg.stage4_dtn_order_policy = "explicit_rectangle"
-            cfg.task40_dtn_rectangle_max_m = int(
-                route["parent_rectangle_max_abs_m_n"][0]
-            )
-            cfg.task40_dtn_rectangle_max_n = int(
-                route["parent_rectangle_max_abs_m_n"][1]
-            )
+            if route.get("signed_rectangle_bounds_mn") is not None:
+                cfg.stage4_dtn_order_policy = "explicit_signed_rectangle"
+                cfg.task40_dtn_signed_rectangle_bounds_mn = tuple(
+                    int(value) for value in route["signed_rectangle_bounds_mn"]
+                )
+            else:
+                # Historical Task40 families keep their centered rectangle.
+                cfg.stage4_dtn_order_policy = "explicit_rectangle"
+                cfg.task40_dtn_rectangle_max_m = int(
+                    route["parent_rectangle_max_abs_m_n"][0]
+                )
+                cfg.task40_dtn_rectangle_max_n = int(
+                    route["parent_rectangle_max_abs_m_n"][1]
+                )
             cfg.stage4_dtn_quadrature_degree = int(route["surface_quadrature_degree"])
             scale_policy = route.get("mode_basis_scale_policy")
             if scale_policy is not None:
@@ -2746,7 +2869,9 @@ def run_p6_condensed_direct(
         elif route["family"] == "dispersion_flat":
             mesh_evidence = _dispersion_flat_mesh_evidence(levels, cfg)
         elif route["family"] == "task40_phi90":
-            if route["task40_mesh_plan_family"] == "d5c":
+            if route["task40_mesh_plan_family"] == "d07c":
+                mesh_evidence = _task40_d07c_mesh_evidence(levels, cfg, route)
+            elif route["task40_mesh_plan_family"] == "d5c":
                 mesh_evidence = _task40_d5c_mesh_evidence(levels, cfg, route)
             elif route["task40_mesh_plan_family"] == "d15":
                 mesh_evidence = _task40_d15_mesh_evidence(levels, cfg, route)
@@ -2806,6 +2931,12 @@ def run_p6_condensed_direct(
             if not route["truncated"]:
                 route["active_count"] = len(parent_inventory[0])
                 route["active_sha256"] = str(parent_inventory[2])
+            expected_prop = route.get("expected_propagating_count")
+            expected_power = route.get("expected_power_carrying_count")
+            if expected_prop is not None and sum(bool(mode.propagating) for mode in parent_inventory[0]) != int(expected_prop):
+                raise ValueError("live Task40 propagating mode count differs from the frozen inventory")
+            if expected_power is not None and sum(float(mode.power_per_unit_amplitude) > 0.0 for mode in parent_inventory[0]) != int(expected_power):
+                raise ValueError("live Task40 power-carrying mode count differs from the frozen inventory")
         if route["family"] == "dispersion_flat":
             if (
                 not parent_inventory[0]
@@ -2918,6 +3049,9 @@ def run_p6_condensed_direct(
             "selected_parent_indices": (
                 None if operator_selection is None else list(selected_parent_indices)
             ),
+            "signed_rectangle_bounds_mn": route.get("signed_rectangle_bounds_mn"),
+            "surface_quadrature_degree": route.get("surface_quadrature_degree"),
+            "surface_quadrature_reference_degree": route.get("surface_quadrature_reference_degree"),
             "quadrature_authority": (
                 "full_32060_parent_q160"
                 if route["family"] == "v7_aniso_n0"
@@ -2985,7 +3119,7 @@ def run_p6_condensed_direct(
             )
             if tuple(volume_quadrature_metadata) != expected_volume_metadata:
                 raise ValueError(
-                    "F5 p6 direct route must retain the historical volume q15 rule"
+                    "P6 direct route must retain the frozen volume q15/default rule"
                 )
             parent_surface_kwargs = (
                 {

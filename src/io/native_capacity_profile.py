@@ -160,6 +160,14 @@ TASK40_PHI90_D5C_MODAL_PROFILES = frozenset(
 TASK40_PHI90_D5C_PROFILES = frozenset(
     {*TASK40_PHI90_D5C_PROFILE_BY_CASE.values(), *TASK40_PHI90_D5C_MODAL_PROFILES}
 )
+# D07C is the separate 0.7 nm finite signed-window full-solve study.
+TASK40_PHI90_D07C_PROFILE_BY_CASE = {
+    case: f"task40para_phi90_0p7_D07C_{case}_p6_direct_v1"
+    for case in ("B", "Y1", "Y2")
+}
+TASK40_PHI90_D07C_PROFILES = frozenset(
+    TASK40_PHI90_D07C_PROFILE_BY_CASE.values()
+)
 TASK40_PHI90_H15_B_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_H15_B_p6_direct_v1"
 )
@@ -356,6 +364,7 @@ TASK40_PHI90_P6_DIRECT_PROFILES = frozenset(
         TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE,
         *TASK40_PHI90_D5_PROFILES,
         *TASK40_PHI90_D5C_PROFILES,
+        *TASK40_PHI90_D07C_PROFILES,
         *TASK40_PHI90_H15_PROFILES,
         *TASK40_PHI90_D15_PROFILES,
     }
@@ -464,6 +473,8 @@ for _task40_profile in TASK40_PHI90_D5C_PROFILES:
     NATIVE_CASES[_task40_profile] = (5.0, (4.0,), None, None, None)
 for _task40_profile in TASK40_PHI90_D15_PROFILES:
     NATIVE_CASES[_task40_profile] = (13.5, (15.0,), None, None, None)
+for _task40_profile in TASK40_PHI90_D07C_PROFILES:
+    NATIVE_CASES[_task40_profile] = (0.7, (0.7,), None, None, None)
 NATIVE_CASES[TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE] = (
     13.5, (10.0,), None, None, None
 )
@@ -1545,6 +1556,229 @@ def _task40_phi90_d5c_profile_facts(identity):
     return base
 
 
+def _task40_phi90_d07c_profile_facts(identity):
+    """Freeze D07C 0.7 nm mesh, finite signed modes, and q81 surface rule."""
+    from copy import deepcopy
+
+    from src.geometry.task40_phi90_d07c_axis_plan import D07C_AXIS_PLANS
+
+    try:
+        case_name = next(
+            case for case, profile in TASK40_PHI90_D07C_PROFILE_BY_CASE.items()
+            if profile == identity
+        )
+    except StopIteration as exc:
+        raise ValueError(f"unsupported Task40 D07C profile: {identity}") from exc
+    plan = D07C_AXIS_PLANS[case_name]
+    counts = [int(value) for value in plan["axis_cell_counts"]]
+    total_cells = int(plan["expected_global_cell_count"])
+    tags = {str(key): int(value) for key, value in plan["expected_material_tag_counts"].items()}
+    base = deepcopy(
+        _task40_phi90_d13_profile_facts(TASK40_PHI90_D13_B_P6_DIRECT_PROFILE)
+    )
+    operator_scope = f"task40_phi90_D07C_{case_name}_M32_Nminus143_to_1_finite"
+    signed_bounds = [-32, 32, -143, 1]
+    evidence_keys = [
+        [side, m, n, pol]
+        for side in ("top", "bottom")
+        for m, n, pol in ((-32, -143, "p"), (0, 0, "s"), (32, 1, "p"))
+    ]
+    mode_selection = {
+        "schema": "task40.dtn-mode-selection.v1",
+        "policy": "explicit_signed_rectangle_v1",
+        "reference_mode_label": "D07C_M32_Nminus143_to_1",
+        "parent_signed_bounds_mn": signed_bounds,
+        "active_signed_bounds_mn": signed_bounds,
+        "parent_rectangle_max_abs_m_n": [32, 143],
+        "active_rectangle_max_abs_m_n": [32, 143],
+        "parent_inventory_scope": (
+            "D07C_finite_signed_rectangle_M[-32,32]_N[-143,1]_including_evanescent"
+        ),
+        "expected_mode_count": 37700,
+        "expected_active_mode_count": 37700,
+        "expected_mode_sha256": (
+            "fad8f4be8404605d5e75cd6f19506890689e10f7d81367ef44aaadb9437e7873"
+        ),
+        "expected_active_mode_sha256": (
+            "fad8f4be8404605d5e75cd6f19506890689e10f7d81367ef44aaadb9437e7873"
+        ),
+        "expected_active_propagating_count": 35784,
+        "expected_active_power_carrying_count": 36744,
+        "boundary_amplitude_scale_policy": "boundary_magnitude_scaled_r5_v1",
+        "production_auto_inventory_signed_bounds_mn": [-71, 71, -142, 142],
+        "auto_inventory_mode_count": 163020,
+        "auto_inventory_propagating_count": 64120,
+        "omitted_auto_propagating_mode_count": 28336,
+        "separate_centered_audit_signed_bounds_mn": [-71, 71, -143, 143],
+        "separate_centered_audit_mode_count": 164164,
+        "separate_centered_audit_is_production_inventory": False,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+    }
+    base.update(
+        identity=identity,
+        model_id="si_block_phi90_50x50_17x20_h120",
+        execution_mode="full_solve",
+        wavelength_nm=0.7,
+        allowed_mesh_targets_nm=[0.7],
+        formal_runner="src.runners.p6_condensed_direct",
+        route=f"TASK40_PHI90_D07C_{case_name}_P6_CONDENSED_DIRECT_M32_Nminus143_to_1",
+        operator_scope=operator_scope,
+        full_dtn_status="FULL_DTN_NOT_VERIFIED",
+    )
+    base["task40_material_identity"] = {
+        "model_id": "si_block_phi90_50x50_17x20_h120",
+        "material_label": "Si / silicon",
+        "index_values": list(MATERIALS[0.7]),
+        "value_authority": USER_MATERIAL_METADATA[0.7]["authority"],
+        "source_sha256": USER_MATERIAL_METADATA[0.7]["source_sha256"],
+        "accuracy_status": "material_accuracy_unqualified",
+        "shared_material_tables_modified": False,
+    }
+    # D07C is a 0.7 nm study and keeps that wavelength's explicit 1.8e12-byte
+    # RSS hard stop plus 128 GiB launch headroom; do not inherit D13's
+    # host-floor-only policy merely because its geometry/physics validator is
+    # reused below.
+    rss_cap = V7_RSS_HARD_LIMIT_BYTES
+    startup_headroom = 128 * 1024**3
+    base["resources"].update(
+        absolute_cap_bytes=rss_cap,
+        planning_cap_bytes=rss_cap,
+        rss_hard_limit_bytes=rss_cap,
+        rss_warning_bytes=1_170_000_000_000,
+        startup_headroom_bytes=startup_headroom,
+        minimum_available_bytes=rss_cap + startup_headroom,
+        resource_stop_policy="measured_tree_rss_only_v3",
+        swap_policy="observe_only",
+        global_swap_delta_policy="observe_only",
+        stop_on_global_swap=False,
+        prediction_admission_policy="record_only",
+        memavailable_runtime_policy="observe_and_warn_only",
+        require_zero_swap=False,
+        pss_sampling_policy="disabled_by_profile",
+        pss_interval_seconds=None,
+        uss_sampling_policy="disabled_by_profile",
+        uss_interval_seconds=None,
+        time_limit_mode="none",
+        workflow_seconds=None,
+        solve_seconds=None,
+    )
+    options = base["component_options"]
+    options.update(
+        task_family="task40_phi90_d07c_mesh_modes_direct",
+        mesh_target_nm=0.7,
+        expected_axis_cell_counts=counts,
+        expected_global_cell_count=total_cells,
+        nominal_mesh_target_is_axis_authority=False,
+        mesh_axis_authority="frozen D07C per-material-segment axis plan",
+        directional_mesh_comparison={
+            "mesh_plan_family": "d07c",
+            "case": case_name,
+            "display_name": f"D07C-{case_name}",
+            "parent_case": "B",
+            "changed_axis": None if case_name == "B" else "y",
+            "axis_cell_counts": counts,
+            "segment_cell_counts": {
+                axis: [int(value) for value in plan["segment_cell_counts"][axis]]
+                for axis in "xyz"
+            },
+            "base_axis_sha256_le_f64": dict(plan["parent_axis_sha256_le_f64"]),
+            "expected_material_tag_counts": tags,
+            "mesh_plan_id": plan["mesh_plan_id"],
+            "mesh_plan_sha256": plan["mesh_plan_sha256"],
+            "expected_axis_sha256_le_f64": dict(plan["axis_sha256_le_f64"]),
+            "explicit_axis_counts_in_input": True,
+            "candidate_not_convergence_claim": True,
+        },
+        mode_selection=mode_selection,
+        surface_quadrature={
+            "degree": 81,
+            "reference_degree": 161,
+            "rule": "default",
+            "fixed_comparison_envelope": {"max_abs_m": 32, "max_abs_n": 143},
+            "signed_mode_bounds_mn": signed_bounds,
+            "authority": "independent_actual_Basix_P6_trace_functional_check_q81_vs_q161_v1",
+            "independent_q161_reference_only": True,
+            "scaled_functional_error_gate": 1.0e-11,
+            "verified_max_scaled_functional_error": 3.921e-12,
+            "q161_production_use": False,
+        },
+        volume_quadrature={
+            "degree": 15,
+            "rule": "default",
+            "authority": "live_FFCx_Basix_p6_volume_form_degree_metadata",
+        },
+    )
+    options["direct_factor_evidence"]["mode_keys"] = evidence_keys
+    options["direct_factor_evidence"]["full_primal_projection_quadrature_degree"] = 81
+    options["direct_factor_evidence"]["active_mode_scope"] = (
+        "D07C finite signed M[-32,32],N[-143,1]; not full auto inventory"
+    )
+    base["backend"].update(
+        independent_residual="original_full_p6_A6_active_D07C_finite_signed_window_action",
+        operator_scope=operator_scope,
+        full_dtn_status="FULL_DTN_NOT_VERIFIED",
+    )
+    base["condensed_route"].update(
+        name="task40_phi90_p6_exact_local_condensation_direct_d07c_v1",
+        operator_family="D07C_M32_Nminus143_to_1_finite_signed_rectangle",
+        parent_mode_inventory=mode_selection["parent_inventory_scope"],
+        active_mode_inventory="same_as_finite_signed_parent",
+        parent_mode_count=37700,
+        parent_quadrature_degree=81,
+        surface_quadrature_envelope_max_abs_m_n=[32, 143],
+        omitted_auto_propagating_mode_count=28336,
+        operator_scope=operator_scope,
+    )
+    direct_route = base["campaign_authorization"]["direct_route"]
+    direct_route.update(
+        degree=6,
+        d07c_case=case_name,
+        parent_signed_bounds_mn=signed_bounds,
+        active_signed_bounds_mn=signed_bounds,
+        parent_rectangle_max_abs_m_n=[32, 143],
+        active_rectangle_max_abs_m_n=[32, 143],
+        parent_mode_count=37700,
+        active_mode_count=37700,
+        parent_mode_sha256=mode_selection["expected_mode_sha256"],
+        active_mode_sha256=mode_selection["expected_active_mode_sha256"],
+        port_boundary_amplitude_scale_policy="boundary_magnitude_scaled_r5_v1",
+        surface_quadrature_degree=81,
+        surface_quadrature_reference_degree=161,
+        surface_quadrature="explicit_D07C_q81; q161_independent_reference_only",
+        volume_quadrature_degree=15,
+        volume_quadrature_rule="default",
+        omitted_auto_propagating_mode_count=28336,
+        mesh_plan_id=plan["mesh_plan_id"],
+        mesh_plan_sha256=plan["mesh_plan_sha256"],
+        expected_axis_sha256_le_f64=dict(plan["axis_sha256_le_f64"]),
+        expected_material_tag_counts=tags,
+        same_factor_lifecycle={
+            "symbolic_calls": 1, "numeric_calls": 1, "initial_solve_calls": 1,
+            "same_factor_correction_solve_calls_max": 2, "total_solve_calls_max": 3,
+        },
+    )
+    base["campaign_authorization"]["resource_policy"] = {
+        "name": "measured_tree_rss_only_v3",
+        "rss_hard_limit_bytes": rss_cap,
+        "rss_warning_bytes": 1_170_000_000_000,
+        "startup_headroom_bytes": startup_headroom,
+        "minimum_available_bytes": rss_cap + startup_headroom,
+        "swap": "observe_only",
+        "global_swap": "observe_only",
+        "prediction": "record_only",
+        "memavailable": "observe_and_warn_only",
+        "pss_uss_sampling": "disabled",
+        "time_limit_mode": "none",
+    }
+    base["campaign_authorization"]["source"] = (
+        "User-authorized three-case 0.7 nm D07C study using one fixed finite signed mode window; "
+        "the excluded high-|m| propagating orders remain outside qualification."
+    )
+    base["operator_scope"] = operator_scope
+    base["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"
+    return base
+
+
 def _task40_phi90_d5c_modal_profile_facts(identity):
     """Freeze one same-grid D5C-Y7 subrectangle against its finite R5 parent."""
     from copy import deepcopy
@@ -2121,6 +2355,8 @@ def native_profile_facts(identity):
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
         if identity in TASK40_PHI90_D5C_PROFILES:
             return _task40_phi90_d5c_profile_facts(identity)
+        if identity in TASK40_PHI90_D07C_PROFILES:
+            return _task40_phi90_d07c_profile_facts(identity)
         if identity in TASK40_PHI90_D5_PROFILES:
             return _task40_phi90_d5_profile_facts(identity)
         if identity in TASK40_PHI90_D15_PROFILES:
@@ -3839,6 +4075,81 @@ def _validate_task40_phi90_d5c_case(config: dict, identity: str) -> None:
     )
 
 
+def _validate_task40_phi90_d07c_case(config: dict, identity: str) -> None:
+    """Validate D07C material/axes/resources, then reuse D13 physics checks."""
+    from copy import deepcopy
+
+    from src.geometry.task40_phi90_d07c_axis_plan import validate_frozen_d07c_axes
+
+    from .input_loader import InputError
+
+    facts = _task40_phi90_d07c_profile_facts(identity)
+    comparison = facts["component_options"]["directional_mesh_comparison"]
+    discretization = config.get("discretization", {})
+    if discretization.get("mesh_target_nm") != 0.7:
+        raise InputError(f"{identity} fixes discretization.mesh_target_nm=0.7")
+    payload = {
+        "mesh_plan_id": discretization.get("mesh_plan_id"),
+        "mesh_plan_sha256": discretization.get("mesh_plan_sha256"),
+        "mesh_axis_cell_counts": discretization.get("mesh_axis_cell_counts"),
+        "mesh_axis_x_values": discretization.get("mesh_axis_x_values"),
+        "mesh_axis_y_values": discretization.get("mesh_axis_y_values"),
+        "mesh_axis_z_values": discretization.get("mesh_axis_z_values"),
+    }
+    try:
+        validate_frozen_d07c_axes(payload)
+    except ValueError as exc:
+        raise InputError(f"{identity} has invalid frozen D07C axes: {exc}") from exc
+    if tuple(payload["mesh_axis_cell_counts"] or ()) != tuple(comparison["axis_cell_counts"]):
+        raise InputError(f"{identity} D07C axis counts differ from profile facts")
+    if discretization.get("mesh_axis_z_profile") is not None:
+        raise InputError(f"{identity} does not use a z-profile alias")
+    if config.get("model_id") != "si_block_phi90_50x50_17x20_h120":
+        raise InputError(f"{identity} fixes the Task40 model identity")
+    materials = config.get("materials", {})
+    expected_n = tuple(MATERIALS[0.7])
+    for key in ("n_substrate", "n_grating"):
+        if tuple(materials.get(key, ())) != expected_n:
+            raise InputError(f"{identity} fixes materials.{key}={expected_n!r}")
+    if tuple(materials.get("n_air", ())) != (1.0, 0.0) or tuple(
+        materials.get("mu_r", ())
+    ) != (1.0, 0.0):
+        raise InputError(f"{identity} fixes air and relative permeability")
+    if materials.get("substrate_name") != "Si / silicon" or materials.get("grating_name") != "Si / silicon":
+        raise InputError(f"{identity} fixes the Si material labels")
+    execution = config.get("execution", {})
+    cap_gib = V7_RSS_HARD_LIMIT_BYTES / 2**30
+    warning_gib = 1_170_000_000_000 / 2**30
+    if (
+        execution.get("mpi_size") != 1
+        or execution.get("time_limit_mode") != "none"
+        or execution.get("timeout_seconds") is not None
+        or execution.get("native_memory_policy") != "interleave_nodes0_1"
+        or execution.get("require_zero_swap") is not False
+        or execution.get("warning_memory_gib") != warning_gib
+        or execution.get("terminate_memory_gib") != cap_gib
+        or execution.get("memory_limit_gb") != cap_gib
+    ):
+        raise InputError(
+            f"{identity} requires the 0.7 nm 1.8e12-byte RSS cap, 128 GiB "
+            "fresh headroom, MPI1, interleave0-1, swap observe-only, and no time limit"
+        )
+    inherited = deepcopy(config)
+    inherited["solver"]["native_capacity_profile"] = TASK40_PHI90_D13_B_P6_DIRECT_PROFILE
+    inherited["incidence"]["wavelength_nm"] = 13.5
+    inherited["materials"]["n_substrate"] = list(MATERIALS[13.5])
+    inherited["materials"]["n_grating"] = list(MATERIALS[13.5])
+    inherited["discretization"]["mesh_target_nm"] = 10.0
+    for key in (
+        "mesh_axis_cell_counts", "mesh_axis_x_values", "mesh_axis_y_values",
+        "mesh_axis_z_values", "mesh_axis_z_profile", "mesh_plan_id", "mesh_plan_sha256",
+    ):
+        inherited["discretization"].pop(key, None)
+    _validate_task40_phi90_d13_case(
+        inherited, TASK40_PHI90_D13_B_P6_DIRECT_PROFILE
+    )
+
+
 def _validate_task40_phi90_r14_case(config: dict, identity: str) -> None:
     """Validate the unchanged Y2 physics/mesh plus the distinct R14 output range."""
     from copy import deepcopy
@@ -3868,6 +4179,8 @@ def validate_native_case(config):
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
         if identity in TASK40_PHI90_D5C_PROFILES:
             _validate_task40_phi90_d5c_case(config, identity)
+        elif identity in TASK40_PHI90_D07C_PROFILES:
+            _validate_task40_phi90_d07c_case(config, identity)
         elif identity in TASK40_PHI90_D5_PROFILES:
             _validate_task40_phi90_d5_case(config, identity)
         elif identity in TASK40_PHI90_D15_PROFILES:
