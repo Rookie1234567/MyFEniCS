@@ -70,9 +70,9 @@ native_capacity_profile = "task40para_phi90_0p7_D07C_Y1_p6_direct_v1"
 mpi_size = 1
 native_memory_policy = "interleave_nodes0_1"
 time_limit_mode = "none"
-warning_memory_gib = 1089.6474123001099
-terminate_memory_gib = 1676.3806343078613
-memory_limit_gb = 1676.3806343078613
+warning_memory_gib = 64.0
+terminate_memory_gib = 128.0
+memory_limit_gb = 128.0
 require_zero_swap = false
 
 [output]

@@ -11,7 +11,6 @@ import pytest
 
 from src.io.execution_plan import build_execution_plan
 from src.io.input_validation import load_and_resolve
-from src.io.native_capacity_profile import V7_RSS_HARD_LIMIT_BYTES
 from src.io.run_specification import thaw
 from src.runners.task038_input_worker import _load_and_validate_worker_payload
 from src.runners.task038_launcher import _write_bootstrap
@@ -20,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 INPUT_DIR = ROOT / "input/task40para_phi90_mesh_modes_direct"
 SOURCE_SHA = "d07c" * 10
 CASES = ("b", "y1", "y2")
-MINIMUM_AVAILABLE = V7_RSS_HARD_LIMIT_BYTES + 128 * 1024**3
+MINIMUM_AVAILABLE = 64 * 1024**3
 
 
 def _build_real_manifest(tmp_path, case):
@@ -75,8 +74,8 @@ def test_d07c_formal_profile_roundtrips_through_worker(case, tmp_path):
     contract = manifest["native_capacity_contract"]
 
     assert manifest["native_capacity_profile_identity"] == profile["identity"]
-    assert contract["resource_stop_policy"] == "measured_tree_rss_only_v3"
-    assert contract["rss_hard_limit_bytes"] == V7_RSS_HARD_LIMIT_BYTES
+    assert contract["resource_stop_policy"] == "host_available_floor_v1"
+    assert contract["rss_hard_limit_bytes"] is None
     assert contract["minimum_available_bytes"] == MINIMUM_AVAILABLE
     assert contract["direct_route"]["active_signed_bounds_mn"] == [-32, 32, -143, 1]
     assert contract["direct_route"]["surface_quadrature_degree"] == 81

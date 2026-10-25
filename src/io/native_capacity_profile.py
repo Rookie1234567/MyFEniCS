@@ -1606,8 +1606,9 @@ def _task40_phi90_d07c_profile_facts(identity):
         "expected_active_power_carrying_count": 36744,
         "boundary_amplitude_scale_policy": "boundary_magnitude_scaled_r5_v1",
         "production_auto_inventory_signed_bounds_mn": [-71, 71, -142, 142],
-        "auto_inventory_mode_count": 163020,
-        "auto_inventory_propagating_count": 64120,
+        "auto_rectangle_candidate_key_count": 163020,
+        "production_auto_inventory_mode_count": 64120,
+        "production_auto_inventory_policy": "auto_propagating",
         "omitted_auto_propagating_mode_count": 28336,
         "separate_centered_audit_signed_bounds_mn": [-71, 71, -143, 143],
         "separate_centered_audit_mode_count": 164164,
@@ -1634,34 +1635,30 @@ def _task40_phi90_d07c_profile_facts(identity):
         "accuracy_status": "material_accuracy_unqualified",
         "shared_material_tables_modified": False,
     }
-    # D07C is a 0.7 nm study and keeps that wavelength's explicit 1.8e12-byte
-    # RSS hard stop plus 128 GiB launch headroom; do not inherit D13's
-    # host-floor-only policy merely because its geometry/physics validator is
-    # reused below.
-    rss_cap = V7_RSS_HARD_LIMIT_BYTES
-    startup_headroom = 128 * 1024**3
-    base["resources"].update(
-        absolute_cap_bytes=rss_cap,
-        planning_cap_bytes=rss_cap,
-        rss_hard_limit_bytes=rss_cap,
-        rss_warning_bytes=1_170_000_000_000,
-        startup_headroom_bytes=startup_headroom,
-        minimum_available_bytes=rss_cap + startup_headroom,
-        resource_stop_policy="measured_tree_rss_only_v3",
-        swap_policy="observe_only",
-        global_swap_delta_policy="observe_only",
-        stop_on_global_swap=False,
-        prediction_admission_policy="record_only",
-        memavailable_runtime_policy="observe_and_warn_only",
-        require_zero_swap=False,
-        pss_sampling_policy="disabled_by_profile",
-        pss_interval_seconds=None,
-        uss_sampling_policy="disabled_by_profile",
-        uss_interval_seconds=None,
-        time_limit_mode="none",
-        workflow_seconds=None,
-        solve_seconds=None,
-    )
+    # D07C follows the Task40 host-floor policy: admission and runtime stop
+    # against MemAvailable, with no fixed tree-RSS cap.  The DAT retains its
+    # schema-required legacy memory fields for provenance only; the direct
+    # route does not enforce them.
+    base["resources"] = {
+        "resource_stop_policy": "host_available_floor_v1",
+        "rss_hard_limit_bytes": None,
+        "rss_warning_bytes": None,
+        "startup_headroom_bytes": None,
+        "minimum_available_bytes": 64 * 1024**3,
+        "swap_policy": "observe_only",
+        "global_swap_delta_policy": "observe_only",
+        "stop_on_global_swap": False,
+        "prediction_admission_policy": "record_only",
+        "memavailable_runtime_policy": "stop_below_explicit_64_gib_floor",
+        "pss_sampling_policy": "disabled_by_profile",
+        "pss_interval_seconds": None,
+        "uss_sampling_policy": "disabled_by_profile",
+        "uss_interval_seconds": None,
+        "concurrent_neighbor_authorized": False,
+        "workflow_seconds": None,
+        "solve_seconds": None,
+        "time_limit_mode": "none",
+    }
     options = base["component_options"]
     options.update(
         task_family="task40_phi90_d07c_mesh_modes_direct",
@@ -1758,15 +1755,13 @@ def _task40_phi90_d07c_profile_facts(identity):
         },
     )
     base["campaign_authorization"]["resource_policy"] = {
-        "name": "measured_tree_rss_only_v3",
-        "rss_hard_limit_bytes": rss_cap,
-        "rss_warning_bytes": 1_170_000_000_000,
-        "startup_headroom_bytes": startup_headroom,
-        "minimum_available_bytes": rss_cap + startup_headroom,
+        "name": "host_available_floor_v1",
+        "rss_user_cap": None,
+        "minimum_available_bytes": 64 * 1024**3,
         "swap": "observe_only",
         "global_swap": "observe_only",
         "prediction": "record_only",
-        "memavailable": "observe_and_warn_only",
+        "memavailable": "stop_below_explicit_64_gib_floor",
         "pss_uss_sampling": "disabled",
         "time_limit_mode": "none",
     }
@@ -4118,22 +4113,36 @@ def _validate_task40_phi90_d07c_case(config: dict, identity: str) -> None:
     if materials.get("substrate_name") != "Si / silicon" or materials.get("grating_name") != "Si / silicon":
         raise InputError(f"{identity} fixes the Si material labels")
     execution = config.get("execution", {})
-    cap_gib = V7_RSS_HARD_LIMIT_BYTES / 2**30
-    warning_gib = 1_170_000_000_000 / 2**30
+    # DAT schema legacy memory fields remain visible in the manifest, but the
+    # D07C P6-direct profile is governed only by its 64 GiB host-available
+    # floor and has no fixed RSS cap.
     if (
         execution.get("mpi_size") != 1
         or execution.get("time_limit_mode") != "none"
         or execution.get("timeout_seconds") is not None
         or execution.get("native_memory_policy") != "interleave_nodes0_1"
         or execution.get("require_zero_swap") is not False
-        or execution.get("warning_memory_gib") != warning_gib
-        or execution.get("terminate_memory_gib") != cap_gib
-        or execution.get("memory_limit_gb") != cap_gib
+        or execution.get("warning_memory_gib") != 64.0
+        or execution.get("terminate_memory_gib") != 128.0
+        or execution.get("memory_limit_gb") != 128.0
     ):
         raise InputError(
-            f"{identity} requires the 0.7 nm 1.8e12-byte RSS cap, 128 GiB "
-            "fresh headroom, MPI1, interleave0-1, swap observe-only, and no time limit"
+            f"{identity} requires the Task40 64 GiB host-available floor, "
+            "legacy DAT diagnostic fields 64/128 GiB, MPI1, interleave0-1, "
+            "observe-only swap, and no time limit"
         )
+    resources = facts["resources"]
+    if (
+        resources.get("resource_stop_policy") != "host_available_floor_v1"
+        or resources.get("minimum_available_bytes") != 64 * 1024**3
+        or resources.get("rss_hard_limit_bytes") is not None
+        or resources.get("pss_sampling_policy") != "disabled_by_profile"
+        or resources.get("uss_sampling_policy") != "disabled_by_profile"
+        or resources.get("swap_policy") != "observe_only"
+        or resources.get("stop_on_global_swap") is not False
+        or resources.get("time_limit_mode") != "none"
+    ):
+        raise InputError(f"{identity} has an invalid Task40 host-floor profile")
     inherited = deepcopy(config)
     inherited["solver"]["native_capacity_profile"] = TASK40_PHI90_D13_B_P6_DIRECT_PROFILE
     inherited["incidence"]["wavelength_nm"] = 13.5

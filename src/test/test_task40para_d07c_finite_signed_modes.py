@@ -28,7 +28,6 @@ from src.io.input_validation import (
 )
 from src.io.native_capacity_profile import (
     TASK40_PHI90_D07C_PROFILE_BY_CASE,
-    V7_RSS_HARD_LIMIT_BYTES,
     native_profile_facts,
     validate_native_case,
 )
@@ -117,8 +116,9 @@ def test_d07c_dat_profile_and_real_axis_planner_bind_each_case(case):
     assert options["mode_selection"]["production_auto_inventory_signed_bounds_mn"] == [
         -71, 71, -142, 142
     ]
-    assert options["mode_selection"]["auto_inventory_mode_count"] == 163_020
-    assert options["mode_selection"]["auto_inventory_propagating_count"] == 64_120
+    assert options["mode_selection"]["auto_rectangle_candidate_key_count"] == 163_020
+    assert options["mode_selection"]["production_auto_inventory_mode_count"] == 64_120
+    assert options["mode_selection"]["production_auto_inventory_policy"] == "auto_propagating"
     assert options["mode_selection"]["omitted_auto_propagating_mode_count"] == 28_336
     assert options["mode_selection"]["separate_centered_audit_signed_bounds_mn"] == [
         -71, 71, -143, 143
@@ -144,10 +144,20 @@ def test_d07c_dat_profile_and_real_axis_planner_bind_each_case(case):
     output_contract = _direct_output_policy(route)["active_fe_port_output_contract"]
     assert output_contract["active_signed_bounds_mn"] == [-32, 32, -143, 1]
     assert output_contract["full_dtn_status"] == "FULL_DTN_NOT_VERIFIED"
-    assert facts["resources"]["rss_hard_limit_bytes"] == V7_RSS_HARD_LIMIT_BYTES
-    assert facts["resources"]["minimum_available_bytes"] == (
-        V7_RSS_HARD_LIMIT_BYTES + 128 * 1024**3
-    )
+    assert facts["resources"]["resource_stop_policy"] == "host_available_floor_v1"
+    assert facts["resources"]["rss_hard_limit_bytes"] is None
+    assert facts["resources"]["minimum_available_bytes"] == 64 * 1024**3
+    assert facts["campaign_authorization"]["resource_policy"] == {
+        "name": "host_available_floor_v1",
+        "rss_user_cap": None,
+        "minimum_available_bytes": 64 * 1024**3,
+        "swap": "observe_only",
+        "global_swap": "observe_only",
+        "prediction": "record_only",
+        "memavailable": "stop_below_explicit_64_gib_floor",
+        "pss_uss_sampling": "disabled",
+        "time_limit_mode": "none",
+    }
     assert facts["resources"]["pss_sampling_policy"] == "disabled_by_profile"
     assert facts["resources"]["swap_policy"] == "observe_only"
 
@@ -191,7 +201,7 @@ def test_d07c_live_mesh_evidence_uses_actual_axes_and_independent_material_tags(
         assert evidence["material_tag_counts"] == EXPECTED_TAGS[case]
 
 
-def test_d07c_rejects_wrong_axis_plan_tags_and_legacy_resource_values():
+def test_d07c_rejects_wrong_axis_plan_tags_and_resource_values():
     path = INPUT_DIR / "d07c_b_m32_nminus143_to1_p6_direct.dat"
     normalized = _validate_sections(_plain(load_dat_input(path).document))
     wrong_axes = dict(normalized)
@@ -204,8 +214,8 @@ def test_d07c_rejects_wrong_axis_plan_tags_and_legacy_resource_values():
 
     wrong_memory = dict(normalized)
     wrong_memory["execution"] = dict(normalized["execution"])
-    wrong_memory["execution"]["memory_limit_gb"] = 128.0
-    with pytest.raises(InputError, match="1.8e12-byte RSS cap"):
+    wrong_memory["execution"]["memory_limit_gb"] = 1676.3806343078613
+    with pytest.raises(InputError, match="64 GiB host-available floor"):
         validate_native_case(wrong_memory)
 
     wrong_material = dict(normalized)
@@ -218,6 +228,7 @@ def test_d07c_rejects_wrong_axis_plan_tags_and_legacy_resource_values():
 def test_d07c_signed_window_production_inventory_is_finite_and_uses_q81():
     _path, _specification, resolved = _resolved_case("B")
     profile_id = resolved["solver"]["native_capacity_profile"]
+    options = native_profile_facts(profile_id)["component_options"]
     route = _direct_run_contract(profile_id)
     cfg = simulation_config_3d_from_normalized(resolved)
     cfg.stage4_dtn_order_policy = "explicit_signed_rectangle"
@@ -250,7 +261,7 @@ def test_d07c_signed_window_production_inventory_is_finite_and_uses_q81():
         bool(order.top_propagating) + bool(order.bottom_propagating)
         for order in auto_orders
     )
-    assert auto_port_count == 163_020
+    assert auto_port_count == options["mode_selection"]["auto_rectangle_candidate_key_count"]
     assert auto_propagating_count == 64_120
     assert auto_propagating_count - EXPECTED_PROPAGATING == 28_336
     assert all(
