@@ -9696,6 +9696,38 @@ def _task41_v11_candidate_replay_exit(record: dict[str, Any], *, worker_ok: bool
     return 0 if service_ok and finalization_ok and worker_ok and checker_ok else 3
 
 
+def _parse_task41_p0_v14_candidate_suffix(case_args: Sequence[str]) -> tuple[Path, str, Path, str, Path, str, str]:
+    """Parse the exact V14 saved-input suffix for the existing B0 audit service."""
+    expected_suffix = [
+        "--v14-saved-rhs-candidate",
+        "--v11-report", None,
+        "--v11-report-sha256", None,
+        "--accepted-checker", None,
+        "--accepted-checker-sha256", None,
+        "--accepted-receipt", None,
+        "--accepted-receipt-sha256", None,
+        "--donor-summary-sha256", None,
+    ]
+    if (
+        len(case_args) != 26
+        or case_args[0] != "--task41-p0-saved-b0-evidence-audit"
+        or any(
+            wanted is not None and actual != wanted
+            for actual, wanted in zip(case_args[11:], expected_suffix, strict=True)
+        )
+    ):
+        raise ValueError("V14 candidate service requires its exact saved-input path/hash suffix")
+    return (
+        Path(case_args[13]).resolve(strict=True),
+        case_args[15],
+        Path(case_args[17]).resolve(strict=True),
+        case_args[19],
+        Path(case_args[21]).resolve(strict=True),
+        case_args[23],
+        case_args[25],
+    )
+
+
 def _run_task41_p0_saved_output_service(
     *,
     unit: str,
@@ -9716,6 +9748,14 @@ def _run_task41_p0_saved_output_service(
     b0_v9_saved_star_screen_mode: bool = False,
     b0_v9_failed_terminal_audit_mode: bool = False,
     b0_saved_y_g_comparison_mode: bool = False,
+    b0_v14_saved_rhs_candidate_mode: bool = False,
+    v14_producer_report_path: Path | None = None,
+    v14_producer_report_sha256: str | None = None,
+    v14_accepted_checker_path: Path | None = None,
+    v14_accepted_checker_sha256: str | None = None,
+    v14_accepted_receipt_path: Path | None = None,
+    v14_accepted_receipt_sha256: str | None = None,
+    v14_donor_summary_sha256: str | None = None,
     b0_v4_volume_only_mode: bool = False,
     b0_v4_geometry_pair_mode: bool = False,
     b0_v5_mesh_actual_exact_mode: bool = False,
@@ -10730,6 +10770,7 @@ def _run_task41_p0_saved_output_service(
         from src.runners.task41_p0_contract import (
             TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
             TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+            TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
             task41_raw_artifact_limit_bytes,
         )
 
@@ -10737,6 +10778,7 @@ def _run_task41_p0_saved_output_service(
         if saved_scope not in (
             TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
             TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+            TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
         ):
             raise ValueError("saved-diagnostics disk gate received a different execution scope")
         if saved_scope == TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE and not (
@@ -10744,6 +10786,8 @@ def _run_task41_p0_saved_output_service(
             or b0_v11_candidate_report_replayed_read_only_mode
         ):
             raise ValueError("V12 two-cell scope only admits its selected candidate replay")
+        if saved_scope == TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE and not b0_v14_saved_rhs_candidate_mode:
+            raise ValueError("V14 initial-screen scope only admits its supervised saved-RHS candidate route")
         window_sha = str(contract.get("window", {}).get("sha256", ""))
         window_output_root = results_root / "task41_p0_saved_diagnostics_6h" / window_sha
         expected_name = (
@@ -10753,6 +10797,7 @@ def _run_task41_p0_saved_output_service(
             if b0_v8_selected_trace_star_metadata_only_mode
             or b0_v8_selected_trace_star_candidate_replay_mode
             or b0_v11_candidate_report_replayed_read_only_mode
+            or b0_v14_saved_rhs_candidate_mode
             else ""
         )
         mode_output_root = window_output_root / expected_name if expected_name else window_output_root
@@ -10845,6 +10890,8 @@ def _run_task41_p0_saved_output_service(
             if b0_saved_y_g_comparison_mode
             else "saved_b0_v9_failed_terminal_audit"
             if b0_v9_failed_terminal_audit_mode
+            else "saved_b0_v14_same_lu_rhs_candidate"
+            if b0_v14_saved_rhs_candidate_mode
             else "saved_b0_v11_candidate_replay_recheck"
             if b0_v11_candidate_report_replayed_read_only_mode
             else "saved_b0_v11_selected_trace_candidate_replay"
@@ -11002,6 +11049,16 @@ def _run_task41_p0_saved_output_service(
             donor_numerical_output=str(donor_numerical_output),
             checker_source_sha=environment.get("TASK41_P0_CHECKER_SOURCE_SHA"),
         )
+    if b0_v14_saved_rhs_candidate_mode:
+        record.update(
+            v14_producer_report_path=str(v14_producer_report_path),
+            v14_producer_report_sha256=v14_producer_report_sha256,
+            v14_accepted_checker_path=str(v14_accepted_checker_path),
+            v14_accepted_checker_sha256=v14_accepted_checker_sha256,
+            v14_accepted_receipt_path=str(v14_accepted_receipt_path),
+            v14_accepted_receipt_sha256=v14_accepted_receipt_sha256,
+            v14_donor_summary_sha256=v14_donor_summary_sha256,
+        )
     if b0_v4_geometry_pair_mode:
         assert source_report_path is not None
         from src.runners.task41_p0_v4_volume_only_audit import (
@@ -11043,6 +11100,358 @@ def _run_task41_p0_saved_output_service(
         "campaign_accounting_path": window.accounting_path,
         "worker_environment": environment,
     }
+    if b0_v14_saved_rhs_candidate_mode:
+        result_code = 3
+        candidate_worker_attempted = False
+        candidate_worker_started = False
+        candidate_worker_ok = False
+        independent_check_ok = False
+        record["v14_candidate_worker_attempted"] = False
+        record["v14_candidate_worker_started"] = False
+        record["v14_candidate_worker_completed"] = False
+        record["numerical_work_started"] = False
+        record["conditional_star_coverage_unlocked"] = False
+        candidate_report_path = output_root / "candidate" / "task41_p0_v14_saved_rhs_candidate.json"
+        checker_result_path = output_root / "task41_p0_v14_saved_rhs_candidate_independent_check.json"
+        candidate_report_sha256: str | None = None
+        try:
+            from src.runners.task41_p0_v14_candidate_io import (
+                V14_ACCEPTED_CHECKER_SHA256,
+                V14_ACCEPTED_RECEIPT_SHA256,
+                V14_CANDIDATE_CHECK_SCHEMA,
+                V14_CANDIDATE_REPORT_SCHEMA,
+                V14_DONOR_CONTRACT_SHA256,
+                V14_DONOR_MANIFEST_SHA256,
+                V14_V11_REPORT_SHA256,
+                V14_SOURCE_WINDOW_SHA256,
+            )
+            from src.runners.task41_p0_v4_volume_only_audit import (
+                TASK41_P0_V11_V9_COMPACT_REPORT_SHA256,
+            )
+
+            required_paths = (
+                v14_producer_report_path,
+                v14_accepted_checker_path,
+                v14_accepted_receipt_path,
+                donor_contract_path,
+                donor_summary_path,
+            )
+            if (
+                any(path is None for path in required_paths)
+                or any(value is None for value in (
+                    v14_producer_report_sha256,
+                    v14_accepted_checker_sha256,
+                    v14_accepted_receipt_sha256,
+                    v14_donor_summary_sha256,
+                    donor_contract_sha256,
+                ))
+            ):
+                raise ValueError("V14 service route is missing a saved source binding")
+            assert v14_producer_report_path is not None
+            assert v14_accepted_checker_path is not None
+            assert v14_accepted_receipt_path is not None
+            assert donor_contract_path is not None
+            assert donor_summary_path is not None
+            assert donor_contract_sha256 is not None
+            assert v14_donor_summary_sha256 is not None
+
+            fixed_inputs = (
+                (v14_producer_report_path, v14_producer_report_sha256, V14_V11_REPORT_SHA256, 64 * 1024**2),
+                (v14_accepted_checker_path, v14_accepted_checker_sha256, V14_ACCEPTED_CHECKER_SHA256, 16 * 1024**2),
+                (v14_accepted_receipt_path, v14_accepted_receipt_sha256, V14_ACCEPTED_RECEIPT_SHA256, 16 * 1024**2),
+                (donor_summary_path, v14_donor_summary_sha256, None, 16 * 1024**2),
+            )
+            for path, declared_sha, required_sha, size_limit in fixed_inputs:
+                resolved = path.resolve(strict=True)
+                if (
+                    not resolved.is_relative_to(results_root)
+                    or resolved.stat().st_size > size_limit
+                    or sha256_file(resolved) != declared_sha
+                    or (required_sha is not None and declared_sha != required_sha)
+                ):
+                    raise ValueError("V14 saved source path, size, or SHA-256 differs")
+            donor_contract_resolved = donor_contract_path.resolve(strict=True)
+            if (
+                not donor_contract_resolved.is_relative_to(repo_root.resolve(strict=True))
+                or donor_contract_resolved.stat().st_size > 16 * 1024**2
+                or sha256_file(donor_contract_resolved) != donor_contract_sha256
+                or donor_contract_sha256 != V14_DONOR_CONTRACT_SHA256
+            ):
+                raise ValueError("V14 registered donor contract path, size, or SHA-256 differs")
+            from src.runners.task41_p0_contract import require_task41_p0_contract
+            require_task41_p0_contract(
+                donor_contract_resolved,
+                expected_sha256=V14_DONOR_CONTRACT_SHA256,
+                current_root=repo_root,
+                check_current_source=False,
+                require_clean_source=False,
+                case_id="B0",
+            )
+            if donor_summary_path.parent.resolve(strict=True) != run_root.resolve(strict=True):
+                raise ValueError("V14 donor summary and registered producer run root differ")
+
+            donor_array_paths, donor_raw_bytes, manifest_sha = stat_only_b0_donor_arrays()
+            if manifest_sha != V14_DONOR_MANIFEST_SHA256:
+                raise ValueError("V14 donor array inventory differs from the frozen 141-array manifest")
+            producer_report = read_json_object(v14_producer_report_path, "V14 accepted V11 report")
+            replay = producer_report.get("v11_selected_trace_candidate_replay")
+            if (
+                producer_report.get("consumer_window_sha256") != V14_SOURCE_WINDOW_SHA256
+                or producer_report.get("v9_compact_report_sha256") is None
+                or not isinstance(replay, Mapping)
+                or replay.get("metadata_window_sha256") is None
+            ):
+                raise ValueError("V14 V11 report does not bind its producer and metadata windows")
+            compact_report_path = Path(str(producer_report.get("v9_compact_report_path", ""))).resolve(strict=True)
+            compact_sha256 = str(producer_report.get("v9_compact_report_sha256", ""))
+            if (
+                not compact_report_path.is_relative_to(results_root)
+                or compact_report_path.name != "task41_p0_b0_v9_compact_volume_audit.json"
+                or compact_report_path.stat().st_size > 8 * 1024**2
+                or compact_sha256 != TASK41_P0_V11_V9_COMPACT_REPORT_SHA256
+                or sha256_file(compact_report_path) != compact_sha256
+            ):
+                raise ValueError("V14 V9 compact report path, size, or SHA-256 differs")
+            compact_report = read_json_object(compact_report_path, "V14 V9 compact report")
+            action_gate = compact_report.get("candidate_full_action_gate")
+            if (
+                compact_report.get("schema") != "task41.p0.b0.v9.compact_volume_identity.v1"
+                or compact_report.get("completed") is not True
+                or compact_report.get("status") != "GATE_FAILED"
+                or compact_report.get("official_result") is not False
+                or compact_report.get("internal_rhs_strategy") != "same_lu_rhs_solve"
+                or compact_report.get("donor_manifest_sha256") != V14_DONOR_MANIFEST_SHA256
+                or not isinstance(action_gate, Mapping)
+                or action_gate.get("status") != "GATE_FAILED"
+            ):
+                raise ValueError("V14 compact report is not the frozen negative same-LU source")
+            existing_bytes = compact_report.get("existing_evidence_bytes")
+            prior_bytes = compact_report.get("prior_new_evidence_bytes")
+            new_bytes = compact_report.get("new_evidence_bytes")
+            cumulative_bytes = compact_report.get("cumulative_evidence_bytes")
+            if (
+                type(existing_bytes) is not int
+                or existing_bytes != donor_raw_bytes
+                or type(prior_bytes) is not int
+                or prior_bytes < 0
+                or type(new_bytes) is not int
+                or new_bytes < 0
+                or type(cumulative_bytes) is not int
+                or cumulative_bytes != existing_bytes + prior_bytes + new_bytes
+            ):
+                raise ValueError("V14 saved raw-evidence totals are inconsistent")
+
+            def stat_only_npy_record(value: Any, label: str) -> Path:
+                if not isinstance(value, Mapping):
+                    raise ValueError(f"{label} array binding is malformed")
+                raw = Path(str(value.get("path", "")))
+                path = (raw if raw.is_absolute() else compact_report_path.parent / raw).resolve(strict=True)
+                if (
+                    not path.is_relative_to(results_root)
+                    or path.suffix.lower() not in {".npy", ".npz"}
+                    or not path.is_file()
+                    or type(value.get("bytes")) is not int
+                    or path.stat().st_size != value["bytes"]
+                    or not isinstance(value.get("sha256"), str)
+                ):
+                    raise ValueError(f"{label} stat-only array path or size differs")
+                return path
+
+            compact_array_paths = [
+                stat_only_npy_record(action_gate.get("full_action_artifact"), "V9 full action"),
+                stat_only_npy_record(action_gate.get("full_reduced_rhs_artifact"), "V9 reduced RHS"),
+            ]
+            if len(set(compact_array_paths)) != 2:
+                raise ValueError("V14 V9 compact arrays are not distinct")
+            saved_bound_raw_paths = [*donor_array_paths, *compact_array_paths]
+            old_window_roots: set[Path] = set()
+            for window_sha in (
+                producer_report.get("consumer_window_sha256"),
+                replay.get("metadata_window_sha256"),
+            ):
+                if not isinstance(window_sha, str) or re.fullmatch(r"[0-9a-f]{64}", window_sha) is None:
+                    raise ValueError("V14 prior saved-diagnostics window SHA is malformed")
+                prior_root = (
+                    results_root / "task41_p0_saved_diagnostics_6h" / window_sha
+                ).resolve(strict=True)
+                if not prior_root.is_relative_to(results_root):
+                    raise ValueError("V14 prior saved-diagnostics window escaped the results root")
+                old_window_roots.add(prior_root)
+            prior_window_output_bytes = sum(stat_output_tree(path) for path in old_window_roots)
+            saved_recorded_raw_bytes = cumulative_bytes + prior_window_output_bytes
+            record["v14_raw_evidence_preflight"] = {
+                "donor_array_count": len(donor_array_paths),
+                "donor_array_bytes_stat_only": donor_raw_bytes,
+                "v9_compact_array_bytes_stat_only": stat_bound_raw_bytes(compact_array_paths),
+                "prior_window_output_bytes_stat_only": prior_window_output_bytes,
+                "recorded_cumulative_raw_bytes": saved_recorded_raw_bytes,
+                "manifest_sha256": manifest_sha,
+                "v9_compact_report_path": str(compact_report_path),
+                "v9_compact_report_sha256": compact_sha256,
+            }
+            record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget_check()
+
+            candidate_worker_command = [
+                python,
+                "-m",
+                "src.runners.task41_p0_v14_saved_rhs_candidate",
+                "--repo-root", str(repo_root),
+                "--consumer-contract", str(contract_path.resolve()),
+                "--consumer-contract-sha256", contract_sha,
+                "--producer-report", str(v14_producer_report_path.resolve()),
+                "--producer-report-sha256", str(v14_producer_report_sha256),
+                "--accepted-checker", str(v14_accepted_checker_path.resolve()),
+                "--accepted-checker-sha256", str(v14_accepted_checker_sha256),
+                "--accepted-receipt", str(v14_accepted_receipt_path.resolve()),
+                "--accepted-receipt-sha256", str(v14_accepted_receipt_sha256),
+                "--donor-summary", str(donor_summary_path.resolve()),
+                "--donor-summary-sha256", str(v14_donor_summary_sha256),
+                "--donor-contract", str(donor_contract_path.resolve()),
+                "--donor-contract-sha256", donor_contract_sha256,
+                "--output-dir", str(candidate_report_path.parent),
+            ]
+            candidate_worker_attempted = True
+            record["v14_candidate_worker_attempted"] = True
+            candidate_watchdog = supervise(
+                candidate_worker_command,
+                service_directory / "v14_candidate_watchdog",
+                wall_seconds=window.cutoff_seconds,
+                phase_path=service_directory / "v14_candidate_phase.json",
+                campaign_phase="numeric",
+                **common_watchdog,
+            )
+            candidate_worker_started = candidate_watchdog.get("leader_exit_code") is not None
+            record["v14_candidate_worker_started"] = candidate_worker_started
+            record["numerical_work_started"] = candidate_worker_started
+            record["v14_candidate_command"] = candidate_worker_command
+            record["v14_candidate_watchdog"] = candidate_watchdog
+            record["v14_candidate_worker_attempted"] = candidate_worker_attempted
+            record["v14_candidate_worker_started"] = candidate_worker_started
+            if (
+                candidate_watchdog.get("classification") == "COMPLETED"
+                and candidate_watchdog.get("leader_exit_code") == 0
+                and candidate_report_path.is_file()
+                and candidate_report_path.stat().st_size <= 16 * 1024**2
+                and stat_output_tree(candidate_report_path.parent) <= 512 * 1024**2
+            ):
+                candidate_report_sha256 = sha256_file(candidate_report_path)
+                candidate_payload = read_json_object(candidate_report_path, "V14 candidate report")
+                candidate_worker_ok = bool(
+                    candidate_payload.get("schema") == V14_CANDIDATE_REPORT_SCHEMA
+                    and candidate_payload.get("status") == "CANDIDATE_PRODUCED_PENDING_INDEPENDENT_CHECK"
+                    and candidate_payload.get("official_result") is False
+                    and candidate_payload.get("scientific_qualified") is False
+                    and candidate_payload.get("consumer_contract_sha256") == contract_sha
+                    and candidate_payload.get("consumer_window_sha256") == window.sha256
+                    and candidate_payload.get("producer_report_sha256") == v14_producer_report_sha256
+                )
+            record["v14_candidate_report_path"] = str(candidate_report_path)
+            record["v14_candidate_report_sha256"] = candidate_report_sha256
+            record["v14_candidate_worker_completed"] = candidate_worker_ok
+            if candidate_worker_ok:
+                record["saved_diagnostics_disk_budget_after_candidate"] = saved_diagnostics_budget_check()
+                assert candidate_report_sha256 is not None
+                checker_command = [
+                    python,
+                    "-m",
+                    "src.runners.task41_p0_v14_saved_rhs_checker",
+                    "--repo-root", str(repo_root),
+                    "--consumer-contract", str(contract_path.resolve()),
+                    "--consumer-contract-sha256", contract_sha,
+                    "--producer-report", str(v14_producer_report_path.resolve()),
+                    "--producer-report-sha256", str(v14_producer_report_sha256),
+                    "--accepted-checker", str(v14_accepted_checker_path.resolve()),
+                    "--accepted-checker-sha256", str(v14_accepted_checker_sha256),
+                    "--accepted-receipt", str(v14_accepted_receipt_path.resolve()),
+                    "--accepted-receipt-sha256", str(v14_accepted_receipt_sha256),
+                    "--donor-summary", str(donor_summary_path.resolve()),
+                    "--donor-summary-sha256", str(v14_donor_summary_sha256),
+                    "--donor-contract", str(donor_contract_path.resolve()),
+                    "--donor-contract-sha256", donor_contract_sha256,
+                    "--candidate-report", str(candidate_report_path),
+                    "--candidate-report-sha256", candidate_report_sha256,
+                    "--output", str(checker_result_path),
+                ]
+                checker_watchdog = supervise(
+                    checker_command,
+                    service_directory / "v14_independent_checker_watchdog",
+                    wall_seconds=window.cutoff_seconds,
+                    phase_path=service_directory / "v14_independent_checker_phase.json",
+                    campaign_phase="numeric",
+                    **common_watchdog,
+                )
+                record["v14_independent_checker_command"] = checker_command
+                record["v14_independent_checker_watchdog"] = checker_watchdog
+                checker_payload = (
+                    read_json_object(checker_result_path, "V14 independent check")
+                    if checker_result_path.is_file()
+                    else {}
+                )
+                independent_check_ok = bool(
+                    checker_watchdog.get("classification") == "COMPLETED"
+                    and checker_watchdog.get("leader_exit_code") == 0
+                    and checker_payload.get("schema") == V14_CANDIDATE_CHECK_SCHEMA
+                    and checker_payload.get("check_completed") is True
+                    and checker_payload.get("official_result") is False
+                    and checker_payload.get("scientific_qualified") is False
+                    and checker_payload.get("candidate_report_sha256") == candidate_report_sha256
+                    and checker_payload.get("status") in {
+                        "LOCAL_CANDIDATE_PASS",
+                        "LOCAL_CANDIDATE_REJECTED",
+                        "INCONCLUSIVE",
+                    }
+                )
+                record["v14_independent_check_path"] = str(checker_result_path)
+                record["v14_independent_check_sha256"] = (
+                    sha256_file(checker_result_path) if checker_result_path.is_file() else None
+                )
+                record["v14_candidate_passed"] = checker_payload.get("candidate_passed")
+                record["conditional_star_coverage_unlocked"] = (
+                    independent_check_ok and checker_payload.get("candidate_passed") is True
+                )
+            record["required_checker_status"] = (
+                "INDEPENDENT_CHECK_COMPLETED" if independent_check_ok
+                else "not_run_or_incomplete"
+            )
+            record["numerical_work_started"] = candidate_worker_started
+            record["v14_candidate_worker_completed"] = candidate_worker_ok
+            record["official_result"] = False
+            record["scientific_qualified"] = False
+            record["full_owner_unlocked"] = False
+            record["result_classification"] = (
+                "V14_LOCAL_CANDIDATE_PASS"
+                if independent_check_ok and record.get("v14_candidate_passed") is True
+                else "V14_LOCAL_CANDIDATE_REJECTED"
+                if independent_check_ok and record.get("v14_candidate_passed") is False
+                else "V14_LOCAL_CANDIDATE_INCONCLUSIVE"
+                if independent_check_ok
+                else "V14_SAVED_RHS_CANDIDATE_INCOMPLETE"
+            )
+            result_code = 0 if candidate_worker_ok and independent_check_ok else 3
+        except Exception as exc:
+            record["workflow_error"] = {"type": type(exc).__name__, "message": str(exc)}
+            record["required_checker_status"] = "not_run_or_incomplete"
+            record["official_result"] = False
+            record["scientific_qualified"] = False
+            record["result_classification"] = "V14_SAVED_RHS_CANDIDATE_INCOMPLETE"
+            result_code = 3
+        finally:
+            end_sample = clock_sample(include_boot_id=True)
+            record["service_elapsed_seconds"] = checked_interval(
+                service_start_sample, end_sample, policy=CONSERVATIVE_REALTIME
+            )["budget_seconds"]
+            record["status"] = "completed" if result_code == 0 else "failed_raw_evidence_retained"
+            record["receipt_path"] = str(receipt_path)
+            try:
+                record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget_check(final=True)
+            except Exception as exc:
+                record["finalization_error"] = {"type": type(exc).__name__, "message": str(exc)}
+                record["status"] = "failed_raw_evidence_retained"
+                record["result_classification"] = "V14_SAVED_RHS_CANDIDATE_INCOMPLETE"
+                result_code = 3
+            _write_json_fsync(receipt_path, record)
+        return result_code
+
     result_code = 3
     candidate_replay_finalization_failed = False
     worker_ok = False
@@ -13782,6 +14191,9 @@ def _run_task41_p0_service(
             "--task41-p0-saved-b0-selected-trace-star-audit",
         }
     )
+    b0_v14_saved_rhs_candidate_mode = bool(
+        b0_evidence_audit_mode and "--v14-saved-rhs-candidate" in case_args
+    )
     saved_output_mode = (
         continuation_mode
         or checker_only_mode
@@ -13833,6 +14245,13 @@ def _run_task41_p0_service(
     v9_y_g_summary_sha256: str | None = None
     v9_y_g_service_receipt_path: Path | None = None
     v9_y_g_service_receipt_sha256: str | None = None
+    v14_producer_report_path: Path | None = None
+    v14_producer_report_sha256: str | None = None
+    v14_accepted_checker_path: Path | None = None
+    v14_accepted_checker_sha256: str | None = None
+    v14_accepted_receipt_path: Path | None = None
+    v14_accepted_receipt_sha256: str | None = None
+    v14_donor_summary_sha256: str | None = None
     if b0_v9_saved_star_screen_mode:
         if (
             len(case_args) != 11
@@ -13921,7 +14340,7 @@ def _run_task41_p0_service(
     candidate_geometry_reference_path: Path | None = None
     if b0_evidence_audit_mode:
         if (
-            len(case_args) not in {11, 14, 15, 16, 18, 19, 20, 23, 28}
+            len(case_args) not in {11, 14, 15, 16, 18, 19, 20, 23, 26, 28}
             or case_args[1] != "--donor-contract"
             or case_args[3] != "--donor-contract-sha256"
             or case_args[5] != "--summary"
@@ -13936,6 +14355,19 @@ def _run_task41_p0_service(
         donor_summary_path = Path(case_args[6]).resolve(strict=True)
         donor_numerical_output = Path(case_args[8]).resolve()
         continuation_output_root = Path(case_args[10]).resolve()
+        if b0_v14_saved_rhs_candidate_mode:
+            (
+                v14_producer_report_path,
+                v14_producer_report_sha256,
+                v14_accepted_checker_path,
+                v14_accepted_checker_sha256,
+                v14_accepted_receipt_path,
+                v14_accepted_receipt_sha256,
+                v14_donor_summary_sha256,
+            ) = _parse_task41_p0_v14_candidate_suffix(case_args)
+            continuation_run_root = donor_summary_path.parent.resolve(strict=True)
+        elif "--v14-saved-rhs-candidate" in case_args:
+            raise ValueError("V14 candidate marker is only accepted in its explicit service route")
         if len(case_args) == 14:
             if (
                 not b0_v4_volume_only_mode
@@ -14180,6 +14612,7 @@ def _run_task41_p0_service(
     if saved_scope is not None and not (
         b0_v9_failed_terminal_audit_mode
         or b0_saved_y_g_comparison_mode
+        or b0_v14_saved_rhs_candidate_mode
         or b0_v8_selected_trace_star_metadata_only_mode
         or b0_v8_selected_trace_star_candidate_replay_mode
         or b0_v11_candidate_report_replayed_read_only_mode
@@ -14196,6 +14629,7 @@ def _run_task41_p0_service(
         b0_v8_selected_trace_star_metadata_only_mode
         or b0_v8_selected_trace_star_candidate_replay_mode
         or b0_v11_candidate_report_replayed_read_only_mode
+        or b0_v14_saved_rhs_candidate_mode
     ) and (
         saved_scope is None
         or "selected_incident_replay" not in saved_scope.get("actions", [])
@@ -15046,6 +15480,14 @@ def _run_task41_p0_service(
             b0_v9_saved_star_screen_mode=b0_v9_saved_star_screen_mode,
             b0_v9_failed_terminal_audit_mode=b0_v9_failed_terminal_audit_mode,
             b0_saved_y_g_comparison_mode=b0_saved_y_g_comparison_mode,
+            b0_v14_saved_rhs_candidate_mode=b0_v14_saved_rhs_candidate_mode,
+            v14_producer_report_path=v14_producer_report_path,
+            v14_producer_report_sha256=v14_producer_report_sha256,
+            v14_accepted_checker_path=v14_accepted_checker_path,
+            v14_accepted_checker_sha256=v14_accepted_checker_sha256,
+            v14_accepted_receipt_path=v14_accepted_receipt_path,
+            v14_accepted_receipt_sha256=v14_accepted_receipt_sha256,
+            v14_donor_summary_sha256=v14_donor_summary_sha256,
             b0_v4_volume_only_mode=b0_v4_volume_only_mode,
             b0_v4_geometry_pair_mode=b0_v4_geometry_pair_mode,
             b0_v5_mesh_actual_exact_mode=b0_v5_mesh_actual_exact_mode,

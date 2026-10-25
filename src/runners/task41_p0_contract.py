@@ -226,6 +226,63 @@ TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE = {
     "carrier_replay": False,
     "full_q_scan": False,
 }
+TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE = "v14_same_lu_rhs_candidate_6h"
+TASK41_B0_V14_SAVED_RHS_CANDIDATE_WINDOW_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE / "execution_window_v14_same_lu_rhs_candidate_6h.json"
+)
+TASK41_B0_V14_SAVED_RHS_CANDIDATE_AUTH_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE / "saved_diagnostics_v14_same_lu_rhs_candidate_authorization.json"
+)
+TASK41_B0_V14_SAVED_RHS_CANDIDATE_ACCOUNTING_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v14_same_lu_rhs_candidate_6h.jsonl"
+)
+TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE = {
+    "kind": "saved_diagnostics_same_lu_rhs_candidate_staged",
+    "actions": ["selected_incident_replay"],
+    "initial_screen": {
+        "selected_cells": [360, 446],
+        "columns": [0, 1],
+        "states": ["j0", "j3"],
+        "right_hand_sides_per_cell": 2,
+        "refinement": "same_lu_binary64_products_real_imag_fsum",
+        "refinement_max_steps": 2,
+        "max_getrs_total": 12,
+        "independent_gate": {
+            "all_450_internal_rows": True,
+            "residuals_nonworsening_and_credible_decline_for_all_four_rhs": True,
+            "actual_returned_minus_Jz_verified": True,
+            "both_candidate_d_columns_improve_beyond_wide_evaluation_resolution": True,
+            "production_order_y_g_d_replayed": True,
+            "noise_covers_change_means_inconclusive": True,
+        },
+        "gate_for_conditional_stage": "initial_screen_independent_check_pass",
+    },
+    "conditional_star_coverage": {
+        "enabled_only_after": "initial_screen_independent_check_pass",
+        "star_cells": [23352, 23493],
+        "both_columns_and_original_cell_rhs_mpc_input": True,
+        "existing_representative_key_set": "eight_original_keys_with_complete_saved_candidate_K_J_LU_mapping_and_b_i",
+        "deduplication": "two_star_cells_union_eight_original_representative_keys_by_frozen_actual_key_identity",
+        "max_unique_keys": 12,
+        "minimum_coverage": ["two_actual_material_tags", "two_actual_directions"],
+        "tag_and_direction_source": "hash_bound_per_key_metadata_not_name_inference",
+        "max_total_getrs_per_nonzero_rhs_per_key": 3,
+        "max_correction_getrs_per_nonzero_rhs_per_key": 2,
+        "j0_j3_share_key_factorization_and_existing_rhs_identity": True,
+        "compute_once_per_unique_key_per_rhs": True,
+        "preserve_historical_charges": True,
+        "missing_saved_K_J_LU_mapping_or_b_i": "enumerate_exact_missing_field_and_use; never_substitute_reference_LU",
+    },
+    "max_ffcx_reference_cells": 0,
+    "new_evidence_limit_bytes": 16 * 1024**2,
+    "single_package_limit_bytes": 512 * 1024**2,
+    "cumulative_raw_artifact_limit_bytes": 16 * 1024**3,
+    "free_space_floor_bytes": 2 * 1024**3,
+    "full_owner": False,
+    "carrier_replay": False,
+    "full_q_scan": False,
+}
+
 TASK41_B0_V9_INTERNAL_RHS_STRATEGY = "same_lu_rhs_solve"
 TASK41_B0_V9_VOLUME_DONOR_RUN_RELATIVE = Path(
     "results/task41extra_phi90_p50x50_g17x20"
@@ -276,6 +333,19 @@ def _task41_saved_diagnostics_instance(instance: str | None = None) -> dict[str,
             ),
             "t0_basis": "user_approved_v12_two_cell_candidate_replay_6h",
         }
+    if instance == TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE:
+        return {
+            "instance": instance,
+            "window_relative": TASK41_B0_V14_SAVED_RHS_CANDIDATE_WINDOW_RELATIVE,
+            "authorization_relative": TASK41_B0_V14_SAVED_RHS_CANDIDATE_AUTH_RELATIVE,
+            "accounting_relative": TASK41_B0_V14_SAVED_RHS_CANDIDATE_ACCOUNTING_RELATIVE,
+            "scope": TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
+            "authorization": "user_explicit_v14_same_lu_saved_candidate_6h",
+            "prior_window_relative": TASK41_B0_V12_CANDIDATE_REPLAY_WINDOW_RELATIVE,
+            "prior_ledger_relative": TASK41_B0_V12_CANDIDATE_REPLAY_ACCOUNTING_RELATIVE,
+            "t0_basis": "user_approved_v14_same_lu_saved_candidate_6h",
+            "requires_preexisting_user_authorization": True,
+        }
     raise Task41ContractError(f"unknown saved-diagnostics instance: {instance!r}")
 
 
@@ -283,7 +353,11 @@ def _task41_saved_diagnostics_instance_for_path(
     root: Path, path: Path
 ) -> dict[str, Any] | None:
     resolved = Path(path).resolve()
-    for instance in (None, TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE):
+    for instance in (
+        None,
+        TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
+        TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE,
+    ):
         config = _task41_saved_diagnostics_instance(instance)
         if resolved == (root / config["window_relative"]).resolve():
             return config
@@ -1150,13 +1224,14 @@ def contract_relative_path(
     if not re.fullmatch(r"[0-9a-f]{40}", source_sha):
         raise Task41ContractError("Task41 source SHA is invalid")
     case = _task41_case(case_id)
-    suffix = (
-        f"_{TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE}"
-        if saved_diagnostics_instance == TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE
-        else ""
-    )
-    if saved_diagnostics_instance not in (None, TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE):
+    suffix_by_instance = {
+        None: "",
+        TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE: f"_{TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE}",
+        TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE: f"_{TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE}",
+    }
+    if saved_diagnostics_instance not in suffix_by_instance:
         raise Task41ContractError("unknown saved-diagnostics contract filename instance")
+    suffix = suffix_by_instance[saved_diagnostics_instance]
     return case["controller_relative"] / f"execution_contract_source_{source_sha}{suffix}.json"
 
 
@@ -1186,7 +1261,8 @@ def require_task41_p0_contract(
             raise Task41ContractError("Task41 contract is outside a registered P0 controller directory")
     case_spec = _task41_case(case_id)
     if relative.parent != case_spec["controller_relative"] or not re.fullmatch(
-        r"execution_contract_source_[0-9a-f]{40}(?:_v12_two_cell_candidate_replay)?\.json", relative.name
+        r"execution_contract_source_[0-9a-f]{40}(?:_v12_two_cell_candidate_replay|_v14_same_lu_rhs_candidate_6h)?\.json",
+        relative.name,
     ):
         raise Task41ContractError("Task41 contract is not in the registered P0 controller directory")
     raw = contract_path.read_bytes()
@@ -2096,6 +2172,7 @@ def task41_raw_artifact_limit_bytes(contract: Mapping[str, Any]) -> int:
     if contract.get("execution_scope") in (
         TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
         TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
+        TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
     ):
         expected["new_evidence_limit_bytes"] = TASK41_B0_SAVED_DIAGNOSTICS_NEW_EVIDENCE_LIMIT_BYTES
     if contract.get("case", {}).get("run_id") != TASK41_B0_RUN_ID or policy != expected:
@@ -2179,6 +2256,11 @@ def prepare_task41_p0(
     if saved_diagnostics_config is not None:
         saved_auth_path = root / saved_diagnostics_config["authorization_relative"]
         if not saved_auth_path.exists():
+            if saved_diagnostics_config.get("requires_preexisting_user_authorization"):
+                raise Task41ContractError(
+                    "V14 saved-candidate prepare requires an existing explicit user authorization; "
+                    "no authorization, T0, window, or accounting file was created"
+                )
             prior_window_path = root / saved_diagnostics_config["prior_window_relative"]
             try:
                 prior_window_raw = prior_window_path.read_bytes()
@@ -2968,7 +3050,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--b0-saved-diagnostics-6h", action="store_true")
     parser.add_argument(
         "--b0-saved-diagnostics-instance",
-        choices=(TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,),
+        choices=(
+            TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
+            TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE,
+        ),
     )
     parser.add_argument("--case", choices=("A1", "A2", "B0"), default="A1")
     parser.add_argument("--a2-q-csr-manifest", action="append", type=Path)
