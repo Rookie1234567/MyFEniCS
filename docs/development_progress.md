@@ -3893,3 +3893,7 @@ V9完整action仍为2.6749770637124364e-10与5.613598120039757e-10，高于1e-11
 ## Task41extra Review V13：保存两cell归因收口（2026-10-24）
 
 V13 对既有两cell保存包完成8组误差账与4条目标行独立复核；原 full-action 两列仍超过 1e-11，official_result=false。保存的 signed attribution 支持一个未实施的窄研究提案：hcurl_assembly_time_condensation.py::project_internal_rhs_same_lu 同LU RHS残差校正；未改生产数值核心，不代表GETRS缺陷或生产修复已验证。详见[response_v13](task41extra_phi90_p50x50_g17x20/response_v13.md)。
+
+## Task41extra Review V14：保存 RHS 候选与最终接线回归（2026-10-25）
+
+V14在cells 360/446及已保存star cells 23352/23493上测试有界同LU残差校正：四个局部star目标行d均下降，8个唯一RHS的Decimal补充残差复核通过；初始wide-arithmetic checker仍为`INCONCLUSIVE`，而V9全域full-action仍`GATE_FAILED`。最终冻结HEAD `eb57f88f26fb3cbbe0d7c34ebb725f9a6b310fe1` 的owner/target/reference/recovery窄接线已由7项工作站定向测试覆盖；没有运行全域official terminal checker或FE/PDE。8个代表键缺完整candidate LU/pivots及原始`b_i`映射，不能转授资格。旧载荷435.653172 GB加新K派生90.72 GB为526.373172 GB，仍只是容量估算。详见[response_v14](task41extra_phi90_p50x50_g17x20/response_v14.md)、[summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)和[V14 closeout ledger](task41extra_phi90_p50x50_g17x20/outcomes/v14_closeout/timing_and_adjoint_ledgers.json)。

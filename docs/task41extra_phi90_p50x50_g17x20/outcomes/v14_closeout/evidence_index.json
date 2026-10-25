@@ -1,0 +1,225 @@
+{
+  "schema": "task41.p0.v14.closeout_evidence_index.v1",
+  "review": "V14",
+  "source_freeze": {
+    "branch": "task41extra_phi90_p50x50_g17x20",
+    "head": "eb57f88f26fb3cbbe0d7c34ebb725f9a6b310fe1",
+    "source_patch_sha256": "e64a266cec40bc054652623bb1bf320e2b312c3ba5eca288c614598c63ab2af2",
+    "worktree_at_freeze": "clean"
+  },
+  "window": {
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v14_same_lu_rhs_candidate_6h.json",
+    "sha256": "4f5d35994e2034c7128a87528303b87892c5563beddc2363e511d1c26dd2d47c"
+  },
+  "evidence_root": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4f5d35994e2034c7128a87528303b87892c5563beddc2363e511d1c26dd2d47c/selected_incident_replay",
+  "entries": [
+    {
+      "attempt": "01",
+      "kind": "service_receipt",
+      "path": "attempt01.service/task41_p0_service_receipt.json",
+      "sha256": "242d133177b482d5cf9b4e08510c6023a98e2c2acfea9095ad74a2d197aabf18",
+      "classification": "V14_LOCAL_CANDIDATE_INCONCLUSIVE"
+    },
+    {
+      "attempt": "01",
+      "kind": "saved_candidate_report",
+      "path": "attempt01/candidate/task41_p0_v14_saved_rhs_candidate.json",
+      "sha256": "a0ed3dd42129705e4806092d611c559403b832862eb3f6ee54a90880ea0f8f19",
+      "classification": "CANDIDATE_PRODUCED_PENDING_INDEPENDENT_CHECK"
+    },
+    {
+      "attempt": "01",
+      "kind": "wide_arithmetic_independent_check",
+      "path": "attempt01/task41_p0_v14_saved_rhs_candidate_independent_check.json",
+      "sha256": "31d0bf84499bbc2340465067e9c2354584b8a79b9ea73440898ec0cc0f74f97e",
+      "classification": "INCONCLUSIVE"
+    },
+    {
+      "attempt": "01",
+      "kind": "candidate_watchdog_summary",
+      "path": "attempt01.service/v14_candidate_watchdog/summary.json",
+      "sha256": "09205296f86ecc2dc646488779cdba86b044c30bc6b008434e3c6e0c481eee9b"
+    },
+    {
+      "attempt": "01",
+      "kind": "independent_checker_watchdog_summary",
+      "path": "attempt01.service/v14_independent_checker_watchdog/summary.json",
+      "sha256": "660d7da6530ec546f007c73944e43ecb9d9c52107eb1d195af3005e6751a9bb4"
+    },
+    {
+      "attempt": "02",
+      "kind": "service_entry_rejection",
+      "path": null,
+      "unit": "myfenics-case-task41-p0-v14-decimal-recheck-attempt02-20261025T0938Z.service",
+      "sha256": "UNKNOWN_NO_COMPLETE_RECEIPT",
+      "invocation_id": "057461078d6f46778ef1d35363f8ea68",
+      "classification": "SERVICE_ENTRY_REJECTED_BEFORE_SCIENTIFIC_WORKER",
+      "service_exit_status": 1,
+      "getrs_calls": 0,
+      "journal_time_observation": "2026-10-25 09:42:01–09:42:05; not a measured parent interval",
+      "cost": "UNKNOWN_NOT_MEASURED"
+    },
+    {
+      "attempt": "03",
+      "kind": "service_receipt",
+      "path": "attempt03.service/task41_p0_service_receipt.json",
+      "sha256": "f008bad9a341f1da24aa58efdc514483ed1af07555f52aad23b71c37a3c18e58",
+      "classification": "V14_DECIMAL_SUPPLEMENTAL_PASS"
+    },
+    {
+      "attempt": "03",
+      "kind": "decimal_residual_recheck",
+      "path": "attempt03/task41_p0_v14_saved_rhs_decimal_residual_recheck.json",
+      "sha256": "f8b9c4e78643fee82dc78d36e9901b0050ce4af26e43fe78e2efe967360a0cf3",
+      "classification": "LOCAL_CANDIDATE_PASS"
+    },
+    {
+      "attempt": "03",
+      "kind": "wide_arithmetic_recheck_preserved",
+      "path": "attempt03/task41_p0_v14_saved_rhs_decimal_wide_recheck.json",
+      "sha256": "31d0bf84499bbc2340465067e9c2354584b8a79b9ea73440898ec0cc0f74f97e",
+      "classification": "INCONCLUSIVE"
+    },
+    {
+      "attempt": "03",
+      "kind": "decimal_checker_watchdog_summary",
+      "path": "attempt03.service/v14_decimal_residual_checker_watchdog/summary.json",
+      "sha256": "863e0e187fa8b1111b4f1e7080b2d0c062dda68b0026353819ed5ae571ced36e"
+    },
+    {
+      "attempt": "04",
+      "kind": "service_receipt",
+      "path": "attempt04.service/task41_p0_service_receipt.json",
+      "sha256": "4b6b1586e0c321edebcdff193cff669865007f675049e2df6623e66f672a2d83",
+      "classification": "V14_LOCAL_CANDIDATE_INCONCLUSIVE"
+    },
+    {
+      "attempt": "04",
+      "kind": "saved_star_candidate_report",
+      "path": "attempt04/candidate/task41_p0_v14_saved_rhs_candidate.json",
+      "sha256": "e65f3471351f51cc7b7033718af3ae2876096c20f124cefd8566483cb14248f7",
+      "classification": "CANDIDATE_PRODUCED_PENDING_INDEPENDENT_CHECK"
+    },
+    {
+      "attempt": "04",
+      "kind": "wide_arithmetic_independent_check",
+      "path": "attempt04/task41_p0_v14_saved_rhs_candidate_independent_check.json",
+      "sha256": "fcc328950dd9adf080f1a95237c7e98e05f7e689251202bfe560107d9589d33c",
+      "classification": "INCONCLUSIVE"
+    },
+    {
+      "attempt": "04",
+      "kind": "candidate_watchdog_summary",
+      "path": "attempt04.service/v14_candidate_watchdog/summary.json",
+      "sha256": "2d06532cd68374335994bc60339f018478f48f81e7a48eb944c734a5e9b1c638"
+    },
+    {
+      "attempt": "04",
+      "kind": "independent_checker_watchdog_summary",
+      "path": "attempt04.service/v14_independent_checker_watchdog/summary.json",
+      "sha256": "2d2789409294327bc7a727428fc5a99185388050308d1378c3443a87142f8cfd"
+    },
+    {
+      "attempt": "05",
+      "kind": "service_receipt",
+      "path": "attempt05.service/task41_p0_service_receipt.json",
+      "sha256": "a6c1751d7f8d9e5144d72cacb20f95eeecad9c770e907415b8112042b1be4f1f",
+      "classification": "V14_DECIMAL_SUPPLEMENTAL_INCOMPLETE"
+    },
+    {
+      "attempt": "05",
+      "kind": "failed_worker_log",
+      "path": "attempt05.service/v14_decimal_residual_checker_watchdog/worker.log",
+      "sha256": "1bc9c613daa6e1e4ccea83cbee8e50d4ce651ab0c2c439dd4dc00ea27956fdfc",
+      "error": "Checker incorrectly required checker source SHA to differ from candidate source SHA"
+    },
+    {
+      "attempt": "05",
+      "kind": "failed_checker_watchdog_summary",
+      "path": "attempt05.service/v14_decimal_residual_checker_watchdog/summary.json",
+      "sha256": "984d4be01f730ca22be1eb412624b48fcafc617408d943cb8050eca2fb3b161f"
+    },
+    {
+      "attempt": "06",
+      "kind": "service_receipt",
+      "path": "attempt06.service/task41_p0_service_receipt.json",
+      "sha256": "8ec96deebcab971aa29b2eb1539d9a6096ff0e47307fca40dc8991983da11e23",
+      "classification": "V14_SAVED_COVERAGE_DECIMAL_PASS_NOT_GLOBAL"
+    },
+    {
+      "attempt": "06",
+      "kind": "decimal_residual_recheck",
+      "path": "attempt06/task41_p0_v14_saved_rhs_decimal_residual_recheck.json",
+      "sha256": "b07b27f8e45b011b0e64354185d1a4c25ecbf8dc76dbe9e9ae1b222f984be3a9",
+      "classification": "LOCAL_CANDIDATE_PASS"
+    },
+    {
+      "attempt": "06",
+      "kind": "preserved_wide_arithmetic_recheck",
+      "path": "attempt06/task41_p0_v14_saved_rhs_decimal_wide_recheck.json",
+      "sha256": "fcc328950dd9adf080f1a95237c7e98e05f7e689251202bfe560107d9589d33c",
+      "classification": "INCONCLUSIVE"
+    },
+    {
+      "attempt": "06",
+      "kind": "decimal_checker_watchdog_summary",
+      "path": "attempt06.service/v14_decimal_residual_checker_watchdog/summary.json",
+      "sha256": "c1908d443c51ba5d79c2b48c0b081023a30cb78758e094556248f47f30905307"
+    },
+    {
+      "attempt": "test-final",
+      "kind": "qualified_workstation_targeted_pytest_log",
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v14_wiring_final_targeted_tests_02.log",
+      "sha256": "54397e91fa48c6889c4b2b969c5d91d14258c864cc9464b12e4c40f32006ebb3",
+      "result": "7 passed in 9.15s",
+      "source_head": "eb57f88f26fb3cbbe0d7c34ebb725f9a6b310fe1"
+    },
+    {
+      "attempt": "test-prior-snapshot",
+      "kind": "qualified_workstation_targeted_pytest_log",
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v14_wiring_targeted_tests_01.log",
+      "sha256": "fb1385482a4bcad7311a35ff19625734f1139a5f913eda3a83e9aabefbbc7d31",
+      "result": "16 passed in 10.27s",
+      "source_sha": "d311d20cf9d9ea1bafe3aefe9d6446d2570335a8",
+      "source_patch_sha256": "06b8e3b16cb834fc152ffa9d8a756ceb248eb63f11928fcd1bec1cd19c5e303b",
+      "source_head_is_final_freeze": false
+    },
+    {
+      "attempt": "window-accounting-snapshot",
+      "kind": "charged_time_observation",
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v14_closeout_accounting_observation.json",
+      "sha256": "5630ed0c8ad790adfdc1ec736c0442be7b585641aa4f755a28c47bfd52fd0fb3",
+      "sample_sequence": 139,
+      "staging_copy": "/tmp/task41_v14_closeout_accounting_observation.json",
+      "is_final": false
+    },
+    {
+      "attempt": "prepublication-closeout-snapshot",
+      "kind": "charged_time_observation",
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v14_prepublication_accounting_observation.json",
+      "sha256": "485c5bc31fa4e47962cc78f69b2fd3f5911acb18229016c4470efa896e2f27e0",
+      "phase": "closeout",
+      "sample_utc_ns": 1792928844817406945,
+      "cumulative_charged_seconds": 10771.817644471404,
+      "staging_copy": "/tmp/v14_prepublication_accounting_observation.json",
+      "is_final": false
+    },
+    {
+      "attempt": "prepublication-closeout-ledger",
+      "kind": "campaign_accounting_ledger",
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v14_same_lu_rhs_candidate_6h.jsonl",
+      "sha256": "dc1c219027709540c71986d1c4e1fc862cdc70a2cd60204662d8db8054f3c0b1",
+      "sample_utc_ns": 1792928844817406945,
+      "is_final": false
+    }
+  ],
+  "candidate_residual_key_inventory": {
+    "keys": [26762, 26897, 0, 1, 2, 5, 6, 7505],
+    "tag_perm": [[1, 0], [1, 0], [2, 0], [2, 36873], [2, 576], [2, 4680], [1, 32769], [3, 0]],
+    "prior_index": "../b0_v6_actual_qmetric_hash_index_20261021.json",
+    "prior_index_available_fields": ["candidate/reference raw and oriented values", "R/T/S", "coordinates", "local action"],
+    "missing": ["complete saved candidate LU and pivots", "original b_i mapping"],
+    "qualification_transfer": false
+  },
+  "closeout_boundary": "No raw mesh, matrix, field, factor, or large candidate arrays are copied into this repository; indexed receipts/reports remain at their workstation paths."
+}

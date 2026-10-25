@@ -1,6 +1,17 @@
 # Task41 阶段结果
 
-> **V12最新：两单元候选重放及保存数组复核完成，科学资格未改变。** attempt03建立必要原网格mesh/space并完成cells 360/446候选重放；attempt06精确复现184项保存数组，但candidate_passed=null、scientific_qualified=false、official_result=false。V9完整action仍FAIL；不解锁全域重验、200q或最终求解。见[response_v12](../response_v12.md)、[V12 compact](b0_v12_saved_array_checker_closeout_20261024.json)。下方V11及V9内容保留为历史阶段记录。
+> **V14最新范围结果：四个已保存单元上的八个 RHS 局部残差校正，经 Decimal 补充复核为 `LOCAL_CANDIDATE_PASS`；没有形成全域资格。** 初始 wide-arithmetic checker 对两组候选均为 `INCONCLUSIVE`，Decimal 补充只确认这些保存残差下降。V9全域 full-action 仍`GATE_FAILED`，两个相对误差为`2.674977063720297e-10`和`5.613598120037966e-10`，门限`1e-11`；V14未重算此门，所有 V14 receipt 均 `official_result=false`、`scientific_qualified=false`、`full_owner_unlocked=false`。详见[response_v14](../response_v14.md)、[V14 ledger](v14_closeout/timing_and_adjoint_ledgers.json)、[V14 evidence index](v14_closeout/evidence_index.json)。
+
+| V14项目 | 当前结果 | 解释及边界 |
+|---|---|---|
+| 局部候选 | cells 360/446 与 23352/23493；4 cells × 2 columns = 8 RHS，候选共24 GETRS | j0/j3标签共享 RHS；不增加积分或覆盖范围 |
+| 第一组 Decimal 复核 | attempt03 对4个已保存残差均判 `credible_improvement`；0新增 GETRS | 只为已批准的保存 star 扩展开闸，不是 full owner 资格 |
+| 已保存 star 扩展 | attempt06 `LOCAL_CANDIDATE_PASS`，`saved_coverage_ready=true`；0新增 GETRS | `conditional_star_coverage_unlocked=false`，仍不是全域资格 |
+| 代表键 | 8键已有 raw/oriented candidate/reference、R/T/S、坐标与局部作用索引 | 缺完整 candidate LU/pivots 和原始`b_i`映射，资格不转授 |
+| 最终代码验证 | HEAD `eb57f88f…`，qualified workstation 定向回归7 passed / 9.15 s | owner/target/reference/recovery窄接线已实现并测试；全域运行合同/official终态checker未运行 |
+| 全域资源尺度 | 旧载荷435.653172 GB + 新K估算90.72 GB = 派生526.373172 GB | 容量估算，不是RSS/cgroup测量或运行准入 |
+
+> **V12历史阶段：两单元候选重放及保存数组复核完成，科学资格未改变。** attempt03建立必要原网格mesh/space并完成cells 360/446候选重放；attempt06精确复现184项保存数组，但candidate_passed=null、scientific_qualified=false、official_result=false。详见[response_v12](../response_v12.md)、[V12 compact](b0_v12_saved_array_checker_closeout_20261024.json)。
 
 
 | V12 项目 | 当前结果 | 范围边界 |
@@ -15,7 +26,7 @@
 
 > **V9 之前的历史科学阶段：Task41extra Review V8 selected-star 局部复核；未形成全域candidate资格。** V6 candidate 原完整两列action仍失败（相对误差`1.7183209126709868e-10` / `3.6180522433957604e-10`，限值`1e-11`）；V8未重跑这两列。V8较早的producer扫描28,000-cell metadata并仅重建目标行两个incident cells的缺失局部张量；此后的独立checker attempts 1–4 为saved-only。V8完成304个保存向量复算，另做局部RHS次序反事实，但saved donor完整action仍失败；candidate数值状态未重验，`official_result=false`。不进入200q、factor、KSP/FGMRES、完整场、A6或official R/T/A。入口：[V8 response](../response_v8.md)、[V8 compact](b0_v8_selected_trace_star_audit_20261021.json)、[测试记录](test_summary.md)、[run index](run_index.json)。
 
-## 最新正式结果：V9 B0 full-action gate 失败
+## V9 全域 full-action 正式门：当前仍失败
 
 本次首次正式 V9 B0 全域尝试 run 20261022T052401.200732Z（source SHA 59722cca5e35eac65efead9fd27f7d7fc0c70419）于 full-action 门失败。两列相对误差为 2.674977063720297e-10 和 5.613598120037966e-10，均高于 1e-11 限值；最大差行均为本次 row 87567。保存数据上的 compact independent checker 为 FAIL。正式 service required terminal checker 因 run_case 报 numerical-output directory missing 而 NOT_RUN，不能与 compact checker 混写。recovery 为 NOT_RUN_ACTION_GATE_FAILED，official_result=false。
 

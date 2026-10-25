@@ -2540,3 +2540,15 @@ V26 面向原尺寸 `50×25×140 nm`、`0.7 nm`、`272×8×14` p6 三维非分�
 | 证据与资源 | attempt02–06父service合计510.8661423435005 s；attempt01为UNKNOWN_NOT_MEASURED。attempt06树RSS 670,048,256 B、cgroup峰504,672,256 B、task swap 0 | 父子计时不相加，RSS与cgroup是不同口径；窗口余额仅为最后watchdog快照 |
 
 详细定义、四组signed terms与n_t汇总、attempt负结果和下一步边界见[Task41 V12 response](task41extra_phi90_p50x50_g17x20/response_v12.md)、[compact ledger](task41extra_phi90_p50x50_g17x20/outcomes/b0_v12_saved_array_checker_closeout_20261024.json)及[原件快照](task41extra_phi90_p50x50_g17x20/outcomes/v12_closeout/)。
+
+## Task41extra Review V14：局部同LU RHS候选登记（2026-10-25）
+
+| 对象 / 阶段 | 实测结果 | 状态与资格范围 |
+|---|---|---|
+| 有界 same-LU 残差候选 | cells 360/446、23352/23493；共8个唯一RHS、24次候选GETRS；两个star目标行的`|d|`均下降 | 仅保存包局部候选，不是全域action或official结果 |
+| wide 与 Decimal 复核 | 两组wide checker均`INCONCLUSIVE`；Decimal补充均`LOCAL_CANDIDATE_PASS`，0次新增GETRS | 保存残差局部改善得到补充确认；V9全域action仍FAIL |
+| 代表键与身份 | 8键可从V6 index追到raw/oriented候选/参考量、R/T/S、坐标与局部作用；完整candidate LU/pivots、原始`b_i`映射缺失 | 无完整覆盖转授；不增加积分补键 |
+| 冻结代码与测试 | HEAD `eb57f88f26fb3cbbe0d7c34ebb725f9a6b310fe1`；7项qualified workstation定向测试通过 | owner/target/reference/recovery窄接线已实现并测试；全域执行合同与official terminal checker未运行 |
+| 资源估算边界 | 旧载荷435.653172 GB + 新K估算90.72 GB = 派生526.373172 GB | 容量估算，不是RSS/cgroup实测或资源准入 |
+
+V14新状态与负边界见[response_v14](task41extra_phi90_p50x50_g17x20/response_v14.md)、[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json)与[V14 evidence index](task41extra_phi90_p50x50_g17x20/outcomes/v14_closeout/evidence_index.json)。

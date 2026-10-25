@@ -1,6 +1,8 @@
 # Task41 V14 保存包候选准备记录
 
-**状态：代码准备完成，本记录随主控准备提交冻结；真实运行仍待用户明确授权。** 本文只记录准备、接线和验证；没有创建 V14 authorization、T0、window 或 consumer contract，没有启动 V14 systemd service，也没有运行真实 candidate。没有创建 `response_v14.md` 或科学结果。
+> **历史准备快照。** 本文件描述 V14 窗口获批之前的状态；其中“运行仍待授权”“未创建 window/service”等表述不代表之后的实际状态。窗口后来获批并完成 attempt01、03、04、05、06 保存包服务；attempt02 在 service entry 阶段失败。实际结果以 [response_v14.md](../response_v14.md)、[V14 ledger](v14_closeout/timing_and_adjoint_ledgers.json) 与 [V14 evidence index](v14_closeout/evidence_index.json) 为准。本文件保留作准备阶段历史，不以其中的命令模板代替实际结果或再次执行。
+
+**本节以下内容按撰写时状态保留。** 当时尚未创建 V14 authorization、T0、window 或 consumer contract，也未启动 V14 systemd service、运行真实 candidate 或创建 `response_v14.md`。这些说法均为历史描述，后续执行回执不在本准备文件内。
 
 ## 身份与范围
 

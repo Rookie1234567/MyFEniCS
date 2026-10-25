@@ -6,7 +6,7 @@
 
 ## 当前任务
 
-当前收口为V12两单元候选重放及保存数组复核，见[response_v12.md](response_v12.md)和[V12 compact](outcomes/b0_v12_saved_array_checker_closeout_20261024.json)。attempt03完成局部两格producer重放；attempt06精确复现184项保存数组，但candidate_passed=null、scientific_qualified=false、official_result=false。V9完整action仍FAIL；没有运行全域PDE。attempt01–06的失败与证据均保留。
+当前收口为V14有界同LU残差校正的保存包候选复核，见[response_v14.md](response_v14.md)、[阶段摘要](outcomes/summary.md)、[V14 ledger](outcomes/v14_closeout/timing_and_adjoint_ledgers.json)及[证据索引](outcomes/v14_closeout/evidence_index.json)。cells 360/446 与已保存 star cells 23352/23493 上的8个 RHS 经 Decimal 补充检查均为局部候选通过；初始 wide checker 仍为INCONCLUSIVE。完整全域action仍沿用V9 FAIL，V14全部official_result与scientific_qualified标志为false；尚未运行全域owner/action/recovery、official terminal checker或PDE。V14失败 attempt 与原始证据保留，不能将局部候选结果转为全域资格。
 
 V6 的 `actual_qmetric_blocked_gram` 候选已构建 28,000 个 `mesh_actual_exact` 键；八个代表键的 raw/oriented 张量、K/G/J/L 与 R/T/S 局部筛查均通过 `1e-11`。候选完整两列作用的冻结分母相对误差为 `1.7183209126709868e-10` 和 `3.6180522433957604e-10`，超过原 `1e-11` 门；独立 saved-only checker 已完成并确认数据完整，但数值资格失败，`official_result=false`。按 Review V6 停在 full-action gate，不进入 200q、factor、KSP/FGMRES、完整场、A6 或 R/T/A。候选恢复也未通过 forward 门，且只做了初次恢复，没有耗尽三次修正额度。V3/V4/V5 均保留为各自历史阶段，不用 donor PASS 替代 V6 候选结果。
 

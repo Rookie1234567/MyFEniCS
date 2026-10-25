@@ -1,5 +1,21 @@
 # Task41 P0 定向验证
 
+## V14 最终冻结源码定向回归
+
+| 项目 | 记录 |
+|---|---|
+| 最终源码身份 | HEAD `eb57f88f26fb3cbbe0d7c34ebb725f9a6b310fe1`；相关15个源/测试文件补丁 SHA-256 `e64a266cec40bc054652623bb1bf320e2b312c3ba5eca288c614598c63ab2af2` |
+| 环境与命令结果 | 资格化工作站环境；7 passed in 9.15 s；测试日志 SHA-256 `54397e91fa48c6889c4b2b969c5d91d14258c864cc9464b12e4c40f32006ebb3` |
+| 覆盖范围 | prebuilt owner 绑定 live strategy、实际 K 与 LU identity；P6 最终 z、Di、recovery 与 borrower 清理；V14 saved candidate/star-extension 回归 |
+| 具体新增 owner 节点 | `src/test/test_task40_v10_p6_yorbit.py::test_fixed_two_prebuilt_owner_binds_live_strategy_and_actual_k_lu_identity` |
+| 结果边界 | 验证窄生产接线和回归；没有运行全域 action/recovery、official terminal checker、FE/PDE、200q、factor、KSP/FGMRES、完整场或 R/T/A |
+
+前一轮 snapshot 结果为 **16 passed in 10.27 s**，源码 `d311d20cf9d9ea1bafe3aefe9d6446d2570335a8`、补丁 SHA-256 `06b8e3b16cb834fc152ffa9d8a756ceb248eb63f11928fcd1bec1cd19c5e303b`，日志 SHA-256 `fb1385482a4bcad7311a35ff19625734f1139a5f913eda3a83e9aabefbbc7d31`；它与最终 eb57 冻结后的7项复核分开记录，不把两批测试合并计数。未运行全仓 pytest，未声称 CI 通过。
+
+V14 服务候选 / wide checker / Decimal 补充复核不是 pytest 结果，分别记录在 [V14 response](../response_v14.md) 与 [closeout evidence index](v14_closeout/evidence_index.json)。
+
+## 历史定向验证
+
 本页记录正式计算前的输入、数值接口和监督接线检查。它们用于避免在昂贵求解后才发现入口错误，**不代表13.5 nm完整场、A1/A2对照或0.7 nm计算通过**。
 
 | 检查 | 结果及边界 |
