@@ -8935,6 +8935,7 @@ def _task41_iterative_candidate_contract(
         root / TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE
     ).resolve()
     is_v15_full_acceptance = False
+    contract_binding = task41_contract_binding
     if case_id not in {"A2", "B0"}:
         raise ValueError("Task41 iterative candidate contract requires case A2 or B0")
     case_spec = _task41_case(case_id)
@@ -9152,7 +9153,6 @@ def _task41_iterative_candidate_contract(
         ),
     }
     if case_id == "B0":
-        contract_binding = task41_contract_binding
         contract_rhs_strategy = contract.get("numerical_strategy", {}).get(
             "internal_rhs_strategy", "stored_T"
         )
@@ -9206,9 +9206,9 @@ def _task41_iterative_candidate_contract(
         )
         if is_v15_full_acceptance:
             expected_output = Path(str(run_directory or "")).resolve()
-            expected_claim = Path(str(contract.get("window", {}).get("accounting_path", "")))
-            if not expected_claim.is_absolute():
-                expected_claim = root / expected_claim
+            # The signed window owns accounting_path; the contract only binds
+            # that window by path/hash. Match the dispatcher's verified source.
+            expected_claim = window.accounting_path
             expected_claim = expected_claim.with_name(
                 expected_claim.name + ".v15_full_owner_claim.json"
             ).resolve()

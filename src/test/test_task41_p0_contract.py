@@ -1417,6 +1417,168 @@ def test_task41_worker_runtime_uses_service_window_and_strict_resource_view(
 
 
 
+def test_task41_v15_dispatch_binding_uses_verified_window_accounting_path(
+    tmp_path, monkeypatch
+):
+    import src.runners.task41_p0_contract as contract_module
+    from src.geometry.task41_phi90_profile import TASK41_B0_PRECONDITIONER
+    from src.io.execution_plan import resolved_config_bytes
+    from src.io.input_validation import load_and_resolve
+    from src.io.physical_intermediate_profile import profile_facts
+    from src.runners.physical_p4_schur_v14 import _V14Runtime
+    from src.runners.task038_full3d_iterative import _task41_b0_dispatch_binding
+    from src.runners.task40_v10_worker import (
+        _candidate_contract,
+        _task41_p0_runtime_configuration,
+    )
+
+    # Reuse the existing authorized V15 prepare fixture so this exercises the
+    # real prepared contract/window shape, including its deliberate omission
+    # of accounting_path from the contract's window projection.
+    test_task41_v15_full_acceptance_prepare_binds_36h_scope_and_raw_policy(
+        tmp_path, monkeypatch
+    )
+    contract_paths = list(
+        (tmp_path / contract_module.TASK41_B0_CONTROLLER_RELATIVE).glob(
+            "execution_contract_source_*_v15_full_two_column_acceptance_36h.json"
+        )
+    )
+    assert len(contract_paths) == 1
+    contract_path = contract_paths[0].resolve()
+    contract_sha = hashlib.sha256(contract_path.read_bytes()).hexdigest()
+    contract, _ = require_task41_p0_contract(
+        contract_path,
+        expected_sha256=contract_sha,
+        current_root=tmp_path,
+        case_id="B0",
+    )
+    assert "accounting_path" not in contract["window"]
+
+    case_spec = contract_module._task41_case("B0")
+    input_path = tmp_path / case_spec["input_relative"]
+    specification = load_and_resolve(input_path)
+    resolved = specification.as_jsonable()
+    source_sha = contract["source"]["sha"]
+    assert source_sha == "a" * 40
+    assert contract["case"]["input_sha256"] == specification.input_sha256
+    assert contract["case"]["resolved_config_sha256"] == hashlib.sha256(
+        resolved_config_bytes(specification)
+    ).hexdigest()
+
+    expected_output_parent = Path(
+        resolved["provenance"]["expected_output_parent"]
+    )
+    if not expected_output_parent.is_absolute():
+        expected_output_parent = tmp_path / expected_output_parent
+    expected_output_parent.mkdir(parents=True, exist_ok=True)
+    run_directory = expected_output_parent / "v15-dispatch-binding-attempt"
+    run_directory.mkdir()
+
+    window = load_task41_p0_fixed_window(contract, current_root=tmp_path)
+    monkeypatch.setenv("TASK41_P0_STRICT_EXECUTION", "1")
+    monkeypatch.setenv("TASK41_P0_CONTRACT_PATH", str(contract_path))
+    monkeypatch.setenv("TASK41_P0_CONTRACT_SHA256", contract_sha)
+    monkeypatch.setenv("TASK41_P0_EXECUTION_WINDOW_PATH", str(window.path.resolve()))
+    monkeypatch.setenv("TASK41_P0_EXECUTION_WINDOW_SHA256", window.sha256)
+    monkeypatch.setenv("TASK41_P0_V15_FULL_ACCEPTANCE", "1")
+    monkeypatch.setenv(
+        "TASK41_P0_V15_OUTPUT_DIRECTORY", str(run_directory.resolve())
+    )
+    monkeypatch.setenv(
+        "TASK41_P0_TASK_MEMORY_MAX_BYTES",
+        str(contract["resources"]["task_memory_max_bytes"]),
+    )
+    monkeypatch.setenv(
+        "TASK41_P0_HOST_RESERVE_BYTES",
+        str(contract["resources"]["host_reserve_bytes"]),
+    )
+    monkeypatch.setenv(
+        "TASK41_P0_MEMORY_SWAP_MAX_BYTES",
+        str(contract["resources"]["memory_swap_max_bytes"]),
+    )
+    monkeypatch.setenv(
+        "PHYSICAL_WATCHDOG_MEMORY_POLICY",
+        "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+    )
+    monkeypatch.setenv("PHYSICAL_WATCHDOG_PSS_POLICY", "disabled_by_profile")
+    monkeypatch.setenv(
+        "PHYSICAL_WATCHDOG_SHARED_LEDGER_PATH",
+        str(tmp_path / "unused_task40_ledger.json"),
+    )
+    monkeypatch.setenv("PHYSICAL_WATCHDOG_SHARED_ATTEMPT_INDEX", "0")
+    monkeypatch.delenv("TASK40_V10_CAMPAIGN_WINDOW", raising=False)
+    monkeypatch.chdir(tmp_path)
+
+    binding = _task41_b0_dispatch_binding(
+        resolved,
+        source_sha=source_sha,
+        current_root=tmp_path,
+        run_directory=run_directory,
+    )
+    expected_claim = window.accounting_path.with_name(
+        window.accounting_path.name + ".v15_full_owner_claim.json"
+    ).resolve()
+    assert binding["full_owner_quota_claim_path"] == str(expected_claim)
+    assert binding["run_directory"] == str(run_directory.resolve())
+
+    from src.runners.task40_v10_campaign import CampaignAccount
+
+    CampaignAccount(window).record_sample(
+        label="test_task41_v15_dispatch_worker_entry", phase="numeric"
+    )
+
+    profile_contract = profile_facts(TASK41_B0_PRECONDITIONER)
+    runtime_contract, resource_overrides = _task41_p0_runtime_configuration(
+        profile_contract, case_id="B0"
+    )
+    runtime = _V14Runtime(
+        tmp_path / "runtime",
+        case_spec["solver_stage"],
+        runtime_contract,
+        root=tmp_path,
+        source_sha=source_sha,
+        batch_identity="task41_p0_b0_07nm_p6_reference",
+        evidence_prefix="task41_v15_dispatch_contract_fixture",
+        require_zero_swap=True,
+        **resource_overrides,
+    )
+
+    import src.runners.task038_full3d_iterative as dispatch_module
+    import src.runners.task40_v10_worker as worker_module
+
+    def check_candidate(payload, candidate_binding):
+        return _candidate_contract(
+            payload, profile_contract, runtime,
+            profile_identity=TASK41_B0_PRECONDITIONER,
+            task41_source_sha=source_sha,
+            task41_contract_binding=candidate_binding,
+            run_directory=run_directory, current_root=tmp_path,
+        )
+
+    captured = {}
+    def worker_entry(payload, output, **kwargs):
+        assert Path(output).resolve() == run_directory.resolve()
+        captured["payload"] = payload
+        return check_candidate(payload, kwargs["task41_contract_binding"])
+
+    monkeypatch.setattr(dispatch_module, "__file__", str(tmp_path / "src/runners/task038_full3d_iterative.py"))
+    monkeypatch.setattr(worker_module, "run_task40_v10_p6_reference_worker", worker_entry)
+    candidate = dispatch_module.run_full3d_iterative(
+        resolved, run_directory, source_sha=source_sha
+    )
+    assert all(candidate["checks"].values())
+    assert candidate["checks"]["v15_full_owner_dispatch_binding"] is True
+    assert candidate["full_owner_quota_claim_path"] == str(expected_claim)
+    assert captured["payload"]["solver"]["internal_rhs_strategy"] == "same_lu_rhs_solve"
+
+    wrong_claim_binding = dict(
+        binding,
+        full_owner_quota_claim_path=str(tmp_path / "wrong-v15-owner-claim.json"),
+    )
+    with pytest.raises(ValueError, match="v15_full_owner_dispatch_binding"):
+        check_candidate(captured["payload"], wrong_claim_binding)
+
+
 def _adopt_v3_window_fixture(root, contract, monkeypatch):
     import src.runners.task41_p0_contract as module
 
