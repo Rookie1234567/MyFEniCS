@@ -19,7 +19,9 @@
       "failed": 1,
       "seconds": 2.53,
       "cause": "tiny fixture retained production-size V15 evidence reserve against its 2 MB fixture cap",
-      "remote_log": "/tmp/task41_v15_p0_unit5_tests.log"
+      "remote_log": "/tmp/task41_v15_p0_unit5_tests.log",
+      "persistent_log": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v15_p0_tests/task41_v15_p0_unit5_tests.log",
+      "log_sha256": "62b4369b45e9a55dc9c98e50d0fa4ba75ec532ae9fcf2fac786d52a9804108be"
     },
     {
       "unit": 6,
@@ -27,7 +29,9 @@
       "failed": 1,
       "seconds": 2.85,
       "cause": "zero-output fixture exposed NumPy bool versus Python bool identity comparison in action metrics",
-      "remote_log": "/tmp/task41_v15_p0_unit6_tests.log"
+      "remote_log": "/tmp/task41_v15_p0_unit6_tests.log",
+      "persistent_log": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v15_p0_tests/task41_v15_p0_unit6_tests.log",
+      "log_sha256": "1ab843d79cba93f0aceb40311421b9c16441603c345cb956b05e4aec7aa79363"
     }
   ],
   "execution": {
@@ -86,7 +90,7 @@
       "sha256": "447c11d1732a7b63c5dcba242a16923f1b81c79fc9c6acc1e4ff3e3d37f76503"
     },
     {
-      "path": "task41_v15_p0_final_tests.log",
+      "path": "task41_v15_p0_final_tests.txt",
       "bytes": 99,
       "sha256": "35fe363ae9122860d9ab5f34e0ee9ea16c509080d849ecfe07956ba36e73c10d"
     },
@@ -95,5 +99,6 @@
       "bytes": 1304,
       "sha256": "ca1acc27311ecaaba65f53937da6a5b7d599a305cc0082b679b4c1b89bf1a0cd"
     }
-  ]
+  ],
+  "scientific_preparation_source": "7c70ef49e1abedaefd35bae9a157f459b7ff41cb"
 }
