@@ -1009,6 +1009,7 @@ def build_task41_v4_volume_only_owner(
     raw_tensor_evaluator_kind: str | None = None,
     ffcx_c_source_path: str | Path | None = None,
     internal_rhs_strategy: str = "stored_T",
+    internal_rhs_refinement_max_steps: int = 0,
     levels: Mapping[str, Any] | None = None,
     volume_form: Any | None = None,
     compiled_form: Any | None = None,
@@ -1053,6 +1054,13 @@ def build_task41_v4_volume_only_owner(
         )
     if internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
         raise ValueError(f"unknown Task41 internal RHS strategy {internal_rhs_strategy!r}")
+    if (
+        isinstance(internal_rhs_refinement_max_steps, bool)
+        or not isinstance(internal_rhs_refinement_max_steps, int)
+        or internal_rhs_refinement_max_steps not in (0, 2)
+        or (internal_rhs_refinement_max_steps and internal_rhs_strategy != "same_lu_rhs_solve")
+    ):
+        raise ValueError("Task41 volume-owner same-LU refinement must be 0 or 2")
     reused_setup = levels is not None or volume_form is not None or compiled_form is not None
     if reused_setup and (levels is None or volume_form is None):
         raise ValueError("reused Task41 FE construction requires both levels and volume_form")
@@ -1193,6 +1201,7 @@ def build_task41_v4_volume_only_owner(
             materialize_global_matrix=False,
             retain_local_schur_for_matrix_free=True,
             internal_rhs_strategy=internal_rhs_strategy,
+            internal_rhs_refinement_max_steps=internal_rhs_refinement_max_steps,
             share_identity_cache=True,
             preserve_exact_geometry=True,
             geometry_policy=geometry_policy,

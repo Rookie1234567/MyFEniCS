@@ -14,6 +14,7 @@ import numpy as np
 
 from src.runners.task41_p0_contract import (
     TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
+    TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
     load_task41_p0_fixed_window,
     require_task41_p0_contract,
     sha256_file,
@@ -33,6 +34,50 @@ from src.runners.task41_p0_v4_volume_only_audit import (
 )
 
 V14_EXPECTED_INTERNAL_ROWS = 450
+
+
+def _serialized_refinement_binding_matches(
+    source: Mapping[str, Any], payload: Mapping[str, Any]
+) -> bool:
+    """Keep historical v1 reports readable while checking new v2 fields."""
+
+    consumer = source.get("consumer_contract")
+    numerical_strategy = (
+        consumer.get("numerical_strategy") if isinstance(consumer, Mapping) else None
+    )
+    historical_v1 = (
+        isinstance(consumer, Mapping)
+        and consumer.get("execution_scope")
+        == TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE
+        and numerical_strategy
+        == {
+            "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+            "internal_rhs_strategy": "same_lu_rhs_solve",
+        }
+    )
+    expected_pair = (
+        source.get("refinement_strategy"), source.get("refinement_max_steps")
+    )
+    has_strategy = "refinement_strategy" in payload
+    has_steps = (
+        "refinement_max_steps" in payload
+        if "refinement_max_steps" in payload
+        else "max_correction_steps" in payload
+    )
+    serialized_steps = payload.get(
+        "refinement_max_steps", payload.get("max_correction_steps")
+    )
+    if historical_v1 and not has_strategy:
+        return bool(
+            (not has_steps)
+            or serialized_steps == expected_pair[1]
+        )
+    return bool(
+        has_strategy
+        and has_steps
+        and payload.get("refinement_strategy") == expected_pair[0]
+        and serialized_steps == expected_pair[1]
+    )
 
 
 def _pair(value: Any, label: str) -> complex:
@@ -364,6 +409,7 @@ def check_v14_saved_candidate(
         and report.get("donor_manifest_sha256") == source["donor_manifest_sha256"]
         and report.get("producer_window_sha256") == V14_SOURCE_WINDOW_SHA256
         and report.get("consumer_contract_path") == str(source["consumer_contract_path"])
+        and _serialized_refinement_binding_matches(source, report)
     )
     if not identity_fields:
         raise ValueError("V14 candidate/report source identities or negative classification differ")
@@ -376,7 +422,8 @@ def check_v14_saved_candidate(
         or stage.get("states") != expected_states
         or (extension and stage.get("state_rows") != expected_state_rows)
         or (not extension and stage.get("state_rows") not in (None, expected_state_rows))
-        or stage.get("max_correction_steps") != 2
+        or stage.get("max_correction_steps") != source["refinement_max_steps"]
+        or not _serialized_refinement_binding_matches(source, stage)
         or stage.get("max_initial_screen_getrs_count") != 12
         or stage.get("conditional_star_coverage_registered") is not (stage_name == "initial_screen")
         or stage.get("prior_stage_reused") != source.get("prior_stage_reused")

@@ -87,6 +87,7 @@ def execute_candidate_rhs(
     matrix_identity: str,
     evidence_budget: list[int],
     expected_initial: np.ndarray,
+    refinement_max_steps: int,
 ) -> dict[str, Any]:
     """Call the production core and durably persist every callback before continuing."""
     if not label or any(character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-" for character in label):
@@ -140,7 +141,7 @@ def execute_candidate_rhs(
             factor,
             actual_trace_interior,
             internal_rhs,
-            refinement_max_steps=2,
+            refinement_max_steps=refinement_max_steps,
             actual_internal_matrix=actual_internal_matrix,
             actual_internal_matrix_identity=matrix_identity,
             factor_matrix_identity=matrix_identity,
@@ -213,6 +214,7 @@ def run_v14_saved_candidate(
                 matrix_identity=identity,
                 evidence_budget=evidence_budget,
                 expected_initial=term.get("old_z_b"),
+                refinement_max_steps=int(source["refinement_max_steps"]),
             )
             projection = np.asarray(
                 local["trace_expansion"].conj().T @ result["returned_correction"],
@@ -349,6 +351,8 @@ def run_v14_saved_candidate(
         "donor_contract_sha256": source["donor_contract_sha256"],
         "donor_manifest_sha256": source["donor_manifest_sha256"],
         "producer_window_sha256": V14_SOURCE_WINDOW_SHA256,
+        "refinement_strategy": source["refinement_strategy"],
+        "refinement_max_steps": int(source["refinement_max_steps"]),
         "scope": {
             "stage": stage,
             "cells": list(cell_order),
@@ -356,7 +360,8 @@ def run_v14_saved_candidate(
             "states": sorted({str(item["state"]) for item in state_rows}),
             "state_rows": [{"column": int(item["column"]), "state": str(item["state"])} for item in state_rows],
             "rhs_count": len(cell_order) * len(columns),
-            "max_correction_steps": 2,
+            "refinement_strategy": source["refinement_strategy"],
+            "max_correction_steps": int(source["refinement_max_steps"]),
             "max_initial_screen_getrs_count": 12,
             "conditional_star_coverage_registered": stage == "initial_screen",
             "prior_stage_reused": source.get("prior_stage_reused"),

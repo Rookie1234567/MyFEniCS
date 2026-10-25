@@ -1141,6 +1141,9 @@ class _CellActionData:
     recovery: np.ndarray
     trace_from_interior: np.ndarray
     trace_interior: np.ndarray | None
+    actual_internal_matrix: np.ndarray | None
+    actual_internal_matrix_identity: object | None
+    factor_matrix_identity: object | None
     interior_lu: tuple[np.ndarray, np.ndarray]
     Bi: np.ndarray
     Bt: np.ndarray | None
@@ -1274,6 +1277,18 @@ class P6CellCondensedAction:
         )
         if self.internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
             raise ValueError("condensation owner has an unknown internal RHS strategy")
+        refinement_steps = getattr(condensed, "internal_rhs_refinement_max_steps", 0)
+        if (
+            isinstance(refinement_steps, (bool, np.bool_))
+            or not isinstance(refinement_steps, (int, np.integer))
+            or int(refinement_steps) not in (0, 2)
+        ):
+            raise ValueError("condensation owner has an unsupported same-LU refinement limit")
+        self.internal_rhs_refinement_max_steps = int(refinement_steps)
+        if self.internal_rhs_refinement_max_steps and (
+            self.internal_rhs_strategy != "same_lu_rhs_solve"
+        ):
+            raise ValueError("same-LU refinement requires same_lu_rhs_solve")
         if (
             self.internal_rhs_strategy == "same_lu_rhs_solve"
             and getattr(condensed, "retained_trace_interior_by_class", None) is None
@@ -1289,12 +1304,37 @@ class P6CellCondensedAction:
             name: {
                 "getrs_count": 0,
                 "getrs_seconds": 0.0,
+                "initial_getrs_count": 0,
+                "initial_getrs_seconds": 0.0,
+                "correction_getrs_count": 0,
+                "correction_getrs_seconds": 0.0,
+                "refinement_steps": 0,
+                "residual_evaluation_count": 0,
+                "residual_seconds": 0.0,
+                "update_seconds": 0.0,
                 "j_matvec_seconds": 0.0,
                 "core_seconds": 0.0,
                 "port_D_seconds": 0.0,
                 "mpc_scatter_seconds": 0.0,
             }
-            for name in ("actual_rhs", "residual_diagnostic")
+            for name in (
+                "actual_rhs",
+                "actual_rhs_recovery",
+                "residual_diagnostic",
+            )
+        }
+        self._same_lu_rhs_costs_scope = {
+            "refinement_max_steps": self.internal_rhs_refinement_max_steps,
+            "refined_purposes": (
+                ["actual_rhs", "actual_rhs_recovery"]
+                if self.internal_rhs_refinement_max_steps
+                else []
+            ),
+            "excluded_purposes": [
+                "residual_diagnostic",
+                "B_port_recovery",
+                "native_internal_recovery_corrections",
+            ],
         }
         self._streamed_action_lu_solve_count = 0
         self._streamed_recovery_lu_solve_count = 0
@@ -1443,6 +1483,16 @@ class P6CellCondensedAction:
             "shared_recovery_buffer_count": len({id(cell.recovery) for cell in self._cells}),
             "shared_LU_factor_buffer_count": len({id(cell.interior_lu[0]) for cell in self._cells}),
             "internal_rhs_strategy": self.internal_rhs_strategy,
+            "internal_rhs_refinement_max_steps": self.internal_rhs_refinement_max_steps,
+            "same_lu_rhs_refinement_strategy": (
+                "same_lu_binary64_products_real_imag_fsum"
+                if self.internal_rhs_refinement_max_steps
+                else "disabled"
+            ),
+            "same_lu_rhs_refinement_scope": dict(self._same_lu_rhs_costs_scope),
+            "actual_internal_K_readonly_borrowed_from_owner": bool(
+                self.internal_rhs_refinement_max_steps
+            ),
             "shared_J_buffer_count": len(
                 {id(cell.trace_interior) for cell in self._cells if cell.trace_interior is not None}
             ),
@@ -1566,6 +1616,9 @@ class P6CellCondensedAction:
                 shape=(nt, ni),
             )
             trace_interior = None
+            actual_internal_matrix = None
+            actual_internal_matrix_identity = None
+            factor_matrix_identity = None
             if self.internal_rhs_strategy == "same_lu_rhs_solve":
                 retained_j = getattr(
                     self.condensed, "retained_trace_interior_by_class", None
@@ -1585,6 +1638,43 @@ class P6CellCondensedAction:
                 if trace_interior.flags.writeable:
                     raise ValueError("retained actual J must be readonly")
             factor = self.condensed.interior_lu_by_class[cell.class_key]
+            if self.internal_rhs_refinement_max_steps:
+                retained_k = getattr(
+                    self.condensed, "retained_actual_internal_matrix_by_class", None
+                )
+                actual_identities = getattr(
+                    self.condensed, "actual_internal_matrix_identity_by_class", None
+                )
+                factor_identities = getattr(
+                    self.condensed, "interior_lu_matrix_identity_by_class", None
+                )
+                if (
+                    retained_k is None
+                    or actual_identities is None
+                    or factor_identities is None
+                ):
+                    raise ValueError(
+                        "same-LU refinement owner is missing its readonly actual K maps"
+                    )
+                try:
+                    actual_internal_matrix = _borrow_matrix(
+                        retained_k[cell.class_key],
+                        "retained actual oriented K block",
+                        shape=(ni, ni),
+                        check_finite=False,
+                    )
+                    actual_internal_matrix_identity = actual_identities[cell.class_key]
+                    factor_matrix_identity = factor_identities[cell.class_key]
+                except KeyError as exc:
+                    raise ValueError(
+                        f"same-LU refinement owner is missing actual K for class {cell.class_key!r}"
+                    ) from exc
+                if actual_internal_matrix.flags.writeable:
+                    raise ValueError("retained actual K must be readonly")
+                if actual_internal_matrix_identity is not factor_matrix_identity:
+                    raise ValueError(
+                        "same-LU refinement actual K and LU identities differ"
+                    )
             if self.port_coupling_mode == "cached":
                 xib = np.ascontiguousarray(lu_solve(factor, bi))
                 bhat = np.ascontiguousarray(
@@ -1623,6 +1713,9 @@ class P6CellCondensedAction:
                     recovery=recovery,
                     trace_from_interior=trace_from_interior,
                     trace_interior=trace_interior,
+                    actual_internal_matrix=actual_internal_matrix,
+                    actual_internal_matrix_identity=actual_internal_matrix_identity,
+                    factor_matrix_identity=factor_matrix_identity,
                     interior_lu=factor,
                     Bi=_readonly(bi),
                     Bt=None if bt is None else _readonly(bt),
@@ -1938,6 +2031,17 @@ class P6CellCondensedAction:
                 self._direct_D_active,
             )
         )
+        actual_k_arrays = [
+            cell.actual_internal_matrix
+            for cell in self._cells
+            if cell.actual_internal_matrix is not None
+        ]
+        actual_k_owners: dict[int, int] = {}
+        for value in actual_k_arrays:
+            owner = value
+            while isinstance(getattr(owner, "base", None), np.ndarray):
+                owner = owner.base
+            actual_k_owners[id(owner)] = int(owner.nbytes)
         return MappingProxyType(
             {
                 "cell_count": len(self._cells),
@@ -1945,6 +2049,17 @@ class P6CellCondensedAction:
                 "unique_S_V_buffers": len({id(cell.S_V) for cell in self._cells}),
                 "unique_recovery_buffers": len({id(cell.recovery) for cell in self._cells}),
                 "unique_LU_factor_buffers": len({id(cell.interior_lu[0]) for cell in self._cells}),
+                "unique_actual_internal_K_buffers": len(
+                    {id(value) for value in actual_k_arrays}
+                ),
+                "actual_internal_K_bytes_borrowed": int(
+                    sum(value.nbytes for value in {
+                        id(array): array for array in actual_k_arrays
+                    }.values())
+                ),
+                "actual_internal_K_unique_backing_bytes": int(
+                    sum(actual_k_owners.values())
+                ),
                 "unique_trace_rhs_projection_buffers": len(
                     {id(cell.trace_from_interior) for cell in self._cells}
                 ),
@@ -2036,6 +2151,7 @@ class P6CellCondensedAction:
         """Hash retained class arrays and the two small port blocks."""
 
         same_lu_rhs_solve = self.internal_rhs_strategy == "same_lu_rhs_solve"
+        refined_same_lu_rhs = bool(self.internal_rhs_refinement_max_steps)
         classes: dict[str, dict[str, str]] = {}
         for cell in self._cells:
             key = repr(cell.class_key)
@@ -2058,17 +2174,35 @@ class P6CellCondensedAction:
                         ),
                     }
                 )
+            if refined_same_lu_rhs:
+                if cell.actual_internal_matrix is None:
+                    raise ValueError(
+                        "refined same-LU cache identity is missing its actual K block"
+                    )
+                class_identity["actual_internal_K_sha256"] = _array_sha256(
+                    cell.actual_internal_matrix
+                )
             classes[key] = class_identity
         return MappingProxyType(
             {
                 "schema_version": (
-                    "task039extra.v19.p6-cell-condensed-cache-identity.v2"
+                    "task039extra.v19.p6-cell-condensed-cache-identity.v3"
+                    if refined_same_lu_rhs
+                    else "task039extra.v19.p6-cell-condensed-cache-identity.v2"
                     if same_lu_rhs_solve
                     else "task039extra.v19.p6-cell-condensed-cache-identity.v1"
                 ),
                 **(
                     {"internal_rhs_strategy": self.internal_rhs_strategy}
                     if same_lu_rhs_solve
+                    else {}
+                ),
+                **(
+                    {
+                        "internal_rhs_refinement_max_steps": self.internal_rhs_refinement_max_steps,
+                        "same_lu_rhs_refinement_strategy": "same_lu_binary64_products_real_imag_fsum",
+                    }
+                    if refined_same_lu_rhs
                     else {}
                 ),
                 "class_payloads": classes,
@@ -3131,14 +3265,49 @@ class P6CellCondensedAction:
             raise RuntimeError("same-LU RHS projection lost its borrowed actual J")
         if purpose not in self._same_lu_rhs_costs:
             raise ValueError(f"unknown same-LU RHS accounting purpose {purpose!r}")
+        refinement_max_steps = (
+            self.internal_rhs_refinement_max_steps
+            if purpose in {"actual_rhs", "actual_rhs_recovery"}
+            else 0
+        )
         solved, correction, timing = project_internal_rhs_same_lu(
-            cell.interior_lu, cell.trace_interior, internal_rhs
+            cell.interior_lu,
+            cell.trace_interior,
+            internal_rhs,
+            refinement_max_steps=refinement_max_steps,
+            actual_internal_matrix=(
+                cell.actual_internal_matrix if refinement_max_steps else None
+            ),
+            actual_internal_matrix_identity=(
+                cell.actual_internal_matrix_identity if refinement_max_steps else None
+            ),
+            factor_matrix_identity=(
+                cell.factor_matrix_identity if refinement_max_steps else None
+            ),
         )
         costs = self._same_lu_rhs_costs[purpose]
-        if timing["nonzero_rhs"]:
-            costs["getrs_count"] += 1
-            self._same_lu_rhs_solve_count += 1
+        getrs_count = int(timing.get("getrs_count", int(timing["nonzero_rhs"])))
+        costs["getrs_count"] += getrs_count
+        self._same_lu_rhs_solve_count += getrs_count
         costs["getrs_seconds"] += float(timing["getrs_seconds"])
+        costs["initial_getrs_count"] += int(
+            timing.get("initial_getrs_count", int(timing["nonzero_rhs"]))
+        )
+        costs["initial_getrs_seconds"] += float(
+            timing.get("initial_getrs_seconds", timing["getrs_seconds"])
+        )
+        costs["correction_getrs_count"] += int(
+            timing.get("correction_getrs_count", 0)
+        )
+        costs["correction_getrs_seconds"] += float(
+            timing.get("correction_getrs_seconds", 0.0)
+        )
+        costs["refinement_steps"] += int(timing.get("refinement_steps", 0))
+        costs["residual_evaluation_count"] += int(
+            timing.get("residual_evaluation_count", 0)
+        )
+        costs["residual_seconds"] += float(timing.get("residual_seconds", 0.0))
+        costs["update_seconds"] += float(timing.get("update_seconds", 0.0))
         costs["j_matvec_seconds"] += float(timing["j_matvec_seconds"])
         costs["core_seconds"] += float(timing["core_seconds"])
         self._audit["same_lu_rhs_solve_count"] = self._same_lu_rhs_solve_count
@@ -3258,7 +3427,14 @@ class P6CellCondensedAction:
         for cell in self._cells:
             local_trace = np.asarray(cell.expansion @ active[cell.active_ids], dtype=np.complex128).reshape(-1)
             bi = self._cell_internal_rhs(full_rhs_values, cell)
-            solved_rhs = lu_solve(cell.interior_lu, bi)
+            if self.internal_rhs_refinement_max_steps:
+                _correction, refined_solved_rhs = self._project_internal_rhs(
+                    cell, bi, purpose="actual_rhs_recovery"
+                )
+                assert refined_solved_rhs is not None
+                solved_rhs = refined_solved_rhs
+            else:
+                solved_rhs = lu_solve(cell.interior_lu, bi)
             trace_recovery = cell.recovery @ local_trace
             values = solved_rhs + trace_recovery
             if self.port_coupling_mode == "streamed":

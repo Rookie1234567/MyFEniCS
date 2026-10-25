@@ -7,6 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
 from src.runners import task41_p0_contract as contract_module
 from src.runners import task41_p0_v14_candidate_io as v14_io
@@ -18,6 +19,89 @@ from scripts import task40_v20_service_workflow as service_workflow
 def _write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def test_v14_refinement_binding_accepts_immutable_v1_and_explicit_v2_only():
+    scope = contract_module.TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE
+    historical = {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+    }
+    explicit = {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v2",
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+        "refinement_strategy": contract_module.TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        "refinement_max_steps": 2,
+    }
+    assert v14_io._v14_refinement_binding(
+        {"execution_scope": scope, "numerical_strategy": historical}
+    ) == (contract_module.TASK41_B0_V14_RHS_REFINEMENT_STRATEGY, 2)
+    assert v14_io._v14_refinement_binding(
+        {"execution_scope": scope, "numerical_strategy": explicit}
+    ) == (contract_module.TASK41_B0_V14_RHS_REFINEMENT_STRATEGY, 2)
+
+    wrong_strategy = {**explicit, "refinement_max_steps": 1}
+    with pytest.raises(ValueError, match="fixed two-step"):
+        v14_io._v14_refinement_binding(
+            {"execution_scope": scope, "numerical_strategy": wrong_strategy}
+        )
+    unbounded_scope = {**scope, "full_owner": True}
+    with pytest.raises(ValueError, match="bounded same-LU"):
+        v14_io._v14_refinement_binding(
+            {"execution_scope": unbounded_scope, "numerical_strategy": explicit}
+        )
+
+
+def test_v14_checker_reads_old_v1_and_new_v2_refinement_serializations():
+    from src.runners.task41_p0_v14_saved_rhs_checker import (
+        _serialized_refinement_binding_matches,
+    )
+
+    scope = contract_module.TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE
+    expected = {
+        "refinement_strategy": contract_module.TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        "refinement_max_steps": 2,
+    }
+    old_source = {
+        **expected,
+        "consumer_contract": {
+            "execution_scope": scope,
+            "numerical_strategy": {
+                "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+                "internal_rhs_strategy": "same_lu_rhs_solve",
+            },
+        },
+    }
+    assert _serialized_refinement_binding_matches(old_source, {})
+    assert _serialized_refinement_binding_matches(
+        old_source, {"max_correction_steps": 2}
+    )
+    assert not _serialized_refinement_binding_matches(
+        old_source, {"max_correction_steps": 1}
+    )
+    assert not _serialized_refinement_binding_matches(
+        old_source, {"refinement_strategy": expected["refinement_strategy"]}
+    )
+
+    new_source = {
+        **expected,
+        "consumer_contract": {
+            "execution_scope": scope,
+            "numerical_strategy": {
+                "schema": "task41.p0.b0.internal_rhs_strategy.v2",
+                "internal_rhs_strategy": "same_lu_rhs_solve",
+                **expected,
+            },
+        },
+    }
+    assert _serialized_refinement_binding_matches(new_source, expected)
+    assert _serialized_refinement_binding_matches(
+        new_source, {
+            "refinement_strategy": expected["refinement_strategy"],
+            "max_correction_steps": 2,
+        }
+    )
+    assert not _serialized_refinement_binding_matches(new_source, {})
 
 
 

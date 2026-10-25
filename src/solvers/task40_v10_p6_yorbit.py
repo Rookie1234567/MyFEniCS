@@ -5003,6 +5003,7 @@ def build_task40_v10_p6_local_sector_owner(
     surface_functional_checkpoint: Mapping[str, Any] | None = None,
     stage_callback: Callable[[Mapping[str, Any]], None] | None = None,
     internal_rhs_strategy: str = "stored_T",
+    internal_rhs_refinement_max_steps: int = 0,
 ) -> dict[str, Any]:
     """Build one reusable local FE/recovery owner before the global reference.
 
@@ -5038,6 +5039,13 @@ def build_task40_v10_p6_local_sector_owner(
         raise ValueError(
             f"unknown Task41 local-sector internal RHS strategy {internal_rhs_strategy!r}"
         )
+    if (
+        isinstance(internal_rhs_refinement_max_steps, bool)
+        or not isinstance(internal_rhs_refinement_max_steps, int)
+        or internal_rhs_refinement_max_steps not in (0, 2)
+        or (internal_rhs_refinement_max_steps and internal_rhs_strategy != "same_lu_rhs_solve")
+    ):
+        raise ValueError("local-sector same-LU refinement must be 0 or 2 with same_lu_rhs_solve")
     if not isinstance(context, Task40V10SectorContext):
         raise TypeError("local p6 sector owner requires a frozen sector context")
     if len(global_modes) != len(global_mode_rows):
@@ -5341,6 +5349,7 @@ def build_task40_v10_p6_local_sector_owner(
                 materialize_global_matrix=False,
                 retain_local_schur_for_matrix_free=True,
                 internal_rhs_strategy=internal_rhs_strategy,
+                internal_rhs_refinement_max_steps=internal_rhs_refinement_max_steps,
                 share_identity_cache=True,
                 preserve_exact_geometry=True,
                 allocation_gate=allocation_gate,
@@ -5586,6 +5595,10 @@ def build_task40_v10_p6_local_sector_owner(
                 "created_before_global_reference": True,
                 "created_transform_bank": bool(created_transform_bank),
                 "action_and_recovery_owner_retained": True,
+                "internal_rhs_strategy": str(action.internal_rhs_strategy),
+                "internal_rhs_refinement_max_steps": int(
+                    action.internal_rhs_refinement_max_steps
+                ),
                 "saved_surface_native_owner": (
                     dict(saved_surface_owner["owner_receipt"])
                     if saved_surface_owner is not None
@@ -5641,6 +5654,98 @@ def _validate_prebuilt_sector_indices(profile: Any, indices: Sequence[Any]) -> N
             "prebuilt sectors are restricted to registered twist indices "
             f"0..{replication_count - 1}"
         )
+
+
+def _validate_prebuilt_sector_rhs_owner(
+    prebuilt: Mapping[str, Any],
+    *,
+    internal_rhs_strategy: str,
+    internal_rhs_refinement_max_steps: int,
+) -> None:
+    """Bind opt-in reference refinement to the live owner's actual K/LU pair.
+
+    The zero-step path intentionally keeps accepting historical prebuilt owners
+    without imposing the newer strategy receipt.  For fixed-two refinement,
+    only the lightweight borrowed-array and identity references are checked
+    here; the owner constructor already performed the numeric K validation.
+    """
+
+    if internal_rhs_refinement_max_steps == 0:
+        return
+    if (
+        internal_rhs_strategy != "same_lu_rhs_solve"
+        or internal_rhs_refinement_max_steps != 2
+    ):
+        raise ValueError(
+            "prebuilt sector refinement requires same_lu_rhs_solve with fixed two steps"
+        )
+
+    action = prebuilt.get("action")
+    condensed = getattr(action, "condensed", None)
+    if action is None or condensed is None:
+        raise ValueError("prebuilt refined sector is missing its live action/system owner")
+    if prebuilt.get("system") is not None and prebuilt.get("system") is not condensed:
+        raise ValueError("prebuilt refined sector action differs from its live system owner")
+    expected = (internal_rhs_strategy, internal_rhs_refinement_max_steps)
+    live = (
+        getattr(action, "internal_rhs_strategy", None),
+        getattr(action, "internal_rhs_refinement_max_steps", None),
+    )
+    system = (
+        getattr(condensed, "internal_rhs_strategy", None),
+        getattr(condensed, "internal_rhs_refinement_max_steps", None),
+    )
+    if live != expected or system != expected:
+        raise ValueError(
+            "prebuilt sector action/system RHS strategy or refinement differs from request"
+        )
+    receipt = prebuilt.get("owner_receipt")
+    if (
+        not isinstance(receipt, Mapping)
+        or receipt.get("internal_rhs_strategy") != expected[0]
+        or receipt.get("internal_rhs_refinement_max_steps") != expected[1]
+    ):
+        raise ValueError("prebuilt sector owner receipt does not bind the requested RHS strategy")
+
+    retained_k = getattr(condensed, "retained_actual_internal_matrix_by_class", None)
+    actual_identities = getattr(condensed, "actual_internal_matrix_identity_by_class", None)
+    factor_identities = getattr(condensed, "interior_lu_matrix_identity_by_class", None)
+    factors = getattr(condensed, "interior_lu_by_class", None)
+    cells = getattr(action, "_cells", None)
+    if any(
+        not isinstance(value, Mapping)
+        for value in (retained_k, actual_identities, factor_identities, factors)
+    ) or not isinstance(cells, tuple) or not cells:
+        raise ValueError("prebuilt refined sector is missing retained actual K/LU identity maps")
+
+    for cell in cells:
+        class_key = getattr(cell, "class_key", None)
+        try:
+            actual_k = retained_k[class_key]
+            actual_identity = actual_identities[class_key]
+            factor_identity = factor_identities[class_key]
+            factor = factors[class_key]
+        except (KeyError, TypeError) as exc:
+            raise ValueError(
+                "prebuilt refined sector is missing a class-bound actual K/LU"
+            ) from exc
+        flags = getattr(actual_k, "flags", None)
+        if (
+            actual_k is not getattr(cell, "actual_internal_matrix", None)
+            or flags is None
+            or bool(flags.writeable)
+        ):
+            raise ValueError(
+                "prebuilt refined sector action does not borrow its owner's readonly K"
+            )
+        if (
+            actual_identity is None
+            or actual_identity is not factor_identity
+            or actual_identity is not getattr(cell, "actual_internal_matrix_identity", None)
+            or factor_identity is not getattr(cell, "factor_matrix_identity", None)
+            or factor is not getattr(cell, "interior_lu", None)
+        ):
+            raise ValueError("prebuilt refined sector actual K and LU identities differ")
 
 
 def _validate_all_profile_q_matrices(
@@ -5820,6 +5925,7 @@ def build_task40_v10_p6_reference_inverse(
     ] | None = None,
     regular_reference_fills_y_period: bool = False,
     internal_rhs_strategy: str = "stored_T",
+    internal_rhs_refinement_max_steps: int = 0,
 ) -> dict[str, Any]:
     """Build the regular p6 inverse, or run a bounded no-factor q-assembly pair."""
     from mpi4py import MPI
@@ -5860,6 +5966,13 @@ def build_task40_v10_p6_reference_inverse(
         raise TypeError("regular reference y-period fill must be an explicit boolean")
     if internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
         raise ValueError(f"unknown Task41 reference internal RHS strategy {internal_rhs_strategy!r}")
+    if (
+        isinstance(internal_rhs_refinement_max_steps, bool)
+        or not isinstance(internal_rhs_refinement_max_steps, int)
+        or internal_rhs_refinement_max_steps not in (0, 2)
+        or (internal_rhs_refinement_max_steps and internal_rhs_strategy != "same_lu_rhs_solve")
+    ):
+        raise ValueError("reference same-LU refinement must be 0 or 2 with same_lu_rhs_solve")
     if not callable(allocation_gate):
         raise TypeError("p6 reference construction requires a live allocation gate")
     if q_assembly_strategy not in Q_ASSEMBLY_STRATEGIES:
@@ -6179,6 +6292,11 @@ def build_task40_v10_p6_reference_inverse(
                 raise ValueError(
                     f"prebuilt twist-{context.twist_index} owner differs from the frozen context/mode/H/bank"
                 )
+            _validate_prebuilt_sector_rhs_owner(
+                prebuilt,
+                internal_rhs_strategy=internal_rhs_strategy,
+                internal_rhs_refinement_max_steps=internal_rhs_refinement_max_steps,
+            )
             owner_q_maps = prebuilt.get("q_maps_by_q")
             if owner_q_maps is not None and (
                 not isinstance(owner_q_maps, Mapping)
@@ -6356,6 +6474,7 @@ def build_task40_v10_p6_reference_inverse(
                         else None
                     ),
                     internal_rhs_strategy=internal_rhs_strategy,
+                    internal_rhs_refinement_max_steps=internal_rhs_refinement_max_steps,
                 )
             else:
                 validate_prebuilt_sector(context, pending_sector)

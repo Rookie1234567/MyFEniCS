@@ -12,6 +12,7 @@ from scipy.sparse import csr_matrix
 
 from src.runners.task41_p0_contract import (
     TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
+    TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
     TASK41_P0_CONTRACT_SCHEMA,
     TASK41_MODEL_ID,
     require_task41_p0_contract,
@@ -140,6 +141,45 @@ def _complex_pair(value: Any, label: str) -> complex:
     return result
 
 
+def _v14_refinement_binding(consumer: Mapping[str, Any]) -> tuple[str, int]:
+    """Resolve the immutable V14 v1 or explicit v2 RHS refinement binding."""
+
+    if consumer.get("execution_scope") != TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE:
+        raise ValueError(
+            "V14 consumer contract does not bind the bounded same-LU candidate scope"
+        )
+    numerical_strategy = consumer.get("numerical_strategy", {})
+    historical_v1_strategy = {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+    }
+    refined_v2_strategy = {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v2",
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+        "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        "refinement_max_steps": 2,
+    }
+    if not isinstance(numerical_strategy, Mapping):
+        raise ValueError("V14 consumer contract has no numerical strategy binding")
+    if dict(numerical_strategy) == historical_v1_strategy:
+        # Existing V14 v1 contracts are immutable evidence. The exact scope
+        # already bound the fixed algorithm before the v2 field was added.
+        return (
+            TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE["initial_screen"]["refinement"],
+            TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE["initial_screen"][
+                "refinement_max_steps"
+            ],
+        )
+    if dict(numerical_strategy) == refined_v2_strategy:
+        return (
+            str(numerical_strategy["refinement_strategy"]),
+            int(numerical_strategy["refinement_max_steps"]),
+        )
+    raise ValueError(
+        "V14 consumer contract does not bind the fixed two-step production core"
+    )
+
+
 def load_v14_saved_candidate_inputs(
     *,
     repo_root: str | Path,
@@ -170,8 +210,7 @@ def load_v14_saved_candidate_inputs(
         require_clean_source=require_clean_source,
         case_id="B0",
     )
-    if consumer.get("execution_scope") != TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE:
-        raise ValueError("V14 consumer contract does not bind the bounded same-LU candidate scope")
+    refinement_strategy, refinement_max_steps = _v14_refinement_binding(consumer)
     window = load_task41_p0_fixed_window(consumer, current_root=root, require_current_boot=False)
     if window.sha256 == V14_SOURCE_WINDOW_SHA256:
         raise ValueError("V14 consumer window must be distinct from the expired V11 producer window")
@@ -470,6 +509,8 @@ def load_v14_saved_candidate_inputs(
         "consumer_contract": consumer,
         "consumer_contract_path": consumer_path,
         "consumer_contract_sha256": consumer_digest,
+        "refinement_strategy": str(refinement_strategy),
+        "refinement_max_steps": int(refinement_max_steps),
         "consumer_window_sha256": window.sha256,
         "producer_report_path": report_path,
         "producer_report_sha256": producer_report_sha256,

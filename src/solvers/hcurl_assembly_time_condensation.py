@@ -47,6 +47,7 @@ def assembly_time_condensation_capacity_facts(
     identity_class_count: int,
     retain_local_schur: bool,
     retain_trace_interior_for_same_lu_rhs: bool = False,
+    retain_actual_internal_matrix_for_same_lu_refinement: bool = False,
     scalar_bytes: int,
     index_bytes: int,
     real_bytes: int,
@@ -87,6 +88,11 @@ def assembly_time_condensation_capacity_facts(
             if retain_trace_interior_for_same_lu_rhs
             else 0
         )
+        + (
+            interior_dimension * interior_dimension * scalar_bytes
+            if retain_actual_internal_matrix_for_same_lu_refinement
+            else 0
+        )
         + (schur_bytes if retain_local_schur else 0)
     )
     identity_cache_bytes_upper = (
@@ -107,6 +113,9 @@ def assembly_time_condensation_capacity_facts(
     )
     retained_schur_term = "t*t*s" if retain_local_schur else "0"
     retained_j_term = "i*t*s" if retain_trace_interior_for_same_lu_rhs else "0"
+    retained_k_term = (
+        "i*i*s" if retain_actual_internal_matrix_for_same_lu_refinement else "0"
+    )
     return {
         "full_tensor_bytes": full_tensor_bytes,
         "schur_bytes": schur_bytes,
@@ -127,6 +136,14 @@ def assembly_time_condensation_capacity_facts(
             if retain_trace_interior_for_same_lu_rhs
             else 0
         ),
+        "retained_actual_internal_matrix_bytes_upper": (
+            oriented_class_count
+            * interior_dimension
+            * interior_dimension
+            * scalar_bytes
+            if retain_actual_internal_matrix_for_same_lu_refinement
+            else 0
+        ),
         "local_working_bytes_upper": local_working_bytes_upper,
         "workspace_bytes_upper": (
             raw_cache_bytes_upper
@@ -138,9 +155,12 @@ def assembly_time_condensation_capacity_facts(
         "retain_trace_interior_for_same_lu_rhs": bool(
             retain_trace_interior_for_same_lu_rhs
         ),
+        "retain_actual_internal_matrix_for_same_lu_refinement": bool(
+            retain_actual_internal_matrix_for_same_lu_refinement
+        ),
         "formula": (
             "retained=o*(i*i*s+i*index+2*i*t*s+"
-            f"{retained_j_term}+{retained_schur_term})+{identity_class_count}*i*i*real; "
+            f"{retained_j_term}+{retained_k_term}+{retained_schur_term})+{identity_class_count}*i*i*real; "
             "workspace=r*F+o*F+o*T+(3*F+i*i*s+i*index+2*i*t*s+2*T)"
         ),
     }
@@ -789,16 +809,89 @@ class AssemblyTimeCondensedSystem:
     retained_local_schur_by_class: Mapping[tuple[Any, ...], np.ndarray] | None = None
     retained_trace_interior_by_class: Mapping[tuple[Any, ...], np.ndarray] | None = None
     internal_rhs_strategy: str = "stored_T"
+    internal_rhs_refinement_max_steps: int = 0
+    retained_actual_internal_matrix_by_class: Mapping[
+        tuple[Any, ...], np.ndarray
+    ] | None = None
+    actual_internal_matrix_identity_by_class: Mapping[
+        tuple[Any, ...], object
+    ] | None = None
+    interior_lu_matrix_identity_by_class: Mapping[
+        tuple[Any, ...], object
+    ] | None = None
     _destroyed: bool = field(default=False, init=False, repr=False)
     _trace_interior_rhs_borrowers: int = field(default=0, init=False, repr=False)
 
     def __post_init__(self) -> None:
         if self.internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
             raise ValueError(f"unknown internal RHS strategy {self.internal_rhs_strategy!r}")
+        if (
+            isinstance(self.internal_rhs_refinement_max_steps, (bool, np.bool_))
+            or not isinstance(
+                self.internal_rhs_refinement_max_steps, (int, np.integer)
+            )
+            or int(self.internal_rhs_refinement_max_steps) not in (0, 2)
+        ):
+            raise ValueError(
+                "same-LU RHS refinement limit must be disabled (0) or fixed at 2"
+            )
+        self.internal_rhs_refinement_max_steps = int(
+            self.internal_rhs_refinement_max_steps
+        )
+        if self.internal_rhs_refinement_max_steps and (
+            self.internal_rhs_strategy != "same_lu_rhs_solve"
+        ):
+            raise ValueError("same-LU refinement requires same_lu_rhs_solve")
         if self.internal_rhs_strategy == "same_lu_rhs_solve":
             if self.retained_trace_interior_by_class is None:
                 raise ValueError("same_lu_rhs_solve owner is missing its retained actual J map")
             self.require_identity_internal_rhs_maps()
+        if self.internal_rhs_refinement_max_steps:
+            if any(
+                value is None
+                for value in (
+                    self.retained_actual_internal_matrix_by_class,
+                    self.actual_internal_matrix_identity_by_class,
+                    self.interior_lu_matrix_identity_by_class,
+                )
+            ):
+                raise ValueError(
+                    "same-LU refinement owner is missing its retained actual K identity maps"
+                )
+            assert self.retained_actual_internal_matrix_by_class is not None
+            assert self.actual_internal_matrix_identity_by_class is not None
+            assert self.interior_lu_matrix_identity_by_class is not None
+            class_dimensions = {
+                cell.class_key: len(cell.interior_original_dofs)
+                for cell in self.cell_recovery_maps
+            }
+            for class_key, dimension in class_dimensions.items():
+                try:
+                    actual_k = self.retained_actual_internal_matrix_by_class[class_key]
+                    actual_identity = self.actual_internal_matrix_identity_by_class[
+                        class_key
+                    ]
+                    factor_identity = self.interior_lu_matrix_identity_by_class[
+                        class_key
+                    ]
+                except KeyError as exc:
+                    raise ValueError(
+                        "same-LU refinement owner is missing a class-bound actual K"
+                    ) from exc
+                array = np.asarray(actual_k)
+                if (
+                    array.shape != (dimension, dimension)
+                    or array.dtype != np.dtype(np.complex128)
+                    or array.flags.writeable
+                    or not np.isfinite(array).all()
+                ):
+                    raise ValueError(
+                        "same-LU refinement actual K must be finite, complex128, and readonly"
+                    )
+                if actual_identity is not factor_identity:
+                    raise ValueError(
+                        "same-LU refinement actual K and LU identities differ"
+                    )
 
     def require_identity_internal_rhs_maps(self) -> None:
         """Fail closed unless the opt-in RHS path uses qualified identity maps."""
@@ -881,6 +974,9 @@ class AssemblyTimeCondensedSystem:
             self.interior_residual_projection_by_class = {}
             self.retained_local_schur_by_class = None
             self.retained_trace_interior_by_class = None
+            self.retained_actual_internal_matrix_by_class = None
+            self.actual_internal_matrix_identity_by_class = None
+            self.interior_lu_matrix_identity_by_class = None
             self.trace_constraints = None
         self._destroyed = True
 
@@ -3255,6 +3351,7 @@ def build_unconstrained_assembly_time_condensation(
     defer_final_assembly: bool = False,
     retain_local_schur_for_matrix_free: bool = False,
     internal_rhs_strategy: str = "stored_T",
+    internal_rhs_refinement_max_steps: int = 0,
     share_identity_cache: bool = False,
     materialize_global_matrix: bool = True,
     compact_action_only_maps: bool = False,
@@ -3304,8 +3401,22 @@ def build_unconstrained_assembly_time_condensation(
     materialize_global_matrix = bool(materialize_global_matrix)
     if internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
         raise ValueError(f"unknown internal RHS strategy {internal_rhs_strategy!r}")
+    if (
+        isinstance(internal_rhs_refinement_max_steps, (bool, np.bool_))
+        or not isinstance(internal_rhs_refinement_max_steps, (int, np.integer))
+        or int(internal_rhs_refinement_max_steps) not in (0, 2)
+    ):
+        raise ValueError(
+            "same-LU RHS refinement limit must be disabled (0) or fixed at 2"
+        )
+    internal_rhs_refinement_max_steps = int(internal_rhs_refinement_max_steps)
+    if internal_rhs_refinement_max_steps and internal_rhs_strategy != "same_lu_rhs_solve":
+        raise ValueError("same-LU refinement requires same_lu_rhs_solve")
     retain_trace_interior_for_same_lu_rhs = (
         internal_rhs_strategy == "same_lu_rhs_solve"
+    )
+    retain_actual_internal_matrix_for_refinement = bool(
+        internal_rhs_refinement_max_steps
     )
     if not materialize_global_matrix and not retain_local_schur_for_matrix_free:
         raise ValueError(
@@ -3689,6 +3800,9 @@ def build_unconstrained_assembly_time_condensation(
             retain_trace_interior_for_same_lu_rhs=(
                 retain_trace_interior_for_same_lu_rhs
             ),
+            retain_actual_internal_matrix_for_same_lu_refinement=(
+                retain_actual_internal_matrix_for_refinement
+            ),
             scalar_bytes=scalar_bytes,
             index_bytes=index_bytes,
             real_bytes=real_bytes,
@@ -3840,6 +3954,9 @@ def build_unconstrained_assembly_time_condensation(
             retain_local_schur=retain_local_schur_for_matrix_free,
             retain_trace_interior_for_same_lu_rhs=(
                 retain_trace_interior_for_same_lu_rhs
+            ),
+            retain_actual_internal_matrix_for_same_lu_refinement=(
+                retain_actual_internal_matrix_for_refinement
             ),
             scalar_bytes=int(np.dtype(np.complex128).itemsize),
             index_bytes=int(np.dtype(PETSc.IntType).itemsize),
@@ -4047,6 +4164,9 @@ def build_unconstrained_assembly_time_condensation(
     solution_embedding_cache: dict[tuple[Any, ...], np.ndarray] = {}
     rhs_trace_cache: dict[tuple[Any, ...], np.ndarray] = {}
     trace_interior_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    actual_internal_matrix_cache: dict[tuple[Any, ...], np.ndarray] = {}
+    actual_internal_matrix_identity_cache: dict[tuple[Any, ...], object] = {}
+    interior_lu_matrix_identity_cache: dict[tuple[Any, ...], object] = {}
     residual_projection_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_maps: list[CellRecoveryMap | None] = (
         [None] * owned_cells
@@ -4249,6 +4369,18 @@ def build_unconstrained_assembly_time_condensation(
                     "dtype": str(A_ti.dtype),
                     "sha256": hashlib.sha256(memoryview(A_ti).cast("B")).hexdigest(),
                 }
+            if retain_actual_internal_matrix_for_refinement:
+                if not np.isfinite(A_ii).all():
+                    raise ValueError(
+                        "retained actual oriented K block contains non-finite values"
+                    )
+                # np.ix_ above made an independent K block, so retaining it
+                # does not keep the full oriented tensor backing alive.
+                A_ii.flags.writeable = False
+                actual_internal_matrix_cache[class_key] = A_ii
+                generation_identity = object()
+                actual_internal_matrix_identity_cache[class_key] = generation_identity
+                interior_lu_matrix_identity_cache[class_key] = generation_identity
             residual_projection_cache[class_key] = interior_identity
             if exact_cell_observer is not None:
                 observer_started = perf_counter()
@@ -4537,6 +4669,7 @@ def build_unconstrained_assembly_time_condensation(
             ("recovery_bytes", recovery_cache),
             ("rhs_trace_bytes", rhs_trace_cache),
             ("trace_interior_bytes", trace_interior_cache),
+            ("actual_internal_matrix_bytes", actual_internal_matrix_cache),
             ("rhs_projection_bytes", rhs_projection_cache),
             ("solution_embedding_bytes", solution_embedding_cache),
             ("residual_projection_bytes", residual_projection_cache),
@@ -4605,6 +4738,22 @@ def build_unconstrained_assembly_time_condensation(
             else None
         ),
         internal_rhs_strategy=internal_rhs_strategy,
+        internal_rhs_refinement_max_steps=internal_rhs_refinement_max_steps,
+        retained_actual_internal_matrix_by_class=(
+            MappingProxyType(actual_internal_matrix_cache)
+            if retain_actual_internal_matrix_for_refinement
+            else None
+        ),
+        actual_internal_matrix_identity_by_class=(
+            MappingProxyType(actual_internal_matrix_identity_cache)
+            if retain_actual_internal_matrix_for_refinement
+            else None
+        ),
+        interior_lu_matrix_identity_by_class=(
+            MappingProxyType(interior_lu_matrix_identity_cache)
+            if retain_actual_internal_matrix_for_refinement
+            else None
+        ),
         build_audit={
             "schema_version": "task035b.assembly-time-cell-condensation.v1",
             "status": "unconstrained_trace_schur_built_without_full_matrix",
@@ -4697,6 +4846,26 @@ def build_unconstrained_assembly_time_condensation(
             ),
             "retained_local_schur_enabled": bool(retain_local_schur_for_matrix_free),
             "internal_rhs_strategy": internal_rhs_strategy,
+            "internal_rhs_refinement_max_steps": internal_rhs_refinement_max_steps,
+            "same_lu_rhs_refinement_strategy": (
+                "same_lu_binary64_products_real_imag_fsum"
+                if internal_rhs_refinement_max_steps
+                else "disabled"
+            ),
+            "same_lu_rhs_actual_K_retained": bool(
+                retain_actual_internal_matrix_for_refinement
+            ),
+            "same_lu_rhs_actual_K_class_count_local": len(
+                actual_internal_matrix_cache
+            ),
+            "same_lu_rhs_actual_K_bytes_local": int(
+                retained_cache_bytes_local["actual_internal_matrix_bytes"]
+            ),
+            "same_lu_rhs_actual_K_key_policy": (
+                "readonly_actual_oriented_A_ii_extraction_same_build_generation_as_LU"
+                if retain_actual_internal_matrix_for_refinement
+                else "not_retained"
+            ),
             "same_lu_rhs_j_retained": bool(
                 retain_trace_interior_for_same_lu_rhs
             ),

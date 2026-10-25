@@ -12,6 +12,7 @@ from scipy.sparse import csr_matrix
 
 import src.runners.task41_p0_v14_saved_rhs_checker as checker_module
 from src.runners.task41_p0_contract import TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE
+from src.runners.task41_p0_contract import TASK41_B0_V14_RHS_REFINEMENT_STRATEGY
 from src.runners.task41_p0_v14_candidate_io import V14_CELLS, V14_COLUMNS
 from src.runners.task41_p0_v14_saved_rhs_candidate import run_v14_saved_candidate
 from src.runners.task41_p0_v14_saved_rhs_checker import check_v14_saved_candidate
@@ -114,6 +115,17 @@ def _synthetic_source(root) -> dict[str, object]:
         "results_root": results_root,
         "consumer_contract_path": str(root / "synthetic_contract.json"),
         "consumer_contract_sha256": "a" * 64,
+        "consumer_contract": {
+            "execution_scope": TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
+            "numerical_strategy": {
+                "schema": "task41.p0.b0.internal_rhs_strategy.v2",
+                "internal_rhs_strategy": "same_lu_rhs_solve",
+                "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+                "refinement_max_steps": 2,
+            },
+        },
+        "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        "refinement_max_steps": 2,
         "consumer_window_sha256": "b" * 64,
         "producer_report_path": root / "frozen_v11.json",
         "producer_report_sha256": "c" * 64,

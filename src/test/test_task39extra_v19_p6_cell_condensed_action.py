@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import gc
 import hashlib
 import json
@@ -144,7 +144,10 @@ def _problem() -> tuple[_FakeCondensed, dict[str, np.ndarray], P6CellCondensedAc
 
 
 def _same_lu_owner(
-    *, retain_j: bool = True, strategy: str = "same_lu_rhs_solve"
+    *,
+    retain_j: bool = True,
+    strategy: str = "same_lu_rhs_solve",
+    refinement_max_steps: int = 0,
 ) -> tuple[AssemblyTimeCondensedSystem, dict[str, np.ndarray], np.ndarray | None, np.ndarray]:
     fake, block, stored_t_action = _problem()
     hp = stored_t_action._H_p.copy()
@@ -171,6 +174,21 @@ def _same_lu_owner(
     )
     trace_interior = block["Vti"].copy()
     trace_interior.flags.writeable = False
+    retained_k_by_class = None
+    actual_k_identity_by_class = None
+    factor_identity_by_class = None
+    if refinement_max_steps:
+        oriented = np.zeros((4, 4), dtype=np.complex128)
+        oriented[np.ix_([0, 1], [0, 1])] = block["Vii"]
+        block["oriented_tensor_fixture"] = oriented
+        actual_k = np.asarray(
+            oriented[np.ix_([0, 1], [0, 1])], dtype=np.complex128
+        )
+        actual_k.flags.writeable = False
+        identity = object()
+        retained_k_by_class = {(0,): actual_k}
+        actual_k_identity_by_class = {(0,): identity}
+        factor_identity_by_class = {(0,): identity}
     identity_by_class = {
         key: np.eye(2, dtype=np.complex128)
         for key in fake.interior_lu_by_class
@@ -202,6 +220,10 @@ def _same_lu_owner(
             {(0,): trace_interior} if retain_j else None
         ),
         internal_rhs_strategy=strategy,
+        internal_rhs_refinement_max_steps=refinement_max_steps,
+        retained_actual_internal_matrix_by_class=retained_k_by_class,
+        actual_internal_matrix_identity_by_class=actual_k_identity_by_class,
+        interior_lu_matrix_identity_by_class=factor_identity_by_class,
     )
     return condensed, block, trace_interior if retain_j else None, hp
 
@@ -337,6 +359,95 @@ def test_same_lu_rhs_reuses_one_getrs_for_trace_mpc_and_di_and_releases_j(monkey
     assert condensed.interior_lu_by_class == {}
     assert condensed.interior_from_trace_by_class == {}
     assert condensed.retained_local_schur_by_class is None
+
+
+def test_same_lu_refinement_flows_final_solution_to_trace_di_and_recovery(monkeypatch) -> None:
+    import src.solvers.hcurl_assembly_time_condensation as hcurl
+
+    condensed, block, _J, hp = _same_lu_owner(refinement_max_steps=2)
+    action = _same_lu_action(condensed, block, hp)
+    retained_k = condensed.retained_actual_internal_matrix_by_class[(0,)]
+    cell_k = action._cells[0].actual_internal_matrix
+    assert cell_k is retained_k
+    assert not cell_k.flags.writeable
+    assert not np.shares_memory(cell_k, block["oriented_tensor_fixture"])
+    identity = condensed.actual_internal_matrix_identity_by_class[(0,)]
+    assert identity is condensed.interior_lu_matrix_identity_by_class[(0,)]
+    assert action._cells[0].actual_internal_matrix_identity is identity
+    assert action._cells[0].factor_matrix_identity is identity
+    with pytest.raises(ValueError, match="identities differ"):
+        replace(
+            condensed,
+            interior_lu_matrix_identity_by_class={(0,): object()},
+        )
+    assert action.cache_identity["schema_version"].endswith("cache-identity.v3")
+    class_identity = next(iter(action.cache_identity["class_payloads"].values()))
+    assert class_identity["actual_internal_K_sha256"]
+    with pytest.raises(RuntimeError, match="cannot release retained J"):
+        condensed.destroy()
+
+    original_solve = hcurl.lu_solve
+    bias_initial = {"next": True}
+    solve_calls = []
+
+    def biased_initial_solve(factor, values, *args, **kwargs):
+        solve_calls.append(np.asarray(values, dtype=np.complex128).copy())
+        solved = original_solve(factor, values, *args, **kwargs)
+        if bias_initial["next"]:
+            bias_initial["next"] = False
+            return 0.5 * solved
+        return solved
+
+    monkeypatch.setattr(hcurl, "lu_solve", biased_initial_solve)
+    rhs = np.asarray(
+        [0.5 - 0.4j, 0.2 + 0.6j, 1.25 - 0.75j, 0.0j],
+        dtype=np.complex128,
+    )
+    port_rhs = np.asarray([0.3 + 0.2j, -0.6 + 0.1j], dtype=np.complex128)
+    solved = np.linalg.solve(block["Vii"], rhs[:2])
+    reduced = action.reduce_rhs(rhs, port_rhs=port_rhs, rhs_is_mpc_dual=True)
+    phase = np.exp(0.43j)
+    expected_trace = rhs[2] - np.vdot(
+        np.asarray([1.0 + 0.0j, phase], dtype=np.complex128),
+        block["Vti"] @ solved,
+    )
+    np.testing.assert_allclose(reduced, np.r_[expected_trace, port_rhs + block["Di"] @ solved])
+    assert len(solve_calls) >= 2
+    actual_cost = action._audit["same_lu_rhs_operation_costs"]["actual_rhs"]
+    assert actual_cost["initial_getrs_count"] == 1
+    assert actual_cost["correction_getrs_count"] >= 1
+    assert actual_cost["refinement_steps"] >= 1
+
+    # Recovery uses the returned refined z as its interior lift. Its initial
+    # solve is biased once more so the correction path is independently live.
+    bias_initial["next"] = True
+    calls_before_recovery = len(solve_calls)
+    zero_reduced = np.zeros(action.reduced_size, dtype=np.complex128)
+    recovered = action.recover_storage(zero_reduced, full_rhs=rhs)
+    np.testing.assert_allclose(recovered[:2], solved, rtol=2.0e-14, atol=2.0e-14)
+    recovery_cost = action._audit["same_lu_rhs_operation_costs"][
+        "actual_rhs_recovery"
+    ]
+    assert len(solve_calls) - calls_before_recovery >= 2
+    assert recovery_cost["initial_getrs_count"] == 1
+    assert recovery_cost["correction_getrs_count"] >= 1
+
+    # Residual diagnostics are deliberately outside the production cap.
+    before_diagnostic = len(solve_calls)
+    action._project_internal_rhs(
+        action._cells[0], rhs[:2], purpose="residual_diagnostic"
+    )
+    assert len(solve_calls) - before_diagnostic == 1
+    diagnostic_cost = action._audit["same_lu_rhs_operation_costs"][
+        "residual_diagnostic"
+    ]
+    assert diagnostic_cost["getrs_count"] == 1
+    assert diagnostic_cost["refinement_steps"] == 0
+    action.destroy()
+    assert condensed.retained_actual_internal_matrix_by_class is not None
+    condensed.destroy()
+    assert condensed.retained_actual_internal_matrix_by_class is None
+    assert condensed.actual_internal_matrix_identity_by_class is None
 
 
 def test_same_lu_rhs_missing_j_fails_closed() -> None:
@@ -583,11 +694,31 @@ def test_same_lu_projection_nonhermitian_zero_rhs_saved_pivots_and_j_capacity(mo
         index_bytes=4,
         real_bytes=8,
     )
+    with_j_and_k = assembly_time_condensation_capacity_facts(
+        dimension=4,
+        interior_dimension=2,
+        trace_dimension=2,
+        raw_class_count=1,
+        oriented_class_count=3,
+        identity_class_count=0,
+        retain_local_schur=False,
+        retain_trace_interior_for_same_lu_rhs=True,
+        retain_actual_internal_matrix_for_same_lu_refinement=True,
+        scalar_bytes=16,
+        index_bytes=4,
+        real_bytes=8,
+    )
     assert (
         with_j["retained_numeric_bytes_upper"]
         - without_j["retained_numeric_bytes_upper"]
         == 3 * 2 * 2 * 16
     )
+    assert (
+        with_j_and_k["retained_numeric_bytes_upper"]
+        - with_j["retained_numeric_bytes_upper"]
+        == 3 * 2 * 2 * 16
+    )
+    assert with_j_and_k["retained_actual_internal_matrix_bytes_upper"] == 3 * 2 * 2 * 16
 
 
 def test_same_lu_internal_correction_updates_only_cell_interior_rows() -> None:

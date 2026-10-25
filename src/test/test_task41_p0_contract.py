@@ -1048,6 +1048,30 @@ def test_task41_watchdog_authorizes_checker_kind_and_command_for_bound_case(
         )
 
 
+def test_task41_refinement_requires_validated_full_owner_scope():
+    from src.runners.task40_v10_worker import _task41_b0_require_full_owner_scope
+
+    assert _task41_b0_require_full_owner_scope(
+        {"full_owner_scope_authorized": False}, refinement_max_steps=0
+    ) is False
+    assert _task41_b0_require_full_owner_scope(
+        {"full_owner_scope_authorized": True}, refinement_max_steps=2
+    ) is True
+    with pytest.raises(ValueError, match="does not authorize a P6 full owner"):
+        _task41_b0_require_full_owner_scope(
+            {"full_owner_scope_authorized": False}, refinement_max_steps=2
+        )
+    for invalid in (True, 2.0):
+        with pytest.raises(ValueError, match="strict integer"):
+            _task41_b0_require_full_owner_scope(
+                {"full_owner_scope_authorized": True}, refinement_max_steps=invalid
+            )
+    with pytest.raises(ValueError, match="0 or 2"):
+        _task41_b0_require_full_owner_scope(
+            {"full_owner_scope_authorized": True}, refinement_max_steps=1
+        )
+
+
 @pytest.mark.parametrize("case_id", ("A2", "B0", "B0_V3"))
 def test_task41_worker_runtime_uses_service_window_and_strict_resource_view(
     case_id, tmp_path, monkeypatch

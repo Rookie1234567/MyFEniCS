@@ -8656,6 +8656,23 @@ def _task41_destroy_pending_condensed(
                     {"type": type(exc).__name__, "message": str(exc)}
                 )
 
+def _task41_b0_require_full_owner_scope(
+    campaign_authority: Mapping[str, Any], *, refinement_max_steps: int
+) -> bool:
+    """Reject refined P6 owner construction unless validated scope permits it."""
+
+    if isinstance(refinement_max_steps, bool) or type(refinement_max_steps) is not int:
+        raise ValueError("Task41 B0 refinement step limit must be a strict integer")
+    if refinement_max_steps not in (0, 2):
+        raise ValueError("Task41 B0 refinement step limit must be 0 or 2")
+    authorized = campaign_authority.get("full_owner_scope_authorized") is True
+    if refinement_max_steps == 2 and not authorized:
+        raise ValueError(
+            "Task41 V14 saved-candidate window does not authorize a P6 full owner"
+        )
+    return authorized
+
+
 def _task41_iterative_candidate_contract(
     resolved: Mapping[str, Any],
     profile_contract: Mapping[str, Any],
@@ -8684,6 +8701,8 @@ def _task41_iterative_candidate_contract(
         TASK41_TOTAL_SECONDS,
         TASK41_A2_INPUT_RELATIVE,
         TASK41_B0_INPUT_RELATIVE,
+        TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
+        TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
         _task41_case,
         load_task41_p0_fixed_window,
         require_task41_p0_contract,
@@ -8725,6 +8744,35 @@ def _task41_iterative_candidate_contract(
     case = contract["case"]
     window_contract = contract["window"]
     solver = resolved.get("solver", {})
+    numerical_settings = contract.get("numerical_strategy", {})
+    contract_refinement_steps = (
+        numerical_settings.get("refinement_max_steps", 0)
+        if isinstance(numerical_settings, Mapping)
+        else None
+    )
+    contract_refinement_strategy = (
+        numerical_settings.get("refinement_strategy")
+        if isinstance(numerical_settings, Mapping)
+        else None
+    )
+    if (
+        case_id == "B0"
+        and isinstance(numerical_settings, Mapping)
+        and numerical_settings.get("schema")
+        == "task41.p0.b0.internal_rhs_strategy.v1"
+        and contract.get("execution_scope")
+        == TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE
+    ):
+        # Historical V14 v1 consumers remain read-only valid because the exact
+        # immutable scope itself bound this fixed algorithm before v2 existed.
+        contract_refinement_steps = int(
+            TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE["initial_screen"][
+                "refinement_max_steps"
+            ]
+        )
+        contract_refinement_strategy = TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE[
+            "initial_screen"
+        ]["refinement"]
     execution = resolved.get("execution", {})
     method = resolved.get("method", {})
     provenance = resolved.get("provenance", {})
@@ -8862,6 +8910,18 @@ def _task41_iterative_candidate_contract(
                 "internal_rhs_strategy", "stored_T"
             )
         ),
+        "internal_rhs_refinement": (
+            case_id != "B0"
+            or (
+                type(contract_refinement_steps) is int
+                and contract_refinement_steps in (0, 2)
+                and (
+                    contract_refinement_steps == 0
+                    or contract_refinement_strategy
+                    == TASK41_B0_V14_RHS_REFINEMENT_STRATEGY
+                )
+            )
+        ),
         "not_a_task40_donor_route": (
             os.environ.get("TASK40_V30_STRICT_EXECUTION") != "1"
             and os.environ.get("TASK40_V31_STRICT_EXECUTION") != "1"
@@ -8873,11 +8933,23 @@ def _task41_iterative_candidate_contract(
             "internal_rhs_strategy", "stored_T"
         )
         expected_dispatch_schema = (
-            "task41.p0.dispatch_binding.v2"
+            "task41.p0.dispatch_binding.v3"
+            if contract_refinement_steps == 2
+            else "task41.p0.dispatch_binding.v2"
             if contract_rhs_strategy == "same_lu_rhs_solve"
             else "task41.p0.dispatch_binding.v1"
         )
         dispatch_strategy = contract_binding.get("internal_rhs_strategy", "stored_T") if isinstance(contract_binding, Mapping) else None
+        dispatch_refinement_steps = (
+            contract_binding.get("internal_rhs_refinement_max_steps", 0)
+            if isinstance(contract_binding, Mapping)
+            else None
+        )
+        dispatch_refinement_strategy = (
+            contract_binding.get("internal_rhs_refinement_strategy")
+            if isinstance(contract_binding, Mapping)
+            else None
+        )
         checks["explicit_dispatch_contract_binding"] = bool(
             isinstance(contract_binding, Mapping)
             and contract_binding.get("schema") == expected_dispatch_schema
@@ -8890,6 +8962,8 @@ def _task41_iterative_candidate_contract(
             and contract_binding.get("saved_surface_donor")
             == contract.get("preparation", {}).get("existing_surface_donor")
             and dispatch_strategy == contract_rhs_strategy
+            and dispatch_refinement_steps == contract_refinement_steps
+            and dispatch_refinement_strategy == contract_refinement_strategy
         )
         checks["no_a1_or_a2_comparison_binding"] = (
             isinstance(contract_binding, Mapping)
@@ -8928,6 +9002,22 @@ def _task41_iterative_candidate_contract(
             )
             if case_id == "B0"
             else "stored_T"
+        ),
+        "internal_rhs_refinement_max_steps": (
+            contract_refinement_steps
+            if case_id == "B0"
+            else 0
+        ),
+        "internal_rhs_refinement_strategy": (
+            contract_refinement_strategy
+            if case_id == "B0"
+            else None
+        ),
+        # Carry only the validated execution-scope fact forward so the owner
+        # construction path cannot infer authorization from profile facts.
+        "full_owner_scope_authorized": bool(
+            isinstance(contract.get("execution_scope"), Mapping)
+            and contract["execution_scope"].get("full_owner") is True
         ),
         "task41_dispatch_binding_schema": (
             task41_contract_binding.get("schema")
@@ -10455,6 +10545,7 @@ def run_task40_v10_p6_reference_worker(
     target_action = None
     target_condensed = None
     task41_internal_rhs_strategy = "stored_T"
+    task41_internal_rhs_refinement_max_steps = 0
     mode_identity: dict[str, Any] = {}
     mode_inventory_preflight: dict[str, Any] = {}
     task41_mode_inventory: tuple[Any, Any, str] | None = None
@@ -10582,14 +10673,47 @@ def run_task40_v10_p6_reference_worker(
                 if isinstance(task41_contract_binding, Mapping)
                 else None
             )
+            campaign_refinement_steps = campaign_authority.get(
+                "internal_rhs_refinement_max_steps", 0
+            )
+            dispatch_refinement_steps = (
+                task41_contract_binding.get("internal_rhs_refinement_max_steps", 0)
+                if isinstance(task41_contract_binding, Mapping)
+                else None
+            )
             if (
                 campaign_strategy not in {"stored_T", "same_lu_rhs_solve"}
                 or campaign_strategy != dispatch_strategy
+                or isinstance(campaign_refinement_steps, bool)
+                or not isinstance(campaign_refinement_steps, int)
+                or campaign_refinement_steps not in (0, 2)
+                or campaign_refinement_steps != dispatch_refinement_steps
+                or (
+                    campaign_refinement_steps == 2
+                    and campaign_authority.get("internal_rhs_refinement_strategy")
+                    != task41_contract_binding.get(
+                        "internal_rhs_refinement_strategy"
+                    )
+                )
             ):
                 raise ValueError(
-                    "Task41 B0 actual-owner strategy is missing or differs from the validated dispatch contract"
+                    "Task41 B0 actual-owner strategy/refinement is missing or differs from the validated dispatch contract"
                 )
             task41_internal_rhs_strategy = str(campaign_strategy)
+            task41_internal_rhs_refinement_max_steps = int(
+                campaign_refinement_steps
+            )
+            full_owner_scope_authorized = _task41_b0_require_full_owner_scope(
+                campaign_authority,
+                refinement_max_steps=task41_internal_rhs_refinement_max_steps,
+            )
+            summary["internal_rhs_refinement_binding"] = {
+                "strategy": campaign_authority.get(
+                    "internal_rhs_refinement_strategy"
+                ),
+                "max_steps": task41_internal_rhs_refinement_max_steps,
+                "full_owner_scope_authorized": full_owner_scope_authorized,
+            }
         if is_task41_p0_iterative:
             runtime.raw_artifact_limit_bytes = summary["campaign_authority"]["raw_artifact_limit_bytes"]
             summary["raw_artifact_limit_bytes"] = runtime.raw_artifact_limit_bytes
@@ -11491,6 +11615,9 @@ def run_task40_v10_p6_reference_worker(
                             raw_tensor_evaluator_kind="actual_qmetric_blocked_gram",
                             ffcx_c_source_path=c_source_path,
                             internal_rhs_strategy="same_lu_rhs_solve",
+                            internal_rhs_refinement_max_steps=(
+                                task41_internal_rhs_refinement_max_steps
+                            ),
                             levels=target_levels,
                             volume_form=context["volume_form"],
                             compiled_form=compiled_form,
@@ -11861,6 +11988,11 @@ def run_task40_v10_p6_reference_worker(
                     internal_rhs_strategy=(
                         task41_internal_rhs_strategy if is_task41_b0 else "stored_T"
                     ),
+                    internal_rhs_refinement_max_steps=(
+                        task41_internal_rhs_refinement_max_steps
+                        if is_task41_b0
+                        else 0
+                    ),
                     allocation_gate=allocation_gate,
                 )
             if is_task41_b0:
@@ -11940,6 +12072,9 @@ def run_task40_v10_p6_reference_worker(
                     "schema": "task41.p0.b0.live_target_owner_identity.v1",
                     "action_uses_same_condensed_object": target_action.condensed is target_condensed,
                     "internal_rhs_strategy": target_condensed.internal_rhs_strategy,
+                    "internal_rhs_refinement_max_steps": (
+                        target_condensed.internal_rhs_refinement_max_steps
+                    ),
                     "geometry_policy": target_condensed.build_audit.get("geometry_policy"),
                     "active_rows": int(target_condensed.active_rows),
                     "appended_rows": int(target_condensed.appended_rows),
@@ -11949,6 +12084,8 @@ def run_task40_v10_p6_reference_worker(
                     target_owner_binding["action_uses_same_condensed_object"]
                     and target_owner_binding["target_action_owns_condensed"]
                     and target_owner_binding["internal_rhs_strategy"] == task41_internal_rhs_strategy
+                    and target_owner_binding["internal_rhs_refinement_max_steps"]
+                    == task41_internal_rhs_refinement_max_steps
                 ):
                     raise ValueError("Task41 B0 real action did not receive the qualified live owner")
                 summary["b0_actual_target_owner_binding"] = target_owner_binding
@@ -13632,6 +13769,11 @@ def run_task40_v10_p6_reference_worker(
                 internal_rhs_strategy=(
                     task41_internal_rhs_strategy if is_task41_b0 else "stored_T"
                 ),
+                internal_rhs_refinement_max_steps=(
+                    task41_internal_rhs_refinement_max_steps
+                    if is_task41_b0
+                    else 0
+                ),
             )
             prebuilt_twist0_owner = local_owner
             local_owner.setdefault("owner_receipt", {}).update(
@@ -13926,6 +14068,9 @@ def run_task40_v10_p6_reference_worker(
                         else None
                     ),
                     internal_rhs_strategy=task41_internal_rhs_strategy,
+                    internal_rhs_refinement_max_steps=(
+                        task41_internal_rhs_refinement_max_steps
+                    ),
                     regular_reference_fills_y_period=is_task41_p0_iterative,
                 )
             except BaseException as error:

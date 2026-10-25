@@ -41,6 +41,10 @@ def _task41_b0_dispatch_binding(
         TASK41_B0_PRECONDITIONER,
         TASK41_B0_RUN_ID,
         TASK41_B0_SAVED_SURFACE_DONOR,
+        TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE,
+        TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
+        TASK41_B0_V14_SAVED_RHS_CANDIDATE_WINDOW_RELATIVE,
+        TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
         TASK41_B0_V9_WINDOW_RELATIVE,
         load_task41_p0_fixed_window,
         require_task41_p0_contract,
@@ -93,15 +97,66 @@ def _task41_b0_dispatch_binding(
     saved_surface_donor = contract.get("preparation", {}).get("existing_surface_donor")
     if saved_surface_donor != TASK41_B0_SAVED_SURFACE_DONOR:
         raise ValueError("Task41 B0 dispatcher contract omits the exact require-existing surface donor")
-    numerical_strategy = contract.get("numerical_strategy", {}).get(
-        "internal_rhs_strategy", "stored_T"
-    )
+    numerical_settings = contract.get("numerical_strategy", {})
+    if not isinstance(numerical_settings, Mapping):
+        raise ValueError("Task41 B0 contract numerical strategy is malformed")
+    numerical_strategy = numerical_settings.get("internal_rhs_strategy", "stored_T")
     if numerical_strategy not in {"stored_T", "same_lu_rhs_solve"}:
         raise ValueError("Task41 B0 contract selects an unknown internal RHS strategy")
-    if numerical_strategy == "same_lu_rhs_solve" and Path(
-        str(contract.get("window", {}).get("path", ""))
-    ) != TASK41_B0_V9_WINDOW_RELATIVE:
-        raise ValueError("same_lu_rhs_solve is allowed only through the V9 B0 contract")
+    refinement_steps = numerical_settings.get("refinement_max_steps", 0)
+    refinement_strategy = numerical_settings.get("refinement_strategy")
+    contract_window = Path(str(contract.get("window", {}).get("path", "")))
+    if not contract_window.is_absolute():
+        contract_window = root / contract_window
+    contract_window = contract_window.resolve()
+    v9_window = (root / TASK41_B0_V9_WINDOW_RELATIVE).resolve()
+    v14_window = (root / TASK41_B0_V14_SAVED_RHS_CANDIDATE_WINDOW_RELATIVE).resolve()
+    if contract_window == v14_window and numerical_settings == {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+    }:
+        # Preserve read-only consumption of the historical V14 contract shape:
+        # its exact saved scope already records the fixed two-step algorithm.
+        old_scope = contract.get("execution_scope")
+        initial_screen = (
+            old_scope.get("initial_screen")
+            if isinstance(old_scope, Mapping)
+            else None
+        )
+        if (
+            old_scope != TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE
+            or not isinstance(initial_screen, Mapping)
+            or initial_screen.get("refinement_max_steps") != 2
+            or initial_screen.get("refinement")
+            != TASK41_B0_V14_RHS_REFINEMENT_STRATEGY
+        ):
+            raise ValueError("historical V14 v1 contract does not bind the fixed refined-candidate scope")
+        refinement_steps = 2
+        refinement_strategy = TASK41_B0_V14_RHS_REFINEMENT_STRATEGY
+    if (
+        isinstance(refinement_steps, bool)
+        or not isinstance(refinement_steps, int)
+        or refinement_steps not in (0, 2)
+    ):
+        raise ValueError("Task41 B0 contract selects an unsupported same-LU refinement limit")
+    if numerical_strategy == "same_lu_rhs_solve" and contract_window not in {
+        v9_window,
+        v14_window,
+    }:
+        raise ValueError("same_lu_rhs_solve is allowed only through the V9 or V14 B0 contract")
+    if refinement_steps:
+        if (
+            refinement_steps != 2
+            or refinement_strategy != TASK41_B0_V14_RHS_REFINEMENT_STRATEGY
+            or contract_window != v14_window
+            or numerical_strategy != "same_lu_rhs_solve"
+            or contract.get("execution_scope") != TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE
+        ):
+            raise ValueError("two-step same-LU refinement is bound only to the exact V14 saved-candidate contract")
+    elif refinement_strategy is not None:
+        raise ValueError("Task41 B0 refinement strategy requires its explicit two-step limit")
+    if contract_window == v14_window and refinement_steps != 2:
+        raise ValueError("V14 saved-candidate contract must explicitly bind two-step refinement")
     window = load_task41_p0_fixed_window(contract, current_root=root)
     if (
         os.environ.get("TASK41_P0_STRICT_EXECUTION") != "1"
@@ -110,9 +165,11 @@ def _task41_b0_dispatch_binding(
         or os.environ.get("TASK41_P0_EXECUTION_WINDOW_SHA256") != window.sha256
     ):
         raise RuntimeError("Task41 B0 dispatcher fixed window differs from its service environment")
-    return {
+    binding = {
         "schema": (
-            "task41.p0.dispatch_binding.v2"
+            "task41.p0.dispatch_binding.v3"
+            if refinement_steps == 2
+            else "task41.p0.dispatch_binding.v2"
             if numerical_strategy == "same_lu_rhs_solve"
             else "task41.p0.dispatch_binding.v1"
         ),
@@ -134,6 +191,14 @@ def _task41_b0_dispatch_binding(
         "internal_rhs_strategy": numerical_strategy,
         "comparison_binding": None,
     }
+    if refinement_steps:
+        binding.update(
+            {
+                "internal_rhs_refinement_max_steps": refinement_steps,
+                "internal_rhs_refinement_strategy": refinement_strategy,
+            }
+        )
+    return binding
 
 
 def run_full3d_iterative(

@@ -236,6 +236,9 @@ TASK41_B0_V14_SAVED_RHS_CANDIDATE_AUTH_RELATIVE = (
 TASK41_B0_V14_SAVED_RHS_CANDIDATE_ACCOUNTING_RELATIVE = (
     TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v14_same_lu_rhs_candidate_6h.jsonl"
 )
+TASK41_B0_V14_RHS_REFINEMENT_STRATEGY = (
+    "same_lu_binary64_products_real_imag_fsum"
+)
 TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE = {
     "kind": "saved_diagnostics_same_lu_rhs_candidate_staged",
     "actions": ["selected_incident_replay"],
@@ -1379,11 +1382,31 @@ def require_task41_p0_contract(
         else None
     )
     is_saved_diagnostics_contract = saved_diagnostics_config is not None
-    if is_v9_contract or is_saved_diagnostics_contract:
-        if numerical_strategy != {
-            "schema": "task41.p0.b0.internal_rhs_strategy.v1",
-            "internal_rhs_strategy": TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
-        }:
+    is_v14_rhs_candidate_contract = bool(
+        is_saved_diagnostics_contract
+        and saved_diagnostics_config["instance"]
+        == TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE
+    )
+    expected_same_lu_strategy = {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+        "internal_rhs_strategy": TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
+    }
+    expected_v14_refined_strategy = {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v2",
+        "internal_rhs_strategy": TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
+        "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        "refinement_max_steps": 2,
+    }
+    if is_v14_rhs_candidate_contract:
+        if numerical_strategy not in (
+            expected_same_lu_strategy,
+            expected_v14_refined_strategy,
+        ):
+            raise Task41ContractError(
+                "Task41 V14 consumer must retain its exact v1 historical binding or use the explicit v2 refined binding"
+            )
+    elif is_v9_contract or is_saved_diagnostics_contract:
+        if numerical_strategy != expected_same_lu_strategy:
             raise Task41ContractError(
                 "Task41 V9/saved-diagnostics contract must explicitly bind same_lu_rhs_solve"
             )
@@ -2709,6 +2732,18 @@ def prepare_task41_p0(
             "schema": "task41.p0.b0.internal_rhs_strategy.v1",
             "internal_rhs_strategy": TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
         }
+        if (
+            saved_diagnostics_config is not None
+            and saved_diagnostics_config["instance"]
+            == TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE
+        ):
+            contract["numerical_strategy"].update(
+                {
+                    "schema": "task41.p0.b0.internal_rhs_strategy.v2",
+                    "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+                    "refinement_max_steps": 2,
+                }
+            )
     if comparison is not None:
         contract["comparison"] = comparison
     if q_csr_reuse is not None:

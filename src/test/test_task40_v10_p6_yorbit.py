@@ -51,6 +51,92 @@ def test_prebuilt_sector_index_limit_follows_profile_replication_count():
         _validate_prebuilt_sector_indices(SimpleNamespace(replication_count=4), (4,))
 
 
+def test_fixed_two_prebuilt_owner_binds_live_strategy_and_actual_k_lu_identity():
+    def make_owner(*, steps, match_k_source=True, match_k_lu_identity=True):
+        class_key = ("oriented-cell",)
+        actual_k = SimpleNamespace(flags=SimpleNamespace(writeable=False))
+        action_k = actual_k if match_k_source else SimpleNamespace(
+            flags=SimpleNamespace(writeable=False)
+        )
+        actual_identity = object()
+        factor_identity = actual_identity if match_k_lu_identity else object()
+        factor = object()
+        condensed = SimpleNamespace(
+            internal_rhs_strategy="same_lu_rhs_solve",
+            internal_rhs_refinement_max_steps=steps,
+            retained_actual_internal_matrix_by_class={class_key: actual_k},
+            actual_internal_matrix_identity_by_class={class_key: actual_identity},
+            interior_lu_matrix_identity_by_class={class_key: factor_identity},
+            interior_lu_by_class={class_key: factor},
+        )
+        action = SimpleNamespace(
+            condensed=condensed,
+            internal_rhs_strategy="same_lu_rhs_solve",
+            internal_rhs_refinement_max_steps=steps,
+            _cells=(
+                SimpleNamespace(
+                    class_key=class_key,
+                    actual_internal_matrix=action_k,
+                    actual_internal_matrix_identity=actual_identity,
+                    factor_matrix_identity=factor_identity,
+                    interior_lu=factor,
+                ),
+            ),
+        )
+        return {
+            "action": action,
+            "owner_receipt": {
+                "internal_rhs_strategy": "same_lu_rhs_solve",
+                "internal_rhs_refinement_max_steps": steps,
+            },
+        }
+
+    validate = yorbit_module._validate_prebuilt_sector_rhs_owner
+    validate(
+        {}, internal_rhs_strategy="stored_T", internal_rhs_refinement_max_steps=0
+    )
+    with pytest.raises(ValueError, match="action/system RHS strategy or refinement"):
+        validate(
+            make_owner(steps=0),
+            internal_rhs_strategy="same_lu_rhs_solve",
+            internal_rhs_refinement_max_steps=2,
+        )
+    mismatched_live_owner = make_owner(steps=2)
+    mismatched_live_owner["action"].condensed.internal_rhs_refinement_max_steps = 0
+    with pytest.raises(ValueError, match="action/system RHS strategy or refinement"):
+        validate(
+            mismatched_live_owner,
+            internal_rhs_strategy="same_lu_rhs_solve",
+            internal_rhs_refinement_max_steps=2,
+        )
+
+    validate(
+        make_owner(steps=2),
+        internal_rhs_strategy="same_lu_rhs_solve",
+        internal_rhs_refinement_max_steps=2,
+    )
+    wrong_receipt = make_owner(steps=2)
+    wrong_receipt["owner_receipt"]["internal_rhs_refinement_max_steps"] = 0
+    with pytest.raises(ValueError, match="owner receipt does not bind"):
+        validate(
+            wrong_receipt,
+            internal_rhs_strategy="same_lu_rhs_solve",
+            internal_rhs_refinement_max_steps=2,
+        )
+    with pytest.raises(ValueError, match="borrow its owner's readonly K"):
+        validate(
+            make_owner(steps=2, match_k_source=False),
+            internal_rhs_strategy="same_lu_rhs_solve",
+            internal_rhs_refinement_max_steps=2,
+        )
+    with pytest.raises(ValueError, match="actual K and LU identities differ"):
+        validate(
+            make_owner(steps=2, match_k_lu_identity=False),
+            internal_rhs_strategy="same_lu_rhs_solve",
+            internal_rhs_refinement_max_steps=2,
+        )
+
+
 def test_empty_port_qs_still_require_nonzero_p6_fe_matrices():
     from src.solvers.task40_v10_p6_periodic_profile import (
         TASK41_G13_A2_P6_PROFILE,
