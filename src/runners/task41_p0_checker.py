@@ -6710,13 +6710,23 @@ def check_task41_p0_b0_v15_terminal_run(
         != checkpoint.get("actual_k_lu_identity")
     ):
         raise ValueError("V15 checkpoint source/window/K-LU identity differs from its run binding")
+    from src.runners.task41_p0_contract import task41_v15_owner_claim_authority
+    quota = task41_v15_owner_claim_authority(
+        root=root, accounting_path=window.accounting_path,
+        window_path=window.path, window_sha256=window.sha256,
+        retry_binding=contract.get("full_owner_retry_authorization"),
+    )
     claim_path = Path(str(campaign.get("full_owner_quota_claim_path", ""))).resolve(strict=True)
+    if (str(claim_path) != quota["claim_path"]
+            or campaign.get("full_owner_retry_authorization") != quota["retry_authorization"]):
+        raise ValueError("V15 checkpoint retry authorization differs from its contract")
     claim = _json_object(claim_path, "V15 full-owner quota claim")
     if (
         claim != checkpoint.get("owner_quota_claim")
         or claim.get("schema") != "task41.p0.b0.v15_full_owner_quota_claim.v1"
         or claim.get("status") != "BUILD_COMPLETED"
-        or claim.get("full_owner_build_count") != 1
+        or claim.get("full_owner_build_count") != quota["full_owner_build_count"]
+        or claim.get("full_owner_retry_authorization") != quota["retry_authorization"]
         or claim.get("quota_scope") != "fixed_window_across_attempts"
         or claim.get("source_sha") != source_sha
         or claim.get("contract_sha256") != contract_digest

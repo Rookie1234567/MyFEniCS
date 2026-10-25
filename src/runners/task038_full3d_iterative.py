@@ -205,9 +205,13 @@ def _task41_b0_dispatch_binding(
             != v15_output_directory
         ):
             raise ValueError("Task41 V15 dispatcher output directory differs from its service binding")
-        v15_quota_claim_path = window.accounting_path.with_name(
-            window.accounting_path.name + ".v15_full_owner_claim.json"
-        ).resolve()
+        from src.runners.task41_p0_contract import task41_v15_owner_claim_authority
+        quota = task41_v15_owner_claim_authority(
+            root=root, accounting_path=window.accounting_path,
+            window_path=window.path, window_sha256=window.sha256,
+            retry_binding=contract.get("full_owner_retry_authorization"),
+        )
+        v15_quota_claim_path = Path(quota["claim_path"])
     binding = {
         "schema": (
             "task41.p0.dispatch_binding.v3"
@@ -253,6 +257,7 @@ def _task41_b0_dispatch_binding(
             {
                 "execution_scope": deepcopy(dict(v15_scope)),
                 "full_owner_quota_claim_path": str(v15_quota_claim_path),
+                "full_owner_retry_authorization": contract.get("full_owner_retry_authorization"),
                 "full_owner_quota_scope": "fixed_window_across_attempts",
                 "run_directory": str(v15_output_directory),
             }

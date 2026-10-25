@@ -1417,8 +1417,9 @@ def test_task41_worker_runtime_uses_service_window_and_strict_resource_view(
 
 
 
+@pytest.mark.parametrize("retry", [False, True])
 def test_task41_v15_dispatch_binding_uses_verified_window_accounting_path(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, retry
 ):
     import src.runners.task41_p0_contract as contract_module
     from src.geometry.task41_phi90_profile import TASK41_B0_PRECONDITIONER
@@ -1445,6 +1446,13 @@ def test_task41_v15_dispatch_binding_uses_verified_window_accounting_path(
     )
     assert len(contract_paths) == 1
     contract_path = contract_paths[0].resolve()
+    if retry:
+        retry_contract = json.loads(contract_path.read_text())
+        retry_window = load_task41_p0_fixed_window(retry_contract, current_root=tmp_path)
+        retry_contract["full_owner_retry_authorization"] = _v15_retry_fixture(
+            tmp_path, retry_window.path, retry_window.accounting_path
+        )[0]
+        contract_path.write_text(json.dumps(retry_contract))
     contract_sha = hashlib.sha256(contract_path.read_bytes()).hexdigest()
     contract, _ = require_task41_p0_contract(
         contract_path,
@@ -1518,6 +1526,9 @@ def test_task41_v15_dispatch_binding_uses_verified_window_accounting_path(
     expected_claim = window.accounting_path.with_name(
         window.accounting_path.name + ".v15_full_owner_claim.json"
     ).resolve()
+    if retry:
+        expected_claim = expected_claim.with_name(expected_claim.name + ".authorized_retry_1.json")
+    assert binding["full_owner_retry_authorization"] == contract.get("full_owner_retry_authorization")
     assert binding["full_owner_quota_claim_path"] == str(expected_claim)
     assert binding["run_directory"] == str(run_directory.resolve())
 
@@ -2543,3 +2554,81 @@ def test_task41_v15_frozen_jit_preflight_rejects_new_compile_and_missing_module(
     (directory / (stem + ".test.so")).write_bytes(b"unqualified rebuild")
     with pytest.raises(Task41ContractError, match="module hash differs"):
         module.verify_task41_v15_frozen_jit_cache(cache)
+
+
+def _v15_retry_fixture(root, window_path, accounting_path):
+    from src.runners.task41_p0_contract import TASK41_V15_RETRY_AUTH_RELATIVE
+    old_run = root / "results" / TASK41_MODEL_ID / "failed-jit-run"
+    old_run.mkdir(parents=True)
+    summary = old_run / "task40_v10_p6_candidate_summary.json"
+    summary.write_text(json.dumps({"source_sha": "c" * 40, "status": "FAILED",
+        "error": {"message": "compiled FFCx module hash differs from frozen V6 profile"},
+        "v15_cleanup": {"completed": True, "passed": True, "errors": []}}))
+    old_claim = accounting_path.with_name(accounting_path.name + ".v15_full_owner_claim.json")
+    old_claim.parent.mkdir(parents=True, exist_ok=True)
+    old_claim.write_text(json.dumps({"status": "BUILD_STARTED", "full_owner_build_count": 1,
+        "source_sha": "c" * 40, "window_sha256": hashlib.sha256(window_path.read_bytes()).hexdigest(),
+        "output_directory": str(old_run)}))
+    original_bytes = old_claim.read_bytes()
+    auth = root / TASK41_V15_RETRY_AUTH_RELATIVE
+    auth.parent.mkdir(parents=True, exist_ok=True)
+    auth.write_text(json.dumps({
+        "schema": "task41.v15.one_additional_build_authorization.v1",
+        "user_decision": "APPROVED", "approved_utc": "2026-10-25T22:49:00Z",
+        "additional_builds": 1, "retry_sequence": 1, "success_exit": "acceptance_only",
+        "fixed_window_unchanged": True, "window_path": str(window_path),
+        "window_sha256": hashlib.sha256(window_path.read_bytes()).hexdigest(),
+        "previous_claim_path": str(old_claim),
+        "previous_claim_sha256": hashlib.sha256(original_bytes).hexdigest(),
+        "failed_run_directory": str(old_run),
+        "failed_summary_sha256": hashlib.sha256(summary.read_bytes()).hexdigest(),
+    }))
+    return {"path": str(TASK41_V15_RETRY_AUTH_RELATIVE),
+            "sha256": hashlib.sha256(auth.read_bytes()).hexdigest()}, old_claim, original_bytes
+
+
+def test_task41_v15_authorized_retry_preserves_old_claim_and_is_single_use(tmp_path):
+    from types import SimpleNamespace
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE, TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
+        task41_v15_owner_claim_authority, Task41ContractError,
+    )
+    from src.runners.task40_v10_worker import _task41_b0_build_v15_full_owner_once
+    window = tmp_path / TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE
+    window.parent.mkdir(parents=True); window.write_text('{"fixture":"unchanged-window"}')
+    accounting = window.parent / "accounting.jsonl"
+    binding, old, old_bytes = _v15_retry_fixture(tmp_path, window, accounting)
+    args = dict(root=tmp_path, accounting_path=accounting, window_path=window,
+                window_sha256=hashlib.sha256(window.read_bytes()).hexdigest(), retry_binding=binding)
+    quota = task41_v15_owner_claim_authority(**args)
+    with pytest.raises(Task41ContractError, match="path/hash"):
+        task41_v15_owner_claim_authority(**dict(args, retry_binding=dict(binding, sha256="0"*64)))
+    with pytest.raises(Task41ContractError, match="claim/window"):
+        task41_v15_owner_claim_authority(**dict(args, window_sha256="0"*64))
+    old.write_bytes(old_bytes + b" ")
+    with pytest.raises(Task41ContractError, match="claim/window"):
+        task41_v15_owner_claim_authority(**args)
+    old.write_bytes(old_bytes)
+    output = tmp_path / "results" / TASK41_MODEL_ID / "retry-run"; output.mkdir()
+    authority = {"execution_scope": TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
+        "campaign_window_path": str(window), "campaign_window_sha256": args["window_sha256"],
+        "campaign_accounting_path": str(accounting), "full_owner_quota_claim_path": quota["claim_path"],
+        "full_owner_retry_authorization": binding, "full_owner_quota_scope": "fixed_window_across_attempts",
+        "model_id": TASK41_MODEL_ID, "run_directory": str(output),
+        "task41_contract_path": str(tmp_path / "contract.json"), "task41_contract_sha256": "a"*64,
+        "source_sha": "b"*40, "input_sha256": "c"*64}
+    generation = object()
+    owner = {"condensed": SimpleNamespace(
+        actual_internal_matrix_identity_by_class={0:generation},
+        interior_lu_matrix_identity_by_class={0:generation},
+        retained_actual_internal_matrix_by_class={0:object()}, interior_lu_by_class={0:object()})}
+    _, claim = _task41_b0_build_v15_full_owner_once(authority, run_directory=output,
+        owner_builder=lambda:owner, current_root=tmp_path)
+    assert claim["status"] == "BUILD_COMPLETED" and claim["full_owner_build_count"] == 2
+    assert claim["full_owner_retry_authorization"] == binding
+    assert old.read_bytes() == old_bytes
+    other = output.with_name("renamed-attempt"); other.mkdir()
+    with pytest.raises(ValueError, match="already consumed"):
+        _task41_b0_build_v15_full_owner_once(dict(authority,run_directory=str(other)),
+            run_directory=other,owner_builder=lambda:owner,current_root=tmp_path)
+    assert old.read_bytes() == old_bytes

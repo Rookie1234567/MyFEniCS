@@ -119,3 +119,11 @@ bash scripts/run_case_in_user_service.sh input/task41extra_phi90_p50x50_g17x20/b
 ```
 
 不手动裸启动checker，不用旧V14命令。若全部两列通过，标`FULL_ACTION_RECOVERY_QUALIFIED`，仍`official_result=false`。本次待批准出口仅全域验收，随后按合同清场；未来下游重建的费用风险保留，未声称200q/完整reference/target已准备或授权。工程开发总耗时没有完整连续父计时，保持UNKNOWN；31项测试7.42s仅是该测试进程父时间，不与正式成本混加。
+
+## 2026-10-26 用户批准的一次接续构建
+
+用户明确回复“授权”，批准错误JIT缓存导致的构建前失败后增加一次接续。原失败run `20261025T145135.719911Z`、BUILD_STARTED claim和费用全部保留。追加授权通过独立文件绑定旧claim、失败summary、原窗口和只做全域验收的范围；新claim使用固定独立路径和排他创建，更换attempt名不能再次取得额度。原窗口、数学策略、资源门不变，不启动200q。
+
+最终5项定向回归通过（2.28 s），覆盖实际dispatcher→worker传递、旧默认、失败owner清理、授权hash/窗口/前序拒绝及仅一次接续。测试不是科学验收；本提交冻结时尚未启动新构建。补丁SHA256为 `fdca1e6a2252d7cfe400e6b22d5dee45d0c207b9f31080fb9bd7f7cedc1e8a3b`。
+
+追加授权SHA256 `85981ba987a7515cd76c813034073f0eb09f133ef30acfa972d911a2e4cfa0c6`，旧claim SHA256仍为 `a35431d3fffc896b9ca8e909b60b2f269d8d94f22d0a96e2ed3ef4a60e5659eb`。2026-10-25 22:53 UTC按campaign API读得数值余额98772.9658625秒；这只是当时快照，正式prepare/启动须重新读取。授权文件中的时间为主控登记时间，非用户消息精确到达时刻。

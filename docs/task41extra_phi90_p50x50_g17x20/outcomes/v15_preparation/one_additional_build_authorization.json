@@ -1,0 +1,31 @@
+{
+  "additional_builds": 1,
+  "approved_utc": "2026-10-25T23:04:34.707216Z",
+  "descendants_cleared": true,
+  "failed_run_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261025T145135.719911Z",
+  "failed_summary_sha256": "caeefb7fdb50d88e2b431f0f51e3459f28327028b0d30efa7451759b361ce8fd",
+  "failed_watchdog_sha256": "793b046cc70bbd6ecc46a4ce5dda459bf1adebc5f7c22a91f19624e648fb47d5",
+  "fixed_window_unchanged": true,
+  "no_numerical_owner_started": true,
+  "previous_claim_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v15_full_two_column_acceptance_36h.jsonl.v15_full_owner_claim.json",
+  "previous_claim_sha256": "a35431d3fffc896b9ca8e909b60b2f269d8d94f22d0a96e2ed3ef4a60e5659eb",
+  "retry_sequence": 1,
+  "schema": "task41.v15.one_additional_build_authorization.v1",
+  "source_before_continuation_fix": "4e0b1aaaed20e7a6e765e0da2ace25eaf6d29e79",
+  "success_exit": "acceptance_only",
+  "timestamp_semantics": "controller registration of already received explicit user approval; exact message time not recorded",
+  "unchanged": [
+    "T0",
+    "deadline",
+    "resource_cap",
+    "ABI",
+    "threads",
+    "numerical_gates",
+    "old_costs",
+    "old_claim"
+  ],
+  "user_decision": "APPROVED",
+  "user_message": "\u6388\u6743",
+  "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v15_full_two_column_acceptance_36h.json",
+  "window_sha256": "db4674af35db8595f022f6ad909783c61f6c717c12b8f8f0990ecb047161609e"
+}

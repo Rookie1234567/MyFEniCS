@@ -8716,9 +8716,13 @@ def _task41_b0_require_full_owner_scope(
     accounting_path = Path(
         str(campaign_authority.get("campaign_accounting_path", ""))
     ).resolve()
-    expected_claim_path = accounting_path.with_name(
-        accounting_path.name + ".v15_full_owner_claim.json"
+    from src.runners.task41_p0_contract import task41_v15_owner_claim_authority
+    quota = task41_v15_owner_claim_authority(
+        root=root, accounting_path=accounting_path, window_path=expected_window,
+        window_sha256=str(campaign_authority.get("campaign_window_sha256", "")),
+        retry_binding=campaign_authority.get("full_owner_retry_authorization"),
     )
+    expected_claim_path = Path(quota["claim_path"])
     if (
         campaign_authority.get("execution_scope")
         != TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
@@ -8796,9 +8800,13 @@ def _task41_b0_build_v15_full_owner_once(
     model_id = str(campaign_authority.get("model_id", ""))
     results_root = (root / "results" / model_id).resolve(strict=True)
     accounting_path = Path(str(campaign_authority.get("campaign_accounting_path", ""))).resolve()
-    claim_path = accounting_path.with_name(
-        accounting_path.name + ".v15_full_owner_claim.json"
+    from src.runners.task41_p0_contract import task41_v15_owner_claim_authority
+    quota = task41_v15_owner_claim_authority(
+        root=root, accounting_path=accounting_path, window_path=expected_window,
+        window_sha256=str(campaign_authority.get("campaign_window_sha256", "")),
+        retry_binding=campaign_authority.get("full_owner_retry_authorization"),
     )
+    claim_path = Path(quota["claim_path"])
     expected_claim_path = Path(
         str(campaign_authority.get("full_owner_quota_claim_path", ""))
     ).resolve()
@@ -8823,7 +8831,7 @@ def _task41_b0_build_v15_full_owner_once(
         "schema": "task41.p0.b0.v15_full_owner_quota_claim.v1",
         "claim_id": claim_id,
         "status": "BUILD_STARTED",
-        "full_owner_build_count": 1,
+        "full_owner_build_count": quota["full_owner_build_count"],
         "quota_scope": "fixed_window_across_attempts",
         "contract_path": str(campaign_authority["task41_contract_path"]),
         "contract_sha256": str(campaign_authority["task41_contract_sha256"]),
@@ -8835,6 +8843,9 @@ def _task41_b0_build_v15_full_owner_once(
         "output_directory": str(output_root),
         "execution_scope": dict(TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE),
     }
+
+    if quota["retry_authorization"] is not None:
+        record["full_owner_retry_authorization"] = quota["retry_authorization"]
 
     def replace_record(updated: Mapping[str, Any], *, exclusive: bool) -> None:
         temporary = claim_path.with_name(claim_path.name + f".{claim_id}.tmp")
@@ -9208,10 +9219,13 @@ def _task41_iterative_candidate_contract(
             expected_output = Path(str(run_directory or "")).resolve()
             # The signed window owns accounting_path; the contract only binds
             # that window by path/hash. Match the dispatcher's verified source.
-            expected_claim = window.accounting_path
-            expected_claim = expected_claim.with_name(
-                expected_claim.name + ".v15_full_owner_claim.json"
-            ).resolve()
+            from src.runners.task41_p0_contract import task41_v15_owner_claim_authority
+            quota = task41_v15_owner_claim_authority(
+                root=root, accounting_path=window.accounting_path,
+                window_path=window.path, window_sha256=window.sha256,
+                retry_binding=contract.get("full_owner_retry_authorization"),
+            )
+            expected_claim = Path(quota["claim_path"])
             checks["v15_full_owner_dispatch_binding"] = bool(
                 run_directory is not None
                 and contract.get("case", {}).get("model_id") == TASK41_MODEL_ID
@@ -9220,6 +9234,8 @@ def _task41_iterative_candidate_contract(
                 == str(expected_claim)
                 and contract_binding.get("full_owner_quota_scope")
                 == "fixed_window_across_attempts"
+                and contract_binding.get("full_owner_retry_authorization")
+                == contract.get("full_owner_retry_authorization")
                 and contract_binding.get("execution_scope")
                 == TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE
                 and os.environ.get("TASK41_P0_V15_FULL_ACCEPTANCE") == "1"
@@ -9296,6 +9312,9 @@ def _task41_iterative_candidate_contract(
             contract_binding.get("full_owner_quota_scope")
             if is_v15_full_acceptance and isinstance(contract_binding, Mapping)
             else None
+        ),
+        "full_owner_retry_authorization": (
+            contract.get("full_owner_retry_authorization") if is_v15_full_acceptance else None
         ),
         "full_owner_quota_claim_path": (
             contract_binding.get("full_owner_quota_claim_path")
