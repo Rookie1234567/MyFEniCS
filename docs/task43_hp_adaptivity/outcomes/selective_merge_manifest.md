@@ -1,8 +1,19 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V6有限支持结果：不授予新资格或合并批准
+## V7 当前审阅：只读证据与未执行的worker假设
 
-Review V5 §9仅新增一个test-only身份存在性修正与两次受限import/affinity诊断。没有数值源码、默认行为、旧合同或历史正式记录变化；新增正式PDE/dispatch/READY为0。S2的20个动态案例未运行。D1/D2全在首个`dolfinx`导入内停止，完整MPI/PETSc ABI检查未到达，pytest、mesh、assembly和solver均未运行。
+本轮新增仅为trace/ELF只读记录、历史启动器快照/diff及当前文档；没有源码行为改动、测试运行、driver、项目导入、PDE或READY。D1/D2停在首个显式`dolfinx`导入返回后的`native_import_complete`检查点；完整MPI/PETSc ABI为`NOT_REACHED`，S2的20个案例为`NOT_RUN`。12份完整raw trace留在ignored artifacts，Git仅保存204条事件表与代表栈摘录。完整入口见[Response V7](../response_v7.md)。
+
+| 合并组 | V7文件/作用 | 本轮证据 | 合并边界 |
+|---|---|---|---|
+| compact evidence/docs | `records/v7_affinity_trace_event_inventory_v1.json`、`v7_affinity_source_loader_audit_v1.json`、4份保存shell/probe文本、2份diff及V7回应/状态文档 | 204条既有D1/D2成功setter、八个V5/V6 support根的文件映射、当前安装静态ELF身份和完整未执行D2→D3候选diff；12份完整raw trace仍在ignored artifacts | 只记历史支持负结果与静态假设；不改变历史记录、ABI、默认环境或数值结论 |
+| research-only proposal (not code) | 候选在worker shell追加`OMPI_MCA_pml=ob1`，复用D2 probe并保留`HWLOC_COMPONENTS=-x86` | 仅有unified diff和当前调用栈上下文；候选目录未创建，运行、ABI预检与20个固定测试案例均未发生 | 不创建可执行runner，不授予新支持运行、MPI>1、数值或生产资格；须另有未来书面授权 |
+| production numerical/core、runner/watchdog、checker | 无V7源码改动 | 无V7测试或fresh PDE evidence | 不因V7而新增合入文件或改变原有建议 |
+| do-not-merge / locked work | 旧场、旧V6 trace/resources、合同、review与response历史文件 | 原件保持原路径/hash；V7只读索引不重写旧原件 | formal预算仍5/6，A1 2/2、A2 3/3，最后1槽封存；没有READY或production merge approval |
+
+## V6历史支持结果：不授予新资格或合并批准
+
+V6阶段按Review V5 §9仅新增一个test-only身份存在性修正与两次受限import/affinity诊断。没有数值源码、默认行为、旧合同或历史正式记录变化；新增正式PDE/dispatch/READY为0。S2的20个动态案例未运行。D1/D2在首个显式`dolfinx`导入返回后的`native_import_complete`检查点停止；完整MPI/PETSc ABI检查为`NOT_REACHED`，pytest、mesh、assembly和solver均未运行。
 
 | V6依赖组 | 文件与作用 | 测试 / fresh PDE evidence | 合并建议 |
 |---|---|---|---|
@@ -61,7 +72,7 @@ V3-03生产合并门仍未关闭：旧Stage1 66路径依赖overlay复核为59/66
 | checker/benchmark · V2 endpoint comparison（research-only） | `benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py`、`sample_v2_legacy_r10_fields.py`；`src/test/test_task43_v2_comparison.py`与上述native helper tests | 比较器从同一物理采样点的R13共同612与R14扩展tail通道重算幅值/功率差及联合门；legacy sampler从真实已存R10系数恢复旧端点的q8/q10字段。比较器不解方程，sampler不改解或补造R13缺失的tail系数。 | 12个比较器fixture通过，三次旧场后处理尝试费用及原件SHA见legacy resampling账；V2三次formal dispatch都没有得到完整可比端点，因此没有通过完整端点验收的fresh PDE evidence，也没有q/R结论。具体输入、测试命令与日志hash见V2 comparator validation及formal compact；不属于Q03的66文件overlay证明。 | 仅作研究对照和hash-bound checker/sampling工具；不能把旧场恢复或部分模态差提升为端点通过。 |
 | do-not-merge／不合入 | ignored的场/网格/矩阵/因子/完整timeline日志，临时/tmp审计与草稿，旧NN/FTT输出，未验路线的默认开关 | 大数据以轻量hash入口保留，旧分支不整体merge/cherry-pick。未验level2/迭代不能冒充生产能力。 | 保留研究负结果、受控停止及已授权旧artifact清理provenance；无需把大型数据提交Git。 | 不纳入源码合并；相关轻量负证据归docs组。 |
 
-## V3最新终态与新增依赖组（非合并批准）
+## V3历史终态与新增依赖组（非合并批准）
 
 V3总计两次正式dispatch，细节见[formal closeout compact](records/v3_formal_diagnostic_closeout_v1.json)。A1_q2实际构网并进入装配，随后因真实入口未接`WorkflowLedger`由主控停止；先前A1 READY保留作历史，不能视为本轮入口通过。A2_q3真实建立WorkflowLedger并运行到额外同因子校正，primary before-extra和q8/q10样本留存；7200秒门触发后任务不完整，且extra full-active explicit residual没有严格下降。A2 native summary/完整比较缺失。V2三次formal wall小计`4915.1723896381445 s`，V3两次小计`7372.49412643211 s`，五次总计`12287.666516070254 s`；此处只加whole-watchdog wall，RSS峰不相加，支持性检查另列于V3 pre-PDE index与closeout compact。
 

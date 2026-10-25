@@ -1,6 +1,21 @@
 # Task43 结果：部分完成，受控负结果
 
-## V6最新收口：S2静态修复，affinity支持门未通过（2026-10-25）
+## V7 最新收口：全部成功 setter 事件与静态装载审计（无新运行）
+
+V7仅按Review V6 §9整理既有D1/D2证据、检查当前安装文件元数据，并写下一个未执行的worker-only候选差异。没有启动新driver、测试、导入、网格或PDE；formal dispatch仍为5/6，A1 2/2、A2 3/3，最后1槽封存。
+
+| 范围 | 实际读到的记录 | 结论边界 |
+|---|---|---|
+| D1完整原trace的事件索引 | 200个成功setter：hwloc196、libinfinipath2、libpsm2 2；CPU1 mask `[1]` 10次、非CPU1 190次 | 204条D1/D2事件均在[trace索引](records/v7_affinity_trace_event_inventory_v1.json)按原trace SHA与行SHA绑定；主控独立逐条复核无差异 |
+| D2完整原trace的事件索引 | 4个成功setter：hwloc0、libinfinipath2、libpsm2 2；CPU1 2次、非CPU1 2次 | `HWLOC_COMPONENTS=-x86`后网络库setter仍在；两次阶段末CPU1采样不能抵消trace调用 |
+| 八个支持根与源码 | V5六个旧support根及V6 D1/D2根逐文件索引；D1/D2各8个源条目与自身快照一致 | V6原source snapshot布尔false经新路径键规范化后8/8匹配；原比较生成器缺失，不能确定原false的代码原因 |
+| 当前装载文件 | hwloc、libinfinipath、libpsm2、OpenMPI/PMIx的当前包版本、SHA、BuildID和`NEEDED`均记入[source/loader审计](records/v7_affinity_source_loader_audit_v1.json) | 是当前安装静态身份，不是历史进程mapped-file字节证明。mca_ess_singleton SHA的V7抄录多一个字符，已记录订正；原inline stdout未留存 |
+| 后续假设 | D2→D3完整拟议patch增加worker-local `OMPI_MCA_pml=ob1`，复用原D2 probe | patch与唯一候选目录只作review文本；未创建/执行、不保证不加载CM或不再调用PSM，也不授予多MPI/数值资格 |
+| 费用与状态 | D1/D2 whole-watchdog合计`20.736750496551394s`；V7记录的明确计时小计`24.384309872s` | RSS、swap、清理与CPU1分类仍按V6原记录；CPU1门未过。人工阅读及未计时检查不在小计内；V7新增formal与support运行均为0 |
+
+本轮主控承认V6阶段在批准D2前只集中审查hwloc路径，漏掉D1中已经出现的两类网络库setter；D2仅局部禁用hwloc组件后仍看到PSM setter，不能把这次审查遗漏归因于环境未知或数值方法。V7没有再运行探针。Git保存4份脚本/探针文本和2份差异文本；12份完整raw trace仍只在ignored artifacts中，Git索引保存204条事件、代表栈摘录与索引。候选diff及完整范围见[Response V7](../response_v7.md)、[source/ELF audit](records/v7_affinity_source_loader_audit_v1.json)和[事件索引](records/v7_affinity_trace_event_inventory_v1.json)。
+
+## V6历史收口：S2静态修复，affinity支持门未通过（2026-10-25）
 
 本轮按Review V5 §9只整理六个旧支持运行、静态修正测试内身份存在性helper，并进行了两次受限原生导入/affinity诊断。新增正式计算、dispatch、PDE、READY均为0；测试helper的20个案例未运行。正式预算仍为5/6（A1 2/2、A2 3/3），最后一槽封存；accepted9/R9、五项能力和下游锁定保持原状。
 
@@ -8,13 +23,13 @@
 |---|---|---|
 | S1旧运行上下文 | 六个V5 support运行的affinity邻域与源快照只读整理 | [S1索引](records/v6_s1_v5_support_affinity_context_v1.json)；summary本身未存launcher exit，引用旧compact中的单独外层退出码 |
 | S2测试helper | source/contract/plan身份需为非空、格式正确的SHA字符串；新增4个共同缺字段负例 | [修改文件](../../../src/test/test_task43_v3_failure_safe_order.py) SHA256 `52f94e28306d2d7f83f602c5e654c8953e544f00091ae3013378d52d040b7a43`；20项均NOT_RUN，无production consumer改变 |
-| D1 | `dolfinx`导入期间捕获200次成功affinity setter：hwloc 196、libinfinipath 2、libpsm2 2；CPU1未通过 | whole-watchdog `10.266887816600502 s`，RSS峰`161480704 B`，task VmSwap采样峰0，global `pswpin/pswpout`增量0/0页，清理完成；MPI/PETSc完整ABI preflight未到达 |
+| D1 | 首个显式`dolfinx`导入返回后的`native_import_complete`检查点，记录200次成功affinity setter：hwloc 196、libinfinipath 2、libpsm2 2；CPU1未通过 | whole-watchdog `10.266887816600502 s`，RSS峰`161480704 B`，task VmSwap采样峰0，global `pswpin/pswpout`增量0/0页，清理完成；完整MPI/PETSc ABI preflight `NOT_REACHED` |
 | D2 | worker shell内设`HWLOC_COMPONENTS=-x86`后仍捕获4次setter：libinfinipath 2、libpsm2 2；阶段采样TID均在CPU1，但trace出现两次CPU0并恢复 | whole-watchdog `10.469862679950893 s`，RSS峰`160063488 B`，task VmSwap采样峰0，global增量0/0页，清理完成；CPU1仍NOT_PASSED，pytest未进入 |
 | 合计与边界 | 两个支持driver whole-watchdog小计`20.736750496551394 s`；资源时限、RSS、task VmSwap采样峰及global swap页增量和清理门通过，严格CPU1门失败 | 主控在D2前未分类D1中已存在的两类网络库setter（合计4次）；该监督审查遗漏已明确保留。没有科学方法失败或新数值结论；没有第三个driver |
 
 精确阶段PID/TID、`trace_sync`、启动命令和脚本快照、逐文件源码hash、D1 `[30]/[33]` trace事件和对应resources成员样本、D2采样与四次setter、代表栈和原trace SHA见[V6 support compact](records/v6_affinity_support_closeout_v1.json)。S2动态案例未运行，历史V5样本根因仍未证实。未监控shell语法与JSON解析仅按现有报告列为静态检查；没有可留存命令/输出核实S2模块bytecode编译，不作该项通过声明。未监控检查耗时及RSS为`not_measured`，不计入watchdog wall。
 
-## 最新收口：V5 按 Review V4 F1–F4 完成有限工程整改（2026-10-25）
+## V5历史收口：按 Review V4 F1–F4 完成有限工程整改（2026-10-25）
 
 V5只处理真实入口的失败写入资格、comparison原件身份和二次写失败的联合读取范围，并更新当前文档；不改数值方程、默认native路线或历史冻结合同。WorkflowLedger记录入口实际执行阶段，原子写入避免单份JSON半写，primary/extra保留额外同因子回代前后的原向量；这些机制降低后处理故障造成的证据损失，但不提升空间精度。
 
@@ -44,7 +59,7 @@ V5只处理真实入口的失败写入资格、comparison原件身份和二次�
 
 N5旧日志生命周期和 affinity 记录见[V4 root audit index](records/v4_root_audit/index.json)。N1–N4 失败注入、final focused 和本地文档检查的实际命令、source/test SHA、完整 stdout 与 watchdog 费用见[V4 focused validation compact](records/v4_focused_validation_v1.json)。支持工作与 formal watchdog wall分账；未独立计时的操作标 `not_measured`，不与N5重叠阶段重复相加。详见[Response V4](../response_v4.md)。
 
-## 最新收口：V3 两次有限诊断（2026-10-24）
+## V3历史收口：两次有限诊断（2026-10-24）
 
 V1接受状态仍冻结在R9，最终空间精度未达。V3在原始最多6次formal dispatch额度内完成了两次获准尝试，累计共5/6次；A1组2/2、A2组3/3，剩余1次封存。A1_q2构网并进入装配后，因为实际A1入口没有建立要求的`WorkflowLedger`，由主控受控停止；A2_q3确实建立ledger、完成Y6_1网格与装配、保存primary和q8/q10场样本，但在7200秒墙钟门到期后停止，完整端点与比较未产出。两项均不是完整q/R资格，A1工程接线缺陷也不能归咎数值方法。
 
@@ -289,7 +304,7 @@ V1的最后接受态仍是R9（110,472 FE），最终空间精度不达标；R10
 
 正式尝试以外的支持工作入口、可计量的独立watchdog费用、未监控时间的`not_measured`标记和保留的前置失败列于[V2 compact的support_work](records/v2_formal_attempts_and_profile_fix_v1.json)。这些费用不并入4,915.1723896381445s formal watchdog subtotal，也不拼成全campaign总额。
 
-## V3正式诊断执行记录（A2 READY前的历史快照；最新整改见V4）
+## V3正式诊断执行记录（A2 READY前的历史快照；后续整改见V4及以后）
 
 V3已派发一次A1_q attempt2，预算累计4/6。实际入口构建了180格网格并进入装配路径，但未留下因子分解或求解完成证据；主控发现A1路径没有接入要求的WorkflowLedger后，按指令对该次运行受控停止。该结果是工程接线不完整，不是数值方法失败，也没有official primary/endpoint。A1_q2 READY仅是该次dispatch的历史授权记录，并因真实入口缺ledger不能支持后续派发；本段原有“A2未READY、未派发”只指A1停止后、A2 READY之前的时点。原始终态和身份见[A1_q2执行记录](records/a1_q_attempt2/dispatch_and_stop_record.json)及[root独立终态审计](records/v3_root_pre_pde_audit/A1_q2_terminal_audit.json)。
 

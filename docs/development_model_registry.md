@@ -1,12 +1,18 @@
 # Task43：accepted9/R9冻结，最终空间精度未达
 
-## Task43 V6最新支持状态：S2动态案例未运行，affinity门未通过
+## Task43 V7最新状态：trace/source静态取证，无新运行
 
-Review V5 §9本轮只调整测试内source/contract/plan身份存在性helper，并对六份旧support和两次受限导入driver做证据收口。D1在`dolfinx`导入trace中记录200次成功affinity setter（hwloc196、libinfinipath 2、libpsm2 2）；D2屏蔽hwloc x86组件后仍有4次网络库setter。两次都在CPU1偏离时停止，完整MPI/PETSc ABI预检与pytest未到达；S2的20个案例`NOT_RUN`。whole-watchdog合计`20.736750496551394s`，task VmSwap采样峰为0 B、global `pswpin/pswpout`增量为0页；RSS及时限/清理通过，严格CPU1`NOT_PASSED`。D2前监督审查漏分类D1中已有的两类网络库调用（合计4次），详情在[Response V6](task43_hp_adaptivity/response_v6.md)和[V6 compact](task43_hp_adaptivity/outcomes/records/v6_affinity_support_closeout_v1.json)。
+V7完整索引了V6 D1/D2两次导入诊断的204条成功affinity setter，并只读登记六个旧V5 support根、两份V6 driver快照和当前安装ELF/package元数据。D1为hwloc196、libinfinipath2、libpsm2 2；D2 `HWLOC_COMPONENTS=-x86`后仍有两类网络库setter各2次。D2前主控漏分类了D1已存在的四次网络库setter，V7明确保留这一监督遗漏。原V6 `source_snapshot_all_match_manifest=false`经路径键规范化后逐项8/8一致，但原生成器没有留存，故不确定该布尔标志的精确成因。mca_ess_singleton当前文件SHA的V7抄录多一个字符，已更正并说明原inline stdout未留存；当前安装ELF信息不证明历史mapped-file字节。
 
-该支持结果不改变模型注册结论：accepted9/R9仍为最后接受状态、最终精度未达；新formal dispatch为0，累计5/6（A1 2/2、A2 3/3），最后1槽封存。五项能力保持空间/选择`PARTIAL`、精度`NOT_PASSED`、同精度全过程成本`NOT_ESTABLISHED`、迭代`NOT_RUN / NOT_QUALIFIED`；0.7 nm未运行。没有生产合并批准。
+R3只留下在D2 worker shell拟增加`OMPI_MCA_pml=ob1`的完整diff与唯一候选路径；不创建、不执行、不授权。栈证明PSM setter经过OpenMPI CM PML组件装载上下文，但不证明OB1选择能阻止CM模块加载或消除setter。V7没有driver、测试、项目导入或PDE。详情见[Response V7](task43_hp_adaptivity/response_v7.md)、[trace事件表](task43_hp_adaptivity/outcomes/records/v7_affinity_trace_event_inventory_v1.json)和[source/loader audit](task43_hp_adaptivity/outcomes/records/v7_affinity_source_loader_audit_v1.json)。正式dispatch仍5/6，A1 2/2、A2 3/3、最后1槽封存；accepted9/R9与五项能力不变，没有READY或生产合并批准。
 
-## Task43 V5最新状态：有限文件保护与文档收口，无新增正式计算（2026-10-25）
+## Task43 V6历史状态：S2动态案例未运行，affinity门未通过
+
+V6阶段按Review V5 §9只调整测试内source/contract/plan身份存在性helper，并对六份旧support和两次受限导入driver做证据收口。D1在首个显式`dolfinx`导入返回后的`native_import_complete`检查点记录200次成功affinity setter（hwloc196、libinfinipath 2、libpsm2 2）；导入期间已发生setter。D2屏蔽hwloc x86组件后仍有4次网络库setter。完整MPI/PETSc ABI预检为`NOT_REACHED`，pytest为`NOT_RUN`；S2的20个案例`NOT_RUN`。whole-watchdog合计`20.736750496551394s`，task VmSwap采样峰为0 B、global `pswpin/pswpout`增量为0页；RSS及时限/清理通过，严格CPU1`NOT_PASSED`。D2前监督审查漏分类D1中已有的两类网络库调用（合计4次），详情在[Response V6](task43_hp_adaptivity/response_v6.md)和[V6 compact](task43_hp_adaptivity/outcomes/records/v6_affinity_support_closeout_v1.json)。
+
+该支持结果不改变模型注册结论：accepted9/R9仍为最后接受状态、最终精度未达；新formal dispatch为0，累计5/6（A1 2/2、A2 3/3），最后1槽封存。五项能力保持空间/选择`PARTIAL`、精度`NOT_PASSED`、同精度全过程成本`NOT_ESTABLISHED`、迭代`NOT_RUN / NOT_QUALIFIED`；0.7 nm未运行。没有生产合并批准。该段为V6历史快照，当前状态见文首V7段。
+
+## Task43 V5历史状态：有限文件保护与文档收口，无新增正式计算（2026-10-25）
 
 Review V4 F1–F4整改只涉及失败写入资格、comparison原件路径和测试内联合读取约定，以及文档。没有改变方程、默认数值行为或端点；本轮新增正式PDE/dispatch/attempt/READY均为0。Task43研究状态为 `PARTIAL / CONTROLLED_NEGATIVE`：accepted9/R9仍是最后接受状态，最终精度未过；A1组2/2、A2组3/3、总计5/6已耗，最后一槽封存。
 

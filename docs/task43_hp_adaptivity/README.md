@@ -5,7 +5,7 @@
 | 执行分支 | `task43_hp_adaptivity` |
 | 建立日期 | 2026-10-22 |
 | 源码基线 | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` |
-| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；accepted9/R9冻结，最终空间精度未达；V2三次和V3两次正式dispatch共5/6，A1组2/2、A2组3/3，剩余1次封存。V4的N1–N6和本轮Review V4的F1–F4均为非PDE整改，正式dispatch新增0；25个F1–F3定向案例通过，具体失败重跑和费用见V5 compact。A1_q2因实际入口未接`WorkflowLedger`而在已构网/进入装配后受控停止；A2_q3已进入native workflow并保存primary partial数据，但在7200秒墙钟门后INCOMPLETE，且extra full-active residual未严格下降。没有完整q/R结论或production merge approval |
+| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；accepted9/R9冻结，最终空间精度未达；正式dispatch 5/6（A1 2/2、A2 3/3），最后1槽封存。V6两次support因affinity偏离CPU1未到完整ABI/pytest；V7只做trace/ELF静态取证与候选文档，没有driver、测试或PDE。R9仍是最后接受态，无完整新endpoint、READY或production merge approval |
 | 第一目标 | 在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环 |
 | 第一验证波长 | 13.5 nm；小规模 direct 作数值核验 |
 | 后续方向 | 自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot |
@@ -49,19 +49,27 @@
 - [V4执行回应：N1–N6有限整改](response_v4.md)；[V4最终focused验证索引](outcomes/records/v4_focused_validation_v1.json)
 - [V4旧A2 affinity区间与生命周期费用审计](outcomes/records/v4_root_audit/index.json)
 - [V5执行回应：Review V4 的 F1–F4有限整改](response_v5.md)；[V5验证与支持费用compact](outcomes/records/v5_focused_validation_v1.json)
+- [V6执行回应：affinity导入诊断与S2 helper静态修正](response_v6.md)；[V6支持compact](outcomes/records/v6_affinity_support_closeout_v1.json)
+- [V7执行回应：完整setter trace、静态装载身份与未执行的OB1假设](response_v7.md)；[204条trace事件索引](outcomes/records/v7_affinity_trace_event_inventory_v1.json)、[source/ELF审计](outcomes/records/v7_affinity_source_loader_audit_v1.json)
 
 V1数值/比较代码及原focused/full pytest使用源码HEAD为 `3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0`；之后V2/V3入口和报告工具分别按各次source snapshot、测试及compact绑定。V2三次正式尝试在完整端点证据前遇到工程/输入绑定错误；V3的A1_q2实际路线漏接WorkflowLedger、A2_q3进入求解后被性能门停止。两项都没有完成完整新端点资格，且V1旧结果保留各自source/ABI/input身份。当前执行分支 `task43_hp_adaptivity` 等待外部审阅，未获merge approval，未合入master。
 
 V3单次A1_q attempt2已构网并进入装配路径，但在因子分解/求解完成及primary端点留证之前，由于真实A1入口没有创建要求的workflow phase ledger，按主控指令受控停止。原READY文件保留为历史授权记录，不能据此继续派发。V4增加了真实A1入口的mesh-boundary组件测试，但不追溯改变该历史dispatch或READY效力。原始summary分类、资源样本、PID/信号、60源码和47输入哈希及独立终态审核见[A1_q2停止记录](outcomes/records/a1_q_attempt2/dispatch_and_stop_record.json)与[root终态审计](outcomes/records/v3_root_pre_pde_audit/A1_q2_terminal_audit.json)。A2_q3真实建立native ledger并运行到受控停止，最终状态和primary原件审计见[post-PDE记录索引](outcomes/records/v3_root_post_pde_audit/index.json)。V4本轮新增正式dispatch为0，剩余1/6封存；具体工程整改、测试和N5费用边界见[Response V4](response_v4.md)及[V4验证compact](outcomes/records/v4_focused_validation_v1.json)。
 
-## Review V4 的最新执行状态（V5，2026-10-25）
+## Review V4 的历史执行状态（V5阶段快照，2026-10-25）
 
 F1–F3有限修复和定向组件验证已完成：A1只有成功取得空输出根后才有权限写失败终态；A2降权 comparison 的原件路径现在指向 sidecar；测试内的联合读取约定覆盖 terminal、进程退出、权限、文件绑定和hash。25个最小案例通过；31项focused首轮30 passed/1 failed，失败来自支持驱动的父子进程拓扑，两个窄恢复节点通过，但没有一次干净的31项全通过运行。六个受监控driver的严格全程CPU1门未通过；wall/RSS/swap和清理通过，具体异常与两次未监控metadata检查失败见[Response V5](response_v5.md)、[V5 validation compact](outcomes/records/v5_focused_validation_v1.json)及[资源复核](outcomes/records/v5_root_resource_recheck.json)。这些fixture不含网格构建、装配或求解，不改变历史A1/A2终态。
 
 原始授权不变：正式dispatch 5/6已耗用，A1 2/2、A2 3/3，最后1槽封存；A1_R/A2_R/B/C、成本campaign、迭代和0.7 nm仍锁定。R9最终精度未达，生产合并未批准。旧A2 resources中实际有三段空cmdline尾段：两个 other_or_unknown各9条观察，另一个 MPI_runtime有8条；仅按同PID/start_ticks前序身份关联，不能补造缺失命令。历史response_v4原字节保留，三段修正见当前Response V5。
 
-## Review V5 §9最新收口（V6）
+## Review V6 §9最新收口（V7，只读证据与候选文档）
 
-本轮只修正测试内联合读取helper的身份存在性约束并核对旧support affinity上下文；S2计划的20个案例未运行。两个受限driver都在`dolfinx`导入时检测到成功的affinity setter偏离CPU1，MPI/PETSc完整ABI preflight及pytest均未到达。D1/D2 whole-watchdog合计`20.736750496551394s`，task VmSwap采样峰为0 B，global `pswpin/pswpout`增量均为0页；RSS/时限/清理满足支持门，但严格CPU1不通过。主控D2前漏分类了D1中已存在的两类网络库setter（合计4次）；该审查遗漏及两次driver的原栈证据已保留。无新正式dispatch/PDE/READY，额度仍5/6，最后一槽封存；科学结论与production资格不变。
+V7完整索引了D1/D2的204条成功affinity setter并只读核对八个V5/V6 support根、保存的启动器与当前安装ELF身份。D1为hwloc196、libinfinipath2、libpsm2 2；D2禁用hwloc x86组件后仍有两类网络库setter各2次。V6主控在D2前漏分类D1已有网络库调用，监督遗漏已明示。旧V6中的 `source_snapshot_all_match_manifest=false` 在本轮规范化路径键后8/8匹配；原比较生成器未留存，未推断原标志的确切成因。候选只是在D2 worker shell中追加 `OMPI_MCA_pml=ob1` 的静态diff；它没有创建或运行，也不证明CM组件或PSM setter会消失。
 
-详见[Response V6](response_v6.md)、[V6 S1只读索引](outcomes/records/v6_s1_v5_support_affinity_context_v1.json)和[V6 affinity support compact](outcomes/records/v6_affinity_support_closeout_v1.json)。
+本轮没有运行driver、导入、pytest、网格或PDE；正式预算和V6 support负结果不变。R9仍为最后接受状态，最后1个formal槽封存，未获READY或production merge approval。详情见[Response V7](response_v7.md)与[204条trace/ELF记录](outcomes/records/v7_affinity_trace_event_inventory_v1.json)、[装载与diff记录](outcomes/records/v7_affinity_source_loader_audit_v1.json)。
+
+## Review V5 §9历史收口（V6）
+
+V6阶段只修正测试内联合读取helper的身份存在性约束并核对旧support affinity上下文；S2计划的20个案例未运行。两个受限driver在首个显式`dolfinx`导入返回后的`native_import_complete`检查点停止；导入过程已触发成功setter偏离CPU1，完整MPI/PETSc ABI preflight为`NOT_REACHED`，pytest为`NOT_RUN`。D1/D2 whole-watchdog合计`20.736750496551394s`，task VmSwap采样峰为0 B，global `pswpin/pswpout`增量均为0页；RSS/时限/清理满足支持门，但严格CPU1不通过。主控D2前漏分类了D1中已存在的两类网络库setter（合计4次）；该审查遗漏及两次driver的原栈证据已保留。无新正式dispatch/PDE/READY，额度仍5/6，最后一槽封存；科学结论与production资格不变。
+
+详见[Response V6](response_v6.md)、[V6 S1只读索引](outcomes/records/v6_s1_v5_support_affinity_context_v1.json)和[V6 affinity support compact](outcomes/records/v6_affinity_support_closeout_v1.json)。该段为V6阶段历史记录；V7当前状态见上文。

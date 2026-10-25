@@ -1,10 +1,16 @@
 # Task43 当前收口（2026-10-25）：PARTIAL / CONTROLLED_NEGATIVE
 
-## V6最新状态：有限support收口，affinity门未通过
+## V7最新状态：静态trace/装载审计，无新运行
 
-Review V5 §9本轮仅静态修正测试helper的source/contract/plan身份存在性，并对六个旧V5 support记录和两次受限import诊断做只读收口。新增正式dispatch/PDE/READY为0，测试helper的20个直接案例均未运行。D1在首个`dolfinx`导入中trace到200次成功affinity设置（hwloc196、libinfinipath 2、libpsm2 2）；D2仅设置worker范围的`HWLOC_COMPONENTS=-x86`后仍看到两类网络库调用。两次均因成功设置偏离CPU1而在完整ABI检查及pytest之前停止，D1/D2 strict CPU1为`NOT_PASSED`。主控D2前漏分类了D1已有的两类网络库setter（合计4次），不能归咎数值方法、环境未知或S2 helper。
+V7只读重核204条既有D1/D2成功affinity setter，保存六个V5 support根与两份V6 driver/probe/diff，并登记当前安装ELF/package信息。D1 200次（hwloc196、libinfinipath2、libpsm2 2）；D2 4次（两类网络库各2）。V6主控在批准D2前漏分类D1已有的四次网络库setter；D2只屏蔽hwloc x86组件后仍有网络调用。V6旧 `source_snapshot_all_match_manifest=false` 经新路径键比较为两个driver各8/8匹配；原生成器未留存，原标志成因不猜测。mca_ess_singleton SHA转录错误已更正，旧metadata inline stdout未保存，当前包信息不是历史映射文件证明。
 
-两次whole-watchdog累计`20.736750496551394s`，最大树RSS采样峰`161480704B`，task VmSwap采样峰0 B，global `pswpin/pswpout`增量均0页，后代清理通过；完整PID/TID/affinity trace、命令/源码快照hash、分组栈和D1 `[30]/[33]`资源成员样本见[V6 closeout compact](task43_hp_adaptivity/outcomes/records/v6_affinity_support_closeout_v1.json)。旧V5六driver S1快照见[V6 S1索引](task43_hp_adaptivity/outcomes/records/v6_s1_v5_support_affinity_context_v1.json)；未监控静态检查耗时与RSS为`not_measured`。没有第三个driver或任何PDE。
+D2→D3只提出worker-local `OMPI_MCA_pml=ob1` 候选diff，未创建或运行；不能证明CM模块不会加载、PSM setter会消失，也不授予MPI>1资格。V7没有support driver、测试、导入、PDE或READY。formal仍5/6，A1 2/2、A2 3/3，最后1槽封存；五项能力与下游锁定不变。完整边界见[Response V7](task43_hp_adaptivity/response_v7.md)及[事件/source/loader记录](task43_hp_adaptivity/outcomes/records/v7_affinity_source_loader_audit_v1.json)。
+
+## V6历史状态：有限support收口，affinity门未通过
+
+V6阶段按Review V5 §9仅静态修正测试helper的source/contract/plan身份存在性，并对六个旧V5 support记录和两次受限import诊断做只读收口。新增正式dispatch/PDE/READY为0，测试helper的20个直接案例均未运行。D1在首个显式`dolfinx`导入返回后的`native_import_complete`检查点对应trace中有200次成功affinity设置（hwloc196、libinfinipath 2、libpsm2 2）；导入期间已观察到setter。D2仅设置worker范围的`HWLOC_COMPONENTS=-x86`后仍看到两类网络库调用。两次均因成功设置偏离CPU1而在完整ABI检查到达前停止，完整MPI/PETSc ABI为`NOT_REACHED`、pytest为`NOT_RUN`，D1/D2 strict CPU1为`NOT_PASSED`。主控D2前漏分类了D1已有的两类网络库setter（合计4次），不能归咎数值方法、环境未知或S2 helper。
+
+两次whole-watchdog累计`20.736750496551394s`，最大树RSS采样峰`161480704B`，task VmSwap采样峰0 B，global `pswpin/pswpout`增量均0页，后代清理通过；PID/TID/affinity摘录与完整trace索引、命令/源码快照hash、代表栈和D1 `[30]/[33]`资源成员样本见[V6 closeout compact](task43_hp_adaptivity/outcomes/records/v6_affinity_support_closeout_v1.json)。旧V5六driver S1快照见[V6 S1索引](task43_hp_adaptivity/outcomes/records/v6_s1_v5_support_affinity_context_v1.json)；未监控静态检查耗时与RSS为`not_measured`。没有第三个driver或任何PDE。
 
 正式预算仍为5/6，A1 2/2、A2 3/3，最后1槽封存；五项能力及所有下游锁定维持V5状态，生产合并未批准。逐项回应见[Response V6](task43_hp_adaptivity/response_v6.md)。
 
@@ -29,7 +35,7 @@ V4 未新增正式 PDE、dispatch、attempt 或 READY。N1 在 A1 实际 main �
 
 原正式预算不变：5/6已耗用，A1 2/2、A2 3/3，剩余1封存；下游仍锁定。此前 A1_q2 的实际入口没有 WorkflowLedger，主控在已构网并进入装配后受控停止，且责任来自此前将通用 fixture 外推为实际入口验证的放行判断；本轮修复与测试不追溯补足旧现场证据。A2_q3真实建立 native ledger，但端点仍不完整且 extra full-active 严格下降门失败。accepted9/R9是最后接受状态，最终精度仍未达，生产合并未批准。
 
-## V3最新进展：两次新增formal dispatch均未取得完整端点资格
+## V3历史进展：两次新增formal dispatch均未取得完整端点资格
 
 V1 accepted9/R9和R10拒绝结论保持冻结；下文16次求解尝试/5份导入场均是V1 inventory历史范围，不包括V2/V3 dispatch。V2三次与V3两次合计5/6，A1组2/2、A2组3/3，剩余一个槽封存。
 
