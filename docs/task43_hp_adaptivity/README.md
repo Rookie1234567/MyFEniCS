@@ -5,7 +5,7 @@
 | 执行分支 | `task43_hp_adaptivity` |
 | 建立日期 | 2026-10-22 |
 | 源码基线 | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` |
-| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；V10只纠正V9三条派生依赖记录，61边/18 parent/24对象离线核算一致。正式V9 review接受固定D3和20项测试的有限工程证据；正式dispatch仍5/6（A1 2/2、A2 3/3），最后1槽封存。无新增运行、READY或合并许可 |
+| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；V10静态整改已由正式review关闭。现依[V11科学推进补充任务书](supplement_v11_scientific_restart.md)，前瞻新增最多A1_q3和R9_H8各1个正式槽及限定支持工作，尚未执行；旧5/6和末槽封存原样保留，新2槽另列，最多累计7/8。科学状态和合并资格未改变 |
 | 第一目标 | 在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环 |
 | 第一验证波长 | 13.5 nm；小规模 direct 作数值核验 |
 | 后续方向 | 自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot |
@@ -14,7 +14,9 @@
 
 ## 阅读入口
 
-本轮执行依据为[正式V9 review第9节](review_report_v9.md)，交付见[Response V10](response_v10.md)、[静态纠正记录](outcomes/records/v10_static_evidence_correction_v1.json)及[纠正版依赖表](outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json)。原V9派生表保留原字节；三个边界的12个字段更正在新文件中，不能继续把旧表当作无误记录。当前文档不改变实际D3运行HEAD `ef1e1ca5bb0b79f7cf5f6b6ce828d0e352ac44ba`，也不赋予生产ABI、科学或合并资格。
+**当前科学执行权威为[V11正式补充任务书](supplement_v11_scientific_restart.md)**：最小入口实现／定向验证、实际h计划、完整A1 q响应、一个固定R9 seed8局部h动作及共同分区比较，在同一授权内按门连续完成，不逐步等待新review。它只前瞻调整列明范围，历史合同和负结果不改。
+
+上一轮[V10正式review](review_report_v10.md)已验收有限静态整改；原执行依据为[正式V9 review第9节](review_report_v9.md)，交付见[Response V10](response_v10.md)、[静态纠正记录](outcomes/records/v10_static_evidence_correction_v1.json)及[纠正版依赖表](outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json)。原V9派生表保留原字节；三个边界的12个字段更正在新文件中，不能继续把旧表当作无误记录。实际D3运行HEAD仍为`ef1e1ca5bb0b79f7cf5f6b6ce828d0e352ac44ba`，本轮尚无新运行结果或合并许可。
 
 1. [task.md](task.md)：科学问题、模型、阶段、接受规则和验收合同。
 2. [AGENTS.md](AGENTS.md)：本目录执行规则；任务书与工作站实施之间的边界。
@@ -56,11 +58,11 @@
 - [V8执行回应：D3准备未通过顺序门，未派发](response_v8.md)；[V7 D3准备原件与收口记录](outcomes/records/v8_d3_preparation_closeout_v1.json)
 - [V9执行回应：D3有限工程复核](response_v9.md)；[D3 resume closeout](outcomes/records/v9_d3_resume_closeout_v1.json)；[实际脚本和root审计字节归档](outcomes/records/v9_d3_sources/README.md)
 
-## V9 当前状态：有限工程终态复核完成；无科学或生产资格
+## V9 历史工程状态：有限工程终态复核完成；无科学或生产资格
 
 V8 review的前瞻许可用于恢复原来未消耗的唯一D3支持运行。V9完成S1静态准备、S2固定字节采用、19项stdlib/AST synthetic sanity；之后对8项源码做hash核对并保存不可后验替换的`prelaunch_snapshot`，再启动唯一D3。root终态审计为`PASS_LIMITED_ENGINEERING`，只覆盖固定启动/import/ABI/affinity链与20个S2 fixture字节：20 passed/0.91s，watchdog whole wall 8.763570327777416s，13个采样的同时进程树RSS峰180887552B、task VmSwap峰0、全局swap增量0/0页，清理完成。没有构网、装配、求解或PDE；审计不授予科学、生产、CI或merge资格。D3额度已耗、无重试；正式额度仍5/6，最后1槽封存，五项科学能力和所有下游锁定不变。V8准备顺序失败与复制失败仍保留，不回写为未发生。见[Response V9](response_v9.md)、[D3 closeout](outcomes/records/v9_d3_resume_closeout_v1.json)与[脚本及轻量证据归档](outcomes/records/v9_d3_sources/README.md)。
 
-V1数值/比较代码及原focused/full pytest使用源码HEAD为 `3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0`；之后V2/V3入口和报告工具分别按各次source snapshot、测试及compact绑定。V2三次正式尝试在完整端点证据前遇到工程/输入绑定错误；V3的A1_q2实际路线漏接WorkflowLedger、A2_q3进入求解后被性能门停止。两项都没有完成完整新端点资格，且V1旧结果保留各自source/ABI/input身份。当前执行分支 `task43_hp_adaptivity` 等待外部审阅，未获merge approval，未合入master。
+V1数值/比较代码及原focused/full pytest使用源码HEAD为 `3da2fa6c96bb315c18c0bb3dcd80b34a8346b3e0`；之后V2/V3入口和报告工具分别按各次source snapshot、测试及compact绑定。V2三次正式尝试在完整端点证据前遇到工程/输入绑定错误；V3的A1_q2实际路线漏接WorkflowLedger、A2_q3进入求解后被性能门停止。两项都没有完成完整新端点资格，且V1旧结果保留各自source/ABI/input身份。上述为历史状态；当前有限执行范围见V11补充任务书，未获merge approval，未合入master。
 
 V3单次A1_q attempt2已构网并进入装配路径，但在因子分解/求解完成及primary端点留证之前，由于真实A1入口没有创建要求的workflow phase ledger，按主控指令受控停止。原READY文件保留为历史授权记录，不能据此继续派发。V4增加了真实A1入口的mesh-boundary组件测试，但不追溯改变该历史dispatch或READY效力。原始summary分类、资源样本、PID/信号、60源码和47输入哈希及独立终态审核见[A1_q2停止记录](outcomes/records/a1_q_attempt2/dispatch_and_stop_record.json)与[root终态审计](outcomes/records/v3_root_pre_pde_audit/A1_q2_terminal_audit.json)。A2_q3真实建立native ledger并运行到受控停止，最终状态和primary原件审计见[post-PDE记录索引](outcomes/records/v3_root_post_pde_audit/index.json)。V4本轮新增正式dispatch为0，剩余1/6封存；具体工程整改、测试和N5费用边界见[Response V4](response_v4.md)及[V4验证compact](outcomes/records/v4_focused_validation_v1.json)。
 
@@ -70,7 +72,7 @@ F1–F3有限修复和定向组件验证已完成：A1只有成功取得空输�
 
 原始授权不变：正式dispatch 5/6已耗用，A1 2/2、A2 3/3，最后1槽封存；A1_R/A2_R/B/C、成本campaign、迭代和0.7 nm仍锁定。R9最终精度未达，生产合并未批准。旧A2 resources中实际有三段空cmdline尾段：两个 other_or_unknown各9条观察，另一个 MPI_runtime有8条；仅按同PID/start_ticks前序身份关联，不能补造缺失命令。历史response_v4原字节保留，三段修正见当前Response V5。
 
-## Review V7 §9当前收口（V8准备阶段停止）
+## Review V7 §9历史收口（V8准备阶段停止）
 
 V7原审阅给出的唯一D3支持许可以先完成§9.2静态核查为条件。本轮候选在输入/ELF核查完成前已被生成，随后首次机械patch/copy以exit 1结束。主控裁决准备不合格并停止；不把候选期望hash相同追认为顺序门通过。候选留在`/tmp/task43_v7_d3_proposal/`仅供审阅；sanity、native import、ABI、固定20项测试、D3 driver和正式PDE均未运行。V7要求的静态项也未全部完成：15个ELF对象有读取记录，但插件直接依赖闭包及完整输入集未完成。费用与原命令/输出见[Response V8](response_v8.md)和[准备收口记录](outcomes/records/v8_d3_preparation_closeout_v1.json)。本次没有merge approval。
 
@@ -84,4 +86,4 @@ V7完整索引了D1/D2的204条成功affinity setter并只读核对八个V5/V6 s
 
 V6阶段只修正测试内联合读取helper的身份存在性约束并核对旧support affinity上下文；S2计划的20个案例未运行。两个受限driver在首个显式`dolfinx`导入返回后的`native_import_complete`检查点停止；导入过程已触发成功setter偏离CPU1，完整MPI/PETSc ABI preflight为`NOT_REACHED`，pytest为`NOT_RUN`。D1/D2 whole-watchdog合计`20.736750496551394s`，task VmSwap采样峰为0 B，global `pswpin/pswpout`增量均为0页；RSS/时限/清理满足支持门，但严格CPU1不通过。主控D2前漏分类了D1中已存在的两类网络库setter（合计4次）；该审查遗漏及两次driver的原栈证据已保留。无新正式dispatch/PDE/READY，额度仍5/6，最后一槽封存；科学结论与production资格不变。
 
-详见[Response V6](response_v6.md)、[V6 S1只读索引](outcomes/records/v6_s1_v5_support_affinity_context_v1.json)和[V6 affinity support compact](outcomes/records/v6_affinity_support_closeout_v1.json)。该段为V6阶段历史记录；V9当前状态见上文。
+详见[Response V6](response_v6.md)、[V6 S1只读索引](outcomes/records/v6_s1_v5_support_affinity_context_v1.json)和[V6 affinity support compact](outcomes/records/v6_affinity_support_closeout_v1.json)。该段为V6阶段历史记录；V9历史工程状态见上文，当前执行范围以顶部V11入口为准。
