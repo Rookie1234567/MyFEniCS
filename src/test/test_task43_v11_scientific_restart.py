@@ -1268,7 +1268,7 @@ def test_main_reaches_v11_mesh_sentinel_with_watchdog_identity(tmp_path, monkeyp
     class P2AuditSentinel(RuntimeError):
         pass
 
-    def stop_at_p2_audit(*, plan_path, **_kwargs):
+    def stop_at_p2_audit(_cfg, *, plan_path, **_kwargs):
         assert plan_path.is_file()
         assert json.loads(plan_path.read_text(encoding="utf-8"))["task43_candidate"]["candidate_id"] == "v11_r9_h8"
         raise P2AuditSentinel("reached existing P2 mesh authority audit boundary")

@@ -1,0 +1,755 @@
+{
+  "schema": "task43.v11.p1_attempt1_root_closeout.v1",
+  "status": "FAILED_LOCAL_FIXTURE_SIGNATURE_RECOVERY_AUTHORIZED",
+  "run_head": "c976dda2076ea7ce802c279bb56b3189fa10dced",
+  "worker_exit": 1,
+  "watchdog_exit": 2,
+  "launcher_exit": 2,
+  "tests": {
+    "passed": 7,
+    "failed": 1,
+    "elapsed_pytest_seconds": 3.55,
+    "failed_selector": "src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity",
+    "failure": "TypeError: P2 _audit_plan is invoked with cfg positional; fixture stub accepted only keyword parameters. Real audit/mesh function never entered.",
+    "later_assertions": "P2 sentinel-specific assertion, environment JSON persistence and normal/fault child fixtures NOT_REACHED"
+  },
+  "root_independent_audit": {
+    "all_final_raw_trace_lines_read": 2552,
+    "raw_event_lines": [
+      {
+        "file": "sched.2021119",
+        "line": 1,
+        "raw": "1793021035.352373 sched_getaffinity(0, 128, [1]) = 8",
+        "stack_id": "23686aff68fa255e"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 125,
+        "raw": "1793021036.204489 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "9b8e2fe271ab5a24"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 225,
+        "raw": "1793021036.384126 sched_getaffinity(0, 8, [1]) = 8",
+        "stack_id": "2d8818ed48a4c5af"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 320,
+        "raw": "1793021036.414621 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "27e9143884cf9a05"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 415,
+        "raw": "1793021036.432161 sched_getaffinity(2021176, 8, [1]) = 8",
+        "stack_id": "27e9143884cf9a05"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 510,
+        "raw": "1793021036.450153 sched_getaffinity(2021177, 8, [1]) = 8",
+        "stack_id": "27e9143884cf9a05"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 605,
+        "raw": "1793021036.468359 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "b718516ca43e5d5e"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 698,
+        "raw": "1793021036.482522 sched_getaffinity(2021176, 8, [1]) = 8",
+        "stack_id": "b718516ca43e5d5e"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 791,
+        "raw": "1793021036.499828 sched_getaffinity(2021177, 8, [1]) = 8",
+        "stack_id": "b718516ca43e5d5e"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 884,
+        "raw": "1793021036.517361 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "c15cdca8fe99bb46"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 977,
+        "raw": "1793021036.535154 sched_getaffinity(2021176, 8, [1]) = 8",
+        "stack_id": "c15cdca8fe99bb46"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1070,
+        "raw": "1793021036.549243 sched_getaffinity(2021177, 8, [1]) = 8",
+        "stack_id": "c15cdca8fe99bb46"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1163,
+        "raw": "1793021038.186117 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "2e46a753bb8c889a"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1200,
+        "raw": "1793021038.198210 sched_getaffinity(2021176, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1235,
+        "raw": "1793021038.203496 sched_getaffinity(2021177, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1270,
+        "raw": "1793021038.212851 sched_getaffinity(0, 8, [1]) = 8",
+        "stack_id": "2e46a753bb8c889a"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1307,
+        "raw": "1793021038.219353 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1342,
+        "raw": "1793021038.224487 sched_getaffinity(2021176, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1377,
+        "raw": "1793021038.229768 sched_getaffinity(2021177, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1412,
+        "raw": "1793021038.239869 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1447,
+        "raw": "1793021038.245117 sched_getaffinity(2021176, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1482,
+        "raw": "1793021038.250446 sched_getaffinity(2021177, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1517,
+        "raw": "1793021038.275669 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=2021276, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---",
+        "stack_id": "8cf6e1032ebe30e6"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1554,
+        "raw": "1793021038.288442 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1589,
+        "raw": "1793021038.294957 sched_getaffinity(2021176, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1624,
+        "raw": "1793021038.300301 sched_getaffinity(2021177, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1659,
+        "raw": "1793021038.315413 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1694,
+        "raw": "1793021038.327148 sched_getaffinity(2021176, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1729,
+        "raw": "1793021038.335458 sched_getaffinity(2021177, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1764,
+        "raw": "1793021038.365266 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1799,
+        "raw": "1793021038.373463 sched_getaffinity(2021176, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1834,
+        "raw": "1793021038.385186 sched_getaffinity(2021177, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1869,
+        "raw": "1793021038.400682 sched_getaffinity(0, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1904,
+        "raw": "1793021038.417337 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1939,
+        "raw": "1793021038.426145 sched_getaffinity(2021176, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 1974,
+        "raw": "1793021038.438193 sched_getaffinity(2021177, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2009,
+        "raw": "1793021038.457675 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2044,
+        "raw": "1793021038.470165 sched_getaffinity(2021176, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2079,
+        "raw": "1793021038.482148 sched_getaffinity(2021177, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2114,
+        "raw": "1793021038.528922 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=2021289, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---",
+        "stack_id": "1896fc4c5e8a56d3"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2149,
+        "raw": "1793021038.541468 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2184,
+        "raw": "1793021038.548224 sched_getaffinity(2021176, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2219,
+        "raw": "1793021038.553001 sched_getaffinity(2021177, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2254,
+        "raw": "1793021038.560825 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2289,
+        "raw": "1793021038.566414 sched_getaffinity(2021176, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2324,
+        "raw": "1793021038.571281 sched_getaffinity(2021177, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2359,
+        "raw": "1793021038.584980 sched_getaffinity(0, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2394,
+        "raw": "1793021038.591318 sched_getaffinity(2021119, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2429,
+        "raw": "1793021038.596575 sched_getaffinity(2021176, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2464,
+        "raw": "1793021038.601826 sched_getaffinity(2021177, 8, [1]) = 8",
+        "stack_id": "8ecd98f4c6e0718f"
+      },
+      {
+        "file": "sched.2021119",
+        "line": 2499,
+        "raw": "1793021039.173037 +++ exited with 1 +++",
+        "stack_id": null
+      },
+      {
+        "file": "sched.2021148",
+        "line": 1,
+        "raw": "1793021035.790175 sched_getaffinity(2021148, 8, [1]) = 8",
+        "stack_id": "0a24452def380b50"
+      },
+      {
+        "file": "sched.2021148",
+        "line": 19,
+        "raw": "1793021035.856332 sched_getaffinity(0, 8, [1]) = 8",
+        "stack_id": "f65c859326ccf680"
+      },
+      {
+        "file": "sched.2021148",
+        "line": 33,
+        "raw": "1793021035.861329 sched_getaffinity(2021148, 8, [1]) = 8",
+        "stack_id": "164fd8c3870bf55c"
+      },
+      {
+        "file": "sched.2021148",
+        "line": 47,
+        "raw": "1793021039.177436 +++ exited with 0 +++",
+        "stack_id": null
+      },
+      {
+        "file": "sched.2021163",
+        "line": 1,
+        "raw": "1793021039.160693 +++ exited with 0 +++",
+        "stack_id": null
+      },
+      {
+        "file": "sched.2021172",
+        "line": 1,
+        "raw": "1793021039.163146 +++ exited with 0 +++",
+        "stack_id": null
+      },
+      {
+        "file": "sched.2021176",
+        "line": 1,
+        "raw": "1793021039.145207 +++ exited with 0 +++",
+        "stack_id": null
+      },
+      {
+        "file": "sched.2021177",
+        "line": 1,
+        "raw": "1793021039.141961 +++ exited with 0 +++",
+        "stack_id": null
+      },
+      {
+        "file": "sched.2021276",
+        "line": 1,
+        "raw": "1793021038.275614 +++ exited with 0 +++",
+        "stack_id": null
+      },
+      {
+        "file": "sched.2021289",
+        "line": 1,
+        "raw": "1793021038.528855 +++ exited with 0 +++",
+        "stack_id": null
+      }
+    ],
+    "all_setters": [],
+    "unclassified_trace_lines": [],
+    "all_trace_exit_tails": [
+      {
+        "file": "sched.2021119",
+        "sha256": "b2cb3005637d481dce513df4be2218f9d389ffe53a16c5560000babe5a57a527",
+        "bytes": 162580,
+        "lines": 2499,
+        "tail": "1793021039.173037 +++ exited with 1 +++"
+      },
+      {
+        "file": "sched.2021148",
+        "sha256": "3197749eaa97226bb393125e7682a0f927dc70c6ea3e94068b4c7f8e324ae974",
+        "bytes": 3717,
+        "lines": 47,
+        "tail": "1793021039.177436 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.2021163",
+        "sha256": "dd9780c508139dcc819dbdcdab48154e6f05a85b4d73d3084b8be1a42d9062b0",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793021039.160693 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.2021172",
+        "sha256": "eb6ba28c2677f3f87e34ae89c4b64b4cfb04ea168e536682b643bdb71aec440e",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793021039.163146 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.2021176",
+        "sha256": "c3c012c917046c684123d928fcc78883ee0ef8679d58f6eed88ebc24c37f8214",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793021039.145207 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.2021177",
+        "sha256": "fff464e4cdceba8fbda652c59d8fbe553c195f5cc6630097ca1667b3d7adc378",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793021039.141961 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.2021276",
+        "sha256": "b48ca75f373fef27198d4cb99c0ed9cab8e1938a9f1f696dec1907eb41c9a624",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793021038.275614 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.2021289",
+        "sha256": "65664511052b02c532879189c0d7dce33f672c3a49447209a2725199c1209b05",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793021038.528855 +++ exited with 0 +++"
+      }
+    ],
+    "signal_classification": "Two normal SIGCHLD CLD_EXITED status0 from git subprocesses; no fatal signal or successful setter. Main pytest exit1 is the recorded assertion failure, other traced exits0.",
+    "resource_rows": [
+      {
+        "timestamp_ns": 1793021035094066624,
+        "elapsed_seconds": 0.21947219083085656,
+        "rss_bytes": 57663488,
+        "swap_bytes": 0,
+        "launch_cap_bytes": 8589934592,
+        "live_or_unreaped_children": [
+          2021119,
+          2021131
+        ],
+        "exit_code": null,
+        "worker_phase": {}
+      },
+      {
+        "timestamp_ns": 1793021035651232752,
+        "elapsed_seconds": 0.7759926789440215,
+        "rss_bytes": 100872192,
+        "swap_bytes": 0,
+        "launch_cap_bytes": 8589934592,
+        "live_or_unreaped_children": [
+          2021119,
+          2021131
+        ],
+        "exit_code": null,
+        "worker_phase": {}
+      },
+      {
+        "timestamp_ns": 1793021036128888782,
+        "elapsed_seconds": 1.25381889520213,
+        "rss_bytes": 135725056,
+        "swap_bytes": 0,
+        "launch_cap_bytes": 8589934592,
+        "live_or_unreaped_children": [
+          2021119,
+          2021131,
+          2021148
+        ],
+        "exit_code": null,
+        "worker_phase": {}
+      },
+      {
+        "timestamp_ns": 1793021036611467450,
+        "elapsed_seconds": 1.736443294212222,
+        "rss_bytes": 154210304,
+        "swap_bytes": 0,
+        "launch_cap_bytes": 8589934592,
+        "live_or_unreaped_children": [
+          2021119,
+          2021131,
+          2021148
+        ],
+        "exit_code": null,
+        "worker_phase": {}
+      },
+      {
+        "timestamp_ns": 1793021037087486887,
+        "elapsed_seconds": 2.212305963039398,
+        "rss_bytes": 187142144,
+        "swap_bytes": 0,
+        "launch_cap_bytes": 8589934592,
+        "live_or_unreaped_children": [
+          2021119,
+          2021131,
+          2021148
+        ],
+        "exit_code": null,
+        "worker_phase": {}
+      },
+      {
+        "timestamp_ns": 1793021037563849189,
+        "elapsed_seconds": 2.6887456690892577,
+        "rss_bytes": 251674624,
+        "swap_bytes": 0,
+        "launch_cap_bytes": 8589934592,
+        "live_or_unreaped_children": [
+          2021119,
+          2021131,
+          2021148
+        ],
+        "exit_code": null,
+        "worker_phase": {}
+      },
+      {
+        "timestamp_ns": 1793021038050881148,
+        "elapsed_seconds": 3.1757685551419854,
+        "rss_bytes": 258383872,
+        "swap_bytes": 0,
+        "launch_cap_bytes": 8589934592,
+        "live_or_unreaped_children": [
+          2021119,
+          2021131,
+          2021148
+        ],
+        "exit_code": null,
+        "worker_phase": {}
+      },
+      {
+        "timestamp_ns": 1793021038522635228,
+        "elapsed_seconds": 3.650375769007951,
+        "rss_bytes": 260497408,
+        "swap_bytes": 0,
+        "launch_cap_bytes": 8589934592,
+        "live_or_unreaped_children": [
+          2021119,
+          2021131,
+          2021148
+        ],
+        "exit_code": null,
+        "worker_phase": {
+          "facts": {
+            "validated_references": []
+          },
+          "phase": "preflight",
+          "phase_started_monotonic": 2946033.316390632,
+          "stage": "task43_preflight_end",
+          "updated_monotonic": 2946033.357039467
+        }
+      },
+      {
+        "timestamp_ns": 1793021038994861483,
+        "elapsed_seconds": 4.119778993073851,
+        "rss_bytes": 265396224,
+        "swap_bytes": 0,
+        "launch_cap_bytes": 8589934592,
+        "live_or_unreaped_children": [
+          2021119,
+          2021131,
+          2021148
+        ],
+        "exit_code": null,
+        "worker_phase": {
+          "facts": {
+            "candidate_id": "v11_r9_h8",
+            "plan_sha256": "a588135843241e851b2e6776a7370a55d234cf5698e626bfcc48104e4b5978d8"
+          },
+          "phase": "mesh_setup",
+          "phase_started_monotonic": 2946033.470586206,
+          "stage": "task43_v11_p2_mesh_authority_begin",
+          "updated_monotonic": 2946033.471158998
+        }
+      },
+      {
+        "timestamp_ns": 1793021039368900885,
+        "elapsed_seconds": 4.493580590933561,
+        "rss_bytes": 38146048,
+        "swap_bytes": 0,
+        "launch_cap_bytes": 8589934592,
+        "live_or_unreaped_children": [],
+        "exit_code": 1,
+        "worker_phase": {
+          "facts": {
+            "candidate_id": "v11_r9_h8",
+            "plan_sha256": "a588135843241e851b2e6776a7370a55d234cf5698e626bfcc48104e4b5978d8"
+          },
+          "phase": "mesh_setup",
+          "phase_started_monotonic": 2946033.470586206,
+          "stage": "task43_v11_p2_mesh_authority_begin",
+          "updated_monotonic": 2946033.471158998
+        }
+      },
+      {
+        "timestamp_ns": 1793021039772840376,
+        "elapsed_seconds": 4.897266237065196,
+        "rss_bytes": 38146048,
+        "swap_bytes": 0,
+        "launch_cap_bytes": 8589934592,
+        "live_or_unreaped_children": [],
+        "exit_code": 1,
+        "worker_phase": {
+          "facts": {
+            "candidate_id": "v11_r9_h8",
+            "plan_sha256": "a588135843241e851b2e6776a7370a55d234cf5698e626bfcc48104e4b5978d8"
+          },
+          "phase": "mesh_setup",
+          "phase_started_monotonic": 2946033.470586206,
+          "stage": "task43_v11_p2_mesh_authority_begin",
+          "updated_monotonic": 2946033.471158998
+        }
+      },
+      {
+        "timestamp_ns": 1793021040129462537,
+        "elapsed_seconds": 5.254011508077383,
+        "rss_bytes": 38146048,
+        "swap_bytes": 0,
+        "launch_cap_bytes": 8589934592,
+        "live_or_unreaped_children": [],
+        "exit_code": 1,
+        "worker_phase": {
+          "facts": {
+            "candidate_id": "v11_r9_h8",
+            "plan_sha256": "a588135843241e851b2e6776a7370a55d234cf5698e626bfcc48104e4b5978d8"
+          },
+          "phase": "mesh_setup",
+          "phase_started_monotonic": 2946033.470586206,
+          "stage": "task43_v11_p2_mesh_authority_begin",
+          "updated_monotonic": 2946033.471158998
+        }
+      },
+      {
+        "timestamp_ns": 1793021040484958625,
+        "elapsed_seconds": 5.609374755062163,
+        "rss_bytes": 38146048,
+        "swap_bytes": 0,
+        "launch_cap_bytes": 8589934592,
+        "live_or_unreaped_children": [],
+        "exit_code": 1,
+        "worker_phase": {
+          "facts": {
+            "candidate_id": "v11_r9_h8",
+            "plan_sha256": "a588135843241e851b2e6776a7370a55d234cf5698e626bfcc48104e4b5978d8"
+          },
+          "phase": "mesh_setup",
+          "phase_started_monotonic": 2946033.470586206,
+          "stage": "task43_v11_p2_mesh_authority_begin",
+          "updated_monotonic": 2946033.471158998
+        }
+      }
+    ],
+    "resource_gate_observations": [],
+    "cleanup": [
+      {
+        "pid": 2021107,
+        "start_ticks": 294602949,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 2021119,
+        "start_ticks": 294602973,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 2021131,
+        "start_ticks": 294602977,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 2021148,
+        "start_ticks": 294603052,
+        "same_process_still_present": false,
+        "proc_stat": null
+      }
+    ],
+    "full_observations_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/preparation/focused_attempt1_root_terminal_observations.json",
+    "full_observations_sha256": "16ca8202022bd9caee617f9fcd9abd15bc10428a3881c01318f7363ee4d4d638"
+  },
+  "resources": {
+    "whole_watchdog_seconds": 5.6703435350209475,
+    "limit_seconds": 300,
+    "tree_rss_peak_bytes": 265396224,
+    "tree_swap_peak_bytes": 0,
+    "all_observed_live_affinities": [
+      1
+    ],
+    "global_swap_delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    },
+    "descendants_cleared": true,
+    "cache_scope": "NOT_MEASURED: no cache-path; empty stamp not shared-cache audit"
+  },
+  "source_identity": {
+    "launch_test_sha256": "14e1d73daecba2e762935b340ba4635afedd43faec1d8e9f67f9f475376cb209",
+    "post_exit_repaired_test_sha256": "ce9ad7fdd8b07a8b33f55fc26c721dd17eb546315b60f03449cba8fe49d5fd2b",
+    "changed_functions": [
+      "test_main_reaches_v11_mesh_sentinel_with_watchdog_identity"
+    ],
+    "other_seven_selector_function_AST": "unchanged; reuse prior measured evidence, no claim entire final test file ran",
+    "numerical_source_changes": [],
+    "contract_changed": false,
+    "repair_timing": "Subagent fixed one fixture after exec session had returned exit2. Root post-exit hash read sees this known later edit; launch snapshot preserved."
+  },
+  "recovery": {
+    "script": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/launch/focused_recovery1.sh",
+    "script_sha256": "5cad2a0b0462ca907c55e6dba77528a6004a29ccfe3ac26db7da44d5b7531bfe",
+    "worker_argv": [
+      "python",
+      "-u",
+      "-m",
+      "pytest",
+      "-q",
+      "-s",
+      "--tb=short",
+      "--basetemp",
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/focused_recovery1/fixtures",
+      "src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity"
+    ],
+    "max_calls": 1,
+    "root_must_be_absent": true,
+    "work_stop": 270,
+    "whole_max": 300,
+    "P1_combined_max": 600,
+    "root_decision": "Proceed only with this diagnosed selector; no other retry/parameter/ABI change."
+  },
+  "counts": {
+    "P1_consumed": 1,
+    "P1_max": 2,
+    "P2": 0,
+    "P3": 0,
+    "P4": 0,
+    "P5": 0,
+    "new_formal": 0,
+    "historical_formal": 5,
+    "old_sealed_slot": "unchanged"
+  }
+}
