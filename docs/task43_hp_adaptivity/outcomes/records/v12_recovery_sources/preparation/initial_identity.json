@@ -1,0 +1,58 @@
+{
+  "schema": "task43.v12.root-initial-static-identity.v1",
+  "utc": "2026-10-26T15:01:30.028488+00:00",
+  "canonical": "/home/fenics/Projects/NN-Lab-V2",
+  "head": "cd4112a0079aba28e9ce1513b58a1b9a51fd6938",
+  "branch": "task43_hp_adaptivity",
+  "upstream": "origin/task43_hp_adaptivity",
+  "origin": "git@github-myfenics:Rookie1234567/MyFEniCS.git",
+  "ahead_behind": "0\t0",
+  "worktrees": "worktree /home/fenics/Projects/Maxwell3D-Lab/task-repository.git\nHEAD 922466da9d7faff408cbb47b7882d179320bdc44\nbranch refs/heads/task39extra_para_workstation_capacity\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity\nHEAD 922466da9d7faff408cbb47b7882d179320bdc44\nbranch refs/heads/task39extra_para_workstation_capacity\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260920\nHEAD 47cb73bf083072ed03788f67830f6ca1e933b60c\ndetached\n\nworktree /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity-docs-20260928\nHEAD c6a7ea25753f116cb7fa7ca871fd8cf29d449444\ndetached\n\nworktree /home/fenics/Projects/Maxwell3D-Phi90\nHEAD 4b57126a5967f14efc379a3b8b0bd0a9d35df963\nbranch refs/heads/task40para_phi90_mesh_modes_direct\n\nworktree /home/fenics/Projects/NN-Lab\nHEAD 81c049e09a61efa38f8c7a6a762f02e8835c9b3f\nbranch refs/heads/task42_neural_coarse_inverse\n\nworktree /home/fenics/Projects/NN-Lab-V2\nHEAD cd4112a0079aba28e9ce1513b58a1b9a51fd6938\nbranch refs/heads/task43_hp_adaptivity\n\nworktree /tmp/task43_v2_a2_development\nHEAD ed95df3370973c2f06168ed938666250587ece6d\ndetached\n\nworktree /tmp/task43_v2_clean_tracked_collection\nHEAD 7458fadccde01d37ed93187ebe4c39177783d60b\ndetached\n\nworktree /tmp/task43_v2_q03_core_closure_405\nHEAD 405e3aff42ac421a4c99315df1ed9b96941ecbe4\ndetached",
+  "status": "M benchmarks/task43_hp_adaptivity/round1_candidates.py\n?? docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/historical_trace_excerpts.json",
+  "unique_roots": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1",
+      "exists": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1",
+      "exists": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1",
+      "exists": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2",
+      "exists": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3",
+      "exists": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1",
+      "exists": false
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1",
+      "exists": false
+    }
+  ],
+  "source_status_note": "Root-added historical trace excerpt only at snapshot; agent edits may follow. Source is not frozen yet.",
+  "static_failures": [
+    {
+      "operation": "initial noninteractive ls-remote",
+      "exit_code": 128,
+      "reason": "temporary github.com DNS failure; concurrent fetch subsequently succeeded",
+      "duration": "not_measured"
+    },
+    {
+      "operation": "agent python -c static JSON read",
+      "exit_code": 127,
+      "reason": "python command not found; no Python code executed",
+      "duration": "not_measured"
+    }
+  ],
+  "new_dynamic_launches": 0
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "task43.v12.root-static-review-notes.v1",
+  "scope": "Pre-dispatch source and fixture reading; not a dynamic test or qualification",
+  "root_findings_sent_to_executor": [
+    "P2 bindings omitted output_root required by reader; unify explicit producer/consumer fields.",
+    "Observer P4 fixture omitted plan_output_path read before mocked CLI boundary.",
+    "Observer endpoint identity fixture did not accept actual positional cfg/modes arguments.",
+    "Main P2 sentinel parent fixture omitted parent_degree_by_box accessed before audit sentinel.",
+    "P5 first terminal read preceded input snapshot; freeze that first consumed byte identity and check it against the complete snapshot.",
+    "P2 joined/launch JSON validation must preserve initial hashes rather than only recompute end-state identities.",
+    "Synthetic Gram RHS/action and residual/action must represent one positive Gram inverse; retain production norm formula.",
+    "S1 must traverse actual builder/audit, observer, disk reader and comparison; count/file-only assertions are insufficient.",
+    "P5 fixtures require q8/q10 classification conflict, reference direction, fixed floors, 612 channels, positive FE increment and late terminal-marker failure.",
+    "Run actual main/ABI/parent sentinel first within counted S1; no separate native probe."
+  ],
+  "static_local_failures": [
+    {"operation": "Read old resources with mistaken capitalized P2 directory", "exit_code": 1, "effect": "No file changed; rg located actual support/space_and_saved_primary_attempt1 path and read succeeded", "timing": "not_measured"}
+  ],
+  "verification_boundary": "The final source/static record and counted S1 results, not this note, determine which fixes are verified."
+}

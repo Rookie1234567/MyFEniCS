@@ -1,0 +1,305 @@
+{
+  "schema": "task43.v12.execution_recovery_manifest.v1",
+  "review_commit_sha": "cd4112a0079aba28e9ce1513b58a1b9a51fd6938",
+  "old_contract_path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+  "old_contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+  "initial_source_sha256": {
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py": "3519df0768ace646cd34fcb44219a9f62c67df80e86edde59186c0c189e4b5ba",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "19c611bb33d04a3bc640b0ffd78f9357fe5cf8e0d2cc3b7876fa82f5a744bbb9",
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "22c35c356c9c12cb30ee01347b2348be22b55301cd35d18d057b5fb82c888a1c",
+    "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+    "src/test/test_task43_v11_scientific_restart.py": "bc3d1f01fa246d6a79a2faa2bb57a5270d20c1df375780b8ecccd6049900532e"
+  },
+  "support_slots": {
+    "S1": {
+      "root": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1",
+      "calls": 1,
+      "work_seconds": 270,
+      "whole_seconds": 300,
+      "rss_bytes": 8589934592
+    },
+    "S1_recovery": {
+      "root": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1",
+      "calls": 1,
+      "work_seconds": 270,
+      "whole_seconds": 300,
+      "rss_bytes": 8589934592
+    },
+    "D1": {
+      "root": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1",
+      "calls": 1,
+      "work_seconds": 540,
+      "whole_seconds": 600,
+      "rss_bytes": 8589934592
+    },
+    "P2R": {
+      "root": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2",
+      "calls": 1,
+      "work_seconds": 1740,
+      "whole_seconds": 1800,
+      "rss_bytes": 8589934592
+    }
+  },
+  "p2_sources": {
+    "D1": {
+      "support_root": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1",
+      "output_root": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output",
+      "plan_output_path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/plans/v11_r9_h8.json",
+      "audit_path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/plans/v11_r9_h8.audit.json",
+      "bundle_path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/plan_audit.json"
+    },
+    "P2R": {
+      "support_root": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2",
+      "output_root": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output",
+      "plan_output_path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plans/v11_r9_h8.json",
+      "audit_path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plans/v11_r9_h8.audit.json",
+      "bundle_path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json"
+    }
+  },
+  "command_shapes": {
+    "S1": {
+      "command": [
+        "bash",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/launch/focused_attempt1.sh"
+      ],
+      "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1",
+      "worker_argv": [
+        "python",
+        "-u",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=short",
+        "--junitxml",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/pytest_results.xml",
+        "--basetemp",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures",
+        "src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity",
+        "src/test/test_task43_v11_scientific_restart.py::test_run_impl_real_v11_observer_preserves_primary_before_postprocessing",
+        "src/test/test_task43_v11_scientific_restart.py::test_raw_vector_residual_recomputation_uses_saved_gram_action",
+        "src/test/test_task43_v11_scientific_restart.py::test_pending_candidate_restore_is_v11_contract_scoped",
+        "src/test/test_task43_v11_scientific_restart.py::test_v12_actual_candidate_reader_rejects_mixed_storage_packet",
+        "src/test/test_task43_v11_scientific_restart.py::test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8",
+        "src/test/test_task43_v11_scientific_restart.py::test_v12_p2_joined_source_binding_rejects_root_terminal_failure",
+        "src/test/test_task43_v11_scientific_restart.py::test_v12_execution_manifest_rejects_changed_fixed_identity",
+        "src/test/test_task43_v11_scientific_restart.py::test_v12_observer_delegates_cache_and_restores_alias_after_errors",
+        "src/test/test_task43_v11_scientific_restart.py::test_v11_primary_cli_forbids_extra_and_binds_q10_output",
+        "src/test/test_task43_v11_scientific_restart.py::test_v11_terminal_failure_is_incomplete_and_primary_only",
+        "src/test/test_task43_v11_scientific_restart.py::test_v11_empty_root_guard_preserves_existing_file_hash",
+        "src/test/test_task43_v11_scientific_restart.py::test_fixed_seed8_plan_rejects_nonroot_and_alternate_seed",
+        "src/test/test_task43_v11_scientific_restart.py::test_v11_common_points_identity_and_fe_bounds"
+      ]
+    },
+    "S1_recovery": {
+      "command": [
+        "bash",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/launch/focused_recovery1.sh"
+      ],
+      "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1",
+      "worker_argv_shape": [
+        "python",
+        "-u",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "--tb=short",
+        "--basetemp",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/fixtures",
+        "<only frozen affected selectors>"
+      ]
+    },
+    "D1": {
+      "command": [
+        "bash",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/launch/authority_profile_attempt1.sh"
+      ],
+      "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1",
+      "worker_argv": [
+        "python",
+        "-u",
+        "-m",
+        "benchmarks.task43_hp_adaptivity.round1_candidates",
+        "--primary-diagnostic-contract",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+        "--execution-recovery-manifest",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+        "--accepted-parent-selection-record",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json"
+      ]
+    },
+    "P2R": {
+      "command": [
+        "bash",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/launch/space_and_saved_primary_attempt2.sh"
+      ],
+      "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2",
+      "worker_argv": [
+        "python",
+        "-u",
+        "-m",
+        "benchmarks.task43_hp_adaptivity.round1_candidates",
+        "--primary-diagnostic-contract",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+        "--execution-recovery-manifest",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+        "--accepted-parent-selection-record",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json"
+      ]
+    },
+    "P3": {
+      "command": [
+        "bash",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/launch/A1_q_attempt3.sh"
+      ],
+      "worker_argv": [
+        "python",
+        "-u",
+        "-m",
+        "benchmarks.task43_hp_adaptivity.h100_anchor",
+        "--case",
+        "round1_candidate_mpi1",
+        "--run-root",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run",
+        "--candidate-plan",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json",
+        "--candidate-id",
+        "round10_p_up",
+        "--candidate-acceptance-contract",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+        "--candidate-parent-selection-record",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+        "--same-lu-solve-residual-correction",
+        "--direct-factor-backend",
+        "mumps",
+        "--primary-diagnostic-contract",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+        "--primary-diagnostic-phase",
+        "A1_q3",
+        "--execution-recovery-manifest",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json"
+      ]
+    },
+    "P4": {
+      "command": [
+        "bash",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/launch/R9_H8_attempt1.sh"
+      ],
+      "worker_argv_by_p2_source": {
+        "D1": [
+          "python",
+          "-u",
+          "-m",
+          "benchmarks.task43_hp_adaptivity.h100_anchor",
+          "--case",
+          "round1_candidate_mpi1",
+          "--run-root",
+          "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run",
+          "--candidate-plan",
+          "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/plans/v11_r9_h8.json",
+          "--candidate-id",
+          "v11_r9_h8",
+          "--candidate-acceptance-contract",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+          "--candidate-parent-selection-record",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+          "--same-lu-solve-residual-correction",
+          "--direct-factor-backend",
+          "mumps",
+          "--primary-diagnostic-contract",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+          "--primary-diagnostic-phase",
+          "R9_H8",
+          "--execution-recovery-manifest",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json"
+        ],
+        "P2R": [
+          "python",
+          "-u",
+          "-m",
+          "benchmarks.task43_hp_adaptivity.h100_anchor",
+          "--case",
+          "round1_candidate_mpi1",
+          "--run-root",
+          "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run",
+          "--candidate-plan",
+          "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plans/v11_r9_h8.json",
+          "--candidate-id",
+          "v11_r9_h8",
+          "--candidate-acceptance-contract",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+          "--candidate-parent-selection-record",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+          "--same-lu-solve-residual-correction",
+          "--direct-factor-backend",
+          "mumps",
+          "--primary-diagnostic-contract",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+          "--primary-diagnostic-phase",
+          "R9_H8",
+          "--execution-recovery-manifest",
+          "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json"
+        ]
+      }
+    },
+    "P5": {
+      "command": [
+        "bash",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/launch/union_comparison_attempt1.sh"
+      ],
+      "worker_argv": [
+        "python",
+        "-u",
+        "-m",
+        "benchmarks.task43_hp_adaptivity.compare_round1_candidate",
+        "--candidate-run-root",
+        "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run",
+        "--accepted-parent-selection-record",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+        "--attempt-id",
+        "v11_r9_h8_union_attempt1",
+        "--diagnostic-contract",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+        "--execution-recovery-manifest",
+        "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json"
+      ]
+    }
+  },
+  "binding_semantics": {
+    "authority": "review_report_v11.md section 9 only; this manifest adds no authority or scientific overrides",
+    "initial_source": "initial frozen bytes; subsequent permitted localized repairs require immutable launch HEAD/source/diff and affected test identities, never a manifest rewrite",
+    "contract": "original bytes and SHA retained; resolver returns separate effective P2 paths",
+    "p2_selection": "root verifies terminal after watchdog exit; P4 explicitly binds D1 or P2R products; P5 inherits P4 binding; no directory search",
+    "s1_selectors": "exact selectors and full argv in pre-dispatch immutable launch snapshot; recovery only affected nodes",
+    "formal_slots_added_by_review": 0,
+    "old_formal_attempts": 5,
+    "old_formal_envelope": 6,
+    "extended_envelope": 8,
+    "sealed_slot_reusable": false
+  },
+  "resources": {
+    "cpu_affinity": [
+      1
+    ],
+    "mpi_size": 1,
+    "thread_variables": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "BLIS_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "worker_local_env": {
+      "HWLOC_COMPONENTS": "-x86",
+      "OMPI_MCA_pml": "ob1"
+    },
+    "activation": "scripts/activate_task40_phi90_pord64.sh",
+    "profile": "task43_hp_adaptivity_resource_v1",
+    "task_swap_bytes": 0,
+    "dynamic_reserve_and_cap": "stricter actual gate applies",
+    "new_support_whole_seconds_max": 3000
+  },
+  "scientific_settings": "unchanged original contract; no numeric or threshold overrides in this manifest"
+}

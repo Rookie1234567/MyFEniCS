@@ -283,6 +283,8 @@ def task43_v11_partial_terminal_record(
     primary_packet: Mapping[str, Any] | None,
     primary_samples: Mapping[str, Any],
     candidate_identity: Mapping[str, Any] | None,
+    v12_recovery_binding: Mapping[str, Any] | None = None,
+    primary_raw_vector_audit_checkpoint: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build V11's fail-closed partial terminal, scoped to its two phases."""
 
@@ -298,7 +300,17 @@ def task43_v11_partial_terminal_record(
         "candidate_identity": (
             dict(candidate_identity) if candidate_identity is not None else None
         ),
+        "v12_recovery_binding": (
+            dict(v12_recovery_binding)
+            if v12_recovery_binding is not None
+            else None
+        ),
         "primary_packet": dict(primary_packet) if primary_packet else None,
+        "primary_raw_vector_audit_checkpoint": (
+            dict(primary_raw_vector_audit_checkpoint)
+            if primary_raw_vector_audit_checkpoint is not None
+            else None
+        ),
         "primary_samples": dict(primary_samples),
         "official_result": False,
         "passed": False,
@@ -331,6 +343,8 @@ def write_v11_primary_terminal(
     primary_packet: Mapping[str, Any],
     primary_samples: Mapping[str, Any],
     endpoint_record_path: Path,
+    v12_recovery_binding: Mapping[str, Any] | None = None,
+    primary_raw_vector_audit_checkpoint: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Atomically bind the successful, still nonofficial V11 endpoint terminal."""
 
@@ -348,6 +362,16 @@ def write_v11_primary_terminal(
         "classification": "solved_primary_nonofficial",
         "source_identity": dict(source_identity),
         "candidate_identity": dict(candidate_identity),
+        "v12_recovery_binding": (
+            dict(v12_recovery_binding)
+            if v12_recovery_binding is not None
+            else None
+        ),
+        "primary_raw_vector_audit_checkpoint": (
+            dict(primary_raw_vector_audit_checkpoint)
+            if primary_raw_vector_audit_checkpoint is not None
+            else None
+        ),
         "contract_sha256": str(contract_sha256),
         "candidate_plan_sha256": str(candidate_plan_sha256),
         "primary_packet": dict(primary_packet),

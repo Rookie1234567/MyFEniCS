@@ -1,0 +1,42 @@
+{
+  "schema": "task43.v12.r9-core-static-delta.v1",
+  "utc": "2026-10-26T15:06:46.846528+00:00",
+  "r9_runtime_head": "db6d39dbc8688cf525e5462cc4f0eaa81fca00c4",
+  "current_review_head": "cd4112a0079aba28e9ce1513b58a1b9a51fd6938",
+  "scope": "Root read complete Git diff for the four changed source files across adaptivity/solvers/postprocessing/common/constraints/geometry. Static mathematical-path review only; no native execution or fresh equivalence measurement.",
+  "files": [
+    {
+      "path": "src/solvers/common_3d_case_flow.py",
+      "r9_sha256": "f6646d69a0c4bc6a1e2f45a6ba1f072d0ba734032da735db054e125c317ce999",
+      "review_head_sha256": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+      "classification": "existing_observation_and_vector_transport_change",
+      "root_static_read": "Adds transport of existing normal-correction-vector capture flag through common flow."
+    },
+    {
+      "path": "src/solvers/dtn_port_3d.py",
+      "r9_sha256": "c298be94bc1a9b870cfddac0cd9a37d4fcfad881387da7d126d7b3d554875dd7",
+      "review_head_sha256": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+      "classification": "existing_observation_and_vector_transport_change",
+      "root_static_read": "Adds optional snapshots of the already computed normal correction, independent A6 and raw state, plus telemetry. Existing correction algorithm, assembly and recovery calls are unchanged."
+    },
+    {
+      "path": "src/solvers/hcurl_variable_p_reduction.py",
+      "r9_sha256": "32343f7501772437fca3c33c0524977fb2659a6177dce66e7b787db51d846e99",
+      "review_head_sha256": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+      "classification": "existing_observation_and_vector_transport_change",
+      "root_static_read": "Retains existing reduced residual and Gram action arrays on demand. Introduces local action temporary for the same Gram product/solve and optionally returns it; existing norm formula is unchanged."
+    },
+    {
+      "path": "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py",
+      "r9_sha256": "97276baa03fb9ba9713418ff98be081a433960bf6f1d06d4037768c91054f6b8",
+      "review_head_sha256": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb",
+      "classification": "existing_observation_and_vector_transport_change",
+      "root_static_read": "Passes the optional capture flag through the existing stage entry."
+    }
+  ],
+  "diff": {
+    "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/preparation/r9_to_review_core.diff",
+    "sha256": "7e698165241bab6f85f4ec3812f6c707595decc879b2cb2abcd19c400e1d3340"
+  },
+  "remaining": "Actual new V12 source changes and runtime identities must be bound at each launch; this record does not qualify a scientific endpoint."
+}

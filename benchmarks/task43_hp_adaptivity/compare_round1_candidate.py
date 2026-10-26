@@ -22,9 +22,12 @@ from benchmarks.task43_hp_adaptivity.h100_anchor import (
     _assert_mesh_profile,
     _h100_config,
     _load_v11_primary_contract,
+    _load_v12_execution_recovery_manifest,
+    _resolve_v12_p2_source,
     _sha256_file,
     _v11_input_snapshot,
     _v11_source_snapshot,
+    _verify_v12_p2_source_binding,
     _require_v11_watchdog_worker_identity,
     _v11_raw_vector_gates,
     _validate_round1_candidate_inputs,
@@ -88,6 +91,52 @@ _V11_P5_INPUT_ROLES = {
 
 def _json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _v12_p5_input_snapshot(
+    candidate_run_root: Path,
+    *,
+    contract_sha256: str,
+    recovery_binding: dict[str, Any],
+) -> dict[str, dict[str, str]]:
+    """Hash the root-joined P2 source and every P4 byte consumed by P5."""
+
+    attempt_root = candidate_run_root.resolve().parent
+    snapshot = _verify_v12_p2_source_binding(
+        recovery_binding,
+        contract_sha256=contract_sha256,
+        p4_launch_manifest_path=attempt_root / "snapshots/launch_manifest.json",
+    )
+    paths = (
+        candidate_run_root / "candidate_plan.json",
+        candidate_run_root / "task43_round1_candidate_record.json",
+        candidate_run_root / "task43_v11_primary_terminal.json",
+        candidate_run_root / "primary_state.npz",
+        candidate_run_root / "primary_raw_vector_audit.json",
+        candidate_run_root / "candidate_recovered_solution_storage.npz",
+        candidate_run_root / "solve/dtn_port_diffraction_orders_3d.json",
+        attempt_root / "snapshots/launch_manifest.json",
+        attempt_root / "snapshots/launch.sh",
+        attempt_root / "watchdog/summary.json",
+        attempt_root / "launcher_exit_code.txt",
+        attempt_root / "watchdog_exit_code.txt",
+    )
+    for path in paths:
+        resolved = path.resolve()
+        if not resolved.is_file():
+            raise FileNotFoundError(f"V12 P5 input is missing: {resolved}")
+        snapshot[str(resolved)] = {"path": str(resolved), "sha256": _sha256_file(resolved)}
+    terminal = _json(candidate_run_root / "task43_v11_primary_terminal.json")
+    record = _json(candidate_run_root / "task43_round1_candidate_record.json")
+    if (
+        terminal.get("v12_recovery_binding") != recovery_binding
+        or record.get("candidate_identity", {}).get("v12_recovery_binding")
+        != recovery_binding
+        or record.get("source_identity", {}).get("v12_recovery_binding")
+        != recovery_binding
+    ):
+        raise ValueError("V12 P5 P4 endpoint/terminal does not bind the chosen P2 source")
+    return snapshot
 
 
 def _sha256_bytes(values: np.ndarray) -> str:
@@ -174,6 +223,7 @@ def _validate_v11_pending_candidate(
     record: dict[str, Any],
     contract: dict[str, Any],
     contract_sha256: str,
+    recovery_binding: dict[str, Any],
 ) -> tuple[Path, dict[str, Any], str]:
     """Require the one successful P4 pending endpoint and its full byte chain."""
 
@@ -185,6 +235,11 @@ def _validate_v11_pending_candidate(
     if candidate_run_root.resolve() != candidate_root:
         raise ValueError("V11 pending restore requires the unique P4 run root")
     attempt_root = candidate_root.parent
+    _verify_v12_p2_source_binding(
+        recovery_binding,
+        contract_sha256=contract_sha256,
+        p4_launch_manifest_path=attempt_root / "snapshots/launch_manifest.json",
+    )
     for filename in ("launcher_exit_code.txt", "watchdog_exit_code.txt"):
         code_path = attempt_root / filename
         if not code_path.is_file() or code_path.read_text(encoding="ascii").strip() != "0":
@@ -207,6 +262,9 @@ def _validate_v11_pending_candidate(
         or watchdog_summary.get("remaining_child_pids") != []
         or manifest.get("schema") != "task43.v11.launch-input-manifest.v1"
         or manifest.get("contract_sha256") != contract_sha256
+        or manifest.get("recovery_manifest_sha256")
+        != recovery_binding.get("manifest_sha256")
+        or manifest.get("p2_source_id") != recovery_binding.get("p2_source_id")
         or _sha256_file(launch_snapshot_path) != manifest.get("launch_shell_sha256")
         or _sha256_file(expected_script) != _sha256_file(launch_snapshot_path)
     ):
@@ -226,9 +284,14 @@ def _validate_v11_pending_candidate(
         if manifest_inputs.get(str(input_path)) != item.get("sha256"):
             raise ValueError("V11 P4 launch manifest omits or changes a contract input")
     current_source = _v11_source_snapshot()
-    for name, digest in current_source.items():
-        if manifest_source.get(name) != digest:
-            raise ValueError(f"V11 P4 launch manifest source differs: {name}")
+    expected_manifest_source = {
+        **current_source,
+        "docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json": recovery_binding[
+            "manifest_sha256"
+        ],
+    }
+    if manifest_source != expected_manifest_source:
+        raise ValueError("V12 P4 launch source snapshot differs from the actual source")
     watchdog_identity = None
     endpoint_path = candidate_root / "task43_round1_candidate_record.json"
     terminal_path = candidate_root / "task43_v11_primary_terminal.json"
@@ -247,6 +310,7 @@ def _validate_v11_pending_candidate(
         or terminal.get("candidate_selected") is not False
         or terminal.get("continuation_all_false") is not True
         or terminal.get("contract_sha256") != contract_sha256
+        or terminal.get("v12_recovery_binding") != recovery_binding
         or terminal.get("candidate_identity") != record.get("candidate_identity")
         or terminal.get("source_identity") != record.get("source_identity")
     ):
@@ -256,6 +320,26 @@ def _validate_v11_pending_candidate(
     endpoint_sha = _sha256_file(endpoint_path)
     if terminal.get("endpoint_record_sha256") != endpoint_sha:
         raise ValueError("V11 P4 terminal endpoint record hash differs")
+    raw_checkpoint = record.get("primary_raw_vector_audit_checkpoint")
+    terminal_raw_checkpoint = terminal.get("primary_raw_vector_audit_checkpoint")
+    raw_checkpoint_path = (candidate_root / "primary_raw_vector_audit.json").resolve()
+    if (
+        not isinstance(raw_checkpoint, dict)
+        or raw_checkpoint != terminal_raw_checkpoint
+        or Path(str(raw_checkpoint.get("path", ""))).resolve() != raw_checkpoint_path
+        or not raw_checkpoint_path.is_file()
+        or _sha256_file(raw_checkpoint_path) != raw_checkpoint.get("sha256")
+    ):
+        raise ValueError("V11 P4 primary raw-gate checkpoint is missing or changed")
+    raw_checkpoint_record = _json(raw_checkpoint_path)
+    if (
+        raw_checkpoint_record.get("schema")
+        != "task43.v11.primary_raw_vector_audit_checkpoint.v1"
+        or raw_checkpoint_record.get("pass") is not True
+        or raw_checkpoint_record.get("audit")
+        != record.get("primary_raw_vector_audit")
+    ):
+        raise ValueError("V11 P4 durable raw-gate checkpoint differs from its endpoint")
     candidate = record.get("candidate_identity")
     if (
         record.get("schema") != "task43.v11.primary-endpoint.v1"
@@ -271,6 +355,7 @@ def _validate_v11_pending_candidate(
         or candidate.get("candidate_id") != "v11_r9_h8"
         or candidate.get("v11_phase") != "R9_H8"
         or candidate.get("v11_contract_sha256") != contract_sha256
+        or candidate.get("v12_recovery_binding") != recovery_binding
     ):
         raise ValueError("V11 endpoint record does not match a successful P4 pending record")
     if record.get("solver", {}).get("official_result") is not False:
@@ -286,6 +371,8 @@ def _validate_v11_pending_candidate(
         != (ROOT / "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json").resolve()
     ):
         raise ValueError("V11 P4 source identity is not bound to this frozen contract")
+    if source_identity.get("v12_recovery_binding") != recovery_binding:
+        raise ValueError("V12 P4 source identity differs from the selected P2 source")
     source_hashes = source_identity.get("file_sha256")
     if not isinstance(source_hashes, dict) or any(
         current_source.get(name) != digest for name, digest in source_hashes.items()
@@ -316,9 +403,7 @@ def _validate_v11_pending_candidate(
     if endpoint_samples not in ({}, None) or terminal_samples not in ({}, None):
         raise ValueError("V11 P4 pending endpoint unexpectedly contains q8/q10 samples")
     plan_path = candidate_root / "candidate_plan.json"
-    expected_plan = (
-        ROOT / str(contract["phases"]["P2"]["plan_output_path"])
-    ).resolve()
+    expected_plan = Path(str(recovery_binding["plan_output_path"])).resolve()
     plan_sha256 = _sha256_file(plan_path)
     expected_plan_sha = _sha256_file(expected_plan)
     if (
@@ -334,6 +419,9 @@ def _validate_v11_pending_candidate(
     if (
         plan.get("task43_candidate", {}).get("candidate_id") != "v11_r9_h8"
         or plan.get("task43_candidate", {}).get("action") != "h_refine"
+        or plan.get("task43_candidate", {}).get("provenance", {}).get(
+            "v12_recovery_binding"
+        ) != recovery_binding
     ):
         raise ValueError("V11 P4 plan is not the fixed h-refine candidate")
     packet = record.get("primary_packet")
@@ -371,6 +459,10 @@ def _validate_v11_pending_candidate(
         or embedded_identity.get("candidate_plan_sha256") != plan_sha256
         or embedded_identity.get("candidate_identity", {}).get("candidate_id")
         != "v11_r9_h8"
+        or embedded_identity != packet.get("identity")
+        or embedded_identity.get("source_identity") != source_identity
+        or embedded_identity.get("candidate_identity") != candidate
+        or embedded_identity.get("v12_recovery_binding") != recovery_binding
         or packet_embedded.get("arrays") != packet.get("arrays")
     ):
         raise ValueError("V11 P4 embedded primary packet identity differs")
@@ -393,6 +485,8 @@ def _validate_v11_pending_candidate(
         or preassembly.get("pass") is not True
     ):
         raise ValueError("V11 P4 raw-vector or preassembly space audit did not pass")
+    if preassembly.get("v12_recovery_binding") != recovery_binding:
+        raise ValueError("V12 P4 preassembly audit names another P2 source")
     normal_audit = embedded_identity.get("normal_correction_audit", {})
     correction_ksp = normal_audit.get("correction_ksp", {})
     storage = record.get("recovered_solution_storage", {})
@@ -417,6 +511,22 @@ def _validate_v11_pending_candidate(
         raise ValueError("V11 P4 raw-vector residual gates fail independent P5 recomputation")
     p2_audit_path = expected_plan.parent / "v11_r9_h8.audit.json"
     p2_audit = _json(p2_audit_path)
+    p2_bundle = _json(Path(str(recovery_binding["bundle_path"])))
+    a2_path = Path(str(recovery_binding["output_root"])) / "A2_saved_primary_q_response.json"
+    a2_response = _json(a2_path)
+    p2_candidates = p2_bundle.get("candidates", [])
+    if (
+        p2_audit.get("v12_recovery_binding") != recovery_binding
+        or p2_audit.get("strict_fe_gate", {}).get("pass") is not True
+        or p2_bundle.get("v12_recovery_binding") != recovery_binding
+        or len(p2_candidates) != 1
+        or p2_candidates[0].get("strict_fe_gate", {}).get("pass") is not True
+        or a2_response.get("v12_recovery_binding") != recovery_binding
+        or a2_response.get("contract_sha256") != contract_sha256
+        or a2_response.get("persisted_before_space_authority") is not True
+        or a2_response.get("pass") is not True
+    ):
+        raise ValueError("V12 P2 audit, bundle and saved A2 do not share one successful binding")
     actual = preassembly.get("actual", {})
     required_fe = contract["phases"]["P4"]["required_fe_bounds"]
     actual_fe_dofs = int(actual.get("independent_active_fe_dofs", -1))
@@ -460,6 +570,7 @@ def _restore_candidate(
     *,
     v11_contract: dict[str, Any] | None = None,
     v11_contract_sha256: str | None = None,
+    v12_recovery_binding: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     record_path = candidate_run_root / "task43_round1_candidate_record.json"
     record = _json(record_path)
@@ -471,13 +582,16 @@ def _restore_candidate(
         if record.get("solver", {}).get("official_result") is not True:
             raise ValueError("candidate lacks a Task43 gated official-result identity")
     else:
-        if not isinstance(v11_contract_sha256, str):
-            raise ValueError("V11 pending restore requires its frozen contract SHA")
+        if not isinstance(v11_contract_sha256, str) or not isinstance(
+            v12_recovery_binding, dict
+        ):
+            raise ValueError("V11 pending restore requires its frozen contract and V12 binding")
         _validate_v11_pending_candidate(
             candidate_run_root,
             record=record,
             contract=v11_contract,
             contract_sha256=v11_contract_sha256,
+            recovery_binding=v12_recovery_binding,
         )
 
     identity = record["candidate_identity"]
@@ -546,9 +660,66 @@ def _restore_candidate(
         for identity_key, storage_key in expected_key_by_identity.items():
             if not np.array_equal(actual_arrays[identity_key], storage[storage_key]):
                 raise ValueError(f"candidate reconstructed {identity_key} differs from storage")
-        coefficients = np.asarray(
-            storage["recovered_p6_local_coefficients"], dtype=np.complex128
+        stored_coefficients = np.asarray(
+            storage["recovered_p6_local_coefficients"]
         ).copy()
+        coefficients = np.asarray(stored_coefficients, dtype=np.complex128).copy()
+        restoration_arrays = (
+            {
+                name: np.asarray(storage[name]).copy()
+                for name in (*expected_key_by_identity.values(), "recovered_p6_local_coefficients")
+            }
+            if v11_contract is not None
+            else {}
+        )
+    restoration_binding = None
+    if v11_contract is not None:
+        packet_path = candidate_run_root / "primary_state.npz"
+        with np.load(packet_path, allow_pickle=False) as packet_archive:
+            packet_key = "recovered_recovered_p6_local_coefficients"
+            if packet_key not in packet_archive.files:
+                raise ValueError("V12 P5 primary packet lacks recovered P6 coefficients")
+            packet_coefficients = np.asarray(packet_archive[packet_key]).copy()
+            restored_array_bindings = {}
+            for name, stored_array in restoration_arrays.items():
+                primary_key = "recovered_" + name
+                if primary_key not in packet_archive.files:
+                    raise ValueError(f"V12 P5 primary packet lacks recovery array {primary_key}")
+                primary_array = np.asarray(packet_archive[primary_key])
+                stored_identity = _checkpoint_array_identity(stored_array)
+                primary_identity = _checkpoint_array_identity(primary_array)
+                declared_identity = storage_identity.get("arrays", {}).get(name, {})
+                if (
+                    stored_array.dtype != primary_array.dtype
+                    or stored_array.shape != primary_array.shape
+                    or not np.array_equal(stored_array, primary_array)
+                    or any(
+                        stored_identity.get(key) != primary_identity.get(key)
+                        or stored_identity.get(key) != declared_identity.get(key)
+                        for key in ("dtype", "shape", "sha256")
+                    )
+                ):
+                    raise ValueError(
+                        f"V12 P5 restored coefficients or recovery indices differ from primary: {name}"
+                    )
+                restored_array_bindings[name] = stored_identity
+        storage_coefficients_identity = _checkpoint_array_identity(
+            stored_coefficients
+        )
+        packet_coefficients_identity = _checkpoint_array_identity(packet_coefficients)
+        restoration_binding = {
+            "p2_source_id": v12_recovery_binding["p2_source_id"],
+            "recovery_manifest_sha256": v12_recovery_binding["manifest_sha256"],
+            "primary_packet_path": str(packet_path.resolve()),
+            "primary_packet_sha256": _sha256_file(packet_path),
+            "primary_array_key": packet_key,
+            "primary_array_identity": packet_coefficients_identity,
+            "storage_path": str(storage_path.resolve()),
+            "storage_sha256": _sha256_file(storage_path),
+            "storage_array_identity": storage_coefficients_identity,
+            "recovery_array_identities": restored_array_bindings,
+            "same_array_values_dtype_and_shape": True,
+        }
     field = fem.Function(space, name=f"{candidate_id}_recovered_E")
     if field.x.array.shape != coefficients.shape:
         raise ValueError("candidate full-carrier coefficients differ from reconstructed space")
@@ -573,6 +744,7 @@ def _restore_candidate(
         "mesh_identity": {name: base._array_identity(values) for name, values in actual_arrays.items()},
         "storage_sha256": storage_identity["sha256"],
         "plan_sha256": plan_sha,
+        "v12_restoration_binding": restoration_binding,
     }
 
 
@@ -1469,12 +1641,17 @@ def compare_v11_union(
     accepted_parent_selection_record: Path,
     *,
     contract_path: Path,
+    recovery_manifest_path: Path,
     attempt_id: str,
 ) -> dict[str, Any]:
     """Restore R9, pending V11 h and Y6_1; sample one common q8/q10 union."""
     if MPI.COMM_WORLD.size != 1:
         raise RuntimeError("V11 P5 union comparison is fixed to MPI1")
     contract, contract_sha256 = _load_v11_primary_contract(contract_path)
+    recovery = _load_v12_execution_recovery_manifest(
+        recovery_manifest_path,
+        contract_sha256=contract_sha256,
+    )
     phase = contract["phases"]["P5"]
     if attempt_id != "v11_r9_h8_union_attempt1":
         raise ValueError("V11 P5 requires its one frozen support attempt id")
@@ -1485,6 +1662,43 @@ def compare_v11_union(
     ).resolve()
     if candidate_run_root.resolve() != expected_candidate_root:
         raise ValueError("V11 P5 candidate root differs from the unique P4 run")
+    terminal_path = candidate_run_root / "task43_v11_primary_terminal.json"
+    # Freeze the terminal bytes before inspecting its selected P2 plan path.
+    # The later complete P2/P4 snapshot must contain this exact first-read value.
+    terminal_sha256_before = _sha256_file(terminal_path)
+    terminal = _json(terminal_path)
+    terminal_binding = terminal.get("v12_recovery_binding")
+    if not isinstance(terminal_binding, dict):
+        raise ValueError("V12 P5 P4 terminal has no explicit P2 source binding")
+    p2_source = _resolve_v12_p2_source(
+        recovery,
+        candidate_plan_path=Path(str(terminal_binding.get("plan_output_path", ""))),
+    )
+    recovery_binding = {
+        "manifest_path": recovery["manifest_path"],
+        "manifest_sha256": recovery["manifest_sha256"],
+        "contract_sha256": contract_sha256,
+        "p2_source_id": p2_source["p2_source_id"],
+        "support_root": p2_source["support_root"],
+        "output_root": p2_source["output_root"],
+        "plan_output_path": p2_source["plan_output_path"],
+        "audit_path": p2_source["audit_path"],
+        "bundle_path": p2_source["bundle_path"],
+    }
+    if terminal_binding != recovery_binding:
+        raise ValueError("V12 P5 terminal source id/path differs from its recovery manifest")
+    v12_inputs_before = _v12_p5_input_snapshot(
+        candidate_run_root,
+        contract_sha256=contract_sha256,
+        recovery_binding=recovery_binding,
+    )
+    terminal_identity = v12_inputs_before.get(str(terminal_path.resolve()))
+    if (
+        terminal_identity is None
+        or terminal_identity.get("sha256") != terminal_sha256_before
+        or _sha256_file(terminal_path) != terminal_sha256_before
+    ):
+        raise RuntimeError("V12 P4 terminal changed between source selection and P5 snapshot")
     selection_item = next(
         item for item in contract["inputs"] if item["role"] == "R9_selection_transition"
     )
@@ -1515,6 +1729,7 @@ def compare_v11_union(
                 "worker_identity": worker_identity,
                 "runtime_environment": runtime_environment,
                 "input_sha256": inputs_before,
+                "v12_p2_p4_input_sha256": v12_inputs_before,
                 "source_sha256": source_before,
                 "contract_sha256": contract_sha256,
             },
@@ -1533,6 +1748,7 @@ def compare_v11_union(
             output_root / "restore_R9_H8",
             v11_contract=contract,
             v11_contract_sha256=contract_sha256,
+            v12_recovery_binding=recovery_binding,
         )
         _require_v11_watchdog_worker_identity(
             expected_identity=worker_identity, require_unused_phase_file=False
@@ -1612,7 +1828,7 @@ def compare_v11_union(
                 for row in rows
             ):
                 raise ValueError(f"V11 P5 {label} has a nonfinite modal observable")
-        p2_plan_path = (ROOT / contract["phases"]["P2"]["plan_output_path"]).resolve()
+        p2_plan_path = Path(recovery_binding["plan_output_path"]).resolve()
         p2_audit_path = p2_plan_path.parent / "v11_r9_h8.audit.json"
         p2_audit = _json(p2_audit_path)
         p4_space = candidate["record"]["p4_preassembly_space_audit"]
@@ -1811,10 +2027,19 @@ def compare_v11_union(
             )
         source_after = _v11_source_snapshot()
         inputs_after = _v11_input_snapshot(contract, _V11_P5_INPUT_ROLES)
+        v12_inputs_after = _v12_p5_input_snapshot(
+            candidate_run_root,
+            contract_sha256=contract_sha256,
+            recovery_binding=recovery_binding,
+        )
         _require_v11_watchdog_worker_identity(
             expected_identity=worker_identity, require_unused_phase_file=False
         )
-        if source_after != source_before or inputs_after != inputs_before:
+        if (
+            source_after != source_before
+            or inputs_after != inputs_before
+            or v12_inputs_after != v12_inputs_before
+        ):
             raise RuntimeError("V11 P5 source/input identity changed during union comparison")
         record = {
             "schema": "task43.v11.union_comparison.v1",
@@ -1832,6 +2057,7 @@ def compare_v11_union(
             "attempt_id": attempt_id,
             "contract_path": str(contract_path.resolve()),
             "contract_sha256": contract_sha256,
+            "v12_recovery_binding": recovery_binding,
             "reference_candidate_id": accepted["candidate_id"],
             "candidate_id": "v11_r9_h8",
             "reference_label": "Y6_1",
@@ -1848,6 +2074,17 @@ def compare_v11_union(
             "P2_plan_path": str(p2_plan_path),
             "P2_plan_sha256": _sha256_file(p2_plan_path),
             "P2_actual_audit_sha256": _sha256_file(p2_audit_path),
+            "P2_joined_terminal_path": str(
+                Path(recovery_binding["support_root"]) / "v12_p2_joined_terminal.json"
+            ),
+            "P2_joined_terminal_sha256": _sha256_file(
+                Path(recovery_binding["support_root"])
+                / "v12_p2_joined_terminal.json"
+            ),
+            "P2_source_id": recovery_binding["p2_source_id"],
+            "P4_restored_coefficient_binding": candidate.get(
+                "v12_restoration_binding"
+            ),
             "P4_preassembly_space_match": p2_space_match,
             "actual_FE": {"R9": r9_dofs, "R9_H8": h_dofs, "Delta_FE": h_dofs - r9_dofs},
             "same_physics": physics,
@@ -1953,6 +2190,8 @@ def compare_v11_union(
             "source_identity_end": source_after,
             "input_identity_start": inputs_before,
             "input_identity_end": inputs_after,
+            "v12_p2_p4_input_identity_start": v12_inputs_before,
+            "v12_p2_p4_input_identity_end": v12_inputs_after,
             "unchanged_source_and_inputs": True,
             "worker_identity": worker_identity,
             "runtime_environment": runtime_environment,
@@ -2187,6 +2426,7 @@ def main() -> int:
     parser.add_argument("--assets-manifest", type=Path)
     parser.add_argument("--validation-reference-root", type=Path)
     parser.add_argument("--diagnostic-contract", type=Path)
+    parser.add_argument("--execution-recovery-manifest", type=Path)
     args = parser.parse_args()
     if not args.attempt_id or Path(args.attempt_id).name != args.attempt_id:
         parser.error("--attempt-id must be one path component")
@@ -2194,6 +2434,7 @@ def main() -> int:
         if (
             args.candidate_run_root is None
             or args.accepted_parent_selection_record is None
+            or args.execution_recovery_manifest is None
             or args.post_selection_record is not None
             or args.assets_manifest is not None
             or args.validation_reference_root is not None
@@ -2205,6 +2446,7 @@ def main() -> int:
             args.candidate_run_root.resolve(),
             args.accepted_parent_selection_record.resolve(),
             contract_path=args.diagnostic_contract,
+            recovery_manifest_path=args.execution_recovery_manifest,
             attempt_id=args.attempt_id,
         )
         print(
@@ -2225,6 +2467,8 @@ def main() -> int:
             ),
             flush=True,
         )
+    elif args.execution_recovery_manifest is not None:
+        parser.error("--execution-recovery-manifest requires V11 diagnostic mode")
     elif args.post_selection_record is not None:
         if (args.candidate_run_root is not None or args.accepted_parent_selection_record is not None
                 or args.assets_manifest is None or args.validation_reference_root is None):

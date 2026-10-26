@@ -6,8 +6,12 @@ import argparse
 import hashlib
 import json
 import math
+import os
+import sys
 import time
+from functools import wraps
 from pathlib import Path
+from collections.abc import Mapping
 from typing import Any
 
 import numpy as np
@@ -17,6 +21,7 @@ from mpi4py import MPI
 from benchmarks.task43_hp_adaptivity.candidate_records import (
     load_accepted_parent_artifacts,
 )
+from benchmarks.task43_hp_adaptivity.candidate_checkpoints import write_atomic_json
 from benchmarks.task43_hp_adaptivity import compare_initial_to_references as base
 from benchmarks.task43_hp_adaptivity.compare_initial_to_references import (
     _actual_mesh_identity,
@@ -37,6 +42,8 @@ from benchmarks.task43_hp_adaptivity.h100_anchor import (
     _require_v11_watchdog_worker_identity,
     _v11_input_snapshot,
     _v11_source_snapshot,
+    _load_v12_execution_recovery_manifest,
+    _resolve_v12_p2_source,
 )
 from benchmarks.task43_hp_adaptivity.profile import (
     TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
@@ -533,6 +540,7 @@ def _build_v11_seed8_plan(
     parent: dict[str, Any],
     comm_size: int,
     contract: dict[str, Any],
+    recovery_binding: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build the sole V11 h candidate from the predeclared accepted-R9 root."""
 
@@ -586,6 +594,8 @@ def _build_v11_seed8_plan(
         if item["role"] == "seed_geometry_audit"
     )
     provenance["full_dorfer_set_not_used"] = True
+    if recovery_binding is not None:
+        provenance["v12_recovery_binding"] = dict(recovery_binding)
     plan["task43_candidate"]["action_description"] = (
         "one_predeclared_seed8_global_root_split_with_degree_inheritance"
     )
@@ -667,6 +677,141 @@ def _build_candidate_plan(
     return plan
 
 
+def _v12_observed_call(output_root: Path, stage: str, function, *args, **kwargs):
+    """Observe existing calls without changing their results, keys or caches.
+
+    The journal is append-only. A BEGIN without END/ERROR means
+    IN_PROGRESS_AT_STOP, never a zero-duration completed call. Process-tree CPU
+    and sampling costs remain in the unchanged watchdog resource stream.
+    """
+    journal = output_root / "authority_observations.jsonl"
+    calls: dict[str, int] = {}
+    sequence = 0
+
+    def describe(value):
+        if value is None or isinstance(value, (str, bool, int, float)):
+            return value
+        if isinstance(value, complex):
+            return {"complex": [value.real, value.imag]}
+        if isinstance(value, Path):
+            return str(value)
+        if isinstance(value, np.generic):
+            return describe(value.item())
+        if isinstance(value, np.ndarray):
+            return {"shape": list(value.shape), "dtype": str(value.dtype),
+                    "sha256": hashlib.sha256(np.ascontiguousarray(value).tobytes()).hexdigest()}
+        if isinstance(value, HexaEntityDegreeMap):
+            return value.to_dict()
+        if isinstance(value, (tuple, list)):
+            return [describe(item) for item in value]
+        if isinstance(value, Mapping):
+            return {
+                str(key): (
+                    {"description": "existing hash-bound historical payload; see input manifest",
+                     "keys": sorted(map(str, item)) if isinstance(item, Mapping) else None}
+                    if key in {"parent_record", "parent_plan", "parent_comparison"}
+                    else describe(item)
+                )
+                for key, item in value.items()
+            }
+        result = {"type": type(value).__module__ + "." + type(value).__qualname__}
+        for name in ("degree", "family", "cell_type", "dim", "floquet_phase_x",
+                     "floquet_phase_y", "stage4_local_h_refinement_plan"):
+            if hasattr(value, name):
+                item = getattr(value, name)
+                result[name] = describe(item) if isinstance(item, (str, int, float, complex, type(None))) else str(item)
+        if hasattr(value, "leaves") and hasattr(value, "root_boxes"):
+            result.update(root_count=len(value.root_boxes), leaf_count=len(value.leaves))
+        return result
+
+    def emit(event):
+        event.update(stage=stage, monotonic=time.monotonic(), worker_cpu_seconds=time.process_time(),
+                     worker_pid=os.getpid())
+        with journal.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(event, sort_keys=True, allow_nan=False) + "\n")
+
+    def wrap(original, name):
+        @wraps(original)
+        def observed(*positional, **keywords):
+            nonlocal sequence
+            sequence += 1
+            call_id = sequence
+            arguments = {"args": describe(positional), "kwargs": describe(keywords)}
+            key = name + ":" + json.dumps(arguments, sort_keys=True)
+            calls[key] = calls.get(key, 0) + 1
+            cache = getattr(original, "cache_info", None)
+            before = dict(cache()._asdict()) if cache else None
+            started = time.monotonic()
+            emit({"event": "BEGIN", "call_id": call_id, "function": name,
+                  "arguments": arguments, "key_occurrence": calls[key], "cache_before": before,
+                  "unreturned_status": "IN_PROGRESS_AT_STOP"})
+            try:
+                result = original(*positional, **keywords)
+            except BaseException as error:
+                emit({"event": "ERROR", "call_id": call_id, "function": name,
+                      "wall_seconds": time.monotonic() - started,
+                      "exception": type(error).__name__ + ": " + str(error)})
+                raise
+            detail = {}
+            if hasattr(result, "owned_cells"):
+                maps = [json.dumps(cell.degree_map.to_dict(), sort_keys=True) for cell in result.owned_cells]
+                detail = {"owned_cell_count": len(maps), "degree_map_multiplicity":
+                          {key: maps.count(key) for key in sorted(set(maps))}}
+            emit({"event": "END", "call_id": call_id, "function": name,
+                  "wall_seconds": time.monotonic() - started,
+                  "cache_after": dict(cache()._asdict()) if cache else None, "completed_work": detail})
+            return result
+        if hasattr(original, "cache_info"):
+            observed.cache_info = original.cache_info
+        if hasattr(original, "cache_parameters"):
+            observed.cache_parameters = original.cache_parameters
+        return observed
+
+    names = {
+        "_build_forest", "build_stage4_local_h_mesh_data", "build_stage4_local_h_reduction_authority",
+        "build_broken_hexa_trace_constraint_authority", "build_broken_hexa_entity_degree_arrays",
+        "build_variable_p_global_entity_map", "build_broken_hexa_cell_trace_constraint_map",
+        "build_variable_p_reference_space", "_create_active_element", "_from_p6_interpolation",
+        "_to_p6_interpolation", "_discrete_gradient", "_orientation_audit",
+        "compute_interpolation_operator", "build_oriented_hanging_face_reference_catalog",
+        "build_hanging_face_reference_pair", "build_oriented_quad_child_trace_restriction",
+    }
+    module_names = (
+        __name__, "basix", "src.adaptivity.stage4_local_h",
+        "src.adaptivity.exact_sequence_variable_p", "src.adaptivity.hcurl_broken_trace_graph",
+        "src.adaptivity.hcurl_broken_cell_trace", "src.adaptivity.hcurl_hanging_trace",
+        "src.adaptivity.variable_p_entity_map", "src.adaptivity.variable_p_degree_plan",
+    )
+    replacements = []
+    wrappers = {}
+    for module_name in module_names:
+        module = sys.modules.get(module_name)
+        if module is None:
+            continue
+        for name in names:
+            original = getattr(module, name, None)
+            if not callable(original):
+                continue
+            if original not in wrappers:
+                wrappers[original] = wrap(original, original.__module__ + "." + original.__name__)
+            replacements.append((module, name, original, wrappers[original]))
+    try:
+        for module, name, original, observed in replacements:
+            setattr(module, name, observed)
+        result = wrap(function, stage)(*args, **kwargs)
+        write_atomic_json(output_root / (stage + "_observation_complete.json"), {
+            "stage": stage, "status": "COMPLETED", "journal_path": str(journal),
+            "observed_calls": sequence, "unique_function_argument_keys": len(calls),
+            "repeated_calls": sum(count - 1 for count in calls.values()),
+            "cache_policy_changed": False, "numerical_results_changed": False,
+            "cost_scope": "Nested call times overlap; do not sum as workflow wall time.",
+        })
+        return result
+    finally:
+        for module, name, original, observed in reversed(replacements):
+            setattr(module, name, original)
+
+
 def _audit_plan(
     cfg,
     *,
@@ -674,6 +819,7 @@ def _audit_plan(
     candidate_id: str,
     comm: MPI.Intracomm,
     parent_independent_fe_dofs: int = PARENT_INDEPENDENT_FE_DOFS,
+    parent_root_degree_by_box: Mapping[tuple[float, ...], int] | None = None,
     parent_storage_path: Path | None = None,
     parent_storage_sha256: str | None = None,
     audit_parent_transfer: bool = True,
@@ -742,6 +888,8 @@ def _audit_plan(
         for root_id, box in enumerate(forest.root_boxes)
         if tuple(map(float, box)) in normalized_marked_boxes
     ]
+    if len(requested_root_ids) != len(normalized_marked_boxes):
+        raise RuntimeError("candidate requests a box outside the actual root forest")
     actual_refined_root_ids = sorted(
         {int(cell.key.root) for cell in forest.leaves if cell.key.level > 0}
     )
@@ -753,21 +901,48 @@ def _audit_plan(
         for root_id, box in enumerate(forest.root_boxes)
     }
     degree_rows = plan.get("cell_interior_degrees", [])
-    degree_by_box = {
-        tuple(
-            map(
-                float,
-                (*row["lower"], *row["upper"]),
-            )
-        ): int(row["degree"])
-        for row in degree_rows
-    }
+    degree_by_box: dict[tuple[float, ...], int] = {}
+    for row in degree_rows:
+        box = tuple(map(float, (*row["lower"], *row["upper"])))
+        if box in degree_by_box:
+            raise RuntimeError("candidate plan repeats an actual-leaf degree box")
+        degree_by_box[box] = int(row["degree"])
+    actual_leaf_boxes = {cell.box for cell in forest.leaves}
+    if set(degree_by_box) != actual_leaf_boxes:
+        raise RuntimeError("candidate plan degree rows differ from actual local-h leaves")
+    normalized_parent_degrees = (
+        {
+            tuple(map(float, box)): int(degree)
+            for box, degree in parent_root_degree_by_box.items()
+        }
+        if parent_root_degree_by_box is not None
+        else None
+    )
+    if normalized_parent_degrees is not None and set(normalized_parent_degrees) != {
+        tuple(map(float, box)) for box in forest.root_boxes
+    }:
+        raise RuntimeError("parent degree map does not cover the actual root forest")
+    leaf_parent_degree_inheritance: dict[str, dict[str, int]] = {}
     leaf_inheritance_by_root: dict[int, dict[str, Any]] = {}
     for cell in forest.leaves:
         root_id = int(cell.key.root)
         degree = degree_by_box.get(tuple(map(float, cell.box)))
         if degree is None:
             raise RuntimeError("actual local-h leaf lacks a saved interior degree")
+        if normalized_parent_degrees is not None:
+            root_box = tuple(map(float, forest.root_boxes[root_id]))
+            parent_degree = normalized_parent_degrees[root_box]
+            if degree != parent_degree:
+                raise RuntimeError(
+                    "candidate actual leaf does not inherit its parent root degree: "
+                    f"root={root_id}, candidate={degree}, parent={parent_degree}"
+                )
+            inherited = leaf_parent_degree_inheritance.setdefault(
+                str(root_id), {"parent_degree": parent_degree, "leaf_count": 0}
+            )
+            if inherited["parent_degree"] != parent_degree:
+                raise RuntimeError("candidate root has inconsistent parent degrees")
+            inherited["leaf_count"] += 1
         entry = leaf_inheritance_by_root.setdefault(
             root_id,
             {"leaf_count": 0, "degree_counts": {}},
@@ -826,6 +1001,16 @@ def _audit_plan(
             str(root_id): actual_root_boxes[root_id]
             for root_id in forced_closure_root_ids
         },
+        "forced_closure_root_degrees": {
+            str(root_id): (
+                normalized_parent_degrees[
+                    tuple(map(float, forest.root_boxes[root_id]))
+                ]
+                if normalized_parent_degrees is not None
+                else None
+            )
+            for root_id in forced_closure_root_ids
+        },
         "root_id_namespace": "forest_root_index; not the parent mesh global-cell ID",
         "requested_root_mesh_global_cell_ids": (
             [seed_mesh_global_cell_id]
@@ -840,6 +1025,18 @@ def _audit_plan(
             str(root_id): entry
             for root_id, entry in sorted(leaf_inheritance_by_root.items())
         },
+        "leaf_parent_degree_inheritance_by_root": leaf_parent_degree_inheritance,
+        "all_actual_leaves_inherit_parent_degree": (
+            (
+                sum(
+                    entry["leaf_count"]
+                    for entry in leaf_parent_degree_inheritance.values()
+                )
+                == leaf_count
+            )
+            if normalized_parent_degrees is not None
+            else None
+        ),
         "seed_parent_degree": seed_parent_degree,
         "seed_child_degrees": seed_child_degrees,
         "seed_child_degree_inheritance_pass": (
@@ -1525,6 +1722,61 @@ def _v11_saved_a2_primary_q_response(
     }
 
 
+def _v11_actual_space_gate(
+    audit: Mapping[str, Any], *, parent_fe_dofs: int, fe_bounds: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Apply the existing fixed-seed/closure and strict FE post-authority gates."""
+    space_detail = audit["space_authority_detail"]
+    expected_seed_box = [16.5, 5.0, -10.0, 33.5, 10.0, 0.0]
+    seed_root_index = space_detail["seed_forest_root_index"]
+    requested_roots = set(space_detail["requested_root_ids"])
+    actual_roots = set(space_detail["actual_refined_root_ids"])
+    forced_closure_roots = set(space_detail["forced_closure_root_ids"])
+    if (
+        len(space_detail["requested_root_ids"]) != 1
+        or space_detail["requested_root_ids"] != [seed_root_index]
+        or space_detail["requested_root_boxes"]
+        != {str(seed_root_index): expected_seed_box}
+        or space_detail["seed_root_box_nm"] != expected_seed_box
+        or space_detail["seed_mesh_global_cell_id"] != 8
+        or space_detail["requested_root_mesh_global_cell_ids"] != [8]
+        or space_detail["root_id_namespace"]
+        != "forest_root_index; not the parent mesh global-cell ID"
+        or requested_roots.intersection(forced_closure_roots)
+        or actual_roots != requested_roots.union(forced_closure_roots)
+        or not space_detail["all_actual_leaves_inherit_parent_degree"]
+        or space_detail["seed_parent_degree"] != 5
+        or space_detail["seed_child_degrees"] != [5]
+        or not space_detail["seed_child_degree_inheritance_pass"]
+        or space_detail["predicted_returned_trace_dtn_rows"]
+        != int(audit["dofs"]["independent_trace_rows"]) + 612
+        or space_detail["hanging_or_floquet_slave_rows_globally_numbered"]
+    ):
+        raise RuntimeError("V11 P2 actual root/degree/Floquet/carrier authority differs")
+    candidate_fe_dofs = int(audit["dofs"]["independent_active_fe_dofs"])
+    minimum_exclusive = int(fe_bounds["parent_fe_dofs"])
+    maximum_exclusive = int(fe_bounds["target_exclusive_upper"])
+    gate = {
+        "parent_independent_fe_dofs": parent_fe_dofs,
+        "candidate_independent_fe_dofs": int(audit["dofs"]["independent_active_fe_dofs"]),
+        "added_dofs": candidate_fe_dofs - parent_fe_dofs,
+        "positive_added_dofs": candidate_fe_dofs - parent_fe_dofs > 0,
+        "exclusive_upper_bound": maximum_exclusive,
+        "below_exclusive_upper": candidate_fe_dofs < maximum_exclusive,
+        "minimum_exclusive_lower_bound": minimum_exclusive,
+        "maximum_exclusive_upper_bound": maximum_exclusive,
+        "parent_matches_frozen_lower_bound": parent_fe_dofs == minimum_exclusive,
+        "above_exclusive_lower_bound": candidate_fe_dofs > minimum_exclusive,
+        "below_exclusive_upper_bound": candidate_fe_dofs < maximum_exclusive,
+    }
+    gate["pass"] = bool(
+        gate["parent_matches_frozen_lower_bound"]
+        and gate["above_exclusive_lower_bound"]
+        and gate["below_exclusive_upper_bound"]
+    )
+    return gate
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--parent-run", type=Path, default=DEFAULT_PARENT_RUN)
@@ -1533,6 +1785,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--acceptance-contract", type=Path, default=DEFAULT_ACCEPTANCE)
     parser.add_argument("--accepted-parent-selection-record", type=Path)
     parser.add_argument("--primary-diagnostic-contract", type=Path)
+    parser.add_argument("--execution-recovery-manifest", type=Path)
     parser.add_argument(
         "--skip-parent-transfer",
         action="store_true",
@@ -1557,20 +1810,51 @@ def main(argv: list[str] | None = None) -> int:
     v11_source_before = None
     v11_inputs_before = None
     v11_ledger = None
+    v11_a2_response = None
+    v12_recovery = None
+    v12_recovery_binding = None
     if args.primary_diagnostic_contract is not None:
         if args.accepted_parent_selection_record is None:
             parser.error("V11 P2 requires the frozen accepted-R9 selection record")
         if args.round_id != "round1" or args.skip_parent_transfer:
             parser.error("V11 P2 is a fixed seed8 space audit and rejects legacy plan options")
         try:
-            v11_contract, _ = _load_v11_primary_contract(
+            v11_contract, v11_contract_sha256 = _load_v11_primary_contract(
                 args.primary_diagnostic_contract
             )
         except (OSError, json.JSONDecodeError, RuntimeError, TypeError, ValueError) as exc:
             parser.error(f"V11 P2 contract is invalid: {exc}")
-        plan_output_path = Path(v11_contract["phases"]["P2"]["plan_output_path"])
-        v11_plan_path = (ROOT / plan_output_path).resolve()
-        v11_output_root = v11_plan_path.parent.parent
+        if args.execution_recovery_manifest is None:
+            parser.error("V11 P2 requires --execution-recovery-manifest")
+        try:
+            v12_recovery = _load_v12_execution_recovery_manifest(
+                args.execution_recovery_manifest,
+                contract_sha256=v11_contract_sha256,
+            )
+            attempt_root_text = os.environ.get("TASK43_V11_ATTEMPT_ROOT")
+            if not attempt_root_text:
+                raise ValueError(
+                    "TASK43_V11_ATTEMPT_ROOT must explicitly select D1 or P2R"
+                )
+            v12_source = _resolve_v12_p2_source(
+                v12_recovery,
+                attempt_root=Path(attempt_root_text),
+            )
+        except (OSError, json.JSONDecodeError, RuntimeError, TypeError, ValueError) as exc:
+            parser.error(f"V12 P2 recovery binding is invalid: {exc}")
+        v11_plan_path = Path(v12_source["plan_output_path"])
+        v11_output_root = Path(v12_source["output_root"])
+        v12_recovery_binding = {
+            "manifest_path": v12_recovery["manifest_path"],
+            "manifest_sha256": v12_recovery["manifest_sha256"],
+            "contract_sha256": v11_contract_sha256,
+            "p2_source_id": v12_source["p2_source_id"],
+            "support_root": v12_source["support_root"],
+            "output_root": v12_source["output_root"],
+            "plan_output_path": v12_source["plan_output_path"],
+            "audit_path": v12_source["audit_path"],
+            "bundle_path": v12_source["bundle_path"],
+        }
         expected_selection = next(
             item["path"]
             for item in v11_contract["inputs"]
@@ -1581,7 +1865,10 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("V11 P2 requires the contract-bound accepted R9 selection path")
         if args.acceptance_contract.resolve() != DEFAULT_ACCEPTANCE.resolve():
             parser.error("V11 P2 requires the frozen round-one acceptance contract")
-        if args.output_root.resolve() not in {DEFAULT_OUTPUT.resolve(), v11_output_root}:
+        if args.output_root.resolve() not in {
+            DEFAULT_OUTPUT.resolve(),
+            v11_output_root.resolve(),
+        }:
             parser.error("V11 P2 output differs from its unique contract-bound plan root")
         selection_item = next(
             item for item in v11_contract["inputs"]
@@ -1617,22 +1904,8 @@ def main(argv: list[str] | None = None) -> int:
         geometry_profile="initial_180",
     )
     if v11_contract is not None:
-        v11_parent = _load_accepted_parent_state(
-            expected_selection_path,
-            cfg=cfg,
-            comm_size=comm.size,
-        )
-        v11_plan = _build_v11_seed8_plan(
-            cfg,
-            parent=v11_parent,
-            comm_size=comm.size,
-            contract=v11_contract,
-        )
         output_root = v11_output_root
-    else:
-        output_root = args.output_root.resolve()
-    output_root.mkdir(parents=True, exist_ok=False)
-    if v11_contract is not None:
+        output_root.mkdir(parents=True, exist_ok=False)
         assert v11_worker_identity is not None
         assert v11_runtime_environment is not None
         v11_ledger = WorkflowLedger(
@@ -1646,8 +1919,58 @@ def main(argv: list[str] | None = None) -> int:
                 "runtime_environment": v11_runtime_environment,
                 "input_sha256": v11_inputs_before,
                 "source_sha256": v11_source_before,
+                "v12_recovery_binding": v12_recovery_binding,
             },
         )
+        try:
+            v11_a2_response = _v11_saved_a2_primary_q_response(v11_contract)
+        except (OSError, KeyError, TypeError, ValueError, RuntimeError) as exc:
+            v11_a2_response = {
+                "schema": "task43.v11.saved_a2_primary_q_response.v1",
+                "status": "failed_saved_primary_read_or_recomputation",
+                "pass": False,
+                "error": f"{type(exc).__name__}: {exc}",
+                "historical_endpoint_status": "INCOMPLETE_NOT_QUALIFIED",
+                "official_result": False,
+                "passed": False,
+                "extra_correction_status": "historical_failure_preserved_not_replayed",
+            }
+        v11_a2_response["persisted_before_space_authority"] = True
+        v11_a2_response["contract_sha256"] = v11_contract_sha256
+        v11_a2_response["v12_recovery_binding"] = v12_recovery_binding
+        a2_checkpoint = write_atomic_json(
+            output_root / "A2_saved_primary_q_response.json",
+            v11_a2_response,
+        )
+        v11_ledger.marker(
+            "task43_v11_p2_saved_a2_response_persisted_before_authority",
+            {
+                "record_path": a2_checkpoint["path"],
+                "record_sha256": a2_checkpoint["sha256"],
+                "pass": v11_a2_response.get("pass") is True,
+            },
+        )
+        if v11_a2_response.get("pass") is not True:
+            raise RuntimeError(
+                "V11 P2 saved A2 primary raw/q response failed before space authority"
+            )
+        v11_parent = _v12_observed_call(
+            output_root, "parent_identity", _load_accepted_parent_state,
+            expected_selection_path,
+            cfg=cfg,
+            comm_size=comm.size,
+        )
+        v11_plan = _v12_observed_call(
+            output_root, "plan", _build_v11_seed8_plan,
+            cfg,
+            parent=v11_parent,
+            comm_size=comm.size,
+            contract=v11_contract,
+            recovery_binding=v12_recovery_binding,
+        )
+    else:
+        output_root = args.output_root.resolve()
+        output_root.mkdir(parents=True, exist_ok=False)
     plans_dir = output_root / "plans"
     plans_dir.mkdir()
     summaries = []
@@ -1665,35 +1988,27 @@ def main(argv: list[str] | None = None) -> int:
             "task43_v11_p2_mesh_authority_begin",
             {"candidate_id": "v11_r9_h8", "plan_sha256": _sha256_file(v11_plan_path)},
         )
-        audit = _audit_plan(
+        audit = _v12_observed_call(
+            output_root, "space_authority", _audit_plan,
             cfg,
             plan_path=v11_plan_path,
             candidate_id="v11_r9_h8",
             comm=comm,
             parent_independent_fe_dofs=int(v11_parent["parent_independent_fe_dofs"]),
+            parent_root_degree_by_box=v11_parent["parent_degree_by_box"],
         )
-        space_detail = audit["space_authority_detail"]
-        expected_seed_box = [16.5, 5.0, -10.0, 33.5, 10.0, 0.0]
-        seed_root_index = space_detail["seed_forest_root_index"]
-        if (
-            len(space_detail["requested_root_ids"]) != 1
-            or space_detail["requested_root_ids"] != [seed_root_index]
-            or space_detail["requested_root_boxes"]
-            != {str(seed_root_index): expected_seed_box}
-            or space_detail["seed_root_box_nm"] != expected_seed_box
-            or space_detail["seed_mesh_global_cell_id"] != 8
-            or space_detail["requested_root_mesh_global_cell_ids"] != [8]
-            or space_detail["root_id_namespace"]
-            != "forest_root_index; not the parent mesh global-cell ID"
-            or space_detail["forced_closure_root_ids"]
-            or space_detail["seed_parent_degree"] != 5
-            or space_detail["seed_child_degrees"] != [5]
-            or not space_detail["seed_child_degree_inheritance_pass"]
-            or space_detail["predicted_returned_trace_dtn_rows"]
-            != int(audit["dofs"]["independent_trace_rows"]) + 612
-            or space_detail["hanging_or_floquet_slave_rows_globally_numbered"]
-        ):
-            raise RuntimeError("V11 P2 actual root/degree/Floquet/carrier authority differs")
+        # Persist the returned actual audit before any later identity/FE gate.
+        write_atomic_json(output_root / "actual_authority_before_fe_gate.json", audit)
+        fe_gate_started = time.monotonic()
+        with (output_root / "authority_observations.jsonl").open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps({"event": "BEGIN", "stage": "FE_verification",
+                                     "monotonic": fe_gate_started,
+                                     "unreturned_status": "IN_PROGRESS_AT_STOP"}) + "\n")
+        strict_fe_gate = _v11_actual_space_gate(
+            audit,
+            parent_fe_dofs=int(v11_parent["parent_independent_fe_dofs"]),
+            fe_bounds=v11_contract["phases"]["P4"]["required_fe_bounds"],
+        )
         _require_v11_watchdog_worker_identity(
             require_unused_phase_file=False,
             expected_identity=v11_worker_identity,
@@ -1716,26 +2031,15 @@ def main(argv: list[str] | None = None) -> int:
             "requested_h_root_splits": 1,
             "source": "v11_predeclared_seed8",
         }
-        audit["strict_fe_gate"] = {
-            "parent_independent_fe_dofs": int(v11_parent["parent_independent_fe_dofs"]),
-            "candidate_independent_fe_dofs": int(audit["dofs"]["independent_active_fe_dofs"]),
-            "added_dofs": int(audit["dofs"]["added_independent_fe_dofs"]),
-            "positive_added_dofs": int(audit["dofs"]["added_independent_fe_dofs"]) > 0,
-            "exclusive_upper_bound": int(
-                v11_contract["phases"]["P4"]["required_fe_bounds"]["target_exclusive_upper"]
-            ),
-            "below_exclusive_upper": int(audit["dofs"]["independent_active_fe_dofs"])
-            < int(v11_contract["phases"]["P4"]["required_fe_bounds"]["target_exclusive_upper"]),
-        }
-        audit["strict_fe_gate"]["pass"] = bool(
-            audit["strict_fe_gate"]["positive_added_dofs"]
-            and audit["strict_fe_gate"]["below_exclusive_upper"]
-        )
+        audit["v12_recovery_binding"] = dict(v12_recovery_binding)
+        audit["strict_fe_gate"] = strict_fe_gate
+        with (output_root / "authority_observations.jsonl").open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps({"event": "END", "stage": "FE_verification",
+                                     "monotonic": time.monotonic(),
+                                     "wall_seconds": time.monotonic() - fe_gate_started,
+                                     "gate": audit["strict_fe_gate"]}) + "\n")
         summaries.append(audit)
-        (plans_dir / "v11_r9_h8.audit.json").write_text(
-            json.dumps(audit, indent=2, sort_keys=True, allow_nan=False) + "\n",
-            encoding="utf-8",
-        )
+        write_atomic_json(plans_dir / "v11_r9_h8.audit.json", audit)
     elif args.accepted_parent_selection_record is None:
         if args.round_id != "round1":
             parser.error("later rounds require --accepted-parent-selection-record")
@@ -1850,6 +2154,8 @@ def main(argv: list[str] | None = None) -> int:
             if args.primary_diagnostic_contract is not None
             else None
         ),
+        "contract_sha256": v11_contract_sha256 if v11_contract is not None else None,
+        "v12_recovery_binding": v12_recovery_binding,
         "plan_output_path": (
             str(v11_plan_path) if v11_plan_path is not None else None
         ),
@@ -1890,21 +2196,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
         "candidates": summaries,
     }
-    v11_a2_response = None
     if v11_contract is not None:
-        try:
-            v11_a2_response = _v11_saved_a2_primary_q_response(v11_contract)
-        except (OSError, KeyError, TypeError, ValueError, RuntimeError) as exc:
-            v11_a2_response = {
-                "schema": "task43.v11.saved_a2_primary_q_response.v1",
-                "status": "failed_saved_primary_read_or_recomputation",
-                "pass": False,
-                "error": f"{type(exc).__name__}: {exc}",
-                "historical_endpoint_status": "INCOMPLETE_NOT_QUALIFIED",
-                "official_result": False,
-                "passed": False,
-                "extra_correction_status": "historical_failure_preserved_not_replayed",
-            }
         record["A2_saved_primary_q_response"] = v11_a2_response
     record_path = output_root / "plan_audit.json"
     if v11_contract is not None:
@@ -1926,10 +2218,13 @@ def main(argv: list[str] | None = None) -> int:
             "source_sha256_after": source_after,
             "unchanged": True,
         }
-    record_path.write_text(
-        json.dumps(record, indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
+    if v11_contract is not None:
+        write_atomic_json(record_path, record)
+    else:
+        record_path.write_text(
+            json.dumps(record, indent=2, sort_keys=True, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
     print(json.dumps(record, sort_keys=True, allow_nan=False))
     if v11_contract is not None and summaries[0]["strict_fe_gate"]["pass"] is not True:
         raise RuntimeError("V11 seed8 actual independent FE strict bounds failed")

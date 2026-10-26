@@ -1,0 +1,56 @@
+{
+  "schema": "task43.v12.prelaunch-static-checks.v1",
+  "utc": "2026-10-26T16:01:51.642000+00:00",
+  "source": [
+    {
+      "path": "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+      "sha256": "3519df0768ace646cd34fcb44219a9f62c67df80e86edde59186c0c189e4b5ba",
+      "ast": "parsed_without_execution"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+      "sha256": "19c611bb33d04a3bc640b0ffd78f9357fe5cf8e0d2cc3b7876fa82f5a744bbb9",
+      "ast": "parsed_without_execution"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+      "sha256": "22c35c356c9c12cb30ee01347b2348be22b55301cd35d18d057b5fb82c888a1c",
+      "ast": "parsed_without_execution"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py",
+      "sha256": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+      "ast": "parsed_without_execution"
+    },
+    {
+      "path": "src/test/test_task43_v11_scientific_restart.py",
+      "sha256": "bc3d1f01fa246d6a79a2faa2bb57a5270d20c1df375780b8ecccd6049900532e",
+      "ast": "parsed_without_execution"
+    }
+  ],
+  "ruff": {
+    "argv": [
+      "/home/fenics/Projects/NN-Lab-V2/.venv/bin/ruff",
+      "check",
+      "--select",
+      "F821,F822,F823",
+      "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+      "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+      "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+      "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py",
+      "src/test/test_task43_v11_scientific_restart.py"
+    ],
+    "exit_code": 0,
+    "stdout": "All checks passed!\n",
+    "stderr": ""
+  },
+  "git_diff_check": {
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "measured_static_seconds": 0.9796270658262074,
+  "scope": "stdlib AST and standalone Ruff only; no native/project import or tests",
+  "support_launches": 0,
+  "formal_launches": 0
+}
