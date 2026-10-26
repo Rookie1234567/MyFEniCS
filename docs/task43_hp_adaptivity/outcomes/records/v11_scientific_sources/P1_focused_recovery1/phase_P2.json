@@ -1,0 +1,1 @@
+{"facts": {"candidate_id": "v11_r9_h8", "plan_sha256": "a588135843241e851b2e6776a7370a55d234cf5698e626bfcc48104e4b5978d8"}, "phase": "mesh_setup", "phase_started_monotonic": 2946241.874625717, "stage": "task43_v11_p2_mesh_authority_begin", "updated_monotonic": 2946241.875146572}

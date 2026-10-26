@@ -1,0 +1,8 @@
+{"candidate_id": "round10_p_up", "case_id": "round1_candidate_mpi1", "elapsed_wall_seconds": 0.006832496263086796, "status": "begin", "task43_stage": "preflight"}
+{"elapsed_wall_seconds": 0.09537771437317133, "status": "end", "task43_stage": "preflight", "validated_references": []}
+{"elapsed_wall_seconds": 0.1499057332985103, "status": "begin", "task43_stage": "mesh_build"}
+{"candidate_id": "v11_r9_h8", "case_id": "round1_candidate_mpi1", "elapsed_wall_seconds": 0.0036728577688336372, "status": "begin", "task43_stage": "preflight"}
+{"elapsed_wall_seconds": 0.05102682486176491, "status": "end", "task43_stage": "preflight", "validated_references": []}
+{"elapsed_wall_seconds": 0.10547872167080641, "status": "begin", "task43_stage": "mesh_build"}
+.
+1 passed in 3.34s

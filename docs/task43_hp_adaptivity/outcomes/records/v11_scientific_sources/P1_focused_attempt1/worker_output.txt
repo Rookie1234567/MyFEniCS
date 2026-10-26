@@ -1,0 +1,18 @@
+....failed to persist V11 failure terminal after escaped error: OSError: injected partial-terminal endpoint demotion failure
+...{"candidate_id": "round10_p_up", "case_id": "round1_candidate_mpi1", "elapsed_wall_seconds": 0.0036649517714977264, "status": "begin", "task43_stage": "preflight"}
+{"elapsed_wall_seconds": 0.048224035650491714, "status": "end", "task43_stage": "preflight", "validated_references": []}
+{"elapsed_wall_seconds": 0.09992078971117735, "status": "begin", "task43_stage": "mesh_build"}
+{"candidate_id": "v11_r9_h8", "case_id": "round1_candidate_mpi1", "elapsed_wall_seconds": 0.006921397987753153, "status": "begin", "task43_stage": "preflight"}
+{"elapsed_wall_seconds": 0.10255750734359026, "status": "end", "task43_stage": "preflight", "validated_references": []}
+{"elapsed_wall_seconds": 0.1645469982177019, "status": "begin", "task43_stage": "mesh_build"}
+F
+=================================== FAILURES ===================================
+__________ test_main_reaches_v11_mesh_sentinel_with_watchdog_identity __________
+src/test/test_task43_v11_scientific_restart.py:1278: in test_main_reaches_v11_mesh_sentinel_with_watchdog_identity
+    round1_candidates.main(
+benchmarks/task43_hp_adaptivity/round1_candidates.py:1668: in main
+    audit = _audit_plan(
+E   TypeError: test_main_reaches_v11_mesh_sentinel_with_watchdog_identity.<locals>.stop_at_p2_audit() takes 0 positional arguments but 1 positional argument (and 1 keyword-only argument) were given
+=========================== short test summary info ============================
+FAILED src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity
+1 failed, 7 passed in 3.55s
