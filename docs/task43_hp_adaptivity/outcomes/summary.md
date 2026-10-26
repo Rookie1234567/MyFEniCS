@@ -1,6 +1,17 @@
 # Task43 结果：部分完成，受控负结果
 
-## V10 当前状态：既有静态证据纠正，无新运行
+## V11 当前状态：P2 空间前门受控停止；无新科学结果
+
+| 项目 | V11 实际结果 | 证据边界 |
+|---|---|---|
+| P1支持 | 首次 `7 passed, 1 failed in 3.55s`；局部恢复 selector `1 passed in 3.34s`；两次 whole-watchdog 合计 `11.511480988003314 s` | 首次为 audit sentinel fixture 签名错误；恢复只重跑该selector。另有必要非空闭包覆盖缺口，不宣称所有P1边界通过 |
+| P2空间与保存场前门 | `PERFORMANCE_CONTROLLED_STOP`；阈值840s，whole-watchdog `842.2889896910638 s`，树RSS采样峰`1,156,853,760 B`、swap 0、1148样本、清理完成 | 停在 `_audit_plan`，完整 authority 未返回；计划 expected_forest 为180根/194叶/material closure 1，仅是计划产物 |
+| P3–P5 / 正式计算 | `NOT_RUN`；新正式dispatch 0 | A1_q3与R9_H8两个新增正式槽未消耗；旧5/6正式额度及封存末槽保持不变；扩展包络5/8 |
+| 科学与合并 | 空间/选择 `PARTIAL`；精度 `NOT_PASSED`；同精度全过程成本 `NOT_ESTABLISHED`；迭代 `NOT_RUN / NOT_QUALIFIED`；无merge approval | P2没有得到FE、残差、A1 q响应、R9_H8 endpoint或共同场比较。forced-empty闭包限制是未执行到的实现缺陷，不是本次科学负结果 |
+
+终态数值、明确未取得字段、P1/P2预算与保留的实现缺陷见[Response V11](../response_v11.md)、[机器结果记录](records/v11_scientific_results_v1.json)、[主控P2 closeout](records/v11_p2_closeout.json)及[P2轻量原件归档](records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/)。
+
+## V10 历史状态：既有静态证据纠正，无新运行
 
 依赖表记录“哪个库需要哪个库”，用于追溯启动输入。本轮只从保存的采集文本更正三条关联错误，避免把相邻对象的元数据挂到loader或libc名下；没有重新读取安装库或启动计算。原表和历史负结果保留。
 

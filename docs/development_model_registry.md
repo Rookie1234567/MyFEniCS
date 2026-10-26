@@ -1,6 +1,10 @@
 # Task43：accepted9/R9冻结，最终空间精度未达
 
-## Task43 V10当前状态：三条依赖派生记录更正，无新模型或运行
+## Task43 V11当前状态：P2空间审计受控停止，无新科学结果
+
+V11 P1两次支持运行分别为`7 passed, 1 failed`和单selector恢复`1 passed`，P2唯一空间/保存场前门在840秒阈值后以`PERFORMANCE_CONTROLLED_STOP`结束（whole-watchdog 842.2889896910638 s）。计划文件的expected_forest为180根、194叶、material closure 1；最终mesh/constraint authority、FE、残差、q响应和比较均未取得。P3–P5未运行，新正式dispatch 0；历史5/6正式额度及封存末槽不变，扩展包络5/8。accepted9/R9和R10拒绝、空间/选择PARTIAL、精度NOT_PASSED、成本NOT_ESTABLISHED、迭代NOT_RUN / NOT_QUALIFIED均保持。必要闭包被错误要求为空的实现缺陷及P1覆盖缺口，未实际触发本次停止；不作科学负结果解释。详见[Response V11](task43_hp_adaptivity/response_v11.md)、[结果记录](task43_hp_adaptivity/outcomes/records/v11_scientific_results_v1.json)和[P2 closeout](task43_hp_adaptivity/outcomes/records/v11_p2_closeout.json)。
+
+## Task43 V10历史状态：三条依赖派生记录更正，无新模型或运行
 
 依正式V9 review第9节，只读取已有stdout并离线更正三条记录的12个字段；主控独立核到61唯一边、18 parent、48+13精确集合覆盖与24对象一致性。原782c57记录保持原字节，具体旧生成器和生成时间UNKNOWN，不据此倒推当时launch门必然误放行。固定D3及20项测试沿用V9 review的有限工程接受，实际运行HEAD仍为`ef1e1ca5bb0b79f7cf5f6b6ce828d0e352ac44ba`。本轮support、sanity、native/ABI、pytest、collect、PDE、dispatch、READY全0；正式5/6、A1 2/2、A2 3/3，最后槽封存。空间/选择PARTIAL，精度NOT_PASSED，成本NOT_ESTABLISHED，迭代NOT_RUN / NOT_QUALIFIED；无生产或合并资格。来源、局部静态失败和费用见[Response V10](task43_hp_adaptivity/response_v10.md)与[纠正记录](task43_hp_adaptivity/outcomes/records/v10_static_evidence_correction_v1.json)。
 

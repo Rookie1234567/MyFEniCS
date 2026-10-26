@@ -1,0 +1,453 @@
+{
+  "schema": "task43.v11.delivery-static-check.v1",
+  "utc": "2026-10-26T13:57:37.910277+00:00",
+  "scope": "stdlib file-only JSON, links, hash and Git checks; no project/native import or dynamic test",
+  "parsed_json_or_jsonl_files": [
+    "docs/task43_hp_adaptivity/outcomes/records/v11_p1_attempt1_closeout.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_p1_closeout.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_p2_closeout.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_results_v1.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_attempt1/summary.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/cleanup_controlled_fault_exit.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/cleanup_normal_exit.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/main_sentinel_runtime_identity.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/phase_A1_q3.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/phase_P2.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/phase_R9_H8.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/summary.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/last_workflow_phase.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/launch_manifest.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/raw_index.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/stages.jsonl",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/summary.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/trace_events_and_frames.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/v11_r9_h8.plan.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/launch_source_paths.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_freeze_static_check.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_h100_function_continuity.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_input_inventory.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_lineage_inputs.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_parent_kernel_audit.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_restore_inputs.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_saved_array_headers.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_prelaunch_process_inventory.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_preparation_archive_index.json"
+  ],
+  "links": [
+    {
+      "file": "docs/task43_hp_adaptivity/response_v11.md",
+      "target": "../../benchmarks/task43_hp_adaptivity/round1_candidates.py#L1688",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/response_v11.md",
+      "target": "outcomes/records/v11_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/response_v11.md",
+      "target": "outcomes/records/v11_p2_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/response_v11.md",
+      "target": "outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/response_v11.md",
+      "target": "outcomes/records/v11_p1_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/response_v11.md",
+      "target": "outcomes/records/v11_p1_attempt1_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/response_v11.md",
+      "target": "outcomes/records/v11_scientific_sources/P1_focused_recovery1/",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "response_v11.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "supplement_v11_scientific_restart.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "review_report_v10.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "review_report_v9.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "response_v10.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "outcomes/records/v10_static_evidence_correction_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "response_v11.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "response_v11.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "outcomes/records/v11_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/summary.md",
+      "target": "../response_v11.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/summary.md",
+      "target": "records/v11_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/summary.md",
+      "target": "records/v11_p2_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/summary.md",
+      "target": "records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+      "target": "../response_v11.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+      "target": "records/v11_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+      "target": "records/v11_p2_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/development_model_registry.md",
+      "target": "task43_hp_adaptivity/response_v11.md",
+      "exists": true
+    },
+    {
+      "file": "docs/development_model_registry.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v11_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/development_model_registry.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v11_p2_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/development_progress.md",
+      "target": "task43_hp_adaptivity/response_v11.md",
+      "exists": true
+    },
+    {
+      "file": "docs/development_progress.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v11_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/development_progress.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v11_p2_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/development_progress.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/",
+      "exists": true
+    }
+  ],
+  "p2_raw_files_rehashed": 75,
+  "unlaunched_roots_absent": {
+    "formal/A1_q_attempt3": true,
+    "formal/R9_H8_attempt1": true,
+    "support/union_comparison_attempt1": true
+  },
+  "post_run_source_changed": [],
+  "git_diff_check_exit": 0,
+  "excluded_raw_archive": "r9_to_v11_start_solver_observer.diff retained byte-for-byte; raw diff context trailing whitespace is historical source evidence, not reformatted",
+  "errors": [],
+  "measured_seconds": 0.43989519216120243,
+  "files_before_this_record": [
+    {
+      "path": "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py",
+      "sha256": "db6729cb7db6140e1d67b3bf59cc0615460c19259305af743d7364ce570195cb"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+      "sha256": "0029780f37bb0d5f790eb9466b37cd178fedf9efece5c52c45e5216651648ede"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+      "sha256": "f7d130fa1e6f3644cc79868574a291975d8c9649fa2e35cdbea28f762019c312"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+      "sha256": "8b23664a9a267f00b30306fa6afb2e1b5ee3327badc54f74c7207750e6022290"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "sha256": "42362fef72c550c99d1473f2a045aa9cd5d3ec1a0235812a788b836d002b36fa"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "sha256": "b7952a51bcfc2e85d6f1927181c18e99f63f45c534d46a887925911580274c42"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/README.md",
+      "sha256": "b83f67d0cb77c1b05347d0b9938190d602267957968b248f36718f61a6cc65b4"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_p1_attempt1_closeout.json",
+      "sha256": "3b448013151ed82b3fe798d3a1e22528e472d15917ad209c0363791887d4f329"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_p1_closeout.json",
+      "sha256": "36e64fa46df2f84bf7d08f1b162fc9a777131370ac0050d449bc7f6d6764d6fc"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_p2_closeout.json",
+      "sha256": "b8df4fbfd389b20aededcb0ff8e814380336ecc46c44038140566c2c84d7eff8"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+      "sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_results_v1.json",
+      "sha256": "3ccef2c03dcfabb8a020d706e8a10f05de5cd72d5152b3a6b6cc0ff40b10a8ef"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_attempt1/launcher_exit_code.txt",
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_attempt1/source_head.txt",
+      "sha256": "657dff1b44235c9163a6d14839d991c0ddbaf50331aaa9f0ac17bf841bde35f1"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_attempt1/summary.json",
+      "sha256": "ea49d3fa699ae6aae6f70dcb96e96e986d1dbc743a074789132089555b08ebb6"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_attempt1/watchdog_exit_code.txt",
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_attempt1/worker_output.txt",
+      "sha256": "b95e8368496a7a6d528dd09b8ce9bbd1d244b3183c6c42c9a66ce501de20a6cf"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/cleanup_controlled_fault_exit.json",
+      "sha256": "b78a232d7e3cb170d1cec0459e745e967662ab2875284108c505d4634320b87f"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/cleanup_normal_exit.json",
+      "sha256": "69d15be2b09e3098119cfc82c195ccfb24c5de1974e15828fc0f1110f586f456"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/main_sentinel_runtime_identity.json",
+      "sha256": "b4491d6379157d6f87bd04fc050e148e6dc3d7cf2bc97466767d8108e98e5b32"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/phase_A1_q3.json",
+      "sha256": "b4f7dd67ba4d9c7f2102811ee4a8ed65a64ab8397d60c0bc3e73b61cf18bca43"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/phase_P2.json",
+      "sha256": "14463173930815877097d3ed46274a39e04b6c1a6d4a2d7f252b5b8ac7e3850b"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/phase_R9_H8.json",
+      "sha256": "14ce0189bf95c3eb04e82895d85a3854f5441b94ec8e8a29f3b769d074817ab7"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/summary.json",
+      "sha256": "5d5a23cb308f5e948256f96309e5ee8e8847851530bbf413a5dfcf4b86a77945"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/worker_output.txt",
+      "sha256": "c8983a4b8bc57ca3b3cb7264d0dc7141ef63457306354359be589752f96a0f23"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/last_workflow_phase.json",
+      "sha256": "ef54149db8fbbac2e1b6d01905ade5ca37d0a9d845f6eea28d791977e759d0f3"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/launch_context.txt",
+      "sha256": "9d03e4fdc81184e0ba2ddfd4cd115a1f6d28ef4858a7a589b480320ca378c4a5"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/launch_manifest.json",
+      "sha256": "b2eca16212bd1ed0760f9aae7952f48ff96c52834d2d40247f955d2eedc95c12"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/launcher_exit_code.txt",
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/raw_index.json",
+      "sha256": "9ee00de24863212d321d064b48e6af04eb9742a0db6721de6c2a86c3f1af5704"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/source_head.txt",
+      "sha256": "2b0e9b1e17e2dc611e1b618086bb7d83c653ed77fae223657b0846e46b966196"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/stages.jsonl",
+      "sha256": "e0f792bd6f848810f3f997329d7d65388ca00e7c2632420510fffebdc3558d8e"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/summary.json",
+      "sha256": "c43b1905846553d685d67cb9e3fb58eb01c92f0c251c1c1cfc8b05ef32e9b9c0"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/trace_events_and_frames.json",
+      "sha256": "eaaccbec587b32a253efde7e5dd6e8ae57c7756ac101b135e3ec2983d62d4342"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/v11_r9_h8.plan.json",
+      "sha256": "0f5885976b000a24e2f21b5aa5f4d0ea97fdd142cac9208e25d4c6e615d1ac23"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/watchdog_exit_code.txt",
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/launch/A1_q_attempt3.sh",
+      "sha256": "a4a5a6357e803755f3a84d2cef3e22c1bbf1f238d974961148799be6b5b03937"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/launch/R9_H8_attempt1.sh",
+      "sha256": "fb982b01c5f6dd295d3886033aae125d5933343a8916334b4c7375d15f557940"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/launch/focused_attempt1.sh",
+      "sha256": "fa59c4909a15bd68bc722ecab0e4a3f2bbfbb2529e1905fe635100f9f7ba6e87"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/launch/focused_recovery1.sh",
+      "sha256": "5cad2a0b0462ca907c55e6dba77528a6004a29ccfe3ac26db7da44d5b7531bfe"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/launch/space_and_saved_primary_attempt1.sh",
+      "sha256": "60b4e31ee26af788c070d1dc6013e69f00421a19a0e04049d5be29480f309e4c"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/launch/union_comparison_attempt1.sh",
+      "sha256": "0e99e6961ab9fadc376104db19d7acdd68ed94d8734b9b936b20b3efc2268ccf"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/launch_source_paths.json",
+      "sha256": "a2e91be793506e715dd07870268c077971dcc7f592f9302d38ccfe312d91ec5f"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/r9_to_v11_start_solver_observer.diff",
+      "sha256": "7e698165241bab6f85f4ec3812f6c707595decc879b2cb2abcd19c400e1d3340"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_freeze_static_check.json",
+      "sha256": "7cde3b5635aff51b16856c3f2642e64b6eb49049f3c71307467c6f251588499b"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_h100_function_continuity.json",
+      "sha256": "e40f2bb347b59dad09a51967a55345bd3b4dac647697b4cd0601cd4d0bb5ada3"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_input_inventory.json",
+      "sha256": "7a4162d1e04e2c929fb7159d3eea91c9640ad86d04aa4e8636e566db64428257"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_lineage_inputs.json",
+      "sha256": "552feccee8a5584c7add2b7dc2bd655be988f514fc690c5e528127720e284695"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_parent_kernel_audit.json",
+      "sha256": "ab902b244b8642b22275fc526cc28694aad3e1b9ac0eba55f8def60e52209557"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_restore_inputs.json",
+      "sha256": "5476cf88cd15f149ef1ee9cf28ccaa65c649965542b88fc098f1427be3b1a636"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_saved_array_headers.json",
+      "sha256": "8c1f09972076217809efc5105ef69427b2ef2f47155dd82bdc855684dfec54c2"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_prelaunch_process_inventory.json",
+      "sha256": "5079b8669b79ac3b736125f0378bccb821459266eab066e1d6e70f26eeb337e5"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_preparation_archive_index.json",
+      "sha256": "49f7149c732779da78f46794f82409556fcbaa2fc87fe7a072bbbc45c4c85a11"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/task43_v11_freeze_preparation.py",
+      "sha256": "3a1b72e31d956a07f1ae80dbfe667dc990461066ca229dffa02a0a5302bd0ce7"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/task43_v11_root_read_terminal.py",
+      "sha256": "54e93fc1d5995aad21face9fc7ac360e33ee4bb60393e2992c2a293a12ea5f0d"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+      "sha256": "5732176627cd92ee21fc96a610781a8e18db644f1d25306a87fe63e8c5ec7768"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/summary.md",
+      "sha256": "2de55acd0244c6853cff9506cfee90dd86afe486a37eb92922e1ffbeb49cbde2"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/response_v11.md",
+      "sha256": "32747a05b3f8d9b6bfcea0dada0aa01d0ac69833887b8bb3a451517e041d50dc"
+    },
+    {
+      "path": "src/test/test_task43_v11_scientific_restart.py",
+      "sha256": "ce9ad7fdd8b07a8b33f55fc26c721dd17eb546315b60f03449cba8fe49d5fd2b"
+    }
+  ],
+  "post_staging_whitespace_check": {
+    "unfiltered_exit": 2,
+    "unfiltered_stdout": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/launch_context.txt:9: trailing whitespace.\n+argv=python -u -m benchmarks.task43_hp_adaptivity.round1_candidates --primary-diagnostic-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json --accepted-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json \n",
+    "classification": "Raw launch_context archive ends its printf-generated argv with one space; original bytes preserved. Initial pre-staging git diff check did not include then-untracked new archive.",
+    "excluded_raw_path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/launch_context.txt",
+    "scoped_exit": 0,
+    "scoped_stdout": "",
+    "measured_seconds": 0.06582973897457123,
+    "new_dynamic_run": false
+  }
+}

@@ -1,6 +1,17 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V10 当前状态：静态证据更正，不授予合并许可
+## V11 当前状态：P2受控停止，不授予合并许可
+
+| 依赖组 | V11文件与证据 | 合入边界 |
+|---|---|---|
+| research-only | `benchmarks/task43_hp_adaptivity/{candidate_checkpoints.py,compare_round1_candidate.py,h100_anchor.py,round1_candidates.py}`及`src/test/test_task43_v11_scientific_restart.py` | 仅V11 opt-in研究入口和定向测试；P1有限工程结果、P2受控停止；P2前门未完成，非生产资格 |
+| compact evidence/docs | `response_v11.md`、`records/v11_scientific_results_v1.json`、P1/P2 closeout与sources archive及本轮导航/总账 | 记录真实终态、缺失科学字段、预算与实现/覆盖缺口；不把expected_forest作为FE/authority结果 |
+| production numerical/core、reusable runner/watchdog | 无V11 `src/` 数值内核、共享watchdog或普通默认行为变更 | P2受控终止遵循现有watchdog；本轮没有数值或生产资格结论 |
+| do-not-merge | P2 ignored运行原件、未资格化V11研究入口及整分支 | 正式旧额度5/6且末槽封存；V11新增正式槽0/2已用、P1支持2/2与P2支持1/1已用；无READY、生产资格或merge approval |
+
+静态遗漏的必要闭包 gate 位于`round1_candidates.py:1688`，P2没有执行到该条件。P1还有一项fixture未覆盖真实非空闭包的缺口；两者均列为实现/审查问题，不是本次h科学失败。详细实际字段见[Response V11](../response_v11.md)、[机器结果记录](records/v11_scientific_results_v1.json)与[P2主控closeout](records/v11_p2_closeout.json)。
+
+## V10 历史状态：静态证据更正，不授予合并许可
 
 | 依赖组 | 本轮文件与依赖 | 核验与合入边界 |
 |---|---|---|

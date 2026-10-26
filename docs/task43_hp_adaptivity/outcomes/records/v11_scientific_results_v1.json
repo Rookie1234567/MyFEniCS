@@ -1,0 +1,301 @@
+{
+  "schema": "task43.v11.scientific-results.v1",
+  "status": "PARTIAL_CONTROLLED_STOP",
+  "recorded_utc": "2026-10-26T13:50:03.100259+00:00",
+  "source": {
+    "taskbook_branch_base": "70e2cfdcc3e5a7c3be5e8b714076420e3eac1129",
+    "p0_and_p1_first_attempt_source_head": "c976dda2076ea7ce802c279bb56b3189fa10dced",
+    "p2_source_head": "2d01bfae15a3831683a859673e69f0c992186b85",
+    "p1_recovery_source_head": "cfe1adae3805c432b0a58349853a70ac47ceed2a",
+    "contract": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+    "p1_root_closeout": "docs/task43_hp_adaptivity/outcomes/records/v11_p1_closeout.json",
+    "p1_first_attempt_closeout": "docs/task43_hp_adaptivity/outcomes/records/v11_p1_attempt1_closeout.json",
+    "p2_root_closeout": "docs/task43_hp_adaptivity/outcomes/records/v11_p2_closeout.json",
+    "p2_lightweight_archive": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/",
+    "p2_full_host_observations": "benchmarks/artifacts/task43/v11_science/preparation/space_and_saved_primary_attempt1_root_terminal_observations.json"
+  },
+  "phase_status": {
+    "P0": "FROZEN_WITH_STATIC_DEFECT_RETAINED",
+    "P1": "TWO_SUPPORT_RUNS_CONSUMED; ONE_INITIAL_FIXTURE_FAILURE_AND_ONE_SELECTOR_RECOVERY_PASS",
+    "P2": "PERFORMANCE_CONTROLLED_STOP; UNIQUE_SUPPORT_RUN_CONSUMED",
+    "P3": "NOT_RUN",
+    "P4": "NOT_RUN",
+    "P5": "NOT_RUN"
+  },
+  "budget": {
+    "historical_formal_dispatches": {
+      "used": 5,
+      "limit": 6,
+      "a1_used": 2,
+      "a2_used": 3,
+      "last_historical_slot": "SEALED"
+    },
+    "v11_additional_formal_slots": {
+      "authorized": 2,
+      "names": [
+        "A1_q3",
+        "R9_H8"
+      ],
+      "consumed": 0,
+      "unconsumed": 2,
+      "availability": "NOT_LAUNCHABLE_UNDER_THIS_CLOSEOUT; P2 FRONT GATE DID NOT COMPLETE"
+    },
+    "expanded_envelope": {
+      "used": 5,
+      "limit": 8,
+      "unconsumed_new_slots": 2,
+      "old_sealed_slot_remains_unavailable": true
+    },
+    "new_formal_dispatches": 0,
+    "support_runs": {
+      "P1_limit": 2,
+      "P1_consumed": 2,
+      "P2_limit": 1,
+      "P2_consumed": 1,
+      "p1_whole_watchdog_seconds": 11.511480988003314,
+      "p2_whole_watchdog_seconds": 842.2889896910638,
+      "combined_whole_watchdog_seconds": 853.8004706790671
+    }
+  },
+  "p1": {
+    "attempts": [
+      {
+        "artifact_root": "benchmarks/artifacts/task43/v11_science/support/focused_attempt1/",
+        "pytest_result": "7 passed, 1 failed in 3.55s",
+        "whole_watchdog_seconds": 5.6703435350209475,
+        "launcher_exit": 2,
+        "watchdog_exit": 2,
+        "failure_class": "FIXTURE_SIGNATURE_ERROR",
+        "failure_detail": "The P2 audit sentinel stub did not accept the positional cfg argument passed by _audit_plan.",
+        "mesh_built": false,
+        "pde_entered": false
+      },
+      {
+        "artifact_root": "benchmarks/artifacts/task43/v11_science/support/focused_recovery1/",
+        "pytest_result": "1 passed in 3.34s",
+        "whole_watchdog_seconds": 5.841137452982366,
+        "launcher_exit": 0,
+        "watchdog_exit": 0,
+        "worker_exit": 0,
+        "recovery_scope": "Only the failed selector was rerun after its fixture signature repair; the other seven tests were unchanged and were not rerun with the repaired test-file bytes.",
+        "main_sentinel_scope": "A1_q3 and R9_H8 real main paths reached the pre-mesh sentinel; no mesh, assembly, factorization, solve, or PDE was entered.",
+        "worker_identity": {
+          "watchdog_pid": 2027999,
+          "worker_pid": 2028000,
+          "tracer_pid": 2028012,
+          "worker_direct_child_of_watchdog": true,
+          "tracer_descends_from_watchdog": true,
+          "live_worker_tid_affinity": [
+            1
+          ]
+        },
+        "runtime": {
+          "python_version": "3.12.3",
+          "python_executable": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+          "qualified_activation_marker": true,
+          "petsc_scalar_type": "numpy.complex128",
+          "petsc_int_type": "numpy.int64",
+          "mpi_size": 1,
+          "mumps_available": true,
+          "cpu_affinity": [
+            1
+          ],
+          "math_threads": 1,
+          "worker_local_environment": {
+            "HWLOC_COMPONENTS": "-x86",
+            "OMPI_MCA_pml": "ob1"
+          }
+        },
+        "normal_and_fault_children": {
+          "normal_exit_code": 0,
+          "controlled_fault_exit_code": 7,
+          "both_reaped": true,
+          "are_watchdog_direct_workers": false
+        },
+        "transient_empty_cmdline_observation": {
+          "pid": 2028092,
+          "start_ticks": 294624188,
+          "state": "Z",
+          "cmdline": "",
+          "trace_exit_code": 0,
+          "reaped": true,
+          "classification": "known normal fixture child; not a live leftover"
+        },
+        "postsolve_extra_correction_calls": "NOT_ESTABLISHED_BY_MESH_SENTINEL"
+      }
+    ],
+    "support_whole_watchdog_seconds": 11.511480988003314,
+    "support_root_review": "LIMITED_ENGINEERING_EVIDENCE_WITH_REQUIRED_CLOSURE_COVERAGE_GAP",
+    "task_required_closure_coverage_gap": {
+      "test": "test_fixed_seed8_plan_rejects_nonroot_and_alternate_seed",
+      "line": 417,
+      "detail": "The fixture replaces _build_next_round_plan with a minimal-provenance stub; the real-main sentinel stops before _audit_plan. The passing selector set therefore does not establish acceptance of non-empty necessary closure.",
+      "implication": "The P1 pass count does not prove all task-required closure cases. P2 launch pre-review was insufficient."
+    }
+  },
+  "p2": {
+    "classification": "PERFORMANCE_CONTROLLED_STOP",
+    "attempt_count": 1,
+    "attempt_limit": 1,
+    "retry_authorized": false,
+    "source_state": "development_worktree; not formal PDE provenance",
+    "stop": {
+      "work_stop_threshold_seconds": 840,
+      "last_live_sample_seconds": 840.6002323981375,
+      "whole_watchdog_seconds": 842.2889896910638,
+      "whole_watchdog_limit_seconds": 900,
+      "launcher_exit": 2,
+      "watchdog_exit": 2,
+      "worker_exit": -15,
+      "first_signal": "SIGTERM from bound watchdog to whole child tree",
+      "termination_grace_seconds": 2,
+      "terminal_stage": "task43_v11_p2_mesh_authority_begin",
+      "execution_location": "_audit_plan was still in progress; the audit did not return or persist its final authority result.",
+      "terminal_stack_observation": "The SIGTERM-time worker stack included Basix compute_interpolation_operator. This is one terminal stack observation, not a profile of the full runtime."
+    },
+    "process_and_resource_evidence": {
+      "watchdog_pid": 2036700,
+      "worker_pid": 2036715,
+      "tracer_pid": 2036727,
+      "observed_mpi_helper_pid": 2036741,
+      "all_live_affinities_cpu": [
+        1
+      ],
+      "live_affinity_violation_count": 0,
+      "sample_count": 1148,
+      "sampled_process_tree_rss_peak_bytes": 1156853760,
+      "rss_cap_bytes": 8589934592,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "global_swap_delta_pages": {
+        "pswpin": 0,
+        "pswpout": 0
+      },
+      "minimum_effective_available_bytes": 1419287298048,
+      "reserve_bytes": 324465057792,
+      "pss": "DISABLED_BY_PROFILE",
+      "cache_audit": "NOT_MEASURED; --cache-path was not supplied; the empty cache metadata stamp is not a shared JIT/global-cache audit.",
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "post_exit_same_process_checks_absent": [
+        2036700,
+        2036715,
+        2036727,
+        2036741
+      ]
+    },
+    "source_and_input_identity": {
+      "source_head": "2d01bfae15a3831683a859673e69f0c992186b85",
+      "source_files_checked": 50,
+      "input_files_checked": 38,
+      "before_after_hash_mismatches": 0,
+      "trace_raw_lines": 795,
+      "trace_parse_unknown_lines": 0,
+      "successful_affinity_setters": 0
+    },
+    "plan_output": {
+      "path": "benchmarks/artifacts/task43/v11_science/support/space_and_saved_primary_attempt1/plan_output/plans/v11_r9_h8.json",
+      "sha256": "0f5885976b000a24e2f21b5aa5f4d0ea97fdd142cac9208e25d4c6e615d1ac23",
+      "candidate_id": "v11_r9_h8",
+      "action": "h_refine",
+      "parent_candidate_id": "round9_p_up",
+      "marked_parent_mesh_global_cell_ids": [
+        8
+      ],
+      "marked_seed_box_nm": {
+        "lower": [
+          16.5,
+          5.0,
+          -10.0
+        ],
+        "upper": [
+          33.5,
+          10.0,
+          0.0
+        ]
+      },
+      "seed_parent_degree": 5,
+      "expected_forest_only": {
+        "root_cell_count": 180,
+        "leaf_cell_count": 194,
+        "closure_counts": {
+          "user": 1,
+          "material": 1,
+          "balance": 0,
+          "periodic": 0
+        },
+        "hanging_patch_count": 9
+      },
+      "interpretation": "Saved plan-generation expected_forest only; not final mesh/constraint authority, qualified FE, or an actual authority audit result."
+    },
+    "numerical_results": {
+      "mesh_constraint_authority": "NOT_RETURNED",
+      "actual_leaf_count_and_closure": "NOT_MEASURED",
+      "independent_fe_trace_interior_counts": "NOT_MEASURED",
+      "condensed_rows_nnz_and_factorization": "NOT_REACHED",
+      "A6_and_residual_vectors": "NOT_REACHED",
+      "old_A2_saved_primary_recalculation": "NOT_REACHED",
+      "A1_q3_response": "NOT_RUN",
+      "R9_H8_solve_and_endpoint": "NOT_RUN",
+      "common_q8_q10_union_comparison": "NOT_RUN",
+      "official_R_T_A_Avolume_or_612_mode_results": "NOT_MEASURED",
+      "h_accuracy_benefit_and_cost": "NOT_ESTABLISHED"
+    },
+    "scope": "No PDE assembly, factorization, or solve was reached. A2 arithmetic and saved-primary re-audit were not reached. No h benefit/cost or q scientific conclusion was produced."
+  },
+  "implementation_defect": {
+    "path": "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+    "line": 1688,
+    "finding": "A V11 gate incorrectly rejects any non-empty forced_closure_root_ids, contrary to the task requirement to preserve and record necessary closure.",
+    "observed_relevance": "The saved expected_forest includes material closure count 1; the actual authority audit never returned, so the defective gate was not executed in P2.",
+    "cause_of_p2_stop": false,
+    "classification": "Implementation defect and prelaunch review omission; not a measured h scientific negative.",
+    "p1_test_coverage_gap": "test_fixed_seed8_plan_rejects_nonroot_and_alternate_seed at src/test/test_task43_v11_scientific_restart.py:417 stubs _build_next_round_plan with minimal provenance; the main sentinel intercepts before _audit_plan, so it does not demonstrate support for necessary non-empty closure.",
+    "post_stop_source_change": false
+  },
+  "scientific_status_unchanged": {
+    "space": "PARTIAL",
+    "selection": "PARTIAL",
+    "accuracy": "NOT_PASSED",
+    "same_accuracy_full_cost": "NOT_ESTABLISHED",
+    "iterative": "NOT_RUN / NOT_QUALIFIED",
+    "working_parent": "accepted9 / R9",
+    "R10": "REJECTED; no transition10"
+  },
+  "local_process_failures_and_unknowns": {
+    "measured_p0_static_actions": [
+      {
+        "action": "P0 frozen source/contract and selector static review",
+        "seconds": 3.7900969316251576,
+        "evidence": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_freeze_static_check.json"
+      },
+      {
+        "action": "P0 input identity inventory",
+        "seconds": 5.7772636017762125,
+        "evidence": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_input_inventory.json"
+      },
+      {
+        "action": "P0 additional R9 lineage byte reads",
+        "seconds": 0.044360832311213017,
+        "evidence": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_lineage_inputs.json"
+      },
+      {
+        "action": "P0 additional restore input byte reads",
+        "seconds": 0.0016497471369802952,
+        "evidence": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_restore_inputs.json"
+      }
+    ],
+    "aggregate_wall_warning": "These are separate bounded measurements, not an aggregate; P1/P2 support-watchdog wall is not total manual or editor wall.",
+    "wrong_path_read": "A read of the recovery worker.log at the wrong parent path failed; corrected to watchdog/worker.log without rerunning. Durable raw stdout for this manual read error was not saved; this is recorded from tool history.",
+    "git_staging": "git add through the sandbox was denied because the canonical common Git directory was read-only; the empty-index commit was refused; authorized real-host add and commit then succeeded.",
+    "manual_static_work_wall_seconds": "NOT_MEASURED",
+    "editor_wall_seconds": "NOT_MEASURED"
+  },
+  "evidence": {
+    "p1_closeout": "docs/task43_hp_adaptivity/outcomes/records/v11_p1_closeout.json",
+    "p1_first_attempt_closeout": "docs/task43_hp_adaptivity/outcomes/records/v11_p1_attempt1_closeout.json",
+    "p1_launch_archive": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P1_focused_recovery1/",
+    "p2_root_closeout": "docs/task43_hp_adaptivity/outcomes/records/v11_p2_closeout.json",
+    "p2_launch_archive": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/",
+    "p2_full_observations": "benchmarks/artifacts/task43/v11_science/preparation/space_and_saved_primary_attempt1_root_terminal_observations.json"
+  }
+}

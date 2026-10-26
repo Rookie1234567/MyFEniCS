@@ -1,6 +1,12 @@
 # Task43 当前收口（2026-10-26）：PARTIAL / CONTROLLED_NEGATIVE
 
-## Task43 V10当前状态：静态证据关联更正，等待正式审阅
+## Task43 V11当前状态：P2空间审计受控停止，无新科学结果
+
+P1两次支持运行留下有限工程证据：首次`7 passed, 1 failed`（sentinel fixture签名错误），单selector恢复`1 passed`；whole-watchdog合计11.511480988003314s。必要非空闭包的授权覆盖仍不足：相关fixture把`_build_next_round_plan`替换为stub，真实main sentinel又在`_audit_plan`之前结束。P2唯一支持运行达到840s工作停止阈值，最后live sample为840.6002323981375s，whole-watchdog 842.2889896910638s；采样树RSS峰1,156,853,760B、树swap峰0、1148样本、清理完成。主控终态为`PERFORMANCE_CONTROLLED_STOP`，P2无重试。
+
+运行停在空间audit路径；saved expected_forest显示180根、194叶、material closure 1，但这不是最终mesh/constraint authority或FE审计。A6/残差、旧A2复算、A1_q3 q响应、R9_H8解、公共q8/q10比较及官方端点均未取得；P3–P5 `NOT_RUN`，新增正式dispatch 0。`round1_candidates.py:1688`把forced closure非空设为拒绝条件，是实现缺陷且P0/P1预审遗漏；实际P2没有执行到该门，也不是h科学负结果。accepted9/R9、R10拒绝及五项科学状态保持；正式额度5/6、原末槽封存，扩展包络5/8，无READY、生产资格或merge approval。字段、预算和root原件见[Response V11](task43_hp_adaptivity/response_v11.md)、[科学结果机器记录](task43_hp_adaptivity/outcomes/records/v11_scientific_results_v1.json)、[P2 closeout](task43_hp_adaptivity/outcomes/records/v11_p2_closeout.json)与[P2原件归档](task43_hp_adaptivity/outcomes/records/v11_scientific_sources/P2_space_and_saved_primary_attempt1/)。
+
+## Task43 V10历史状态：静态证据关联更正，等待正式审阅
 
 本轮按正式V9 review第9节完成保存文本的离线纠正，未启动任何支持诊断或正式计算。旧stdout的三处EDGE/BRIDGE边界分别明确，旧派生JSON却把相邻桥对象的SONAME、NEEDED和包元数据关联到loader/libc；新文件逐字段纠正三条共12处，旧文件保留。主控用另一种PACKAGE终止的分块方式独立核算，再与最终纠正版逐字段对照，确认61边、18 parent、48+13集合覆盖、24对象无冲突。局部解析、字段/范围读取错误均保留费用，没有改期望值来消除原记录错误。
 

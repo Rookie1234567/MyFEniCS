@@ -5,7 +5,7 @@
 | 执行分支 | `task43_hp_adaptivity` |
 | 建立日期 | 2026-10-22 |
 | 源码基线 | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` |
-| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；V10静态整改已由正式review关闭。现依[V11科学推进补充任务书](supplement_v11_scientific_restart.md)，前瞻新增最多A1_q3和R9_H8各1个正式槽及限定支持工作，尚未执行；旧5/6和末槽封存原样保留，新2槽另列，最多累计7/8。科学状态和合并资格未改变 |
+| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；V11 P1 两次支持运行留下有限工程证据（首次7通过/1 fixture失败，单selector恢复通过），P2唯一支持运行在840秒阈值后以`PERFORMANCE_CONTROLLED_STOP`结束（whole 842.288990秒），最终空间authority/FE未取得；P3–P5未运行、新增正式dispatch为0。旧正式5/6及封存末槽不变，V11新2个正式槽未消耗但当前不得启动，扩展包络为5/8；五项科学状态及无合并许可不变。详见[Response V11](response_v11.md) |
 | 第一目标 | 在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环 |
 | 第一验证波长 | 13.5 nm；小规模 direct 作数值核验 |
 | 后续方向 | 自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot |
@@ -14,9 +14,9 @@
 
 ## 阅读入口
 
-**当前科学执行权威为[V11正式补充任务书](supplement_v11_scientific_restart.md)**：最小入口实现／定向验证、实际h计划、完整A1 q响应、一个固定R9 seed8局部h动作及共同分区比较，在同一授权内按门连续完成，不逐步等待新review。它只前瞻调整列明范围，历史合同和负结果不改。
+**V11范围由[V11正式补充任务书](supplement_v11_scientific_restart.md)规定。**本轮已在P2空间前门受控停止，动态工作全部结束；不得自动重跑P2或启动P3–P5，恢复执行需正式审阅并授权新的具体范围。V11只前瞻调整任务书列明的范围，历史合同和负结果不改。
 
-上一轮[V10正式review](review_report_v10.md)已验收有限静态整改；原执行依据为[正式V9 review第9节](review_report_v9.md)，交付见[Response V10](response_v10.md)、[静态纠正记录](outcomes/records/v10_static_evidence_correction_v1.json)及[纠正版依赖表](outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json)。原V9派生表保留原字节；三个边界的12个字段更正在新文件中，不能继续把旧表当作无误记录。实际D3运行HEAD仍为`ef1e1ca5bb0b79f7cf5f6b6ce828d0e352ac44ba`，本轮尚无新运行结果或合并许可。
+上一轮[V10正式review](review_report_v10.md)已验收有限静态整改；原执行依据为[正式V9 review第9节](review_report_v9.md)，V10当轮未新增运行。其交付见[Response V10](response_v10.md)、[静态纠正记录](outcomes/records/v10_static_evidence_correction_v1.json)及[纠正版依赖表](outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json)。原V9派生表保留原字节；三个边界的12个字段更正在新文件中，不能继续把旧表当作无误记录。V11支持运行及受控停止见[Response V11](response_v11.md)；V11没有正式PDE结果或合并许可。
 
 1. [task.md](task.md)：科学问题、模型、阶段、接受规则和验收合同。
 2. [AGENTS.md](AGENTS.md)：本目录执行规则；任务书与工作站实施之间的边界。
@@ -38,6 +38,7 @@
 停止选择后，三个恢复参考与R9/R10共同用q8/q10进行九组方向明确的全场比较；结果已由root从原始数组独立审计，未反馈选择或增加PDE。全仓 `pytest -q` 已真实尝试，但在collection阶段发生1次skip和8个collection errors，测试体执行0项；负结果与其SLEPc/忽略artifact来源保留。没有CI通过声明。
 
 - [结果与统一模型表](outcomes/summary.md)
+- [V11收口回应](response_v11.md)；[V11科学结果机器记录](outcomes/records/v11_scientific_results_v1.json)
 - [执行回应](response_v1.md)
 - [V2最终执行回应](response_v2.md)
 - [依赖组选择性合并清单](outcomes/selective_merge_manifest.md)
