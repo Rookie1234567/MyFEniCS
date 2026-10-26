@@ -1,0 +1,23 @@
+{
+  "schema": "task43.v11.additional-restore-inputs.v1",
+  "inputs": [
+    {
+      "role": "Y6_1_restore_inventory",
+      "path": "docs/task43_hp_adaptivity/outcomes/records/existing_validation_fields_v1.json",
+      "sha256": "8493acfd4485ef7c9b4c662708d7bac8df9934bf90dae550d8d392f59f630df0",
+      "expected_sha256": null,
+      "matches_expected": null,
+      "binding": "tracked HEAD input"
+    },
+    {
+      "role": "A2_saved_resolved_config",
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/resolved_config.json",
+      "sha256": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc",
+      "expected_sha256": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc",
+      "matches_expected": true,
+      "binding": "primary NPZ embedded identity"
+    }
+  ],
+  "elapsed_seconds": 0.0016497471369802952,
+  "NPZ_scope": "embedded JSON read only; no vector arithmetic/no native import"
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "task43.v11.root-parent-kernel-static-audit.v1",
+  "r9_runtime_head": "db6d39dbc8688cf525e5462cc4f0eaa81fca00c4",
+  "v11_preimplementation_head": "70e2cfdcc3e5a7c3be5e8b714076420e3eac1129",
+  "scope": "R9 to V11 start shared variable-p numerical solver route; subsequent V11 call-layer changes still require review before freeze",
+  "source_changes": [
+    {
+      "path": "src/solvers/common_3d_case_flow.py",
+      "r9_sha256": "f6646d69a0c4bc6a1e2f45a6ba1f072d0ba734032da735db054e125c317ce999",
+      "v11_start_sha256": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+      "root_read_entire_diff": true,
+      "finding": "Optional capture_normal_correction_vectors forwarded; default false; no operator or solve formula changes."
+    },
+    {
+      "path": "src/solvers/dtn_port_3d.py",
+      "r9_sha256": "c298be94bc1a9b870cfddac0cd9a37d4fcfad881387da7d126d7b3d554875dd7",
+      "v11_start_sha256": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+      "root_read_entire_diff": true,
+      "finding": "Optional raw arrays copied from existing independent action/full-active audit and before/after the same single normal correction. Existing action, RHS, constraint projection and solver calls retained."
+    },
+    {
+      "path": "src/solvers/hcurl_variable_p_reduction.py",
+      "r9_sha256": "32343f7501772437fca3c33c0524977fb2659a6177dce66e7b787db51d846e99",
+      "v11_start_sha256": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+      "root_read_entire_diff": true,
+      "finding": "Optional vectors and Gram actions copied. Existing reduced trace dual norm and eliminated-interior residual computation unchanged. Interior residual stored in full entity_map row layout, distinct from reduced independent trace layout."
+    },
+    {
+      "path": "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py",
+      "r9_sha256": "97276baa03fb9ba9713418ff98be081a433960bf6f1d06d4037768c91054f6b8",
+      "v11_start_sha256": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb",
+      "root_read_entire_diff": true,
+      "finding": "Wrapper forwards optional capture flag only."
+    }
+  ],
+  "diff_sha256": "7e698165241bab6f85f4ec3812f6c707595decc879b2cb2abcd19c400e1d3340",
+  "unchanged_numerical_scope": [
+    "volume matrix and RHS equations",
+    "entity/Floquet constraint mathematics",
+    "static condensation algebra",
+    "normal correction strategy",
+    "field recovery algebra"
+  ],
+  "out_of_route": "native p6 runner changes are not used for fresh R9_H8; Y6 remains a fixed numerical target, not a same-kernel equivalence claim",
+  "new_runtime_validation": false,
+  "qualification": "STATIC_SAME_KERNEL_CONTINUITY_FOR_LISTED_SHARED_SOLVER_FILES_ONLY",
+  "remaining": "Review final h100 cfg, parent plan, primary storage and restore call layers; actual P2 geometry/authority and raw numerical gates remain required."
+}

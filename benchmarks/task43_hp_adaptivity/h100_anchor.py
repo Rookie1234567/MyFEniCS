@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import time
+from contextlib import contextmanager, nullcontext
 from collections.abc import Mapping
 from dataclasses import replace
 from pathlib import Path
@@ -26,11 +27,15 @@ from petsc4py import PETSc
 
 from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
     task43_v3_partial_terminal_record,
+    task43_v11_partial_terminal_record,
     write_atomic_json,
     write_atomic_npz,
     write_pre_validation_checkpoint,
     write_v3_primary_before_extra_packet,
     write_v3_primary_field_sample,
+    write_v11_primary_packet,
+    write_v11_primary_field_sample,
+    write_v11_primary_terminal,
 )
 from benchmarks.task43_hp_adaptivity.candidate_records import (
     load_accepted_parent_artifacts,
@@ -47,12 +52,15 @@ from benchmarks.task43_hp_adaptivity.compare_v2_endpoints import (
     _validated_rows as _v2_validated_rows,
 )
 from benchmarks.task43_hp_adaptivity.profile import (
+    TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
+    _mode_identity,
     task43_initial_profile,
     task43_profile_identity,
     task43_watchdog_resource_gate_from_environment,
 )
 from src.adaptivity.physical_g_error import physical_g_difference_metrics
 from src.adaptivity.stage4_local_h import (
+    build_stage4_local_h_reduction_authority,
     build_stage4_local_h_mesh_data,
     stage4_local_h_refinement_plan_payload,
 )
@@ -84,6 +92,7 @@ from src.postprocessing.physical_field_sampling import (
 )
 from src.postprocessing.rta_3d import compute_volume_absorption_3d
 from src.runners.physical_intermediate import WorkflowLedger
+from src.solvers.common_3d_solve import _has_petsc_package
 from src.solvers.dtn_port_3d import (
     Stage4VariablePLiveView,
     _deep_readonly_copy,
@@ -94,6 +103,7 @@ from src.solvers.dtn_port_3d import (
     _write_port_outputs,
     compute_stage4_independent_active_action,
 )
+from src.solvers import dtn_port_3d as _dtn_port_solver
 from src.solvers.petsc_residual_correction import single_petsc_residual_correction
 from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
     run_stage4b_block_grating_3d_case,
@@ -116,6 +126,9 @@ _V3_CONTRACT_REL = Path(
 _V3_PLAN_REL = Path("docs/task43_hp_adaptivity/diagnostic_plan_v3.md")
 _V3_CONTRACT_SHA256: str | None = "b694a975dee21d8347d77b3c247edda313422c9f2f6c5c605f8bcb52161e3898"
 _V3_PLAN_SHA256: str | None = "b162512ed484ae30b88555b83afe0ad0ac669014e18cf1f1114f24c02bdb1db7"
+_V11_CONTRACT_REL = Path(
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json"
+)
 _V2_LEGACY_R10_RECORD_SHA256 = "29b6a568956de31482688a8433021f779b616ab90a01660f63d53e4a5be2300d"
 _V2_LEGACY_R10_SAMPLE_SHA256 = "d21d9977f518050ac53c675539df5010d12b6126687ac84b01c0f71b2f9b0a71"
 _V2_R10_PLAN_SHA256 = "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826"
@@ -130,6 +143,11 @@ _THREAD_ENV = (
     "OPENBLAS_NUM_THREADS",
     "MKL_NUM_THREADS",
     "NUMEXPR_NUM_THREADS",
+)
+_V11_THREAD_ENV = (
+    *_THREAD_ENV,
+    "BLIS_NUM_THREADS",
+    "VECLIB_MAXIMUM_THREADS",
 )
 _SOURCE_FILES = (
     "benchmarks/task43_hp_adaptivity/h100_anchor.py",
@@ -1961,6 +1979,44 @@ def _check_environment(comm: MPI.Intracomm) -> dict[str, Any]:
     }
 
 
+def _check_v11_runtime_envelope(
+    comm: MPI.Intracomm,
+    *,
+    expected_identity: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Check V11's existing ABI/resource gate plus its worker-only envelope."""
+
+    environment = _check_environment(comm)
+    if comm.size != 1:
+        raise RuntimeError("V11 primary workflows are fixed to MPI1")
+    identity = _require_v11_watchdog_worker_identity(
+        expected_identity=expected_identity
+    )
+    threads = {name: os.environ.get(name) for name in _V11_THREAD_ENV}
+    if any(value != "1" for value in threads.values()):
+        raise RuntimeError(f"V11 requires six math thread counts of 1: {threads}")
+    worker_environment = {
+        "HWLOC_COMPONENTS": os.environ.get("HWLOC_COMPONENTS"),
+        "OMPI_MCA_pml": os.environ.get("OMPI_MCA_pml"),
+    }
+    if worker_environment != {"HWLOC_COMPONENTS": "-x86", "OMPI_MCA_pml": "ob1"}:
+        raise RuntimeError(
+            "V11 worker-local Open MPI settings differ from the frozen envelope: "
+            f"{worker_environment}"
+        )
+    if not _has_petsc_package("mumps"):
+        raise RuntimeError("V11 requires an actually available PETSc MUMPS package")
+    if any(item["cpu_list"] != [1] for item in identity["worker_tid_affinities"]):
+        raise RuntimeError("V11 requires every live worker TID to remain affined to CPU1")
+    return {
+        **environment,
+        "v11_math_threads": threads,
+        "v11_worker_local_environment": worker_environment,
+        "v11_mumps_available": True,
+        "v11_watchdog_worker_identity": identity,
+    }
+
+
 def _write_samples(
     path: Path,
     samples: dict[str, dict[str, np.ndarray]],
@@ -2128,6 +2184,84 @@ def _write_v3_partial_terminal(
     return write_atomic_json(path, record, refuse_overwrite=True)
 
 
+def _write_v11_partial_terminal(
+    run_root: Path,
+    *,
+    phase: str | None,
+    source_identity: Mapping[str, Any],
+    captured: Mapping[str, Any],
+    candidate_identity: Mapping[str, Any] | None,
+    error: BaseException | str,
+) -> dict[str, Any]:
+    """Persist V11's partial primary state and demote provisional solver records."""
+
+    if phase not in {"A1_q3", "R9_H8"}:
+        raise ValueError(f"unsupported V11 partial terminal phase {phase!r}")
+    terminal_path = Path(run_root) / "task43_v11_partial_terminal.json"
+    if terminal_path.is_file():
+        return {"path": str(terminal_path), "sha256": _sha256_file(terminal_path)}
+    error_text = (
+        f"{type(error).__name__}: {error}"
+        if isinstance(error, BaseException)
+        else str(error)
+    )
+    primary_packet = captured.get("v11_primary_packet")
+    sample_records = captured.get("v11_primary_sample_records", {})
+    record = task43_v11_partial_terminal_record(
+        phase=phase,
+        source_identity=source_identity,
+        error=error_text,
+        primary_packet=primary_packet if isinstance(primary_packet, Mapping) else None,
+        primary_samples=sample_records if isinstance(sample_records, Mapping) else {},
+        candidate_identity=(
+            candidate_identity if isinstance(candidate_identity, Mapping) else None
+        ),
+    )
+    terminal_write = write_atomic_json(terminal_path, record)
+    run_summary_path = Path(run_root) / "solve" / "run_summary.json"
+    if run_summary_path.is_file():
+        run_summary = json.loads(run_summary_path.read_text(encoding="utf-8"))
+        if not isinstance(run_summary, dict):
+            raise TypeError("V11 solver run_summary.json is not an object")
+        run_summary["legacy_solver_reported_official_result"] = run_summary.get(
+            "legacy_solver_reported_official_result", run_summary.get("official_result")
+        )
+        run_summary["official_result"] = False
+        run_summary["diagnostic_only"] = True
+        run_summary["task43_v11_failure_terminal_path"] = str(
+            terminal_path.resolve()
+        )
+        run_summary["task43_v11_failure_error"] = error_text
+        write_atomic_json(run_summary_path, run_summary, refuse_overwrite=False)
+    endpoint_path = Path(run_root) / "task43_round1_candidate_record.json"
+    if endpoint_path.is_file():
+        endpoint = json.loads(endpoint_path.read_text(encoding="utf-8"))
+        if not isinstance(endpoint, dict):
+            raise TypeError("V11 candidate endpoint record is not an object")
+        endpoint["legacy_pre_demote_status"] = endpoint.get("status")
+        endpoint["status"] = "FAILED_OR_INCOMPLETE"
+        endpoint["classification"] = "partial_nonofficial_v11_primary_endpoint"
+        endpoint["official_result"] = False
+        endpoint["pass"] = False
+        if "passed" in endpoint:
+            endpoint["passed"] = False
+        endpoint["selection_eligible"] = False
+        endpoint["selection_candidate"] = False
+        endpoint["candidate_selected"] = False
+        endpoint["continuation_all_false"] = True
+        endpoint["v11_failure_terminal"] = {
+            "path": str(terminal_path.resolve()),
+            "sha256": terminal_write["sha256"],
+        }
+        if isinstance(endpoint.get("solver"), dict):
+            endpoint["solver"]["official_result"] = False
+        if isinstance(endpoint.get("gates"), dict):
+            endpoint["gates"]["pass"] = False
+            endpoint["gates"]["status"] = "failed_or_incomplete"
+        write_atomic_json(endpoint_path, endpoint, refuse_overwrite=False)
+    return terminal_write
+
+
 def _configure_direct_factor_backend(cfg, requested: str) -> None:
     """Select an existing direct factor implementation; leave defaults intact."""
     if requested not in {"default", "mumps"}:
@@ -2163,6 +2297,444 @@ def _load_v2_diagnostic_contract(path: Path, expected_sha256: str) -> dict[str, 
     ):
         raise ValueError("V2 diagnostic contract is not the frozen executable contract")
     return contract
+
+
+def _load_v11_primary_contract(path: Path) -> tuple[dict[str, Any], str]:
+    """Load the one tracked V11 contract without binding it to a future commit."""
+
+    expected_path = (_REPOSITORY_ROOT / _V11_CONTRACT_REL).resolve()
+    contract_path = Path(path).resolve()
+    if contract_path != expected_path:
+        raise ValueError("V11 primary diagnostics require the tracked contract path")
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    if (
+        contract.get("schema") != "task43.v11.scientific_restart_contract.v1"
+        or contract.get("status") != "frozen_for_task43_v11_execution"
+        or contract.get("authority", {}).get("does_not_authorize_merge_or_transition10")
+        is not True
+    ):
+        raise ValueError("V11 scientific restart contract is not frozen or bounded")
+    phases = contract.get("phases", {})
+    if not all(name in phases for name in ("P1", "P2", "P3", "P4", "P5")):
+        raise ValueError("V11 contract does not define all five execution phases")
+    return contract, _sha256_file(contract_path)
+
+
+def _v11_phase_definition(contract: Mapping[str, Any], phase: str) -> Mapping[str, Any]:
+    phase_map = {"A1_q3": "P3", "R9_H8": "P4"}
+    if phase not in phase_map:
+        raise ValueError(f"unsupported V11 primary phase {phase!r}")
+    entry = contract.get("phases", {}).get(phase_map[phase])
+    if not isinstance(entry, Mapping) or entry.get("phase") != phase:
+        raise ValueError(f"V11 contract phase entry is invalid for {phase}")
+    return entry
+
+
+def _v11_input_snapshot(
+    contract: Mapping[str, Any], roles: set[str]
+) -> dict[str, dict[str, str]]:
+    """Hash only contract-bound inputs consumed by the current V11 phase."""
+
+    entries: dict[str, Mapping[str, Any]] = {}
+    for item in contract.get("inputs", []):
+        if not isinstance(item, Mapping) or item.get("role") not in roles:
+            continue
+        role = str(item["role"])
+        if role in entries:
+            raise ValueError(f"V11 contract repeats consumed input role {role!r}")
+        entries[role] = item
+    missing = roles.difference(entries)
+    if missing:
+        raise ValueError(f"V11 contract is missing consumed input roles: {sorted(missing)}")
+    snapshot: dict[str, dict[str, str]] = {}
+    for role in sorted(roles):
+        item = entries[role]
+        path = (_REPOSITORY_ROOT / str(item["path"])).resolve()
+        actual = _sha256_file(path)
+        expected = str(item.get("sha256", ""))
+        if actual != expected:
+            raise ValueError(f"V11 consumed input {role} differs from its contract hash")
+        snapshot[role] = {"path": str(path), "sha256": actual}
+    return snapshot
+
+
+def _v11_source_snapshot() -> dict[str, str]:
+    names = tuple(
+        dict.fromkeys(
+            (
+                *_SOURCE_FILES,
+                "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+            )
+        )
+    )
+    return {
+        name: _sha256_file(_REPOSITORY_ROOT / name)
+        for name in names
+    }
+
+
+def _validate_v11_primary_cli(
+    *,
+    contract: Mapping[str, Any],
+    phase: str,
+    run_root: Path,
+    candidate_id: str | None,
+    candidate_plan_path: Path | None,
+    candidate_parent_selection_record: Path | None,
+    candidate_acceptance_contract: Path | None,
+    normal_correction_enabled: bool,
+    extra_correction_enabled: bool,
+    direct_factor_backend: str,
+) -> None:
+    """Reject V11 mode unless its phase, candidate and unique root all match."""
+
+    entry = _v11_phase_definition(contract, phase)
+    expected_prefix = Path(str(contract["artifact_prefix"])).resolve()
+    required_prefix = (
+        _REPOSITORY_ROOT / "benchmarks/artifacts/task43/v11_science"
+    ).resolve()
+    if expected_prefix != required_prefix:
+        raise ValueError("V11 contract artifact prefix differs from the canonical root")
+    expected_root = (expected_prefix / str(entry["root"]) / "run").resolve()
+    if Path(run_root).resolve() != expected_root:
+        raise ValueError(f"V11 {phase} run root differs from its unique contract root")
+    if not normal_correction_enabled or extra_correction_enabled:
+        raise ValueError("V11 requires exactly one normal correction and zero extra corrections")
+    if direct_factor_backend != "mumps":
+        raise ValueError("V11 variable-p primary endpoints require direct MUMPS")
+    if candidate_acceptance_contract is None or Path(
+        candidate_acceptance_contract
+    ).resolve() != (
+        _REPOSITORY_ROOT
+        / "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json"
+    ).resolve():
+        raise ValueError("V11 requires the frozen round-one acceptance contract")
+    if candidate_parent_selection_record is None or Path(
+        candidate_parent_selection_record
+    ).resolve() != (
+        _REPOSITORY_ROOT
+        / "docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json"
+    ).resolve():
+        raise ValueError("V11 endpoints must retain the accepted R9 parent identity")
+    if candidate_plan_path is None:
+        raise ValueError("V11 requires its phase-specific candidate plan")
+    expected_id = str(
+        entry.get("space", {}).get("candidate_id", entry.get("candidate_id", ""))
+    )
+    if not expected_id:
+        raise ValueError(f"V11 contract phase {phase} has no fixed candidate id")
+    if candidate_id != expected_id:
+        raise ValueError(f"V11 {phase} requires candidate id {expected_id!r}")
+    if phase == "A1_q3":
+        expected_plan = (
+            _REPOSITORY_ROOT
+            / "benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json"
+        )
+    else:
+        plan_path = contract.get("phases", {}).get("P2", {}).get(
+            "plan_output_path"
+        )
+        if not isinstance(plan_path, str) or not plan_path:
+            raise ValueError("V11 contract lacks the unique P2-generated h plan path")
+        expected_plan = _REPOSITORY_ROOT / plan_path
+    if Path(candidate_plan_path).resolve() != expected_plan.resolve():
+        raise ValueError(f"V11 {phase} candidate plan differs from its unique input")
+
+
+def _configure_v11_primary_endpoint(
+    cfg, phase: str, contract: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Set only V11 quadrature and the frozen R13 rectangle on the existing route."""
+
+    entry = _v11_phase_definition(contract, phase)
+    quadrature = entry["quadrature"]
+    cfg.stage4_volume_quadrature_degree = int(quadrature["volume"])
+    cfg.stage4_incident_quadrature_degree = int(
+        quadrature["incident_and_port"]
+    )
+    cfg.stage4_dtn_quadrature_degree = int(quadrature["incident_and_port"])
+    # R13 is fixed to m=-4..4, n=-8..8 (612 modes) in both new phases.
+    if quadrature.get("modes") != "R13" or int(quadrature.get("count", -1)) != 612:
+        raise ValueError("V11 primary phases require the frozen 612-mode R13 set")
+    cfg.stage4_dtn_order_policy = "explicit_rectangle"
+    cfg.stage4_dtn_rectangle_max_m = 4
+    cfg.stage4_dtn_rectangle_max_n = 8
+    return {
+        "phase": phase,
+        "volume_quadrature_degree": int(cfg.stage4_volume_quadrature_degree),
+        "incident_and_port_quadrature_degree": int(
+            cfg.stage4_dtn_quadrature_degree
+        ),
+        "A_volume_rule": (
+            {
+                "degree": int(cfg.stage4_volume_quadrature_degree),
+                "quadrature_rule": str(
+                    getattr(cfg, "stage4_volume_quadrature_rule", "default")
+                ),
+                "metadata_sources": [
+                    "src/solvers/common_3d_forms.py",
+                    "src/postprocessing/rta_3d.py",
+                ],
+                "A2_historical_rule_reinterpreted": False,
+            }
+        ),
+        "R13_rectangle": {"max_abs_m": 4, "max_abs_n": 8, "count": 612},
+        "normal_correction_count": 1,
+        "extra_correction_count": 0,
+    }
+
+
+def _v11_raw_vector_gates(
+    arrays: Mapping[str, np.ndarray],
+    *,
+    active_trace_rows: int,
+    active_interior_rows: int,
+    independent_fe_dofs: int,
+    active_full_rows: int,
+    full_active_scope: Mapping[str, Any],
+    independent_a6_scope: Mapping[str, Any],
+    normal_correction_count: int,
+    normal_converged_reason: int,
+    normal_correction_status: str,
+    extra_correction_count: int,
+) -> dict[str, Any]:
+    """Recompute A6, block-Gaussian full-active and returned-system residuals.
+
+    The full-active trace norm uses its stored same-pass Gram inverse action.
+    Concatenating trace and interior vectors with an ordinary Euclidean norm is
+    incorrect for this constraint-induced dual norm.
+    """
+
+    def vector(name: str) -> np.ndarray:
+        if name not in arrays:
+            raise ValueError(f"V11 raw packet is missing {name}")
+        value = np.asarray(arrays[name], dtype=np.complex128)
+        if value.ndim != 1 or not np.isfinite(value).all():
+            raise ValueError(f"V11 raw vector {name} is not a finite one-dimensional array")
+        return value
+
+    def euclidean_sq(value: np.ndarray) -> float:
+        return float(np.vdot(value, value).real)
+
+    def dual_trace_sq(value: np.ndarray, action: np.ndarray, *, name: str) -> float:
+        if value.shape != action.shape:
+            raise ValueError(f"V11 {name} and saved Gram action have different shapes")
+        product = np.vdot(value, action)
+        if abs(float(product.imag)) > 5.0e-11 * max(abs(float(product.real)), 1.0):
+            raise ValueError(f"V11 {name} Gram norm has a non-real inner product")
+        if float(product.real) < -5.0e-11:
+            raise ValueError(f"V11 {name} Gram norm is negative")
+        return max(float(product.real), 0.0)
+
+    a6_r_trace = vector(
+        "independent_A6_independent_active_residual_trace"
+    )
+    a6_r_interior = vector(
+        "independent_A6_independent_active_residual_cell_interior"
+    )
+    a6_r_modal = vector(
+        "independent_A6_independent_active_modal_lower_solver_gauge"
+    )
+    a6_b_trace = vector("independent_A6_independent_active_rhs_trace")
+    a6_b_interior = vector("independent_A6_independent_active_rhs_cell_interior")
+    if (
+        int(independent_a6_scope.get("trace_rows", -1)) != active_trace_rows
+        or int(independent_a6_scope.get("active_interior_rows", -1))
+        != active_interior_rows
+        or int(independent_a6_scope.get("modal_lower_rows", -1)) != 612
+    ):
+        raise ValueError("V11 independent A6 raw scope metadata differs from frozen R13 space")
+    if (
+        a6_r_trace.size != active_trace_rows
+        or a6_r_interior.size != active_interior_rows
+        or a6_r_modal.size != 612
+    ):
+        raise ValueError("V11 independent A6 residual row counts differ from active space")
+    if a6_b_trace.shape != a6_r_trace.shape or a6_b_interior.shape != a6_r_interior.shape:
+        raise ValueError("V11 independent A6 RHS and residual layouts differ")
+    a6_residual_norm = float(
+        np.sqrt(euclidean_sq(a6_r_trace) + euclidean_sq(a6_r_interior) + euclidean_sq(a6_r_modal))
+    )
+    a6_rhs_norm = float(np.sqrt(euclidean_sq(a6_b_trace) + euclidean_sq(a6_b_interior)))
+    a6_relative = a6_residual_norm / max(a6_rhs_norm, np.finfo(float).tiny)
+    if active_trace_rows + active_interior_rows != independent_fe_dofs:
+        raise ValueError("V11 independent trace/interior rows do not equal independent FE DoFs")
+
+    full_reduced_residual = vector(
+        "full_active_reduced_trace_dtn_residual_Ax_minus_b_owned"
+    )
+    full_residual_metric_action = vector(
+        "full_active_reduced_trace_dtn_residual_trace_metric_action"
+    )
+    full_reduced_rhs = vector("full_active_reduced_trace_dtn_rhs_owned")
+    full_rhs_metric_action = vector(
+        "full_active_reduced_trace_dtn_rhs_trace_metric_action"
+    )
+    full_active_rhs = vector("full_active_active_full_rhs")
+    full_active_solution = vector("full_active_active_full_solution")
+    full_interior_residual = vector(
+        "full_active_eliminated_active_interior_residual"
+    )
+    expected_active_rows = int(full_active_scope.get("active_full_rows", -1))
+    reduced_trace_dtn_rows = int(
+        full_active_scope.get("reduced_trace_dtn_rows", -1)
+    )
+    raw_trace_rows = expected_active_rows - active_interior_rows
+    if (
+        expected_active_rows != active_full_rows
+        or expected_active_rows <= active_interior_rows
+        or raw_trace_rows <= 0
+        or full_active_rhs.shape != (expected_active_rows,)
+        or full_active_solution.shape != (expected_active_rows,)
+        or full_interior_residual.shape != (expected_active_rows,)
+    ):
+        raise ValueError("V11 active-full raw vectors disagree with the full entity-map row scope")
+    if int(full_active_scope.get("mpi_size", -1)) != 1:
+        raise ValueError("V11 full-active raw scope must be captured on MPI1")
+    reduced_owned_range = full_active_scope.get("reduced_trace_dtn_owned_range")
+    if reduced_owned_range != [0, reduced_trace_dtn_rows]:
+        raise ValueError("V11 reduced trace/DtN raw scope is not the complete serial vector")
+    if (
+        reduced_trace_dtn_rows < active_trace_rows
+        or reduced_trace_dtn_rows != active_trace_rows + 612
+        or full_reduced_residual.shape != (reduced_trace_dtn_rows,)
+        or full_reduced_rhs.shape != (reduced_trace_dtn_rows,)
+    ):
+        raise ValueError("V11 reduced trace/DtN vectors disagree with their saved raw scope")
+    # The independent trace is the reduced metric block. Raw active storage has
+    # a larger trace prefix: it contains unconstrained entity-map trace slots.
+    # The eliminated-interior residual is intentionally stored at full
+    # active-row length with zeros in those raw trace slots.
+    if np.any(full_interior_residual[:raw_trace_rows] != 0):
+        raise ValueError("V11 eliminated-interior residual is nonzero in raw trace slots")
+    stored_active_rhs = vector("recovered_active_full_rhs_owned")
+    stored_active_solution = vector("recovered_active_full_solution_owned")
+    if not np.array_equal(full_active_rhs, stored_active_rhs) or not np.array_equal(
+        full_active_solution, stored_active_solution
+    ):
+        raise ValueError("V11 raw active-full RHS/solution differ from saved recovered state")
+    if full_residual_metric_action.shape != (active_trace_rows,) or full_rhs_metric_action.shape != (active_trace_rows,):
+        raise ValueError("V11 saved trace Gram actions have the wrong row count")
+    full_residual_sq = (
+        dual_trace_sq(
+            full_reduced_residual[:active_trace_rows],
+            full_residual_metric_action,
+            name="full-active residual",
+        )
+        + euclidean_sq(full_reduced_residual[active_trace_rows:])
+        + euclidean_sq(full_interior_residual)
+    )
+    full_rhs_sq = (
+        dual_trace_sq(
+            full_reduced_rhs[:active_trace_rows],
+            full_rhs_metric_action,
+            name="full-active RHS",
+        )
+        + euclidean_sq(full_reduced_rhs[active_trace_rows:])
+        + euclidean_sq(full_active_rhs[raw_trace_rows:])
+    )
+    full_relative = float(np.sqrt(max(full_residual_sq, 0.0))) / max(
+        float(np.sqrt(max(full_rhs_sq, 0.0))), np.finfo(float).tiny
+    )
+
+    condensed_rhs = vector("returned_trace_dtn_rhs")
+    condensed_solution = vector("returned_trace_dtn_solution")
+    condensed_residual = vector("returned_trace_dtn_b_minus_Ax")
+    if (
+        condensed_rhs.shape != (reduced_trace_dtn_rows,)
+        or condensed_solution.shape != (reduced_trace_dtn_rows,)
+        or condensed_residual.shape != (reduced_trace_dtn_rows,)
+    ):
+        raise ValueError("V11 returned condensed RHS, solution and residual layouts differ")
+    condensed_relative = float(np.linalg.norm(condensed_residual)) / max(
+        float(np.linalg.norm(condensed_rhs)), np.finfo(float).tiny
+    )
+
+    normal_before_rhs = vector("normal_before_normal_correction_rhs")
+    normal_after_rhs = vector("normal_after_normal_correction_rhs")
+    normal_before_residual = vector(
+        "normal_before_normal_correction_residual_b_minus_Ax"
+    )
+    normal_after_residual = vector(
+        "normal_after_normal_correction_residual_b_minus_Ax"
+    )
+    normal_before_solution = vector("normal_before_normal_correction_solution")
+    normal_after_solution = vector("normal_after_normal_correction_solution")
+    normal_layouts = {
+        normal_before_rhs.shape,
+        normal_after_rhs.shape,
+        normal_before_solution.shape,
+        normal_after_solution.shape,
+        normal_before_residual.shape,
+        normal_after_residual.shape,
+    }
+    if len(normal_layouts) != 1:
+        raise ValueError("V11 normal correction raw RHS/solution/residual layouts differ")
+    if not np.array_equal(normal_before_rhs, normal_after_rhs):
+        raise ValueError("V11 normal correction changed the frozen RHS")
+    if (
+        not np.array_equal(normal_after_rhs, condensed_rhs)
+        or not np.array_equal(normal_after_solution, condensed_solution)
+        or not np.array_equal(normal_after_residual, condensed_residual)
+    ):
+        raise ValueError("V11 corrected raw normal state differs from the saved primary returned system")
+    normal_rhs_norm = max(float(np.linalg.norm(normal_before_rhs)), np.finfo(float).tiny)
+    normal_before_relative = float(np.linalg.norm(normal_before_residual)) / normal_rhs_norm
+    normal_after_relative = float(np.linalg.norm(normal_after_residual)) / normal_rhs_norm
+    gates = {
+        "independent_A6_raw_relative_le_1e-8": bool(
+            np.isfinite(a6_relative) and 0.0 <= a6_relative <= 1.0e-8
+        ),
+        "full_active_metric_raw_relative_le_1e-8": bool(
+            np.isfinite(full_relative) and 0.0 <= full_relative <= 1.0e-8
+        ),
+        "returned_condensed_raw_relative_le_1e-9": bool(
+            np.isfinite(condensed_relative) and 0.0 <= condensed_relative <= 1.0e-9
+        ),
+        "normal_correction_exactly_once": normal_correction_count == 1,
+        "normal_correction_positive_reason": (
+            normal_converged_reason > 0 and normal_correction_status == "passed"
+        ),
+        "normal_correction_raw_residual_strictly_decreased": bool(
+            np.isfinite(normal_before_relative)
+            and np.isfinite(normal_after_relative)
+            and normal_after_relative < normal_before_relative
+        ),
+        "extra_correction_count_zero": extra_correction_count == 0,
+    }
+    return {
+        "independent_A6": {
+            "residual_norm": a6_residual_norm,
+            "rhs_norm": a6_rhs_norm,
+            "relative_residual": a6_relative,
+        },
+        "full_active_transformed": {
+            "residual_norm": float(np.sqrt(max(full_residual_sq, 0.0))),
+            "rhs_norm": float(np.sqrt(max(full_rhs_sq, 0.0))),
+            "relative_residual": full_relative,
+            "trace_metric": "saved same-pass Gram inverse action",
+            "interior_metric": "Euclidean",
+            "independent_reduced_trace_rows": active_trace_rows,
+            "independent_active_fe_dofs": independent_fe_dofs,
+            "raw_full_entity_map_rows": expected_active_rows,
+            "raw_trace_rows": raw_trace_rows,
+            "active_interior_rows": active_interior_rows,
+            "reduced_trace_dtn_rows_including_auxiliary": reduced_trace_dtn_rows,
+        },
+        "returned_condensed": {
+            "residual_norm": float(np.linalg.norm(condensed_residual)),
+            "rhs_norm": float(np.linalg.norm(condensed_rhs)),
+            "relative_residual": condensed_relative,
+        },
+        "normal_correction": {
+            "rhs_identical": True,
+            "before_relative_residual": normal_before_relative,
+            "after_relative_residual": normal_after_relative,
+            "converged_reason": int(normal_converged_reason),
+        },
+        "gates": gates,
+        "pass": all(value is True for value in gates.values()),
+    }
 
 
 def _configure_v2_a1_endpoint(cfg, phase: str, contract: dict[str, Any]) -> dict[str, Any]:
@@ -2279,6 +2851,222 @@ def _v2_endpoint_identity(
         "physical_configuration": physical_identity,
         "numerical_controls": controls,
         "numerical_controls_sha256": _sha256_json(controls),
+    }
+
+
+def _v11_endpoint_identity(
+    cfg,
+    modes,
+    *,
+    axes_nm: Mapping[str, Any],
+    candidate_plan_sha256: str,
+    active_degree_plan_sha256: str,
+    independent_active_fe_dofs: int,
+    phase: str,
+    contract_sha256: str,
+) -> dict[str, Any]:
+    """Record V11's actual physics and controls without reusing the old q profile."""
+
+    if phase not in {"A1_q3", "R9_H8"}:
+        raise ValueError(f"unsupported V11 endpoint identity phase {phase!r}")
+    mode_inventory = [_mode_identity(mode) for mode in modes]
+    mode_keys = [
+        [item["side"], item["m"], item["n"], item["polarization"]]
+        for item in mode_inventory
+    ]
+    if len(mode_keys) != 612 or {
+        (item[0], item[1], item[2], item[3]) for item in mode_keys
+    } != R13_MODE_KEYS:
+        raise ValueError("V11 endpoint does not contain the exact frozen 612 R13 modes")
+    physical = task43_v2_physical_configuration_identity(
+        cfg.as_jsonable(),
+        axis_values_nm=dict(axes_nm),
+        candidate_plan_sha256=candidate_plan_sha256,
+        active_degree_plan_sha256=active_degree_plan_sha256,
+    )
+    controls = {
+        "phase": phase,
+        "quadrature_degree": {
+            "volume": int(cfg.stage4_volume_quadrature_degree),
+            "incident": int(cfg.stage4_incident_quadrature_degree),
+            "ports": int(cfg.stage4_dtn_quadrature_degree),
+        },
+        "A_volume_resolved_rule": {
+            "degree": int(cfg.stage4_volume_quadrature_degree),
+            "quadrature_rule": str(
+                getattr(cfg, "stage4_volume_quadrature_rule", "default")
+            ),
+            "form_metadata_sources": [
+                "src/solvers/common_3d_forms.py",
+                "src/postprocessing/rta_3d.py",
+            ],
+        },
+        "modal_selection": {
+            "policy": str(cfg.stage4_dtn_order_policy),
+            "max_abs_m": int(cfg.stage4_dtn_rectangle_max_m),
+            "max_abs_n": int(cfg.stage4_dtn_rectangle_max_n),
+            "count": len(mode_inventory),
+            "ordered_keys_sha256": _sha256_json(mode_keys),
+            "mode_inventory_sha256": _sha256_json(mode_inventory),
+        },
+        "candidate_plan_sha256": candidate_plan_sha256,
+        "active_degree_plan_sha256": active_degree_plan_sha256,
+        "independent_active_fe_dofs": int(independent_active_fe_dofs),
+        "assembly_backend": str(cfg.stage4_full3d_assembly_backend),
+        "factor_solver": str(
+            dict(cfg.petsc_extra_options or {}).get(
+                "pc_factor_mat_solver_type", ""
+            )
+        ),
+        "normal_correction_count": 1,
+        "extra_correction_count": 0,
+    }
+    return {
+        "schema": "task43.v11.primary_endpoint_identity.v1",
+        "contract_sha256": contract_sha256,
+        "physical_configuration": physical,
+        "numerical_controls": controls,
+        "numerical_controls_sha256": _sha256_json(controls),
+        "actual_cfg": cfg.as_jsonable(),
+    }
+
+
+def _v11_p4_preassembly_space_audit(
+    *,
+    cfg,
+    mesh_data,
+    candidate_plan: Mapping[str, Any],
+    candidate_plan_sha256: str,
+    contract: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Bind P4's real mesh and entity authority to the completed P2 audit."""
+
+    p2_plan = (_REPOSITORY_ROOT / contract["phases"]["P2"]["plan_output_path"]).resolve()
+    p2_audit_path = p2_plan.parent / "v11_r9_h8.audit.json"
+    p2_bundle_path = p2_plan.parent.parent / "plan_audit.json"
+    if not p2_plan.is_file() or not p2_audit_path.is_file() or not p2_bundle_path.is_file():
+        raise FileNotFoundError("P4 requires the completed P2 plan and both authority audits")
+    p2_audit = json.loads(p2_audit_path.read_text(encoding="utf-8"))
+    p2_bundle = json.loads(p2_bundle_path.read_text(encoding="utf-8"))
+    bundle_matches = [
+        item
+        for item in p2_bundle.get("candidates", [])
+        if isinstance(item, Mapping) and item.get("candidate_id") == "v11_r9_h8"
+    ]
+    if (
+        len(bundle_matches) != 1
+        or _sha256_file(p2_plan) != candidate_plan_sha256
+        or _sha256_file(p2_plan) != p2_audit.get("plan_sha256")
+        or bundle_matches[0].get("plan_sha256") != candidate_plan_sha256
+        or p2_audit.get("strict_fe_gate", {}).get("pass") is not True
+        or candidate_plan.get("task43_candidate", {}).get("candidate_id")
+        != "v11_r9_h8"
+    ):
+        raise ValueError("P4 candidate plan is not the strict-fe-gated P2 plan")
+
+    authority = build_stage4_local_h_reduction_authority(
+        mesh_data.local_h_context,
+        phase_x=complex(cfg.floquet_phase_x),
+        phase_y=complex(cfg.floquet_phase_y),
+        active_fe_dof_gate_policy=TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
+    )
+    context_audit = mesh_data.local_h_context.audit
+    degree_audit = authority.degree_plan.audit
+    physical_audit = authority.audit["physical_trace"]
+    actual_histogram = {
+        str(key): int(value)
+        for key, value in degree_audit["cell_degree_counts"].items()
+        if int(value) > 0
+    }
+    actual_interior = int(authority.degree_plan.entity_map.active_cell_interior_rows)
+    actual_trace = int(authority.trace_constraints.independent_trace_rows)
+    actual_fe = actual_trace + actual_interior
+    actual_roots = int(context_audit["root_cell_count"])
+    actual_leaves = int(context_audit["leaf_cell_count"])
+    actual_splits, split_remainder = divmod(actual_leaves - actual_roots, 7)
+    if split_remainder:
+        raise ValueError("P4 actual leaf count does not encode complete octree splits")
+    expected = p2_audit
+    comparisons = {
+        "root_cell_count": actual_roots
+        == int(expected["forest"]["root_cell_count"]),
+        "actual_leaf_cell_count": actual_leaves
+        == int(expected["forest"]["actual_leaf_cell_count"]),
+        "requested_h_root_splits": len(candidate_plan["marked_root_boxes"])
+        == int(expected["forest"]["requested_h_root_splits"]),
+        "actual_one_level_root_splits": actual_splits
+        == int(expected["forest"]["actual_one_level_root_splits"]),
+        "forced_closure_h_splits": actual_splits - len(candidate_plan["marked_root_boxes"])
+        == int(expected["forest"]["forced_closure_h_splits"]),
+        "hanging_patch_count": int(context_audit["hanging_patch_count"])
+        == int(expected["forest"]["hanging_patch_count"]),
+        "closure_split_counts": context_audit["forest"]["closure_split_counts"]
+        == expected["forest"]["closure_split_counts"],
+        "leaf_catalog_sha256": context_audit["forest"]["leaf_catalog_sha256"]
+        == expected["forest"]["leaf_catalog_sha256"],
+        "cell_interior_histogram": actual_histogram
+        == expected["degrees"]["cell_interior_histogram"],
+        "entity_degree_plan_sha256": degree_audit["cell_degree_plan_sha256"]
+        == expected["degrees"]["entity_degree_plan_sha256"],
+        "entity_map_sha256": degree_audit["runtime_global_entity_degree_sha256"]
+        == expected["degrees"]["entity_map_sha256"],
+        "independent_trace_rows": actual_trace
+        == int(expected["dofs"]["independent_trace_rows"]),
+        "active_cell_interior_rows": actual_interior
+        == int(expected["dofs"]["active_cell_interior_rows"]),
+        "independent_active_fe_dofs": actual_fe
+        == int(expected["dofs"]["independent_active_fe_dofs"]),
+        "mesh_box_catalog_sha256": degree_audit["mesh_cell_box_catalog_sha256"]
+        == expected["actual_geometry"]["mesh_box_catalog_sha256"],
+        "degree_constraints_pass": authority.audit.get("pass") is True
+        and degree_audit.get("pass") is True,
+        "strict_fe_bounds": (
+            actual_fe > int(contract["phases"]["P4"]["required_fe_bounds"]["parent_fe_dofs"])
+            and actual_fe
+            < int(contract["phases"]["P4"]["required_fe_bounds"]["target_exclusive_upper"])
+        ),
+    }
+    if not all(comparisons.values()):
+        raise ValueError(
+            "P4 actual preassembly mesh/constraint/FE authority differs from P2: "
+            f"{[key for key, passed in comparisons.items() if not passed]}"
+        )
+    return {
+        "schema": "task43.v11.p4_preassembly_space_audit.v1",
+        "p2_plan_path": str(p2_plan),
+        "p2_plan_sha256": _sha256_file(p2_plan),
+        "p2_audit_path": str(p2_audit_path),
+        "p2_audit_sha256": _sha256_file(p2_audit_path),
+        "p2_bundle_path": str(p2_bundle_path),
+        "p2_bundle_sha256": _sha256_file(p2_bundle_path),
+        "actual": {
+            "root_cell_count": actual_roots,
+            "leaf_cell_count": actual_leaves,
+            "actual_one_level_root_splits": actual_splits,
+            "cell_interior_histogram": actual_histogram,
+            "independent_trace_rows": actual_trace,
+            "active_cell_interior_rows": actual_interior,
+            "independent_active_fe_dofs": actual_fe,
+            "entity_degree_plan_sha256": degree_audit[
+                "cell_degree_plan_sha256"
+            ],
+            "entity_map_sha256": degree_audit[
+                "runtime_global_entity_degree_sha256"
+            ],
+            "mesh_box_catalog_sha256": degree_audit[
+                "mesh_cell_box_catalog_sha256"
+            ],
+            "raw_broken_active_fe_dofs": int(
+                authority.audit["raw_broken_active_fe_dofs"]
+            ),
+            "physical_trace_degree_values": list(
+                physical_audit["trace_degree_values"]
+            ),
+        },
+        "comparisons": comparisons,
+        "pass": True,
+        "matrix_allocated": False,
+        "PDE_solve_performed": False,
     }
 
 
@@ -2766,6 +3554,187 @@ def _require_v3_watchdog_worker_identity(
     }
 
 
+def _require_v11_watchdog_worker_identity(
+    *,
+    require_unused_phase_file: bool = True,
+    expected_identity: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Bind the worker, watchdog and tracer identities and every live TID affinity."""
+
+    try:
+        expected_parent = int(os.environ["PHYSICAL_WATCHDOG_PARENT_PID"])
+        phase_path = Path(os.environ["PHYSICAL_WATCHDOG_PHASE_PATH"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError("V11 requires native watchdog parent and phase identity") from exc
+    actual_parent = os.getppid()
+    if expected_parent != actual_parent:
+        raise RuntimeError("V11 application worker is not the watchdog's direct child")
+    if not phase_path.is_absolute():
+        raise RuntimeError("V11 watchdog phase path must be absolute")
+    phase_path = phase_path.resolve()
+    if not phase_path.parent.is_dir():
+        raise RuntimeError("V11 watchdog phase parent directory is missing")
+    if require_unused_phase_file and phase_path.exists():
+        raise RuntimeError("V11 watchdog phase file already exists")
+    try:
+        status_lines = Path(f"/proc/{os.getpid()}/status").read_text(
+            encoding="ascii"
+        ).splitlines()
+        tracer_line = next(line for line in status_lines if line.startswith("TracerPid:"))
+        tracer_pid = int(tracer_line.split(":", 1)[1].strip())
+        stat_fields = Path(f"/proc/{os.getpid()}/stat").read_text(
+            encoding="ascii"
+        ).rsplit(")", 1)[1].split()
+        worker_start_ticks = int(stat_fields[19])
+        parent_fields = Path(f"/proc/{expected_parent}/stat").read_text(
+            encoding="ascii"
+        ).rsplit(")", 1)[1].split()
+        watchdog_start_ticks = int(parent_fields[19])
+        tracer_fields = Path(f"/proc/{tracer_pid}/stat").read_text(
+            encoding="ascii"
+        ).rsplit(")", 1)[1].split()
+        tracer_parent = int(tracer_fields[1])
+        tracer_start_ticks = int(tracer_fields[19])
+        tids = sorted(
+            int(path.name)
+            for path in Path(f"/proc/{os.getpid()}/task").iterdir()
+            if path.name.isdigit()
+        )
+        tid_affinities = [
+            {"tid": tid, "cpu_list": sorted(os.sched_getaffinity(tid))}
+            for tid in tids
+        ]
+    except (OSError, StopIteration, ValueError, IndexError) as exc:
+        raise RuntimeError("V11 could not read worker/tracer proc identity") from exc
+    if tracer_pid <= 0 or tracer_pid == os.getpid():
+        raise RuntimeError("V11 worker must be actively traced by strace")
+
+    # In strace -D mode, tracee and tracer are both contained by the watchdog.
+    # Walk the tracer's current ancestry and bind the observed start time.
+    ancestor = tracer_pid
+    tracer_is_watchdog_descendant = False
+    for _ in range(32):
+        if ancestor == expected_parent:
+            tracer_is_watchdog_descendant = True
+            break
+        if ancestor <= 1:
+            break
+        try:
+            fields = Path(f"/proc/{ancestor}/stat").read_text(
+                encoding="ascii"
+            ).rsplit(")", 1)[1].split()
+            ancestor = int(fields[1])
+        except (OSError, ValueError, IndexError):
+            break
+    if not tracer_is_watchdog_descendant:
+        raise RuntimeError("V11 strace tracer is outside the watchdog child tree")
+    if not tid_affinities or any(item["cpu_list"] != [1] for item in tid_affinities):
+        raise RuntimeError(
+            f"V11 every live worker TID must be affined to CPU1: {tid_affinities}"
+        )
+    identity = {
+        "worker_pid": os.getpid(),
+        "worker_parent_pid": actual_parent,
+        "worker_start_ticks": worker_start_ticks,
+        "watchdog_pid": expected_parent,
+        "watchdog_start_ticks": watchdog_start_ticks,
+        "watchdog_parent_pid_environment": expected_parent,
+        "direct_watchdog_parent_verified": True,
+        "phase_path": str(phase_path),
+        "tracer_pid": tracer_pid,
+        "tracer_parent_pid": tracer_parent,
+        "tracer_start_ticks": tracer_start_ticks,
+        "tracer_proc_status_verified": True,
+        "tracer_descends_from_watchdog": True,
+        "worker_tid_affinities": tid_affinities,
+    }
+    if expected_identity is not None:
+        stable_fields = (
+            "worker_pid",
+            "worker_parent_pid",
+            "worker_start_ticks",
+            "watchdog_pid",
+            "watchdog_start_ticks",
+            "watchdog_parent_pid_environment",
+            "phase_path",
+            "tracer_pid",
+            "tracer_parent_pid",
+            "tracer_start_ticks",
+        )
+        changed = {
+            key: (expected_identity.get(key), identity.get(key))
+            for key in stable_fields
+            if expected_identity.get(key) != identity.get(key)
+        }
+        if changed:
+            raise RuntimeError(
+                f"V11 worker/watchdog/tracer identity changed at a later checkpoint: {changed}"
+            )
+    return identity
+
+
+def _record_v11_identity_checkpoint(
+    *,
+    baseline: Mapping[str, Any],
+    workflow_ledger: WorkflowLedger | None,
+    checkpoint: str,
+) -> dict[str, Any]:
+    """Recheck the first worker/tracer identity without accepting a replacement."""
+
+    current = _require_v11_watchdog_worker_identity(
+        require_unused_phase_file=False,
+        expected_identity=baseline,
+    )
+    if workflow_ledger is not None:
+        workflow_ledger.marker(
+            "task43_v11_worker_identity_checkpoint",
+            {"checkpoint": checkpoint, "identity": current},
+        )
+    return current
+
+
+@contextmanager
+def _v11_solver_progress_identity_guard(
+    *,
+    baseline: Mapping[str, Any],
+    workflow_ledger: WorkflowLedger | None,
+):
+    """Add identity checks around existing solver progress boundaries only."""
+
+    original = _dtn_port_solver._write_progress_event
+    checkpoint_stages = {
+        "stage4_full3d_assembly_backend",
+        "stage4_dtn_base_matrix_assembled",
+        "after_base_matrix_assembly",
+        "stage4_dtn_augmented_matrix_finalized",
+        "stage4_dtn_augmented_ksp_setup",
+        "before_ksp_setup",
+        "after_ksp_setup_factorized",
+        "before_ksp_solve",
+        "after_ksp_solve",
+        "variable_p_same_lu_residual_correction",
+        "after_true_residual",
+        "after_fe_field_reconstruction",
+    }
+
+    def checked_progress_event(*args, **kwargs):
+        stage = kwargs.get("stage")
+        status = kwargs.get("status")
+        if stage in checkpoint_stages:
+            _record_v11_identity_checkpoint(
+                baseline=baseline,
+                workflow_ledger=workflow_ledger,
+                checkpoint=f"{stage}:{status}",
+            )
+        return original(*args, **kwargs)
+
+    _dtn_port_solver._write_progress_event = checked_progress_event
+    try:
+        yield
+    finally:
+        _dtn_port_solver._write_progress_event = original
+
+
 def _validate_v3_consumed_formal_attempts(
     contract: Mapping[str, Any], repository_root: Path
 ) -> None:
@@ -3089,6 +4058,120 @@ def _v2_a1_endpoint_record(
     }
 
 
+def _v11_primary_q_response(
+    *,
+    phase: str,
+    cfg,
+    candidate_identity: Mapping[str, Any],
+    endpoint_identity: Mapping[str, Any],
+    captured: Mapping[str, Any],
+    port_payload: Mapping[str, Any],
+    A_volume_total: float,
+) -> dict[str, Any] | None:
+    """Apply the frozen same-space perturbation gates to A1 q8/q10 samples."""
+
+    if phase != "A1_q3":
+        return None
+    if candidate_identity.get("candidate_id") != "round10_p_up":
+        raise ValueError("V11 A1 quadrature response requires the frozen R10 space")
+    try:
+        samples = captured["fields"]["samples"]
+        current_physical = endpoint_identity["physical_configuration"]
+        current_discretization = current_physical["discretization_identity"]
+        reference = _v2_legacy_r10_reference()
+    except (KeyError, TypeError) as exc:
+        raise ValueError("V11 A1 primary q response lacks endpoint samples or identity") from exc
+    modal = compare_r13_modal_outputs(
+        reference["payload"],
+        port_payload,
+        reference_a_volume=float(reference["A_volume_total"]),
+        candidate_a_volume=float(A_volume_total),
+        reference_physical_configuration_sha256=str(
+            reference["physical_configuration_sha256"]
+        ),
+        candidate_physical_configuration_sha256=str(current_physical["sha256"]),
+        reference_discretization_sha256=str(reference["discretization_sha256"]),
+        candidate_discretization_sha256=str(current_discretization["sha256"]),
+        expected_keys=R13_MODE_KEYS,
+    )
+    volume = float(
+        cfg.period_x * cfg.period_y * (cfg.domain_z_max - cfg.domain_z_min)
+    )
+    e_floor = float(np.sqrt(volume))
+    h_floor = e_floor * float(cfg.magnetic_field_scale_A_per_m)
+    g_floor = float(np.sqrt(2.0 * volume))
+    field = {}
+    for order in (8, 10):
+        reference_bundle = _v2_field_bundle_from_npz(
+            reference["samples_path"],
+            order,
+            cfg,
+            reference["physical_configuration_sha256"],
+        )
+        current_bundle = _v2_field_bundle_from_capture(
+            samples[f"q{order}"], cfg, str(current_physical["sha256"])
+        )
+        field[f"q{order}"] = compare_field_sample_bundles(
+            reference_bundle,
+            current_bundle,
+            k0_per_nm=float(cfg.k0),
+            magnetic_field_scale_A_per_m=float(cfg.magnetic_field_scale_A_per_m),
+            mu_r=complex(cfg.mu_r),
+            incident_e_norm_floor=e_floor,
+            incident_h_norm_floor=h_floor,
+            incident_g_norm_floor=g_floor,
+        )
+    gates = {
+        "612_mode_modal_perturbation_pass": modal.get(
+            "pass_10_percent_perturbation_gate"
+        )
+        is True,
+        **{
+            f"{order}_field_perturbation_pass": field[order].get(
+                "pass_10_percent_perturbation_gate"
+            )
+            is True
+            for order in ("q8", "q10")
+        },
+    }
+    return {
+        "schema": "task43.v11.a1_primary_q_response.v1",
+        "reference": {
+            "phase": reference["phase"],
+            "record_sha256": reference["record_sha256"],
+            "mode_rows_sha256": reference["payload_sha256"],
+            "field_samples_sha256": reference["samples_sha256"],
+            "solver_source_compatibility": reference[
+                "solver_source_compatibility"
+            ],
+        },
+        "modal_comparison": modal,
+        "field_comparisons": field,
+        "gates": gates,
+        "pass": all(gates.values()),
+        "historical_extra_correction_status": "not_reinterpreted_by_v11",
+    }
+
+
+def _acquire_empty_run_root(run_root: Path, comm) -> None:
+    """Create a run root only when it is empty, preserving any existing evidence."""
+
+    root_error = None
+    if comm.rank == 0:
+        try:
+            if run_root.exists() and any(run_root.iterdir()):
+                raise FileExistsError(
+                    f"refusing to overwrite nonempty output root {run_root}"
+                )
+            run_root.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:  # synchronize a rank-zero filesystem error
+            root_error = f"{type(exc).__name__}: {exc}"
+    root_error = comm.bcast(root_error, root=0)
+    if root_error is not None:
+        raise RuntimeError(root_error)
+    comm.Barrier()
+
+
 def _run_impl(
     case: str,
     run_root: Path,
@@ -3113,6 +4196,10 @@ def _run_impl(
     v3_contract_sha256: str | None = None,
     v3_plan_path: Path | None = None,
     v3_plan_sha256: str | None = None,
+    v11_primary_diagnostic_phase: str | None = None,
+    v11_contract_path: Path | None = None,
+    v11_contract_sha256: str | None = None,
+    v11_initial_worker_identity: Mapping[str, Any] | None = None,
     _failure_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     comm = MPI.COMM_WORLD
@@ -3121,6 +4208,39 @@ def _run_impl(
     current_case = case == _CURRENT_CASE
     candidate_case = case == _ROUND1_CANDIDATE_CASE
     v2_diagnostic = v2_diagnostic_phase is not None
+    v11_diagnostic = v11_primary_diagnostic_phase is not None
+    v11_contract: dict[str, Any] | None = None
+    if v11_diagnostic and (v2_diagnostic or v3_failure_evidence_enabled):
+        raise ValueError("V11 primary diagnostics cannot be combined with V2/V3 modes")
+    if v11_diagnostic:
+        if v11_contract_path is None or v11_contract_sha256 is None:
+            raise ValueError("V11 primary diagnostics require the tracked contract and SHA")
+        v11_contract, actual_v11_contract_sha = _load_v11_primary_contract(
+            v11_contract_path
+        )
+        if actual_v11_contract_sha != v11_contract_sha256:
+            raise ValueError("V11 contract bytes changed between CLI validation and run")
+        if not candidate_case or v2_diagnostic or v3_failure_evidence_enabled:
+            raise ValueError("V11 primary diagnostics are candidate-only and independent")
+        if same_lu_tightening_enabled:
+            raise ValueError("V11 primary-only mode forbids extra same-LU correction")
+        _validate_v11_primary_cli(
+            contract=v11_contract,
+            phase=str(v11_primary_diagnostic_phase),
+            run_root=run_root,
+            candidate_id=candidate_id,
+            candidate_plan_path=candidate_plan_path,
+            candidate_parent_selection_record=candidate_parent_selection_record,
+            candidate_acceptance_contract=candidate_acceptance_contract,
+            normal_correction_enabled=same_lu_solve_residual_correction_enabled,
+            extra_correction_enabled=same_lu_tightening_enabled,
+            direct_factor_backend=direct_factor_backend,
+        )
+    elif any(
+        value is not None
+        for value in (v11_contract_path, v11_contract_sha256)
+    ):
+        raise ValueError("V11 contract inputs require --primary-diagnostic-phase")
     if v3_failure_evidence_enabled and not v2_diagnostic:
         raise ValueError("V3 failure evidence requires a frozen V2 endpoint route")
     v3_fields = (
@@ -3176,7 +4296,21 @@ def _run_impl(
         case_id=case,
         candidate_id=candidate_id if candidate_case else None,
     )
-    environment = _check_environment(comm)
+    environment = (
+        _check_v11_runtime_envelope(
+            comm, expected_identity=v11_initial_worker_identity
+        )
+        if v11_diagnostic
+        else _check_environment(comm)
+    )
+    v11_watchdog_identity = None
+    if v11_diagnostic:
+        v11_watchdog_identity = environment["v11_watchdog_worker_identity"]
+        if _failure_context is not None:
+            _failure_context["v11_worker_identity"] = v11_watchdog_identity
+        environment["v11_worker_affinity"] = v11_watchdog_identity[
+            "worker_tid_affinities"
+        ]
     root_contract = (
         str(run_root.resolve()),
         None if reference_run_root is None else str(reference_run_root.resolve()),
@@ -3212,6 +4346,18 @@ def _run_impl(
         v3_contract_sha256,
         None if v3_plan_path is None else str(v3_plan_path.resolve()),
         v3_plan_sha256,
+        v11_primary_diagnostic_phase,
+        None if v11_contract_path is None else str(v11_contract_path.resolve()),
+        v11_contract_sha256,
+        (
+            None
+            if v11_initial_worker_identity is None
+            else json.dumps(
+                dict(v11_initial_worker_identity),
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+        ),
     )
     root_contracts = comm.allgather(root_contract)
     if any(contract != root_contracts[0] for contract in root_contracts[1:]):
@@ -3219,7 +4365,9 @@ def _run_impl(
     run_root = Path(root_contract[0])
     if _failure_context is not None:
         _failure_context["run_root"] = run_root
-        _failure_context["phase"] = v2_diagnostic_phase
+        _failure_context["phase"] = (
+            v11_primary_diagnostic_phase or v2_diagnostic_phase
+        )
     reference_run_root = (
         None if root_contract[1] is None else Path(root_contract[1])
     )
@@ -3256,31 +4404,29 @@ def _run_impl(
     v3_contract_sha256 = root_contract[17]
     v3_plan_path = None if root_contract[18] is None else Path(root_contract[18])
     v3_plan_sha256 = root_contract[19]
+    v11_primary_diagnostic_phase = root_contract[20]
+    v11_contract_path = (
+        None if root_contract[21] is None else Path(root_contract[21])
+    )
+    v11_contract_sha256 = root_contract[22]
+    v11_initial_worker_identity = (
+        None if root_contract[23] is None else json.loads(root_contract[23])
+    )
     v2_diagnostic = v2_diagnostic_phase is not None
+    v11_diagnostic = v11_primary_diagnostic_phase is not None
     v2_contract = (
         _load_v2_diagnostic_contract(v2_contract_path, str(v2_contract_sha256))
         if v2_diagnostic
         else None
     )
-    root_error = None
-    if comm.rank == 0:
-        try:
-            if run_root.exists() and any(run_root.iterdir()):
-                raise FileExistsError(
-                    f"refusing to overwrite nonempty output root {run_root}"
-                )
-            run_root.mkdir(parents=True, exist_ok=True)
-        except OSError as exc:  # synchronize a rank-zero filesystem error
-            root_error = f"{type(exc).__name__}: {exc}"
-    root_error = comm.bcast(root_error, root=0)
-    if root_error is not None:
-        raise RuntimeError(root_error)
-    comm.Barrier()
+    _acquire_empty_run_root(run_root, comm)
     if _failure_context is not None:
         _failure_context["run_root"] = run_root
         _failure_context["run_root_acquired"] = True
 
     v3_workflow_ledger = None
+    v11_workflow_ledger = None
+    workflow_ledger = None
     if v3_failure_evidence_enabled and comm.rank == 0:
         watchdog_identity = _require_v3_watchdog_worker_identity()
         v3_workflow_ledger = WorkflowLedger(
@@ -3292,6 +4438,24 @@ def _run_impl(
         )
         if _failure_context is not None:
             _failure_context["workflow_ledger"] = v3_workflow_ledger
+        workflow_ledger = v3_workflow_ledger
+    if v11_diagnostic and comm.rank == 0:
+        watchdog_identity = v11_watchdog_identity or _require_v11_watchdog_worker_identity()
+        v11_workflow_ledger = WorkflowLedger(
+            run_root, Path(watchdog_identity["phase_path"])
+        )
+        v11_workflow_ledger.set_phase("preflight")
+        v11_workflow_ledger.marker(
+            "task43_v11_primary_worker_identity_bound", watchdog_identity
+        )
+        _record_v11_identity_checkpoint(
+            baseline=watchdog_identity,
+            workflow_ledger=v11_workflow_ledger,
+            checkpoint="preflight_ledger_created",
+        )
+        if _failure_context is not None:
+            _failure_context["workflow_ledger"] = v11_workflow_ledger
+        workflow_ledger = v11_workflow_ledger
 
     if candidate_case:
         if any(value is None for value in (candidate_plan_path, candidate_id, candidate_acceptance_contract)):
@@ -3346,6 +4510,44 @@ def _run_impl(
             != _V2_ACCEPTANCE_SHA256
         ):
             raise ValueError("V2 A1 candidate does not match the frozen R10 lineage")
+        if v11_diagnostic:
+            assert v11_contract is not None
+            phase_entry = _v11_phase_definition(
+                v11_contract, str(v11_primary_diagnostic_phase)
+            )
+            if v11_primary_diagnostic_phase == "A1_q3":
+                expected_plan_sha = next(
+                    item["sha256"]
+                    for item in v11_contract["inputs"]
+                    if item["role"] == "R10_authority_plan"
+                )
+                if candidate_plan_sha256 != expected_plan_sha:
+                    raise ValueError("V11 A1_q3 plan differs from frozen R10 authority")
+                if candidate_identity.get("action") != "p_up":
+                    raise ValueError("V11 A1_q3 must reuse the frozen R10 p-up action")
+            else:
+                assert candidate_plan is not None
+                v11_seed = candidate_plan.get("task43_candidate", {}).get(
+                    "provenance", {}
+                ).get("v11_seed")
+                expected_seed = phase_entry["seed"]
+                if (
+                    candidate_identity.get("action") != "h_refine"
+                    or not isinstance(v11_seed, Mapping)
+                    or int(v11_seed.get("global_cell_id", -1))
+                    != int(expected_seed["global_cell_id"])
+                    or v11_seed.get("lower_nm") != expected_seed["lower_nm"]
+                    or v11_seed.get("upper_nm") != expected_seed["upper_nm"]
+                    or int(v11_seed.get("parent_degree", -1))
+                    != int(expected_seed["parent_degree"])
+                    or candidate_plan.get("task43_candidate", {}).get(
+                        "provenance", {}
+                    ).get("marked_global_cell_ids_source")
+                    != "v11_predeclared_seed8"
+                ):
+                    raise ValueError("V11 R9_H8 plan differs from frozen seed-8 request")
+            candidate_identity["v11_phase"] = v11_primary_diagnostic_phase
+            candidate_identity["v11_contract_sha256"] = v11_contract_sha256
         if v3_workflow_ledger is not None:
             v3_workflow_ledger.marker(
                 "task43_v3_a1_candidate_inputs_bound",
@@ -3357,6 +4559,21 @@ def _run_impl(
                     ),
                 },
             )
+        if v11_workflow_ledger is not None:
+            v11_workflow_ledger.marker(
+                "task43_v11_candidate_inputs_bound",
+                {
+                    "phase": v11_primary_diagnostic_phase,
+                    "candidate_id": str(candidate_id),
+                    "candidate_plan_sha256": candidate_plan_sha256,
+                    "accepted_parent_selection_sha256": candidate_identity.get(
+                        "accepted_parent_selection_sha256"
+                    ),
+                    "contract_sha256": v11_contract_sha256,
+                },
+            )
+        if _failure_context is not None:
+            _failure_context["candidate_identity"] = candidate_identity
 
     v2_reference_data = None
     if v2_diagnostic_phase == "A1_q":
@@ -3403,7 +4620,7 @@ def _run_impl(
         started,
         "preflight",
         "end",
-        workflow_ledger=v3_workflow_ledger,
+        workflow_ledger=workflow_ledger,
         validated_references=sorted(reference_identities),
     )
 
@@ -3480,6 +4697,20 @@ def _run_impl(
         source_identity["v3_watchdog_worker_identity"] = (
             _require_v3_watchdog_worker_identity(require_unused_phase_file=False)
         )
+    if v11_diagnostic:
+        assert v11_contract_path is not None and v11_contract_sha256 is not None
+        assert v11_primary_diagnostic_phase is not None
+        source_identity["v11_primary_contract"] = {
+            "contract_path": str(v11_contract_path),
+            "contract_sha256": v11_contract_sha256,
+            "phase": v11_primary_diagnostic_phase,
+        }
+        source_identity["v11_watchdog_worker_identity"] = (
+            _require_v11_watchdog_worker_identity(
+                require_unused_phase_file=False,
+                expected_identity=v11_watchdog_identity,
+            )
+        )
     source_hashes_before = source_identity["file_sha256"]
 
     cfg = _h100_config(
@@ -3502,15 +4733,28 @@ def _run_impl(
         v2_phase_controls = _configure_v2_a1_endpoint(
             cfg, v2_diagnostic_phase, v2_contract
         )
+    v11_phase_controls = None
+    if v11_diagnostic:
+        assert v11_contract is not None
+        v11_phase_controls = _configure_v11_primary_endpoint(
+            cfg, str(v11_primary_diagnostic_phase), v11_contract
+        )
     _log_stage(
         comm,
         started,
         "mesh_build",
         "begin",
-        workflow_ledger=v3_workflow_ledger,
+        workflow_ledger=workflow_ledger,
     )
+    if workflow_ledger is not None:
+        workflow_ledger.set_phase("mesh_setup")
+    if v11_diagnostic:
+        _record_v11_identity_checkpoint(
+            baseline=v11_watchdog_identity,
+            workflow_ledger=v11_workflow_ledger,
+            checkpoint="mesh_setup_begin",
+        )
     if v3_workflow_ledger is not None:
-        v3_workflow_ledger.set_phase("mesh_setup")
         v3_workflow_ledger.marker(
             "task43_v3_a1_mesh_setup_started",
             {
@@ -3522,6 +4766,12 @@ def _run_impl(
     mesh_data = build_airbox_mesh_3d(cfg, run_root / "resolved_mesh")
     if v3_workflow_ledger is not None:
         v3_workflow_ledger.marker("task43_v3_a1_mesh_setup_complete", {})
+    if v11_workflow_ledger is not None:
+        _record_v11_identity_checkpoint(
+            baseline=v11_watchdog_identity,
+            workflow_ledger=v11_workflow_ledger,
+            checkpoint="mesh_setup_complete",
+        )
     axes = _mesh_axes(mesh_data.mesh, comm)
     _assert_mesh_profile(mesh_data, axes, geometry_profile)
     reference_axes = None
@@ -3534,6 +4784,7 @@ def _run_impl(
                 for name in ("x", "y", "z")
             )
     local_h_plan_identity = None
+    v11_p4_actual_space_audit = None
     if kind == "empty_h_active_p3":
         if candidate_case:
             assert candidate_plan is not None
@@ -3633,6 +4884,26 @@ def _run_impl(
             ),
             "allow_no_refinement": bool(plan.get("allow_no_refinement", False)),
         }
+        if v11_diagnostic and v11_primary_diagnostic_phase == "R9_H8":
+            assert v11_contract is not None
+            assert candidate_plan_sha256 is not None
+            v11_p4_actual_space_audit = _v11_p4_preassembly_space_audit(
+                cfg=cfg,
+                mesh_data=mesh_data,
+                candidate_plan=plan,
+                candidate_plan_sha256=candidate_plan_sha256,
+                contract=v11_contract,
+            )
+            _record_v11_identity_checkpoint(
+                baseline=v11_watchdog_identity,
+                workflow_ledger=v11_workflow_ledger,
+                checkpoint="p4_preassembly_actual_space_authority",
+            )
+            if v11_workflow_ledger is not None:
+                v11_workflow_ledger.marker(
+                    "task43_v11_p4_preassembly_space_identity_pass",
+                    v11_p4_actual_space_audit,
+                )
     if current_case:
         mesh_data.mesh.topology.create_connectivity(mesh_data.mesh.topology.dim, 0)
     if candidate_case:
@@ -3642,7 +4913,7 @@ def _run_impl(
         started,
         "mesh_build",
         "end",
-        workflow_ledger=v3_workflow_ledger,
+        workflow_ledger=workflow_ledger,
         global_cells=int(mesh_data.mesh.topology.index_map(mesh_data.mesh.topology.dim).size_global),
         axis_cell_counts_xyz=[len(axis) - 1 for axis in axes],
         local_h_allow_no_refinement=(
@@ -3668,6 +4939,8 @@ def _run_impl(
         raise RuntimeError(f"unexpected assembly backend: {backend_audit}")
 
     captured: dict[str, Any] = {}
+    if v11_p4_actual_space_audit is not None:
+        captured["v11_p4_preassembly_space_audit"] = v11_p4_actual_space_audit
     if _failure_context is not None:
         _failure_context["captured"] = captured
 
@@ -3693,11 +4966,20 @@ def _run_impl(
             candidate_plan_sha256=(
                 candidate_plan_sha256 if candidate_case else None
             ),
-            sample_fields=(not candidate_case or v2_diagnostic),
+            sample_fields=(
+                not candidate_case
+                or v2_diagnostic
+                or (v11_diagnostic and v11_primary_diagnostic_phase == "A1_q3")
+            ),
             on_sample=(
                 (lambda order, sample: _write_v3_primary_sample(order, sample))
                 if capture_v3_samples
-                else None
+                else (
+                    (lambda order, sample: _write_v11_primary_sample(order, sample))
+                    if v11_diagnostic
+                    and v11_primary_diagnostic_phase == "A1_q3"
+                    else None
+                )
             ),
         )
         modes = goal_context["modes"]
@@ -3706,7 +4988,24 @@ def _run_impl(
             [str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)]
             for mode in modes
         ]
-        if (current_case or candidate_case) and not v2_diagnostic:
+        if v11_diagnostic:
+            if v11_primary_diagnostic_phase == "R9_H8":
+                captured["resolved_profile_identity"] = task43_profile_identity(
+                    live_cfg,
+                    modes,
+                    resolved_axes_nm=captured["fields"]["axes_nm"],
+                    resolved_mesh_audit={
+                        "global_cell_count": int(
+                            captured["fields"]["mesh_identity"]["global_cells"]
+                        ),
+                        "leaf_cell_count": int(
+                            captured["fields"]["mesh_identity"]["global_cells"]
+                        ),
+                    },
+                )
+            else:
+                captured["resolved_profile_identity"] = None
+        elif (current_case or candidate_case) and not v2_diagnostic:
             captured["resolved_profile_identity"] = task43_profile_identity(
                 live_cfg,
                 modes,
@@ -3738,6 +5037,28 @@ def _run_impl(
                 ).get("mesh_and_dof_order_sha256"),
             },
             sample_records=captured.setdefault("v3_primary_sample_records", {}),
+        )
+
+    def _write_v11_primary_sample(order: int, sample: dict[str, np.ndarray]) -> None:
+        if not v11_diagnostic or v11_primary_diagnostic_phase != "A1_q3" or comm.rank != 0:
+            return
+        assert v11_primary_diagnostic_phase is not None
+        assert v11_contract_sha256 is not None
+        write_v11_primary_field_sample(
+            run_root / f"primary_field_sample_q{int(order)}.npz",
+            order,
+            sample,
+            identity={
+                "phase": v11_primary_diagnostic_phase,
+                "source_identity": source_identity,
+                "contract_sha256": v11_contract_sha256,
+                "candidate_identity": candidate_identity,
+                "candidate_plan_sha256": candidate_plan_sha256,
+                "mesh_and_dof_order_sha256": captured.get(
+                    "solution_storage_metadata", {}
+                ).get("mesh_and_dof_order_sha256"),
+            },
+            sample_records=captured.setdefault("v11_primary_sample_records", {}),
         )
 
     def _write_v3_extra_sample(order: int, sample: dict[str, np.ndarray]) -> None:
@@ -3778,6 +5099,12 @@ def _run_impl(
         captured["port_metrics"] = kwargs["dtn_result"]["port_metrics"]
 
     def active_observer(view) -> None:
+        if v11_diagnostic:
+            _record_v11_identity_checkpoint(
+                baseline=v11_watchdog_identity,
+                workflow_ledger=v11_workflow_ledger,
+                checkpoint="live_observer_after_factor_solve_and_recovery",
+            )
         captured["actual_live_factor_backend"] = (
             view.ksp.getPC().getFactorSolverType()
         )
@@ -3788,7 +5115,7 @@ def _run_impl(
                     started,
                     "pre_validation_checkpoint",
                     "begin",
-                    workflow_ledger=v3_workflow_ledger,
+                    workflow_ledger=workflow_ledger,
                 )
                 storage_arrays, storage_metadata = _active_solution_storage(view)
                 modes = view.goal_context["modes"]
@@ -3812,6 +5139,10 @@ def _run_impl(
                 checkpoint_profile_identity = (
                     None
                     if v2_diagnostic
+                    or (
+                        v11_diagnostic
+                        and v11_primary_diagnostic_phase == "A1_q3"
+                    )
                     else task43_profile_identity(
                         view.config,
                         modes,
@@ -3832,6 +5163,23 @@ def _run_impl(
                         phase=str(v2_diagnostic_phase),
                         contract_sha256=str(v2_contract_sha256),
                     )
+                checkpoint_v11_identity = None
+                if v11_diagnostic:
+                    checkpoint_v11_identity = _v11_endpoint_identity(
+                        view.config,
+                        modes,
+                        axes_nm=resolved_axes,
+                        candidate_plan_sha256=str(candidate_plan_sha256),
+                        active_degree_plan_sha256=str(
+                            storage_metadata["active_degree_plan_sha256"]
+                        ),
+                        independent_active_fe_dofs=int(
+                            storage_metadata["independent_active_fe_dofs"]
+                        ),
+                        phase=str(v11_primary_diagnostic_phase),
+                        contract_sha256=str(v11_contract_sha256),
+                    )
+                    captured["v11_endpoint_identity"] = checkpoint_v11_identity
                 checkpoint_identity = {
                     "case_id": case,
                     "candidate_id": candidate_id if candidate_case else None,
@@ -3852,6 +5200,7 @@ def _run_impl(
                     "source_identity": source_identity,
                     "resolved_profile_identity": checkpoint_profile_identity,
                     "v2_endpoint_identity": checkpoint_v2_identity,
+                    "v11_endpoint_identity": checkpoint_v11_identity,
                     "resolved_axes_nm": resolved_axes,
                     "local_h_plan_identity": local_h_plan_identity,
                     "ordered_mode_count": len(ordered_mode_keys),
@@ -3878,7 +5227,7 @@ def _run_impl(
                     started,
                     "pre_validation_checkpoint",
                     "end",
-                    workflow_ledger=v3_workflow_ledger,
+                    workflow_ledger=workflow_ledger,
                     npz_sha256=captured["pre_validation_checkpoint"][
                         "npz_sha256"
                     ],
@@ -3898,7 +5247,7 @@ def _run_impl(
                 started,
                 "field_capture",
                 "begin",
-                workflow_ledger=v3_workflow_ledger,
+                workflow_ledger=workflow_ledger,
             )
             try:
                 capture(
@@ -3914,7 +5263,7 @@ def _run_impl(
                     started,
                     "field_capture",
                     "failed",
-                    workflow_ledger=v3_workflow_ledger,
+                    workflow_ledger=workflow_ledger,
                     stage_duration_seconds=time.perf_counter() - capture_started,
                     error=repr(error),
                 )
@@ -3939,11 +5288,11 @@ def _run_impl(
                 started,
                 "field_capture",
                 "end",
-                workflow_ledger=v3_workflow_ledger,
+                workflow_ledger=workflow_ledger,
                 stage_duration_seconds=time.perf_counter() - capture_started,
             )
 
-        if not v3_failure_evidence_enabled:
+        if not (v3_failure_evidence_enabled or v11_diagnostic):
             capture_primary_fields(capture_v3_samples=False)
         captured["distinct_physical_trace_degrees"] = sorted(
             {
@@ -3959,13 +5308,14 @@ def _run_impl(
             started,
             "independent_active_action",
             "begin",
-            workflow_ledger=v3_workflow_ledger,
+            workflow_ledger=workflow_ledger,
         )
         try:
             independent_action = compute_stage4_independent_active_action(
-                view, capture_raw_vectors=v3_failure_evidence_enabled
+                view,
+                capture_raw_vectors=(v3_failure_evidence_enabled or v11_diagnostic),
             )
-            if v3_failure_evidence_enabled:
+            if v3_failure_evidence_enabled or v11_diagnostic:
                 captured["independent_active_action_raw_vectors"] = (
                     independent_action.pop("raw_vectors", None)
                 )
@@ -3979,7 +5329,7 @@ def _run_impl(
                 started,
                 "independent_active_action",
                 "failed",
-                workflow_ledger=v3_workflow_ledger,
+                workflow_ledger=workflow_ledger,
                 stage_duration_seconds=time.perf_counter() - action_started,
                 error=repr(error),
             )
@@ -3989,14 +5339,14 @@ def _run_impl(
             started,
             "independent_active_action",
             "end",
-            workflow_ledger=v3_workflow_ledger,
+            workflow_ledger=workflow_ledger,
             stage_duration_seconds=time.perf_counter() - action_started,
         )
         if v2_diagnostic:
             captured["explicit_active_residual"] = _linear_residual(
                 view.A, view.b, view.x
             )
-        if v3_failure_evidence_enabled:
+        if v3_failure_evidence_enabled or v11_diagnostic:
             captured["full_active_residual_raw_vectors"] = (
                 view.full_active_residual.get("raw_vectors")
             )
@@ -4028,6 +5378,164 @@ def _run_impl(
         captured["local_h_audit"]["closure_split_counts"] = dict(
             audit["forest"]["closure_split_counts"]
         )
+        if v11_diagnostic:
+            raw_action = view.b.duplicate()
+            raw_residual = view.b.duplicate()
+            try:
+                view.A.mult(view.x, raw_action)
+                view.b.copy(raw_residual)
+                raw_residual.axpy(PETSc.ScalarType(-1.0), raw_action)
+                full_raw = captured.get("full_active_residual_raw_vectors")
+                a6_raw = captured.get("independent_active_action_raw_vectors")
+                full_scope = captured.get("full_active_residual_raw_vector_scope")
+                a6_scope = captured.get("independent_active_action_raw_vector_scope")
+                if not all(isinstance(value, Mapping) for value in (full_raw, a6_raw, full_scope, a6_scope)):
+                    raise TypeError("V11 primary raw vector arrays or scope metadata are missing")
+                normal_vectors = view.normal_correction_raw_vectors
+                required_normal_vectors = {
+                    "before_normal_correction_rhs",
+                    "before_normal_correction_solution",
+                    "before_normal_correction_residual_b_minus_Ax",
+                    "after_normal_correction_rhs",
+                    "after_normal_correction_solution",
+                    "after_normal_correction_residual_b_minus_Ax",
+                }
+                if normal_vectors is None or set(normal_vectors) != required_normal_vectors:
+                    raise RuntimeError("V11 primary lacks both raw normal-correction states")
+                packet_arrays = {
+                    f"recovered_{name}": np.asarray(values)
+                    for name, values in captured["solution_storage_arrays"].items()
+                }
+                packet_arrays.update(
+                    returned_trace_dtn_rhs=np.asarray(
+                        view.b.getArray(readonly=True), dtype=np.complex128
+                    ).copy(),
+                    returned_trace_dtn_solution=np.asarray(
+                        view.x.getArray(readonly=True), dtype=np.complex128
+                    ).copy(),
+                    returned_trace_dtn_b_minus_Ax=np.asarray(
+                        raw_residual.getArray(readonly=True), dtype=np.complex128
+                    ).copy(),
+                )
+                packet_arrays.update(
+                    {
+                        f"full_active_{name}": np.asarray(values)
+                        for name, values in full_raw.items()
+                    }
+                )
+                packet_arrays.update(
+                    {
+                        f"independent_A6_{name}": np.asarray(values)
+                        for name, values in a6_raw.items()
+                    }
+                )
+                packet_arrays.update(
+                    {f"normal_{name}": np.asarray(values) for name, values in normal_vectors.items()}
+                )
+                storage_metadata = captured["solution_storage_metadata"]
+                active_trace_rows = int(view.reduction.system.active_trace_rows)
+                active_interior_rows = int(
+                    view.reduction.system.entity_map.active_cell_interior_rows
+                )
+                active_full_rows = int(view.reduction.system.entity_map.active_rows)
+                normal_audit = view.primal_solver_telemetry["normal_correction_audit"]
+                if not isinstance(normal_audit, Mapping):
+                    raise TypeError("V11 normal correction telemetry is missing")
+                correction_ksp = normal_audit.get("correction_ksp")
+                if not isinstance(correction_ksp, Mapping):
+                    raise TypeError("V11 normal correction KSP reason is missing")
+                full_scope_record = {
+                    **dict(full_scope),
+                    "active_full_rows": active_full_rows,
+                    "raw_trace_rows": active_full_rows - active_interior_rows,
+                    "active_interior_rows": active_interior_rows,
+                    "independent_reduced_trace_rows": active_trace_rows,
+                    "independent_active_fe_dofs": int(
+                        storage_metadata["independent_active_fe_dofs"]
+                    ),
+                }
+                v11_packet_identity = {
+                    "phase": v11_primary_diagnostic_phase,
+                    "contract_sha256": v11_contract_sha256,
+                    "source_identity": source_identity,
+                    "candidate_identity": candidate_identity,
+                    "candidate_plan_sha256": candidate_plan_sha256,
+                    "endpoint_identity": captured.get("v11_endpoint_identity"),
+                    "P2_preassembly_space_audit": captured.get(
+                        "v11_p4_preassembly_space_audit"
+                    ),
+                    "pre_validation_checkpoint": captured.get(
+                        "pre_validation_checkpoint"
+                    ),
+                    "normal_correction_audit": _plain_nested_containers(normal_audit),
+                    "normal_correction_count": int(
+                        view.primal_solver_telemetry["normal_correction_count"]
+                    ),
+                    "extra_correction_count": 0,
+                    "independent_active_fe_dofs": int(
+                        storage_metadata["independent_active_fe_dofs"]
+                    ),
+                    "raw_full_active_scope": full_scope_record,
+                    "independent_A6_raw_vector_scope": dict(a6_scope),
+                    "raw_vector_gate_status": "pending_independent_recomputation",
+                    "ordered_mode_keys": captured["ordered_mode_keys"],
+                    "ordered_mode_count": int(captured["mode_count"]),
+                    "returned_trace_dtn_matrix_shape": [
+                        int(value) for value in view.A.getSize()
+                    ],
+                    "returned_trace_dtn_system_scope": (
+                        "returned independent-trace/DtN reduced system; full-active residual is separately retained"
+                    ),
+                    "extra_correction_status": "NOT_REQUESTED_BY_V11_PROTOCOL",
+                    "official_result": False,
+                    "passed": False,
+                }
+                packet_record = None
+                packet_error = None
+                if comm.rank == 0:
+                    try:
+                        packet_record = write_v11_primary_packet(
+                            run_root / "primary_state.npz",
+                            packet_arrays,
+                            phase=str(v11_primary_diagnostic_phase),
+                            identity=v11_packet_identity,
+                        )
+                        captured["v11_primary_packet"] = packet_record
+                    except (OSError, TypeError, ValueError) as error:
+                        packet_error = f"{type(error).__name__}: {error}"
+                packet_record, packet_error = comm.bcast(
+                    (packet_record, packet_error), root=0
+                )
+                if packet_error is not None:
+                    raise RuntimeError(f"V11 primary raw packet write failed: {packet_error}")
+                captured["v11_primary_packet"] = packet_record
+                raw_gate_audit = _v11_raw_vector_gates(
+                    packet_arrays,
+                    active_trace_rows=active_trace_rows,
+                    active_interior_rows=active_interior_rows,
+                    independent_fe_dofs=int(
+                        storage_metadata["independent_active_fe_dofs"]
+                    ),
+                    active_full_rows=active_full_rows,
+                    full_active_scope=full_scope_record,
+                    independent_a6_scope=a6_scope,
+                    normal_correction_count=int(
+                        view.primal_solver_telemetry["normal_correction_count"]
+                    ),
+                    normal_converged_reason=int(correction_ksp["converged_reason"]),
+                    normal_correction_status=str(normal_audit.get("status", "")),
+                    extra_correction_count=0,
+                )
+                captured["v11_primary_raw_gate_audit"] = raw_gate_audit
+            finally:
+                raw_action.destroy()
+                raw_residual.destroy()
+
+            # Save q8 before q10 only after the primary arrays and the independent
+            # raw-vector gates are durable. A q10 failure then leaves both primary
+            # and q8 evidence in the failure terminal.
+            capture_primary_fields(capture_v3_samples=False)
+
         if v3_failure_evidence_enabled:
             raw_action = view.b.duplicate()
             raw_residual = view.b.duplicate()
@@ -4276,7 +5784,7 @@ def _run_impl(
                 on_extra_sample=(
                     _write_v3_extra_sample if v3_failure_evidence_enabled else None
                 ),
-                workflow_ledger=v3_workflow_ledger,
+                workflow_ledger=workflow_ledger,
             )
 
     _log_stage(
@@ -4284,24 +5792,33 @@ def _run_impl(
         started,
         "solve_and_observe",
         "begin",
-        workflow_ledger=v3_workflow_ledger,
+        workflow_ledger=workflow_ledger,
     )
     try:
-        summary = run_stage4b_block_grating_3d_case(
-            cfg,
-            run_root / "solve",
-            solution_observer=(native_observer if kind == "native_p3" else None),
-            variable_p_live_observer=(
-                active_observer if kind == "empty_h_active_p3" else None
-            ),
-            variable_p_single_lu_residual_correction=(
-                same_lu_solve_residual_correction_enabled
-            ),
-            variable_p_capture_normal_correction_vectors=(
-                v3_failure_evidence_enabled
-            ),
-            mesh_data_override=mesh_data,
+        identity_guard = (
+            _v11_solver_progress_identity_guard(
+                baseline=v11_watchdog_identity,
+                workflow_ledger=v11_workflow_ledger,
+            )
+            if v11_diagnostic
+            else nullcontext()
         )
+        with identity_guard:
+            summary = run_stage4b_block_grating_3d_case(
+                cfg,
+                run_root / "solve",
+                solution_observer=(native_observer if kind == "native_p3" else None),
+                variable_p_live_observer=(
+                    active_observer if kind == "empty_h_active_p3" else None
+                ),
+                variable_p_single_lu_residual_correction=(
+                    same_lu_solve_residual_correction_enabled
+                ),
+                variable_p_capture_normal_correction_vectors=(
+                    v3_failure_evidence_enabled or v11_diagnostic
+                ),
+                mesh_data_override=mesh_data,
+            )
     except BaseException as error:
         if v3_failure_evidence_enabled:
             terminal_error = None
@@ -4329,7 +5846,7 @@ def _run_impl(
         started,
         "solve_and_observe",
         "end",
-        workflow_ledger=v3_workflow_ledger,
+        workflow_ledger=workflow_ledger,
     )
     actual_factor_backend = summary.get("actual_pc_factor_solver_type")
     actual_live_factor_backend = captured.get("actual_live_factor_backend")
@@ -4362,7 +5879,7 @@ def _run_impl(
         started,
         "record_and_compare",
         "begin",
-        workflow_ledger=v3_workflow_ledger,
+        workflow_ledger=workflow_ledger,
     )
     post_error = None
     task43_gated_official_result = None
@@ -4471,7 +5988,49 @@ def _run_impl(
                 ]
                 condensed = captured["condensed_residual"]
                 a6_relative = independent["relative_to_independent_rhs"]
-                if current_case or candidate_case:
+                if v11_diagnostic:
+                    raw_gate_audit = captured.get("v11_primary_raw_gate_audit")
+                    if not isinstance(raw_gate_audit, Mapping):
+                        raise ValueError("V11 primary raw residual audit is missing")
+                    raw_gates = raw_gate_audit.get("gates")
+                    if not isinstance(raw_gates, Mapping):
+                        raise ValueError("V11 primary raw residual gates are missing")
+                    gates["independent_A6_raw_relative_le_1e-8"] = bool(
+                        raw_gates.get("independent_A6_raw_relative_le_1e-8") is True
+                    )
+                    gates["full_active_metric_raw_relative_le_1e-8"] = bool(
+                        raw_gates.get("full_active_metric_raw_relative_le_1e-8")
+                        is True
+                    )
+                    gates["returned_condensed_raw_relative_le_1e-9"] = bool(
+                        raw_gates.get("returned_condensed_raw_relative_le_1e-9")
+                        is True
+                    )
+                    gates["normal_correction_exactly_once"] = bool(
+                        raw_gates.get("normal_correction_exactly_once") is True
+                    )
+                    gates["normal_correction_positive_reason"] = bool(
+                        raw_gates.get("normal_correction_positive_reason") is True
+                    )
+                    gates["normal_correction_raw_residual_strictly_decreased"] = bool(
+                        raw_gates.get(
+                            "normal_correction_raw_residual_strictly_decreased"
+                        )
+                        is True
+                    )
+                    gates["extra_correction_count_zero"] = bool(
+                        raw_gates.get("extra_correction_count_zero") is True
+                    )
+                    small_direct_target_diagnostic = {
+                        "relative_to_independent_rhs": raw_gate_audit[
+                            "independent_A6"
+                        ]["relative_residual"],
+                        "limit": 1.0e-8,
+                        "passed": gates["independent_A6_raw_relative_le_1e-8"],
+                        "classification": "hard_gate",
+                        "scope": "independent A6 residual over independent FE plus 612 modal lower rows",
+                    }
+                elif current_case or candidate_case:
                     gates["independent_A6_relative_to_rhs_le_1e-6"] = bool(
                         independent["finite"]
                         and np.isfinite(a6_relative)
@@ -4495,10 +6054,11 @@ def _run_impl(
                         and np.isfinite(a6_relative)
                         and a6_relative <= 1.0e-9
                     )
-                gates["condensed_active_residual_le_1e-9"] = bool(
-                    np.isfinite(condensed["linear_system_relative_residual"])
-                    and condensed["linear_system_relative_residual"] <= 1.0e-9
-                )
+                if not v11_diagnostic:
+                    gates["condensed_active_residual_le_1e-9"] = bool(
+                        np.isfinite(condensed["linear_system_relative_residual"])
+                        and condensed["linear_system_relative_residual"] <= 1.0e-9
+                    )
                 if candidate_case:
                     storage_metadata = captured.get("solution_storage_metadata", {})
                     local_h_audit = captured.get("local_h_audit", {})
@@ -4765,6 +6325,144 @@ def _run_impl(
                     ]
                 ),
             }
+            if v11_diagnostic:
+                assert v11_primary_diagnostic_phase is not None
+                assert v11_contract_sha256 is not None
+                assert candidate_plan_sha256 is not None
+                raw_gate_audit = captured.get("v11_primary_raw_gate_audit")
+                primary_packet = captured.get("v11_primary_packet")
+                endpoint_identity = captured.get("v11_endpoint_identity")
+                if not isinstance(raw_gate_audit, Mapping) or not isinstance(
+                    primary_packet, Mapping
+                ) or not isinstance(endpoint_identity, Mapping):
+                    raise ValueError("V11 success endpoint lacks its raw primary bindings")
+                _v2_validated_rows(
+                    port_payload,
+                    label=f"V11 primary {v11_primary_diagnostic_phase}",
+                    expected=R13_MODE_KEYS,
+                )
+                q_response = _v11_primary_q_response(
+                    phase=v11_primary_diagnostic_phase,
+                    cfg=cfg,
+                    candidate_identity=candidate_identity or {},
+                    endpoint_identity=endpoint_identity,
+                    captured=captured,
+                    port_payload=port_payload,
+                    A_volume_total=a_volume,
+                )
+                v11_gates = dict(gates)
+                v11_gates.update(
+                    {
+                        f"primary_raw_{name}": bool(value)
+                        for name, value in raw_gate_audit["gates"].items()
+                    }
+                )
+                if q_response is not None:
+                    v11_gates.update(
+                        {
+                            f"primary_q_response_{name}": bool(value)
+                            for name, value in q_response["gates"].items()
+                        }
+                    )
+                v11_gates["primary_packet_bound"] = bool(
+                    primary_packet.get("npz_sha256")
+                    and primary_packet.get("npz_path")
+                    and Path(str(primary_packet["npz_path"])).is_file()
+                    and _sha256_file(Path(str(primary_packet["npz_path"])))
+                    == primary_packet.get("npz_sha256")
+                )
+                if v11_primary_diagnostic_phase == "R9_H8":
+                    preassembly_audit = captured.get(
+                        "v11_p4_preassembly_space_audit"
+                    )
+                    v11_gates["P4_preassembly_space_matches_P2"] = bool(
+                        isinstance(preassembly_audit, Mapping)
+                        and preassembly_audit.get("pass") is True
+                    )
+                    actual_fe_dofs = int(
+                        storage_metadata["independent_active_fe_dofs"]
+                    )
+                    required_fe = v11_contract["phases"]["P4"][
+                        "required_fe_bounds"
+                    ]
+                    v11_gates["strict_h_independent_fe_bounds"] = bool(
+                        actual_fe_dofs > int(required_fe["parent_fe_dofs"])
+                        and actual_fe_dofs
+                        < int(required_fe["target_exclusive_upper"])
+                    )
+                v11_gates["pass"] = all(
+                    value is True
+                    for key, value in v11_gates.items()
+                    if key not in {"pass", "status"}
+                )
+                v11_gates["status"] = (
+                    "passed" if v11_gates["pass"] else "failed"
+                )
+                sample_records = captured.get("v11_primary_sample_records", {})
+                phase_status = (
+                    "SOLVED_PRIMARY_Q_RESPONSE_PASS"
+                    if v11_primary_diagnostic_phase == "A1_q3"
+                    else "SOLVED_PENDING_POSTPROCESS"
+                )
+                record.update(
+                    {
+                        "schema": "task43.v11.primary-endpoint.v1",
+                        "classification": "measured_primary_nonofficial_v11_endpoint",
+                        "phase": v11_primary_diagnostic_phase,
+                        "status": phase_status if v11_gates["pass"] else "FAILED",
+                        "selection_status": "diagnostic_only_no_transition_authorized",
+                        "official_result_scope": "nonofficial V11 primary diagnostic; no acceptance or transition authority",
+                        "contract": {
+                            "path": str(v11_contract_path.resolve()),
+                            "sha256": v11_contract_sha256,
+                        },
+                        "candidate_plan_sha256": candidate_plan_sha256,
+                        "endpoint_identity": endpoint_identity,
+                        "primary_packet": primary_packet,
+                        "primary_raw_vector_audit": raw_gate_audit,
+                        "p4_preassembly_space_audit": captured.get(
+                            "v11_p4_preassembly_space_audit"
+                        ),
+                        "primary_q_response": q_response,
+                        "primary_samples": sample_records,
+                        "field_samples": {
+                            "status": (
+                                "measured_and_q_response_gated"
+                                if v11_primary_diagnostic_phase == "A1_q3"
+                                else "not_run_pending_p5_common_union_sampling"
+                            ),
+                            "orders": sorted(sample_records),
+                            "samples": sample_records,
+                            "phase_fit": False,
+                        },
+                        "official_result": False,
+                        "selection_eligible": False,
+                        "selection_candidate": False,
+                        "candidate_selected": False,
+                        "continuation_all_false": True,
+                        "continuation": {
+                            "same_group_R": False,
+                            "A1_R": False,
+                            "A2_q": False,
+                            "A2_R": False,
+                            "B": False,
+                            "C": False,
+                            "cost_campaign": False,
+                            "iteration": False,
+                        },
+                        "gates": v11_gates,
+                        "pass": bool(v11_gates["pass"]),
+                    }
+                )
+                record["solver"]["official_result"] = False
+                record["solver"]["official_result_scope"] = (
+                    "nonofficial V11 primary diagnostic; numerical gates do not grant selection authority"
+                )
+                record["solver"]["legacy_solver_result_is_diagnostic_only_if_task_gates_fail"] = True
+                task43_gated_official_result = False
+                gates = v11_gates
+                if not v11_gates["pass"]:
+                    post_error = f"V11 primary endpoint gates failed; see {record_path}"
             if v2_diagnostic:
                 assert v2_diagnostic_phase is not None
                 assert v2_phase_controls is not None
@@ -4838,7 +6536,7 @@ def _run_impl(
                 started,
                 "record_and_compare",
                 gates["status"],
-                workflow_ledger=v3_workflow_ledger,
+                workflow_ledger=workflow_ledger,
                 record_path=str(record_path),
             )
         except Exception as exc:  # noqa: BLE001 - broadcast rank-zero postsolve failures
@@ -4892,7 +6590,7 @@ def _run_impl(
             started,
             "record_and_compare",
             "failed",
-            workflow_ledger=v3_workflow_ledger,
+            workflow_ledger=workflow_ledger,
             error=post_error,
         )
         raise RuntimeError(post_error)
@@ -4901,25 +6599,82 @@ def _run_impl(
         started,
         "case_complete",
         "end",
-        workflow_ledger=v3_workflow_ledger,
+        workflow_ledger=workflow_ledger,
         total_wall_seconds=time.perf_counter() - started,
     )
+    if v11_diagnostic:
+        terminal_error = None
+        if comm.rank == 0:
+            try:
+                if not isinstance(candidate_identity, Mapping):
+                    raise ValueError("V11 success terminal lacks candidate identity")
+                if not isinstance(captured.get("v11_primary_packet"), Mapping):
+                    raise ValueError("V11 success terminal lacks its primary raw packet")
+                assert v11_primary_diagnostic_phase is not None
+                assert v11_contract_sha256 is not None
+                assert candidate_plan_sha256 is not None
+                phase_status = (
+                    "SOLVED_PRIMARY_Q_RESPONSE_PASS"
+                    if v11_primary_diagnostic_phase == "A1_q3"
+                    else "SOLVED_PENDING_POSTPROCESS"
+                )
+                terminal = write_v11_primary_terminal(
+                    run_root / "task43_v11_primary_terminal.json",
+                    phase=v11_primary_diagnostic_phase,
+                    status=phase_status,
+                    source_identity=source_identity,
+                    candidate_identity=candidate_identity,
+                    contract_sha256=v11_contract_sha256,
+                    candidate_plan_sha256=candidate_plan_sha256,
+                    primary_packet=captured["v11_primary_packet"],
+                    primary_samples=captured.get(
+                        "v11_primary_sample_records", {}
+                    ),
+                    endpoint_record_path=run_root
+                    / "task43_round1_candidate_record.json",
+                )
+                if v11_workflow_ledger is not None:
+                    _record_v11_identity_checkpoint(
+                        baseline=v11_watchdog_identity,
+                        workflow_ledger=v11_workflow_ledger,
+                        checkpoint="primary_terminal_written",
+                    )
+                    v11_workflow_ledger.marker(
+                        "task43_v11_primary_endpoint_solved",
+                        {
+                            "terminal_path": terminal["path"],
+                            "terminal_sha256": terminal["sha256"],
+                            "endpoint_record_sha256": terminal[
+                                "endpoint_record_sha256"
+                            ],
+                            "phase": v11_primary_diagnostic_phase,
+                            "status": phase_status,
+                        },
+                    )
+            except BaseException as exc:  # noqa: BLE001 - broadcast terminal write failure
+                terminal_error = f"{type(exc).__name__}: {exc}"
+        terminal_error = comm.bcast(terminal_error, root=0)
+        if terminal_error is not None:
+            raise RuntimeError(f"V11 successful terminal write failed: {terminal_error}")
     return summary
 
 
 def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
-    """Persist a V3 terminal if any post-solve step escapes its local handler."""
+    """Persist V3/V11 failure terminals after an acquired run root."""
     from inspect import signature
 
     bound = signature(_run_impl).bind_partial(*args, **kwargs)
     arguments = bound.arguments
     v3_enabled = bool(arguments.get("v3_failure_evidence_enabled", False))
+    v11_enabled = arguments.get("v11_primary_diagnostic_phase") is not None
     context: dict[str, Any] = {
         "run_root": arguments.get("run_root"),
         "run_root_acquired": False,
-        "phase": arguments.get("v2_diagnostic_phase"),
+        "phase": arguments.get("v11_primary_diagnostic_phase")
+        or arguments.get("v2_diagnostic_phase"),
         "source_identity": {},
         "captured": {},
+        "candidate_identity": None,
     }
     kwargs["_failure_context"] = context
     try:
@@ -4928,6 +6683,29 @@ def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
         workflow_ledger = context.get("workflow_ledger")
         run_root = context.get("run_root")
         terminal_record = None
+        if (
+            v11_enabled
+            and context.get("run_root_acquired") is True
+            and run_root is not None
+            and Path(run_root).is_dir()
+            and MPI.COMM_WORLD.rank == 0
+        ):
+            try:
+                terminal_record = _write_v11_partial_terminal(
+                    Path(run_root),
+                    phase=context.get("phase"),
+                    source_identity=context.get("source_identity") or {},
+                    captured=context.get("captured") or {},
+                    candidate_identity=context.get("candidate_identity"),
+                    error=error,
+                )
+            except BaseException as terminal_error:  # noqa: BLE001
+                print(
+                    "failed to persist V11 failure terminal after escaped error: "
+                    f"{type(terminal_error).__name__}: {terminal_error}",
+                    file=sys.stderr,
+                    flush=True,
+                )
         if (
             v3_enabled
             and context.get("run_root_acquired") is True
@@ -4973,6 +6751,25 @@ def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
                     file=sys.stderr,
                     flush=True,
                 )
+        if v11_enabled and workflow_ledger is not None:
+            try:
+                workflow_ledger.marker(
+                    "task43_v11_primary_failed",
+                    {
+                        "previous_stage": workflow_ledger.last_stage,
+                        "exception_type": type(error).__name__,
+                        "exception_message": str(error),
+                        "terminal_reference": terminal_record,
+                    },
+                    allow_stop=True,
+                )
+            except BaseException as ledger_error:  # noqa: BLE001
+                print(
+                    "failed to persist V11 workflow failure marker: "
+                    f"{type(ledger_error).__name__}: {ledger_error}",
+                    file=sys.stderr,
+                    flush=True,
+                )
         raise
 
 
@@ -4997,6 +6794,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--v2-contract", type=Path)
     parser.add_argument("--v2-contract-sha256")
     parser.add_argument("--v2-reference-run-root", type=Path)
+    parser.add_argument(
+        "--primary-diagnostic-phase", choices=("A1_q3", "R9_H8")
+    )
+    parser.add_argument("--primary-diagnostic-contract", type=Path)
     parser.add_argument(
         "--v3-failure-evidence",
         action="store_true",
@@ -5032,6 +6833,45 @@ def main(argv: list[str] | None = None) -> int:
     is_native = kind == "native_p3"
     is_mpi2 = args.case == "empty_h_active_p3_mpi2"
     v2_diagnostic = args.v2_diagnostic_phase is not None
+    v11_diagnostic = args.primary_diagnostic_phase is not None
+    if v11_diagnostic:
+        if args.primary_diagnostic_contract is None:
+            parser.error("V11 primary diagnostics require --primary-diagnostic-contract")
+        if (
+            not is_candidate
+            or v2_diagnostic
+            or args.v3_failure_evidence
+            or args.same_lu_tightening
+            or not args.same_lu_solve_residual_correction
+            or args.direct_factor_backend != "mumps"
+        ):
+            parser.error(
+                "V11 requires the candidate route, one normal correction, zero extra corrections, and MUMPS"
+            )
+        try:
+            v11_contract, v11_contract_sha256 = _load_v11_primary_contract(
+                args.primary_diagnostic_contract
+            )
+            _validate_v11_primary_cli(
+                contract=v11_contract,
+                phase=args.primary_diagnostic_phase,
+                run_root=args.run_root,
+                candidate_id=args.candidate_id,
+                candidate_plan_path=args.candidate_plan,
+                candidate_parent_selection_record=args.candidate_parent_selection_record,
+                candidate_acceptance_contract=args.candidate_acceptance_contract,
+                normal_correction_enabled=args.same_lu_solve_residual_correction,
+                extra_correction_enabled=args.same_lu_tightening,
+                direct_factor_backend=args.direct_factor_backend,
+            )
+            v11_worker_identity = _require_v11_watchdog_worker_identity()
+        except (OSError, json.JSONDecodeError, RuntimeError, TypeError, ValueError) as exc:
+            parser.error(f"V11 primary diagnostic contract or worker identity is invalid: {exc}")
+    elif args.primary_diagnostic_contract is not None:
+        parser.error("--primary-diagnostic-contract requires --primary-diagnostic-phase")
+    else:
+        v11_contract_sha256 = None
+        v11_worker_identity = None
     if args.v3_failure_evidence and not v2_diagnostic:
         parser.error("--v3-failure-evidence requires --v2-diagnostic-phase")
     if args.v3_failure_evidence:
@@ -5184,6 +7024,10 @@ def main(argv: list[str] | None = None) -> int:
         v3_contract_sha256=_V3_CONTRACT_SHA256 if args.v3_failure_evidence else None,
         v3_plan_path=args.v3_plan,
         v3_plan_sha256=_V3_PLAN_SHA256 if args.v3_failure_evidence else None,
+        v11_primary_diagnostic_phase=args.primary_diagnostic_phase,
+        v11_contract_path=args.primary_diagnostic_contract,
+        v11_contract_sha256=v11_contract_sha256,
+        v11_initial_worker_identity=v11_worker_identity,
     )
     if comm.rank == 0:
         print(

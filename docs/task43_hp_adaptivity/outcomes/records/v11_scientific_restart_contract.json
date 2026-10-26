@@ -1,0 +1,650 @@
+{
+  "schema": "task43.v11.scientific_restart_contract.v1",
+  "status": "frozen_for_task43_v11_execution",
+  "purpose": "Measure whether higher quadrature changes the existing R10 and saved A2 primaries, then measure one preselected R9 seed-8 h action against the fixed Y6_1 target on common q8/q10 partitions.",
+  "authority": {
+    "supplement": "docs/task43_hp_adaptivity/supplement_v11_scientific_restart.md",
+    "task": "docs/task43_hp_adaptivity/task.md",
+    "canonical_repository": "/home/fenics/Projects/NN-Lab-V2",
+    "branch": "task43_hp_adaptivity",
+    "execution_start_head": "70e2cfdcc3e5a7c3be5e8b714076420e3eac1129",
+    "contract_sha_is_not_self_referential": true,
+    "does_not_authorize_merge_or_transition10": true
+  },
+  "artifact_prefix": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science",
+  "input_inventory": {
+    "path": "benchmarks/artifacts/task43/v11_science/preparation/root_p0_input_inventory.json",
+    "purpose": "Root-owned static input byte and ZIP CRC inventory; execution records bind only the specific files they consume."
+  },
+  "inputs": [
+    {
+      "role": "Y6_1_auxiliary_amplitudes",
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/dtn_auxiliary_amplitudes_3d.json",
+      "sha256": "ba628da18c0e107625c393b7ab33a5e1ec19861892d596ac67156cb65c9fdae8"
+    },
+    {
+      "role": "Y6_1_modal_orders",
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/dtn_port_diffraction_orders_3d.json",
+      "sha256": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463"
+    },
+    {
+      "role": "Y6_1_saved_samples_metadata",
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/full3d_reference_samples.json",
+      "sha256": "dc6df754f565d3af41c8d561904c75dfd3667299a405b1c57d2a2804c9786fe3"
+    },
+    {
+      "role": "Y6_1_saved_samples",
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/full3d_reference_samples.npz",
+      "sha256": "2735c75f4a2fa559ae2ba79022e0af6b5b27b892f0d8f8df2fef20127c9bce04"
+    },
+    {
+      "role": "Y6_1_native_summary",
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/p6_condensed_direct_summary.json",
+      "sha256": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc"
+    },
+    {
+      "role": "Y6_1_carrier_coefficients",
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/recovered_p6_storage_coefficients.npy",
+      "sha256": "a4d38aa88da897e4274160d7f23944e5870d253b0a3e4033e28332bbf430570c"
+    },
+    {
+      "role": "Y6_1_recovered_bundle",
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/recovered_reference_bundle.npz",
+      "sha256": "6c244fae7e246c171cef1f66ae3f1d607622c89da1f9cd4474e55908bfd6b6d4"
+    },
+    {
+      "role": "Y6_1_resolved_config",
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/resolved_config.json",
+      "sha256": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc"
+    },
+    {
+      "role": "Y6_1_restore_identity",
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/restore_identity_record.json",
+      "sha256": "ef77da1e68136e08b48dc0e352690f9c9fdcd132dcc2b765dcb12413b7cf3300"
+    },
+    {
+      "role": "Y6_1_restore_inventory",
+      "path": "docs/task43_hp_adaptivity/outcomes/records/existing_validation_fields_v1.json",
+      "sha256": "8493acfd4485ef7c9b4c662708d7bac8df9934bf90dae550d8d392f59f630df0"
+    },
+    {
+      "role": "R10_authority_plan",
+      "path": "benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json",
+      "sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826"
+    },
+    {
+      "role": "R10_candidate_plan_copy",
+      "path": "benchmarks/artifacts/task43/round10_p_up_attempt1/run/candidate_plan.json",
+      "sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826"
+    },
+    {
+      "role": "R10_candidate_storage",
+      "path": "benchmarks/artifacts/task43/round10_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+      "sha256": "e1296a9b55ff6d29fde55bf545e44be737c4f5d534b12b69f1ded5f05a0a7eaf"
+    },
+    {
+      "role": "R10_modal_orders",
+      "path": "benchmarks/artifacts/task43/round10_p_up_attempt1/run/solve/dtn_port_diffraction_orders_3d.json",
+      "sha256": "f7048a9ecad65db39faa688d9d4f0041099f2719e64e5ea2898e3dc793003450"
+    },
+    {
+      "role": "R10_run_summary",
+      "path": "benchmarks/artifacts/task43/round10_p_up_attempt1/run/solve/run_summary.json",
+      "sha256": "be445b030b8e39169fc800e4c53aae0f85fcf8800312d7538518df67891d6376"
+    },
+    {
+      "role": "R10_candidate_record",
+      "path": "benchmarks/artifacts/task43/round10_p_up_attempt1/run/task43_round1_candidate_record.json",
+      "sha256": "66d56c0644b5c8eb66d075a7898cdfa28024e3cc30834a08cd3d8b76e453968d"
+    },
+    {
+      "role": "R10_watchdog_terminal",
+      "path": "benchmarks/artifacts/task43/round10_p_up_attempt1/watchdog/summary.json",
+      "sha256": "ad4675ae06ae2a1122c94812837a539da647d2062e8b88c257930e7c57286b4a"
+    },
+    {
+      "role": "historical_joint_comparison",
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/post_selection_joint_attempt1/post_selection_comparison.json",
+      "sha256": "347195b3e29e23a2907e16264385346e208a2a7d2d48fb8b2d8c0b00ede3b6aa"
+    },
+    {
+      "role": "historical_joint_q10",
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/post_selection_joint_attempt1/post_selection_shared_q10.npz",
+      "sha256": "895b65ffbf63176ac20008e6488c1c1318141f877eb5814496fcc945c049514d"
+    },
+    {
+      "role": "historical_joint_q8",
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/post_selection_joint_attempt1/post_selection_shared_q8.npz",
+      "sha256": "ce3707052419ada5a8e55574a826772bcb1e37cf1f764fc115eb8bf8a52306e5"
+    },
+    {
+      "role": "R9_authority_plan",
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/plan_output/plans/round9_p_up.json",
+      "sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947"
+    },
+    {
+      "role": "R9_candidate_storage",
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+      "sha256": "7a71623b15afea662956ecd6af89b1d08701631174d1a048d5320e7a3217b893"
+    },
+    {
+      "role": "R9_candidate_record",
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/task43_round1_candidate_record.json",
+      "sha256": "5b6454d4234cf254536f1c1d4263c3e804ed508cdc644614649b592e818027ea"
+    },
+    {
+      "role": "R10_resampling_record",
+      "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/fields/legacy_r10_field_resampling.json",
+      "sha256": "29b6a568956de31482688a8433021f779b616ab90a01660f63d53e4a5be2300d"
+    },
+    {
+      "role": "R10_resampling_samples",
+      "path": "benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/fields/r10_q8_q10_field_samples.npz",
+      "sha256": "d21d9977f518050ac53c675539df5010d12b6126687ac84b01c0f71b2f9b0a71"
+    },
+    {
+      "role": "seed_geometry_audit",
+      "path": "benchmarks/artifacts/task43/v2_root_audit/seed_geometry_audit.json",
+      "sha256": "3fc78f7d728f357fc33b26decd0e6aaa5d3981197cdef4dc49f83633c169a524"
+    },
+    {
+      "role": "A2_saved_modal_orders",
+      "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/dtn_port_diffraction_orders_3d.json",
+      "sha256": "6540f0b3cb58d69af74f76a482fde6846f6450caeb6503fbb71a6f31189e8427"
+    },
+    {
+      "role": "A2_primary_packet",
+      "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/task43_v3_primary_before_extra.npz",
+      "sha256": "cc368ed3d9baa391d70b8c368ab2868e5e78c60df464184fbbfa6536c5077feb"
+    },
+    {
+      "role": "A2_q10_saved_sample",
+      "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/task43_v3_primary_q10_field_sample.npz",
+      "sha256": "228fb211efa7da2b56fc7fec3ad38a89f89faba904bf5f6e54c400ad4d82e695"
+    },
+    {
+      "role": "A2_q8_saved_sample",
+      "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/task43_v3_primary_q8_field_sample.npz",
+      "sha256": "89a50aa029cd0c9f06748bbed679fede142063826e85815886a4e1e10ea4c16c"
+    },
+    {
+      "role": "A2_saved_absorption",
+      "path": "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/volume_absorption.json",
+      "sha256": "1457a23e966f773cc767e0351e2c27e65e45a40606f530bb4740d0e69237aa7b"
+    },
+    {
+      "role": "frozen_acceptance_contract",
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+      "sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647"
+    },
+    {
+      "role": "R9_selection_transition",
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+      "sha256": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9"
+    },
+    {
+      "role": "R9_candidate_plan_copy",
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_plan.json",
+      "sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947"
+    },
+    {
+      "role": "R9_comparison",
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round9_p_up_attempt1/candidate_comparison_v2.json",
+      "sha256": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30"
+    },
+    {
+      "role": "R8_ancestry_selection",
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round8_selection_transition8_v1.json",
+      "sha256": "cf737d0fd8fd1da643d263b28770358d82e96c77ce82692bc1f08d27b15dccc2"
+    },
+    {
+      "role": "frozen_comparison_contract",
+      "path": "docs/task43_hp_adaptivity/outcomes/records/comparison_contract_v1.json",
+      "sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1"
+    },
+    {
+      "role": "reference_calibration",
+      "path": "benchmarks/artifacts/task43/reference_comparison/attempt2/reference_calibration_v1.json",
+      "sha256": "d3b0d0660f419357bf05ad74282fadfb853027a54ecdb4b9f3586547c8c1e61b"
+    }
+  ],
+  "model_settings": {
+    "geometry_nm": {
+      "domain": [
+        50.0,
+        50.0,
+        140.0
+      ],
+      "x": [
+        16.5,
+        33.5
+      ],
+      "y": [
+        15.0,
+        35.0
+      ],
+      "z": [
+        0.0,
+        120.0
+      ],
+      "z_domain": [
+        -10.0,
+        130.0
+      ]
+    },
+    "wavelength_nm": 13.5,
+    "incidence": {
+      "phi_deg": 90.0,
+      "grazing_deg": 1.0,
+      "polarization": "s"
+    },
+    "scalar_type": "complex128",
+    "integer_type": "int64",
+    "mpi_size": 1,
+    "threads": {
+      "OMP_NUM_THREADS": 1,
+      "OPENBLAS_NUM_THREADS": 1,
+      "MKL_NUM_THREADS": 1,
+      "NUMEXPR_NUM_THREADS": 1,
+      "BLIS_NUM_THREADS": 1,
+      "VECLIB_MAXIMUM_THREADS": 1
+    },
+    "direct_factor_backend": "mumps",
+    "normal_same_factor_corrections": 1,
+    "extra_same_factor_corrections": 0,
+    "shared_activation": "scripts/activate_task40_phi90_pord64.sh",
+    "worker_local_environment": {
+      "HWLOC_COMPONENTS": "-x86",
+      "OMPI_MCA_pml": "ob1"
+    },
+    "worker_affinity_cpu_list": [
+      1
+    ],
+    "native_capacity_profile": "task43_hp_adaptivity_resource_v1"
+  },
+  "phases": {
+    "P1": {
+      "attempts_max": 2,
+      "focused_attempt1": {
+        "root": "support/focused_attempt1",
+        "script": "launch/focused_attempt1.sh",
+        "work_seconds": 270,
+        "whole_watchdog_seconds": 300,
+        "rss_cap_bytes": 8589934592
+      },
+      "focused_recovery1": {
+        "root": "support/focused_recovery1",
+        "script": "launch/focused_recovery1.sh",
+        "work_seconds": 270,
+        "whole_watchdog_seconds": 300,
+        "rss_cap_bytes": 8589934592,
+        "only_if_first_attempt_has_located_fixture_or_wiring_failure": true
+      },
+      "test_selectors": [
+        "src/test/test_task43_v11_scientific_restart.py::test_raw_vector_residual_recomputation_uses_saved_gram_action",
+        "src/test/test_task43_v11_scientific_restart.py::test_pending_candidate_restore_is_v11_contract_scoped",
+        "src/test/test_task43_v11_scientific_restart.py::test_fixed_seed8_plan_rejects_nonroot_and_alternate_seed",
+        "src/test/test_task43_v11_scientific_restart.py::test_v11_primary_cli_forbids_extra_and_binds_q10_output",
+        "src/test/test_task43_v11_scientific_restart.py::test_v11_terminal_failure_is_incomplete_and_primary_only",
+        "src/test/test_task43_v11_scientific_restart.py::test_v11_empty_root_guard_preserves_existing_file_hash",
+        "src/test/test_task43_v11_scientific_restart.py::test_v11_common_points_identity_and_fe_bounds",
+        "src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity"
+      ]
+    },
+    "P2": {
+      "attempts_max": 1,
+      "root": "support/space_and_saved_primary_attempt1",
+      "script": "launch/space_and_saved_primary_attempt1.sh",
+      "work_seconds": 840,
+      "whole_watchdog_seconds": 900,
+      "rss_cap_bytes": 8589934592,
+      "outputs": [
+        "R9_H8_actual_plan",
+        "actual_mesh_and_constraint_authority",
+        "A2_saved_primary_q_response"
+      ],
+      "plan_output_path": "benchmarks/artifacts/task43/v11_science/support/space_and_saved_primary_attempt1/plan_output/plans/v11_r9_h8.json",
+      "prerequisites": [
+        "P1 all contract selectors pass; review freeze/commit authorized",
+        "R9 selected state and all five runtime loader inputs match root lineage inventory",
+        "all six math threads 1; CPU affinity [1]; MPI1; complex128/int64; MUMPS available"
+      ],
+      "stop_semantics": "Any accepted-parent identity, seed geometry, space, strict FE bounds, A2 raw identity/readability or saved q8/q10 threshold failure stops dependent P3/P4/P5; no alternate seed or PDE retry. Preserve historical endpoint INCOMPLETE_NOT_QUALIFIED and extra-correction failure."
+    },
+    "P3": {
+      "attempts_max": 1,
+      "phase": "A1_q3",
+      "root": "formal/A1_q_attempt3",
+      "script": "launch/A1_q_attempt3.sh",
+      "work_seconds": 6900,
+      "whole_watchdog_seconds": 7200,
+      "rss_cap_bytes": 34359738368,
+      "space": {
+        "cells": 180,
+        "independent_FE_dofs": 118800,
+        "candidate_id": "round10_p_up"
+      },
+      "quadrature": {
+        "volume": 19,
+        "incident_and_port": 32,
+        "modes": "R13",
+        "count": 612
+      },
+      "comparison": {
+        "reference": "frozen R10 q15/q28/R13",
+        "test": "A1_q3 q19/q32/R13"
+      },
+      "prerequisites": [
+        "P1 and P2 pass; P2 R9_H8 actual space audit is within 0 < Delta_FE and FE_h < 237600",
+        "source/input identity stable; parent R9 shared-solver differences independently classified observer-only",
+        "fixed candidate R10 p-up and R9 selection ancestry inputs match inventory"
+      ],
+      "stop_semantics": "Any preflight, identity, resource, solve, raw residual, mode, correction, closure, field sample or q8/q10 comparison gate failure closes V11 A1 and blocks P4; retain failed terminal; no retry or extra correction."
+    },
+    "P4": {
+      "attempts_max": 1,
+      "phase": "R9_H8",
+      "root": "formal/R9_H8_attempt1",
+      "script": "launch/R9_H8_attempt1.sh",
+      "work_seconds": 6900,
+      "whole_watchdog_seconds": 7200,
+      "rss_cap_bytes": 34359738368,
+      "parent": "accepted R9 110472 independent FE DoFs",
+      "candidate_id": "v11_r9_h8",
+      "seed": {
+        "global_cell_id": 8,
+        "lower_nm": [
+          16.5,
+          5.0,
+          -10.0
+        ],
+        "upper_nm": [
+          33.5,
+          10.0,
+          0.0
+        ],
+        "parent_degree": 5,
+        "split": "one global root cell into eight children",
+        "maximum_level": 1
+      },
+      "quadrature": {
+        "volume": 15,
+        "incident_and_port": 28,
+        "modes": "R13",
+        "count": 612
+      },
+      "required_fe_bounds": {
+        "strict_added_dofs_minimum": 1,
+        "parent_fe_dofs": 110472,
+        "target_exclusive_upper": 237600
+      },
+      "prerequisites": [
+        "P1, P2, P3 pass; P3 q8/q10 quadrature response within every frozen threshold",
+        "P2 plan bytes and actual mesh/constraint/FE identity match before assembly",
+        "same R9 q15/q28/R13 physics, normal correction once, MUMPS, extra correction zero"
+      ],
+      "stop_semantics": "Any preflight, identity, actual-space, resource, raw residual, modal, normal-correction or closure failure closes V11 R9_H8; retain failed terminal; no alternate seed, p change, fresh baseline or retry."
+    },
+    "P5": {
+      "attempts_max": 1,
+      "attempt_id": "v11_r9_h8_union_attempt1",
+      "root": "support/union_comparison_attempt1",
+      "script": "launch/union_comparison_attempt1.sh",
+      "work_seconds": 1740,
+      "whole_watchdog_seconds": 1800,
+      "rss_cap_bytes": 8589934592,
+      "fields": [
+        "R9",
+        "R9_H8",
+        "Y6_1"
+      ],
+      "orders": [
+        8,
+        10
+      ],
+      "sample_each_field_once_per_order": true,
+      "reference": "Y6_1",
+      "no_phase_fit": true,
+      "comparison_output_root": "support/union_comparison_attempt1/comparison",
+      "prerequisites": [
+        "P4 terminal is exactly SOLVED_PENDING_POSTPROCESS and its source/contract/candidate/plan/primary packet bindings verify",
+        "R9 and Y6_1 field restores and all 612 physical mode rows pass before common sampling"
+      ],
+      "stop_semantics": "Any restore binding, common-domain, point/weight identity, sampling, mode, source-stability or metric failure classifies ACTION_ENDPOINT_NOT_QUALIFIED; preserve already-written q8 sample if later work fails; never write selection transition."
+    }
+  },
+  "hard_gates": {
+    "independent_A6_relative_to_raw_rhs_max": 1E-8,
+    "full_active_transformed_relative_residual_max": 1E-8,
+    "returned_condensed_relative_residual_max": 1E-9,
+    "normal_correction_count": 1,
+    "normal_correction_requires_same_rhs_finite_and_strict_decrease": true,
+    "extra_correction_count": 0,
+    "energy_closure_absolute_max": 0.00001,
+    "all_612_modes_finite": true,
+    "four_boundary_amplitude_groups_required": true,
+    "source_and_input_hashes_stable_before_after": true,
+    "actual_h_fe_requires_positive_added_dofs": true,
+    "actual_h_fe_strictly_less_than": 237600
+  },
+  "quadrature_response_thresholds": {
+    "aggregate_absolute_max": 0.000001,
+    "zero_order_s_p_and_each_channel_power_absolute_max": 1E-7,
+    "four_boundary_amplitude_and_total_scattered_E_H_G_floor_normalized_max": 0.00001,
+    "orders": [
+      8,
+      10
+    ],
+    "no_phase_fit": true
+  },
+  "fixed_h_diagnostic_thresholds": {
+    "epsilon_J": 0.12716416232413652,
+    "epsilon_G": 0.000009088158796603444,
+    "positive": "Delta_J > epsilon_J and eta_h <= eta_R9 + epsilon_G",
+    "negative_or_tradeoff": "J_h > J_R9 + epsilon_J or eta_h > eta_R9 + epsilon_G",
+    "otherwise": "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE",
+    "selection_transition_written": false
+  },
+  "launch_chain": {
+    "watchdog_direct_parent_must_remain_application_worker": true,
+    "exec_shape": [
+      "taskset",
+      "-c",
+      "1",
+      "strace",
+      "-D",
+      "-ff",
+      "-ttt",
+      "-k",
+      "-e",
+      "trace=sched_setaffinity,sched_getaffinity"
+    ],
+    "trace_scope": "worker descendants after taskset; preserve watchdog as worker's direct parent",
+    "validate_worker_pid_ppid_start_ticks_and_tracerpid": true,
+    "worker_local_hwloc_components": "-x86",
+    "worker_local_ompi_mca_pml": "ob1",
+    "all_task_vm_swap_bytes_must_be_zero": true,
+    "global_swap_is_reported_not_attributed": true
+  },
+  "non_goals": [
+    "transition10",
+    "accepted-state update",
+    "A2 PDE retry",
+    "A1_R",
+    "A2_R",
+    "C",
+    "R14",
+    "extra correction",
+    "p-down",
+    "second seed",
+    "theta scan",
+    "level2 refinement",
+    "fresh baseline",
+    "production-default change",
+    "merge approval"
+  ],
+  "fixed_reference_contract": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/comparison_contract_v1.json",
+    "sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1",
+    "domain_volume_nm3": 350000.0,
+    "physical_domain_nm": [
+      [
+        0.0,
+        50.0
+      ],
+      [
+        0.0,
+        50.0
+      ],
+      [
+        -10.0,
+        130.0
+      ]
+    ],
+    "field_comparison": {
+      "common_rule": "tensor Gauss over the union of physical cell breakpoints from every compared mesh, including references",
+      "initial_gauss_order_per_axis_per_interval": 8,
+      "stricter_gauss_order_per_axis_per_interval": 10,
+      "exact_polynomial_scope": "affine Cartesian N1curl degree <= 6 E and curl(E), represented by the qualified cell-local DGQ6 export",
+      "nonpolynomial_background_requires_stricter_rule_check": true,
+      "phase_fit": false,
+      "E_H_relative_denominator": "max(reference L2 norm, corresponding fixed incident L2 norm)",
+      "G_relative_denominator": "max(reference G norm, sqrt(700000))",
+      "scatter_definition": "total field minus the same analytic flat air/substrate Fresnel background evaluated directly at common physical points",
+      "background_E_implementation": "src.common.analytic_fields_3d.electric_field_code_values",
+      "background_H_implementation": "src.common.analytic_fields_3d.magnetic_field_code_values with resolved physical H scale",
+      "scatter_report": "absolute L2 difference, raw relative difference when reference is nonzero, and relative difference with fixed incident floor",
+      "zero_reference_raw_relative": null,
+      "low_order_VTU_not_an_authoritative_field": true
+    },
+    "final_tolerances": {
+      "independent_full_active_relative_residual": 0.000001,
+      "small_direct_target_relative_residual": 1E-8,
+      "condensed_direct_relative_residual": 1E-9,
+      "absolute_energy_closure_1_minus_R_minus_T_minus_A_volume": 0.00001,
+      "absolute_R_T_A_volume_and_R00_total_difference": 0.00001,
+      "absolute_individual_channel_power_including_R00_s_R00_p_difference": 0.000001,
+      "relative_field_and_boundary_amplitude_difference_with_incident_floor": 0.0001,
+      "relative_G_difference_with_incident_floor": 0.0001,
+      "port_and_quadrature_perturbation_fraction_of_each_final_tolerance": 0.1
+    },
+    "incident_scales": {
+      "classification": "derived_from_unit_air_incident_plane_wave",
+      "field_convention": "exp(i k dot r), exp(-i omega t); code electric amplitude 1",
+      "extension": "the same incident air plane wave extended over the entire comparison domain",
+      "electric_L2_squared_code_nm3": 350000.0,
+      "curl_electric_L2_squared_over_k0_squared_code_nm3": 350000.0,
+      "G_squared_code_nm3": 700000.0,
+      "G_definition": "integral(|E|^2 + |curl(E)|^2/k0^2) dV",
+      "H_L2_floor_definition": "sqrt(350000) times resolved cfg.magnetic_field_scale_A_per_m for mu_r=1",
+      "runtime_validation": "check resolved amplitude, n_air, mu_r, wavevector and units before applying these derived scales",
+      "not_a_layered_background_norm": true
+    },
+    "observable_vector": {
+      "inventory": "all ordered parsed top/bottom s/p modes; R13 has 612 entries; bind actual mode identities and physical wave data",
+      "power": [
+        "R_total",
+        "T_total",
+        "A_volume",
+        "R00_s",
+        "R00_p",
+        "R00_total",
+        "every individual reflected and transmitted channel power"
+      ],
+      "amplitudes": "all complex amplitudes including evanescent modes, in the same physical boundary amplitude convention",
+      "amplitude_grouping": [
+        "top_s",
+        "top_p",
+        "bottom_s",
+        "bottom_p"
+      ],
+      "amplitude_group_metric": "complex vector Euclidean L2 difference divided by max(reference group L2, unit incident modal amplitude); no fitted phase",
+      "fields": [
+        "total E volume L2",
+        "total H volume L2",
+        "scattered E volume L2",
+        "scattered H volume L2",
+        "G norm field difference"
+      ],
+      "different_mode_windows": "compare common identities explicitly and report added modes separately; never truncate silently to a favorable subset"
+    }
+  },
+  "actual_endpoint_rules": {
+    "source_change_allowlist": [
+      "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+      "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+      "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+      "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py",
+      "src/test/test_task43_v11_scientific_restart.py"
+    ],
+    "run_record_contract_and_budget": {
+      "historical_formal_attempts_consumed": 5,
+      "historical_formal_attempts_total": 6,
+      "historical_attempt6_status": "sealed",
+      "new_formal_attempts_max": 2,
+      "total_formal_attempts_max": 8,
+      "new_formal_whole_watchdog_seconds_max": 14400,
+      "support_whole_watchdog_seconds_max": 3300,
+      "combined_whole_watchdog_seconds_max": 17700,
+      "new_formal_worker_seconds_max": 13800,
+      "support_worker_seconds_max": 3120,
+      "combined_worker_seconds_max": 16920,
+      "historical_plus_new_formal_attempts_max": 7,
+      "attempts_of_original_plus_new_envelope_max": 8,
+      "last_original_slot_remains_sealed": true
+    },
+    "quadrature_response_thresholds": {
+      "aggregate_absolute_max": 0.000001,
+      "zero_order_s_p_and_each_channel_power_absolute_max": 1E-7,
+      "four_boundary_amplitude_and_total_scattered_E_H_G_floor_normalized_max": 0.00001,
+      "orders": [
+        8,
+        10
+      ],
+      "no_phase_fit": true,
+      "normalization_source": "fixed_reference_contract.field_comparison and incident_scales; no fitted phase"
+    },
+    "same_physics_and_saved_612_contract": {
+      "mode_count": 612,
+      "exact_mode_keys": "top/bottom x m=-4..4 x n=-8..8 x s/p",
+      "reference_identity": "fixed_reference_contract.observable_vector",
+      "no_mode_truncation": true,
+      "four_boundary_amplitude_groups": [
+        "top_s",
+        "top_p",
+        "bottom_s",
+        "bottom_p"
+      ],
+      "source_contract_sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1"
+    },
+    "primary_only": {
+      "normal_correction_count": 1,
+      "normal_correction_positive_converged_reason": true,
+      "normal_correction_same_rhs_finite_strict_decrease": true,
+      "extra_correction_count": 0,
+      "extra_correction_status": "NOT_REQUESTED_BY_V11_PROTOCOL",
+      "old_A2_automatic_rule_reinterpreted_as_q19": false,
+      "old_A2_historical_endpoint": "INCOMPLETE_NOT_QUALIFIED",
+      "old_A2_extra_correction_failure_preserved": true
+    },
+    "actual_A_volume_rule": {
+      "use_resolved_cfg_degree_and_rule": true,
+      "metadata_sources": [
+        "src/solvers/common_3d_forms.py",
+        "src/postprocessing/rta_3d.py"
+      ],
+      "use_material_volume_integral": true,
+      "infer_absorption_from_1_minus_R_minus_T": false
+    }
+  },
+  "formal_vs_support_budgets": {
+    "formal_whole_watchdog_seconds_max": 14400,
+    "support_whole_watchdog_seconds_max": 3300,
+    "combined_whole_watchdog_seconds_max": 17700,
+    "formal_worker_seconds_max": 13800,
+    "support_worker_seconds_max": 3120,
+    "combined_worker_seconds_max": 16920,
+    "launch_calls_consume_slots": true,
+    "failed_preflight_consumes_slot": true
+  }
+}

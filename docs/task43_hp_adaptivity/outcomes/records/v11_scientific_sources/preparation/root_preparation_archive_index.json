@@ -1,0 +1,57 @@
+{
+  "schema": "task43.v11.root-preparation-archive.v1",
+  "created_utc": "2026-10-26T13:10:03.792281+00:00",
+  "files": [
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_input_inventory.json",
+      "source": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/preparation/root_p0_input_inventory.json",
+      "sha256": "7a4162d1e04e2c929fb7159d3eea91c9640ad86d04aa4e8636e566db64428257"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_lineage_inputs.json",
+      "source": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/preparation/root_p0_lineage_inputs.json",
+      "sha256": "552feccee8a5584c7add2b7dc2bd655be988f514fc690c5e528127720e284695"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_restore_inputs.json",
+      "source": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/preparation/root_p0_restore_inputs.json",
+      "sha256": "5476cf88cd15f149ef1ee9cf28ccaa65c649965542b88fc098f1427be3b1a636"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_parent_kernel_audit.json",
+      "source": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/preparation/root_p0_parent_kernel_audit.json",
+      "sha256": "ab902b244b8642b22275fc526cc28694aad3e1b9ac0eba55f8def60e52209557"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_h100_function_continuity.json",
+      "source": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/preparation/root_p0_h100_function_continuity.json",
+      "sha256": "e40f2bb347b59dad09a51967a55345bd3b4dac647697b4cd0601cd4d0bb5ada3"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/root_p0_saved_array_headers.json",
+      "source": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/preparation/root_p0_saved_array_headers.json",
+      "sha256": "8c1f09972076217809efc5105ef69427b2ef2f47155dd82bdc855684dfec54c2"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_sources/preparation/r9_to_v11_start_solver_observer.diff",
+      "source": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/preparation/r9_to_v11_start_solver_observer.diff",
+      "sha256": "7e698165241bab6f85f4ec3812f6c707595decc879b2cb2abcd19c400e1d3340"
+    }
+  ],
+  "scope": "Existing raw byte/ZIP-header checks and source reading only; no native import, PDE, field sampling or residual arithmetic executed during this preparation.",
+  "static_cost": "Measured durations remain in the individual records; all other manual reading/editing and shell text searches are not_measured. No aggregate wall invented.",
+  "known_static_local_failures": [
+    "An initial source-list draft named src/io/workflow_ledger.py; corrected to src/runners/physical_intermediate.py before any launch.",
+    "A static grep targeted a nonexistent accepted_parent_artifacts.py (exit 2); located actual candidate_records.py and read it.",
+    "A static glob search for normal-correction helpers returned exit 2; corrected source search found dtn_port_3d.py.",
+    "Subagent reported unqualified bare python was unavailable during AST command selection; used python3 stdlib AST only, no native environment was sourced or probed.",
+    "Full git diff --cached --check exited 2 on the archived raw git diff: space-prefixed empty context lines and EOF context are intentional original evidence bytes. Archive preserved; scoped formatting check excludes only this .diff and is separately reported."
+  ],
+  "run_counts_at_archive": {
+    "P1": 0,
+    "P2": 0,
+    "P3": 0,
+    "P4": 0,
+    "P5": 0
+  }
+}

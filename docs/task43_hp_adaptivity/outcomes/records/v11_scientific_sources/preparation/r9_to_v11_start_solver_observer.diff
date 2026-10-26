@@ -1,0 +1,509 @@
+diff --git a/src/solvers/common_3d_case_flow.py b/src/solvers/common_3d_case_flow.py
+index ccdf3d7f..38c1ee7e 100644
+--- a/src/solvers/common_3d_case_flow.py
++++ b/src/solvers/common_3d_case_flow.py
+@@ -779,6 +779,7 @@ def run_prepared_3d_case_flow(
+     matrix_free_dtn_probe: bool = False,
+     canonical_vector_export: bool = False,
+     variable_p_single_lu_residual_correction: bool = False,
++    variable_p_capture_normal_correction_vectors: bool = False,
+     mesh_data_override: AirBox3DMesh | None = None,
+ ) -> dict[str, object]:
+     """Run one explicit 3D Maxwell case after the stage file chooses the recipe.
+@@ -810,6 +811,7 @@ def run_prepared_3d_case_flow(
+             bool(matrix_free_dtn),
+             bool(matrix_free_dtn_probe),
+             bool(variable_p_single_lu_residual_correction),
++            bool(variable_p_capture_normal_correction_vectors),
+         )
+     )
+     if len(set(live_observer_flags)) != 1:
+@@ -1343,6 +1345,9 @@ def run_prepared_3d_case_flow(
+                 variable_p_single_lu_residual_correction=(
+                     variable_p_single_lu_residual_correction
+                 ),
++                variable_p_capture_normal_correction_vectors=(
++                    variable_p_capture_normal_correction_vectors
++                ),
+             )
+         except DirectSolveFailure as failure:
+             _finish_timed_stage(
+diff --git a/src/solvers/dtn_port_3d.py b/src/solvers/dtn_port_3d.py
+index b2085115..c9ce9f06 100644
+--- a/src/solvers/dtn_port_3d.py
++++ b/src/solvers/dtn_port_3d.py
+@@ -122,6 +122,7 @@ class Stage4VariablePLiveView:
+     port_operator_audit: Mapping[str, Any]
+     full_active_residual: Mapping[str, Any]
+     primal_solver_telemetry: Mapping[str, Any]
++    normal_correction_raw_vectors: Mapping[str, Any] | None = None
+     volume_bilinear_form: Any | None = None
+     volume_linear_form: Any | None = None
+     dtn_surface_quadrature_degree: int | None = None
+@@ -4823,6 +4824,8 @@ def _independent_active_action_project_p6_dual(
+ 
+ def compute_stage4_independent_active_action(
+     view: Stage4VariablePLiveView,
++    *,
++    capture_raw_vectors: bool = False,
+ ) -> dict[str, Any]:
+     """Independently evaluate the original variable-p Stage-4 active equations.
+ 
+@@ -5137,7 +5140,7 @@ def compute_stage4_independent_active_action(
+         and np.isfinite(rhs_norm)
+         and np.isfinite(relative_residual)
+     )
+-    return {
++    result = {
+         "schema_version": "stage4.independent-active-action.v1",
+         "method": (
+             "reassembled original volume action and incident/port vectors; "
+@@ -5221,6 +5224,61 @@ def compute_stage4_independent_active_action(
+         "independent_of_solver_condensed_residual": True,
+         "inactive_carrier_tests_excluded": True,
+     }
++    if capture_raw_vectors:
++        result["raw_vector_scope"] = {
++            "method": (
++                "same-pass original volume/incident/port action after actual "
++                "entity/Floquet projection, with active interiors and raw plus "
++                "solver-gauge modal lower rows retained"
++            ),
++            "trace_rows": trace_rows,
++            "active_interior_rows": int(residual_interior.size),
++            "modal_lower_rows": int(modal_gauge.size),
++            "norm_definition": (
++                "Euclidean norm of the independently assembled trace residual, "
++                "active-interior residual, and normalized modal-gauge rows; the "
++                "original unnormalized modal rows are also retained separately"
++            ),
++        }
++        result["raw_vectors"] = {
++            "independent_active_residual_trace": np.asarray(
++                residual_trace, dtype=np.complex128
++            ).copy(),
++            "independent_active_residual_cell_interior": np.asarray(
++                residual_interior, dtype=np.complex128
++            ).copy(),
++            "independent_active_rhs_trace": np.asarray(
++                rhs_trace, dtype=np.complex128
++            ).copy(),
++            "independent_active_rhs_cell_interior": np.asarray(
++                rhs_interior, dtype=np.complex128
++            ).copy(),
++            "independent_active_volume_action_minus_rhs_trace": np.asarray(
++                volume_trace, dtype=np.complex128
++            ).copy(),
++            "independent_active_volume_action_minus_rhs_cell_interior": np.asarray(
++                volume_interior, dtype=np.complex128
++            ).copy(),
++            "independent_active_incident_traction_trace": np.asarray(
++                incident_trace, dtype=np.complex128
++            ).copy(),
++            "independent_active_incident_traction_cell_interior": np.asarray(
++                incident_interior, dtype=np.complex128
++            ).copy(),
++            "independent_active_port_upper_alpha_trace": np.asarray(
++                port_alpha_trace, dtype=np.complex128
++            ).copy(),
++            "independent_active_port_upper_incident_trace": np.asarray(
++                port_incident_trace, dtype=np.complex128
++            ).copy(),
++            "independent_active_modal_lower_raw_original_equation": np.asarray(
++                modal_raw, dtype=np.complex128
++            ).copy(),
++            "independent_active_modal_lower_solver_gauge": np.asarray(
++                modal_gauge, dtype=np.complex128
++            ).copy(),
++        }
++    return result
+ 
+ 
+ class _IndependentModeSurfaceMomentAssembler:
+@@ -6498,6 +6556,7 @@ def _solve_stage4_dtn_port_total_field_impl(
+     _recovery_cleanup_sink: list[VariablePRecoveredSolution],
+     diagnostic_reference_incident_quadrature: bool = False,
+     variable_p_single_lu_residual_correction: bool = False,
++    variable_p_capture_normal_correction_vectors: bool = False,
+ ) -> dict[str, Any]:
+     """Solve the Stage-4 total-field problem with 3D Fourier-DtN ports.
+ 
+@@ -6576,6 +6635,17 @@ def _solve_stage4_dtn_port_total_field_impl(
+             "same-LU variable-p residual correction requires the built-in "
+             "variable-p solve and its live observer"
+         )
++    if variable_p_capture_normal_correction_vectors and (
++        not variable_p_single_lu_residual_correction
++        or variable_p_live_observer is None
++        or int(
++            (mesh_data.mesh.comm if mesh_data is not None else V.mesh.comm).size
++        ) != 1
++    ):
++        raise ValueError(
++            "normal correction vector capture requires the MPI1 variable-p "
++            "live observer and its existing normal correction"
++        )
+     if canonical_vector_export and (
+         not assembly_time_cell_static_condensation or variable_p_backend
+     ):
+@@ -8293,6 +8363,7 @@ def _solve_stage4_dtn_port_total_field_impl(
+     timing_details["stage4_dtn_linear_solve_seconds"] = setup_and_solve_seconds
+ 
+     same_lu_residual_correction: dict[str, Any] | None = None
++    normal_correction_raw_vectors: dict[str, np.ndarray] | None = None
+     if variable_p_single_lu_residual_correction:
+         correction_started = time.perf_counter()
+         _write_progress_event(
+@@ -8313,6 +8384,35 @@ def _solve_stage4_dtn_port_total_field_impl(
+             petsc_options=petsc_options,
+             extra={"original_primal_ksp": original_primal_ksp},
+         )
++        if variable_p_capture_normal_correction_vectors:
++            if comm.size != 1:
++                raise RuntimeError("normal correction vector capture is MPI1-only")
++
++            def snapshot(tag: str) -> None:
++                assert solve_A is not None and solve_b is not None and solve_x is not None
++                action = solve_b.duplicate()
++                residual = solve_b.duplicate()
++                try:
++                    solve_A.mult(solve_x, action)
++                    solve_b.copy(residual)
++                    residual.axpy(PETSc.ScalarType(-1.0), action)
++                    normal_correction_raw_vectors[f"{tag}_rhs"] = np.asarray(
++                        solve_b.getArray(readonly=True), dtype=np.complex128
++                    ).copy()
++                    normal_correction_raw_vectors[f"{tag}_solution"] = np.asarray(
++                        solve_x.getArray(readonly=True), dtype=np.complex128
++                    ).copy()
++                    normal_correction_raw_vectors[f"{tag}_residual_b_minus_Ax"] = (
++                        np.asarray(
++                            residual.getArray(readonly=True), dtype=np.complex128
++                        ).copy()
++                    )
++                finally:
++                    action.destroy()
++                    residual.destroy()
++
++            normal_correction_raw_vectors = {}
++            snapshot("before_normal_correction")
+         same_lu_residual_correction = single_petsc_residual_correction_in_place(
+             solve_A,
+             solve_b,
+@@ -8320,6 +8420,8 @@ def _solve_stage4_dtn_port_total_field_impl(
+             ksp,
+             enabled=True,
+         )
++        if normal_correction_raw_vectors is not None:
++            snapshot("after_normal_correction")
+         correction_seconds = float(
+             comm.allreduce(time.perf_counter() - correction_started, op=MPI.MAX)
+         )
+@@ -8460,6 +8562,7 @@ def _solve_stage4_dtn_port_total_field_impl(
+             b_aug,
+             x_aug,
+             variable_p_recovered,
++            capture_raw_vectors=variable_p_capture_normal_correction_vectors,
+         )
+         if assembly_time_full_rhs is None:
+             raise RuntimeError("variable-p full RHS lifecycle is invalid")
+@@ -8946,9 +9049,18 @@ def _solve_stage4_dtn_port_total_field_impl(
+                         "pc_factor_solver_type": solver_info[
+                             "actual_pc_factor_solver_type"
+                         ],
++                        "normal_correction_audit": solver_info.get(
++                            "variable_p_same_lu_residual_correction"
++                        ),
++                        "normal_correction_count": int(
++                            same_lu_residual_correction is not None
++                        ),
+                         **dict(linear_residual),
+                     }
+                 ),
++                normal_correction_raw_vectors=_deep_readonly_copy(
++                    normal_correction_raw_vectors
++                ),
+                 volume_bilinear_form=a,
+                 volume_linear_form=L,
+                 dtn_surface_quadrature_degree=int(dtn_quadrature_degree),
+@@ -9065,6 +9177,7 @@ def solve_stage4_dtn_port_total_field(
+     matrix_free_dtn_probe: bool = False,
+     canonical_vector_export: bool = False,
+     variable_p_single_lu_residual_correction: bool = False,
++    variable_p_capture_normal_correction_vectors: bool = False,
+ ) -> dict[str, Any]:
+     """Run the DtN solver with exception-safe recovered-vector ownership."""
+ 
+@@ -9085,6 +9198,7 @@ def solve_stage4_dtn_port_total_field(
+             bool(canonical_vector_export),
+             bool(diagnostic_reference_incident_quadrature),
+             bool(variable_p_single_lu_residual_correction),
++            bool(variable_p_capture_normal_correction_vectors),
+         )
+     )
+     if len(set(observer_flags)) != 1:
+@@ -9121,6 +9235,9 @@ def solve_stage4_dtn_port_total_field(
+             variable_p_single_lu_residual_correction=(
+                 variable_p_single_lu_residual_correction
+             ),
++            variable_p_capture_normal_correction_vectors=(
++                variable_p_capture_normal_correction_vectors
++            ),
+             _recovery_cleanup_sink=recovered_cleanup,
+         )
+     except BaseException:
+diff --git a/src/solvers/hcurl_variable_p_reduction.py b/src/solvers/hcurl_variable_p_reduction.py
+index ab74a6f1..6e851777 100644
+--- a/src/solvers/hcurl_variable_p_reduction.py
++++ b/src/solvers/hcurl_variable_p_reduction.py
+@@ -610,17 +610,30 @@ class VariablePAssemblyTimeReduction:
+         reduced_rhs: PETSc.Vec,
+         reduced_solution: PETSc.Vec,
+         recovered: VariablePRecoveredSolution,
++        *,
++        capture_raw_vectors: bool = False,
+     ) -> dict[str, Any]:
+         """Audit reduced and every eliminated active-interior equation."""
+ 
+         residual = reduced_matrix.createVecLeft()
+         reduced_matrix.mult(reduced_solution, residual)
+         residual.axpy(PETSc.ScalarType(-1.0), reduced_rhs)
+-        reduced_norm = _reduced_trace_auxiliary_norm(
++        raw_reduced_residual = (
++            np.asarray(residual.getArray(readonly=True), dtype=np.complex128).copy()
++            if capture_raw_vectors
++            else None
++        )
++        reduced_norm_result = _reduced_trace_auxiliary_norm(
+             self.system,
+             residual,
+             trace_kind="dual",
++            return_action=capture_raw_vectors,
+         )
++        if capture_raw_vectors:
++            reduced_norm, reduced_metric_action = reduced_norm_result
++        else:
++            reduced_norm = reduced_norm_result
++            reduced_metric_action = None
+         residual.destroy()
+ 
+         active_solution = _global_values(
+@@ -642,6 +655,11 @@ class VariablePAssemblyTimeReduction:
+                 self.system.entity_map.mesh.comm,
+             )
+         )
++        interior_residual = (
++            np.zeros_like(active_rhs, dtype=np.complex128)
++            if capture_raw_vectors
++            else None
++        )
+         local_interior_sq = 0.0
+         local_interior_max = 0.0
+         local_interior_rhs_sq = 0.0
+@@ -663,6 +681,8 @@ class VariablePAssemblyTimeReduction:
+             )
+             action -= active_rhs[cell.interior_rows]
+             action -= auxiliary_action[cell.interior_rows]
++            if interior_residual is not None:
++                interior_residual[cell.interior_rows] = action
+             local_interior_sq += float(np.vdot(action, action).real)
+             local_rhs = active_rhs[cell.interior_rows]
+             local_interior_rhs_sq += float(
+@@ -683,11 +703,17 @@ class VariablePAssemblyTimeReduction:
+             comm.allreduce(local_interior_max, op=MPI.MAX)
+         )
+         full_norm = float(np.hypot(reduced_norm, interior_norm))
+-        reduced_rhs_norm = _reduced_trace_auxiliary_norm(
++        rhs_norm_result = _reduced_trace_auxiliary_norm(
+             self.system,
+             reduced_rhs,
+             trace_kind="dual",
++            return_action=capture_raw_vectors,
+         )
++        if capture_raw_vectors:
++            reduced_rhs_norm, rhs_metric_action = rhs_norm_result
++        else:
++            reduced_rhs_norm = rhs_norm_result
++            rhs_metric_action = None
+         interior_rhs_norm = float(
+             np.sqrt(
+                 comm.allreduce(local_interior_rhs_sq, op=MPI.SUM)
+@@ -696,11 +722,17 @@ class VariablePAssemblyTimeReduction:
+         rhs_norm = float(
+             np.hypot(reduced_rhs_norm, interior_rhs_norm)
+         )
+-        reduced_solution_norm = _reduced_trace_auxiliary_norm(
++        solution_norm_result = _reduced_trace_auxiliary_norm(
+             self.system,
+             reduced_solution,
+             trace_kind="primal",
++            return_action=capture_raw_vectors,
+         )
++        if capture_raw_vectors:
++            reduced_solution_norm, solution_metric_action = solution_norm_result
++        else:
++            reduced_solution_norm = solution_norm_result
++            solution_metric_action = None
+         interior_solution_norm = float(
+             np.sqrt(
+                 comm.allreduce(
+@@ -712,7 +744,7 @@ class VariablePAssemblyTimeReduction:
+         solution_norm = float(
+             np.hypot(reduced_solution_norm, interior_solution_norm)
+         )
+-        return {
++        result = {
+             "linear_system_rhs_norm": rhs_norm,
+             "linear_system_solution_norm": solution_norm,
+             "linear_system_residual_norm": full_norm,
+@@ -758,6 +790,56 @@ class VariablePAssemblyTimeReduction:
+             "full_p6_global_matrix_allocated_for_residual": False,
+             "ordinary_default_changed": False,
+         }
++        if capture_raw_vectors:
++            result["raw_vector_scope"] = {
++                "method": (
++                    "same-pass exact block-Gaussian transformed residual; reduced "
++                    "trace/DtN residual is retained in its constraint-induced dual "
++                    "coordinates, while eliminated active-interior rows are retained "
++                    "in active-cell coordinates"
++                ),
++                "reduced_trace_dtn_rows": int(reduced_rhs.getSize()),
++                "reduced_trace_dtn_owned_range": [
++                    int(value) for value in reduced_rhs.getOwnershipRange()
++                ],
++                "mpi_size": int(
++                    self.system.entity_map.mesh.comm.Get_size()
++                ),
++                "active_full_rows": int(active_solution.size),
++                "full_operator_norm_definition": (
++                    "sqrt(constraint-dual reduced-trace norm^2 + eliminated-interior "
++                    "Euclidean norm^2); do not take a plain concatenated Euclidean norm"
++                ),
++                "trace_metric_action_definition": (
++                    "same-pass Gram inverse action for dual residual/RHS and Gram "
++                    "action for primal solution; vdot(trace, action) plus auxiliary "
++                    "Euclidean contribution reproduces each reduced norm squared"
++                ),
++            }
++            result["raw_vectors"] = {
++                "reduced_trace_dtn_rhs_owned": np.asarray(
++                    reduced_rhs.getArray(readonly=True), dtype=np.complex128
++                ).copy(),
++                "reduced_trace_dtn_solution_owned": np.asarray(
++                    reduced_solution.getArray(readonly=True), dtype=np.complex128
++                ).copy(),
++                "reduced_trace_dtn_residual_Ax_minus_b_owned": raw_reduced_residual,
++                "reduced_trace_dtn_residual_trace_metric_action": (
++                    reduced_metric_action["trace_metric_action"]
++                ),
++                "reduced_trace_dtn_rhs_trace_metric_action": (
++                    rhs_metric_action["trace_metric_action"]
++                ),
++                "reduced_trace_dtn_solution_trace_metric_action": (
++                    solution_metric_action["trace_metric_action"]
++                ),
++                "active_full_rhs": np.asarray(active_rhs, dtype=np.complex128).copy(),
++                "active_full_solution": np.asarray(
++                    active_solution, dtype=np.complex128
++                ).copy(),
++                "eliminated_active_interior_residual": interior_residual,
++            }
++        return result
+ 
+ 
+ def _global_values(
+@@ -901,7 +983,8 @@ def _reduced_trace_auxiliary_norm(
+     vector: PETSc.Vec,
+     *,
+     trace_kind: str,
+-) -> float:
++    return_action: bool = False,
++) -> float | tuple[float, dict[str, np.ndarray]]:
+     """Return the full trace-constraint invariant reduced vector norm."""
+ 
+     if trace_kind not in {"dual", "primal"}:
+@@ -915,9 +998,15 @@ def _reduced_trace_auxiliary_norm(
+     trace = values[: system.active_trace_rows]
+     auxiliary = values[system.active_trace_rows :]
+     trace_sq = 0.0
++    trace_metric_action = (
++        np.zeros_like(trace, dtype=np.complex128) if return_action else None
++    )
+     constraints = system.trace_constraints
+     if constraints is None:
+         trace_sq = float(np.vdot(trace, trace).real)
++        if return_action:
++            assert trace_metric_action is not None
++            trace_metric_action[:] = trace
+     elif hasattr(constraints, "component_gram"):
+         gram = constraints.component_gram
+         expected_shape = (
+@@ -965,6 +1054,9 @@ def _reduced_trace_auxiliary_norm(
+                 "physical trace component Gram norm is not positive real"
+             )
+         trace_sq = max(float(contribution.real), 0.0)
++        if return_action:
++            assert trace_metric_action is not None
++            trace_metric_action[:] = gram_action
+     else:
+         seen = np.zeros(system.active_trace_rows, dtype=np.int8)
+         blocks_by_root: dict[
+@@ -1000,15 +1092,20 @@ def _reduced_trace_auxiliary_norm(
+                 gram += expansion.conj().T @ expansion
+             block_values = trace[rows]
+             if trace_kind == "primal":
++                action = gram @ block_values
+                 contribution = np.vdot(
+                     block_values,
+-                    gram @ block_values,
++                    action,
+                 )
+             else:
++                action = np.linalg.solve(gram, block_values)
+                 contribution = np.vdot(
+                     block_values,
+-                    np.linalg.solve(gram, block_values),
++                    action,
+                 )
++            if return_action:
++                assert trace_metric_action is not None
++                trace_metric_action[rows] = action
+             trace_sq += float(contribution.real)
+             seen[rows] += 1
+         if not np.all(seen == 1):
+@@ -1016,7 +1113,11 @@ def _reduced_trace_auxiliary_norm(
+                 "periodic entity blocks do not partition trace coordinates"
+             )
+     auxiliary_sq = float(np.vdot(auxiliary, auxiliary).real)
+-    return float(np.sqrt(max(trace_sq + auxiliary_sq, 0.0)))
++    norm = float(np.sqrt(max(trace_sq + auxiliary_sq, 0.0)))
++    if return_action:
++        assert trace_metric_action is not None
++        return norm, {"trace_metric_action": trace_metric_action}
++    return norm
+ 
+ 
+ def _active_auxiliary_interior_action(
+diff --git a/src/solvers/solve_maxwell_3d_stage_4b_block_grating.py b/src/solvers/solve_maxwell_3d_stage_4b_block_grating.py
+index 9497561b..ed780984 100644
+--- a/src/solvers/solve_maxwell_3d_stage_4b_block_grating.py
++++ b/src/solvers/solve_maxwell_3d_stage_4b_block_grating.py
+@@ -23,6 +23,7 @@ def run_stage4b_block_grating_3d_case(
+     matrix_free_dtn_probe: bool = False,
+     canonical_vector_export: bool = False,
+     variable_p_single_lu_residual_correction: bool = False,
++    variable_p_capture_normal_correction_vectors: bool = False,
+     mesh_data_override=None,
+ ) -> dict[str, object]:
+     """Run Stage 4B: rectangular block grating with 3D DtN total-field ports.
+@@ -66,6 +67,9 @@ def run_stage4b_block_grating_3d_case(
+         variable_p_single_lu_residual_correction=(
+             variable_p_single_lu_residual_correction
+         ),
++        variable_p_capture_normal_correction_vectors=(
++            variable_p_capture_normal_correction_vectors
++        ),
+         mesh_data_override=mesh_data_override,
+     )
+ 

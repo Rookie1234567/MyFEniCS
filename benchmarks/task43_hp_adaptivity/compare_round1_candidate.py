@@ -18,11 +18,22 @@ from benchmarks.task43_hp_adaptivity.candidate_records import (
     load_accepted_parent_artifacts,
 )
 from benchmarks.task43_hp_adaptivity.h100_anchor import (
+    _check_v11_runtime_envelope,
     _assert_mesh_profile,
     _h100_config,
+    _load_v11_primary_contract,
     _sha256_file,
+    _v11_input_snapshot,
+    _v11_source_snapshot,
+    _require_v11_watchdog_worker_identity,
+    _v11_raw_vector_gates,
     _validate_round1_candidate_inputs,
 )
+from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+    _array_identity as _checkpoint_array_identity,
+    write_atomic_npz,
+)
+from src.runners.physical_intermediate import WorkflowLedger
 from benchmarks.task43_hp_adaptivity.profile import _mode_identity
 from benchmarks.task43_hp_adaptivity.reference_restore import _post_selection_binding
 from src.adaptivity.physical_g_error import (
@@ -51,6 +62,28 @@ ACCEPTANCE = ROOT / "docs/task43_hp_adaptivity/outcomes/records/round1_acceptanc
 COMPARISON_CONTRACT = ROOT / "docs/task43_hp_adaptivity/outcomes/records/comparison_contract_v1.json"
 CANDIDATE_RECORDS = Path(__file__).with_name("candidate_records.py")
 DEFAULT_OUTPUT = ROOT / "benchmarks/artifacts/task43/round1_candidates/comparisons"
+_V11_P5_INPUT_ROLES = {
+    "R9_authority_plan",
+    "R9_candidate_plan_copy",
+    "R9_candidate_storage",
+    "R9_candidate_record",
+    "R9_selection_transition",
+    "R9_comparison",
+    "R8_ancestry_selection",
+    "frozen_acceptance_contract",
+    "frozen_comparison_contract",
+    "reference_calibration",
+    "Y6_1_auxiliary_amplitudes",
+    "Y6_1_modal_orders",
+    "Y6_1_saved_samples_metadata",
+    "Y6_1_saved_samples",
+    "Y6_1_native_summary",
+    "Y6_1_carrier_coefficients",
+    "Y6_1_recovered_bundle",
+    "Y6_1_resolved_config",
+    "Y6_1_restore_identity",
+    "Y6_1_restore_inventory",
+}
 
 
 def _json(path: Path) -> dict[str, Any]:
@@ -135,15 +168,317 @@ def _restore_case_fields(
     }
 
 
-def _restore_candidate(candidate_run_root: Path, output_root: Path) -> dict[str, Any]:
+def _validate_v11_pending_candidate(
+    candidate_run_root: Path,
+    *,
+    record: dict[str, Any],
+    contract: dict[str, Any],
+    contract_sha256: str,
+) -> tuple[Path, dict[str, Any], str]:
+    """Require the one successful P4 pending endpoint and its full byte chain."""
+
+    candidate_root = (
+        Path(str(contract["artifact_prefix"]))
+        / str(contract["phases"]["P4"]["root"])
+        / "run"
+    ).resolve()
+    if candidate_run_root.resolve() != candidate_root:
+        raise ValueError("V11 pending restore requires the unique P4 run root")
+    attempt_root = candidate_root.parent
+    for filename in ("launcher_exit_code.txt", "watchdog_exit_code.txt"):
+        code_path = attempt_root / filename
+        if not code_path.is_file() or code_path.read_text(encoding="ascii").strip() != "0":
+            raise ValueError(f"V11 P4 {filename} does not record a zero exit")
+    watchdog_summary_path = attempt_root / "watchdog/summary.json"
+    manifest_path = attempt_root / "snapshots/launch_manifest.json"
+    launch_snapshot_path = attempt_root / "snapshots/launch.sh"
+    if not all(path.is_file() for path in (watchdog_summary_path, manifest_path, launch_snapshot_path)):
+        raise ValueError("V11 P4 watchdog summary or launch identity snapshot is missing")
+    watchdog_summary = _json(watchdog_summary_path)
+    manifest = _json(manifest_path)
+    expected_script = (
+        Path(str(contract["artifact_prefix"]))
+        / contract["phases"]["P4"]["script"]
+    ).resolve()
+    if (
+        watchdog_summary.get("classification") != "COMPLETED"
+        or watchdog_summary.get("leader_exit_code") != 0
+        or watchdog_summary.get("descendants_cleared") is not True
+        or watchdog_summary.get("remaining_child_pids") != []
+        or manifest.get("schema") != "task43.v11.launch-input-manifest.v1"
+        or manifest.get("contract_sha256") != contract_sha256
+        or _sha256_file(launch_snapshot_path) != manifest.get("launch_shell_sha256")
+        or _sha256_file(expected_script) != _sha256_file(launch_snapshot_path)
+    ):
+        raise ValueError("V11 P4 launch manifest, watchdog exit or descendant cleanup is invalid")
+    manifest_source = {
+        str(item["path"]): str(item["sha256"])
+        for item in manifest.get("source", [])
+        if isinstance(item, dict) and "path" in item and "sha256" in item
+    }
+    manifest_inputs = {
+        str(Path(item["path"]).resolve()): str(item["sha256"])
+        for item in manifest.get("inputs", [])
+        if isinstance(item, dict) and "path" in item and "sha256" in item
+    }
+    for item in contract.get("inputs", []):
+        input_path = (ROOT / str(item["path"])).resolve()
+        if manifest_inputs.get(str(input_path)) != item.get("sha256"):
+            raise ValueError("V11 P4 launch manifest omits or changes a contract input")
+    current_source = _v11_source_snapshot()
+    for name, digest in current_source.items():
+        if manifest_source.get(name) != digest:
+            raise ValueError(f"V11 P4 launch manifest source differs: {name}")
+    watchdog_identity = None
+    endpoint_path = candidate_root / "task43_round1_candidate_record.json"
+    terminal_path = candidate_root / "task43_v11_primary_terminal.json"
+    partial_terminal_path = candidate_root / "task43_v11_partial_terminal.json"
+    if partial_terminal_path.exists() or not terminal_path.is_file():
+        raise ValueError("V11 P4 success terminal is missing or conflicts with a failure terminal")
+    terminal = _json(terminal_path)
+    if (
+        terminal.get("schema") != "task43.v11.primary-terminal.v1"
+        or terminal.get("phase") != "R9_H8"
+        or terminal.get("status") != "SOLVED_PENDING_POSTPROCESS"
+        or terminal.get("official_result") is not False
+        or terminal.get("passed") is not False
+        or terminal.get("selection_eligible") is not False
+        or terminal.get("selection_candidate") is not False
+        or terminal.get("candidate_selected") is not False
+        or terminal.get("continuation_all_false") is not True
+        or terminal.get("contract_sha256") != contract_sha256
+        or terminal.get("candidate_identity") != record.get("candidate_identity")
+        or terminal.get("source_identity") != record.get("source_identity")
+    ):
+        raise ValueError("V11 P4 terminal is not the exact pending nonofficial endpoint")
+    if terminal.get("endpoint_record_path") != str(endpoint_path):
+        raise ValueError("V11 terminal names a different endpoint record path")
+    endpoint_sha = _sha256_file(endpoint_path)
+    if terminal.get("endpoint_record_sha256") != endpoint_sha:
+        raise ValueError("V11 P4 terminal endpoint record hash differs")
+    candidate = record.get("candidate_identity")
+    if (
+        record.get("schema") != "task43.v11.primary-endpoint.v1"
+        or record.get("phase") != "R9_H8"
+        or record.get("status") != "SOLVED_PENDING_POSTPROCESS"
+        or record.get("official_result") is not False
+        or record.get("selection_eligible") is not False
+        or record.get("selection_candidate") is not False
+        or record.get("candidate_selected") is not False
+        or record.get("continuation_all_false") is not True
+        or record.get("gates", {}).get("pass") is not True
+        or not isinstance(candidate, dict)
+        or candidate.get("candidate_id") != "v11_r9_h8"
+        or candidate.get("v11_phase") != "R9_H8"
+        or candidate.get("v11_contract_sha256") != contract_sha256
+    ):
+        raise ValueError("V11 endpoint record does not match a successful P4 pending record")
+    if record.get("solver", {}).get("official_result") is not False:
+        raise ValueError("V11 pending endpoint carries an official-result flag")
+    source_identity = record.get("source_identity")
+    if not isinstance(source_identity, dict):
+        raise ValueError("V11 pending endpoint lacks its source identity")
+    source_contract = source_identity.get("v11_primary_contract", {})
+    if (
+        source_contract.get("contract_sha256") != contract_sha256
+        or source_contract.get("phase") != "R9_H8"
+        or Path(str(source_contract.get("contract_path", ""))).resolve()
+        != (ROOT / "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json").resolve()
+    ):
+        raise ValueError("V11 P4 source identity is not bound to this frozen contract")
+    source_hashes = source_identity.get("file_sha256")
+    if not isinstance(source_hashes, dict) or any(
+        current_source.get(name) != digest for name, digest in source_hashes.items()
+    ):
+        raise ValueError("V11 P4 numerical source identity differs from the current frozen source")
+    watchdog_identity = source_identity.get("v11_watchdog_worker_identity")
+    if (
+        not isinstance(watchdog_identity, dict)
+        or watchdog_identity.get("direct_watchdog_parent_verified") is not True
+        or watchdog_identity.get("tracer_descends_from_watchdog") is not True
+        or not watchdog_identity.get("worker_tid_affinities")
+        or any(item.get("cpu_list") != [1] for item in watchdog_identity["worker_tid_affinities"])
+    ):
+        raise ValueError("V11 P4 primary endpoint lacks its directly-parented traced CPU1 worker identity")
+    for process_key, start_key in (
+        ("worker_pid", "worker_start_ticks"),
+        ("tracer_pid", "tracer_start_ticks"),
+    ):
+        proc_stat = Path(f"/proc/{int(watchdog_identity[process_key])}/stat")
+        if proc_stat.is_file():
+            fields = proc_stat.read_text(encoding="ascii").rsplit(")", 1)[1].split()
+            if int(fields[19]) == int(watchdog_identity[start_key]):
+                raise ValueError(f"V11 P4 {process_key} remains live after watchdog completion")
+    if record.get("field_samples", {}).get("status") != "not_run_pending_p5_common_union_sampling":
+        raise ValueError("V11 P4 must defer all field samples to the P5 union rule")
+    endpoint_samples = record.get("primary_samples")
+    terminal_samples = terminal.get("primary_samples")
+    if endpoint_samples not in ({}, None) or terminal_samples not in ({}, None):
+        raise ValueError("V11 P4 pending endpoint unexpectedly contains q8/q10 samples")
+    plan_path = candidate_root / "candidate_plan.json"
+    expected_plan = (
+        ROOT / str(contract["phases"]["P2"]["plan_output_path"])
+    ).resolve()
+    plan_sha256 = _sha256_file(plan_path)
+    expected_plan_sha = _sha256_file(expected_plan)
+    if (
+        plan_path.resolve() != (candidate_root / "candidate_plan.json").resolve()
+        or plan_sha256 != record.get("candidate_plan_sha256")
+        or plan_sha256 != terminal.get("candidate_plan_sha256")
+        or plan_sha256 != candidate.get("plan_sha256")
+        or plan_sha256 != expected_plan_sha
+        or candidate.get("run_plan_path") != str(plan_path.resolve())
+    ):
+        raise ValueError("V11 P4 run-local plan differs from the unique P2 plan")
+    plan = _json(plan_path)
+    if (
+        plan.get("task43_candidate", {}).get("candidate_id") != "v11_r9_h8"
+        or plan.get("task43_candidate", {}).get("action") != "h_refine"
+    ):
+        raise ValueError("V11 P4 plan is not the fixed h-refine candidate")
+    packet = record.get("primary_packet")
+    terminal_packet = terminal.get("primary_packet")
+    if not isinstance(packet, dict) or not isinstance(terminal_packet, dict):
+        raise ValueError("V11 P4 endpoint lacks its primary raw packet record")
+    packet_path = (candidate_root / "primary_state.npz").resolve()
+    if (
+        Path(str(packet.get("npz_path", ""))).resolve() != packet_path
+        or Path(str(terminal_packet.get("npz_path", ""))).resolve() != packet_path
+        or not packet_path.is_file()
+        or _sha256_file(packet_path) != packet.get("npz_sha256")
+        or packet.get("npz_sha256") != terminal_packet.get("npz_sha256")
+        or terminal_packet.get("identity") != packet.get("identity")
+    ):
+        raise ValueError("V11 P4 primary packet path or hash differs across endpoint and terminal")
+    with np.load(packet_path, allow_pickle=False) as archive:
+        if "__task43_record_json__" not in archive.files:
+            raise ValueError("V11 P4 primary NPZ lacks its embedded raw identity")
+        packet_embedded = json.loads(
+            np.asarray(archive["__task43_record_json__"], dtype=np.uint8).tobytes()
+        )
+        packet_arrays = {
+            name: np.asarray(archive[name]).copy()
+            for name in archive.files
+            if name != "__task43_record_json__"
+        }
+    embedded_identity = packet_embedded.get("identity", {})
+    if (
+        packet_embedded.get("schema") != "task43.v11.primary_state.v1"
+        or packet_embedded.get("official_result") is not False
+        or packet_embedded.get("passed") is not False
+        or embedded_identity.get("phase") != "R9_H8"
+        or embedded_identity.get("contract_sha256") != contract_sha256
+        or embedded_identity.get("candidate_plan_sha256") != plan_sha256
+        or embedded_identity.get("candidate_identity", {}).get("candidate_id")
+        != "v11_r9_h8"
+        or packet_embedded.get("arrays") != packet.get("arrays")
+    ):
+        raise ValueError("V11 P4 embedded primary packet identity differs")
+    if set(packet_arrays) != set(packet_embedded.get("arrays", {})):
+        raise ValueError("V11 P4 primary packet array manifest differs from its NPZ members")
+    for name, values in packet_arrays.items():
+        actual_array_identity = _checkpoint_array_identity(values)
+        saved_array_identity = packet_embedded["arrays"].get(name, {})
+        if any(
+            actual_array_identity.get(key) != saved_array_identity.get(key)
+            for key in ("dtype", "shape", "sha256")
+        ):
+            raise ValueError(f"V11 P4 primary array identity differs: {name}")
+    raw_audit = record.get("primary_raw_vector_audit")
+    preassembly = record.get("p4_preassembly_space_audit")
+    if (
+        not isinstance(raw_audit, dict)
+        or raw_audit.get("pass") is not True
+        or not isinstance(preassembly, dict)
+        or preassembly.get("pass") is not True
+    ):
+        raise ValueError("V11 P4 raw-vector or preassembly space audit did not pass")
+    normal_audit = embedded_identity.get("normal_correction_audit", {})
+    correction_ksp = normal_audit.get("correction_ksp", {})
+    storage = record.get("recovered_solution_storage", {})
+    recomputed_raw = _v11_raw_vector_gates(
+        packet_arrays,
+        active_trace_rows=int(storage.get("active_trace_rows", -1)),
+        active_interior_rows=int(storage.get("active_cell_interior_rows", -1)),
+        independent_fe_dofs=int(embedded_identity.get("independent_active_fe_dofs", -1)),
+        active_full_rows=int(embedded_identity.get("raw_full_active_scope", {}).get("active_full_rows", -1)),
+        full_active_scope=embedded_identity.get("raw_full_active_scope", {}),
+        independent_a6_scope=embedded_identity.get("independent_A6_raw_vector_scope", {}),
+        normal_correction_count=int(embedded_identity.get("normal_correction_count", -1)),
+        normal_converged_reason=int(correction_ksp.get("converged_reason", -1)),
+        normal_correction_status=str(normal_audit.get("status", "")),
+        extra_correction_count=int(embedded_identity.get("extra_correction_count", -1)),
+    )
+    if (
+        recomputed_raw.get("pass") is not True
+        or raw_audit.get("pass") is not True
+        or raw_audit.get("gates") != recomputed_raw.get("gates")
+    ):
+        raise ValueError("V11 P4 raw-vector residual gates fail independent P5 recomputation")
+    p2_audit_path = expected_plan.parent / "v11_r9_h8.audit.json"
+    p2_audit = _json(p2_audit_path)
+    actual = preassembly.get("actual", {})
+    required_fe = contract["phases"]["P4"]["required_fe_bounds"]
+    actual_fe_dofs = int(actual.get("independent_active_fe_dofs", -1))
+    if not (
+        actual_fe_dofs > int(required_fe["parent_fe_dofs"])
+        and actual_fe_dofs < int(required_fe["target_exclusive_upper"])
+    ):
+        raise ValueError(
+            "V11 P4 actual independent FE count is outside the strict growth bounds"
+        )
+    p2_match = (
+        preassembly.get("pass") is True
+        and preassembly.get("p2_plan_sha256") == expected_plan_sha
+        and actual.get("root_cell_count") == p2_audit.get("forest", {}).get("root_cell_count")
+        and actual.get("leaf_cell_count") == p2_audit.get("forest", {}).get("actual_leaf_cell_count")
+        and actual.get("independent_trace_rows") == p2_audit.get("dofs", {}).get("independent_trace_rows")
+        and actual.get("active_cell_interior_rows") == p2_audit.get("dofs", {}).get("active_cell_interior_rows")
+        and actual.get("independent_active_fe_dofs") == p2_audit.get("dofs", {}).get("independent_active_fe_dofs")
+        and actual.get("cell_interior_histogram") == p2_audit.get("degrees", {}).get("cell_interior_histogram")
+        and actual.get("entity_degree_plan_sha256") == p2_audit.get("degrees", {}).get("entity_degree_plan_sha256")
+        and actual.get("entity_map_sha256") == p2_audit.get("degrees", {}).get("entity_map_sha256")
+        and actual.get("mesh_box_catalog_sha256") == p2_audit.get("actual_geometry", {}).get("mesh_box_catalog_sha256")
+    )
+    if not p2_match:
+        raise ValueError("V11 P4 preassembly mesh/authority/FE differs from its saved P2 audit")
+    selection_item = next(
+        item for item in contract["inputs"] if item["role"] == "R9_selection_transition"
+    )
+    if (
+        candidate.get("accepted_parent_selection_sha256") != selection_item["sha256"]
+        or plan.get("task43_candidate", {}).get("provenance", {}).get("accepted_parent_selection_sha256")
+        != selection_item["sha256"]
+    ):
+        raise ValueError("V11 P4 plan/endpoint do not retain the frozen R9 accepted parent")
+    return plan_path, plan, plan_sha256
+
+
+def _restore_candidate(
+    candidate_run_root: Path,
+    output_root: Path,
+    *,
+    v11_contract: dict[str, Any] | None = None,
+    v11_contract_sha256: str | None = None,
+) -> dict[str, Any]:
     record_path = candidate_run_root / "task43_round1_candidate_record.json"
     record = _json(record_path)
-    if record.get("schema") != "task43.round1_candidate_solve.v1":
-        raise ValueError("candidate record has an unexpected schema")
-    if record.get("gates", {}).get("pass") is not True:
-        raise ValueError("candidate solver did not pass all hard numerical gates")
-    if record.get("solver", {}).get("official_result") is not True:
-        raise ValueError("candidate lacks a Task43 gated official-result identity")
+    if v11_contract is None:
+        if record.get("schema") != "task43.round1_candidate_solve.v1":
+            raise ValueError("candidate record has an unexpected schema")
+        if record.get("gates", {}).get("pass") is not True:
+            raise ValueError("candidate solver did not pass all hard numerical gates")
+        if record.get("solver", {}).get("official_result") is not True:
+            raise ValueError("candidate lacks a Task43 gated official-result identity")
+    else:
+        if not isinstance(v11_contract_sha256, str):
+            raise ValueError("V11 pending restore requires its frozen contract SHA")
+        _validate_v11_pending_candidate(
+            candidate_run_root,
+            record=record,
+            contract=v11_contract,
+            contract_sha256=v11_contract_sha256,
+        )
 
     identity = record["candidate_identity"]
     candidate_id = str(identity["candidate_id"])
@@ -1060,6 +1395,614 @@ def _post_selection_full_mode_physics(case: dict[str, Any]) -> dict[str, Any]:
             "scope": "Actual historical-unscaled or Task43-scaled cfg; existing physical mode, phase and power functions; no phase fit"}
 
 
+def _v11_fixed_h_classification(
+    *, j_r9: float, j_h: float, eta_r9: float, eta_h: float,
+    epsilon_j: float, epsilon_g: float,
+) -> dict[str, Any]:
+    if not all(np.isfinite(value) for value in (j_r9, j_h, eta_r9, eta_h)):
+        raise ValueError("V11 fixed-h classification metrics must all be finite")
+    delta_j = j_r9 - j_h
+    delta_g = eta_r9 - eta_h
+    if delta_j > epsilon_j and eta_h <= eta_r9 + epsilon_g:
+        classification = "POSITIVE_FIXED_REFERENCE_OUTPUT_RESPONSE"
+    elif j_h > j_r9 + epsilon_j or eta_h > eta_r9 + epsilon_g:
+        classification = "NEGATIVE_OR_TRADEOFF_RESPONSE"
+    else:
+        classification = "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE"
+    return {
+        "classification": classification,
+        "Delta_J": delta_j,
+        "Delta_G": delta_g,
+        "positive_condition_pass": bool(
+            delta_j > epsilon_j and eta_h <= eta_r9 + epsilon_g
+        ),
+        "negative_or_tradeoff_condition_pass": bool(
+            j_h > j_r9 + epsilon_j or eta_h > eta_r9 + epsilon_g
+        ),
+        "legacy_double_gate_pass": bool(
+            delta_g > epsilon_g and j_h <= j_r9 + epsilon_j
+        ),
+        "selection_transition_written": False,
+    }
+
+
+def _v11_signed_mode_differences(
+    reference: dict[str, Any], candidate: dict[str, Any]
+) -> dict[str, Any]:
+    reference_keys, reference_amplitudes, reference_rows = base._modal_identity(
+        reference["mode_payload"], reference["label"]
+    )
+    candidate_keys, candidate_amplitudes, candidate_rows = base._modal_identity(
+        candidate["mode_payload"], candidate["label"]
+    )
+    if reference_keys != candidate_keys or len(reference_keys) != 612:
+        raise ValueError("V11 signed modal deltas require matching ordered R13 rows")
+    signed_power = [
+        float(candidate_row["power_ratio"]) - float(reference_row["power_ratio"])
+        for reference_row, candidate_row in zip(reference_rows, candidate_rows, strict=True)
+    ]
+    amplitude_delta = candidate_amplitudes - reference_amplitudes
+    return {
+        "aggregate_signed_candidate_minus_reference": {
+            key: float(candidate["power"][key]) - float(reference["power"][key])
+            for key in ("R_total", "T_total", "A_volume", "R00_s", "R00_p", "R00_total")
+        },
+        "signed_individual_channel_power_ratio_differences": [
+            {"mode_key": list(key), "candidate_minus_reference": value}
+            for key, value in zip(reference_keys, signed_power, strict=True)
+        ],
+        "complex_boundary_amplitude_differences": [
+            {
+                "mode_key": list(key),
+                "candidate_minus_reference": [float(delta.real), float(delta.imag)],
+            }
+            for key, delta in zip(reference_keys, amplitude_delta, strict=True)
+        ],
+        "maximum_absolute_complex_boundary_amplitude_difference": float(
+            np.max(np.abs(amplitude_delta))
+        ),
+    }
+
+
+def compare_v11_union(
+    candidate_run_root: Path,
+    accepted_parent_selection_record: Path,
+    *,
+    contract_path: Path,
+    attempt_id: str,
+) -> dict[str, Any]:
+    """Restore R9, pending V11 h and Y6_1; sample one common q8/q10 union."""
+    if MPI.COMM_WORLD.size != 1:
+        raise RuntimeError("V11 P5 union comparison is fixed to MPI1")
+    contract, contract_sha256 = _load_v11_primary_contract(contract_path)
+    phase = contract["phases"]["P5"]
+    if attempt_id != "v11_r9_h8_union_attempt1":
+        raise ValueError("V11 P5 requires its one frozen support attempt id")
+    expected_candidate_root = (
+        Path(str(contract["artifact_prefix"]))
+        / str(contract["phases"]["P4"]["root"])
+        / "run"
+    ).resolve()
+    if candidate_run_root.resolve() != expected_candidate_root:
+        raise ValueError("V11 P5 candidate root differs from the unique P4 run")
+    selection_item = next(
+        item for item in contract["inputs"] if item["role"] == "R9_selection_transition"
+    )
+    expected_selection = (ROOT / selection_item["path"]).resolve()
+    if (
+        accepted_parent_selection_record.resolve() != expected_selection
+        or _sha256_file(expected_selection) != selection_item["sha256"]
+    ):
+        raise ValueError("V11 P5 requires the contract-bound frozen R9 selection record")
+    output_root = (
+        Path(str(contract["artifact_prefix"])) / str(phase["comparison_output_root"])
+    ).resolve()
+    if output_root.exists():
+        raise FileExistsError(f"refusing to overwrite V11 P5 output root: {output_root}")
+    runtime_environment = _check_v11_runtime_envelope(MPI.COMM_WORLD)
+    worker_identity = runtime_environment["v11_watchdog_worker_identity"]
+    inputs_before = _v11_input_snapshot(contract, _V11_P5_INPUT_ROLES)
+    source_before = _v11_source_snapshot()
+    output_root.mkdir(parents=True, exist_ok=False)
+    started = time.perf_counter()
+    ledger = WorkflowLedger(output_root, Path(worker_identity["phase_path"]))
+    completed_samples: dict[str, dict[str, Any]] = {}
+    try:
+        ledger.set_phase("preflight")
+        ledger.marker(
+            "task43_v11_p5_worker_identity_bound",
+            {
+                "worker_identity": worker_identity,
+                "runtime_environment": runtime_environment,
+                "input_sha256": inputs_before,
+                "source_sha256": source_before,
+                "contract_sha256": contract_sha256,
+            },
+        )
+        accepted = _load_accepted_parent(expected_selection)
+        if accepted.get("candidate_id") != "round9_p_up":
+            raise ValueError("V11 P5 selected parent is not the frozen R9 p-up endpoint")
+        reference = _restore_candidate(
+            Path(accepted["run_root"]), output_root / "restore_R9"
+        )
+        _require_v11_watchdog_worker_identity(
+            expected_identity=worker_identity, require_unused_phase_file=False
+        )
+        candidate = _restore_candidate(
+            candidate_run_root,
+            output_root / "restore_R9_H8",
+            v11_contract=contract,
+            v11_contract_sha256=contract_sha256,
+        )
+        _require_v11_watchdog_worker_identity(
+            expected_identity=worker_identity, require_unused_phase_file=False
+        )
+        y6 = _restore_case_fields("Y6_1", output_root)
+        _require_v11_watchdog_worker_identity(
+            expected_identity=worker_identity, require_unused_phase_file=False
+        )
+        cases = {"R9": {**reference, "label": "R9"}, "R9_H8": candidate, "Y6_1": y6}
+        quadrature_validation = base._validate_recorded_quadrature_and_cutoff(
+            cases, labels=("R9", "Y6_1")
+        )
+
+        p4_controls = candidate["record"].get("numerical_controls", {})
+        r9_controls = reference["record"].get("numerical_controls", {})
+        expected_quadrature = contract["phases"]["P4"]["quadrature"]
+        frozen_calibration = _json(
+            ROOT / next(
+                item["path"]
+                for item in contract["inputs"]
+                if item["role"] == "reference_calibration"
+            )
+        )
+        expected_cutoff = frozen_calibration[
+            "recorded_quadrature_and_cutoff_identity"
+        ]["expected"]
+        for label, controls in (("R9", r9_controls), ("R9_H8", p4_controls)):
+            actual_identity = {
+                "volume_degree": int(controls["volume_quadrature_degree"]),
+                "surface_and_incident_degree": int(
+                    controls["incident_and_port_quadrature_degree"]
+                ),
+                "volume_rule": str(controls["volume_quadrature_rule"]),
+                "cutoff_policy": str(controls["sparse_cutoff_policy"]),
+                "cutoff_relative_tolerance": float(
+                    controls["sparse_cutoff_relative_tolerance"]
+                ),
+            }
+            expected_identity = {
+                "volume_degree": int(expected_quadrature["volume"]),
+                "surface_and_incident_degree": int(
+                    expected_quadrature["incident_and_port"]
+                ),
+                **expected_cutoff,
+            }
+            if actual_identity != expected_identity:
+                raise ValueError(f"V11 P5 {label} q/cutoff differs from the frozen R9 profile")
+            if controls.get("ordered_mode_count") != 612:
+                raise ValueError(f"V11 P5 {label} does not contain exactly 612 R13 modes")
+            if controls.get("port_amplitude_scale_policy") != "boundary_magnitude_scaled_r5_v1":
+                raise ValueError(f"V11 P5 {label} does not use the qualified Task43 amplitude gauge")
+        physics = base._validate_common_physics(
+            cases, labels=("R9", "R9_H8", "Y6_1")
+        )
+        modal_physics = base._validate_mode_physics(
+            cases, labels=("R9", "R9_H8", "Y6_1")
+        )
+        full_mode_physics = {
+            label: _post_selection_full_mode_physics(case)
+            for label, case in cases.items()
+        }
+        expected_keys = {
+            (side, m, n, pol)
+            for side in ("top", "bottom")
+            for m in range(-4, 5)
+            for n in range(-8, 9)
+            for pol in ("s", "p")
+        }
+        for label, case in cases.items():
+            keys, amplitudes, rows = base._modal_identity(case["mode_payload"], label)
+            if len(keys) != 612 or set(keys) != expected_keys or not np.isfinite(amplitudes).all():
+                raise ValueError(f"V11 P5 {label} lacks the exact finite R13 mode set")
+            if any(
+                not all(np.isfinite(np.asarray(row[field], dtype=np.float64)).all()
+                        for field in ("alpha", "gamma", "beta", "kz", "refractive_index"))
+                or not np.isfinite(float(row["power_ratio"]))
+                for row in rows
+            ):
+                raise ValueError(f"V11 P5 {label} has a nonfinite modal observable")
+        p2_plan_path = (ROOT / contract["phases"]["P2"]["plan_output_path"]).resolve()
+        p2_audit_path = p2_plan_path.parent / "v11_r9_h8.audit.json"
+        p2_audit = _json(p2_audit_path)
+        p4_space = candidate["record"]["p4_preassembly_space_audit"]
+        r9_dofs = int(
+            reference["record"]["recovered_solution_storage"]["independent_active_fe_dofs"]
+        )
+        h_dofs = int(
+            candidate["record"]["recovered_solution_storage"]["independent_active_fe_dofs"]
+        )
+        p2_space_match = {
+            "p2_plan_sha256": p4_space.get("p2_plan_sha256") == _sha256_file(p2_plan_path),
+            "p2_audit_sha256": p4_space.get("p2_audit_sha256") == _sha256_file(p2_audit_path),
+            "actual_fe": p4_space.get("actual", {}).get("independent_active_fe_dofs")
+            == p2_audit.get("dofs", {}).get("independent_active_fe_dofs"),
+            "positive_fe_increment": int(candidate["record"]["recovered_solution_storage"]["independent_active_fe_dofs"])
+            > int(contract["phases"]["P4"]["required_fe_bounds"]["parent_fe_dofs"]),
+            "accepted_r9_fe_matches_contract": r9_dofs
+            == int(contract["phases"]["P4"]["required_fe_bounds"]["parent_fe_dofs"]),
+            "strict_fe_upper": int(candidate["record"]["recovered_solution_storage"]["independent_active_fe_dofs"])
+            < int(contract["phases"]["P4"]["required_fe_bounds"]["target_exclusive_upper"]),
+        }
+        if not all(p2_space_match.values()):
+            raise ValueError("V11 P5 P4 actual mesh/authority/FE does not match the frozen P2 audit")
+        _require_v11_watchdog_worker_identity(
+            expected_identity=worker_identity, require_unused_phase_file=False
+        )
+        ledger.set_phase("postprocess")
+        ledger.marker(
+            "task43_v11_p5_restores_and_modal_physics_pass",
+            {
+                "candidate_id": "v11_r9_h8",
+                "accepted_parent_candidate_id": accepted["candidate_id"],
+                "p2_space_match": p2_space_match,
+                "full_mode_physics": full_mode_physics,
+            },
+        )
+        results: dict[str, Any] = {}
+        reference_case = cases["Y6_1"]
+        pair_cases = {"R9": cases["R9"], "R9_H8": cases["R9_H8"]}
+        for order in (8, 10):
+            quadrature = build_common_volume_quadrature(
+                [case["axes"] for case in cases.values()], gauss_order=order
+            )
+            points = np.asarray(quadrature.points_nm, dtype=np.float64)
+            weights = np.asarray(quadrature.weights_nm3, dtype=np.float64)
+            volume = float(np.sum(weights, dtype=np.float64))
+            if (
+                not np.isfinite(points).all()
+                or not np.isfinite(weights).all()
+                or np.any(weights <= 0.0)
+                or abs(volume - 350000.0) > 1.0e-8
+            ):
+                raise ValueError(f"V11 P5 q{order} common domain/weights are invalid")
+            material_breakpoints = (
+                (0.0, 16.5, 33.5, 50.0),
+                (0.0, 15.0, 35.0, 50.0),
+                (-10.0, 0.0, 120.0, 130.0),
+            )
+            for axis, required in zip(
+                quadrature.axis_breakpoints_nm, material_breakpoints, strict=True
+            ):
+                if any(
+                    not np.any(np.isclose(axis, value, rtol=0.0, atol=1.0e-12))
+                    for value in required
+                ):
+                    raise ValueError(f"V11 P5 q{order} common rule omits a material/domain boundary")
+            samples: dict[str, dict[str, np.ndarray]] = {}
+            owners: dict[str, dict[str, np.ndarray]] = {}
+            for label, case in cases.items():
+                samples[label] = _sample_field(case, points)
+                if not all(np.isfinite(value).all() for value in samples[label].values()):
+                    raise ValueError(f"V11 P5 q{order} {label} samples are nonfinite")
+                global_cell_ids, local_slots = base._cell_slot_for_points(
+                    case["mesh_data"].mesh, case["axes"], points
+                )
+                if local_slots.shape != (points.shape[0],):
+                    raise ValueError(f"V11 P5 q{order} {label} owner map has a bad layout")
+                owners[label] = {
+                    "cell_global_ids": global_cell_ids,
+                    "point_cell_local_slots": local_slots,
+                    "point_cell_global_ids": global_cell_ids[local_slots],
+                }
+                _require_v11_watchdog_worker_identity(
+                    expected_identity=worker_identity,
+                    require_unused_phase_file=False,
+                )
+            sample_arrays: dict[str, np.ndarray] = {
+                "points_nm": points,
+                "weights_nm3": weights,
+            }
+            sample_arrays.update(
+                {
+                    f"{label}_{name}": value
+                    for label, fields in samples.items()
+                    for name, value in fields.items()
+                }
+            )
+            sample_arrays.update(
+                {
+                    f"{label}_{name}": value
+                    for label, values in owners.items()
+                    for name, value in values.items()
+                }
+            )
+            sample_path = output_root / f"v11_r9_h8_union_q{order}.npz"
+            sample_record = write_atomic_npz(
+                sample_path,
+                sample_arrays,
+                schema="task43.v11.union_comparison_samples.v1",
+                classification="measured_shared_union_samples_nonofficial",
+                identity={
+                    "attempt_id": attempt_id,
+                    "quadrature_order": order,
+                    "candidate_id": "v11_r9_h8",
+                    "reference_candidate_id": "round9_p_up",
+                    "reference_label": "Y6_1",
+                    "contract_sha256": contract_sha256,
+                    "p4_terminal_sha256": _sha256_file(
+                        candidate_run_root / "task43_v11_primary_terminal.json"
+                    ),
+                    "rule_sha256": quadrature.rule_sha256,
+                    "sample_count": int(quadrature.point_count),
+                "partition_box_count": int(quadrature.partition_box_count),
+                "axis_breakpoints_nm": [
+                    np.asarray(axis, dtype=np.float64).tolist()
+                    for axis in quadrature.axis_breakpoints_nm
+                ],
+                    "integrated_domain_volume_nm3": volume,
+                    "point_owner_scope": "actual per-case cell global ids/local slots for every shared point",
+                },
+            )
+            completed_samples[f"q{order}"] = {
+                "path": str(sample_path),
+                "sha256": sample_record["npz_sha256"],
+                "sample_count": int(quadrature.point_count),
+                "point_hash": _sha256_bytes(points),
+                "weight_hash": _sha256_bytes(weights),
+                "rule_sha256": quadrature.rule_sha256,
+            }
+            _require_v11_watchdog_worker_identity(
+                expected_identity=worker_identity,
+                require_unused_phase_file=False,
+            )
+            results[f"q{order}"] = {}
+            for label, candidate_case in pair_cases.items():
+                modal = base._modal_comparison(reference_case, candidate_case)
+                field = base._field_metrics(
+                    samples["Y6_1"], samples[label], points, weights, reference_case["cfg"]
+                )
+                score = _j_infinity(modal, field)
+                results[f"q{order}"][label] = {
+                    "reference_label": "Y6_1",
+                    "candidate_label": label,
+                    "modal_metrics": modal,
+                    "field_metrics": field,
+                    "J_infinity": score,
+                    "eta": float(field["G"]["relative_with_incident_floor"]),
+                    "signed_observables": _v11_signed_mode_differences(
+                        reference_case, candidate_case
+                    ),
+                }
+            del samples, owners, sample_arrays
+        thresholds = contract["fixed_h_diagnostic_thresholds"]
+        q10_r9 = results["q10"]["R9"]
+        q10_h = results["q10"]["R9_H8"]
+        classification_q10 = _v11_fixed_h_classification(
+            j_r9=float(q10_r9["J_infinity"]["value"]),
+            j_h=float(q10_h["J_infinity"]["value"]),
+            eta_r9=float(q10_r9["eta"]),
+            eta_h=float(q10_h["eta"]),
+            epsilon_j=float(thresholds["epsilon_J"]),
+            epsilon_g=float(thresholds["epsilon_G"]),
+        )
+        q8_classification = _v11_fixed_h_classification(
+            j_r9=float(results["q8"]["R9"]["J_infinity"]["value"]),
+            j_h=float(results["q8"]["R9_H8"]["J_infinity"]["value"]),
+            eta_r9=float(results["q8"]["R9"]["eta"]),
+            eta_h=float(results["q8"]["R9_H8"]["eta"]),
+            epsilon_j=float(thresholds["epsilon_J"]),
+            epsilon_g=float(thresholds["epsilon_G"]),
+        )
+        sampling_classification = (
+            "SAMPLING_SENSITIVITY_UNRESOLVED"
+            if q8_classification["classification"] != classification_q10["classification"]
+            else "q8_q10_diagnostic_classification_agrees"
+        )
+        if h_dofs <= r9_dofs:
+            raise ValueError("V11 P5 h candidate has no positive actual Delta_FE")
+        for classification in (classification_q10, q8_classification):
+            classification["Delta_FE"] = h_dofs - r9_dofs
+            classification["Delta_J_per_added_FE_dof"] = (
+                classification["Delta_J"] / (h_dofs - r9_dofs)
+            )
+            classification["Delta_G_per_added_FE_dof"] = (
+                classification["Delta_G"] / (h_dofs - r9_dofs)
+            )
+        source_after = _v11_source_snapshot()
+        inputs_after = _v11_input_snapshot(contract, _V11_P5_INPUT_ROLES)
+        _require_v11_watchdog_worker_identity(
+            expected_identity=worker_identity, require_unused_phase_file=False
+        )
+        if source_after != source_before or inputs_after != inputs_before:
+            raise RuntimeError("V11 P5 source/input identity changed during union comparison")
+        record = {
+            "schema": "task43.v11.union_comparison.v1",
+            "status": "COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE",
+            "classification": (
+                "SAMPLING_SENSITIVITY_UNRESOLVED"
+                if sampling_classification == "SAMPLING_SENSITIVITY_UNRESOLVED"
+                else classification_q10["classification"]
+            ),
+            "qualification_boundary": "fixed-reference output response only; no continuous-error or accepted-state claim",
+            "official_result": False,
+            "passed": False,
+            "selection_transition_written": False,
+            "continuation_all_false": True,
+            "attempt_id": attempt_id,
+            "contract_path": str(contract_path.resolve()),
+            "contract_sha256": contract_sha256,
+            "reference_candidate_id": accepted["candidate_id"],
+            "candidate_id": "v11_r9_h8",
+            "reference_label": "Y6_1",
+            "candidate_run_root": str(candidate_run_root.resolve()),
+            "candidate_endpoint_sha256": _sha256_file(candidate_run_root / "task43_round1_candidate_record.json"),
+            "candidate_terminal_sha256": _sha256_file(candidate_run_root / "task43_v11_primary_terminal.json"),
+            "candidate_primary_packet_sha256": _sha256_file(candidate_run_root / "primary_state.npz"),
+            "P4_launch_manifest_sha256": _sha256_file(candidate_run_root.parent / "snapshots/launch_manifest.json"),
+            "P4_watchdog_summary_sha256": _sha256_file(candidate_run_root.parent / "watchdog/summary.json"),
+            "P4_launcher_exit_code_sha256": _sha256_file(candidate_run_root.parent / "launcher_exit_code.txt"),
+            "P4_watchdog_exit_code_sha256": _sha256_file(candidate_run_root.parent / "watchdog_exit_code.txt"),
+            "accepted_parent_selection_path": str(expected_selection),
+            "accepted_parent_selection_sha256": selection_item["sha256"],
+            "P2_plan_path": str(p2_plan_path),
+            "P2_plan_sha256": _sha256_file(p2_plan_path),
+            "P2_actual_audit_sha256": _sha256_file(p2_audit_path),
+            "P4_preassembly_space_match": p2_space_match,
+            "actual_FE": {"R9": r9_dofs, "R9_H8": h_dofs, "Delta_FE": h_dofs - r9_dofs},
+            "same_physics": physics,
+            "same_modal_physics": modal_physics,
+            "full_612_physical_reconstruction": full_mode_physics,
+            "recorded_quadrature_and_cutoff_identity": quadrature_validation,
+            "case_identities": {
+                label: {
+                    "discretization_identity": {
+                        "nedelec_degree": int(
+                            case["record"].get("numerical_controls", {}).get(
+                                "nedelec_degree",
+                                case["record"].get("resolved_identity", {}).get(
+                                    "nedelec_degree", 6
+                                ),
+                            )
+                        ),
+                        "floquet_constraint_mode": case["record"].get(
+                            "resolved_config", {}
+                        ).get(
+                            "floquet_constraint_mode",
+                            case["record"].get("resolved_identity", {}).get(
+                                "floquet_constraint_mode"
+                            ),
+                        ),
+                        "independent_active_fe_dofs": case["record"].get(
+                            "recovered_solution_storage", {}
+                        ).get(
+                            "independent_active_fe_dofs",
+                            case["record"].get("numerical_controls", {})
+                            .get("active_space", {})
+                            .get("independent_active_fe_dofs"),
+                        ),
+                        "ordered_mode_count": case["record"].get(
+                            "numerical_controls", {}
+                        ).get(
+                            "ordered_mode_count",
+                            case["record"].get("resolved_identity", {}).get(
+                                "ordered_mode_count"
+                            ),
+                        ),
+                    },
+                    "mesh_identity": {
+                        "recorded_mesh": case["record"].get(
+                            "numerical_controls", {}
+                        ).get(
+                            "mesh",
+                            {
+                                key: case["record"].get("resolved_identity", {}).get(key)
+                                for key in (
+                                    "mesh_axes_nm",
+                                    "global_cells",
+                                    "mesh_cell_catalog_sha256",
+                                )
+                            },
+                        ),
+                        "restored_mesh_arrays": case.get("mesh_identity", {}),
+                        "axes_nm_sha256": [
+                            _sha256_bytes(np.asarray(axis, dtype=np.float64))
+                            for axis in case["axes"]
+                        ],
+                    },
+                    "solver_route_identity": (
+                        {
+                            key: case["record"].get("solver", {}).get(key)
+                            for key in (
+                                "requested_direct_factor_backend",
+                                "actual_direct_factor_backend",
+                                "actual_live_direct_factor_backend",
+                                "official_result_scope",
+                            )
+                        }
+                        | {
+                            "assembly_backend": case["record"]
+                            .get("numerical_controls", {})
+                            .get("assembly_backend"),
+                            "method": case["record"].get("method"),
+                        }
+                        if label != "Y6_1"
+                        else {
+                            "historical_execution_identity": case["record"].get(
+                                "execution_identity"
+                            ),
+                            "source_module_sha256": case["record"].get(
+                                "source_module_sha256"
+                            ),
+                            "route_scope": "restored historical Y6_1 direct-route record; no new solve",
+                        }
+                    ),
+                }
+                for label, case in cases.items()
+            },
+            "quadrature_orders": [8, 10],
+            "sample_each_case_once_per_order": True,
+            "common_domain_volume_nm3": 350000.0,
+            "saved_union_samples": completed_samples,
+            "results": results,
+            "fixed_thresholds": thresholds,
+            "q10_primary_classification": classification_q10,
+            "q8_robustness_classification": q8_classification,
+            "sampling_sensitivity": sampling_classification,
+            "source_identity_start": source_before,
+            "source_identity_end": source_after,
+            "input_identity_start": inputs_before,
+            "input_identity_end": inputs_after,
+            "unchanged_source_and_inputs": True,
+            "worker_identity": worker_identity,
+            "runtime_environment": runtime_environment,
+            "frozen_comparison_contract_sha256": next(
+                item["sha256"]
+                for item in contract["inputs"]
+                if item["role"] == "frozen_comparison_contract"
+            ),
+            "wall_seconds": time.perf_counter() - started,
+        }
+        record_path = output_root / "v11_r9_h8_union_comparison.json"
+        record_path.write_text(
+            json.dumps(record, indent=2, sort_keys=True, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+        ledger.set_phase("complete")
+        ledger.marker(
+            "task43_v11_p5_union_comparison_complete",
+            {"record_path": str(record_path), "record_sha256": _sha256_file(record_path)},
+        )
+        return record
+    except BaseException as exc:
+        failure = {
+            "schema": "task43.v11.union_comparison_failure.v1",
+            "status": "ACTION_ENDPOINT_NOT_QUALIFIED",
+            "classification": "ACTION_ENDPOINT_NOT_QUALIFIED",
+            "error": f"{type(exc).__name__}: {exc}",
+            "attempt_id": attempt_id,
+            "contract_sha256": contract_sha256,
+            "official_result": False,
+            "passed": False,
+            "selection_transition_written": False,
+            "completed_samples": completed_samples,
+            "source_identity_start": source_before,
+            "input_identity_start": inputs_before,
+        }
+        failure_path = output_root / "v11_r9_h8_union_failure.json"
+        if not failure_path.exists():
+            failure_path.write_text(
+                json.dumps(failure, indent=2, sort_keys=True, allow_nan=False) + "\n",
+                encoding="utf-8",
+            )
+        try:
+            ledger.set_phase("failed")
+            ledger.marker("task43_v11_p5_union_comparison_failed", failure)
+        except BaseException:
+            pass
+        raise
+
+
 def compare_post_selection(
     stop_record: Path, assets_manifest: Path, reference_root: Path, output_root: Path,
 ) -> dict[str, Any]:
@@ -1243,10 +2186,46 @@ def main() -> int:
     parser.add_argument("--post-selection-record", type=Path)
     parser.add_argument("--assets-manifest", type=Path)
     parser.add_argument("--validation-reference-root", type=Path)
+    parser.add_argument("--diagnostic-contract", type=Path)
     args = parser.parse_args()
     if not args.attempt_id or Path(args.attempt_id).name != args.attempt_id:
         parser.error("--attempt-id must be one path component")
-    if args.post_selection_record is not None:
+    if args.diagnostic_contract is not None:
+        if (
+            args.candidate_run_root is None
+            or args.accepted_parent_selection_record is None
+            or args.post_selection_record is not None
+            or args.assets_manifest is not None
+            or args.validation_reference_root is not None
+        ):
+            parser.error(
+                "V11 diagnostic mode requires P4 candidate and accepted R9 paths and rejects post-selection arguments"
+            )
+        result = compare_v11_union(
+            args.candidate_run_root.resolve(),
+            args.accepted_parent_selection_record.resolve(),
+            contract_path=args.diagnostic_contract,
+            attempt_id=args.attempt_id,
+        )
+        print(
+            json.dumps(
+                {
+                    "stage": "v11_union_comparison_complete",
+                    "classification": result["classification"],
+                    "record": str(
+                        Path(str(result["saved_union_samples"]["q10"]["path"]))
+                        .parent
+                        / "v11_r9_h8_union_comparison.json"
+                    ),
+                    "Delta_J": result["q10_primary_classification"]["Delta_J"],
+                    "Delta_G": result["q10_primary_classification"]["Delta_G"],
+                },
+                sort_keys=True,
+                allow_nan=False,
+            ),
+            flush=True,
+        )
+    elif args.post_selection_record is not None:
         if (args.candidate_run_root is not None or args.accepted_parent_selection_record is not None
                 or args.assets_manifest is None or args.validation_reference_root is None):
             parser.error("post-selection mode requires assets/reference roots and rejects adaptive arguments")

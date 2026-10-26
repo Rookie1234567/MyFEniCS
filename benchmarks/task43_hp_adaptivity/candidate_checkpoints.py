@@ -229,6 +229,147 @@ def write_v3_primary_before_extra_packet(
     )
 
 
+def write_v11_primary_packet(
+    path: Path,
+    arrays: Mapping[str, np.ndarray],
+    *,
+    phase: str,
+    identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Persist V11's primary-only raw state without inheriting V3's extra label."""
+
+    if phase not in {"A1_q3", "R9_H8"}:
+        raise ValueError(f"unsupported V11 primary phase {phase!r}")
+    return write_atomic_npz(
+        path,
+        arrays,
+        schema="task43.v11.primary_state.v1",
+        classification="measured_primary_only_not_official_pending_endpoint_gates",
+        identity={**dict(identity), "phase": phase, "extra_correction_count": 0},
+    )
+
+
+def write_v11_primary_field_sample(
+    path: Path,
+    order: int,
+    sample: Mapping[str, np.ndarray],
+    *,
+    identity: Mapping[str, Any],
+    sample_records: dict[str, Any],
+) -> dict[str, Any]:
+    """Atomically retain one completed V11 q sample before starting the next."""
+
+    if int(order) not in {8, 10}:
+        raise ValueError(f"V11 primary sample order must be 8 or 10, got {order!r}")
+    key = f"q{int(order)}"
+    if key in sample_records:
+        raise FileExistsError(f"V11 primary sample {key} was already recorded")
+    record = write_atomic_npz(
+        path,
+        {str(name): np.asarray(value) for name, value in sample.items()},
+        schema="task43.v11.primary_field_sample.v1",
+        classification="measured_primary_sample_not_official",
+        identity={**dict(identity), "quadrature_order": int(order)},
+    )
+    sample_records[key] = record
+    return record
+
+
+def task43_v11_partial_terminal_record(
+    *,
+    phase: str | None,
+    source_identity: Mapping[str, Any],
+    error: str,
+    primary_packet: Mapping[str, Any] | None,
+    primary_samples: Mapping[str, Any],
+    candidate_identity: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Build V11's fail-closed partial terminal, scoped to its two phases."""
+
+    if phase not in {"A1_q3", "R9_H8"}:
+        raise ValueError(f"unsupported V11 terminal phase {phase!r}")
+    return {
+        "schema": "task43.v11.partial-terminal.v1",
+        "phase": phase,
+        "status": "FAILED" if primary_packet else "INCOMPLETE",
+        "classification": "measured_or_partial_nonofficial_endpoint",
+        "error": str(error),
+        "source_identity": dict(source_identity),
+        "candidate_identity": (
+            dict(candidate_identity) if candidate_identity is not None else None
+        ),
+        "primary_packet": dict(primary_packet) if primary_packet else None,
+        "primary_samples": dict(primary_samples),
+        "official_result": False,
+        "passed": False,
+        "selection_eligible": False,
+        "selection_candidate": False,
+        "candidate_selected": False,
+        "continuation_all_false": True,
+        "continuation": {
+            "same_group_R": False,
+            "A1_R": False,
+            "A2_q": False,
+            "A2_R": False,
+            "B": False,
+            "C": False,
+            "cost_campaign": False,
+            "iteration": False,
+        },
+    }
+
+
+def write_v11_primary_terminal(
+    path: Path,
+    *,
+    phase: str,
+    status: str,
+    source_identity: Mapping[str, Any],
+    candidate_identity: Mapping[str, Any],
+    contract_sha256: str,
+    candidate_plan_sha256: str,
+    primary_packet: Mapping[str, Any],
+    primary_samples: Mapping[str, Any],
+    endpoint_record_path: Path,
+) -> dict[str, Any]:
+    """Atomically bind the successful, still nonofficial V11 endpoint terminal."""
+
+    allowed = {
+        "A1_q3": "SOLVED_PRIMARY_Q_RESPONSE_PASS",
+        "R9_H8": "SOLVED_PENDING_POSTPROCESS",
+    }
+    if phase not in allowed or status != allowed[phase]:
+        raise ValueError("V11 successful terminal status does not match its phase")
+    path = Path(path)
+    record = {
+        "schema": "task43.v11.primary-terminal.v1",
+        "phase": phase,
+        "status": status,
+        "classification": "solved_primary_nonofficial",
+        "source_identity": dict(source_identity),
+        "candidate_identity": dict(candidate_identity),
+        "contract_sha256": str(contract_sha256),
+        "candidate_plan_sha256": str(candidate_plan_sha256),
+        "primary_packet": dict(primary_packet),
+        "primary_samples": dict(primary_samples),
+        "endpoint_record_path": str(endpoint_record_path),
+        "official_result": False,
+        "passed": False,
+        "selection_eligible": False,
+        "selection_candidate": False,
+        "candidate_selected": False,
+        "continuation_all_false": True,
+    }
+    if path.exists():
+        raise FileExistsError(f"refusing to overwrite V11 terminal {path}")
+    endpoint_record_path = Path(endpoint_record_path)
+    if not endpoint_record_path.is_file():
+        raise FileNotFoundError(f"V11 endpoint record is missing: {endpoint_record_path}")
+    record["endpoint_record_sha256"] = _sha256_file(endpoint_record_path)
+    _replace_atomically(path, lambda stream: stream.write(_json_bytes(record)))
+    return {**record, "path": str(path), "sha256": _sha256_file(path)}
+
+
 def write_v3_extra_before_output_packet(
     path: Path,
     arrays: Mapping[str, np.ndarray],

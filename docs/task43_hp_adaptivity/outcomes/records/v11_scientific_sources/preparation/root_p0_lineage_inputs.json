@@ -1,0 +1,48 @@
+{
+  "schema": "task43.v11.root-p0-lineage-inputs.v1",
+  "inputs": [
+    {
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_plan.json",
+      "expected_sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+      "sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+      "match": true,
+      "size_bytes": 47658,
+      "provenance": "R9 accepted selection"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round9_p_up_attempt1/candidate_comparison_v2.json",
+      "expected_sha256": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30",
+      "sha256": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30",
+      "match": true,
+      "size_bytes": 77297,
+      "provenance": "R9 accepted selection"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round8_selection_transition8_v1.json",
+      "expected_sha256": "cf737d0fd8fd1da643d263b28770358d82e96c77ce82692bc1f08d27b15dccc2",
+      "sha256": "cf737d0fd8fd1da643d263b28770358d82e96c77ce82692bc1f08d27b15dccc2",
+      "match": true,
+      "size_bytes": 22617,
+      "provenance": "R9 candidate ancestry"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/comparison_contract_v1.json",
+      "expected_sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1",
+      "sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1",
+      "match": true,
+      "size_bytes": 6271,
+      "provenance": "frozen acceptance evidence comparison_contract"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/reference_comparison/attempt2/reference_calibration_v1.json",
+      "expected_sha256": "d3b0d0660f419357bf05ad74282fadfb853027a54ecdb4b9f3586547c8c1e61b",
+      "sha256": "d3b0d0660f419357bf05ad74282fadfb853027a54ecdb4b9f3586547c8c1e61b",
+      "match": true,
+      "size_bytes": 121781,
+      "provenance": "frozen acceptance evidence reference_and_quadrature"
+    }
+  ],
+  "all_match": true,
+  "elapsed_seconds": 0.044360832311213017,
+  "classification": "static_byte_read_no_project_import"
+}

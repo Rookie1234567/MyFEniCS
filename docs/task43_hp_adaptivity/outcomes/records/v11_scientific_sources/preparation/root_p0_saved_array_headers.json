@@ -1,0 +1,249 @@
+{
+  "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/task43_v3_primary_q8_field_sample.npz": {
+    "points_nm.npy": {
+      "descr": "<f8",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "weights_nm3.npy": {
+      "descr": "<f8",
+      "fortran_order": false,
+      "shape": [
+        516096
+      ]
+    },
+    "E_total_code.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "curl_E_total_code.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "H_total_A_per_m.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "__task43_record_json__.npy": {
+      "descr": "|u1",
+      "fortran_order": false,
+      "shape": [
+        1722
+      ]
+    }
+  },
+  "benchmarks/artifacts/task43/round1_candidates/comparisons/post_selection_joint_attempt1/post_selection_shared_q8.npz": {
+    "points_nm.npy": {
+      "descr": "<f8",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "weights_nm3.npy": {
+      "descr": "<f8",
+      "fortran_order": false,
+      "shape": [
+        516096
+      ]
+    },
+    "round9_p_up_E.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "round9_p_up_curl_E.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "round10_p_up_E.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "round10_p_up_curl_E.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "Y6_1_E.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "Y6_1_curl_E.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "Y5_1_E.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "Y5_1_curl_E.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "Y3_E.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "Y3_curl_E.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "Y3_2_E.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    },
+    "Y3_2_curl_E.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        516096,
+        3
+      ]
+    }
+  },
+  "benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/task43_v3_primary_before_extra.npz": {
+    "primary_recovered_p6_storage.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        389832
+      ]
+    },
+    "primary_full_physical_rhs.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        389832
+      ]
+    },
+    "primary_returned_trace_dtn_rhs.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        121572
+      ]
+    },
+    "primary_returned_trace_dtn_solution.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        121572
+      ]
+    },
+    "primary_returned_trace_dtn_b_minus_Ax.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        121572
+      ]
+    },
+    "primary_independent_A6_residual.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        389832
+      ]
+    },
+    "primary_native_A6_effective_rhs.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        389832
+      ]
+    },
+    "primary_zero_slave_carrier_residual.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        389832
+      ]
+    },
+    "primary_augmented_port_residual.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        612
+      ]
+    },
+    "normal_correction_b_minus_Ax_snapshot_0.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        121572
+      ]
+    },
+    "normal_correction_b_minus_Ax_snapshot_1.npy": {
+      "descr": "<c16",
+      "fortran_order": false,
+      "shape": [
+        121572
+      ]
+    },
+    "__task43_record_json__.npy": {
+      "descr": "|u1",
+      "fortran_order": false,
+      "shape": [
+        16366
+      ]
+    }
+  }
+}

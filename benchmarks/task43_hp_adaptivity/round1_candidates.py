@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import time
 from pathlib import Path
 from typing import Any
@@ -16,10 +17,27 @@ from mpi4py import MPI
 from benchmarks.task43_hp_adaptivity.candidate_records import (
     load_accepted_parent_artifacts,
 )
+from benchmarks.task43_hp_adaptivity import compare_initial_to_references as base
 from benchmarks.task43_hp_adaptivity.compare_initial_to_references import (
     _actual_mesh_identity,
 )
-from benchmarks.task43_hp_adaptivity.h100_anchor import _h100_config
+from benchmarks.task43_hp_adaptivity import compare_round1_candidate as candidate_comparator
+from benchmarks.task43_hp_adaptivity.reference_restore import (
+    _configure_historical_direct_route,
+    _load_inventory_entry,
+)
+from benchmarks.task43_hp_adaptivity.compare_v2_endpoints import (
+    R13_MODE_KEYS,
+    _validated_rows,
+)
+from benchmarks.task43_hp_adaptivity.h100_anchor import (
+    _check_v11_runtime_envelope,
+    _h100_config,
+    _load_v11_primary_contract,
+    _require_v11_watchdog_worker_identity,
+    _v11_input_snapshot,
+    _v11_source_snapshot,
+)
 from benchmarks.task43_hp_adaptivity.profile import (
     TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
 )
@@ -44,6 +62,8 @@ from src.adaptivity.variable_p_transfer import (
     recover_active_full_to_p6_field,
 )
 from src.solvers.common_3d_solve import _create_nedelec_space
+from src.runners.physical_intermediate import WorkflowLedger
+from src.io.input_validation import simulation_config_3d_from_normalized
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_PARENT_RUN = ROOT / "benchmarks/artifacts/task43/current_180/attempt1/run"
@@ -58,7 +78,36 @@ DEFAULT_ACCEPTANCE = (
     ROOT / "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json"
 )
 DEFAULT_OUTPUT = ROOT / "benchmarks/artifacts/task43/round1_candidates/attempt2"
+V11_SEED8_IDENTITY = {
+    "global_cell_id": 8,
+    "lower_nm": [16.5, 5.0, -10.0],
+    "upper_nm": [33.5, 10.0, 0.0],
+    "parent_degree": 5,
+}
 PARENT_INDEPENDENT_FE_DOFS = 15120
+_V11_P2_INPUT_ROLES = {
+    "R9_authority_plan",
+    "R9_candidate_plan_copy",
+    "R9_candidate_storage",
+    "R9_candidate_record",
+    "R9_selection_transition",
+    "R9_comparison",
+    "R8_ancestry_selection",
+    "frozen_acceptance_contract",
+    "frozen_comparison_contract",
+    "reference_calibration",
+    "A2_saved_modal_orders",
+    "A2_primary_packet",
+    "A2_q8_saved_sample",
+    "A2_q10_saved_sample",
+    "A2_saved_absorption",
+    "historical_joint_comparison",
+    "historical_joint_q8",
+    "historical_joint_q10",
+    "Y6_1_modal_orders",
+    "Y6_1_resolved_config",
+    "Y6_1_restore_inventory",
+}
 
 
 def _sha256_file(path: Path) -> str:
@@ -477,6 +526,71 @@ def _build_next_round_plan(
         "closure_or_inheritance": closure,
     }
 
+
+def _build_v11_seed8_plan(
+    cfg,
+    *,
+    parent: dict[str, Any],
+    comm_size: int,
+    contract: dict[str, Any],
+) -> dict[str, Any]:
+    """Build the sole V11 h candidate from the predeclared accepted-R9 root."""
+
+    phase = contract["phases"]["P4"]
+    seed = dict(phase["seed"])
+    if seed != {**V11_SEED8_IDENTITY, "split": seed.get("split"), "maximum_level": 1}:
+        raise ValueError("V11 seed identity differs from the audited global-cell-8 request")
+    if parent["selected_candidate_id"] != "round9_p_up":
+        raise ValueError("V11 h candidate requires the accepted round9_p_up parent")
+    if int(parent["parent_independent_fe_dofs"]) != int(
+        phase["required_fe_bounds"]["parent_fe_dofs"]
+    ):
+        raise ValueError("accepted R9 independent FE count differs from frozen 110472")
+    if parent["parent_marked_root_boxes"]:
+        raise ValueError("V11 seed8 request requires an unrefined accepted R9 root mesh")
+
+    seed_box = tuple(map(float, (*seed["lower_nm"], *seed["upper_nm"])))
+    actual_box = parent["parent_boxes_by_global_id"].get(
+        int(seed["global_cell_id"])
+    )
+    if actual_box != seed_box:
+        raise ValueError(
+            "predeclared V11 global cell 8 geometry differs from accepted R9 storage"
+        )
+    if seed_box not in parent["parent_forest"].root_boxes:
+        raise ValueError("V11 global cell 8 is not an unrefined root in the accepted R9 forest")
+    parent_degree = parent["parent_degree_by_box"].get(seed_box)
+    if int(parent_degree or -1) != int(seed["parent_degree"]):
+        raise ValueError("V11 seed8 accepted-parent interior degree is not p5")
+
+    fixed_parent = dict(parent)
+    fixed_parent["marked_global_cell_ids"] = [int(seed["global_cell_id"])]
+    fixed_parent["marked_boxes"] = (seed_box,)
+    plan, status = _build_next_round_plan(
+        cfg,
+        action="h_refine",
+        candidate_id="v11_r9_h8",
+        parent=fixed_parent,
+        comm_size=comm_size,
+    )
+    if plan is None or status.get("status") != "plan_built":
+        raise ValueError(f"V11 predeclared seed8 h plan could not be built: {status}")
+    provenance = plan["task43_candidate"]["provenance"]
+    provenance.pop("marking_theta", None)
+    provenance.pop("marked_global_cell_ids_sha256", None)
+    provenance["marked_global_cell_ids_source"] = "v11_predeclared_seed8"
+    provenance["v11_seed"] = seed
+    provenance["seed_geometry_audit_sha256"] = next(
+        item["sha256"]
+        for item in contract["inputs"]
+        if item["role"] == "seed_geometry_audit"
+    )
+    provenance["full_dorfer_set_not_used"] = True
+    plan["task43_candidate"]["action_description"] = (
+        "one_predeclared_seed8_global_root_split_with_degree_inheritance"
+    )
+    return plan
+
 def _build_candidate_plan(
     cfg,
     *,
@@ -613,6 +727,149 @@ def _audit_plan(
     distinct_trace_degrees = sorted(
         {int(value) for value in physical_audit["trace_degree_values"]}
     )
+    forest = mesh_data.local_h_context.forest
+    normalized_marked_boxes = {
+        tuple(
+            map(
+                float,
+                (*row["lower"], *row["upper"]),
+            )
+        )
+        for row in plan["marked_root_boxes"]
+    }
+    requested_root_ids = [
+        root_id
+        for root_id, box in enumerate(forest.root_boxes)
+        if tuple(map(float, box)) in normalized_marked_boxes
+    ]
+    actual_refined_root_ids = sorted(
+        {int(cell.key.root) for cell in forest.leaves if cell.key.level > 0}
+    )
+    forced_closure_root_ids = sorted(
+        set(actual_refined_root_ids).difference(requested_root_ids)
+    )
+    actual_root_boxes = {
+        root_id: [float(value) for value in box]
+        for root_id, box in enumerate(forest.root_boxes)
+    }
+    degree_rows = plan.get("cell_interior_degrees", [])
+    degree_by_box = {
+        tuple(
+            map(
+                float,
+                (*row["lower"], *row["upper"]),
+            )
+        ): int(row["degree"])
+        for row in degree_rows
+    }
+    leaf_inheritance_by_root: dict[int, dict[str, Any]] = {}
+    for cell in forest.leaves:
+        root_id = int(cell.key.root)
+        degree = degree_by_box.get(tuple(map(float, cell.box)))
+        if degree is None:
+            raise RuntimeError("actual local-h leaf lacks a saved interior degree")
+        entry = leaf_inheritance_by_root.setdefault(
+            root_id,
+            {"leaf_count": 0, "degree_counts": {}},
+        )
+        entry["leaf_count"] += 1
+        degree_key = f"p{degree}"
+        entry["degree_counts"][degree_key] = (
+            int(entry["degree_counts"].get(degree_key, 0)) + 1
+        )
+    seed = plan["task43_candidate"].get("provenance", {}).get("v11_seed")
+    seed_box = (
+        tuple(map(float, (*seed["lower_nm"], *seed["upper_nm"])))
+        if isinstance(seed, Mapping) and "lower_nm" in seed and "upper_nm" in seed
+        else None
+    )
+    matching_seed_roots = (
+        [
+            root_id
+            for root_id, box in enumerate(forest.root_boxes)
+            if tuple(map(float, box)) == seed_box
+        ]
+        if seed_box is not None
+        else []
+    )
+    if seed_box is not None and len(matching_seed_roots) != 1:
+        raise RuntimeError("V11 seed geometry does not map to exactly one forest root index")
+    seed_forest_root_index = matching_seed_roots[0] if matching_seed_roots else None
+    seed_mesh_global_cell_id = (
+        int(seed["global_cell_id"])
+        if isinstance(seed, Mapping) and "global_cell_id" in seed
+        else None
+    )
+    seed_parent_degree = int(seed["parent_degree"]) if isinstance(seed, Mapping) and "parent_degree" in seed else None
+    seed_child_degrees = (
+        sorted(
+            {
+                degree_by_box[tuple(map(float, cell.box))]
+                for cell in forest.leaves
+                if int(cell.key.root) == seed_forest_root_index
+            }
+        )
+        if seed_forest_root_index is not None
+        else []
+    )
+    constraint_audit = dict(authority.audit["trace_constraints"])
+    entity_map = authority.degree_plan.entity_map
+    space_authority_detail = {
+        "requested_root_ids": requested_root_ids,
+        "requested_root_boxes": {
+            str(root_id): actual_root_boxes[root_id]
+            for root_id in requested_root_ids
+        },
+        "actual_refined_root_ids": actual_refined_root_ids,
+        "forced_closure_root_ids": forced_closure_root_ids,
+        "forced_closure_root_boxes": {
+            str(root_id): actual_root_boxes[root_id]
+            for root_id in forced_closure_root_ids
+        },
+        "root_id_namespace": "forest_root_index; not the parent mesh global-cell ID",
+        "requested_root_mesh_global_cell_ids": (
+            [seed_mesh_global_cell_id]
+            if seed_forest_root_index in requested_root_ids
+            else []
+        ),
+        "seed_mesh_global_cell_id": seed_mesh_global_cell_id,
+        "seed_forest_root_index": seed_forest_root_index,
+        "seed_root_box_nm": list(seed_box) if seed_box is not None else None,
+        "leaf_interior_degree_histogram": degrees,
+        "leaf_inheritance_by_root": {
+            str(root_id): entry
+            for root_id, entry in sorted(leaf_inheritance_by_root.items())
+        },
+        "seed_parent_degree": seed_parent_degree,
+        "seed_child_degrees": seed_child_degrees,
+        "seed_child_degree_inheritance_pass": (
+            seed_parent_degree is None or seed_child_degrees == [seed_parent_degree]
+        ),
+        "independent_trace_rows": independent_trace_rows,
+        "independent_cell_interior_rows": cell_interior_rows,
+        "independent_fe_dofs": independent_dofs,
+        "hanging_slave_rows": int(constraint_audit.get("hanging_slave_rows", 0)),
+        "floquet_periodic_relations": {
+            key: int(value)
+            for key, value in constraint_audit.items()
+            if key.startswith("periodic_") and isinstance(value, (int, np.integer))
+        },
+        "hanging_or_floquet_slave_rows_globally_numbered": bool(
+            constraint_audit.get("hanging_or_periodic_slave_rows_globally_numbered", True)
+        ),
+        "p6_carrier": {
+            "container_degree": int(plan["cell_interior_degree"]),
+            "uniform_p6_global_rows": int(entity_map.uniform_p6_rows),
+            "uniform_p6_trace_rows": int(entity_map.uniform_p6_trace_rows),
+            "active_entity_rows": int(entity_map.active_rows),
+            "inactive_p6_rows": int(entity_map.uniform_p6_rows - entity_map.active_rows),
+            "full_p6_global_matrix_constructed": bool(
+                entity_map.audit.get("full_p6_global_matrix_constructed", False)
+            ),
+        },
+        "predicted_returned_trace_dtn_rows": independent_trace_rows + 612,
+        "predicted_returned_trace_dtn_scope": "independent trace rows plus exactly 612 R13 modal rows",
+    }
     transfer_audit = None
     if parent_storage_path is not None:
         if plan["task43_candidate"]["action"] != "p_up":
@@ -816,6 +1073,455 @@ def _audit_plan(
                 for axis in range(3)
             ],
         },
+        "space_authority_detail": space_authority_detail,
+    }
+
+
+def _v11_saved_a2_primary_q_response(
+    contract: dict[str, Any],
+) -> dict[str, Any]:
+    """Recompute only the hash-bound A2 primary vectors and saved q8/q10 fields."""
+
+    def input_path(role: str) -> Path:
+        matches = [item for item in contract["inputs"] if item["role"] == role]
+        if len(matches) != 1:
+            raise ValueError(f"V11 A2 audit requires exactly one {role} input")
+        return (ROOT / matches[0]["path"]).resolve()
+
+    def selected_npz(
+        path: Path,
+        names: set[str],
+        *,
+        require_embedded_identity: bool = True,
+    ) -> tuple[dict[str, np.ndarray], dict[str, Any] | None]:
+        with np.load(path, allow_pickle=False) as archive:
+            missing = names.difference(archive.files)
+            if missing or (
+                require_embedded_identity
+                and "__task43_record_json__" not in archive.files
+            ):
+                raise ValueError(
+                    f"saved NPZ {path} is missing arrays or its embedded identity: {sorted(missing)}"
+                )
+            values = {name: np.asarray(archive[name]).copy() for name in names}
+            identity = (
+                json.loads(
+                    np.asarray(archive["__task43_record_json__"], dtype=np.uint8).tobytes()
+                )
+                if "__task43_record_json__" in archive.files
+                else None
+            )
+        return values, identity
+
+    def array_identity(values: np.ndarray) -> dict[str, Any]:
+        array = np.ascontiguousarray(values)
+        digest = hashlib.sha256()
+        digest.update(array.dtype.str.encode("ascii"))
+        digest.update(json.dumps(list(array.shape)).encode("ascii"))
+        digest.update(array.view(np.uint8))
+        return {
+            "dtype": array.dtype.str,
+            "shape": list(array.shape),
+            "sha256": digest.hexdigest(),
+            "finite": bool(np.isfinite(array).all()),
+        }
+
+    def finite_vector(arrays: dict[str, np.ndarray], name: str, size: int) -> np.ndarray:
+        value = np.asarray(arrays[name], dtype=np.complex128)
+        if value.shape != (size,) or not np.isfinite(value).all():
+            raise ValueError(f"saved A2 primary vector {name} must be finite with {size} rows")
+        return value
+
+    packet_path = input_path("A2_primary_packet")
+    packet_names = {
+        "primary_native_A6_effective_rhs",
+        "primary_independent_A6_residual",
+        "primary_zero_slave_carrier_residual",
+        "primary_augmented_port_residual",
+        "primary_returned_trace_dtn_rhs",
+        "primary_returned_trace_dtn_solution",
+        "primary_returned_trace_dtn_b_minus_Ax",
+        "normal_correction_b_minus_Ax_snapshot_0",
+        "normal_correction_b_minus_Ax_snapshot_1",
+        "primary_full_physical_rhs",
+        "primary_recovered_p6_storage",
+    }
+    raw, packet_identity = selected_npz(packet_path, packet_names)
+    if (
+        packet_identity.get("schema") != "task43.v3.a2_primary_before_extra.v1"
+        or packet_identity.get("official_result") is not False
+        or packet_identity.get("passed") is not False
+    ):
+        raise ValueError("historical A2 primary packet identity is not incomplete/nonofficial")
+    identity = packet_identity.get("identity")
+    if not isinstance(identity, dict):
+        raise ValueError("historical A2 primary packet lacks its saved identity")
+    resolved_config_item = next(
+        item for item in contract["inputs"] if item["role"] == "Y6_1_resolved_config"
+    )
+    resolved_config_path = (ROOT / resolved_config_item["path"]).resolve()
+    if (
+        identity.get("resolved_config_path") != str(resolved_config_path)
+        or identity.get("resolved_config_sha256") != resolved_config_item["sha256"]
+        or identity.get("resolved_config_sha256") != _sha256_file(resolved_config_path)
+    ):
+        raise ValueError("historical A2 packet resolved-config path/hash differs from Y6 identity")
+    array_identities = packet_identity.get("arrays")
+    if not isinstance(array_identities, dict):
+        raise ValueError("historical A2 primary packet lacks raw array identities")
+    vectors = {
+        name: finite_vector(raw, name, 389832)
+        for name in (
+            "primary_native_A6_effective_rhs",
+            "primary_independent_A6_residual",
+            "primary_zero_slave_carrier_residual",
+            "primary_full_physical_rhs",
+            "primary_recovered_p6_storage",
+        )
+    }
+    vectors["primary_augmented_port_residual"] = finite_vector(
+        raw, "primary_augmented_port_residual", 612
+    )
+    for name in (
+        "primary_returned_trace_dtn_rhs",
+        "primary_returned_trace_dtn_solution",
+        "primary_returned_trace_dtn_b_minus_Ax",
+        "normal_correction_b_minus_Ax_snapshot_0",
+        "normal_correction_b_minus_Ax_snapshot_1",
+    ):
+        vectors[name] = finite_vector(raw, name, 121572)
+    if any(
+        array_identities.get(name, {}).get("sha256")
+        != array_identity(values)["sha256"]
+        for name, values in raw.items()
+    ):
+        raise ValueError("historical A2 primary packet array bytes differ from embedded identities")
+    norm = lambda value: float(np.linalg.norm(value))  # noqa: E731 - local scalar helper
+    native_rhs_norm = norm(vectors["primary_native_A6_effective_rhs"])
+    returned_rhs_norm = norm(vectors["primary_returned_trace_dtn_rhs"])
+    if native_rhs_norm <= 0.0 or returned_rhs_norm <= 0.0:
+        raise ValueError("historical A2 primary residual denominator is not positive")
+    a6_relative = norm(vectors["primary_independent_A6_residual"]) / native_rhs_norm
+    full_active_relative = math.hypot(
+        norm(vectors["primary_zero_slave_carrier_residual"]),
+        norm(vectors["primary_augmented_port_residual"]),
+    ) / native_rhs_norm
+    condensed_relative = (
+        norm(vectors["primary_returned_trace_dtn_b_minus_Ax"]) / returned_rhs_norm
+    )
+    before_relative = (
+        norm(vectors["normal_correction_b_minus_Ax_snapshot_0"]) / returned_rhs_norm
+    )
+    after_relative = (
+        norm(vectors["normal_correction_b_minus_Ax_snapshot_1"]) / returned_rhs_norm
+    )
+    if not np.allclose(
+        vectors["normal_correction_b_minus_Ax_snapshot_1"],
+        vectors["primary_returned_trace_dtn_b_minus_Ax"],
+        rtol=1.0e-12,
+        atol=1.0e-24,
+    ):
+        raise ValueError("historical A2 normal snapshot 1 differs from returned raw residual")
+    raw_gates = {
+        "independent_A6_raw_relative_le_1e-8": bool(a6_relative <= 1.0e-8),
+        "full_active_hypot_raw_relative_le_1e-8": bool(
+            full_active_relative <= 1.0e-8
+        ),
+        "returned_condensed_raw_relative_le_1e-9": bool(
+            condensed_relative <= 1.0e-9
+        ),
+        "normal_correction_raw_residual_strictly_decreased": bool(
+            after_relative < before_relative
+        ),
+    }
+    stored_residual_metrics = identity.get("primary_solver_residual_metrics_before_extra")
+    if not isinstance(stored_residual_metrics, dict):
+        raise ValueError("historical A2 packet lacks the recorded raw residual scalar identity")
+    recomputed_metrics = {
+        "condensed_b_minus_Ax_relative": condensed_relative,
+        "independent_A6_relative": a6_relative,
+        "full_active_zero_slave_carrier_plus_modal_port_euclidean_relative": full_active_relative,
+    }
+    scalar_identity_differences = {}
+    stored_key_by_recomputed = {
+        "condensed_b_minus_Ax_relative": "condensed_b_minus_Ax_relative",
+        "independent_A6_relative": "independent_A6_relative",
+        "full_active_zero_slave_carrier_plus_modal_port_euclidean_relative":
+            "full_active_space_transformed_relative",
+    }
+    for name, value in recomputed_metrics.items():
+        stored = float(stored_residual_metrics[stored_key_by_recomputed[name]])
+        scalar_identity_differences[name] = abs(stored - value)
+        if not np.isclose(stored, value, rtol=1.0e-12, atol=1.0e-24):
+            raise ValueError(f"historical A2 recomputed {name} differs from its packet identity")
+
+    modal_path = input_path("A2_saved_modal_orders")
+    mode_payload = json.loads(modal_path.read_text(encoding="utf-8"))
+    modal_rows = _validated_rows(
+        mode_payload, label="A2_saved_primary", expected=R13_MODE_KEYS
+    )
+    absorption_path = input_path("A2_saved_absorption")
+    absorption = json.loads(absorption_path.read_text(encoding="utf-8"))
+    a_volume = float(absorption["A_volume_total"])
+    if not math.isfinite(a_volume):
+        raise ValueError("saved A2 primary A_volume is not finite")
+    region_total = sum(
+        float(value["A_volume"])
+        for value in absorption.get("regions", {}).values()
+    )
+    if not np.isclose(region_total, a_volume, rtol=2.0e-12, atol=1.0e-14):
+        raise ValueError("saved A2 primary material-volume absorption does not sum to A_volume")
+    mode_metrics = mode_payload["metrics"]
+    a2_case = {
+        "label": "A2_saved_primary",
+        "mode_payload": mode_payload,
+        "power": {
+            "R_total": float(mode_metrics["R_total"]),
+            "T_total": float(mode_metrics["T_total"]),
+            "A_volume": a_volume,
+            "R00_s": float(mode_metrics["R00_s"]),
+            "R00_p": float(mode_metrics["R00_p"]),
+            "R00_total": float(mode_metrics["R00_total"]),
+        },
+    }
+    y6_inventory = _load_inventory_entry("Y6_1")
+    y6_config = json.loads(resolved_config_path.read_text(encoding="utf-8"))
+    historical_cfg = _configure_historical_direct_route(y6_config, y6_inventory)
+    a2_operator_q = int(identity.get("operator_q", -1))
+    a2_incident_port_q = int(identity.get("incident_port_q", -1))
+    if (
+        a2_operator_q != 19
+        or a2_incident_port_q != 32
+        or identity.get("mode_basis_scale_policy") is not None
+    ):
+        raise ValueError("saved A2 primary is not the bound historical unscaled q19/q32 route")
+    # The resolved JSON is the original Y6 config (q15/q28). V3 records the
+    # actual A2 per-run overrides in its primary identity; bind those overrides
+    # explicitly while keeping its historical unscaled modal gauge.
+    a2_cfg = historical_cfg
+    a2_cfg.stage4_volume_quadrature_degree = a2_operator_q
+    a2_cfg.stage4_incident_quadrature_degree = a2_incident_port_q
+    a2_cfg.stage4_dtn_quadrature_degree = a2_incident_port_q
+    y6_case = candidate_comparator._load_modal_case("Y6_1")
+    y6_case = {**y6_case, "label": "Y6_1"}
+    mode_physics = base._validate_mode_physics(
+        {"Y6_1": y6_case, "A2_saved_primary": a2_case},
+        labels=("Y6_1", "A2_saved_primary"),
+    )
+    # Existing mode-power helpers re-evaluate all 612 rows against the same
+    # physical configuration before any saved observable is used.
+    a2_case["cfg"] = a2_cfg
+    y6_case["cfg"] = historical_cfg
+    a2_case["record"] = {"power": {"A_volume_total": a_volume}}
+    y6_case["record"] = y6_case.get("record", {})
+    physical_rows = {
+        "A2_saved_primary": candidate_comparator._post_selection_full_mode_physics(
+            a2_case
+        ),
+        "Y6_1": candidate_comparator._post_selection_full_mode_physics(y6_case),
+    }
+    modal_comparison = base._modal_comparison(y6_case, a2_case)
+    modal_thresholds = contract["quadrature_response_thresholds"]
+    modal_gates = {
+        f"aggregate_{name}_le_1e-6": bool(
+            abs(float(value)) <= float(modal_thresholds["aggregate_absolute_max"])
+        )
+        for name, value in modal_comparison["power_absolute_differences"].items()
+        if name not in {"R00_s", "R00_p"}
+    }
+    modal_gates["zero_order_s_p_and_each_channel_le_1e-7"] = bool(
+        max(
+            float(modal_comparison["power_absolute_differences"]["R00_s"]),
+            float(modal_comparison["power_absolute_differences"]["R00_p"]),
+            float(
+                modal_comparison[
+                    "maximum_individual_channel_power_ratio_absolute_difference"
+                ]
+            ),
+        )
+        <= float(modal_thresholds["zero_order_s_p_and_each_channel_power_absolute_max"])
+    )
+    modal_gates["four_boundary_amplitude_groups_le_1e-5"] = bool(
+        all(
+            float(item["relative_with_unit_incident_modal_floor"])
+            <= float(
+                modal_thresholds[
+                    "four_boundary_amplitude_and_total_scattered_E_H_G_floor_normalized_max"
+                ]
+            )
+            for item in modal_comparison["boundary_amplitude_groups"].values()
+        )
+    )
+    q_comparisons: dict[str, Any] = {}
+    q_gates: dict[str, bool] = {}
+    comparison_record = json.loads(input_path("historical_joint_comparison").read_text())
+    for order in (8, 10):
+        key = f"q{order}"
+        saved_path = input_path(f"A2_q{order}_saved_sample")
+        reference_path = input_path(f"historical_joint_q{order}")
+        comparison_rule = comparison_record["quadrature"][key]
+        if (
+            Path(str(comparison_rule["sample_bundle"])).resolve() != reference_path
+            or _sha256_file(reference_path) != comparison_rule["sample_bundle_sha256"]
+        ):
+            raise ValueError(f"historical {key} reference path/hash differs from its frozen record")
+        saved, saved_identity = selected_npz(
+            saved_path,
+            {
+                "points_nm",
+                "weights_nm3",
+                "E_total_code",
+                "curl_E_total_code",
+                "H_total_A_per_m",
+            },
+        )
+        reference, _ = selected_npz(
+            reference_path,
+            {"points_nm", "weights_nm3", "Y6_1_E", "Y6_1_curl_E"},
+            require_embedded_identity=False,
+        )
+        points = np.asarray(saved["points_nm"], dtype=np.float64)
+        weights = np.asarray(saved["weights_nm3"], dtype=np.float64)
+        if (
+            points.ndim != 2
+            or points.shape[1] != 3
+            or weights.shape != (points.shape[0],)
+            or not all(np.isfinite(array).all() for array in (*saved.values(), *reference.values()))
+            or np.any(weights <= 0.0)
+            or not np.array_equal(points, reference["points_nm"])
+            or not np.array_equal(weights, reference["weights_nm3"])
+            or abs(float(np.sum(weights, dtype=np.float64)) - 350000.0) > 1.0e-8
+        ):
+            raise ValueError(f"saved A2 and Y6 {key} point/weight identity or domain is invalid")
+        if (
+            saved_identity.get("identity", {}).get("primary_before_extra_npz_sha256")
+            != _sha256_file(packet_path)
+        ):
+            raise ValueError(f"saved A2 {key} sample does not bind the primary NPZ")
+        expected_h = (
+            saved["curl_E_total_code"]
+            * float(historical_cfg.magnetic_field_scale_A_per_m)
+            / (1j * float(historical_cfg.k0) * complex(historical_cfg.mu_r))
+        )
+        if not np.allclose(
+            saved["H_total_A_per_m"], expected_h, rtol=2.0e-12, atol=1.0e-14
+        ):
+            raise ValueError(f"saved A2 {key} H is inconsistent with curl(E)")
+        field_metrics = base._field_metrics(
+            {
+                "E": reference["Y6_1_E"],
+                "curl_E": reference["Y6_1_curl_E"],
+            },
+            {
+                "E": saved["E_total_code"],
+                "curl_E": saved["curl_E_total_code"],
+            },
+            points,
+            weights,
+            historical_cfg,
+        )
+        field_threshold = float(
+            modal_thresholds[
+                "four_boundary_amplitude_and_total_scattered_E_H_G_floor_normalized_max"
+            ]
+        )
+        field_gate = {
+            name: bool(
+                float(field_metrics[name]["relative_to_reference_or_floor"])
+                <= field_threshold
+            )
+            for name in (
+                "E_total_code",
+                "H_total_A_per_m",
+                "E_scattered_code",
+                "H_scattered_A_per_m",
+            )
+        }
+        field_gate["G"] = bool(
+            float(field_metrics["G"]["relative_with_incident_floor"])
+            <= field_threshold
+        )
+        q_comparisons[key] = {
+            "status": "measured_from_saved_arrays_no_resampling_or_integration",
+            "sample_count": int(weights.size),
+            "points_sha256": array_identity(points)["sha256"],
+            "weights_sha256": array_identity(weights)["sha256"],
+            "integrated_domain_volume_nm3": float(np.sum(weights, dtype=np.float64)),
+            "A2_sample_npz_sha256": _sha256_file(saved_path),
+            "Y6_sample_bundle_sha256": _sha256_file(reference_path),
+            "field_metrics": field_metrics,
+            "gates": field_gate,
+            "pass": all(field_gate.values()),
+        }
+        q_gates.update({f"{key}_{name}": value for name, value in field_gate.items()})
+
+    all_gates = {
+        **raw_gates,
+        **modal_gates,
+        **q_gates,
+    }
+    return {
+        "schema": "task43.v11.saved_a2_primary_q_response.v1",
+        "status": "measured_limited_saved_primary_diagnostic",
+        "historical_endpoint_status": "INCOMPLETE_NOT_QUALIFIED",
+        "historical_endpoint_official_result": False,
+        "historical_extra_correction_failure_preserved": True,
+        "historical_extra_correction_status": "failure preserved; no extra replay or continuation",
+        "packet_npz_sha256": _sha256_file(packet_path),
+        "packet_embedded_identity": identity,
+        "raw_vector_arrays": {
+            name: array_identity(values) for name, values in raw.items()
+        },
+        "raw_vector_recomputation": {
+            "A6_relative_to_native_effective_rhs": a6_relative,
+            "full_active_zero_slave_carrier_l2": norm(
+                vectors["primary_zero_slave_carrier_residual"]
+            ),
+            "full_active_modal_port_l2": norm(
+                vectors["primary_augmented_port_residual"]
+            ),
+            "full_active_zero_slave_carrier_plus_modal_port_euclidean_relative_to_native_effective_rhs": full_active_relative,
+            "returned_condensed_relative_to_returned_rhs": condensed_relative,
+            "normal_correction_relative_history": [before_relative, after_relative],
+            "stored_scalar_identity_absolute_differences": scalar_identity_differences,
+            "scope": "native explicit full-active residual: zero-slave carrier and modal-port Euclidean components, normalized by native effective RHS; not a variable-p Gram metric norm; no operator application, resampling, material integration, or PDE solve",
+            "historical_scalar_alias": {
+                "packet_key": "full_active_space_transformed_relative",
+                "recomputed_scope": "full_active_zero_slave_carrier_plus_modal_port_euclidean_relative",
+            },
+            "normal_raw_state_limitation": "legacy packet lacks separate normal RHS/solution vectors; verifies the returned RHS/solution/residual and two b-Ax snapshots only",
+            "gates": raw_gates,
+            "pass": all(raw_gates.values()),
+        },
+        "modal_physics_validation": {
+            "row_physics": mode_physics,
+            "physical_mode_power_reconstruction": physical_rows,
+            "ordered_rows_checked": len(modal_rows),
+            "actual_basis_gauge": "historical_unscaled_Task40_direct_route",
+            "resolved_config_path": str(resolved_config_path),
+            "resolved_config_sha256": resolved_config_item["sha256"],
+            "A2_actual_quadrature_identity": {
+                "volume_degree": a2_operator_q,
+                "incident_and_port_degree": a2_incident_port_q,
+                "source": "primary NPZ identity overrides the hash-bound original Y6 resolved config",
+            },
+        },
+        "modal_comparison_vs_Y6_1": {
+            "metrics": modal_comparison,
+            "gates": modal_gates,
+            "pass": all(modal_gates.values()),
+        },
+        "saved_field_comparisons_vs_Y6_1": q_comparisons,
+        "all_gates": all_gates,
+        "pass": all(value is True for value in all_gates.values()),
+        "selection_or_transition_authority": False,
+        "A_volume": {
+            "saved_value": a_volume,
+            "material_region_sum": region_total,
+            "reintegrated": False,
+            "inferred_from_one_minus_R_minus_T": False,
+            "historical_automatic_rule_reinterpreted_as_q19": False,
+        },
     }
 
 
@@ -826,6 +1532,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--marking-record", type=Path, default=DEFAULT_MARKING)
     parser.add_argument("--acceptance-contract", type=Path, default=DEFAULT_ACCEPTANCE)
     parser.add_argument("--accepted-parent-selection-record", type=Path)
+    parser.add_argument("--primary-diagnostic-contract", type=Path)
     parser.add_argument(
         "--skip-parent-transfer",
         action="store_true",
@@ -841,17 +1548,195 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("candidate plan audit is qualified here for MPI1 only")
     if args.skip_parent_transfer and args.accepted_parent_selection_record is None:
         parser.error("--skip-parent-transfer requires --accepted-parent-selection-record")
+    v11_contract = None
+    v11_plan_path = None
+    v11_parent = None
+    v11_plan = None
+    v11_runtime_environment = None
+    v11_worker_identity = None
+    v11_source_before = None
+    v11_inputs_before = None
+    v11_ledger = None
+    if args.primary_diagnostic_contract is not None:
+        if args.accepted_parent_selection_record is None:
+            parser.error("V11 P2 requires the frozen accepted-R9 selection record")
+        if args.round_id != "round1" or args.skip_parent_transfer:
+            parser.error("V11 P2 is a fixed seed8 space audit and rejects legacy plan options")
+        try:
+            v11_contract, _ = _load_v11_primary_contract(
+                args.primary_diagnostic_contract
+            )
+        except (OSError, json.JSONDecodeError, RuntimeError, TypeError, ValueError) as exc:
+            parser.error(f"V11 P2 contract is invalid: {exc}")
+        plan_output_path = Path(v11_contract["phases"]["P2"]["plan_output_path"])
+        v11_plan_path = (ROOT / plan_output_path).resolve()
+        v11_output_root = v11_plan_path.parent.parent
+        expected_selection = next(
+            item["path"]
+            for item in v11_contract["inputs"]
+            if item["role"] == "R9_selection_transition"
+        )
+        expected_selection_path = (ROOT / expected_selection).resolve()
+        if args.accepted_parent_selection_record.resolve() != expected_selection_path:
+            parser.error("V11 P2 requires the contract-bound accepted R9 selection path")
+        if args.acceptance_contract.resolve() != DEFAULT_ACCEPTANCE.resolve():
+            parser.error("V11 P2 requires the frozen round-one acceptance contract")
+        if args.output_root.resolve() not in {DEFAULT_OUTPUT.resolve(), v11_output_root}:
+            parser.error("V11 P2 output differs from its unique contract-bound plan root")
+        selection_item = next(
+            item for item in v11_contract["inputs"]
+            if item["role"] == "R9_selection_transition"
+        )
+        acceptance_item = next(
+            item for item in v11_contract["inputs"]
+            if item["role"] == "frozen_acceptance_contract"
+        )
+        if (
+            _sha256_file(expected_selection_path) != selection_item["sha256"]
+            or _sha256_file(DEFAULT_ACCEPTANCE) != acceptance_item["sha256"]
+        ):
+            parser.error("V11 P2 selection/acceptance bytes differ from the frozen contract")
+        try:
+            v11_runtime_environment = _check_v11_runtime_envelope(comm)
+            v11_worker_identity = v11_runtime_environment[
+                "v11_watchdog_worker_identity"
+            ]
+            v11_inputs_before = _v11_input_snapshot(
+                v11_contract, _V11_P2_INPUT_ROLES
+            )
+            v11_source_before = _v11_source_snapshot()
+        except (OSError, RuntimeError, TypeError, ValueError) as exc:
+            parser.error(f"V11 P2 worker/input preflight failed: {exc}")
     cfg = _h100_config(
         kind="empty_h_active_p3",
-        case_name=f"task43_{args.round_id}_candidate_plan_initial180_mpi1",
+        case_name=(
+            "task43_v11_r9_h8_candidate_plan_mpi1"
+            if v11_contract is not None
+            else f"task43_{args.round_id}_candidate_plan_initial180_mpi1"
+        ),
         geometry_profile="initial_180",
     )
-    output_root = args.output_root.resolve()
+    if v11_contract is not None:
+        v11_parent = _load_accepted_parent_state(
+            expected_selection_path,
+            cfg=cfg,
+            comm_size=comm.size,
+        )
+        v11_plan = _build_v11_seed8_plan(
+            cfg,
+            parent=v11_parent,
+            comm_size=comm.size,
+            contract=v11_contract,
+        )
+        output_root = v11_output_root
+    else:
+        output_root = args.output_root.resolve()
     output_root.mkdir(parents=True, exist_ok=False)
+    if v11_contract is not None:
+        assert v11_worker_identity is not None
+        assert v11_runtime_environment is not None
+        v11_ledger = WorkflowLedger(
+            output_root, Path(v11_worker_identity["phase_path"])
+        )
+        v11_ledger.set_phase("preflight")
+        v11_ledger.marker(
+            "task43_v11_p2_worker_identity_bound",
+            {
+                "worker_identity": v11_worker_identity,
+                "runtime_environment": v11_runtime_environment,
+                "input_sha256": v11_inputs_before,
+                "source_sha256": v11_source_before,
+            },
+        )
     plans_dir = output_root / "plans"
     plans_dir.mkdir()
     summaries = []
-    if args.accepted_parent_selection_record is None:
+    if v11_contract is not None:
+        assert v11_plan_path is not None and v11_plan is not None
+        if v11_plan_path != (plans_dir / "v11_r9_h8.json").resolve():
+            raise ValueError("V11 P2 plan path escaped the unique plan_output root")
+        v11_plan_path.write_text(
+            json.dumps(v11_plan, indent=2, sort_keys=True, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+        assert v11_ledger is not None and v11_worker_identity is not None
+        v11_ledger.set_phase("mesh_setup")
+        v11_ledger.marker(
+            "task43_v11_p2_mesh_authority_begin",
+            {"candidate_id": "v11_r9_h8", "plan_sha256": _sha256_file(v11_plan_path)},
+        )
+        audit = _audit_plan(
+            cfg,
+            plan_path=v11_plan_path,
+            candidate_id="v11_r9_h8",
+            comm=comm,
+            parent_independent_fe_dofs=int(v11_parent["parent_independent_fe_dofs"]),
+        )
+        space_detail = audit["space_authority_detail"]
+        expected_seed_box = [16.5, 5.0, -10.0, 33.5, 10.0, 0.0]
+        seed_root_index = space_detail["seed_forest_root_index"]
+        if (
+            len(space_detail["requested_root_ids"]) != 1
+            or space_detail["requested_root_ids"] != [seed_root_index]
+            or space_detail["requested_root_boxes"]
+            != {str(seed_root_index): expected_seed_box}
+            or space_detail["seed_root_box_nm"] != expected_seed_box
+            or space_detail["seed_mesh_global_cell_id"] != 8
+            or space_detail["requested_root_mesh_global_cell_ids"] != [8]
+            or space_detail["root_id_namespace"]
+            != "forest_root_index; not the parent mesh global-cell ID"
+            or space_detail["forced_closure_root_ids"]
+            or space_detail["seed_parent_degree"] != 5
+            or space_detail["seed_child_degrees"] != [5]
+            or not space_detail["seed_child_degree_inheritance_pass"]
+            or space_detail["predicted_returned_trace_dtn_rows"]
+            != int(audit["dofs"]["independent_trace_rows"]) + 612
+            or space_detail["hanging_or_floquet_slave_rows_globally_numbered"]
+        ):
+            raise RuntimeError("V11 P2 actual root/degree/Floquet/carrier authority differs")
+        _require_v11_watchdog_worker_identity(
+            require_unused_phase_file=False,
+            expected_identity=v11_worker_identity,
+        )
+        v11_ledger.marker(
+            "task43_v11_p2_mesh_authority_complete",
+            {
+                "candidate_id": "v11_r9_h8",
+                "plan_sha256": _sha256_file(v11_plan_path),
+                "independent_trace_rows": audit["dofs"]["independent_trace_rows"],
+                "active_cell_interior_rows": audit["dofs"]["active_cell_interior_rows"],
+                "independent_active_fe_dofs": audit["dofs"]["independent_active_fe_dofs"],
+            },
+        )
+        audit["plan_status"] = {
+            "candidate_id": "v11_r9_h8",
+            "action": "h_refine",
+            "status": "plan_built",
+            "predeclared_global_cell_id": 8,
+            "requested_h_root_splits": 1,
+            "source": "v11_predeclared_seed8",
+        }
+        audit["strict_fe_gate"] = {
+            "parent_independent_fe_dofs": int(v11_parent["parent_independent_fe_dofs"]),
+            "candidate_independent_fe_dofs": int(audit["dofs"]["independent_active_fe_dofs"]),
+            "added_dofs": int(audit["dofs"]["added_independent_fe_dofs"]),
+            "positive_added_dofs": int(audit["dofs"]["added_independent_fe_dofs"]) > 0,
+            "exclusive_upper_bound": int(
+                v11_contract["phases"]["P4"]["required_fe_bounds"]["target_exclusive_upper"]
+            ),
+            "below_exclusive_upper": int(audit["dofs"]["independent_active_fe_dofs"])
+            < int(v11_contract["phases"]["P4"]["required_fe_bounds"]["target_exclusive_upper"]),
+        }
+        audit["strict_fe_gate"]["pass"] = bool(
+            audit["strict_fe_gate"]["positive_added_dofs"]
+            and audit["strict_fe_gate"]["below_exclusive_upper"]
+        )
+        summaries.append(audit)
+        (plans_dir / "v11_r9_h8.audit.json").write_text(
+            json.dumps(audit, indent=2, sort_keys=True, allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+    elif args.accepted_parent_selection_record is None:
         if args.round_id != "round1":
             parser.error("later rounds require --accepted-parent-selection-record")
         parent_identity, boxes_by_id = _load_parent_identity(
@@ -951,11 +1836,23 @@ def main(argv: list[str] | None = None) -> int:
             )
     record = {
         "schema": (
+            "task43.v11_r9_h8_plan_audit_bundle.v1"
+            if v11_contract is not None
+            else (
             "task43.round1-candidate-plan-audit-bundle.v1"
             if args.accepted_parent_selection_record is None
             else "task43.adaptive-candidate-plan-audit-bundle.v1"
+            )
         ),
         "classification": "mesh_and_entity_closure_only_no_pde_solve",
+        "contract_path": (
+            str(args.primary_diagnostic_contract.resolve())
+            if args.primary_diagnostic_contract is not None
+            else None
+        ),
+        "plan_output_path": (
+            str(v11_plan_path) if v11_plan_path is not None else None
+        ),
         "skip_parent_transfer_requested": args.skip_parent_transfer,
         "started_unix_seconds": program_started_unix_seconds,
         "completed_unix_seconds": time.time(),
@@ -963,6 +1860,20 @@ def main(argv: list[str] | None = None) -> int:
         "parent_identity": (
             parent_identity
             if args.accepted_parent_selection_record is None
+            else {
+                key: value
+                for key, value in v11_parent.items()
+                if key
+                not in {
+                    "parent_forest",
+                    "parent_degree_by_box",
+                    "parent_boxes_by_global_id",
+                    "parent_record",
+                    "parent_plan",
+                    "parent_comparison",
+                }
+            }
+            if v11_contract is not None
             else {
                 key: value
                 for key, value in parent.items()
@@ -979,12 +1890,66 @@ def main(argv: list[str] | None = None) -> int:
         ),
         "candidates": summaries,
     }
+    v11_a2_response = None
+    if v11_contract is not None:
+        try:
+            v11_a2_response = _v11_saved_a2_primary_q_response(v11_contract)
+        except (OSError, KeyError, TypeError, ValueError, RuntimeError) as exc:
+            v11_a2_response = {
+                "schema": "task43.v11.saved_a2_primary_q_response.v1",
+                "status": "failed_saved_primary_read_or_recomputation",
+                "pass": False,
+                "error": f"{type(exc).__name__}: {exc}",
+                "historical_endpoint_status": "INCOMPLETE_NOT_QUALIFIED",
+                "official_result": False,
+                "passed": False,
+                "extra_correction_status": "historical_failure_preserved_not_replayed",
+            }
+        record["A2_saved_primary_q_response"] = v11_a2_response
     record_path = output_root / "plan_audit.json"
+    if v11_contract is not None:
+        assert v11_worker_identity is not None
+        _require_v11_watchdog_worker_identity(
+            require_unused_phase_file=False,
+            expected_identity=v11_worker_identity,
+        )
+        inputs_after = _v11_input_snapshot(v11_contract, _V11_P2_INPUT_ROLES)
+        source_after = _v11_source_snapshot()
+        if inputs_after != v11_inputs_before or source_after != v11_source_before:
+            raise RuntimeError("V11 P2 source/input identity changed during space preparation")
+        record["v11_runtime_identity"] = {
+            "worker_identity": v11_worker_identity,
+            "runtime_environment": v11_runtime_environment,
+            "input_sha256_before": v11_inputs_before,
+            "input_sha256_after": inputs_after,
+            "source_sha256_before": v11_source_before,
+            "source_sha256_after": source_after,
+            "unchanged": True,
+        }
     record_path.write_text(
         json.dumps(record, indent=2, sort_keys=True, allow_nan=False) + "\n",
         encoding="utf-8",
     )
     print(json.dumps(record, sort_keys=True, allow_nan=False))
+    if v11_contract is not None and summaries[0]["strict_fe_gate"]["pass"] is not True:
+        raise RuntimeError("V11 seed8 actual independent FE strict bounds failed")
+    if v11_contract is not None and (
+        not isinstance(v11_a2_response, dict)
+        or v11_a2_response.get("pass") is not True
+    ):
+        raise RuntimeError(
+            "V11 P2 saved A2 primary raw/q response failed; see plan_audit.json"
+        )
+    if v11_ledger is not None:
+        v11_ledger.set_phase("complete")
+        v11_ledger.marker(
+            "task43_v11_p2_space_plan_complete",
+            {
+                "plan_audit_path": str(record_path.resolve()),
+                "plan_audit_sha256": _sha256_file(record_path),
+                "plan_sha256": _sha256_file(v11_plan_path),
+            },
+        )
     return 0
 
 

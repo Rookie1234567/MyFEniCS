@@ -1,0 +1,37 @@
+{
+  "file": "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+  "r9_head": "db6d39dbc8688cf525e5462cc4f0eaa81fca00c4",
+  "v11_start_head": "70e2cfdcc3e5a7c3be5e8b714076420e3eac1129",
+  "functions": [
+    {
+      "function": "_h100_config",
+      "identical_source": true,
+      "r9_sha256": "3de42256252c73db2baaf0b9540106c4c466fa38d4650941a4aabd6f330645e9",
+      "v11_start_sha256": "3de42256252c73db2baaf0b9540106c4c466fa38d4650941a4aabd6f330645e9"
+    },
+    {
+      "function": "_assert_mesh_profile",
+      "identical_source": true,
+      "r9_sha256": "f197473622698c495f42a2b85770811bf5fc9cc1c421bfaa685b1dd0c10590fd",
+      "v11_start_sha256": "f197473622698c495f42a2b85770811bf5fc9cc1c421bfaa685b1dd0c10590fd"
+    },
+    {
+      "function": "_active_solution_storage",
+      "identical_source": true,
+      "r9_sha256": "336abc43a55b957a92b971b7f4ce238cb721c1303fc42ac88e43431a16345aa7",
+      "v11_start_sha256": "336abc43a55b957a92b971b7f4ce238cb721c1303fc42ac88e43431a16345aa7"
+    },
+    {
+      "function": "_validate_accepted_parent_candidate_inputs",
+      "status": "NAME_NOT_PRESENT_BOTH",
+      "scope": "static function lookup only"
+    },
+    {
+      "function": "_configure_direct_factor_backend",
+      "identical_source": true,
+      "r9_sha256": "82654a4a8443fecc3235e087f9bac085a22eb3a4e03477c55ce5bcdcfc981955",
+      "v11_start_sha256": "82654a4a8443fecc3235e087f9bac085a22eb3a4e03477c55ce5bcdcfc981955"
+    }
+  ],
+  "scope": "original baseline/configuration and recovery functions; excludes new V11 call-layer code which is reviewed separately"
+}
