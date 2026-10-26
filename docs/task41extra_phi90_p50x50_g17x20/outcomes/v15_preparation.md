@@ -127,3 +127,14 @@ bash scripts/run_case_in_user_service.sh input/task41extra_phi90_p50x50_g17x20/b
 最终5项定向回归通过（2.28 s），覆盖实际dispatcher→worker传递、旧默认、失败owner清理、授权hash/窗口/前序拒绝及仅一次接续。测试不是科学验收；本提交冻结时尚未启动新构建。补丁SHA256为 `fdca1e6a2252d7cfe400e6b22d5dee45d0c207b9f31080fb9bd7f7cedc1e8a3b`。
 
 追加授权SHA256 `85981ba987a7515cd76c813034073f0eb09f133ef30acfa972d911a2e4cfa0c6`，旧claim SHA256仍为 `a35431d3fffc896b9ca8e909b60b2f269d8d94f22d0a96e2ed3ef4a60e5659eb`。2026-10-25 22:53 UTC按campaign API读得数值余额98772.9658625秒；这只是当时快照，正式prepare/启动须重新读取。授权文件中的时间为主控登记时间，非用户消息精确到达时刻。
+
+
+## 2026-10-26 时间停止异常与有界热点调查（继续执行中）
+
+新run `20261025T230726.217051Z`（source `7d08ba512552c7ef9a1e8f0f1dac4641e52e7264`）已完成冻结JIT身份检查并进入fresh owner；八键前缀后的保守预测为剩余构建171107.65433076024 s，加fsum情景20496 s与其他验收计划14400 s，共206003.65433076024 s。它超过当时97244.77301950839 s余额。随后局部import遮蔽外层`V14ResourceStop`导致UnboundLocalError；旧FAILED/V16_ADMISSION_LEDGER_INCONSISTENT原样保留，不改写旧收据。
+
+已最小修复作用域，并在拒绝前保存前缀分项与明确TIME_ADMISSION_CONTROLLED_STOP分类。实际嵌套callback测试1 passed（0.97 s），不是科学验收；不改变窗口、资源或数学门。旧八键分项未落盘，仍NOT_PERSISTED_BEFORE_REJECT，不伪补历史。
+
+本次service父成本751.769998218 s（含required checker 47.02598814526573 s），watchdog子段692.2478735409677 s不重复相加。tree峰8911572992 B，cgroup峰8768217088 B，task swap0，后代清场；未保存新的NPY。required checker实际执行但缺终态充分产品，INCOMPLETE/TERMINAL_EVIDENCE_INVALID；action/recovery未验收。详见[原始路径与hash](v15_preparation/retry_time_admission_failure.json)。
+
+用户在本次状态反馈后明确要求：修复异常并查清真实构建热点，可作最小修复后继续，禁止原样全域重跑或仅凭预测结束。当前继续进行有界代码/保存数据成本调查；不刷新T0，不把预测57.2h当实测。V6历史Gram16807.707907172386 s/28000键、owner24777.34818448685 s只作历史定位依据；V9 owner68236.865869666 s的分项未知。新诊断与旧运行分列，尚不宣称全域可准入或成功。

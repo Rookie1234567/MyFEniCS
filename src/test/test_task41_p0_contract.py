@@ -2632,3 +2632,46 @@ def test_task41_v15_authorized_retry_preserves_old_claim_and_is_single_use(tmp_p
         _task41_b0_build_v15_full_owner_once(dict(authority,run_directory=str(other)),
             run_directory=other,owner_builder=lambda:owner,current_root=tmp_path)
     assert old.read_bytes() == old_bytes
+
+
+def test_task41_v15_actual_allocation_callback_reports_time_stop_before_memory_branch():
+    """Execute the real nested callback, with only its expensive runtime replaced."""
+    import ast
+    import textwrap
+    from types import SimpleNamespace
+    import numpy as np
+    import src.runners.task40_v10_worker as worker
+    from src.runners.physical_p4_schur_v14 import V14ResourceStop
+
+    tree = ast.parse(Path(worker.__file__).read_text())
+    outer = next(n for n in tree.body if isinstance(n, ast.FunctionDef)
+                 and n.name == "run_task40_v10_p6_reference_worker")
+    callback = next(n for n in ast.walk(outer) if isinstance(n, ast.FunctionDef)
+                    and n.name == "allocation_gate")
+    events, summary = [], {}
+    runtime = SimpleNamespace(workflow_reserved_seconds=97244.77301950839,
+        workflow_clock_interval=lambda: {"budget_seconds": 0.0},
+        marker=lambda name, facts: events.append((name, facts)))
+    namespace = {"np":np, "Mapping":dict, "Any":object,
+                 "resource_stop":V14ResourceStop, "test_runtime":runtime,
+                 "test_summary":summary}
+    source = ("def make_callback():\n"
+              "    allocation_gate_invocation_count = 0\n"
+              "    V14ResourceStop = resource_stop\n"
+              "    task41_v15_acceptance_only = True\n"
+              "    runtime = test_runtime\n"
+              "    summary = test_summary\n"
+              + textwrap.indent(ast.unparse(callback), "    ")
+              + "\n    return allocation_gate\n")
+    exec(compile(source, worker.__file__, "exec"), namespace)
+    gate = namespace["make_callback"]()
+    facts = {"projected_remaining_class_build_seconds_upper":171107.65433076024,
+             "measured_prefix_cache_misses":8, "prefix_records":[{"fixture":True}]}
+    with pytest.raises(V14ResourceStop) as stopped:
+        gate("mesh_actual_exact_full_admission", facts)
+    assert stopped.value.classification == "TIME_ADMISSION_CONTROLLED_STOP"
+    record = summary["v15_build_and_acceptance_time_admission"]
+    assert record["total_projected_seconds"] == pytest.approx(206003.65433076024)
+    assert record["remaining_numerical_seconds"] == 97244.77301950839
+    assert record["measured_prefix"]["prefix_records"] == facts["prefix_records"]
+    assert events[-1][0] == "task41_v15_build_and_acceptance_time_admission"

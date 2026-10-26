@@ -11097,13 +11097,26 @@ def run_task40_v10_p6_reference_worker(
                     "other_reserve_basis": "four-hour conservative planning allowance; actual exclusive costs remain separately measured",
                     "total_projected_seconds": remaining_build + rhs_fsum_reserve + other_acceptance_reserve,
                     "fixed_cutoff_unchanged": True,
+                    # Persist the measured evidence before a rejected gate
+                    # unwinds the partially built owner.
+                    "measured_prefix": {
+                        key: facts.get(key) for key in (
+                            "measured_prefix_cache_misses", "prefix_records",
+                            "prefix_phase_mean_seconds", "prefix_phase_max_seconds",
+                            "raw_key_count", "oriented_key_count",
+                            "remaining_miss_projection_method",
+                        )
+                    },
                 }
                 summary["v15_build_and_acceptance_time_admission"] = projection
                 runtime.marker("task41_v15_build_and_acceptance_time_admission", projection)
                 if not np.isfinite(remaining_build) or remaining_build < 0:
                     raise ValueError("V15 measured prefix returned an invalid build-time projection")
                 if projection["total_projected_seconds"] > remaining:
-                    raise V14ResourceStop("V15 fixed window cannot admit remaining build plus full action/recovery/save/checker budget")
+                    raise V14ResourceStop(
+                        "V15 fixed window cannot admit remaining build plus full action/recovery/save/checker budget",
+                        classification="TIME_ADMISSION_CONTROLLED_STOP",
+                    )
             amount = int(facts.get(
                 "additional_payload_bytes",
                 facts.get("matrix_payload_bytes", facts.get("workspace_bytes", 0)),
@@ -11338,8 +11351,8 @@ def run_task40_v10_p6_reference_worker(
                 bounds["total_rss_inequality_passed"]
                 and bounds["incremental_headroom_inequality_passed"]
             ):
-                from .physical_p4_schur_v14 import V14ResourceStop
-
+                # Use the worker's enclosing import; a local import here
+                # shadows the earlier fixed-window admission exception.
                 raise V14ResourceStop(f"Task40 V12 two-boundary memory admission failed: {admission}")
             completion_sample = runtime.sample(f"v10_{label}_allocation_gate")
             admission["allocation_gate_completion_sample"] = completion_sample

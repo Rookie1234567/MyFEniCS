@@ -1,0 +1,173 @@
+{
+  "schema": "task41.v15.authorized_retry_terminal_evidence.v1",
+  "run_id": "20261025T230726.217051Z",
+  "run_root": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261025T230726.217051Z",
+  "source_sha": "7d08ba512552c7ef9a1e8f0f1dac4641e52e7264",
+  "original_status": "FAILED",
+  "original_result_classification": "V16_ADMISSION_LEDGER_INCONSISTENT",
+  "original_error": {
+    "message": "cannot access local variable 'V14ResourceStop' where it is not associated with a value",
+    "type": "UnboundLocalError"
+  },
+  "posthoc_interpretation": "TIME_ADMISSION_REJECTED_WITH_EXCEPTION_REPORTING_BUG; original records unchanged",
+  "time_admission": {
+    "fixed_cutoff_unchanged": true,
+    "four_rhs_fsum_scenario_upper_seconds": 20496.0,
+    "measured_prefix_based_remaining_build_seconds": 171107.65433076024,
+    "other_action_native_recovery_save_checker_planning_reserve_seconds": 14400.0,
+    "other_reserve_basis": "four-hour conservative planning allowance; actual exclusive costs remain separately measured",
+    "other_reserve_is_measured": false,
+    "remaining_numerical_seconds": 97244.77301950839,
+    "total_projected_seconds": 206003.65433076024
+  },
+  "volume_owner_events": [
+    {
+      "event": "task41_b0_v9_volume_owner",
+      "facts": {
+        "degree": 6,
+        "include_positive_coefficients": false,
+        "owned_cells": 28000,
+        "phase": "fresh_same_mesh_levels",
+        "status": "REUSED"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1792970027698729079
+    },
+    {
+      "event": "task41_b0_v9_volume_owner",
+      "facts": {
+        "phase": "direct_volume_form_compile",
+        "status": "STARTED"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1792970027699175237
+    },
+    {
+      "event": "task41_b0_v9_volume_owner",
+      "facts": {
+        "construction": "curl_plus_mass_only",
+        "phase": "direct_volume_form_compile",
+        "status": "COMPLETED"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1792970027918434735
+    },
+    {
+      "event": "task41_b0_v9_volume_owner",
+      "facts": {
+        "appended_rows": 64120,
+        "matrix_materialized": false,
+        "phase": "fresh_volume_owner",
+        "status": "STARTED"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1792970027919325791
+    },
+    {
+      "event": "task41_v15_build_and_acceptance_time_admission",
+      "facts": {
+        "fixed_cutoff_unchanged": true,
+        "four_rhs_fsum_scenario_upper_seconds": 20496.0,
+        "measured_prefix_based_remaining_build_seconds": 171107.65433076024,
+        "other_action_native_recovery_save_checker_planning_reserve_seconds": 14400.0,
+        "other_reserve_basis": "four-hour conservative planning allowance; actual exclusive costs remain separately measured",
+        "other_reserve_is_measured": false,
+        "remaining_numerical_seconds": 97244.77301950839,
+        "total_projected_seconds": 206003.65433076024
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1792970316803580796
+    },
+    {
+      "event": "task41_b0_v9_volume_owner",
+      "facts": {
+        "error": "UnboundLocalError: cannot access local variable 'V14ResourceStop' where it is not associated with a value",
+        "phase": "fresh_volume_owner",
+        "status": "FAILED"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1792970316805941703
+    }
+  ],
+  "cleanup": {
+    "completed": true,
+    "descendants_checked_by": "independent_launcher_watchdog",
+    "errors": [],
+    "passed": true,
+    "scope": "worker_owned_actions_levels_and_runtime_post_cleanup_sample"
+  },
+  "npys_saved": 0,
+  "tree_peak_rss_bytes": 8911572992,
+  "tree_swap_peak_bytes": 0,
+  "cgroup_peak_bytes": 8768217088,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "watchdog_elapsed_seconds": 692.2478735409677,
+  "service_time_fields": {
+    "service_elapsed_seconds": 751.769998218
+  },
+  "required_checker": {
+    "action_passed": null,
+    "audit_completed": false,
+    "classification": "TERMINAL_EVIDENCE_INVALID",
+    "data_integrity": false,
+    "errors": [
+      "ValueError: V15 run has no hash-bound terminal-sufficient checkpoint"
+    ],
+    "official_result": false,
+    "raw_evidence_retained": true,
+    "recovery_passed": null,
+    "schema": "task41.p0.b0.v15.terminal_sufficient_independent_check.v1",
+    "scientific_qualified": false,
+    "status": "INCOMPLETE"
+  },
+  "checker_elapsed_seconds": 47.02598814526573,
+  "prefix_detail_status": "NOT_PERSISTED_BEFORE_REJECT; no rerun to reconstruct historical timings",
+  "files": [
+    {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261025T230726.217051Z/task40_v10_p6_candidate_summary.json",
+      "bytes": 82835,
+      "sha256": "163e3c13dcc34841a43de16cbad4aefd3c1d1bce717899f3184c27adea590cf5"
+    },
+    {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261025T230726.217051Z/run_manifest.json",
+      "bytes": 9511,
+      "sha256": "90dacdbc97b4b3a5afc384ba1ca91bc42e7cb52db7b206eeb25f331b1bce5328"
+    },
+    {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261025T230726.217051Z/run_summary.json",
+      "bytes": 13729,
+      "sha256": "839b43f2839136434b8c191d07b8e576c69ca30fd5f500cb2897ec8b4e97a27d"
+    },
+    {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261025T230726.217051Z/watchdog/summary.json",
+      "bytes": 12398,
+      "sha256": "d564d56b4ac4b3662566a584f2e5f68b8e521dc34de0a4c07dfe34fd3bd0db48"
+    },
+    {
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261025T230726.217051Z/task41_b0_07nm_p6_y_orbit_reference_events.jsonl",
+      "bytes": 235124,
+      "sha256": "f8052185c235d94d67ff4d46b585335a6dead1ba85669642aac7e6d8de5e2391"
+    },
+    {
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_7d08ba512552c7ef9a1e8f0f1dac4641e52e7264/task41_p0_checker_result.json",
+      "bytes": 446,
+      "sha256": "4f4366bbd920438c605efb9f4933e31376cf8d3615a619439507031adbaa92af"
+    },
+    {
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_7d08ba512552c7ef9a1e8f0f1dac4641e52e7264/task41_p0_service_receipt.json",
+      "bytes": 25046,
+      "sha256": "ada811822542f26240b5a86097b685fbb32f40db858bdbd64e33019316dbb56b"
+    },
+    {
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v15_full_two_column_acceptance_36h.jsonl.v15_full_owner_claim.json",
+      "bytes": 2517,
+      "sha256": "a35431d3fffc896b9ca8e909b60b2f269d8d94f22d0a96e2ed3ef4a60e5659eb"
+    },
+    {
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v15_full_two_column_acceptance_36h.jsonl.v15_full_owner_claim.json.authorized_retry_1.json",
+      "bytes": 2751,
+      "sha256": "1bcfca2e6e9378ba91c0536205195d433d6eb75c50914f830c6ef5f196c48f6b"
+    }
+  ]
+}
