@@ -1,0 +1,7 @@
+{
+  "raw_path": "benchmarks/artifacts/task43/v10_static_correction/staged_diff_check.stdout",
+  "raw_sha256": "00eb6e6808341e1577fe02facbdf86de6f7ab99babe73fb2701583a3e1d35e4e",
+  "raw_text": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/collector_snapshots/map_direct_needed_paths.sh:9: trailing whitespace.\n+printf 'activation_env_overrides_present=' \n",
+  "exit_code": 2,
+  "reason": "exact historical collector whitespace retained"
+}

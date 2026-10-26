@@ -1,0 +1,304 @@
+{
+  "schema": "task43.v10.s1_direct_needed_raw_boundaries.v1",
+  "source_path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_direct_needed_paths.stdout",
+  "source_sha256": "42700961db2b4ca1ae2206d93c18a6e0ad8986ec72b818b26a192b082eb005c4",
+  "excerpts": [
+    {
+      "line_range": [
+        415,
+        431
+      ],
+      "range_sha256_no_terminal_newline": "880725162a2a2fd419d69876b0671447fa5ee2932aeecd57ec9f21ef673bdea4",
+      "lines": [
+        {
+          "line": 415,
+          "sha256_no_newline": "d440ce4b056059ff7679225764ab868f138e33983ecdf5b6808c13b76a3e5127",
+          "text": "EDGE parent=/usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_btl_ofi.so needed=ld-linux-x86-64.so.2 source=ld.so.cache candidate=/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 realpath=/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2"
+        },
+        {
+          "line": 416,
+          "sha256_no_newline": "8ce2e08ea1393597bb8d08ee7e9fd439df73db0cd05e9699d5fa03c635a5edb5",
+          "text": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2"
+        },
+        {
+          "line": 417,
+          "sha256_no_newline": "17591a5223b31acdf39636ce99c07007f0c0bfa06eca0396e368c60278811cd8",
+          "text": "BUILD_ID   GNU                  0x00000014\tNT_GNU_BUILD_ID (unique build ID bitstring)\t    Build ID: 0d77dbd4379bf0b5af3e05be7fb6af1e4cea7c96"
+        },
+        {
+          "line": 418,
+          "sha256_no_newline": "77913765664e964149f88ad074ee50e3be3960e0bbee93dfa2a44903d0c0c932",
+          "text": "DYNAMIC  0x000000000000000e (SONAME)             Library soname: [ld-linux-x86-64.so.2]"
+        },
+        {
+          "line": 419,
+          "sha256_no_newline": "c7b4b175e7f48567c45e9fd5f56b4b98637e02a068d5de4a3a9a0e1b2399ca57",
+          "text": "PACKAGE_OWNER exit=0 libc6:amd64: /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2"
+        },
+        {
+          "line": 420,
+          "sha256_no_newline": "2a3b9118522e8dac320e5fd6dbbf8a3464192ffcee464f7fa569db43597cd5a7",
+          "text": "PACKAGE libc6:amd64 2.39-0ubuntu8.9"
+        },
+        {
+          "line": 421,
+          "sha256_no_newline": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "text": ""
+        },
+        {
+          "line": 422,
+          "sha256_no_newline": "96fc46771df3d434da232104d8e828703a2955d49c0c8e6969d7483c133cffe8",
+          "text": "THREE EXPLICIT BRIDGE OBJECTS AND THEIR DIRECT NEEDED EDGES"
+        },
+        {
+          "line": 423,
+          "sha256_no_newline": "7818246c77ba89b52d9479934fa1f1a1eba5ffe17bbe1cc2f40c943a3a3c614c",
+          "text": "BRIDGE libpsm_infinipath.so.1 candidate=/lib/x86_64-linux-gnu/libpsm_infinipath.so.1 realpath=/usr/lib/libpsm1/libpsm_infinipath.so.1.16"
+        },
+        {
+          "line": 424,
+          "sha256_no_newline": "3fa623c46ec8b3c68d0d4f30822808ea877738b0d8ae8bb5c86ed7a7752f11de",
+          "text": "22326dcb62181903e978a3123929f26185b2ccae001b988d44fd88719f5c1fc2  /usr/lib/libpsm1/libpsm_infinipath.so.1.16"
+        },
+        {
+          "line": 425,
+          "sha256_no_newline": "1a240eca6f1e30ff5f4e9e2ce23b64c86fc87071d22a13edef94f6de795dd22b",
+          "text": "BUILD_ID   GNU                  0x00000014\tNT_GNU_BUILD_ID (unique build ID bitstring)\t    Build ID: c0c162e535b7d5de4dca343449705a3b4c1edf70"
+        },
+        {
+          "line": 426,
+          "sha256_no_newline": "f79371c1c7d2e7419b75aac06befc606d0759208e0165aa1bc3ca67bf3956705",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [libinfinipath.so.4]"
+        },
+        {
+          "line": 427,
+          "sha256_no_newline": "9ee7a1415ba9e2adf5efc3a3753f3dfd231c637f901e5da2a68edbf459e899b2",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [libuuid.so.1]"
+        },
+        {
+          "line": 428,
+          "sha256_no_newline": "7ee7b3959dba2059ad6ff771e4386e8a89effb0c8e744a7548f1edc0e4e247ff",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]"
+        },
+        {
+          "line": 429,
+          "sha256_no_newline": "c8fc2fe282bd3178b40e4096638287b6448f8e6a365ae8af3e1318de371c6dbf",
+          "text": "DYNAMIC  0x000000000000000e (SONAME)             Library soname: [libpsm_infinipath.so.1]"
+        },
+        {
+          "line": 430,
+          "sha256_no_newline": "8081a089fd45e1e6836461b7018f66444ef29c13f0efb9930f5263289ec62e91",
+          "text": "PACKAGE_OWNER exit=0 libpsm-infinipath1: /usr/lib/libpsm1/libpsm_infinipath.so.1.16"
+        },
+        {
+          "line": 431,
+          "sha256_no_newline": "737048c0be4c9034870a25259adcf4c87849ab55047622ce241d59d7bca0490d",
+          "text": "PACKAGE libpsm-infinipath1 3.3+20.604758e7-6.3build1"
+        }
+      ]
+    },
+    {
+      "line_range": [
+        447,
+        462
+      ],
+      "range_sha256_no_terminal_newline": "b26034532d9a31eb8c558c291988445a610bf9ef3c6761bc61cb0318e95b4761",
+      "lines": [
+        {
+          "line": 447,
+          "sha256_no_newline": "c17c32d185451cfec9a96cad44862097e95ccf2351cf6297c636225f406c8824",
+          "text": "EDGE parent=/usr/lib/libpsm1/libpsm_infinipath.so.1.16 needed=libc.so.6 source=ld.so.cache candidate=/lib/x86_64-linux-gnu/libc.so.6 realpath=/usr/lib/x86_64-linux-gnu/libc.so.6"
+        },
+        {
+          "line": 448,
+          "sha256_no_newline": "b7faf64dce688a365473f50d14e79382992383c430fc09a637fd32302ae9af98",
+          "text": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf  /usr/lib/x86_64-linux-gnu/libc.so.6"
+        },
+        {
+          "line": 449,
+          "sha256_no_newline": "23eb182de866c28889b95992cbb0c0188627516cb834b3078b57cc8eef20ac55",
+          "text": "BUILD_ID   GNU                  0x00000014\tNT_GNU_BUILD_ID (unique build ID bitstring)\t    Build ID: a4a7992a8e66555c8141ab2a08a8465ff6e0ea65"
+        },
+        {
+          "line": 450,
+          "sha256_no_newline": "1c3ccf5a449915ec3c333bbb98c3725fe8b05c38d44fc9c7b2a5c30ac8956c3e",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [ld-linux-x86-64.so.2]"
+        },
+        {
+          "line": 451,
+          "sha256_no_newline": "bedc3aa7e40123711282b078df2e85ed5759c507831740c5374a70c8dacbe75c",
+          "text": "DYNAMIC  0x000000000000000e (SONAME)             Library soname: [libc.so.6]"
+        },
+        {
+          "line": 452,
+          "sha256_no_newline": "e72fa84e120d921f043b97b1df9369d106b362d0fafc93c4ca4f1fe6a062fd2c",
+          "text": "PACKAGE_OWNER exit=0 libc6:amd64: /usr/lib/x86_64-linux-gnu/libc.so.6"
+        },
+        {
+          "line": 453,
+          "sha256_no_newline": "2a3b9118522e8dac320e5fd6dbbf8a3464192ffcee464f7fa569db43597cd5a7",
+          "text": "PACKAGE libc6:amd64 2.39-0ubuntu8.9"
+        },
+        {
+          "line": 454,
+          "sha256_no_newline": "d18f47055126bb1e407354d6e19cb089545fbda02be4496d6d65c6677af711a6",
+          "text": "BRIDGE libmca_common_ofi.so.10 candidate=/lib/x86_64-linux-gnu/libmca_common_ofi.so.10 realpath=/usr/lib/x86_64-linux-gnu/libmca_common_ofi.so.10.0.2"
+        },
+        {
+          "line": 455,
+          "sha256_no_newline": "3c17797e4238dd56e3200f974bcc82d0addb980bcd5c3c91387a4d9c7f13ce56",
+          "text": "c6ff425c78528daf5e8b7df1276fb05e52535775681309ce86072784d436a6e3  /usr/lib/x86_64-linux-gnu/libmca_common_ofi.so.10.0.2"
+        },
+        {
+          "line": 456,
+          "sha256_no_newline": "269a25356ddc9dc060101c67a6525c01fb2d66d343904cc9e2576a7763692971",
+          "text": "BUILD_ID   GNU                  0x00000014\tNT_GNU_BUILD_ID (unique build ID bitstring)\t    Build ID: 3b64b40f76196adf08db83a1502c12afff4d0a8e"
+        },
+        {
+          "line": 457,
+          "sha256_no_newline": "68e71d41dfcbf3b6c5de7a711e490ddf592a8b2b6fb0388def57de06616ceb57",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [libfabric.so.1]"
+        },
+        {
+          "line": 458,
+          "sha256_no_newline": "cf45ded9fb7f1e903ed090aa7a3f378888c0ef5781c58fba8fccf3ee965021d7",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [libhwloc.so.15]"
+        },
+        {
+          "line": 459,
+          "sha256_no_newline": "7ee7b3959dba2059ad6ff771e4386e8a89effb0c8e744a7548f1edc0e4e247ff",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]"
+        },
+        {
+          "line": 460,
+          "sha256_no_newline": "e54ddc0408c34b62187b8ccc00f3817e8342530f875c0d52aa2a6436c116cfb2",
+          "text": "DYNAMIC  0x000000000000000e (SONAME)             Library soname: [libmca_common_ofi.so.10]"
+        },
+        {
+          "line": 461,
+          "sha256_no_newline": "99ba93ac9728bf6417e87cdd052e6443896cd9fa5f461a8ed4fe0bcc0874d83b",
+          "text": "PACKAGE_OWNER exit=0 libopenmpi3t64:amd64: /usr/lib/x86_64-linux-gnu/libmca_common_ofi.so.10.0.2"
+        },
+        {
+          "line": 462,
+          "sha256_no_newline": "ce2684c08650392d63b9dd497d63bf96959d98c6948f614bd397d182b452d434",
+          "text": "PACKAGE libopenmpi3t64:amd64 4.1.6-7ubuntu2"
+        }
+      ]
+    },
+    {
+      "line_range": [
+        485,
+        504
+      ],
+      "range_sha256_no_terminal_newline": "70e3925685983158db9376532504c3a5b5ab1a7911420f1017feec44e3797445",
+      "lines": [
+        {
+          "line": 485,
+          "sha256_no_newline": "f00d1ce2ac73acf68ca8de3b84cc5b7179bbb4b88a3d1d079841f670dbf306bf",
+          "text": "EDGE parent=/usr/lib/x86_64-linux-gnu/libmca_common_ofi.so.10.0.2 needed=libc.so.6 source=ld.so.cache candidate=/lib/x86_64-linux-gnu/libc.so.6 realpath=/usr/lib/x86_64-linux-gnu/libc.so.6"
+        },
+        {
+          "line": 486,
+          "sha256_no_newline": "b7faf64dce688a365473f50d14e79382992383c430fc09a637fd32302ae9af98",
+          "text": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf  /usr/lib/x86_64-linux-gnu/libc.so.6"
+        },
+        {
+          "line": 487,
+          "sha256_no_newline": "23eb182de866c28889b95992cbb0c0188627516cb834b3078b57cc8eef20ac55",
+          "text": "BUILD_ID   GNU                  0x00000014\tNT_GNU_BUILD_ID (unique build ID bitstring)\t    Build ID: a4a7992a8e66555c8141ab2a08a8465ff6e0ea65"
+        },
+        {
+          "line": 488,
+          "sha256_no_newline": "1c3ccf5a449915ec3c333bbb98c3725fe8b05c38d44fc9c7b2a5c30ac8956c3e",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [ld-linux-x86-64.so.2]"
+        },
+        {
+          "line": 489,
+          "sha256_no_newline": "bedc3aa7e40123711282b078df2e85ed5759c507831740c5374a70c8dacbe75c",
+          "text": "DYNAMIC  0x000000000000000e (SONAME)             Library soname: [libc.so.6]"
+        },
+        {
+          "line": 490,
+          "sha256_no_newline": "e72fa84e120d921f043b97b1df9369d106b362d0fafc93c4ca4f1fe6a062fd2c",
+          "text": "PACKAGE_OWNER exit=0 libc6:amd64: /usr/lib/x86_64-linux-gnu/libc.so.6"
+        },
+        {
+          "line": 491,
+          "sha256_no_newline": "2a3b9118522e8dac320e5fd6dbbf8a3464192ffcee464f7fa569db43597cd5a7",
+          "text": "PACKAGE libc6:amd64 2.39-0ubuntu8.9"
+        },
+        {
+          "line": 492,
+          "sha256_no_newline": "ed8b3bf27f8af0940cd1b0b3c98384e58dd20f4441b354ea4f3e4405932184f6",
+          "text": "BRIDGE libfabric.so.1 candidate=/lib/x86_64-linux-gnu/libfabric.so.1 realpath=/usr/lib/x86_64-linux-gnu/libfabric.so.1.20.0"
+        },
+        {
+          "line": 493,
+          "sha256_no_newline": "034ed2d76425a65bd503b4c9fdc3fd6ae792c6e862c40d4deedc97aac21ebf61",
+          "text": "f679d7aabc9126ee0c7d9780a2321ebef7d95d2d5ee14f1b123d67158a8f51d2  /usr/lib/x86_64-linux-gnu/libfabric.so.1.20.0"
+        },
+        {
+          "line": 494,
+          "sha256_no_newline": "a106565d84e70fd2adc2f9e179453cb71011dc712d157d3a843328cf52150e30",
+          "text": "BUILD_ID   GNU                  0x00000014\tNT_GNU_BUILD_ID (unique build ID bitstring)\t    Build ID: 0b100b742847dd3d0edde23a256f30dc848f21ec"
+        },
+        {
+          "line": 495,
+          "sha256_no_newline": "b52152910ac93c9d03be34cce87c98c8c68a69ea4e7c1c5793d389189908e0a8",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [librdmacm.so.1]"
+        },
+        {
+          "line": 496,
+          "sha256_no_newline": "9ea4d534a05fca5b6a57bcc7bb5477c57e7f3af3909b6823f167de56c6b6c4df",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [libefa.so.1]"
+        },
+        {
+          "line": 497,
+          "sha256_no_newline": "82607eea0ddd001ef6e9cb75f1ce2555c09f8c3b5d9598c135f77a3d141e5876",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [libibverbs.so.1]"
+        },
+        {
+          "line": 498,
+          "sha256_no_newline": "e8a41144ae07f01be1c119a59b8868517be8fff63d58810f27dc4fad47f238f2",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [libpsm_infinipath.so.1]"
+        },
+        {
+          "line": 499,
+          "sha256_no_newline": "ec649593a91eafd58e4071010a6fcb7dd55f4442c32909133fbba7843c804c34",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [libpsm2.so.2]"
+        },
+        {
+          "line": 500,
+          "sha256_no_newline": "a2ef100f89b812349109f06482a8527e2861a9175098392b5ca940a633d07c5a",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [libatomic.so.1]"
+        },
+        {
+          "line": 501,
+          "sha256_no_newline": "7ee7b3959dba2059ad6ff771e4386e8a89effb0c8e744a7548f1edc0e4e247ff",
+          "text": "DYNAMIC  0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]"
+        },
+        {
+          "line": 502,
+          "sha256_no_newline": "156646935d61f4da28c13277851314cd7e83a525a47557cef2a8003da93cbd26",
+          "text": "DYNAMIC  0x000000000000000e (SONAME)             Library soname: [libfabric.so.1]"
+        },
+        {
+          "line": 503,
+          "sha256_no_newline": "164f74e7cca0f578e20b5a63624c49a9602fd8d9e6314e2802da3c212c230b62",
+          "text": "PACKAGE_OWNER exit=0 libfabric1:amd64: /usr/lib/x86_64-linux-gnu/libfabric.so.1.20.0"
+        },
+        {
+          "line": 504,
+          "sha256_no_newline": "6a2487d55e00b55e210a887228182adc1330b7fd3fcc73696710bc973c02e60b",
+          "text": "PACKAGE libfabric1:amd64 1.17.0-3build2"
+        }
+      ]
+    }
+  ],
+  "interpretation": [
+    "415-420 is the loader EDGE block; the next block 423-431 starts an independent PSM BRIDGE record.",
+    "447-453 is a libc EDGE block; 454-462 starts an independent common-ofi BRIDGE record.",
+    "485-491 is a libc EDGE block; 492-504 starts an independent libfabric BRIDGE record."
+  ]
+}

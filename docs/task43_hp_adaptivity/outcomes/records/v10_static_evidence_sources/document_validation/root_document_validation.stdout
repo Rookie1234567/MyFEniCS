@@ -1,0 +1,95 @@
+{
+  "schema": "task43.v10.final-document-static-validation.v1",
+  "utc": "2026-10-26T01:10:53.137017+00:00",
+  "json_files": 11,
+  "path_hash_checks": 146,
+  "unique_hash_paths": 144,
+  "saved_stdout_excerpt_lines_checked": 212,
+  "local_links_checked": 33,
+  "tables_checked": 7,
+  "historical_and_source_paths_unchanged": true,
+  "modified_tracked_paths": [
+    "docs/README.md",
+    "docs/development_model_registry.md",
+    "docs/development_progress.md",
+    "docs/task43_hp_adaptivity/README.md",
+    "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+    "docs/task43_hp_adaptivity/outcomes/summary.md"
+  ],
+  "render_input": [
+    {
+      "path": "docs/README.md",
+      "full_file_sha256": "52c3ed3003f5ead6c4d74eca8f74b16fc9b8c2de67ca926ad4a19dae83fbd2eb",
+      "rendered_lines": [
+        1,
+        4
+      ],
+      "slice_sha256": "b7668fb3ebf2ff62d710450ada2742c496a9728a1642fec0083294328c6452e6"
+    },
+    {
+      "path": "docs/development_model_registry.md",
+      "full_file_sha256": "1da9fc02f09bc1c1b51e561d6632950eb70a2431a6affb43c12812ede3dd24c8",
+      "rendered_lines": [
+        1,
+        6
+      ],
+      "slice_sha256": "15c920a8e54d549935546d03ed0fb7d111eb80c635ab9dd48b9813e59326fe64"
+    },
+    {
+      "path": "docs/development_progress.md",
+      "full_file_sha256": "200545955291bc1242b91567a3d28654dc454255dd658e40f0895e16f0f10232",
+      "rendered_lines": [
+        1,
+        8
+      ],
+      "slice_sha256": "de99b7509ba14ece0d5f6ddace81d07cd3fef1b8f10ca0f0ed511e912b07c8ae"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/README.md",
+      "full_file_sha256": "fd8fbdfaf53744f7fce68644e511851ca9a193822bb3df3caaab402a64d9cf04",
+      "rendered_lines": [
+        1,
+        24
+      ],
+      "slice_sha256": "ddb2da93b8397e26c3e50a424e04b3c917f68e13612f77bb72f22bb85055e0e6"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/summary.md",
+      "full_file_sha256": "b50ababc50c5ded7d9c05a953eee369df6fbaf68ffcd1dbac8b08b7e5a535e94",
+      "rendered_lines": [
+        1,
+        16
+      ],
+      "slice_sha256": "53187e71d5a2c876f16336e22685d491d6f73e4fd85bcec4dfba20965f2b9013"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+      "full_file_sha256": "165429f896863fe7365f68d0dc439f5a1dbe94a7bdff83dc98c72f287a7c3b3d",
+      "rendered_lines": [
+        1,
+        13
+      ],
+      "slice_sha256": "7d2869f969339ab03134dc8cfa8715e8eefb901e6e8d1b3e666344a9590f28ee"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/response_v10.md",
+      "full_file_sha256": "af1d191ebf9dc4c0d9db87d84385158c0d758e82a4be44b37258005085bbb7be",
+      "rendered_lines": [
+        1,
+        54
+      ],
+      "slice_sha256": "af1d191ebf9dc4c0d9db87d84385158c0d758e82a4be44b37258005085bbb7be"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/README.md",
+      "full_file_sha256": "a9bf045cb386609ad4cd22aeb101ad3c26fa56ad291022b5a8490077f5e061c0",
+      "rendered_lines": [
+        1,
+        17
+      ],
+      "slice_sha256": "a9bf045cb386609ad4cd22aeb101ad3c26fa56ad291022b5a8490077f5e061c0"
+    }
+  ],
+  "github_render_request_sha256": "b1e116af01926caac58ae11e2ef1b93a5def2ffb39bf4117e920a23dfe06da62",
+  "scope": "only saved texts, JSON, local links and Markdown table structure; no imported project modules or tests"
+}

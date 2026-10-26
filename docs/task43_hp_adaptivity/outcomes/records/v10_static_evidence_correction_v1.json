@@ -1,0 +1,723 @@
+{
+  "schema": "task43.v10_static_evidence_correction.v1",
+  "status": "STATIC_ONLY_CORRECTION_READY_FOR_REVIEW",
+  "identity": {
+    "review": "docs/task43_hp_adaptivity/review_report_v9.md",
+    "review_head_at_start": "9be37f5dda06039e50400d395baa732e70012976",
+    "worktree_head_at_derivation": "9be37f5dda06039e50400d395baa732e70012976",
+    "v9_fixed_code": "c245dd060882df4dc6f30224ac0fa8be93f764d2",
+    "v9_s1_review": "docs/task43_hp_adaptivity/outcomes/records/v9_d3_sources/preparation/root_s1_review.json",
+    "v9_s1_review_sha256": "6f72d07d0fdeaf7141a95b69013608225fc99826f07af7f2fa9402c99401f000",
+    "v9_s1_summary": "docs/task43_hp_adaptivity/outcomes/records/v9_d3_sources/preparation/s1_static_summary.json",
+    "v9_s1_summary_sha256": "d9e79dd8057ca08d9f99bc6b4f715b68600808c75487add0395ebbadb125641c",
+    "repository": "Rookie1234567/MyFEniCS",
+    "branch": "task43_hp_adaptivity",
+    "canonical_worktree": "/home/fenics/Projects/NN-Lab-V2",
+    "reviewed_historical_delivery": "782c57fe4339fac2fe73fca2942b0d654024dda5",
+    "historical_actual_d3_run_head": "ef1e1ca5bb0b79f7cf5f6b6ce828d0e352ac44ba",
+    "baseline_sha": "405e3aff42ac421a4c99315df1ed9b96941ecbe4"
+  },
+  "scope": {
+    "included": [
+      "Offline stdlib parsing of the already saved direct-needed text capture",
+      "Hash-bound V9 activation/MCA saved-text context excerpt and exact copies of its collector source scripts",
+      "Correction of the three contaminated derived edge records, with independent root comparison"
+    ],
+    "not_run": [
+      "No support driver, activation, environment probe, native import, ABI check, test, collect-only, PDE, library loading, readelf, ldd, or ompi_info",
+      "No historical V1 map generator was found or executed",
+      "No runtime mapping or historical process state is inferred from static dependency text"
+    ],
+    "historical_generator": "The saved capture shell emits raw edge/bridge text and does not write the V1 JSON. The exact earlier derivation command/source/time is unavailable. The observed adjacency contamination identifies the layer needing correction but does not prove which historical parser statement caused it."
+  },
+  "source_identity": {
+    "saved_raw_stdout": {
+      "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_direct_needed_paths.stdout",
+      "sha256": "42700961db2b4ca1ae2206d93c18a6e0ad8986ec72b818b26a192b082eb005c4"
+    },
+    "saved_capture_shell": {
+      "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_direct_needed_paths.sh",
+      "sha256": "1568de57c0911a88c062df5b9d504ae42fad3e0b93217f730e55f2631ee1b8b2"
+    },
+    "legacy_derived_map": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v9_d3_sources/preparation/direct_needed_edge_map.json",
+      "sha256": "d013d64d8c9e300e39b04b927ba23c3e9e5c55d1f02cded732550cd4093401e3"
+    },
+    "raw_boundaries": [
+      {
+        "edge_lines": [
+          415,
+          420
+        ],
+        "following_bridge_lines": [
+          423,
+          431
+        ],
+        "parent": "/usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_btl_ofi.so",
+        "needed": "ld-linux-x86-64.so.2"
+      },
+      {
+        "edge_lines": [
+          447,
+          453
+        ],
+        "following_bridge_lines": [
+          454,
+          462
+        ],
+        "parent": "/usr/lib/libpsm1/libpsm_infinipath.so.1.16",
+        "needed": "libc.so.6"
+      },
+      {
+        "edge_lines": [
+          485,
+          491
+        ],
+        "following_bridge_lines": [
+          492,
+          504
+        ],
+        "parent": "/usr/lib/x86_64-linux-gnu/libmca_common_ofi.so.10.0.2",
+        "needed": "libc.so.6"
+      }
+    ],
+    "saved_line_excerpts": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/corrected/direct_needed_raw_boundary_excerpts.json",
+      "sha256": "e6fa1f338a1070113f42971783eeee173dc2489b614fd4bd0affebf1cdcbe91f"
+    }
+  },
+  "corrected_derivation": {
+    "parser": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/parse_direct_needed_stdout.py",
+      "sha256": "195b6312451fd729dd6a2a5d9fa21deef1505431e4f9fb546bdba182fd78545a",
+      "method": "EDGE/BRIDGE header separation of preserved text; PACKAGE line closes reported source-line range; not the historical generator"
+    },
+    "corrected_edge_map": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json",
+      "sha256": "858950cdb8fa02301bb9b7f88a399a3c34b68134a6bc181b28f9753feb3b6bcf"
+    },
+    "field_diff": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_field_diff.json",
+      "sha256": "18dd3e98316575c174145129f326843b26366a6ea03a83a4a8fa397c0e626e29"
+    },
+    "counts": {
+      "unique_edges": 61,
+      "parent_objects": 18,
+      "frozen_15_parent_edges": 48,
+      "bridge_parent_edges": 13,
+      "bridges": 3,
+      "resolved_realpaths": 24,
+      "same_realpath_identity_conflicts": 0,
+      "needed_soname_mismatches": 0,
+      "unchanged_legacy_records": 58,
+      "corrected_legacy_records": 3,
+      "corrected_fields": 12
+    },
+    "three_record_correction": [
+      {
+        "legacy_json_field_lines": [
+          781,
+          795
+        ],
+        "raw_edge_lines": [
+          415,
+          420
+        ],
+        "corrected_needed_object": "ld-linux-x86-64.so.2",
+        "corrected_package": "libc6:amd64 2.39-0ubuntu8.9",
+        "corrected_needed_list": []
+      },
+      {
+        "legacy_json_field_lines": [
+          829,
+          844
+        ],
+        "raw_edge_lines": [
+          447,
+          453
+        ],
+        "corrected_needed_object": "libc.so.6",
+        "corrected_package": "libc6:amd64 2.39-0ubuntu8.9",
+        "corrected_needed_list": [
+          "ld-linux-x86-64.so.2"
+        ]
+      },
+      {
+        "legacy_json_field_lines": [
+          885,
+          904
+        ],
+        "raw_edge_lines": [
+          485,
+          491
+        ],
+        "corrected_needed_object": "libc.so.6",
+        "corrected_package": "libc6:amd64 2.39-0ubuntu8.9",
+        "corrected_needed_list": [
+          "ld-linux-x86-64.so.2"
+        ]
+      }
+    ],
+    "superseded_wrong_span_output": {
+      "classification": "preserved_ignored_superseded_attempt2_not_current",
+      "ignored_path": "benchmarks/artifacts/task43/v10_static_correction/agent_parser_attempt2/derived_output_superseded/",
+      "hash_list": "benchmarks/artifacts/task43/v10_static_correction/agent_parser_attempt2/derived_output_superseded.sha256",
+      "hash_list_sha256": "494384ebeb009bec6d1aee54e945ae351b01b80dffc6adb8abb9662a8c22bcf1"
+    },
+    "derived_utc": "2026-10-26T01:01:29.387523+00:00"
+  },
+  "saved_v9_input_context": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/v9_static_input_context.json",
+    "sha256": "e341ce70e31c7340435fac625d4ce074025c4a628f801e9bcbedd5bf541a2dc6",
+    "extractor": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/build_v9_input_context_excerpt.py",
+      "sha256": "796d1410d81df8b90a0810f1a302920e52a9c3251e7fc99f0f10fc599db44756"
+    },
+    "superseded_incomplete_context": {
+      "ignored_path": "benchmarks/artifacts/task43/v10_static_correction/input_context_build/context_attempt1_incomplete_source_excerpt.json",
+      "sha256": "9bfd0865521968018fe2cd7ec04ef85628e5636314f9677c3bd4795948d50e1a",
+      "issue": "The first projection used the wrong source-summary key, leaving activation_and_venv empty and omitting fixed activation/venv lines; replaced by the corrected second projection."
+    },
+    "build_attempts": [
+      {
+        "attempt": 1,
+        "exit_code": 0,
+        "elapsed_seconds": 0.24,
+        "classification": "content incomplete; preserved ignored output",
+        "evidence": "benchmarks/artifacts/task43/v10_static_correction/input_context_build/"
+      },
+      {
+        "attempt": 2,
+        "exit_code": 0,
+        "elapsed_seconds": 0.08,
+        "classification": "current context excerpt",
+        "evidence": "benchmarks/artifacts/task43/v10_static_correction/input_context_build_attempt2/"
+      }
+    ],
+    "collector_source_snapshots": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/collector_snapshots/",
+    "collector_snapshot_count": 10,
+    "meaning": "Preserved V9 text says activation was not sourced; activation and venv source identities, selected environment names, login source excerpts, MCA path/override text, bounded config state, and original capture commands/exits/hashes are included. These describe the captured shell/configuration scope, not an actual native worker environment."
+  },
+  "independent_root_review": {
+    "package_terminated_parse": {
+      "path": "benchmarks/artifacts/task43/v10_static_correction/root_independent_accounting.json",
+      "sha256": "a93bf05ee3061a0b00864e8ff33791f8e81d9a473942ed12408f71eb7d9f6c06",
+      "elapsed_seconds": 0.006885193288326263,
+      "result": "61 keys, 18 parents, 48+13 edges, 24 resolved objects, no realpath metadata conflicts, no needed/SONAME mismatches; raw text only",
+      "git_copy": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/root_review/root_independent_accounting.json",
+        "sha256": "a93bf05ee3061a0b00864e8ff33791f8e81d9a473942ed12408f71eb7d9f6c06"
+      },
+      "script": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/root_review/task43_v10_root_verify.py",
+        "sha256": "c1e56ff9ad9a904765299f1c5a6831348d1cd4719d6ca657347d2d8de8fbae3e"
+      },
+      "elapsed_seconds_is_nested_not_added": true
+    },
+    "final_comparison": {
+      "path": "benchmarks/artifacts/task43/v10_static_correction/root_final_static_comparison_attempt3.json",
+      "sha256": "7e4ac0b3392f7a8c98f6aa131e10302fa2f66f51ca7e3531a8073050fd7a1418",
+      "elapsed_seconds": 0.25,
+      "exit_code": 0,
+      "result": "All 61 corrected edges/original fields, three original line ranges, 12 field changes, and 24 realpath identities match the independent parse.",
+      "git_copy": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/root_review/root_final_static_comparison_attempt3.json",
+        "sha256": "7e4ac0b3392f7a8c98f6aa131e10302fa2f66f51ca7e3531a8073050fd7a1418"
+      },
+      "script": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/root_review/task43_v10_compare_final.py",
+        "sha256": "31025cf332c3434b1f59aebffa3b3c88a99718d57a83c580e2b4f297dd95d5a5"
+      }
+    },
+    "personal_read": "Root personally read raw lines 408-505 including all three EDGE/BRIDGE boundaries, the collector source, all three old/new four-field differences, final corrected spans, and activation/MCA input excerpts; then inspected independent set and all-field comparisons."
+  },
+  "attempt_ledger": {
+    "agent_parser": [
+      {
+        "attempt": 1,
+        "exit_code": 1,
+        "elapsed_seconds": 0.971472583245486,
+        "failure": "initial parser omitted positional BRIDGE header SONAME",
+        "run_record": "benchmarks/artifacts/task43/v10_static_correction/agent_parser_attempt1/run.json"
+      },
+      {
+        "attempt": 2,
+        "exit_code": 0,
+        "elapsed_seconds": 0.20041946088895202,
+        "classification": "superseded: emitted incorrect V1 JSON line spans ending at 1019",
+        "run_record": "benchmarks/artifacts/task43/v10_static_correction/agent_parser_attempt2/run.json"
+      },
+      {
+        "attempt": 3,
+        "exit_code": 1,
+        "elapsed_seconds": 0.9392846538685262,
+        "failure": "span assertion exposed object-range lines instead of field-range lines",
+        "run_record": "benchmarks/artifacts/task43/v10_static_correction/agent_parser_attempt3/run.json"
+      },
+      {
+        "attempt": 4,
+        "exit_code": 0,
+        "elapsed_seconds": 0.0963271651417017,
+        "classification": "current corrected derivation",
+        "run_record": "benchmarks/artifacts/task43/v10_static_correction/agent_parser_attempt4/run.json"
+      }
+    ],
+    "root_static_review": [
+      {
+        "attempt": "independent_accounting_1",
+        "exit_code": 1,
+        "elapsed_seconds": 0.24,
+        "failure": "DOTALL header expression crossed package blocks; frozen parent count assertion failed",
+        "evidence": "benchmarks/artifacts/task43/v10_static_correction/root_independent_accounting.stderr"
+      },
+      {
+        "attempt": "independent_accounting_2",
+        "exit_code": 0,
+        "elapsed_seconds": 0.08,
+        "classification": "PACKAGE-terminated independent accounting",
+        "evidence": "benchmarks/artifacts/task43/v10_static_correction/root_independent_accounting_attempt2.stdout"
+      },
+      {
+        "attempt": "final_comparison_1",
+        "exit_code": 1,
+        "elapsed_seconds": 0.87,
+        "failure": "compared stale superseded output with field-level spans",
+        "evidence": "benchmarks/artifacts/task43/v10_static_correction/root_final_static_comparison.stderr"
+      },
+      {
+        "attempt": "final_comparison_2",
+        "exit_code": 1,
+        "elapsed_seconds": 0.45,
+        "failure": "comparison helper used the retired field name v1_json_lines",
+        "evidence": "benchmarks/artifacts/task43/v10_static_correction/root_final_static_comparison_attempt2.stderr"
+      },
+      {
+        "attempt": "final_comparison_3",
+        "exit_code": 0,
+        "elapsed_seconds": 0.25,
+        "classification": "independent successful comparison",
+        "evidence": "benchmarks/artifacts/task43/v10_static_correction/root_final_static_comparison_attempt3.json"
+      }
+    ],
+    "auxiliary_read_error": {
+      "command": "rg --files docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources && cat docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/derived/accounting.json",
+      "exit_code": 1,
+      "elapsed_seconds": 0.090485988,
+      "timing_source": "exec tool wall_time_seconds; chunk 4b98e0",
+      "failure": "assumed accounting.json did not exist; rg listing succeeded, cat failed; subsequent actual map/diff reads succeeded",
+      "scope": "read-only bookkeeping error, no data generation or runtime",
+      "attribution_correction": "Previous agent draft had a different command; replaced from root tool call chunk4b98e0, draft retained."
+    },
+    "this_agent_shell_command_error": {
+      "command": "python - <<'PY' ...",
+      "exit_code": 127,
+      "failure": "bare python was not on PATH; no script or project import ran",
+      "timing": "not independently measured",
+      "evidence_level": "agent-reported tool error; no separate stdout archive supplied"
+    },
+    "this_agent_hash_command_path_error": {
+      "command": "sha256sum .../input_context_build_attempt1/context_attempt1_incomplete_source_excerpt.json ...",
+      "exit_code": 1,
+      "failure": "incorrect subdirectory in one requested path; the existing preserved artifact was not modified",
+      "timing": "not independently measured",
+      "evidence_level": "agent-reported tool error; no separate stdout archive supplied"
+    },
+    "closeout_path_read_error": {
+      "command": "cat docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_correction_v1.json",
+      "exit_code": 1,
+      "elapsed_seconds": 0.156572441,
+      "timing_source": "exec tool wall_time_seconds; chunk aa189a",
+      "failure": "agent draft was placed one directory too deep; root located existing file and moved corrected delivery to authorized path",
+      "scope": "read-only bookkeeping error"
+    },
+    "agent_draft_review_corrections": {
+      "draft": {
+        "path": "benchmarks/artifacts/task43/v10_static_correction/agent_closeout_draft_path_and_command_errors.json",
+        "sha256": "3abc7ab90c4dd41b43a53a82d0b484e9db5a466bff3ff2cab48a0aec9732f5ee"
+      },
+      "issues": [
+        "wrong closeout output directory",
+        "auxiliary read failure command incorrectly attributed to timing_ledger.json instead of actual derived/accounting.json",
+        "agent parser described as PACKAGE-delimited although implementation separates EDGE/BRIDGE headers"
+      ],
+      "resolution": "root corrected these new draft metadata only; original draft retained ignored"
+    },
+    "static_evidence_archive": [
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/agent_parser_attempt1/parser.stderr",
+        "sha256": "447daa39715a1df72a69375d1c1423a621d40d45f77f6a23023657abc5031b5f"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/agent_parser_attempt1/parser.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/agent_parser_attempt1/run.json",
+        "sha256": "6d287eb08d8f736883d45b0084ebc880b36fe58bef2371121224e7d1607f4f66"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/agent_parser_attempt2/parser.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/agent_parser_attempt2/parser.stdout",
+        "sha256": "b406779cdf09edfdeca7d8a0f5077ef7f1e9352b91891761603ad1805c4bed76"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/agent_parser_attempt2/run.json",
+        "sha256": "13fd978b0a90c51bb2073d87f61ca3198c59f680295e07984ab9bcb56bfdc764"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/agent_parser_attempt3/parser.stderr",
+        "sha256": "57a11fcd5edeb29eca0ebd4737fc78a6163e60600e109b8bdd92caa0813095b1"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/agent_parser_attempt3/parser.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/agent_parser_attempt3/run.json",
+        "sha256": "e7f6d82cf6ebc0040234727337d3fe87f0b6295da99561d81220dc52295cf7e6"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/agent_parser_attempt4/parser.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/agent_parser_attempt4/parser.stdout",
+        "sha256": "4f367011954466c27173b98ee4b68e1c1b45285546b31ab1f1ea9ddaf52f4dc9"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/agent_parser_attempt4/run.json",
+        "sha256": "d90be71ace921760d12ea19dbc1c0654b7f15ee08442fef10179120648b052c9"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/input_context_build/exit_code",
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/input_context_build/finished.txt",
+        "sha256": "e3d83924031bde59e44273c320206301b01a772509edd7c3b0b6ec09e723b25c"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/input_context_build/started.txt",
+        "sha256": "36da1d1702d13d0a1d8391cbf40207945dfa55083908a8850211167165017224"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/input_context_build/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/input_context_build/stdout",
+        "sha256": "dbfa8603ac5ee193bc93842c0f6af0711278d8ba0d8580e7ac3c6c5d6714d0d5"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/input_context_build_attempt2/exit_code",
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/input_context_build_attempt2/finished.txt",
+        "sha256": "1c321f24be2d8515b4ff0433a788c26a6146ff0d00ed6a50f9d76ed8ec84df17"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/input_context_build_attempt2/started.txt",
+        "sha256": "1c321f24be2d8515b4ff0433a788c26a6146ff0d00ed6a50f9d76ed8ec84df17"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/input_context_build_attempt2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/input_context_build_attempt2/stdout",
+        "sha256": "055db61c15a5fdef8fb0666ac722f3a14e0882e801192d4f1bb2380897b86890"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_final_static_comparison.exit_code",
+        "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_final_static_comparison.stderr",
+        "sha256": "662c9371068ae39f7de75dd3c3bf09c16247a276f2d7703c866abf500192dd84"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_final_static_comparison.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_final_static_comparison.time",
+        "sha256": "f25bd36aa3d1cc4c00d4706a8eed31a13e370e89378102b0f738799c7ca9bd88"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_final_static_comparison_attempt1.py",
+        "sha256": "1007750552d106df70527c34f88c17c27d814969616e21ef1a1016349e95c268"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_final_static_comparison_attempt2.exit_code",
+        "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_final_static_comparison_attempt2.py",
+        "sha256": "8a4ab18b9bfbc17c30e933b5531b8034d2b550a874d2c2b31a472ea4bcf99c0c"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_final_static_comparison_attempt2.stderr",
+        "sha256": "940f75520a9d5807110f3f64756f91535230a93226e2730551b8ecc96bfc70bc"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_final_static_comparison_attempt2.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_final_static_comparison_attempt2.time",
+        "sha256": "5dd50e94ac76187eefe44f0b9e5b0ed9ad77d0ed8f1ed1835f54429fda956217"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_final_static_comparison_attempt3.exit_code",
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_final_static_comparison_attempt3.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_final_static_comparison_attempt3.stdout",
+        "sha256": "d7a72b7fb601c855db925471669ffe756cdc02091557ac16d928571dd8d47118"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_final_static_comparison_attempt3.time",
+        "sha256": "8d7880e032db4522742889cc4e2a609cc18cee8ad5daa6517a8fdc2e2cec43de"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_independent_accounting.exit_code",
+        "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_independent_accounting.stderr",
+        "sha256": "b9210cecd85abf1d4956a6c353c2da083e6c54adb7b3e4f4c6badb966d88b6b7"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_independent_accounting.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_independent_accounting.time",
+        "sha256": "18cc861af15dee91935e44fd69caf37e289dfeb9237ce0c40a7b34e84926e85f"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_independent_accounting_attempt1.py",
+        "sha256": "f0a8ba8ca648c79ea81138e6277e61094e85e496aeda3ce39d9a56463a96a98d"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_independent_accounting_attempt2.exit_code",
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_independent_accounting_attempt2.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_independent_accounting_attempt2.stdout",
+        "sha256": "39a9c1d7e990533c3d7d0809b27e57137252b1a5be0e971021d6a43a39136033"
+      },
+      {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/static_action_records/root_independent_accounting_attempt2.time",
+        "sha256": "088efe0439f331ac336dbbe28ca8b950ea45014054ea88381554dafc5de8c5f5"
+      }
+    ],
+    "premature_packaging_self_copies": {
+      "classification": "draft packaging artifact mistake, corrected before commit",
+      "issue": "packaging glob copied its own just-created empty stdout/stderr/time while still running",
+      "resolution": "removed those three redundant draft copies; completed exact files retained under document_validation/",
+      "qualification_effect": "none; never used as timing or success evidence"
+    }
+  },
+  "timing": {
+    "historical_v8_v9_recorded_action_subtotal_seconds": 55.18740113839802,
+    "v10_agent_parser_four_attempts_seconds": 2.2075038631446655,
+    "v10_context_excerpt_build_seconds": 0.32,
+    "root_independent_accounting_attempts_seconds": 0.32,
+    "root_final_comparison_attempts_seconds": 1.57,
+    "root_auxiliary_read_error_seconds": 0.090485988,
+    "v10_recorded_sum_including_read_error_seconds": 7.064562292144666,
+    "combined_recorded_sum_with_v8_v9_seconds": 62.25196343054269,
+    "not_measured": [
+      "manual reading/editing and hash packaging",
+      "bare-python PATH error wall time",
+      "incorrect hash-command path error wall time",
+      "root/agent source edits and manual content review, untimed JSON/hash packaging, Git preparation",
+      "agent final JSON/context read check had no separate saved timer; not new sanity or pytest",
+      "staging/diff checks: one known trailing-space diagnostic in exact historical collector snapshot; rest of paths check exit0"
+    ],
+    "closeout_path_read_error_seconds": 0.156572441,
+    "limits_seconds": {
+      "single_static_action": 60,
+      "v10_new_measured": 300,
+      "historical_plus_v10_measured": 600
+    },
+    "closeout_additional_measured_actions": "Included final packaging 0.20, document checks 0.15, GitHub GFM request 1.82, HTML inspection 0.23 seconds. Editorial final index updates, Git transport and manual review remain not_measured. These are measured action subtotals, not complete round wall time.",
+    "v10_pre_document_closeout_measured_seconds": 4.664562292144666,
+    "final_document_actions": [
+      {
+        "action": "root_packaging",
+        "elapsed_seconds": 0.2,
+        "exit_code": 0,
+        "time_evidence": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/document_validation/root_packaging.time",
+          "sha256": "3a919e28e4432511fa0e6bc2968ffb44c7ff37fd4bb3b8c2edbf1e89ed478902"
+        }
+      },
+      {
+        "action": "root_document_validation",
+        "elapsed_seconds": 0.15,
+        "exit_code": 0,
+        "time_evidence": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/document_validation/root_document_validation.time",
+          "sha256": "54b507a696a7107575155187af686304f209be0a2b9929bcbbaca9ced0781aa3"
+        }
+      },
+      {
+        "action": "github_render",
+        "elapsed_seconds": 1.82,
+        "exit_code": 0,
+        "time_evidence": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/document_validation/github_render.time",
+          "sha256": "8f382d2788fe44336e6bd143578edc0e2fcc410d0a7cc7200fc9769026d79bd6"
+        }
+      },
+      {
+        "action": "github_render_inspection",
+        "elapsed_seconds": 0.23,
+        "exit_code": 0,
+        "time_evidence": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/document_validation/github_render_inspection.time",
+          "sha256": "992030a5f8e9b6c5bbd49df9e500dc888889b5197c64c661549f0c648522af6e"
+        }
+      }
+    ],
+    "arithmetic_decimal_text": {
+      "v10": "7.064562292144666",
+      "historical_plus_v10": "62.251963430542686"
+    }
+  },
+  "qualification": {
+    "classification": "static evidence derivation correction only",
+    "tests": "NOT_RUN",
+    "native_import_or_abi": "NOT_RUN",
+    "support_driver": "NOT_RUN",
+    "PDE_or_formal_attempt": "NOT_RUN",
+    "scientific_qualification": "unchanged; no numerical or production qualification is claimed",
+    "historical_d3_and_20_tests": "ACCEPTED_LIMITED_ENGINEERING_BY_FORMAL_V9_REVIEW; reused, not rerun",
+    "new_counts": {
+      "support_driver": 0,
+      "sanity": 0,
+      "native_import": 0,
+      "ABI_run": 0,
+      "pytest": 0,
+      "collect_only": 0,
+      "PDE": 0,
+      "formal_dispatch": 0,
+      "READY": 0
+    },
+    "historical_quotas": {
+      "formal": "5/6",
+      "A1": "2/2",
+      "A2": "3/3",
+      "sanity": "1/1",
+      "D3": "1/1",
+      "last_formal_slot": "SEALED"
+    },
+    "capabilities": {
+      "space": "PARTIAL",
+      "selection": "PARTIAL",
+      "accuracy": "NOT_PASSED",
+      "equal_accuracy_whole_cost": "NOT_ESTABLISHED",
+      "iteration": "NOT_RUN / NOT_QUALIFIED"
+    },
+    "merge_approval": false,
+    "locked": [
+      "A1/A2 q retry",
+      "A1_R",
+      "A2_R",
+      "B/C",
+      "fresh baseline",
+      "equal accuracy cost campaign",
+      "iteration",
+      "0.7 nm",
+      "NN/FTT"
+    ]
+  },
+  "derived_packaging_utc": "2026-10-26T01:09:32.723748+00:00",
+  "unknowns": [
+    "historical V1 JSON generator, exact invocation, source statement and generation time",
+    "historical full process mappings cannot be reconstructed from dependency capture",
+    "installed path strings/package evidence do not replace a build-time header or full runtime closure"
+  ],
+  "final_document_validation": {
+    "local": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/document_validation/root_document_validation.json",
+      "sha256": "5a794b0d0e3ee87eaa24359a429ec38660ce5ebf386f8a04bc5b52b9650e1bcf"
+    },
+    "github_rendered_html_inspection": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/document_validation/github_render_inspection.json",
+      "sha256": "dcf8bc52c3dd56037bee7d398db0eb82e661ca85400aeef320eeda50e1737cbd"
+    },
+    "raw_html": {
+      "path": "benchmarks/artifacts/task43/v10_static_correction/github_render.html",
+      "sha256": "f49d3007777bf6f2012b4f7b9f397cb198cd10ad138cb8682a2a9cf9c20fa292"
+    },
+    "request": {
+      "path": "benchmarks/artifacts/task43/v10_static_correction/github_render_request.json",
+      "sha256": "b1e116af01926caac58ae11e2ef1b93a5def2ffb39bf4117e920a23dfe06da62"
+    },
+    "scope": "Eight current document slices (including complete new response and archive README) rendered by GitHub official GFM API, HTTP200; root read all seven rendered tables. Not a browser screenshot or full historical-document visual audit. Local 33 relative links checked independently.",
+    "measured_actions": [
+      {
+        "action": "root_packaging",
+        "elapsed_seconds": 0.2,
+        "exit_code": 0,
+        "time_evidence": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/document_validation/root_packaging.time",
+          "sha256": "3a919e28e4432511fa0e6bc2968ffb44c7ff37fd4bb3b8c2edbf1e89ed478902"
+        }
+      },
+      {
+        "action": "root_document_validation",
+        "elapsed_seconds": 0.15,
+        "exit_code": 0,
+        "time_evidence": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/document_validation/root_document_validation.time",
+          "sha256": "54b507a696a7107575155187af686304f209be0a2b9929bcbbaca9ced0781aa3"
+        }
+      },
+      {
+        "action": "github_render",
+        "elapsed_seconds": 1.82,
+        "exit_code": 0,
+        "time_evidence": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/document_validation/github_render.time",
+          "sha256": "8f382d2788fe44336e6bd143578edc0e2fcc410d0a7cc7200fc9769026d79bd6"
+        }
+      },
+      {
+        "action": "github_render_inspection",
+        "elapsed_seconds": 0.23,
+        "exit_code": 0,
+        "time_evidence": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/document_validation/github_render_inspection.time",
+          "sha256": "992030a5f8e9b6c5bbd49df9e500dc888889b5197c64c661549f0c648522af6e"
+        }
+      }
+    ],
+    "final_editorial_check": "All scripts here are reviewable static text utilities or read-only historical collector snapshots; none of the historical collectors/probes was executed.",
+    "staged_whitespace_check": {
+      "full_diff_exit_code": 2,
+      "diagnostic": "collector_snapshots/map_direct_needed_paths.sh:9: trailing whitespace",
+      "reason_preserved": "Exact historical collector bytes required by fixed SHA1568de57c0911a88c062df5b9d504ae42fad3e0b93217f730e55f2631ee1b8b2; not newly introduced script formatting",
+      "remaining_paths_exit_code": 0,
+      "command": "git diff --cached --check -- . :(exclude)docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/collector_snapshots/map_direct_needed_paths.sh",
+      "evidence_path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/document_validation/staged_diff_check_excerpt.json",
+      "measurement": "Git administrative checks not independently timed; do not report full diff check as clean",
+      "raw_warning_copy_note": "A direct stdout copy reproduced the same trailing space in its diagnostic line and caused an additional focused diff-check warning (chunkd4e48e; combined shell exit0 masks that subcommand status). Replaced only the new diagnostic copy with JSON-escaped exact text, original raw retained ignored. Historical collector bytes unchanged."
+    }
+  }
+}

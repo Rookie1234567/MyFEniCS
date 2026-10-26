@@ -1,0 +1,13 @@
+{
+  "schema": "task43.v10.root-final-static-comparison.v1",
+  "derived_utc": "2026-10-26T01:02:06.676364+00:00",
+  "corrected_map_sha256": "858950cdb8fa02301bb9b7f88a399a3c34b68134a6bc181b28f9753feb3b6bcf",
+  "field_diff_sha256": "18dd3e98316575c174145129f326843b26366a6ea03a83a4a8fa397c0e626e29",
+  "independent_accounting_sha256": "a93bf05ee3061a0b00864e8ff33791f8e81d9a473942ed12408f71eb7d9f6c06",
+  "all_61_edges_all_original_fields_match_independent_package_terminated_parse": true,
+  "three_legacy_line_ranges_match": true,
+  "three_entries_twelve_field_changes_match": true,
+  "unique_realpaths": 24,
+  "one_identity_per_realpath": true,
+  "scope": "saved text and derived JSON only; no current installed object or runtime inspection"
+}

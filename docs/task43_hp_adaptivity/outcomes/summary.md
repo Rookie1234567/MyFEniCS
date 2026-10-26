@@ -1,6 +1,20 @@
 # Task43 结果：部分完成，受控负结果
 
-## V9 当前状态：D3 有限工程终态复核完成；无科学或生产资格
+## V10 当前状态：既有静态证据纠正，无新运行
+
+依赖表记录“哪个库需要哪个库”，用于追溯启动输入。本轮只从保存的采集文本更正三条关联错误，避免把相邻对象的元数据挂到loader或libc名下；没有重新读取安装库或启动计算。原表和历史负结果保留。
+
+| 项目 | 本轮结果 | 证据边界 |
+|---|---|---|
+| 三条派生错误 | 3条记录共12字段：SONAME、NEEDED、package及package owner；路径/hash/Build-ID不变 | 原stdout边界清楚；错误位于派生关联层，具体旧生成器、语句及时间UNKNOWN |
+| 独立离线核算 | 61唯一边、18 parent；旧15对象48边与三桥13边集合完全覆盖；24对象身份一致 | 只核保存文本；不证明当前库文件或运行时完整装载闭包 |
+| 固定D3和20项测试 | 沿用正式V9 review的有限工程接受；本轮未重跑 | 实际历史运行HEAD仍为`ef1e1ca5bb0b79f7cf5f6b6ce828d0e352ac44ba` |
+| 新增运行 | support driver/sanity/native import/ABI/pytest/collect-only/PDE/formal dispatch/READY全0 | sanity1/1、D3 1/1已用尽；正式5/6、A1 2/2、A2 3/3，最后一槽封存 |
+| 科学与合并 | 空间PARTIAL；选择PARTIAL；精度NOT_PASSED；同精度全过程成本NOT_ESTABLISHED；迭代NOT_RUN / NOT_QUALIFIED | accepted9/R9、R10拒绝、旧独立精度失败及全部下游锁保持；无merge approval |
+
+[Response V10](../response_v10.md)列明逐字段差异、局部静态失败和UNKNOWN；[纠正记录](records/v10_static_evidence_correction_v1.json)绑定新文件及原件hash、费用与主控独立核算。以下V9历史段落保留当时报告，不以原S1的PASS标签否认已发现的三条派生错误。
+
+## V9 历史交付：D3 有限工程终态复核完成；无科学或生产资格
 
 V8 review的前瞻许可只恢复一次D3 support运行，V8候选顺序/首次复制失败仍保留。V9 S1 root静态复核为15/15 ELF匹配、61条直接依赖边、3个桥接对象且issues=[]；S2采用既有冻结字节，19项stdlib/AST sanity通过后执行一次D3。root最终审计为`PASS_LIMITED_ENGINEERING`，范围严格限定在固定启动/import/ABI/affinity链与20个S2 fixture字节：worker/外层exit 0，`20 passed in 0.91s`；未建mesh、未装配、未求解、未运行PDE。六份trace共1010行，44次affinity getter均为CPU `[1]`，无成功setter、signal或trace错误；8个相关PID/TID在终态检查时均不存在。该有限审计不代表科学、生产、完整CI或merge资格。
 

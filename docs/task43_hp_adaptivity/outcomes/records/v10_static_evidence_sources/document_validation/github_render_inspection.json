@@ -1,0 +1,215 @@
+{
+  "schema": "task43.v10.github-gfm-render-inspection.v1",
+  "http_status": 200,
+  "html_sha256": "f49d3007777bf6f2012b4f7b9f397cb198cd10ad138cb8682a2a9cf9c20fa292",
+  "render_request_sha256": "b1e116af01926caac58ae11e2ef1b93a5def2ffb39bf4117e920a23dfe06da62",
+  "table_count": 7,
+  "tables": [
+    [
+      [
+        "项目",
+        "本轮权威"
+      ],
+      [
+        "执行分支",
+        "task43_hp_adaptivity"
+      ],
+      [
+        "建立日期",
+        "2026-10-22"
+      ],
+      [
+        "源码基线",
+        "task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4"
+      ],
+      [
+        "当前状态",
+        "PARTIAL / CONTROLLED_NEGATIVE；V10只纠正V9三条派生依赖记录，61边/18 parent/24对象离线核算一致。正式V9 review接受固定D3和20项测试的有限工程证据；正式dispatch仍5/6（A1 2/2、A2 3/3），最后1槽封存。无新增运行、READY或合并许可"
+      ],
+      [
+        "第一目标",
+        "在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环"
+      ],
+      [
+        "第一验证波长",
+        "13.5 nm；小规模 direct 作数值核验"
+      ],
+      [
+        "后续方向",
+        "自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot"
+      ]
+    ],
+    [
+      [
+        "项目",
+        "本轮结果",
+        "证据边界"
+      ],
+      [
+        "三条派生错误",
+        "3条记录共12字段：SONAME、NEEDED、package及package owner；路径/hash/Build-ID不变",
+        "原stdout边界清楚；错误位于派生关联层，具体旧生成器、语句及时间UNKNOWN"
+      ],
+      [
+        "独立离线核算",
+        "61唯一边、18 parent；旧15对象48边与三桥13边集合完全覆盖；24对象身份一致",
+        "只核保存文本；不证明当前库文件或运行时完整装载闭包"
+      ],
+      [
+        "固定D3和20项测试",
+        "沿用正式V9 review的有限工程接受；本轮未重跑",
+        "实际历史运行HEAD仍为ef1e1ca5bb0b79f7cf5f6b6ce828d0e352ac44ba"
+      ],
+      [
+        "新增运行",
+        "support driver/sanity/native import/ABI/pytest/collect-only/PDE/formal dispatch/READY全0",
+        "sanity1/1、D3 1/1已用尽；正式5/6、A1 2/2、A2 3/3，最后一槽封存"
+      ],
+      [
+        "科学与合并",
+        "空间PARTIAL；选择PARTIAL；精度NOT_PASSED；同精度全过程成本NOT_ESTABLISHED；迭代NOT_RUN / NOT_QUALIFIED",
+        "accepted9/R9、R10拒绝、旧独立精度失败及全部下游锁保持；无merge approval"
+      ]
+    ],
+    [
+      [
+        "依赖组",
+        "本轮文件与依赖",
+        "核验与合入边界"
+      ],
+      [
+        "compact evidence/docs",
+        "response_v10.md、records/v10_static_evidence_correction_v1.json、records/v10_static_evidence_sources/及当前导航/总账",
+        "新纠正版必须连同原文行号、旧v1身份、逐字段diff、局部失败和UNKNOWN保留；静态核算61/18/48+13/24，fresh PDE为0；仍待正式审阅，未给docs merge approval"
+      ],
+      [
+        "research-only",
+        "V10仅解析保存文本的stdlib脚本与历史采集脚本归档",
+        "仅供复核静态证据，不是controller、driver或生产入口；不执行归档采集脚本"
+      ],
+      [
+        "production numerical/core、reusable runner/watchdog、checker/benchmark",
+        "无源码或数值行为变化",
+        "沿用既有依赖组限制；固定20项测试证据历史复用，不等于全仓或生产资格；没有新的建议合入顺序或许可"
+      ],
+      [
+        "do-not-merge",
+        "ignored原件、整分支、未资格化默认及所有锁定计算",
+        "正式5/6、A1 2/2、A2 3/3、最后槽封存；sanity1/1、D3 1/1不恢复；不合并"
+      ]
+    ],
+    [
+      [
+        "旧JSON字段行 / 边",
+        "原stdout边界",
+        "更正内容"
+      ],
+      [
+        "781–795：mca_btl_ofi.so → ld-linux-x86-64.so.2",
+        "EDGE 415–420；下一BRIDGE 423–431",
+        "移除误挂的PSM元数据；SONAME恢复loader，NEEDED为空，package及owner恢复libc6/loader路径"
+      ],
+      [
+        "829–844：libpsm_infinipath.so.1.16 → libc.so.6",
+        "EDGE 447–453；下一BRIDGE 454–462",
+        "移除误挂的common_ofi元数据；SONAME恢复libc，NEEDED只含loader，package及owner恢复libc6/libc路径"
+      ],
+      [
+        "885–904：libmca_common_ofi.so.10.0.2 → libc.so.6",
+        "EDGE 485–491；下一BRIDGE 492–504",
+        "移除误挂的fabric元数据；SONAME恢复libc，NEEDED只含loader，package及owner恢复libc6/libc路径"
+      ]
+    ],
+    [
+      [
+        "身份",
+        "SHA256"
+      ],
+      [
+        "既有 raw/map_direct_needed_paths.stdout",
+        "42700961db2b4ca1ae2206d93c18a6e0ad8986ec72b818b26a192b082eb005c4"
+      ],
+      [
+        "既有 raw/map_direct_needed_paths.sh，仅阅读归档，未执行",
+        "1568de57c0911a88c062df5b9d504ae42fad3e0b93217f730e55f2631ee1b8b2"
+      ],
+      [
+        "原V9 v1依赖表，保留原字节",
+        "d013d64d8c9e300e39b04b927ba23c3e9e5c55d1f02cded732550cd4093401e3"
+      ],
+      [
+        "本轮纠正版依赖表",
+        "858950cdb8fa02301bb9b7f88a399a3c34b68134a6bc181b28f9753feb3b6bcf"
+      ],
+      [
+        "本轮逐字段差异",
+        "18dd3e98316575c174145129f326843b26366a6ea03a83a4a8fa397c0e626e29"
+      ]
+    ],
+    [
+      [
+        "核算项",
+        "实际结果"
+      ],
+      [
+        "唯一 (parent, needed_soname) 键 / parent",
+        "61 / 18，无重复键或缺边"
+      ],
+      [
+        "集合覆盖",
+        "旧15对象48边 + 三桥13边，互不相交并恰好覆盖61边"
+      ],
+      [
+        "resolved对象",
+        "24个realpath，各自hash、Build-ID、SONAME、NEEDED、package及owner一致；同path或同path/hash无冲突"
+      ],
+      [
+        "名称及别名",
+        "61个needed名均等于对应SONAME；candidate→realpath绑定有旧原文。三个桥及MPI、PMIx、libpsm2绑定保持"
+      ],
+      [
+        "全字段比较",
+        "最终61条全部原字段与主控独立结果一致；3条/12字段差异及三处行号范围均相符"
+      ],
+      [
+        "输入原件复核",
+        "主控另核14份activation/MCA相关原输出与采集脚本hash，匹配旧root S1 manifest"
+      ]
+    ],
+    [
+      [
+        "入口",
+        "内容与范围"
+      ],
+      [
+        "纠正版依赖表",
+        "唯一当前V10派生表：61边、18 parent、24 resolved对象；不代表新采集或运行映射"
+      ],
+      [
+        "逐字段差异与原边界摘录",
+        "三条共12字段；保留原stdout hash与原行号，旧v1不变"
+      ],
+      [
+        "保存的输入摘录",
+        "activation/venv实际source行、长短MCA名、参数/override/路径；来自旧raw，不是当前环境检查"
+      ],
+      [
+        "主控独立核算与最终逐字段比较",
+        "PACKAGE终止解析、旧15对象NEEDED集合覆盖，再比较最终代理表；含实值与全部对应边"
+      ],
+      [
+        "static_action_records/",
+        "本轮静态失败/成功输出、退出码、计时及四次代理parser命令；不计作support/sanity/pytest"
+      ],
+      [
+        "collector_snapshots/",
+        "10份原采集脚本的字节副本，只供阅读，本轮未执行"
+      ],
+      [
+        "parse_direct_needed_stdout.py、build_v9_input_context_excerpt.py、root_review/*.py",
+        "本轮仅解析保存文本的stdlib脚本；不是旧v1生成器，也不提供任何运行许可"
+      ]
+    ]
+  ],
+  "scope": "GitHub official /markdown GFM HTML of exact current document slices/full new responses; not a browser screenshot or complete historical-document visual audit"
+}

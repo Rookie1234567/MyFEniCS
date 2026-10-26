@@ -5,7 +5,7 @@
 | 执行分支 | `task43_hp_adaptivity` |
 | 建立日期 | 2026-10-22 |
 | 源码基线 | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` |
-| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；accepted9/R9冻结，最终空间精度未达；正式dispatch 5/6（A1 2/2、A2 3/3），最后1槽封存。V9唯一D3 support已完成，root审计`PASS_LIMITED_ENGINEERING`仅覆盖固定启动链与20个fixture字节；无新PDE、无READY或production merge approval |
+| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；V10只纠正V9三条派生依赖记录，61边/18 parent/24对象离线核算一致。正式V9 review接受固定D3和20项测试的有限工程证据；正式dispatch仍5/6（A1 2/2、A2 3/3），最后1槽封存。无新增运行、READY或合并许可 |
 | 第一目标 | 在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环 |
 | 第一验证波长 | 13.5 nm；小规模 direct 作数值核验 |
 | 后续方向 | 自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot |
@@ -13,6 +13,8 @@
 **本任务研究怎样用合适的局部单元尺寸 h 和局部多项式阶次 p 达到所需精度，并核算完整代价。** h 加密把单元变小，适合难以用一个光滑多项式表示的局部结构；p 加密提高单元内部的表达能力，可能更适合光滑区域。两者都会改变全局方程和求解器的成本，必须实际求解才能确认收益。
 
 ## 阅读入口
+
+本轮执行依据为[正式V9 review第9节](review_report_v9.md)，交付见[Response V10](response_v10.md)、[静态纠正记录](outcomes/records/v10_static_evidence_correction_v1.json)及[纠正版依赖表](outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json)。原V9派生表保留原字节；三个边界的12个字段更正在新文件中，不能继续把旧表当作无误记录。当前文档不改变实际D3运行HEAD `ef1e1ca5bb0b79f7cf5f6b6ce828d0e352ac44ba`，也不赋予生产ABI、科学或合并资格。
 
 1. [task.md](task.md)：科学问题、模型、阶段、接受规则和验收合同。
 2. [AGENTS.md](AGENTS.md)：本目录执行规则；任务书与工作站实施之间的边界。

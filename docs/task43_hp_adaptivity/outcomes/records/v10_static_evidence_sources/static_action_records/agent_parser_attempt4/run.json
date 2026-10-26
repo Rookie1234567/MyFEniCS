@@ -1,0 +1,26 @@
+{
+  "schema": "task43.v10.parser_run.v1",
+  "classification": "offline_stdlib_text_parse_not_test_or_native_run",
+  "started_utc": "2026-10-26T01:01:29.291050+00:00",
+  "finished_utc": "2026-10-26T01:01:29.387523+00:00",
+  "elapsed_monotonic_seconds": 0.0963271651417017,
+  "command_argv": [
+    "/usr/bin/python3",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/parse_direct_needed_stdout.py",
+    "/home/fenics/Projects/NN-Lab-V2",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/corrected"
+  ],
+  "cwd": "/home/fenics/Projects/NN-Lab-V2",
+  "exit_code": 0,
+  "parser_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/parse_direct_needed_stdout.py",
+  "parser_sha256": "195b6312451fd729dd6a2a5d9fa21deef1505431e4f9fb546bdba182fd78545a",
+  "input_hashes": {
+    "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_direct_needed_paths.stdout": "42700961db2b4ca1ae2206d93c18a6e0ad8986ec72b818b26a192b082eb005c4",
+    "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_direct_needed_paths.sh": "1568de57c0911a88c062df5b9d504ae42fad3e0b93217f730e55f2631ee1b8b2"
+  },
+  "stdout_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v10_static_correction/agent_parser_attempt4/parser.stdout",
+  "stdout_sha256": "4f367011954466c27173b98ee4b68e1c1b45285546b31ab1f1ea9ddaf52f4dc9",
+  "stderr_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v10_static_correction/agent_parser_attempt4/parser.stderr",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "scope_note": "stdlib subprocess only; no activation, environment probe, project import, readelf, ldd, ompi_info, or library load"
+}

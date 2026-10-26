@@ -1,0 +1,1412 @@
+{
+  "schema": "task43.v10.saved_v9_input_context_excerpt.v1",
+  "scope": "Offline extraction from preserved V9 raw text and existing V9 S1 review only. No source activation, native import, environment probe, ELF inspection, or capture-script execution.",
+  "source_review": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v9_d3_sources/preparation/root_s1_review.json",
+    "sha256": "6f72d07d0fdeaf7141a95b69013608225fc99826f07af7f2fa9402c99401f000",
+    "status": "PASS_STATIC_FOR_NEXT_STAGE",
+    "issues": [],
+    "historical_input_conclusion_only": "Activation/venv hashes unchanged; relevant MCA namespace unset; login source chain examined; tty conditions and noninteractive bashrc early return; /etc/openmpi compiled sysconfdir and ordinary config known; override files absent; no unexplained selector/search path. Normal pml=^ucx is lower priority than worker-local ob1.",
+    "interpretation": "Quoted V9 S1 conclusion, not a new V10 environment check or a claim about a worker process."
+  },
+  "v9_static_summary": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v9_d3_sources/preparation/s1_static_summary.json",
+    "sha256": "d9e79dd8057ca08d9f99bc6b4f715b68600808c75487add0395ebbadb125641c",
+    "historical_activation_and_mca": {
+      "activation_path": "scripts/activate_task40_phi90_pord64.sh",
+      "activation_sha256": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+      "activation_was_sourced": false,
+      "actual_venv_source": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv",
+      "venv_activate_sha256": "385c11bda947bee666f53387da2b751e71ed03e5d66be779d4a467364ad373a6",
+      "pyvenv_cfg_sha256": "262b4e9c7aab12f299ea7acf28960a368f73e7153accb5afb64df858ea614590",
+      "activation_effect": "The tracked script selects the shared venv and composes the five LD_LIBRARY_PATH directories listed in the raw activation record; it does not set the inspected MCA selector variables. Its five directories exist. No library was loaded to establish which path a process actually mapped.",
+      "login_source_scope": "Read-only inspection of bash -lc/login files: /etc/profile sources /etc/profile.d/*.sh; .profile points to .bashrc, which returns for non-interactive shells; GNOME-specific .gnomerc source condition was false in the observed tty shell and ~/.gnomerc was absent.",
+      "observed_environment_scope": "Current login-invoked shell before activation, not a native worker environment. OPAL_PREFIX, LD_LIBRARY_PATH/LD_PRELOAD, relevant OMPI_MCA/PMIX_MCA/PRTE_MCA/ORTE_MCA selectors, HWLOC_COMPONENTS and activation override roots were unset in the captured scope.",
+      "sysconfdir_evidence": {
+        "OPAL_PREFIX": "unset in captured shell",
+        "installed_libopen_pal_strings": "contains /etc/openmpi and the compiled parameter/override path templates",
+        "ordinary_config": "/etc/openmpi/openmpi-mca-params.conf",
+        "ordinary_config_owner": "openmpi-bin (dpkg-query -S)",
+        "ordinary_config_sha256": "ddadfed9edb0c84e8f332f7d2c4cee8414c22bc763d7963b98960b1aaf87d0c2",
+        "ordinary_config_values": "pml = ^ucx; btl = ^uct,openib,ofi; mtl = ^ofi",
+        "limit": "This is installed-path/string and package evidence for /etc/openmpi, not a direct read of the package's build-time sysconfdir source/config header."
+      },
+      "bounded_override_candidates": {
+        "present": [
+          "/etc/openmpi/openmpi-mca-params.conf"
+        ],
+        "absent": [
+          "/home/fenics/.openmpi/mca-params.conf",
+          "/home/fenics/.openmpi/openmpi-mca-params.conf",
+          "/home/fenics/.openmpi/openmpi-mca-params-override.conf",
+          "/etc/openmpi/openmpi-mca-params-override.conf",
+          "/etc/openmpi/mca-params.conf",
+          "/etc/openmpi/mca-params-override.conf",
+          "/etc/openmpi-mca-params.conf",
+          "/etc/openmpi-mca-params-override.conf",
+          "/usr/etc/openmpi-mca-params.conf",
+          "/usr/etc/openmpi-mca-params-override.conf"
+        ],
+        "selector_variables_checked": [
+          "OPAL_PREFIX",
+          "OMPI_MCA_mca_base_param_file_path",
+          "OMPI_MCA_mca_base_param_file_path_force",
+          "OMPI_MCA_mca_base_param_file_prefix",
+          "OMPI_MCA_mca_base_envar_file_prefix",
+          "OMPI_MCA_mca_base_env_list",
+          "OMPI_MCA_mca_base_component_path",
+          "OMPI_MCA_mca_param_files",
+          "OMPI_MCA_mca_base_override_param_file",
+          "OMPI_MCA_pml",
+          "OMPI_MCA_pml_base_pml",
+          "PMIX_MCA_mca_base_param_file_path",
+          "PRTE_MCA_mca_base_param_file_path",
+          "ORTE_MCA_mca_base_param_file_path"
+        ],
+        "priority_limit": "The V8 review's fixed OpenMPI source references describe override-file/environment/ordinary-file precedence and long/short names. The captured login shell and bounded installed paths showed no selected high-priority override. No claim is made about a post-activation worker that was not run."
+      },
+      "raw_records": "benchmarks/artifacts/task43/v9_resume_preparation/raw/{activation_mca,login_sources,gnome_profile,login_selector_env,mca_registry_strings,mca_param_paths,inspect_mca_override_files,inspect_sysconfdir_ownership}.*"
+    },
+    "historical_elf_recheck": {
+      "targets": 15,
+      "identity_match_against_v8": "15/15",
+      "exit_code": 0,
+      "elapsed_seconds": 4.84,
+      "stdout": "benchmarks/artifacts/task43/v9_resume_preparation/raw/recheck_15_elf.stdout",
+      "stdout_sha256": "1ed5822173f54528544914c6e523fd2ce1241d0187a1df9f5fdf43df66201f6e"
+    }
+  },
+  "raw_records": [
+    {
+      "record": "activation_mca",
+      "files": {
+        "stdout": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/activation_mca.stdout",
+          "sha256": "f0c9545b4429f1e0faf2e80eaee5e4ab7c6ba69a1a3d21510ca3166d02f3ec4e",
+          "size_bytes": 6849
+        },
+        "collector_snapshot": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/collector_snapshots/collect_activation_mca.sh",
+          "sha256": "1a4350a8150a51dbce67aaf2529dae59d5e537c906897d692efabef47a9b81f6",
+          "size_bytes": 2801
+        },
+        "command": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/activation_mca.command.txt",
+          "sha256": "d7f216b1820f050950b4d7be0afb649e4a4d8e8da9ce69e8b60d138274665d4e",
+          "size_bytes": 85
+        },
+        "stderr": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/activation_mca.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "exit_code": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/activation_mca.exit_code",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "size_bytes": 2
+        },
+        "time": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/activation_mca.time",
+          "sha256": "ea0d9d6b2af5ffabecb65699079fb6ff0c3df652bde653436bd37ed979e02983",
+          "size_bytes": 45
+        },
+        "started": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/activation_mca.started.txt",
+          "sha256": "32831028bf114c91856d5372770f5b57eb4fdae72f79bfbe204156e5747dda83",
+          "size_bytes": 33
+        },
+        "finished": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/activation_mca.finished.txt",
+          "sha256": "7c64c9b699862b9a3b0f7c6a5f8f417bb016376e47bc79b327d28e77484a3e3b",
+          "size_bytes": 34
+        }
+      },
+      "command_text": "bash benchmarks/artifacts/task43/v9_resume_preparation/raw/collect_activation_mca.sh",
+      "recorded_exit_code": "0",
+      "bounded_saved_stdout_excerpt": [
+        {
+          "line": 1,
+          "text": "scope=read-only; no activation sourced; no native import"
+        },
+        {
+          "line": 2,
+          "text": "utc=2026-10-25T14:38:28Z"
+        },
+        {
+          "line": 3,
+          "text": ""
+        },
+        {
+          "line": 4,
+          "text": "--- tracked activation and stated source ---"
+        },
+        {
+          "line": 5,
+          "text": "/home/fenics/Projects/NN-Lab-V2/scripts/activate_task40_phi90_pord64.sh"
+        },
+        {
+          "line": 6,
+          "text": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3  /home/fenics/Projects/NN-Lab-V2/scripts/activate_task40_phi90_pord64.sh"
+        },
+        {
+          "line": 7,
+          "text": "3:# keeping this worktree's source imports and all writable caches private."
+        },
+        {
+          "line": 8,
+          "text": "10:_TASK40_SHARED_REPO_ROOT=\"${TASK40_SHARED_REPO_ROOT:-/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity}\""
+        },
+        {
+          "line": 9,
+          "text": "11:_TASK40_SHARED_VENV=\"${TASK40_SHARED_VENV:-${_TASK40_SHARED_REPO_ROOT}/.venv}\""
+        },
+        {
+          "line": 10,
+          "text": "12:_TASK40_INT64_ROOT=\"${TASK39EXTRA_INT64_STACK_ROOT:-${_TASK40_SHARED_REPO_ROOT}/tmp/task39extra_v5_abi_restore_20260923/base}\""
+        },
+        {
+          "line": 11,
+          "text": "13:_TASK40_PORD64_ROOT=\"${TASK39EXTRA_PORD64_ROOT:-${_TASK40_INT64_ROOT}/prefix/pord64-overlay}\""
+        },
+        {
+          "line": 12,
+          "text": "26:  echo 'Task40 source root is not a Git worktree.' >&2"
+        },
+        {
+          "line": 13,
+          "text": "29:if [[ ! -x \"${_TASK40_SHARED_VENV}/bin/python\" || ! -f \"${_TASK40_SHARED_VENV}/bin/activate\" ]]; then"
+        },
+        {
+          "line": 14,
+          "text": "30:  echo \"missing read-only shared interpreter: ${_TASK40_SHARED_VENV}/bin/python\" >&2"
+        },
+        {
+          "line": 15,
+          "text": "46:source \"${_TASK40_SHARED_VENV}/bin/activate\" || return"
+        },
+        {
+          "line": 16,
+          "text": "47:export TASK39EXTRA_INT64_STACK_ROOT=\"${_TASK40_INT64_ROOT}\""
+        },
+        {
+          "line": 17,
+          "text": "48:export TASK39EXTRA_PORD64_ROOT=\"${_TASK40_PORD64_ROOT}\""
+        },
+        {
+          "line": 18,
+          "text": "49:export TASK40_SHARED_VENV_ROOT=\"${_TASK40_SHARED_VENV}\""
+        },
+        {
+          "line": 19,
+          "text": "50:export TASK39EXTRA_INT64_ACTIVATION=1"
+        },
+        {
+          "line": 20,
+          "text": "51:export TASK39EXTRA_PORD64_ACTIVATION=1"
+        },
+        {
+          "line": 21,
+          "text": "56:export PATH=\"${_TASK40_SHARED_VENV}/bin:/usr/local/bin:/usr/bin:/bin\""
+        },
+        {
+          "line": 22,
+          "text": "57:export LD_LIBRARY_PATH=\"${_TASK40_PETSC}/lib:${_TASK40_PORD64_ROOT}/lib:${_TASK40_MPC}/lib:${_TASK40_DOLFINX}/lib:${_TASK40_SCOTCH}/lib\""
+        },
+        {
+          "line": 23,
+          "text": "58:export PYTHONPATH=\"${_TASK40_REPO_ROOT}:${_TASK40_PETSC}/lib:${_TASK40_MPC_PY}:${_TASK40_DOLFINX_PY}:${_TASK40_INT64_ROOT}/build-tools\""
+        },
+        {
+          "line": 24,
+          "text": ""
+        },
+        {
+          "line": 25,
+          "text": "--- venv activation identities and source selectors ---"
+        },
+        {
+          "line": 26,
+          "text": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/activate"
+        },
+        {
+          "line": 27,
+          "text": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/pyvenv.cfg"
+        },
+        {
+          "line": 28,
+          "text": "385c11bda947bee666f53387da2b751e71ed03e5d66be779d4a467364ad373a6  /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/activate"
+        },
+        {
+          "line": 29,
+          "text": "262b4e9c7aab12f299ea7acf28960a368f73e7153accb5afb64df858ea614590  /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/pyvenv.cfg"
+        },
+        {
+          "line": 44,
+          "text": "--- current shell selected environment (unset distinguished from empty) ---"
+        },
+        {
+          "line": 45,
+          "text": "UNSET OMPI_MCA_pml"
+        },
+        {
+          "line": 46,
+          "text": "UNSET OMPI_MCA_btl"
+        },
+        {
+          "line": 47,
+          "text": "UNSET OMPI_MCA_mtl"
+        },
+        {
+          "line": 48,
+          "text": "UNSET OMPI_MCA_mca_param_files"
+        },
+        {
+          "line": 49,
+          "text": "UNSET OMPI_MCA_mca_base_param_file_prefix"
+        },
+        {
+          "line": 50,
+          "text": "UNSET OMPI_MCA_mca_base_component_path"
+        },
+        {
+          "line": 51,
+          "text": "UNSET OMPI_MCA_mca_base_env_list"
+        },
+        {
+          "line": 52,
+          "text": "UNSET PMIX_MCA_mca_param_files"
+        },
+        {
+          "line": 53,
+          "text": "UNSET PMIX_MCA_mca_base_param_file_prefix"
+        },
+        {
+          "line": 54,
+          "text": "UNSET PMIX_MCA_psec"
+        },
+        {
+          "line": 55,
+          "text": "UNSET PMIX_MCA_gds"
+        },
+        {
+          "line": 56,
+          "text": "UNSET PRTE_MCA_mca_param_files"
+        },
+        {
+          "line": 57,
+          "text": "UNSET PRTE_MCA_mca_base_param_file_prefix"
+        },
+        {
+          "line": 58,
+          "text": "UNSET ORTE_MCA_mca_param_files"
+        },
+        {
+          "line": 59,
+          "text": "UNSET ORTE_MCA_mca_base_param_file_prefix"
+        },
+        {
+          "line": 60,
+          "text": "UNSET HWLOC_COMPONENTS"
+        },
+        {
+          "line": 61,
+          "text": "UNSET OPAL_PREFIX"
+        },
+        {
+          "line": 62,
+          "text": "UNSET LD_LIBRARY_PATH"
+        },
+        {
+          "line": 63,
+          "text": "UNSET LD_PRELOAD"
+        },
+        {
+          "line": 64,
+          "text": "SET PATH=/home/fenics/.codex/packages/standalone/releases/0.162.1-x86_64-unknown-linux-musl/codex-path:/home/fenics/.local/bin:/home/fenics/.codex/tmp/arg0/codex-arg0ut1sqx:/home/fenics/.codex/packages/standalone/releases/0.162.1-x86_64-unknown-linux-musl/codex-path:/home/fenics/.local/bin:/home/fenics/.local/bin:/home/fenics/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+        },
+        {
+          "line": 65,
+          "text": "UNSET PYTHONPATH"
+        },
+        {
+          "line": 66,
+          "text": "UNSET VIRTUAL_ENV"
+        },
+        {
+          "line": 67,
+          "text": "UNSET TASK40_SHARED_VENV"
+        },
+        {
+          "line": 68,
+          "text": "UNSET TASK40_SHARED_REPO_ROOT"
+        },
+        {
+          "line": 69,
+          "text": "UNSET TASK39EXTRA_INT64_STACK_ROOT"
+        },
+        {
+          "line": 70,
+          "text": "UNSET TASK39EXTRA_PORD64_ROOT"
+        },
+        {
+          "line": 71,
+          "text": ""
+        },
+        {
+          "line": 72,
+          "text": "--- known OpenMPI parameter files and selected MCA values ---"
+        },
+        {
+          "line": 73,
+          "text": "ABSENT /home/fenics/.openmpi/mca-params.conf"
+        },
+        {
+          "line": 74,
+          "text": "ABSENT /home/fenics/.openmpi/openmpi-mca-params.conf"
+        },
+        {
+          "line": 75,
+          "text": "PRESENT /etc/openmpi/openmpi-mca-params.conf"
+        },
+        {
+          "line": 76,
+          "text": "/etc/openmpi/openmpi-mca-params.conf"
+        },
+        {
+          "line": 77,
+          "text": "ddadfed9edb0c84e8f332f7d2c4cee8414c22bc763d7963b98960b1aaf87d0c2  /etc/openmpi/openmpi-mca-params.conf"
+        },
+        {
+          "line": 78,
+          "text": "67:mtl = ^ofi"
+        },
+        {
+          "line": 79,
+          "text": "68:btl = ^uct,openib,ofi"
+        },
+        {
+          "line": 80,
+          "text": "69:pml = ^ucx"
+        },
+        {
+          "line": 81,
+          "text": "ABSENT /etc/openmpi-mca-params.conf"
+        },
+        {
+          "line": 82,
+          "text": "ABSENT /usr/etc/openmpi-mca-params.conf"
+        }
+      ]
+    },
+    {
+      "record": "login_sources",
+      "files": {
+        "stdout": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/login_sources.stdout",
+          "sha256": "81a0d0869343a08699df221e07f05d0594f80297579a733569804be6bd18ec7c",
+          "size_bytes": 4844
+        },
+        "collector_snapshot": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/collector_snapshots/inspect_login_mca_sources.sh",
+          "sha256": "ab5cca7edbc1ba77f1bc5cd55cd8392a5af1cbfe3c23a71988d55909ab5b0590",
+          "size_bytes": 1087
+        },
+        "command": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/login_sources.command.txt",
+          "sha256": "3b9de02b515d1181f2f4aa02ed402296ce46984a8dca4e190b8b7524ffe259d3",
+          "size_bytes": 88
+        },
+        "stderr": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/login_sources.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "exit_code": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/login_sources.exit_code",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "size_bytes": 2
+        },
+        "time": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/login_sources.time",
+          "sha256": "3e5a869c761d4a1b2c5013e2ae3f289b321c25e3beb7057f02c9bf5dfb3cd13e",
+          "size_bytes": 45
+        },
+        "started": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/login_sources.started.txt",
+          "sha256": "e1d9301d132c5225b6d9deac0d28e9ee1bfc57635694885e0d0718c674acc6ed",
+          "size_bytes": 33
+        },
+        "finished": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/login_sources.finished.txt",
+          "sha256": "c473de5f6197d50efdfb2af5fc6519ee88e308d2d8c1cd9eeb3620269b2fcdc4",
+          "size_bytes": 34
+        }
+      },
+      "command_text": "bash benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_login_mca_sources.sh",
+      "recorded_exit_code": "0",
+      "bounded_saved_stdout_excerpt": [
+        {
+          "line": 1,
+          "text": "scope=read-only source-chain inspection; no file sourced, no activation, no native import"
+        },
+        {
+          "line": 2,
+          "text": "utc=2026-10-25T14:41:42Z"
+        },
+        {
+          "line": 4,
+          "text": "--- /etc/profile source loop and per-user login selection ---"
+        },
+        {
+          "line": 5,
+          "text": "# /etc/profile: system-wide .profile file for the Bourne shell (sh(1))"
+        },
+        {
+          "line": 24,
+          "text": "if [ -d /etc/profile.d ]; then"
+        },
+        {
+          "line": 32,
+          "text": "# ~/.profile: executed by the command interpreter for login shells."
+        },
+        {
+          "line": 56,
+          "text": "# ~/.bashrc: executed by bash(1) for non-login shells."
+        },
+        {
+          "line": 61,
+          "text": "case $- in"
+        },
+        {
+          "line": 89,
+          "text": "--- startup source files and MCA/library override matches ---"
+        },
+        {
+          "line": 121,
+          "text": "FILE /etc/profile.d/gnome-session_gnomerc.sh"
+        },
+        {
+          "line": 122,
+          "text": "/etc/profile.d/gnome-session_gnomerc.sh"
+        },
+        {
+          "line": 123,
+          "text": "d957952f33856373ea9cc4b338466be3bb58e40bf483bef77688df807b34a059  /etc/profile.d/gnome-session_gnomerc.sh"
+        },
+        {
+          "line": 124,
+          "text": "3:# If we are running the GNOME session, source ~/.gnomerc, but only if"
+        },
+        {
+          "line": 140,
+          "text": "--- full current MCA namespace names only (values are config, not secrets) ---"
+        }
+      ]
+    },
+    {
+      "record": "login_selector_env",
+      "files": {
+        "stdout": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/login_selector_env.stdout",
+          "sha256": "97880db55a2bfed82c10ecaf17f80c19b465d70fab85239b063cebb82172520b",
+          "size_bytes": 786
+        },
+        "collector_snapshot": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/collector_snapshots/record_login_selector_env.sh",
+          "sha256": "e0995423efa801d6676176c6b13886fc2e04fbd0f908078f3d1b98f830f36e48",
+          "size_bytes": 805
+        },
+        "command": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/login_selector_env.command.txt",
+          "sha256": "028895dc95df7e333e6bf0fdfc004561ac3a262ccf312c07af5aab2de0351f9f",
+          "size_bytes": 88
+        },
+        "stderr": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/login_selector_env.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "exit_code": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/login_selector_env.exit_code",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "size_bytes": 2
+        },
+        "time": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/login_selector_env.time",
+          "sha256": "a40d93daaf00b4a457da9066864e71057a96e37671a1a31f5f7c54580127fa73",
+          "size_bytes": 45
+        },
+        "started": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/login_selector_env.started.txt",
+          "sha256": "4c401d967d8761d4cd545157e400ad767e1255cb19240c2b483172eb661a4de3",
+          "size_bytes": 21
+        },
+        "finished": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/login_selector_env.finished.txt",
+          "sha256": "4c401d967d8761d4cd545157e400ad767e1255cb19240c2b483172eb661a4de3",
+          "size_bytes": 21
+        }
+      },
+      "command_text": "bash benchmarks/artifacts/task43/v9_resume_preparation/raw/record_login_selector_env.sh",
+      "recorded_exit_code": "0",
+      "bounded_saved_stdout_excerpt": [
+        {
+          "line": 1,
+          "text": "scope=current login-invoked shell environment, no profile source or activation; distinguishes unset/empty"
+        },
+        {
+          "line": 2,
+          "text": "utc=2026-10-25T14:46:48Z"
+        },
+        {
+          "line": 3,
+          "text": "SET XDG_SESSION_TYPE=tty"
+        },
+        {
+          "line": 4,
+          "text": "UNSET XDG_CURRENT_DESKTOP"
+        },
+        {
+          "line": 5,
+          "text": "UNSET DESKTOP_SESSION"
+        },
+        {
+          "line": 6,
+          "text": "UNSET GNOME_DESKTOP_SESSION_ID"
+        },
+        {
+          "line": 7,
+          "text": "UNSET XDG_CONFIG_HOME"
+        },
+        {
+          "line": 8,
+          "text": "UNSET BASH_ENV"
+        },
+        {
+          "line": 9,
+          "text": "UNSET ENV"
+        },
+        {
+          "line": 10,
+          "text": "UNSET OMPI_MCA_pml"
+        },
+        {
+          "line": 11,
+          "text": "UNSET OMPI_MCA_pml_base_pml"
+        },
+        {
+          "line": 12,
+          "text": "UNSET OMPI_MCA_btl"
+        },
+        {
+          "line": 13,
+          "text": "UNSET OMPI_MCA_mtl"
+        },
+        {
+          "line": 14,
+          "text": "UNSET OMPI_MCA_mca_base_param_file_prefix"
+        },
+        {
+          "line": 15,
+          "text": "UNSET OMPI_MCA_mca_base_envar_file_prefix"
+        },
+        {
+          "line": 16,
+          "text": "UNSET OMPI_MCA_mca_base_env_list"
+        },
+        {
+          "line": 17,
+          "text": "UNSET OMPI_MCA_mca_base_component_path"
+        },
+        {
+          "line": 18,
+          "text": "UNSET OMPI_MCA_mca_param_files"
+        },
+        {
+          "line": 19,
+          "text": "UNSET OMPI_MCA_mca_base_override_param_file"
+        },
+        {
+          "line": 20,
+          "text": "UNSET PMIX_MCA_mca_base_param_file_prefix"
+        },
+        {
+          "line": 21,
+          "text": "UNSET PRTE_MCA_mca_base_param_file_prefix"
+        },
+        {
+          "line": 22,
+          "text": "UNSET ORTE_MCA_mca_base_param_file_prefix"
+        },
+        {
+          "line": 23,
+          "text": "UNSET HWLOC_COMPONENTS"
+        },
+        {
+          "line": 24,
+          "text": "UNSET LD_LIBRARY_PATH"
+        },
+        {
+          "line": 25,
+          "text": "UNSET LD_PRELOAD"
+        }
+      ]
+    },
+    {
+      "record": "mca_registry_strings",
+      "files": {
+        "stdout": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/mca_registry_strings.stdout",
+          "sha256": "a9c57e933ef2d589553299abdd1f27534abdc9f8530c891445c6f0fe8f72ce3d",
+          "size_bytes": 7622
+        },
+        "collector_snapshot": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/collector_snapshots/inspect_mca_registry_strings.sh",
+          "sha256": "54faea9431ca8fa122999325b60a46b7f2d4ba5dc66026cacf2d396a3e2981c3",
+          "size_bytes": 727
+        },
+        "command": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/mca_registry_strings.command.txt",
+          "sha256": "359bd6dba0b2ac7c625c1d9748f79ca07ce1ee6c59e49026a673351137bf6510",
+          "size_bytes": 91
+        },
+        "stderr": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/mca_registry_strings.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "exit_code": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/mca_registry_strings.exit_code",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "size_bytes": 2
+        },
+        "time": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/mca_registry_strings.time",
+          "sha256": "ff84d0c0d4162408d1d5c8d4d3dbb8648650048eba6eb785f4f8f6f98117b29d",
+          "size_bytes": 45
+        },
+        "started": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/mca_registry_strings.started.txt",
+          "sha256": "9e2ac31ab3c739f52dda5374cfd0cfc0d003b5613d92b2290578465005c7193c",
+          "size_bytes": 21
+        },
+        "finished": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/mca_registry_strings.finished.txt",
+          "sha256": "e6d33e8ab754eec7b24c3560fa5b1b8e3ef2ab9c8c1fe3cf41f5c137c9509cb0",
+          "size_bytes": 21
+        }
+      },
+      "command_text": "bash benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_mca_registry_strings.sh",
+      "recorded_exit_code": "0",
+      "bounded_saved_stdout_excerpt": [
+        {
+          "line": 1,
+          "text": "scope=static strings from already identified OpenMPI 4.1.6 ELF; no load/import/MPI command"
+        },
+        {
+          "line": 2,
+          "text": "utc=2026-10-25T14:46:34Z"
+        },
+        {
+          "line": 4,
+          "text": "FILE /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3"
+        },
+        {
+          "line": 6,
+          "text": "59c4d9b111cd3ec326a4df475a338daae050496087c67e86956187056fdc3051  /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3"
+        },
+        {
+          "line": 8,
+          "text": "OMPI_MCA_"
+        },
+        {
+          "line": 10,
+          "text": "PMIX_MCA_mca_base_component_show_load_errors"
+        },
+        {
+          "line": 21,
+          "text": "mca_base_component_path"
+        },
+        {
+          "line": 48,
+          "text": "mca_base_env_list"
+        },
+        {
+          "line": 49,
+          "text": "mca_base_env_list_internal"
+        },
+        {
+          "line": 50,
+          "text": "mca_base_env_list_sep"
+        },
+        {
+          "line": 51,
+          "text": "mca_base_envar_file_prefix"
+        },
+        {
+          "line": 52,
+          "text": "mca_base_param_file_prefix"
+        },
+        {
+          "line": 54,
+          "text": "FILE /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3"
+        },
+        {
+          "line": 56,
+          "text": "26467e1da428d31dab924ddbc50bc6ade75da47dbb82c77498a5f127a5466ba7  /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3"
+        },
+        {
+          "line": 57,
+          "text": "OMPI_MCA_"
+        },
+        {
+          "line": 58,
+          "text": "OMPI_MCA_ess"
+        },
+        {
+          "line": 59,
+          "text": "OMPI_MCA_initial_wdir"
+        },
+        {
+          "line": 60,
+          "text": "OMPI_MCA_orte_base_applied_binding"
+        },
+        {
+          "line": 61,
+          "text": "OMPI_MCA_orte_bound_at_launch"
+        },
+        {
+          "line": 62,
+          "text": "OMPI_MCA_orte_externally_bound"
+        },
+        {
+          "line": 63,
+          "text": "OMPI_MCA_orte_hnp_uri"
+        },
+        {
+          "line": 64,
+          "text": "OMPI_MCA_orte_launch"
+        },
+        {
+          "line": 65,
+          "text": "OMPI_MCA_orte_precondition_transports"
+        },
+        {
+          "line": 66,
+          "text": "OMPI_MCA_orte_precondition_transports=%s"
+        },
+        {
+          "line": 67,
+          "text": "OMPI_MCA_pmix"
+        },
+        {
+          "line": 70,
+          "text": "mca_base_env_list"
+        },
+        {
+          "line": 71,
+          "text": "mca_base_envar_file_prefix"
+        },
+        {
+          "line": 72,
+          "text": "mca_base_param_file_path"
+        },
+        {
+          "line": 73,
+          "text": "mca_base_param_file_path_force"
+        },
+        {
+          "line": 74,
+          "text": "mca_base_param_file_prefix"
+        },
+        {
+          "line": 76,
+          "text": "FILE /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pml_cm.so"
+        },
+        {
+          "line": 78,
+          "text": "fc4f371d0bccf7d3e962e22aca35335747472b529a2988d253240e122d277b15  /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pml_cm.so"
+        },
+        {
+          "line": 112,
+          "text": "FILE /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pml_ob1.so"
+        },
+        {
+          "line": 114,
+          "text": "cfa0e7399fa1f17534f59636479dd40ba750ceeec70a290ccc152744f2f00af3  /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pml_ob1.so"
+        },
+        {
+          "line": 219,
+          "text": "FILE /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pmix_ext3x.so"
+        },
+        {
+          "line": 221,
+          "text": "ee05dac13a0f91dc8773400a240ac2d03d64745df1790c350e63481799c6e03b  /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pmix_ext3x.so"
+        },
+        {
+          "line": 222,
+          "text": "OMPI_MCA_orte_launch"
+        }
+      ]
+    },
+    {
+      "record": "mca_param_paths",
+      "files": {
+        "stdout": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/mca_param_paths.stdout",
+          "sha256": "bc03f9c22f3f647261eb8b93a5f14c6abf19a78905156803d3db12bc9d3963eb",
+          "size_bytes": 6070
+        },
+        "collector_snapshot": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/collector_snapshots/inspect_mca_param_paths.sh",
+          "sha256": "76f721ba965a3c64d35b3da0c0c95ea8c9c6bd60082f51b5ae13df0977fbacfa",
+          "size_bytes": 685
+        },
+        "command": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/mca_param_paths.command.txt",
+          "sha256": "94a7d23c4897a5a270b4d3c01a01b87de9352697450cb6406c732e0a8bde23e4",
+          "size_bytes": 86
+        },
+        "stderr": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/mca_param_paths.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "exit_code": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/mca_param_paths.exit_code",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "size_bytes": 2
+        },
+        "time": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/mca_param_paths.time",
+          "sha256": "dad56629acb3d767ce98b9120c5a9219e89d9e40019b85303b09a9e16141e558",
+          "size_bytes": 45
+        },
+        "started": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/mca_param_paths.started.txt",
+          "sha256": "3444399906eb15692aebdd48ae791b1389705a252eadf1a7e8ebbb333b5717f7",
+          "size_bytes": 21
+        },
+        "finished": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/mca_param_paths.finished.txt",
+          "sha256": "3444399906eb15692aebdd48ae791b1389705a252eadf1a7e8ebbb333b5717f7",
+          "size_bytes": 21
+        }
+      },
+      "command_text": "bash benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_mca_param_paths.sh",
+      "recorded_exit_code": "0",
+      "bounded_saved_stdout_excerpt": [
+        {
+          "line": 1,
+          "text": "scope=static strings for OpenMPI parameter/override paths in already identified ELF; no library load/import/MPI command"
+        },
+        {
+          "line": 2,
+          "text": "utc=2026-10-25T14:47:24Z"
+        },
+        {
+          "line": 4,
+          "text": "FILE /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3"
+        },
+        {
+          "line": 5,
+          "text": "%s/.openmpi/mca-params.conf%c%s/openmpi-mca-params.conf"
+        },
+        {
+          "line": 7,
+          "text": "%s/openmpi-mca-params-override.conf"
+        },
+        {
+          "line": 28,
+          "text": "mca_base_component_path"
+        },
+        {
+          "line": 55,
+          "text": "mca_base_env_list"
+        },
+        {
+          "line": 56,
+          "text": "mca_base_env_list_internal"
+        },
+        {
+          "line": 57,
+          "text": "mca_base_env_list_sep"
+        },
+        {
+          "line": 58,
+          "text": "mca_base_envar_file_prefix"
+        },
+        {
+          "line": 73,
+          "text": "mca_base_param_file_prefix"
+        },
+        {
+          "line": 160,
+          "text": "FILE /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3"
+        },
+        {
+          "line": 166,
+          "text": "mca_base_env_list"
+        },
+        {
+          "line": 167,
+          "text": "mca_base_envar_file_prefix"
+        },
+        {
+          "line": 173,
+          "text": "mca_base_param_file_path"
+        },
+        {
+          "line": 174,
+          "text": "mca_base_param_file_path_force"
+        },
+        {
+          "line": 175,
+          "text": "mca_base_param_file_prefix"
+        },
+        {
+          "line": 184,
+          "text": "FILE /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pml_cm.so"
+        },
+        {
+          "line": 189,
+          "text": "FILE /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pml_ob1.so"
+        },
+        {
+          "line": 195,
+          "text": "FILE /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pmix_ext3x.so"
+        }
+      ]
+    },
+    {
+      "record": "inspect_mca_override_files",
+      "files": {
+        "stdout": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_mca_override_files.stdout",
+          "sha256": "58dde03d5a23dc737e39eb27e7359c583af63ad016b78d7559ba67740ec5dd25",
+          "size_bytes": 1684
+        },
+        "collector_snapshot": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/collector_snapshots/inspect_mca_override_files.sh",
+          "sha256": "462de24661456a05077495bee09615dd5f49ad7e398c27fe8e9bd04fc409d57e",
+          "size_bytes": 2093
+        },
+        "command": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_mca_override_files.command.txt",
+          "sha256": "755f3bdea5aaa09fef8a8f7826acd3e42a9ed442e2d2139883978fff646bca4f",
+          "size_bytes": 121
+        },
+        "stderr": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_mca_override_files.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "exit_code": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_mca_override_files.exit_code",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "size_bytes": 2
+        },
+        "time": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_mca_override_files.time",
+          "sha256": "8973be9b0b5d7f2c9824c0e04cb15d8e3c34e0679480c3b0657e1fa843966f3c",
+          "size_bytes": 46
+        },
+        "started": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_mca_override_files.started.txt",
+          "sha256": "8625be4ad4c8dc8b897a5d43c2b66575e6c6fb3272b852a58dbe6b5c67fb73e4",
+          "size_bytes": 21
+        },
+        "finished": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_mca_override_files.finished.txt",
+          "sha256": "5bbe19d5d1c4654b908f836b2f4289bf3129eab38b6ed5d560fc2b6b4739fc1c",
+          "size_bytes": 21
+        }
+      },
+      "command_text": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_mca_override_files.sh",
+      "recorded_exit_code": "0",
+      "bounded_saved_stdout_excerpt": [
+        {
+          "line": 1,
+          "text": "scope=bounded static config/override path check; no activation source, library load, native import, MPI command, or recursive filesystem scan"
+        },
+        {
+          "line": 2,
+          "text": "utc=2026-10-25T14:50:29Z"
+        },
+        {
+          "line": 4,
+          "text": "--- package ownership and installed config inventory ---"
+        },
+        {
+          "line": 8,
+          "text": "--- bounded config candidates derived from installed strings and package paths ---"
+        },
+        {
+          "line": 9,
+          "text": "ABSENT /home/fenics/.openmpi/mca-params.conf"
+        },
+        {
+          "line": 10,
+          "text": "ABSENT /home/fenics/.openmpi/openmpi-mca-params.conf"
+        },
+        {
+          "line": 11,
+          "text": "ABSENT /home/fenics/.openmpi/openmpi-mca-params-override.conf"
+        },
+        {
+          "line": 12,
+          "text": "PRESENT /etc/openmpi/openmpi-mca-params.conf"
+        },
+        {
+          "line": 13,
+          "text": "/etc/openmpi/openmpi-mca-params.conf"
+        },
+        {
+          "line": 14,
+          "text": "ddadfed9edb0c84e8f332f7d2c4cee8414c22bc763d7963b98960b1aaf87d0c2  /etc/openmpi/openmpi-mca-params.conf"
+        },
+        {
+          "line": 15,
+          "text": "67:mtl = ^ofi"
+        },
+        {
+          "line": 16,
+          "text": "68:btl = ^uct,openib,ofi"
+        },
+        {
+          "line": 17,
+          "text": "69:pml = ^ucx"
+        },
+        {
+          "line": 18,
+          "text": "ABSENT /etc/openmpi/openmpi-mca-params-override.conf"
+        },
+        {
+          "line": 19,
+          "text": "ABSENT /etc/openmpi/mca-params.conf"
+        },
+        {
+          "line": 20,
+          "text": "ABSENT /etc/openmpi/mca-params-override.conf"
+        },
+        {
+          "line": 21,
+          "text": "ABSENT /etc/openmpi-mca-params.conf"
+        },
+        {
+          "line": 22,
+          "text": "ABSENT /etc/openmpi-mca-params-override.conf"
+        },
+        {
+          "line": 23,
+          "text": "ABSENT /usr/etc/openmpi-mca-params.conf"
+        },
+        {
+          "line": 24,
+          "text": "ABSENT /usr/etc/openmpi-mca-params-override.conf"
+        },
+        {
+          "line": 26,
+          "text": "--- bounded MCA parameter selectors in current login shell ---"
+        },
+        {
+          "line": 27,
+          "text": "UNSET OPAL_PREFIX"
+        },
+        {
+          "line": 28,
+          "text": "UNSET OMPI_MCA_mca_base_param_file_path"
+        },
+        {
+          "line": 29,
+          "text": "UNSET OMPI_MCA_mca_base_param_file_path_force"
+        },
+        {
+          "line": 30,
+          "text": "UNSET OMPI_MCA_mca_base_param_file_prefix"
+        },
+        {
+          "line": 31,
+          "text": "UNSET OMPI_MCA_mca_base_envar_file_prefix"
+        },
+        {
+          "line": 32,
+          "text": "UNSET OMPI_MCA_mca_base_env_list"
+        },
+        {
+          "line": 33,
+          "text": "UNSET OMPI_MCA_mca_base_component_path"
+        },
+        {
+          "line": 34,
+          "text": "UNSET OMPI_MCA_mca_param_files"
+        },
+        {
+          "line": 35,
+          "text": "UNSET OMPI_MCA_mca_base_override_param_file"
+        },
+        {
+          "line": 36,
+          "text": "UNSET OMPI_MCA_pml"
+        },
+        {
+          "line": 37,
+          "text": "UNSET OMPI_MCA_pml_base_pml"
+        },
+        {
+          "line": 38,
+          "text": "UNSET PMIX_MCA_mca_base_param_file_path"
+        },
+        {
+          "line": 39,
+          "text": "UNSET PRTE_MCA_mca_base_param_file_path"
+        },
+        {
+          "line": 40,
+          "text": "UNSET ORTE_MCA_mca_base_param_file_path"
+        }
+      ]
+    },
+    {
+      "record": "inspect_sysconfdir_ownership",
+      "files": {
+        "stdout": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_sysconfdir_ownership.stdout",
+          "sha256": "79a5d1dd5029b520bdbf124444e8f212734e383a4e8d80daed8ab03443934131",
+          "size_bytes": 557
+        },
+        "collector_snapshot": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/collector_snapshots/inspect_sysconfdir_ownership.sh",
+          "sha256": "d367a7a6609f7ea30ef4d6910425c6acdf6e617d832194b450d56ada5d1e4050",
+          "size_bytes": 951
+        },
+        "command": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_sysconfdir_ownership.command.txt",
+          "sha256": "5e2a6c8c65adb27ac2f90a9605ccf7de028cbdbfb3a3ccba007ebbc694720e86",
+          "size_bytes": 123
+        },
+        "stderr": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_sysconfdir_ownership.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "exit_code": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_sysconfdir_ownership.exit_code",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "size_bytes": 2
+        },
+        "time": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_sysconfdir_ownership.time",
+          "sha256": "9024eaae3d1dd74487858c19047fafb11ec3c848a5b5a25ee569a1fe5c1fa036",
+          "size_bytes": 46
+        },
+        "started": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_sysconfdir_ownership.started.txt",
+          "sha256": "abf2bac17c0a63199a5df0578c7bc57efdf8f326331bcb5b0f371d46f4a8c0e5",
+          "size_bytes": 21
+        },
+        "finished": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_sysconfdir_ownership.finished.txt",
+          "sha256": "6feae22c38a635ceafa611157a98b91329d520f0c9e09d9e97a96b16b2f98643",
+          "size_bytes": 21
+        }
+      },
+      "command_text": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v9_resume_preparation/raw/inspect_sysconfdir_ownership.sh",
+      "recorded_exit_code": "0",
+      "bounded_saved_stdout_excerpt": [
+        {
+          "line": 1,
+          "text": "scope=bounded installed package/config ownership; no activation, library load, native import, or recursive scan"
+        },
+        {
+          "line": 2,
+          "text": "utc=2026-10-25T14:50:39Z"
+        },
+        {
+          "line": 4,
+          "text": "--- actual config owner and package file lists ---"
+        },
+        {
+          "line": 5,
+          "text": "openmpi-bin: /etc/openmpi/openmpi-mca-params.conf"
+        },
+        {
+          "line": 6,
+          "text": "PACKAGE openmpi-common"
+        },
+        {
+          "line": 7,
+          "text": "openmpi-common 4.1.6-7ubuntu2"
+        },
+        {
+          "line": 8,
+          "text": "PACKAGE libopenmpi3t64:amd64"
+        },
+        {
+          "line": 11,
+          "text": "--- package conffile registration ---"
+        },
+        {
+          "line": 12,
+          "text": "openmpi-common"
+        },
+        {
+          "line": 15,
+          "text": "--- bounded installed path strings ---"
+        },
+        {
+          "line": 16,
+          "text": "%s/.openmpi/mca-params.conf%c%s/openmpi-mca-params.conf"
+        },
+        {
+          "line": 17,
+          "text": "%s/openmpi-mca-params-override.conf"
+        },
+        {
+          "line": 18,
+          "text": "/etc/openmpi"
+        }
+      ]
+    },
+    {
+      "record": "map_needed_sonames",
+      "files": {
+        "stdout": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_needed_sonames.stdout",
+          "sha256": "14bfa3361337fc43774412816daedc5044834abf47e8a728d62d1407462cf24a",
+          "size_bytes": 1863
+        },
+        "collector_snapshot": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/collector_snapshots/map_needed_sonames.sh",
+          "sha256": "97e61b009eb0c1069b816e21184dbf468abeeacd1682e17adbe5a0d8d2bd5b95",
+          "size_bytes": 559
+        },
+        "command": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_needed_sonames.command.txt",
+          "sha256": "d9fee2bb3fad7a07425189db3f6a866a088ebcbf8bbb30dfb98c1ff579400970",
+          "size_bytes": 81
+        },
+        "stderr": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_needed_sonames.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "exit_code": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_needed_sonames.exit_code",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "size_bytes": 2
+        },
+        "time": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_needed_sonames.time",
+          "sha256": "f13a6d0dcfd042db175ea03eac3312bcc5f6c2a3d4fc93447b7429687e4501ae",
+          "size_bytes": 45
+        },
+        "started": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_needed_sonames.started.txt",
+          "sha256": "7fb70310237a7ee086124ddba36ac77829c6da779490d19ed386aec647504e3e",
+          "size_bytes": 33
+        },
+        "finished": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_needed_sonames.finished.txt",
+          "sha256": "421591e27817b8f656be45d4aae5a854e9cfc17062cf28938c49ddcde55332d1",
+          "size_bytes": 34
+        }
+      },
+      "command_text": "bash benchmarks/artifacts/task43/v9_resume_preparation/raw/map_needed_sonames.sh",
+      "recorded_exit_code": "0",
+      "bounded_saved_stdout_excerpt": []
+    },
+    {
+      "record": "recheck_15_elf",
+      "files": {
+        "stdout": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/recheck_15_elf.stdout",
+          "sha256": "1ed5822173f54528544914c6e523fd2ce1241d0187a1df9f5fdf43df66201f6e",
+          "size_bytes": 13707
+        },
+        "collector_snapshot": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/collector_snapshots/recheck_15_elf.sh",
+          "sha256": "e82e691e37f997cac95fd7edb041ca98344272f5b2690308d2deb042c02466e3",
+          "size_bytes": 1012
+        },
+        "command": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/recheck_15_elf.command.txt",
+          "sha256": "c3d6b50e1754661853f29ec2fa8516b2cbf7e16f3c02768afb3f9c4e3097827a",
+          "size_bytes": 77
+        },
+        "stderr": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/recheck_15_elf.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "exit_code": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/recheck_15_elf.exit_code",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "size_bytes": 2
+        },
+        "time": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/recheck_15_elf.time",
+          "sha256": "3366b86fb77372bfad3df716c3a0f1c84f2e843b91f6ea1dbabaabf36d18ddc7",
+          "size_bytes": 46
+        },
+        "started": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/recheck_15_elf.started.txt",
+          "sha256": "c9dd2b033e3b3d78bf8feb792a58cbc197df43274582609f21ebb830dfc55d04",
+          "size_bytes": 33
+        },
+        "finished": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/recheck_15_elf.finished.txt",
+          "sha256": "574147679752fa3cbf751492c146871d47200c80d82fd1c985581d79a67f369b",
+          "size_bytes": 34
+        }
+      },
+      "command_text": "bash benchmarks/artifacts/task43/v9_resume_preparation/raw/recheck_15_elf.sh",
+      "recorded_exit_code": "0",
+      "bounded_saved_stdout_excerpt": []
+    },
+    {
+      "record": "map_direct_needed_paths",
+      "files": {
+        "stdout": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_direct_needed_paths.stdout",
+          "sha256": "42700961db2b4ca1ae2206d93c18a6e0ad8986ec72b818b26a192b082eb005c4",
+          "size_bytes": 57440
+        },
+        "collector_snapshot": {
+          "path": "docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/collector_snapshots/map_direct_needed_paths.sh",
+          "sha256": "1568de57c0911a88c062df5b9d504ae42fad3e0b93217f730e55f2631ee1b8b2",
+          "size_bytes": 4709
+        },
+        "stderr": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_direct_needed_paths.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "exit_code": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_direct_needed_paths.exit_code",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "size_bytes": 2
+        },
+        "time": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_direct_needed_paths.time",
+          "sha256": "a8b35d04483e44ab132d7c8376cf70dbb902120bb52befa2d70d0259a3b2e70c",
+          "size_bytes": 47
+        },
+        "started": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_direct_needed_paths.started.txt",
+          "sha256": "ad28acabadf9d1a2cbb00b742b05aa574de7d2548aee05220da630a170b4654d",
+          "size_bytes": 21
+        },
+        "finished": {
+          "path": "benchmarks/artifacts/task43/v9_resume_preparation/raw/map_direct_needed_paths.finished.txt",
+          "sha256": "1bbb899120db387ce442d14a3ab6f3c93859d1e7177b13aa5fc86a1382c343c3",
+          "size_bytes": 21
+        }
+      },
+      "command_text": null,
+      "recorded_exit_code": "0",
+      "bounded_saved_stdout_excerpt": []
+    }
+  ],
+  "output": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/v9_static_input_context.json"
+}

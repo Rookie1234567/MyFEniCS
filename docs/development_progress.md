@@ -1,6 +1,12 @@
-# Task43 当前收口（2026-10-25）：PARTIAL / CONTROLLED_NEGATIVE
+# Task43 当前收口（2026-10-26）：PARTIAL / CONTROLLED_NEGATIVE
 
-## Task43 V9当前状态：D3有限工程复核完成；科学资格不变
+## Task43 V10当前状态：静态证据关联更正，等待正式审阅
+
+本轮按正式V9 review第9节完成保存文本的离线纠正，未启动任何支持诊断或正式计算。旧stdout的三处EDGE/BRIDGE边界分别明确，旧派生JSON却把相邻桥对象的SONAME、NEEDED和包元数据关联到loader/libc；新文件逐字段纠正三条共12处，旧文件保留。主控用另一种PACKAGE终止的分块方式独立核算，再与最终纠正版逐字段对照，确认61边、18 parent、48+13集合覆盖、24对象无冲突。局部解析、字段/范围读取错误均保留费用，没有改期望值来消除原记录错误。
+
+固定D3启动链和20项测试的有限工程证据已被正式V9 review接受，本轮历史复用，不将文档HEAD追认为运行HEAD。具体旧生成器/时间仍UNKNOWN；MCA输入摘录仅来自原保存文本。五项能力、accepted9/R9和所有历史负结果不变。新增support/sanity/native/ABI/pytest/collect/PDE/dispatch/READY全0，正式5/6、A1 2/2、A2 3/3及最后封存槽不变；无新运行或merge approval。交付见[Response V10](task43_hp_adaptivity/response_v10.md)与[静态纠正记录](task43_hp_adaptivity/outcomes/records/v10_static_evidence_correction_v1.json)。
+
+## Task43 V9历史交付：D3有限工程复核完成；科学资格不变
 
 V8候选顺序偏差和初次复制失败仍保留。V9在S1静态复核、S2固定字节采用、19项synthetic sanity及prelaunch 8-source snapshot后，执行了唯一一次D3 support。Root终态审计为`PASS_LIMITED_ENGINEERING`，只覆盖固定启动/import/ABI/affinity链与20个S2 fixture字节；20项通过，whole-watchdog 8.763570s、进程树RSS采样峰180887552B、task VmSwap采样峰0、global swap增量0、后代已清理。未构网、未装配、未求解、未运行PDE。六份trace共1010行、44次getter均为`[1]`、0成功setter/0 signal；这些是记录范围，不证明trace开始前的全生命周期affinity。root审计还注明PSS禁用、TID无独立start_ticks、没有`--cache-path`，空SHA稳定不等于JIT/global cache已核验。新增formal dispatch与PDE为0；历史额度5/6（A1 2/2、A2 3/3），最后1槽封存，五项能力与下游仍锁定，无READY或merge approval。见[Response V9](task43_hp_adaptivity/response_v9.md)、[D3 closeout](task43_hp_adaptivity/outcomes/records/v9_d3_resume_closeout_v1.json)及[完整轻量原件归档](task43_hp_adaptivity/outcomes/records/v9_d3_sources/README.md)。
 

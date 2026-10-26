@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/parse_direct_needed_stdout.py", line 354, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v10_static_evidence_sources/parse_direct_needed_stdout.py", line 245, in main
+    raise ValueError(f"legacy row spans differ from independently reviewed positions: {observed_spans}")
+ValueError: legacy row spans differ from independently reviewed positions: {('/usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_btl_ofi.so', 'ld-linux-x86-64.so.2'): [780, 796], ('/usr/lib/libpsm1/libpsm_infinipath.so.1.16', 'libc.so.6'): [828, 845], ('/usr/lib/x86_64-linux-gnu/libmca_common_ofi.so.10.0.2', 'libc.so.6'): [884, 905]}

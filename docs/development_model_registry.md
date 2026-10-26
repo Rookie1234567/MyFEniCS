@@ -1,6 +1,10 @@
 # Task43：accepted9/R9冻结，最终空间精度未达
 
-## Task43 V9当前状态：D3固定启动链与fixture的有限工程审计完成
+## Task43 V10当前状态：三条依赖派生记录更正，无新模型或运行
+
+依正式V9 review第9节，只读取已有stdout并离线更正三条记录的12个字段；主控独立核到61唯一边、18 parent、48+13精确集合覆盖与24对象一致性。原782c57记录保持原字节，具体旧生成器和生成时间UNKNOWN，不据此倒推当时launch门必然误放行。固定D3及20项测试沿用V9 review的有限工程接受，实际运行HEAD仍为`ef1e1ca5bb0b79f7cf5f6b6ce828d0e352ac44ba`。本轮support、sanity、native/ABI、pytest、collect、PDE、dispatch、READY全0；正式5/6、A1 2/2、A2 3/3，最后槽封存。空间/选择PARTIAL，精度NOT_PASSED，成本NOT_ESTABLISHED，迭代NOT_RUN / NOT_QUALIFIED；无生产或合并资格。来源、局部静态失败和费用见[Response V10](task43_hp_adaptivity/response_v10.md)与[纠正记录](task43_hp_adaptivity/outcomes/records/v10_static_evidence_correction_v1.json)。
+
+## Task43 V9历史交付：D3固定启动链与fixture的有限工程审计完成
 
 V8准备顺序/复制负项保持历史原状。V9依既有许可完成一次D3 support；root审计状态为`PASS_LIMITED_ENGINEERING`，只覆盖固定启动/import/ABI/affinity链及20个S2 fixture字节。S1静态复核为15/15 ELF身份匹配、61条直接依赖边、3个桥接对象；D3有6份trace/1010行、44个getter均为CPU `[1]`，无成功setter或signal；20项fixture passed，整个运行未构网、装配、求解或运行PDE。RSS/VmSwap是13个watchdog样本而非连续观测，PSS未启用；没有完整科学端点、生产ABI、全仓CI或merge资格。新增正式PDE/dispatch为0，formal累计5/6、A1 2/2、A2 3/3，最后1槽封存。accepted9/R9与五项能力不变，无READY或merge approval。身份与原件见[Response V9](task43_hp_adaptivity/response_v9.md)、[D3 resume closeout](task43_hp_adaptivity/outcomes/records/v9_d3_resume_closeout_v1.json)及[archive](task43_hp_adaptivity/outcomes/records/v9_d3_sources/README.md)。
 

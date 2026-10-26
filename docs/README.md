@@ -1,5 +1,7 @@
 # 任务流转索引
 
+Task43当前交付：[V10静态证据回应](task43_hp_adaptivity/response_v10.md)、[纠正记录](task43_hp_adaptivity/outcomes/records/v10_static_evidence_correction_v1.json)；执行权威为[正式V9 review第9节](task43_hp_adaptivity/review_report_v9.md)。本轮只纠正三条派生记录，新增运行全0；既有D3与20项测试仅获有限工程接受，科学与合并资格不变。
+
 `docs/taskXXX_*/` 保存 ChatGPT 任务书、Codex outcomes 和审查报告；`notes/` 只保存理论、学习和解释性文档。Task28 从干净 master 选择性归档 Task021-Task027 的核心闭环文件，不复制 raw runs。
 
 <!-- REPOSITORY_WORK_PRINCIPLES_BEGIN -->

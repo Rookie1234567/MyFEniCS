@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/tmp/task43_v10_compare_final.py", line 25, in <module>
+    assert d['v1_json_lines'] == line_range, d['v1_json_lines']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: [781, 1019]

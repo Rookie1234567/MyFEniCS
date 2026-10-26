@@ -1,0 +1,127 @@
+{
+  "schema": "task43.v10.root-independent-offline-accounting.v1",
+  "derived_utc": "2026-10-26T00:56:34.482037+00:00",
+  "method": "PACKAGE-terminated raw records; no agent parser or old audit execution",
+  "raw_sha256": "42700961db2b4ca1ae2206d93c18a6e0ad8986ec72b818b26a192b082eb005c4",
+  "collector_sha256": "1568de57c0911a88c062df5b9d504ae42fad3e0b93217f730e55f2631ee1b8b2",
+  "recheck_sha256": "1ed5822173f54528544914c6e523fd2ce1241d0187a1df9f5fdf43df66201f6e",
+  "old_edge_map_sha256": "d013d64d8c9e300e39b04b927ba23c3e9e5c55d1f02cded732550cd4093401e3",
+  "edge_count": 61,
+  "unique_keys": 61,
+  "parent_count": 18,
+  "old15_edge_count": 48,
+  "bridge_edge_count": 13,
+  "resolved_object_count": 24,
+  "same_realpath_hash_metadata_conflicts": 0,
+  "needed_soname_mismatches": 0,
+  "field_differences": [
+    {
+      "key": [
+        "/usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_btl_ofi.so",
+        "ld-linux-x86-64.so.2"
+      ],
+      "raw_lines": [
+        415,
+        420
+      ],
+      "changes": {
+        "needed_by_resolved_object": {
+          "old": [
+            "libinfinipath.so.4",
+            "libuuid.so.1",
+            "libc.so.6"
+          ],
+          "corrected": []
+        },
+        "resolved_soname": {
+          "old": "libpsm_infinipath.so.1",
+          "corrected": "ld-linux-x86-64.so.2"
+        },
+        "package_owner_line": {
+          "old": "PACKAGE_OWNER exit=0 libpsm-infinipath1: /usr/lib/libpsm1/libpsm_infinipath.so.1.16",
+          "corrected": "PACKAGE_OWNER exit=0 libc6:amd64: /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2"
+        },
+        "package": {
+          "old": "libpsm-infinipath1 3.3+20.604758e7-6.3build1",
+          "corrected": "libc6:amd64 2.39-0ubuntu8.9"
+        }
+      }
+    },
+    {
+      "key": [
+        "/usr/lib/libpsm1/libpsm_infinipath.so.1.16",
+        "libc.so.6"
+      ],
+      "raw_lines": [
+        447,
+        453
+      ],
+      "changes": {
+        "needed_by_resolved_object": {
+          "old": [
+            "ld-linux-x86-64.so.2",
+            "libfabric.so.1",
+            "libhwloc.so.15",
+            "libc.so.6"
+          ],
+          "corrected": [
+            "ld-linux-x86-64.so.2"
+          ]
+        },
+        "resolved_soname": {
+          "old": "libmca_common_ofi.so.10",
+          "corrected": "libc.so.6"
+        },
+        "package_owner_line": {
+          "old": "PACKAGE_OWNER exit=0 libopenmpi3t64:amd64: /usr/lib/x86_64-linux-gnu/libmca_common_ofi.so.10.0.2",
+          "corrected": "PACKAGE_OWNER exit=0 libc6:amd64: /usr/lib/x86_64-linux-gnu/libc.so.6"
+        },
+        "package": {
+          "old": "libopenmpi3t64:amd64 4.1.6-7ubuntu2",
+          "corrected": "libc6:amd64 2.39-0ubuntu8.9"
+        }
+      }
+    },
+    {
+      "key": [
+        "/usr/lib/x86_64-linux-gnu/libmca_common_ofi.so.10.0.2",
+        "libc.so.6"
+      ],
+      "raw_lines": [
+        485,
+        491
+      ],
+      "changes": {
+        "needed_by_resolved_object": {
+          "old": [
+            "ld-linux-x86-64.so.2",
+            "librdmacm.so.1",
+            "libefa.so.1",
+            "libibverbs.so.1",
+            "libpsm_infinipath.so.1",
+            "libpsm2.so.2",
+            "libatomic.so.1",
+            "libc.so.6"
+          ],
+          "corrected": [
+            "ld-linux-x86-64.so.2"
+          ]
+        },
+        "resolved_soname": {
+          "old": "libfabric.so.1",
+          "corrected": "libc.so.6"
+        },
+        "package_owner_line": {
+          "old": "PACKAGE_OWNER exit=0 libfabric1:amd64: /usr/lib/x86_64-linux-gnu/libfabric.so.1.20.0",
+          "corrected": "PACKAGE_OWNER exit=0 libc6:amd64: /usr/lib/x86_64-linux-gnu/libc.so.6"
+        },
+        "package": {
+          "old": "libfabric1:amd64 1.17.0-3build2",
+          "corrected": "libc6:amd64 2.39-0ubuntu8.9"
+        }
+      }
+    }
+  ],
+  "scope": "historical captured text consistency only; no installed-file or runtime claim",
+  "elapsed_seconds": 0.006885193288326263
+}

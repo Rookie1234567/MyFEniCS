@@ -1,6 +1,17 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V9 当前状态：D3 有限工程复核完成；不改变生产合并资格
+## V10 当前状态：静态证据更正，不授予合并许可
+
+| 依赖组 | 本轮文件与依赖 | 核验与合入边界 |
+|---|---|---|
+| compact evidence/docs | `response_v10.md`、`records/v10_static_evidence_correction_v1.json`、`records/v10_static_evidence_sources/`及当前导航/总账 | 新纠正版必须连同原文行号、旧v1身份、逐字段diff、局部失败和UNKNOWN保留；静态核算61/18/48+13/24，fresh PDE为0；仍待正式审阅，未给docs merge approval |
+| research-only | V10仅解析保存文本的stdlib脚本与历史采集脚本归档 | 仅供复核静态证据，不是controller、driver或生产入口；不执行归档采集脚本 |
+| production numerical/core、reusable runner/watchdog、checker/benchmark | 无源码或数值行为变化 | 沿用既有依赖组限制；固定20项测试证据历史复用，不等于全仓或生产资格；没有新的建议合入顺序或许可 |
+| do-not-merge | ignored原件、整分支、未资格化默认及所有锁定计算 | 正式5/6、A1 2/2、A2 3/3、最后槽封存；sanity1/1、D3 1/1不恢复；不合并 |
+
+正式V9 review接受固定D3启动链及20项固定测试的有限工程证据，V10不否定也不扩大该结论。原782c57交付中三条派生错误由新文件纠正，原表不改。详见[Response V10](../response_v10.md)及[纠正记录](records/v10_static_evidence_correction_v1.json)。
+
+## V9 历史交付：D3 有限工程复核完成；不改变生产合并资格
 
 V8前瞻许可只恢复一次D3 support运行。Root对固定启动/import/ABI/affinity链与20个S2 fixture字节的审计为`PASS_LIMITED_ENGINEERING`，issues=[]；没有mesh、assembly、solver或PDE，也没有数值核心改动。watchdog whole wall `8.763570327777416 s`、进程树RSS采样峰`180887552 B`、task VmSwap峰0、global swap增量0/0页，后代清理完成。trace共1010行/44 getter，getter均为CPU `[1]`，0成功setter、0 signal；采样不等同连续观测，trace从taskset后开始。
 
