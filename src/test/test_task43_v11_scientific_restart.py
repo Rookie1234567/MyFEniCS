@@ -106,7 +106,7 @@ class _ObserverVector:
         return _ObserverVector(np.zeros_like(self.values))
 
     def copy(self, other):
-        self.values[...] = other.values
+        other.values[...] = self.values
 
     def axpy(self, scale, other):
         self.values += scale * other.values
@@ -500,6 +500,18 @@ def _invoke_actual_v11_observer(
 def test_run_impl_real_v11_observer_preserves_primary_before_postprocessing(
     tmp_path, monkeypatch, phase, outcome, capture_expected, sample_keys
 ):
+    if (
+        phase == "A1_q3"
+        and outcome == "success"
+        and os.environ.get("TASK43_V11_ATTEMPT_ROOT")
+    ):
+        runtime_identity = h100_anchor._check_v11_runtime_envelope(
+            h100_anchor.MPI.COMM_WORLD
+        )
+        (tmp_path / "recovery_runtime_identity.json").write_text(
+            json.dumps(runtime_identity, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
     run_root, view, captures, captured = _invoke_actual_v11_observer(
         tmp_path,
         monkeypatch,
@@ -967,6 +979,7 @@ def _prepare_v12_compare_fixture(root: Path, monkeypatch, *, failure: str | None
     a2_path = p2_support / "A2_saved_primary_q_response.json"
     a2 = json.loads(a2_path.read_text(encoding="utf-8"))
     bind(a2)
+    a2["contract_sha256"] = contract_sha
     a2_path.write_text(json.dumps(a2, sort_keys=True) + "\n", encoding="utf-8")
 
     record["candidate_plan_sha256"] = hashlib.sha256(p4_plan_path.read_bytes()).hexdigest()
@@ -1021,6 +1034,12 @@ def _prepare_v12_compare_fixture(root: Path, monkeypatch, *, failure: str | None
     storage_path = candidate_root / "candidate_recovered_solution_storage.npz"
     np.savez_compressed(storage_path, recovered_p6_local_coefficients=np.asarray([1.0 + 0.0j]))
     orders_path = candidate_root / "solve/dtn_port_diffraction_orders_3d.json"
+    orders_path.parent.mkdir(parents=True, exist_ok=True)
+    orders_path.write_text(
+        json.dumps({"orders": [], "classification": "synthetic_reader_fixture"}, sort_keys=True)
+        + "\n",
+        encoding="utf-8",
+    )
     record["power"]["channel_rows_sha256"] = hashlib.sha256(orders_path.read_bytes()).hexdigest()
     endpoint_path.write_text(json.dumps(record, sort_keys=True) + "\n", encoding="utf-8")
     terminal["endpoint_record_sha256"] = hashlib.sha256(endpoint_path.read_bytes()).hexdigest()
@@ -1174,6 +1193,9 @@ def _prepare_v12_compare_fixture(root: Path, monkeypatch, *, failure: str | None
                 "contract_sha256": contract_sha,
                 "recovery_manifest_sha256": binding["manifest_sha256"],
                 "p2_source_id": "D1",
+                "launch_shell_sha256": hashlib.sha256(
+                    (p4_attempt / "snapshots/launch.sh").read_bytes()
+                ).hexdigest(),
                 "source": p4_source,
                 "inputs": p4_inputs,
             },

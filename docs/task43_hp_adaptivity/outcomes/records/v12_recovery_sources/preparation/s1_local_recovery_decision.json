@@ -1,0 +1,51 @@
+{
+  "schema": "task43.v12.s1-local-recovery-decision.v1",
+  "authority": "review_report_v11.md sections 9.3/9.4",
+  "review_sha": "cd4112a0079aba28e9ce1513b58a1b9a51fd6938",
+  "initial_freeze_head": "4ab4e4e8a80fb13f4c4dde63decfe282b897567e",
+  "recovery_manifest_sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+  "test_sha256": "5dcfcddb3253266bc3eff5c93172c9e84af553252166ea574db92765a5bdaf2d",
+  "observed_failure_groups": [
+    "4 observer parameter cases failed because fake vector copy reversed source/result direction",
+    "10 reader/P5/joined-source parameter cases stopped at missing orders JSON before the tested path"
+  ],
+  "additional_static_findings": [
+    "P4 fixture overwrote launch manifest without its shell hash",
+    "A2 fixture kept old top-level contract hash after extending synthetic contract",
+    "The four recovery selectors mock runtime checks; first affected observer parameter now runs existing actual worker envelope check before monkeypatch and saves it in the same worker"
+  ],
+  "production_source_change_since_initial_freeze": false,
+  "recovery_selectors": [
+    "test_run_impl_real_v11_observer_preserves_primary_before_postprocessing",
+    "test_v12_actual_candidate_reader_rejects_mixed_storage_packet",
+    "test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8",
+    "test_v12_p2_joined_source_binding_rejects_root_terminal_failure"
+  ],
+  "expected_parameter_items": 14,
+  "limits": {
+    "work_seconds": 270,
+    "whole_seconds": 300,
+    "tree_rss_bytes": 8589934592,
+    "cpu": [
+      1
+    ],
+    "mpi": 1,
+    "math_threads": 1,
+    "task_swap_bytes": 0
+  },
+  "decision": "ALLOW_ONCE_LOCAL_FIXTURE_RECOVERY; D1 not yet eligible",
+  "root_review": "Root read all 14 failure tracebacks, runtime identity/controlled child exits, all 55 compact resource rows, all raw trace events and all unique stack frames. All 51 source and 38 input identities match own snapshots; no disqualifying hard failure. Same initial manifest retained. No whole-suite retry.",
+  "unmeasured_static_actions": [
+    "manual reading and editing",
+    "git status/diff inspections",
+    "AST/lint/shell inspection by agent unless separately timed",
+    "root evidence extraction"
+  ],
+  "additional_local_failures": [
+    {
+      "operation": "tail focused_attempt1/worker.log",
+      "exit_code": 1,
+      "cause": "wrong child path; correct watchdog/worker.log used, no workflow rerun"
+    }
+  ]
+}

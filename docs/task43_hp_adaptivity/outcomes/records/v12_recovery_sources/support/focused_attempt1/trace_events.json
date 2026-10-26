@@ -1,0 +1,508 @@
+{
+  "raw_trace_index": [
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/strace/sched.2267041",
+      "sha256": "a95508f7b22fd817ae2ea276142e94cd7305e11cff5b07acf13ae9bbef7eaf31",
+      "bytes": 180050
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/strace/sched.2267274",
+      "sha256": "ef4e37b8cf9654c07846565602b439da67a6a9031dc59e4e3f30231121abfe03",
+      "bytes": 3717
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/strace/sched.2267292",
+      "sha256": "2adca6502ee1502ee6ea92f8b68886ee5d3f3e919ed8ea9b2825d9b35e1b9f80",
+      "bytes": 40
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/strace/sched.2267295",
+      "sha256": "913ed1da3700cbe15b7b076aeb9a10e3186dd361567d1364553ccff8959423ae",
+      "bytes": 40
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/strace/sched.2267296",
+      "sha256": "3c38e9e8161fd62aeaa2e60f8f7244062a2e8418db7c63306884eed6f353276c",
+      "bytes": 40
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/strace/sched.2267297",
+      "sha256": "975470858e04e552ad382a7d075f0e32429b611c95a276989cbab819c6a2d8fc",
+      "bytes": 40
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/strace/sched.2267543",
+      "sha256": "71a0ffc33c75b3b1b0db6b4dd9ce09552931921d9c3dacdeaa80f40d90dd32b9",
+      "bytes": 40
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/strace/sched.2267571",
+      "sha256": "f928790c83cbb8edaf20523ba917ac9a4dfdaffdffb1372f34a43e48cb0fa4db",
+      "bytes": 40
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/strace/sched.2267703",
+      "sha256": "8d448f4d00328caabb99eb1e96f53e0cc91ed5edbe244ee2291ff9674b034e07",
+      "bytes": 40
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/strace/sched.2267705",
+      "sha256": "57a39c85d3e83913997b0b85568be3805b94620377ca8184bdeaecf5bb28cbfc",
+      "bytes": 40
+    }
+  ],
+  "all_nonstack_lines": [
+    {
+      "file": "sched.2267041",
+      "line": 1,
+      "raw": "1793030624.862391 sched_getaffinity(0, 128, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 125,
+      "raw": "1793030627.666175 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 225,
+      "raw": "1793030627.920098 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 320,
+      "raw": "1793030627.954997 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 415,
+      "raw": "1793030627.996639 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 510,
+      "raw": "1793030628.052414 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 605,
+      "raw": "1793030628.104244 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 698,
+      "raw": "1793030628.153309 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 791,
+      "raw": "1793030628.206369 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 884,
+      "raw": "1793030628.253557 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 977,
+      "raw": "1793030628.304116 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1070,
+      "raw": "1793030628.348299 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1163,
+      "raw": "1793030633.118326 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1200,
+      "raw": "1793030633.147702 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1235,
+      "raw": "1793030633.158026 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1270,
+      "raw": "1793030633.179810 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1307,
+      "raw": "1793030633.195443 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1342,
+      "raw": "1793030633.205373 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1377,
+      "raw": "1793030633.213706 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1412,
+      "raw": "1793030633.241382 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1447,
+      "raw": "1793030633.254549 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1482,
+      "raw": "1793030633.263256 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1517,
+      "raw": "1793030633.315219 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=2267543, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1554,
+      "raw": "1793030633.345305 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1589,
+      "raw": "1793030633.387429 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1624,
+      "raw": "1793030633.426468 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1659,
+      "raw": "1793030633.485541 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1694,
+      "raw": "1793030633.530331 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1729,
+      "raw": "1793030633.567272 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1764,
+      "raw": "1793030633.678508 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1799,
+      "raw": "1793030633.724897 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1834,
+      "raw": "1793030633.765282 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1869,
+      "raw": "1793030633.822353 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1904,
+      "raw": "1793030633.878858 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1939,
+      "raw": "1793030633.924325 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 1974,
+      "raw": "1793030633.962606 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2009,
+      "raw": "1793030633.992489 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2044,
+      "raw": "1793030634.008171 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2079,
+      "raw": "1793030634.018361 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2114,
+      "raw": "1793030634.076534 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=2267571, si_uid=1000, si_status=0, si_utime=0, si_stime=1 /* 0.01 s */} ---"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2149,
+      "raw": "1793030634.128973 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2184,
+      "raw": "1793030634.141636 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2219,
+      "raw": "1793030634.150107 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2254,
+      "raw": "1793030634.187041 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2289,
+      "raw": "1793030634.200874 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2324,
+      "raw": "1793030634.210030 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2359,
+      "raw": "1793030634.755850 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2394,
+      "raw": "1793030634.811385 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2429,
+      "raw": "1793030634.831079 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2464,
+      "raw": "1793030634.841303 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2499,
+      "raw": "1793030637.024527 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2534,
+      "raw": "1793030637.040559 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2569,
+      "raw": "1793030637.047642 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2604,
+      "raw": "1793030637.066851 sched_getaffinity(2267041, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2639,
+      "raw": "1793030637.075652 sched_getaffinity(2267296, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2674,
+      "raw": "1793030637.082569 sched_getaffinity(2267297, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2709,
+      "raw": "1793030637.341951 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=2267703, si_uid=1000, si_status=0, si_utime=2 /* 0.02 s */, si_stime=1 /* 0.01 s */} ---"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2744,
+      "raw": "1793030637.629100 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=2267705, si_uid=1000, si_status=7, si_utime=2 /* 0.02 s */, si_stime=2 /* 0.02 s */} ---"
+    },
+    {
+      "file": "sched.2267041",
+      "line": 2780,
+      "raw": "1793030661.712398 +++ exited with 1 +++"
+    },
+    {
+      "file": "sched.2267274",
+      "line": 1,
+      "raw": "1793030626.970266 sched_getaffinity(2267274, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267274",
+      "line": 19,
+      "raw": "1793030627.093607 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267274",
+      "line": 33,
+      "raw": "1793030627.100705 sched_getaffinity(2267274, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2267274",
+      "line": 47,
+      "raw": "1793030661.740288 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.2267292",
+      "line": 1,
+      "raw": "1793030661.650466 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.2267295",
+      "line": 1,
+      "raw": "1793030661.669039 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.2267296",
+      "line": 1,
+      "raw": "1793030661.500245 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.2267297",
+      "line": 1,
+      "raw": "1793030661.483129 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.2267543",
+      "line": 1,
+      "raw": "1793030633.314807 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.2267571",
+      "line": 1,
+      "raw": "1793030634.076087 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.2267703",
+      "line": 1,
+      "raw": "1793030637.341702 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.2267705",
+      "line": 1,
+      "raw": "1793030637.628540 +++ exited with 7 +++"
+    }
+  ],
+  "unique_stack_frames_with_counts": {
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(sched_getaffinity+0x1a) [0x10e73a]": 55,
+    " > /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so(get_num_procs+0xce) [0x39bbfe]": 1,
+    " > /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so(blas_get_cpu_number+0x35) [0x39bce5]": 1,
+    " > /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so(gotoblas_init+0x4b) [0x1480bb]": 1,
+    " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x142f) [0x571f]": 1,
+    " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x1534) [0x5824]": 1,
+    " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x132) [0x15b2]": 1,
+    " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_rtld_di_serinfo+0x2cac) [0xcd7c]": 1,
+    " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x9c) [0x151c]": 2,
+    " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_find_dso_for_object+0x184) [0xd164]": 1,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(dlmopen+0x104) [0x98284]": 1,
+    " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x1e9) [0x1669]": 1,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(dlerror+0x2c3) [0x97d63]": 1,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(dlopen+0x6f) [0x9833f]": 1,
+    " > /usr/bin/python3.12(_Py_GetLocaleconvNumeric+0x6bc) [0x2bc73c]": 1,
+    " > /usr/bin/python3.12(PyState_FindModule+0x25a) [0x2a983a]": 1,
+    " > /usr/bin/python3.12(PyImport_GetImporter+0x232) [0x2a8fc2]": 1,
+    " > /usr/bin/python3.12(PyCMethod_New+0x6f7) [0x182207]": 2,
+    " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]": 110,
+    " > /usr/bin/python3.12(PyObject_CallFunctionObjArgs+0x327) [0x149d87]": 64,
+    " > /usr/bin/python3.12(PyObject_CallMethodObjArgs+0xe3) [0x14b603]": 64,
+    " > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x395) [0x1fdab5]": 40,
+    " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x5e6e) [0x1dc49e]": 39,
+    " > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]": 108,
+    " > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]": 108,
+    " > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]": 133,
+    " > /usr/bin/python3.12(_PyWeakref_ClearRef+0xa2a4) [0x1d3724]": 25,
+    " > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x5eb) [0x1fdd0b]": 24,
+    " > /usr/bin/python3.12(PyObject_Vectorcall+0x35) [0x1499b5]": 85,
+    " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xadf) [0x1d710f]": 328,
+    " > /usr/bin/python3.12(PyObject_CallOneArg+0x4d) [0x14a69d]": 12,
+    " > /usr/bin/python3.12(_PyObject_GenericGetAttrWithDict+0xa8) [0x185008]": 12,
+    " > /usr/bin/python3.12(PyObject_GetAttr+0x4d) [0x184a2d]": 12,
+    " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xee4) [0x1d7514]": 12,
+    " > /usr/bin/python3.12(_PyObject_Call_Prepend+0x18a) [0x14a8ca]": 278,
+    " > /usr/bin/python3.12(PyType_GetModule+0x5a8) [0x1a3778]": 278,
+    " > /usr/bin/python3.12(_PyObject_MakeTpCall+0x13e) [0x14907e]": 232,
+    " > /usr/bin/python3.12(PyException_SetCause+0xeb6) [0x1552a6]": 12,
+    " > /usr/bin/python3.12(_PyList_Extend+0x204) [0x15fc04]": 12,
+    " > /usr/bin/python3.12(PyList_GetItem+0xbd6) [0x161296]": 12,
+    " > /usr/bin/python3.12(Py_RunMain+0x602) [0x2bcf22]": 58,
+    " > /usr/bin/python3.12(Py_RunMain+0x232) [0x2bcb52]": 58,
+    " > /usr/bin/python3.12(Py_BytesMain+0x2d) [0x2bc7bd]": 58,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_init_first+0x8a) [0x2a1ca]": 61,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x2a28b]": 61,
+    " > /usr/bin/python3.12(_start+0x25) [0x257a05]": 58,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(pthread_getaffinity_np+0x20) [0x9de30]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetExportTable+0x1a0574) [0x327fc4]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetExportTable+0x13c497) [0x2c3ee7]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetExportTable+0x154f12) [0x2dc962]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetPlatformInfo+0xbb) [0x17344b]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libOpenCL.so.1.0.0(clSetContextDestructorCallback+0x98b) [0xabfb]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libOpenCL.so.1.0.0(clGetPlatformIDs+0xb0) [0xbce0]": 2,
+    " > /usr/lib/x86_64-linux-gnu/hwloc/hwloc_opencl.so() [0x1468]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_last_cpu_location+0xda46) [0x44c46]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_topology_load+0x1019) [0x106f9]": 2,
+    " > /usr/lib/x86_64-linux-gnu/pmix2/lib/libpmix.so.2.13.1(pmix_hwloc_setup_topology+0x1d26) [0x4de16]": 1,
+    " > /usr/lib/x86_64-linux-gnu/pmix2/lib/libpmix.so.2.13.1(PMIx_Init+0x21cc) [0x5357c]": 1,
+    " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pmix_ext3x.so(ext3x_client_init+0xd3) [0xfa93]": 1,
+    " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_singleton.so() [0x2e86]": 1,
+    " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_init+0x2aa) [0x9815a]": 14,
+    " > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(ompi_mpi_init+0x24c) [0xebeec]": 11,
+    " > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(PMPI_Init_thread+0x5c) [0x82eec]": 11,
+    " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6(PetscInitialize+0xd2) [0x150454]": 11,
+    " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so(__pyx_pw_8petsc4py_5PETSc_5_initialize+0x4ad) [0x34065d]": 11,
+    " > /usr/bin/python3.12(PyCMethod_New+0x65f) [0x18216f]": 11,
+    " > /usr/bin/python3.12(_PyObject_MakeTpCall+0x75) [0x148fb5]": 11,
+    " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0x19d) [0x3675d]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0x90b) [0x36ecb]": 12,
+    " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc__xml_export_topology+0x3206) [0x32bd6]": 12,
+    " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0xaae) [0x3706e]": 12,
+    " > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_hwloc_base_get_local_cpuset+0x34) [0x74d54]": 6,
+    " > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_hwloc_base_get_topology+0xcc9) [0x7b399]": 6,
+    " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_ess_base_proc_binding+0xcd1) [0x61991]": 4,
+    " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_singleton.so() [0x421c]": 10,
+    " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0x21e) [0x367de]": 10,
+    " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_ess_base_proc_binding+0x12a0) [0x61f60]": 3,
+    " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_ess_base_proc_binding+0xd18) [0x619d8]": 3,
+    " > /usr/bin/python3.12(PyOS_AfterFork_Child+0x1eb2) [0xf1d0d]": 42,
+    " > /usr/bin/python3.12(PyCMethod_New+0x572) [0x182082]": 2,
+    " > /usr/bin/python3.12(PyObject_Call+0x6c) [0x14b12c]": 46,
+    " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x14fd) [0x1d7b2d]": 40,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(wait4+0x53) [0x110913]": 2,
+    " > /usr/bin/python3.12(PyOS_AfterFork_Parent+0x99) [0x2e4a89]": 2,
+    " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x207d) [0x1d86ad]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(poll+0x4d) [0x11b79d]": 1,
+    " > /usr/bin/python3.12(PyInit_select+0xb05) [0x2d4935]": 1,
+    " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x1e47) [0x1d8477]": 1,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(read+0x4a) [0x11bd6a]": 1,
+    " > /usr/bin/python3.12(_Py_read+0x53) [0x21bee3]": 1,
+    " > /usr/bin/python3.12(PyOS_AfterFork_Parent+0x42d) [0x2e4e1d]": 1,
+    " > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_hwloc_base_get_topology+0x12a6) [0x7b976]": 1,
+    " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_hnp.so() [0x4c56]": 3,
+    " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_daemon+0xc80) [0x39540]": 3,
+    " > /usr/bin/orted() [0x11c5]": 3
+  }
+}

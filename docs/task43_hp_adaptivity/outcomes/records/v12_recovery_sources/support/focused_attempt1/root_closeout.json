@@ -1,0 +1,242 @@
+{
+  "schema": "task43.v12.support-root-closeout.v1",
+  "stage": "S1",
+  "run_head": "4ab4e4e8a80fb13f4c4dde63decfe282b897567e",
+  "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1",
+  "root_audit_read_utc": "2026-10-26T16:10:56.854290+00:00",
+  "classification": "WORKER_FAILED_FIXTURE_ERRORS",
+  "tests": [
+    {
+      "name": "test_main_reaches_v11_mesh_sentinel_with_watchdog_identity",
+      "time": "4.642",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_run_impl_real_v11_observer_preserves_primary_before_postprocessing[A1_q3-success-True-sample_keys0]",
+      "time": "0.286",
+      "status": "FAILED",
+      "failure_message": "ValueError: V11 full-active reduced RHS/solution/residual do not match the returned system"
+    },
+    {
+      "name": "test_run_impl_real_v11_observer_preserves_primary_before_postprocessing[R9_H8-success-True-sample_keys1]",
+      "time": "0.242",
+      "status": "FAILED",
+      "failure_message": "ValueError: V11 full-active reduced RHS/solution/residual do not match the returned system"
+    },
+    {
+      "name": "test_run_impl_real_v11_observer_preserves_primary_before_postprocessing[A1_q3-raw_failure-False-sample_keys2]",
+      "time": "1.107",
+      "status": "FAILED",
+      "failure_message": "ValueError: V11 full-active reduced RHS/solution/residual do not match the returned system"
+    },
+    {
+      "name": "test_run_impl_real_v11_observer_preserves_primary_before_postprocessing[A1_q3-q10_failure-True-sample_keys3]",
+      "time": "0.080",
+      "status": "FAILED",
+      "failure_message": "ValueError: V11 full-active reduced RHS/solution/residual do not match the returned system"
+    },
+    {
+      "name": "test_raw_vector_residual_recomputation_uses_saved_gram_action",
+      "time": "0.009",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_pending_candidate_restore_is_v11_contract_scoped",
+      "time": "0.425",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_v12_actual_candidate_reader_rejects_mixed_storage_packet[None]",
+      "time": "0.038",
+      "status": "FAILED",
+      "failure_message": "FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_actual_candidate_read0/reader_valid/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'"
+    },
+    {
+      "name": "test_v12_actual_candidate_reader_rejects_mixed_storage_packet[source_identity]",
+      "time": "0.078",
+      "status": "FAILED",
+      "failure_message": "FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_actual_candidate_read1/reader_source_identity/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'"
+    },
+    {
+      "name": "test_v12_actual_candidate_reader_rejects_mixed_storage_packet[coefficients]",
+      "time": "0.150",
+      "status": "FAILED",
+      "failure_message": "FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_actual_candidate_read2/reader_coefficients/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'"
+    },
+    {
+      "name": "test_v12_actual_candidate_reader_rejects_mixed_storage_packet[recovery_index]",
+      "time": "0.145",
+      "status": "FAILED",
+      "failure_message": "FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_actual_candidate_read3/reader_recovery_index/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'"
+    },
+    {
+      "name": "test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None]",
+      "time": "0.060",
+      "status": "FAILED",
+      "failure_message": "FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b0/success/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'"
+    },
+    {
+      "name": "test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[terminal_read_drift]",
+      "time": "0.151",
+      "status": "FAILED",
+      "failure_message": "FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b1/terminal_read_drift/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'"
+    },
+    {
+      "name": "test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[input_drift]",
+      "time": "0.155",
+      "status": "FAILED",
+      "failure_message": "FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b2/input_drift/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'"
+    },
+    {
+      "name": "test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[q10_failure]",
+      "time": "0.060",
+      "status": "FAILED",
+      "failure_message": "FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b3/q10_failure/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'"
+    },
+    {
+      "name": "test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[ledger_marker_failure]",
+      "time": "0.126",
+      "status": "FAILED",
+      "failure_message": "FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b4/ledger_marker_failure/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'"
+    },
+    {
+      "name": "test_v12_p2_joined_source_binding_rejects_root_terminal_failure",
+      "time": "0.146",
+      "status": "FAILED",
+      "failure_message": "FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_p2_joined_source_bind0/actual_joined/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'"
+    },
+    {
+      "name": "test_v12_execution_manifest_rejects_changed_fixed_identity",
+      "time": "0.017",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_v12_observer_delegates_cache_and_restores_alias_after_errors",
+      "time": "0.009",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_v11_primary_cli_forbids_extra_and_binds_q10_output",
+      "time": "0.083",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_v11_terminal_failure_is_incomplete_and_primary_only",
+      "time": "0.062",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_v11_empty_root_guard_preserves_existing_file_hash",
+      "time": "0.004",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_fixed_seed8_plan_rejects_nonroot_and_alternate_seed",
+      "time": "0.002",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_v11_common_points_identity_and_fe_bounds",
+      "time": "0.114",
+      "status": "PASSED",
+      "failure_message": null
+    }
+  ],
+  "whole_seconds": 42.5156832835637,
+  "limit_seconds": 300,
+  "rss_peak_bytes": 284934144,
+  "rss_cap_bytes": 8589934592,
+  "task_swap_peak_bytes": 0,
+  "exit_codes": {
+    "worker": 1,
+    "watchdog": 2,
+    "launcher": 2
+  },
+  "cleanup": {
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "host_proc_checks": [
+      {
+        "pid": 2267024,
+        "start_ticks": 295561568,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 2267041,
+        "start_ticks": 295561612,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 2267060,
+        "start_ticks": 295561630,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 2267274,
+        "start_ticks": 295562137,
+        "same_process_still_present": false,
+        "proc_stat": null
+      }
+    ]
+  },
+  "source_count": 51,
+  "input_count": 38,
+  "trace": {
+    "setter_count": 0,
+    "all_getters_cpu1": true,
+    "raw_event_line_count": 71,
+    "classification": "No setter; successful getters [1]; child exit7 is intentional cleanup fixture, not unknown failure; worker exit1 agrees XML failures; sample50 worker vanished during normal exit, final child list empty."
+  },
+  "resource_read_scope": "Root independently read all 55 compact per-line rows, first/last raw rows, full trace syscall/exit/signal lines and every unique stack frame; full raw bytes scanned by readonly helper. Large raw records remain ignored. No cache paths supplied; cache qualification NOT_MEASURED.",
+  "failure_causes": [
+    "fixture vector.copy reversed PETSc source-to-result semantics (4 cases)",
+    "fixture diffraction orders JSON read before creation (10 cases)"
+  ],
+  "continuation": {
+    "S1_recovery_permitted": true,
+    "D1_permitted": false,
+    "reason": "Only identified fixture failures; no identity/CPU/resource/trace/write/cleanup hard gate failure. Recovery restricted to four affected selectors."
+  },
+  "root_observation": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/preparation/focused_attempt1_root_terminal_observations.json",
+    "sha256": "c8bddc119031889e70100bcbfd4798cc8f0ec8a01f6a93203ba848893350243b"
+  },
+  "raw_index": [
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/watchdog/worker.log",
+      "sha256": "00edb3445c876f24fc03a2dfdd831137d6d36570066195ad695d81503e0c1d2e"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/watchdog/resources.jsonl",
+      "sha256": "633c06ca2b069d5a13eb2436ec1ae5a2aec6815de44c79e2729e8450ff5078ec"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/pytest_results.xml",
+      "sha256": "3cf8ae20b74cc8ff522217aee20fd3a7e0b153e49bb259e20d5e3d31b103a7e5"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/snapshots/launch_manifest.json",
+      "sha256": "8dd0253a90d26ffd78542e4e0f6387021175d13ee8f8c6686859004ec296405d"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/watchdog/summary.json",
+      "sha256": "0c8427dd8c4a2c598e088d071e1ab9fbd40b0c6c65de56de7db27e1b1b7467dc"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/watchdog_stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

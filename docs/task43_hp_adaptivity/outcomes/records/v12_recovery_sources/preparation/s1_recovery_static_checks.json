@@ -1,0 +1,24 @@
+{
+  "static_seconds": 0.08011862775310874,
+  "checks": [
+    "test AST",
+    "bash syntax",
+    "embedded snapshot stdlib AST",
+    "test F821/F822/F823",
+    "git diff --check"
+  ],
+  "test_sha256": "5dcfcddb3253266bc3eff5c93172c9e84af553252166ea574db92765a5bdaf2d",
+  "launch_sha256": "e0350fa46d741444c3b2424a7fe847c1d2696cca8f228eb4311fc4b51a72c1e0",
+  "local_static_failures": [
+    {
+      "operation": "bare ruff via subprocess",
+      "result": "FileNotFoundError; AST and shell checks already passed; elapsed not saved",
+      "scope": "no driver/native import/test run"
+    },
+    {
+      "operation": "ls .venv/bin/ruff and ~/.local/bin/ruff",
+      "result": "existing .venv ruff; ~/.local path absent, exit2",
+      "scope": "path lookup only"
+    }
+  ]
+}

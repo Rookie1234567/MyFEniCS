@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="14" skipped="0" tests="24" time="35.674" timestamp="2026-10-27T00:03:43.347519" hostname="fenics-ws01"><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_main_reaches_v11_mesh_sentinel_with_watchdog_identity" time="4.642" /><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_run_impl_real_v11_observer_preserves_primary_before_postprocessing[A1_q3-success-True-sample_keys0]" time="0.286"><failure message="ValueError: V11 full-active reduced RHS/solution/residual do not match the returned system">src/test/test_task43_v11_scientific_restart.py:503: in test_run_impl_real_v11_observer_preserves_primary_before_postprocessing
+    run_root, view, captures, captured = _invoke_actual_v11_observer(
+src/test/test_task43_v11_scientific_restart.py:460: in _invoke_actual_v11_observer
+    h100_anchor._run_impl(
+benchmarks/task43_hp_adaptivity/h100_anchor.py:6445: in _run_impl
+    summary = run_stage4b_block_grating_3d_case(
+src/test/test_task43_v11_scientific_restart.py:365: in fake_solver
+    kwargs["variable_p_live_observer"](view)
+benchmarks/task43_hp_adaptivity/h100_anchor.py:6131: in active_observer
+    raw_gate_audit = _v11_raw_vector_gates(
+benchmarks/task43_hp_adaptivity/h100_anchor.py:3096: in _v11_raw_vector_gates
+    raise ValueError(
+E   ValueError: V11 full-active reduced RHS/solution/residual do not match the returned system</failure></testcase><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_run_impl_real_v11_observer_preserves_primary_before_postprocessing[R9_H8-success-True-sample_keys1]" time="0.242"><failure message="ValueError: V11 full-active reduced RHS/solution/residual do not match the returned system">src/test/test_task43_v11_scientific_restart.py:503: in test_run_impl_real_v11_observer_preserves_primary_before_postprocessing
+    run_root, view, captures, captured = _invoke_actual_v11_observer(
+src/test/test_task43_v11_scientific_restart.py:460: in _invoke_actual_v11_observer
+    h100_anchor._run_impl(
+benchmarks/task43_hp_adaptivity/h100_anchor.py:6445: in _run_impl
+    summary = run_stage4b_block_grating_3d_case(
+src/test/test_task43_v11_scientific_restart.py:365: in fake_solver
+    kwargs["variable_p_live_observer"](view)
+benchmarks/task43_hp_adaptivity/h100_anchor.py:6131: in active_observer
+    raw_gate_audit = _v11_raw_vector_gates(
+benchmarks/task43_hp_adaptivity/h100_anchor.py:3096: in _v11_raw_vector_gates
+    raise ValueError(
+E   ValueError: V11 full-active reduced RHS/solution/residual do not match the returned system</failure></testcase><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_run_impl_real_v11_observer_preserves_primary_before_postprocessing[A1_q3-raw_failure-False-sample_keys2]" time="1.107"><failure message="ValueError: V11 full-active reduced RHS/solution/residual do not match the returned system">src/test/test_task43_v11_scientific_restart.py:503: in test_run_impl_real_v11_observer_preserves_primary_before_postprocessing
+    run_root, view, captures, captured = _invoke_actual_v11_observer(
+src/test/test_task43_v11_scientific_restart.py:460: in _invoke_actual_v11_observer
+    h100_anchor._run_impl(
+benchmarks/task43_hp_adaptivity/h100_anchor.py:6445: in _run_impl
+    summary = run_stage4b_block_grating_3d_case(
+src/test/test_task43_v11_scientific_restart.py:365: in fake_solver
+    kwargs["variable_p_live_observer"](view)
+benchmarks/task43_hp_adaptivity/h100_anchor.py:6131: in active_observer
+    raw_gate_audit = _v11_raw_vector_gates(
+benchmarks/task43_hp_adaptivity/h100_anchor.py:3096: in _v11_raw_vector_gates
+    raise ValueError(
+E   ValueError: V11 full-active reduced RHS/solution/residual do not match the returned system</failure></testcase><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_run_impl_real_v11_observer_preserves_primary_before_postprocessing[A1_q3-q10_failure-True-sample_keys3]" time="0.080"><failure message="ValueError: V11 full-active reduced RHS/solution/residual do not match the returned system">src/test/test_task43_v11_scientific_restart.py:503: in test_run_impl_real_v11_observer_preserves_primary_before_postprocessing
+    run_root, view, captures, captured = _invoke_actual_v11_observer(
+src/test/test_task43_v11_scientific_restart.py:460: in _invoke_actual_v11_observer
+    h100_anchor._run_impl(
+benchmarks/task43_hp_adaptivity/h100_anchor.py:6445: in _run_impl
+    summary = run_stage4b_block_grating_3d_case(
+src/test/test_task43_v11_scientific_restart.py:365: in fake_solver
+    kwargs["variable_p_live_observer"](view)
+benchmarks/task43_hp_adaptivity/h100_anchor.py:6131: in active_observer
+    raw_gate_audit = _v11_raw_vector_gates(
+benchmarks/task43_hp_adaptivity/h100_anchor.py:3096: in _v11_raw_vector_gates
+    raise ValueError(
+E   ValueError: V11 full-active reduced RHS/solution/residual do not match the returned system</failure></testcase><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_raw_vector_residual_recomputation_uses_saved_gram_action" time="0.009" /><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_pending_candidate_restore_is_v11_contract_scoped" time="0.425" /><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_v12_actual_candidate_reader_rejects_mixed_storage_packet[None]" time="0.038"><failure message="FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_actual_candidate_read0/reader_valid/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'">src/test/test_task43_v11_scientific_restart.py:1682: in test_v12_actual_candidate_reader_rejects_mixed_storage_packet
+    fixture = _prepare_v12_compare_fixture(
+src/test/test_task43_v11_scientific_restart.py:1024: in _prepare_v12_compare_fixture
+    record["power"]["channel_rows_sha256"] = hashlib.sha256(orders_path.read_bytes()).hexdigest()
+/usr/lib/python3.12/pathlib.py:1021: in read_bytes
+    with self.open(mode='rb') as f:
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_actual_candidate_read0/reader_valid/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'</failure></testcase><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_v12_actual_candidate_reader_rejects_mixed_storage_packet[source_identity]" time="0.078"><failure message="FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_actual_candidate_read1/reader_source_identity/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'">src/test/test_task43_v11_scientific_restart.py:1682: in test_v12_actual_candidate_reader_rejects_mixed_storage_packet
+    fixture = _prepare_v12_compare_fixture(
+src/test/test_task43_v11_scientific_restart.py:1024: in _prepare_v12_compare_fixture
+    record["power"]["channel_rows_sha256"] = hashlib.sha256(orders_path.read_bytes()).hexdigest()
+/usr/lib/python3.12/pathlib.py:1021: in read_bytes
+    with self.open(mode='rb') as f:
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_actual_candidate_read1/reader_source_identity/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'</failure></testcase><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_v12_actual_candidate_reader_rejects_mixed_storage_packet[coefficients]" time="0.150"><failure message="FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_actual_candidate_read2/reader_coefficients/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'">src/test/test_task43_v11_scientific_restart.py:1682: in test_v12_actual_candidate_reader_rejects_mixed_storage_packet
+    fixture = _prepare_v12_compare_fixture(
+src/test/test_task43_v11_scientific_restart.py:1024: in _prepare_v12_compare_fixture
+    record["power"]["channel_rows_sha256"] = hashlib.sha256(orders_path.read_bytes()).hexdigest()
+/usr/lib/python3.12/pathlib.py:1021: in read_bytes
+    with self.open(mode='rb') as f:
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_actual_candidate_read2/reader_coefficients/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'</failure></testcase><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_v12_actual_candidate_reader_rejects_mixed_storage_packet[recovery_index]" time="0.145"><failure message="FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_actual_candidate_read3/reader_recovery_index/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'">src/test/test_task43_v11_scientific_restart.py:1682: in test_v12_actual_candidate_reader_rejects_mixed_storage_packet
+    fixture = _prepare_v12_compare_fixture(
+src/test/test_task43_v11_scientific_restart.py:1024: in _prepare_v12_compare_fixture
+    record["power"]["channel_rows_sha256"] = hashlib.sha256(orders_path.read_bytes()).hexdigest()
+/usr/lib/python3.12/pathlib.py:1021: in read_bytes
+    with self.open(mode='rb') as f:
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_actual_candidate_read3/reader_recovery_index/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'</failure></testcase><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None]" time="0.060"><failure message="FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b0/success/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'">src/test/test_task43_v11_scientific_restart.py:1416: in test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8
+    fixture = _prepare_v12_compare_fixture(
+src/test/test_task43_v11_scientific_restart.py:1024: in _prepare_v12_compare_fixture
+    record["power"]["channel_rows_sha256"] = hashlib.sha256(orders_path.read_bytes()).hexdigest()
+/usr/lib/python3.12/pathlib.py:1021: in read_bytes
+    with self.open(mode='rb') as f:
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b0/success/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'</failure></testcase><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[terminal_read_drift]" time="0.151"><failure message="FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b1/terminal_read_drift/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'">src/test/test_task43_v11_scientific_restart.py:1416: in test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8
+    fixture = _prepare_v12_compare_fixture(
+src/test/test_task43_v11_scientific_restart.py:1024: in _prepare_v12_compare_fixture
+    record["power"]["channel_rows_sha256"] = hashlib.sha256(orders_path.read_bytes()).hexdigest()
+/usr/lib/python3.12/pathlib.py:1021: in read_bytes
+    with self.open(mode='rb') as f:
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b1/terminal_read_drift/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'</failure></testcase><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[input_drift]" time="0.155"><failure message="FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b2/input_drift/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'">src/test/test_task43_v11_scientific_restart.py:1416: in test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8
+    fixture = _prepare_v12_compare_fixture(
+src/test/test_task43_v11_scientific_restart.py:1024: in _prepare_v12_compare_fixture
+    record["power"]["channel_rows_sha256"] = hashlib.sha256(orders_path.read_bytes()).hexdigest()
+/usr/lib/python3.12/pathlib.py:1021: in read_bytes
+    with self.open(mode='rb') as f:
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b2/input_drift/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'</failure></testcase><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[q10_failure]" time="0.060"><failure message="FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b3/q10_failure/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'">src/test/test_task43_v11_scientific_restart.py:1416: in test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8
+    fixture = _prepare_v12_compare_fixture(
+src/test/test_task43_v11_scientific_restart.py:1024: in _prepare_v12_compare_fixture
+    record["power"]["channel_rows_sha256"] = hashlib.sha256(orders_path.read_bytes()).hexdigest()
+/usr/lib/python3.12/pathlib.py:1021: in read_bytes
+    with self.open(mode='rb') as f:
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b3/q10_failure/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'</failure></testcase><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[ledger_marker_failure]" time="0.126"><failure message="FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b4/ledger_marker_failure/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'">src/test/test_task43_v11_scientific_restart.py:1416: in test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8
+    fixture = _prepare_v12_compare_fixture(
+src/test/test_task43_v11_scientific_restart.py:1024: in _prepare_v12_compare_fixture
+    record["power"]["channel_rows_sha256"] = hashlib.sha256(orders_path.read_bytes()).hexdigest()
+/usr/lib/python3.12/pathlib.py:1021: in read_bytes
+    with self.open(mode='rb') as f:
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_compare_v11_union_reads_b4/ledger_marker_failure/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'</failure></testcase><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_v12_p2_joined_source_binding_rejects_root_terminal_failure" time="0.146"><failure message="FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_p2_joined_source_bind0/actual_joined/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'">src/test/test_task43_v11_scientific_restart.py:1524: in test_v12_p2_joined_source_binding_rejects_root_terminal_failure
+    fixture = _prepare_v12_compare_fixture(tmp_path / "actual_joined", monkeypatch)
+src/test/test_task43_v11_scientific_restart.py:1024: in _prepare_v12_compare_fixture
+    record["power"]["channel_rows_sha256"] = hashlib.sha256(orders_path.read_bytes()).hexdigest()
+/usr/lib/python3.12/pathlib.py:1021: in read_bytes
+    with self.open(mode='rb') as f:
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_attempt1/fixtures/test_v12_p2_joined_source_bind0/actual_joined/artifacts/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json'</failure></testcase><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_v12_execution_manifest_rejects_changed_fixed_identity" time="0.017" /><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_v12_observer_delegates_cache_and_restores_alias_after_errors" time="0.009" /><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_v11_primary_cli_forbids_extra_and_binds_q10_output" time="0.083" /><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_v11_terminal_failure_is_incomplete_and_primary_only" time="0.062" /><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_v11_empty_root_guard_preserves_existing_file_hash" time="0.004" /><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_fixed_seed8_plan_rejects_nonroot_and_alternate_seed" time="0.002" /><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_v11_common_points_identity_and_fe_bounds" time="0.114" /></testsuite></testsuites>
