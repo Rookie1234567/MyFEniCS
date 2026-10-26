@@ -138,3 +138,24 @@ bash scripts/run_case_in_user_service.sh input/task41extra_phi90_p50x50_g17x20/b
 本次service父成本751.769998218 s（含required checker 47.02598814526573 s），watchdog子段692.2478735409677 s不重复相加。tree峰8911572992 B，cgroup峰8768217088 B，task swap0，后代清场；未保存新的NPY。required checker实际执行但缺终态充分产品，INCOMPLETE/TERMINAL_EVIDENCE_INVALID；action/recovery未验收。详见[原始路径与hash](v15_preparation/retry_time_admission_failure.json)。
 
 用户在本次状态反馈后明确要求：修复异常并查清真实构建热点，可作最小修复后继续，禁止原样全域重跑或仅凭预测结束。当前继续进行有界代码/保存数据成本调查；不刷新T0，不把预测57.2h当实测。V6历史Gram16807.707907172386 s/28000键、owner24777.34818448685 s只作历史定位依据；V9 owner68236.865869666 s的分项未知。新诊断与旧运行分列，尚不宣称全域可准入或成功。
+
+
+## 当前保存数据热点测量与用户授权续作
+
+为查清57.2h预测而非原样重跑，使用V12已保存cells360/446的真实坐标、原始/方向后张量和K/G/J/L，hash核验后测原函数。未建mesh/MPC/全域owner、未扫carrier；仅两个450阶局部factor作为成本测量。冻结FFCx helper准备39.041s，仍核原C/权重/Basix表身份；它不是原慢FFCx张量oracle或新PDE。诊断初次import/path及独立Basix方向接口错误保留在工具记录/ignored日志；方向最终用不需要mesh的实际DOLFINx包装器补测。
+
+| 当前诊断 | cell360 | cell446 | 边界 |
+|---|---:|---:|---|
+| 原Gram整体/s | 0.664529220 | 0.659413964 | 对保存完整raw误差0 |
+| 其中最终Gram乘法/s | 0.527252670 | 0.525393179 | 当前已测最大单项 |
+| 方向变换/s | 0.040651776 | 0.011506478 | 对保存oriented误差0 |
+| hash/分块/严格LU/R/T/Schur/保留KJ合计/s | 0.191462299 | 0.177038398 | R/T/S对保存值误差0 |
+| 批量matmul诊断Gram/s | 0.613634168 | 0.612582648 | 两键raw误差0，但未采用生产 |
+
+Gram加权收缩的批量写法只节省本地两键约7–8%，当前未改科学核心，避免未经完整evaluator身份资格把两键结果推广到全域。实测每键上述部分合计约0.897/0.848s；它不是全域保证，不包含全部FE/映射/运行监督或冷阶段。新诊断raw文件未复制；小报告记录peak/输入hash。
+
+旧预测171107.654s来自`27992 × sum(首8键每阶段max)`，约6.112735s/键。sum-max不是同一个实际键的父时间；本次未发现这些被相加的阶段有明确重复计费，helper一次准备也不在kernel循环里。旧分项丢失使当时哪个子项最慢仍UNKNOWN，不能断言全由冷启动、CPU争用、LU或Gram造成。历史V6每键均值0.70147s、max5.322s只说明峰值外推可能很保守，不能拿其替当前实测。
+
+用户最新明确要求修复后继续且不要只因时间预测停止。本次独立授权hash `bedb1577e29f3f1d2a4ed50c3d9d3134d64077d903e1bb35f0593b5453c5d4b9`绑定已清场的第二claim、原失败summary与原V15窗口，固定第三claim路径；至多一次接续，换attempt名仍拒绝。只有该授权把**预测**设为提示；原数值cutoff、总截止、内存、host reserve、task swap0、数值门、验收-only出口全部不变。旧默认仍严格拒绝预测超时。没有刷新T0或删除旧费用。
+
+在原构建函数内增加每60秒/最终键的已完成键进度、排他阶段累计及嵌套evaluator子时钟，通过原allocation gate保存RSS与资源采样；不缓存全raw，不用开始回调冒充完成，不双计父子。新四项定向测试1.41s通过：两条授权的hash/旧claim保护、单次性，以及预测提示后仍进入实际内存门。当前尚未启动接续；正式运行须主控冻结clean source并通过既有prepare/service。

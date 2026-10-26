@@ -1,0 +1,26 @@
+{
+  "schema": "task41.v15.one_additional_build_authorization.v1",
+  "user_decision": "APPROVED",
+  "approved_utc": "2026-10-26T08:05:04.286317Z",
+  "timestamp_meaning": "controller registration of latest user instruction, not exact message arrival",
+  "user_instruction": "\u5148\u4fee\u597d\u5f02\u5e38\u5904\u7406\uff0c\u518d\u67e5\u6e05\u4e3a\u4ec0\u4e48\u9884\u8ba1\u898157\u5c0f\u65f6\uff0c\u627e\u51fa\u6784\u5efa\u771f\u6b63\u8017\u65f6\u7684\u6b65\u9aa4\uff0c\u80fd\u6700\u5c0f\u4fee\u590d\u5c31\u7ee7\u7eed\u63a8\u8fdb\uff0c\u4e0d\u8981\u539f\u6837\u91cd\u8dd1\u6216\u53ea\u56e0\u65f6\u95f4\u9884\u6d4b\u5c31\u505c\u4e0b\u3002",
+  "additional_builds": 1,
+  "retry_sequence": 2,
+  "success_exit": "acceptance_only",
+  "fixed_window_unchanged": true,
+  "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v15_full_two_column_acceptance_36h.json",
+  "window_sha256": "db4674af35db8595f022f6ad909783c61f6c717c12b8f8f0990ecb047161609e",
+  "previous_claim_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v15_full_two_column_acceptance_36h.jsonl.v15_full_owner_claim.json.authorized_retry_1.json",
+  "previous_claim_sha256": "1bcfca2e6e9378ba91c0536205195d433d6eb75c50914f830c6ef5f196c48f6b",
+  "failed_run_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261025T230726.217051Z",
+  "failed_summary_sha256": "163e3c13dcc34841a43de16cbad4aefd3c1d1bce717899f3184c27adea590cf5",
+  "time_prediction_policy": "observe_only_fixed_cutoff",
+  "mathematics_resources_cutoff_unchanged": true,
+  "retained_failures": true,
+  "new_diagnostic_bindings": {
+    "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v15_gram_cost_probe/probe.json": "d002dce5f202f720eb63a9701ea9f5975eb4c63f7b584490649f0899cfde3e57",
+    "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v15_local_cost.json": "bf9eb86cba93be339c19c3860dd7b7dd8e9527d2ee8e084a8a5e23ae9b3cf8c7",
+    "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v15_orientation_cost.json": "65b0f921c43b8137271dd417e943103eaf09323d0343d93ca398d6715a82d028"
+  },
+  "decision": "Scope/exception repair plus completed-key progress; retain original qualified numerical kernel. Forecast is observation under latest user instruction; real fixed deadline/resource/numerical gates remain enforced."
+}

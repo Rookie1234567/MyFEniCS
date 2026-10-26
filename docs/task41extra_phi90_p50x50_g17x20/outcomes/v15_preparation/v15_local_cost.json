@@ -1,0 +1,52 @@
+{
+  "diagnostic_only": true,
+  "FE_built": false,
+  "full_owner_built": false,
+  "new_local_factor_count": 2,
+  "records": [
+    {
+      "cell": 360,
+      "times": {
+        "orientation": null,
+        "tensor_hash": 0.062036863062530756,
+        "partition": 0.008877614978700876,
+        "strict_lu_with_identity_check": 0.053399421740323305,
+        "R_solve": 0.022641839925199747,
+        "T_solve": 0.022650060709565878,
+        "schur_product": 0.012414074037224054,
+        "retain_K_J_check_hash": 0.00944242486730218
+      },
+      "total_measured_phases": 0.1914622993208468,
+      "saved_errors": {
+        "R": 0.0,
+        "T": 0.0,
+        "S": 0.0
+      },
+      "strict_lu_relative": 3.363529233331282e-20
+    },
+    {
+      "cell": 446,
+      "times": {
+        "orientation": null,
+        "tensor_hash": 0.05915771517902613,
+        "partition": 0.0060929409228265285,
+        "strict_lu_with_identity_check": 0.047068575862795115,
+        "R_solve": 0.02139333914965391,
+        "T_solve": 0.022108289413154125,
+        "schur_product": 0.011764477007091045,
+        "retain_K_J_check_hash": 0.009453060105443
+      },
+      "total_measured_phases": 0.17703839763998985,
+      "saved_errors": {
+        "R": 0.0,
+        "T": 0.0,
+        "S": 0.0
+      },
+      "strict_lu_relative": 3.220977054039582e-20
+    }
+  ],
+  "rss_peak_bytes": 255832064,
+  "task_swap": [
+    "VmSwap:\t       0 kB"
+  ]
+}

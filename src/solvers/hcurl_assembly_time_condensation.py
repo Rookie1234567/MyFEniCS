@@ -4175,6 +4175,7 @@ def build_unconstrained_assembly_time_condensation(
     )
     exact_probe_records: list[dict[str, Any]] = []
     exact_cache_misses = 0
+    exact_progress_last = perf_counter()
     exact_full_admission_passed = False
     action_tensor_identities: dict[str, Any] = {}
     trace_interior_identities: dict[str, Any] = {}
@@ -4563,6 +4564,36 @@ def build_unconstrained_assembly_time_condensation(
                             },
                         )
                         exact_full_admission_passed = True
+                # Bounded progress evidence from completed keys; retain no raw tensors.
+                progress_now = perf_counter()
+                if exact_full_admission_passed and (
+                    progress_now - exact_progress_last >= 60.0
+                    or exact_cache_misses == int(exact_class_count)
+                ):
+                    allocation_gate("mesh_actual_exact_build_progress", {
+                        "additional_payload_bytes": 0, "workspace_bytes": 0,
+                        "completed_oriented_keys": int(exact_cache_misses),
+                        "total_oriented_keys": int(exact_class_count),
+                        "last_completed_cell": int(cell),
+                        "exclusive_phase_seconds": {
+                            "kernel": local_kernel_seconds,
+                            "orientation": local_orientation_seconds,
+                            "tensor_hash": local_tensor_hash_seconds,
+                            "tensor_prepare": local_tensor_prepare_seconds,
+                            "strict_lu_R_T": local_lu_solve_seconds,
+                            "schur": local_schur_product_seconds,
+                            "observer": local_observer_seconds,
+                            "release": local_release_seconds,
+                        },
+                        "evaluator_phase_seconds": dict(getattr(raw_tensor_evaluator, "phase_seconds", {})),
+                        "evaluator_phases_nested_in_kernel": True,
+                        "completed_numeric_payload_bytes": (
+                            exact_cache_misses * int(exact_capacity["retained_per_oriented_class_bytes"])
+                            + int(exact_capacity["identity_cache_bytes_upper"])
+                        ),
+                        "elapsed_build_parent_seconds": progress_now - started,
+                    })
+                    exact_progress_last = perf_counter()
         trace_original = original_dofs[trace_positions]
         if materialize_global_matrix:
             active_ids, local_expansion, identity_expansion = cell_trace_data[cell]

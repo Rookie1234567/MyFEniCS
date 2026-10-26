@@ -1,0 +1,15 @@
+{
+  "FE_mesh_built": false,
+  "records": [
+    {
+      "cell": 360,
+      "seconds": 0.040651775896549225,
+      "relative": 0.0
+    },
+    {
+      "cell": 446,
+      "seconds": 0.01150647783651948,
+      "relative": 0.0
+    }
+  ]
+}

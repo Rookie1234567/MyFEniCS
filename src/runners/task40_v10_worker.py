@@ -10858,6 +10858,7 @@ def run_task40_v10_p6_reference_worker(
     task41_internal_rhs_strategy = "stored_T"
     task41_internal_rhs_refinement_max_steps = 0
     task41_v15_acceptance_only = False
+    task41_v15_forecast_only = False
     mode_identity: dict[str, Any] = {}
     mode_inventory_preflight: dict[str, Any] = {}
     task41_mode_inventory: tuple[Any, Any, str] | None = None
@@ -11025,6 +11026,18 @@ def run_task40_v10_p6_reference_worker(
                 full_owner_scope_authorized
                 and os.environ.get("TASK41_P0_V15_FULL_ACCEPTANCE") == "1"
             )
+            if task41_v15_acceptance_only:
+                from src.runners.task41_p0_contract import task41_v15_owner_claim_authority
+                resolved_quota = task41_v15_owner_claim_authority(
+                    root=Path(__file__).resolve().parents[2],
+                    accounting_path=Path(campaign_authority["campaign_accounting_path"]),
+                    window_path=Path(campaign_authority["campaign_window_path"]),
+                    window_sha256=campaign_authority["campaign_window_sha256"],
+                    retry_binding=campaign_authority.get("full_owner_retry_authorization"),
+                )
+                task41_v15_forecast_only = (
+                    resolved_quota.get("time_prediction_policy") == "observe_only_fixed_cutoff"
+                )
             summary["internal_rhs_refinement_binding"] = {
                 "strategy": campaign_authority.get(
                     "internal_rhs_refinement_strategy"
@@ -11097,6 +11110,7 @@ def run_task40_v10_p6_reference_worker(
                     "other_reserve_basis": "four-hour conservative planning allowance; actual exclusive costs remain separately measured",
                     "total_projected_seconds": remaining_build + rhs_fsum_reserve + other_acceptance_reserve,
                     "fixed_cutoff_unchanged": True,
+                    "time_prediction_policy": ("observe_only_fixed_cutoff" if task41_v15_forecast_only else "enforce"),
                     # Persist the measured evidence before a rejected gate
                     # unwinds the partially built owner.
                     "measured_prefix": {
@@ -11112,7 +11126,7 @@ def run_task40_v10_p6_reference_worker(
                 runtime.marker("task41_v15_build_and_acceptance_time_admission", projection)
                 if not np.isfinite(remaining_build) or remaining_build < 0:
                     raise ValueError("V15 measured prefix returned an invalid build-time projection")
-                if projection["total_projected_seconds"] > remaining:
+                if projection["total_projected_seconds"] > remaining and not task41_v15_forecast_only:
                     raise V14ResourceStop(
                         "V15 fixed window cannot admit remaining build plus full action/recovery/save/checker budget",
                         classification="TIME_ADMISSION_CONTROLLED_STOP",

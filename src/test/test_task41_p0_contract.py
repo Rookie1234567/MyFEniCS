@@ -2587,7 +2587,8 @@ def _v15_retry_fixture(root, window_path, accounting_path):
             "sha256": hashlib.sha256(auth.read_bytes()).hexdigest()}, old_claim, original_bytes
 
 
-def test_task41_v15_authorized_retry_preserves_old_claim_and_is_single_use(tmp_path):
+@pytest.mark.parametrize("time_continuation", [False, True])
+def test_task41_v15_authorized_retry_preserves_old_claim_and_is_single_use(tmp_path, time_continuation):
     from types import SimpleNamespace
     from src.runners.task41_p0_contract import (
         TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE, TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
@@ -2598,6 +2599,22 @@ def test_task41_v15_authorized_retry_preserves_old_claim_and_is_single_use(tmp_p
     window.parent.mkdir(parents=True); window.write_text('{"fixture":"unchanged-window"}')
     accounting = window.parent / "accounting.jsonl"
     binding, old, old_bytes = _v15_retry_fixture(tmp_path, window, accounting)
+    if time_continuation:
+        from src.runners.task41_p0_contract import TASK41_V15_TIME_CONTINUATION_AUTH_RELATIVE
+        initial_auth = json.loads((tmp_path / binding["path"]).read_text())
+        predecessor = old.with_name(old.name + ".authorized_retry_1.json")
+        predecessor.write_text(json.dumps(dict(json.loads(old_bytes), full_owner_build_count=2)))
+        summary = Path(initial_auth["failed_run_directory"]) / "task40_v10_p6_candidate_summary.json"
+        failed = json.loads(summary.read_text())
+        failed["error"]["message"] = "cannot access local variable 'V14ResourceStop' where it is not associated with a value"
+        summary.write_text(json.dumps(failed))
+        auth = tmp_path / TASK41_V15_TIME_CONTINUATION_AUTH_RELATIVE
+        auth.write_text(json.dumps(dict(initial_auth, retry_sequence=2,
+            time_prediction_policy="observe_only_fixed_cutoff",
+            previous_claim_path=str(predecessor), previous_claim_sha256=hashlib.sha256(predecessor.read_bytes()).hexdigest(),
+            failed_summary_sha256=hashlib.sha256(summary.read_bytes()).hexdigest())))
+        binding = {"path":str(TASK41_V15_TIME_CONTINUATION_AUTH_RELATIVE),"sha256":hashlib.sha256(auth.read_bytes()).hexdigest()}
+        old, old_bytes = predecessor, predecessor.read_bytes()
     args = dict(root=tmp_path, accounting_path=accounting, window_path=window,
                 window_sha256=hashlib.sha256(window.read_bytes()).hexdigest(), retry_binding=binding)
     quota = task41_v15_owner_claim_authority(**args)
@@ -2624,7 +2641,7 @@ def test_task41_v15_authorized_retry_preserves_old_claim_and_is_single_use(tmp_p
         retained_actual_internal_matrix_by_class={0:object()}, interior_lu_by_class={0:object()})}
     _, claim = _task41_b0_build_v15_full_owner_once(authority, run_directory=output,
         owner_builder=lambda:owner, current_root=tmp_path)
-    assert claim["status"] == "BUILD_COMPLETED" and claim["full_owner_build_count"] == 2
+    assert claim["status"] == "BUILD_COMPLETED" and claim["full_owner_build_count"] == (3 if time_continuation else 2)
     assert claim["full_owner_retry_authorization"] == binding
     assert old.read_bytes() == old_bytes
     other = output.with_name("renamed-attempt"); other.mkdir()
@@ -2634,7 +2651,8 @@ def test_task41_v15_authorized_retry_preserves_old_claim_and_is_single_use(tmp_p
     assert old.read_bytes() == old_bytes
 
 
-def test_task41_v15_actual_allocation_callback_reports_time_stop_before_memory_branch():
+@pytest.mark.parametrize("forecast_only", [False, True])
+def test_task41_v15_actual_allocation_callback_reports_time_stop_before_memory_branch(forecast_only):
     """Execute the real nested callback, with only its expensive runtime replaced."""
     import ast
     import textwrap
@@ -2652,13 +2670,20 @@ def test_task41_v15_actual_allocation_callback_reports_time_stop_before_memory_b
     runtime = SimpleNamespace(workflow_reserved_seconds=97244.77301950839,
         workflow_clock_interval=lambda: {"budget_seconds": 0.0},
         marker=lambda name, facts: events.append((name, facts)))
-    namespace = {"np":np, "Mapping":dict, "Any":object,
+    class MemoryAdmissionReached(Exception):
+        pass
+    def memory_gate(*args, **kwargs):
+        raise MemoryAdmissionReached()
+    runtime.check_projected = memory_gate
+    namespace = {"np":np, "Mapping":dict, "Any":object, "forecast_only":forecast_only,
                  "resource_stop":V14ResourceStop, "test_runtime":runtime,
                  "test_summary":summary}
     source = ("def make_callback():\n"
               "    allocation_gate_invocation_count = 0\n"
               "    V14ResourceStop = resource_stop\n"
               "    task41_v15_acceptance_only = True\n"
+              "    task41_v15_forecast_only = forecast_only\n"
+              "    is_v18 = False\n"
               "    runtime = test_runtime\n"
               "    summary = test_summary\n"
               + textwrap.indent(ast.unparse(callback), "    ")
@@ -2667,9 +2692,13 @@ def test_task41_v15_actual_allocation_callback_reports_time_stop_before_memory_b
     gate = namespace["make_callback"]()
     facts = {"projected_remaining_class_build_seconds_upper":171107.65433076024,
              "measured_prefix_cache_misses":8, "prefix_records":[{"fixture":True}]}
-    with pytest.raises(V14ResourceStop) as stopped:
-        gate("mesh_actual_exact_full_admission", facts)
-    assert stopped.value.classification == "TIME_ADMISSION_CONTROLLED_STOP"
+    if forecast_only:
+        with pytest.raises(MemoryAdmissionReached):
+            gate("mesh_actual_exact_full_admission", facts)
+    else:
+        with pytest.raises(V14ResourceStop) as stopped:
+            gate("mesh_actual_exact_full_admission", facts)
+        assert stopped.value.classification == "TIME_ADMISSION_CONTROLLED_STOP"
     record = summary["v15_build_and_acceptance_time_admission"]
     assert record["total_projected_seconds"] == pytest.approx(206003.65433076024)
     assert record["remaining_numerical_seconds"] == 97244.77301950839

@@ -1311,6 +1311,11 @@ TASK41_V15_RETRY_AUTH_RELATIVE = (
 )
 
 
+TASK41_V15_TIME_CONTINUATION_AUTH_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE / "v15_time_prediction_continuation_authorization.json"
+)
+
+
 def task41_v15_owner_claim_authority(
     *, root: Path, accounting_path: Path, window_path: Path,
     window_sha256: str, retry_binding: Mapping[str, Any] | None = None,
@@ -1328,7 +1333,15 @@ def task41_v15_owner_claim_authority(
               "retry_authorization": None}
     if retry_binding is None:
         return result
-    auth_path = (root / TASK41_V15_RETRY_AUTH_RELATIVE).resolve()
+    if not isinstance(retry_binding, Mapping):
+        raise Task41ContractError("V15 additional-build authorization path/hash differs")
+    bound_path = _resolve(root, retry_binding.get("path"), "retry authorization")
+    continuation = bound_path == (root / TASK41_V15_TIME_CONTINUATION_AUTH_RELATIVE).resolve()
+    sequence = 2 if continuation else 1
+    auth_path = (root / (TASK41_V15_TIME_CONTINUATION_AUTH_RELATIVE
+                        if continuation else TASK41_V15_RETRY_AUTH_RELATIVE)).resolve()
+    predecessor = (original.with_name(original.name + ".authorized_retry_1.json")
+                   if continuation else original)
     if (not isinstance(retry_binding, Mapping)
             or set(retry_binding) != {"path", "sha256"}
             or _resolve(root, retry_binding["path"], "retry authorization") != auth_path
@@ -1338,23 +1351,25 @@ def task41_v15_owner_claim_authority(
     if (auth.get("schema") != "task41.v15.one_additional_build_authorization.v1"
             or auth.get("user_decision") != "APPROVED"
             or auth.get("additional_builds") != 1
-            or auth.get("retry_sequence") != 1
+            or auth.get("retry_sequence") != sequence
             or auth.get("success_exit") != "acceptance_only"
             or auth.get("fixed_window_unchanged") is not True
             or _resolve(root, auth.get("window_path"), "retry window") != window_path.resolve()
             or auth.get("window_sha256") != window_sha256
             or sha256_file(window_path) != window_sha256
-            or _resolve(root, auth.get("previous_claim_path"), "previous claim") != original
-            or sha256_file(original) != auth.get("previous_claim_sha256")):
+            or _resolve(root, auth.get("previous_claim_path"), "previous claim") != predecessor
+            or sha256_file(predecessor) != auth.get("previous_claim_sha256")):
         raise Task41ContractError("V15 additional-build authorization does not bind the old claim/window")
     _utc_ns(auth.get("approved_utc"))
-    old = json.loads(original.read_text())
+    if continuation and auth.get("time_prediction_policy") != "observe_only_fixed_cutoff":
+        raise Task41ContractError("V15 continuation needs explicit forecast-only authorization")
+    old = json.loads(predecessor.read_text())
     failed_run = _resolve(root, auth.get("failed_run_directory"), "failed run")
     summary_path = failed_run / "task40_v10_p6_candidate_summary.json"
     if (not failed_run.is_relative_to(root / "results" / TASK41_MODEL_ID)
             or sha256_file(summary_path) != auth.get("failed_summary_sha256")
             or old.get("status") != "BUILD_STARTED"
-            or old.get("full_owner_build_count") != 1
+            or old.get("full_owner_build_count") != sequence
             or old.get("window_sha256") != window_sha256
             or Path(old.get("output_directory", "")).resolve() != failed_run):
         raise Task41ContractError("V15 retry predecessor claim/run identity differs")
@@ -1363,13 +1378,15 @@ def task41_v15_owner_claim_authority(
     if (failed.get("source_sha") != old.get("source_sha")
             or failed.get("status") != "FAILED"
             or failed.get("error", {}).get("message")
-            != "compiled FFCx module hash differs from frozen V6 profile"
+            != ("cannot access local variable 'V14ResourceStop' where it is not associated with a value"
+                if continuation else "compiled FFCx module hash differs from frozen V6 profile")
             or cleanup.get("completed") is not True
             or cleanup.get("passed") is not True or cleanup.get("errors") != []):
         raise Task41ContractError("V15 retry requires the preserved cleaned JIT-identity failure")
     result.update({
-        "claim_path": str(original.with_name(original.name + ".authorized_retry_1.json")),
-        "full_owner_build_count": 2,
+        "claim_path": str(original.with_name(original.name + f".authorized_retry_{sequence}.json")),
+        "full_owner_build_count": sequence + 1,
+        "time_prediction_policy": ("observe_only_fixed_cutoff" if continuation else "enforce"),
         "retry_authorization": dict(retry_binding),
     })
     return result
@@ -3011,9 +3028,12 @@ def prepare_task41_p0(
         }
     if frozen_jit_preflight is not None:
         contract["preparation"]["frozen_jit_preflight"] = frozen_jit_preflight
-    retry_auth_path = root / TASK41_V15_RETRY_AUTH_RELATIVE
+    retry_relative = (TASK41_V15_TIME_CONTINUATION_AUTH_RELATIVE
+                      if (root / TASK41_V15_TIME_CONTINUATION_AUTH_RELATIVE).exists()
+                      else TASK41_V15_RETRY_AUTH_RELATIVE)
+    retry_auth_path = root / retry_relative
     if saved_diagnostics_instance == TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE and retry_auth_path.exists():
-        retry_binding = {"path": str(TASK41_V15_RETRY_AUTH_RELATIVE),
+        retry_binding = {"path": str(retry_relative),
                          "sha256": sha256_file(retry_auth_path)}
         task41_v15_owner_claim_authority(
             root=root, accounting_path=Path(window_payload["accounting_path"]),
