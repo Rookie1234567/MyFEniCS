@@ -1,6 +1,17 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V11 当前状态：P2受控停止，不授予合并许可
+## V12 当前状态：两处最终断言未验证，不授予合并许可
+
+| 依赖组 | V12 文件与证据 | 合入边界 |
+|---|---|---|
+| research-only | `benchmarks/task43_hp_adaptivity/{candidate_checkpoints.py,compare_round1_candidate.py,h100_anchor.py,round1_candidates.py}`及`src/test/test_task43_v11_scientific_restart.py` | V11 review §9 的研究入口修复；两轮支持运行分别10/24和12/14节点通过。最终两处断言只作静态修正、未运行；不得据此宣称回归通过或提升为默认/生产路径 |
+| compact evidence/docs | `response_v12.md`、V12机器记录、两次root closeout、summary/README/本manifest/模型总账/开发进展导航 | 记录失败、局部准备错误、资源/trace和未运行边界；没有正式PDE证据或merge approval |
+| production numerical/core、reusable runner/watchdog、checker/benchmark | 无共享数值核心、默认行为或通用watchdog改动 | V12支持执行不改变科学状态，不建立性能或数值资格 |
+| do-not-merge | 未资格化研究入口及整分支 | S1主验证及局部恢复两槽已用；V12新支持总计2/4，D1/P2R各0/1但当前前门不合格；P3/P4/P5未运行；旧正式额度5/6、最后槽封存，V11两项新增正式槽均未消耗；无READY或生产资格 |
+
+恢复测试最后有两个未通过节点，后续静态断言修正尚未运行。仅在新授权验证这两个selector后，才可考虑V11科学链；本manifest不构成重跑许可。详见[Response V12](../response_v12.md)、[V12机器记录](records/v12_recovery_and_scientific_results_v1.json)、[S1 root closeout](records/v12_recovery_sources/support/focused_attempt1/root_closeout.json)和[窄恢复 root closeout](records/v12_recovery_sources/support/focused_recovery1/root_closeout.json)。
+
+## V11 历史状态：P2受控停止，不授予合并许可
 
 | 依赖组 | V11文件与证据 | 合入边界 |
 |---|---|---|

@@ -1,6 +1,12 @@
-# Task43 当前收口（2026-10-26）：PARTIAL / CONTROLLED_NEGATIVE
+# Task43 当前收口（2026-10-27）：PARTIAL / CONTROLLED_NEGATIVE
 
-## Task43 V11当前状态：P2空间审计受控停止，无新科学结果
+## Task43 V12当前状态：有限支持验证受控结束，最终两处断言未运行
+
+获准的S1支持验证为10/24通过，窄恢复为12/14通过；S1失败来自observer向量复制方向和缺少orders JSON fixture，恢复失败来自不同shape数组断言与实际错误信息regex不匹配。后两处随后只作静态修正，最终字节未运行。主控对两轮静态预审漏掉确定性fixture/断言问题负责，不归因于ABI、数学或求解性能。两轮whole-watchdog合计49.582441974431276s，进程树RSS采样峰分别284934144B和265719808B；CPU观察为1，task swap为0，清理完成。S1为57 getter/0 setter/4个fixture SIGCHLD，恢复为19 getter/0 setter/0 signal。root完整复核trace、资源和runtime身份未见额外硬失败；不由此推导科学或D1性能资格。
+
+S1主验证及局部恢复合计2/2已用；V12新支持总计2/4，D1/P2R各0/1但当前前门不合格；D1/P2R/P3/P4/P5全部`NOT_RUN`，新正式dispatch为0。S1的4个SIGCHLD中一条来自预设exit-7 fixture。accepted9/R9、R10拒绝，空间/选择`PARTIAL`、精度`NOT_PASSED`、成本`NOT_ESTABLISHED`、迭代`NOT_RUN / NOT_QUALIFIED`均不变；旧正式5/6、末槽封存、扩展包络5/8，无READY、生产资格或merge approval。最终两处待验证节点及局部准备失败账见[Response V12](task43_hp_adaptivity/response_v12.md)、[机器收口记录](task43_hp_adaptivity/outcomes/records/v12_recovery_and_scientific_results_v1.json)、[S1 closeout](task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/root_closeout.json)与[窄恢复 closeout](task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/root_closeout.json)。
+
+## Task43 V11历史状态：P2空间审计受控停止，无新科学结果
 
 P1两次支持运行留下有限工程证据：首次`7 passed, 1 failed`（sentinel fixture签名错误），单selector恢复`1 passed`；whole-watchdog合计11.511480988003314s。必要非空闭包的授权覆盖仍不足：相关fixture把`_build_next_round_plan`替换为stub，真实main sentinel又在`_audit_plan`之前结束。P2唯一支持运行达到840s工作停止阈值，最后live sample为840.6002323981375s，whole-watchdog 842.2889896910638s；采样树RSS峰1,156,853,760B、树swap峰0、1148样本、清理完成。主控终态为`PERFORMANCE_CONTROLLED_STOP`，P2无重试。
 

@@ -1,0 +1,260 @@
+{
+  "scope": "SYNTHETIC_FIXTURE_ONLY_NOT_SCIENTIFIC_RESULTS",
+  "observer": [
+    {
+      "case_index": 0,
+      "phase_label_synthetic": "A1_q3",
+      "raw_audit_path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/fixtures/test_run_impl_real_v11_observe0/A1_q3/run/primary_raw_vector_audit.json",
+      "raw_audit_sha256": "6eb0126fdb53c57495cc91950ab4d032302e7e1737aaf9c477a5c0b8d379cbd9",
+      "audit": {
+        "full_active_transformed": {
+          "active_interior_rows": 1,
+          "independent_active_fe_dofs": 2,
+          "independent_reduced_trace_rows": 1,
+          "interior_metric": "Euclidean",
+          "raw_full_entity_map_rows": 3,
+          "raw_trace_rows": 2,
+          "reduced_trace_dtn_rows_including_auxiliary": 613,
+          "relative_residual": 0.0,
+          "residual_norm": 0.0,
+          "rhs_norm": 24.779023386727733,
+          "trace_metric": "saved same-pass Gram inverse action"
+        },
+        "gates": {
+          "extra_correction_count_zero": true,
+          "full_active_metric_raw_relative_le_1e-8": true,
+          "independent_A6_raw_relative_le_1e-8": true,
+          "normal_correction_exactly_once": true,
+          "normal_correction_positive_reason": true,
+          "normal_correction_raw_residual_strictly_decreased": true,
+          "returned_condensed_raw_relative_le_1e-9": true
+        },
+        "independent_A6": {
+          "relative_residual": 0.0,
+          "residual_norm": 0.0,
+          "rhs_norm": 1.4142135623730951
+        },
+        "normal_correction": {
+          "after_relative_residual": 0.0,
+          "before_relative_residual": 1.0,
+          "converged_reason": 2,
+          "rhs_identical": true
+        },
+        "pass": true,
+        "returned_condensed": {
+          "relative_residual": 0.0,
+          "residual_norm": 0.0,
+          "rhs_norm": 24.758836806279895
+        }
+      },
+      "primary_npz": {
+        "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/fixtures/test_run_impl_real_v11_observe0/A1_q3/run/primary_state.npz",
+        "sha256": "3fd2bf26a12c857a244a3b433bb14a05d1d30cb9aaf3ab1647b30e075005ede9"
+      },
+      "q8_exists": true,
+      "q10_exists": true
+    },
+    {
+      "case_index": 1,
+      "phase_label_synthetic": "R9_H8",
+      "raw_audit_path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/fixtures/test_run_impl_real_v11_observe1/R9_H8/run/primary_raw_vector_audit.json",
+      "raw_audit_sha256": "a9d891bf10ae34609438ee9395592e842c2d0221c91e6ccbb23917da9a45adb3",
+      "audit": {
+        "full_active_transformed": {
+          "active_interior_rows": 1,
+          "independent_active_fe_dofs": 2,
+          "independent_reduced_trace_rows": 1,
+          "interior_metric": "Euclidean",
+          "raw_full_entity_map_rows": 3,
+          "raw_trace_rows": 2,
+          "reduced_trace_dtn_rows_including_auxiliary": 613,
+          "relative_residual": 0.0,
+          "residual_norm": 0.0,
+          "rhs_norm": 24.779023386727733,
+          "trace_metric": "saved same-pass Gram inverse action"
+        },
+        "gates": {
+          "extra_correction_count_zero": true,
+          "full_active_metric_raw_relative_le_1e-8": true,
+          "independent_A6_raw_relative_le_1e-8": true,
+          "normal_correction_exactly_once": true,
+          "normal_correction_positive_reason": true,
+          "normal_correction_raw_residual_strictly_decreased": true,
+          "returned_condensed_raw_relative_le_1e-9": true
+        },
+        "independent_A6": {
+          "relative_residual": 0.0,
+          "residual_norm": 0.0,
+          "rhs_norm": 1.4142135623730951
+        },
+        "normal_correction": {
+          "after_relative_residual": 0.0,
+          "before_relative_residual": 1.0,
+          "converged_reason": 2,
+          "rhs_identical": true
+        },
+        "pass": true,
+        "returned_condensed": {
+          "relative_residual": 0.0,
+          "residual_norm": 0.0,
+          "rhs_norm": 24.758836806279895
+        }
+      },
+      "primary_npz": {
+        "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/fixtures/test_run_impl_real_v11_observe1/R9_H8/run/primary_state.npz",
+        "sha256": "7a397fe85f7fdb38b000091573fc04cca5eb039bdb25a630ae6eafa207ebe08a"
+      },
+      "q8_exists": false,
+      "q10_exists": false
+    },
+    {
+      "case_index": 2,
+      "phase_label_synthetic": "A1_q3",
+      "raw_audit_path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/fixtures/test_run_impl_real_v11_observe2/A1_q3/run/primary_raw_vector_audit.json",
+      "raw_audit_sha256": "d77fc206d1d5af845d033653a249c94ccf2a8c09816b995453b19a398e8c858e",
+      "audit": {
+        "full_active_transformed": {
+          "active_interior_rows": 1,
+          "independent_active_fe_dofs": 2,
+          "independent_reduced_trace_rows": 1,
+          "interior_metric": "Euclidean",
+          "raw_full_entity_map_rows": 3,
+          "raw_trace_rows": 2,
+          "reduced_trace_dtn_rows_including_auxiliary": 613,
+          "relative_residual": 0.0,
+          "residual_norm": 0.0,
+          "rhs_norm": 24.779023386727733,
+          "trace_metric": "saved same-pass Gram inverse action"
+        },
+        "gates": {
+          "extra_correction_count_zero": true,
+          "full_active_metric_raw_relative_le_1e-8": true,
+          "independent_A6_raw_relative_le_1e-8": false,
+          "normal_correction_exactly_once": true,
+          "normal_correction_positive_reason": true,
+          "normal_correction_raw_residual_strictly_decreased": true,
+          "returned_condensed_raw_relative_le_1e-9": true
+        },
+        "independent_A6": {
+          "relative_residual": 0.7071067811865475,
+          "residual_norm": 1.0,
+          "rhs_norm": 1.4142135623730951
+        },
+        "normal_correction": {
+          "after_relative_residual": 0.0,
+          "before_relative_residual": 1.0,
+          "converged_reason": 2,
+          "rhs_identical": true
+        },
+        "pass": false,
+        "returned_condensed": {
+          "relative_residual": 0.0,
+          "residual_norm": 0.0,
+          "rhs_norm": 24.758836806279895
+        }
+      },
+      "primary_npz": {
+        "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/fixtures/test_run_impl_real_v11_observe2/A1_q3/run/primary_state.npz",
+        "sha256": "3e3b885df6be3ede989f927a2ddae212608eaf67ea64bba5316b0b35aaf67688"
+      },
+      "q8_exists": false,
+      "q10_exists": false
+    },
+    {
+      "case_index": 3,
+      "phase_label_synthetic": "A1_q3",
+      "raw_audit_path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/fixtures/test_run_impl_real_v11_observe3/A1_q3/run/primary_raw_vector_audit.json",
+      "raw_audit_sha256": "c095b25fd516d5c540e93bebdb4d41ef4d5a5f79125a5d07cb96d2d54a921c71",
+      "audit": {
+        "full_active_transformed": {
+          "active_interior_rows": 1,
+          "independent_active_fe_dofs": 2,
+          "independent_reduced_trace_rows": 1,
+          "interior_metric": "Euclidean",
+          "raw_full_entity_map_rows": 3,
+          "raw_trace_rows": 2,
+          "reduced_trace_dtn_rows_including_auxiliary": 613,
+          "relative_residual": 0.0,
+          "residual_norm": 0.0,
+          "rhs_norm": 24.779023386727733,
+          "trace_metric": "saved same-pass Gram inverse action"
+        },
+        "gates": {
+          "extra_correction_count_zero": true,
+          "full_active_metric_raw_relative_le_1e-8": true,
+          "independent_A6_raw_relative_le_1e-8": true,
+          "normal_correction_exactly_once": true,
+          "normal_correction_positive_reason": true,
+          "normal_correction_raw_residual_strictly_decreased": true,
+          "returned_condensed_raw_relative_le_1e-9": true
+        },
+        "independent_A6": {
+          "relative_residual": 0.0,
+          "residual_norm": 0.0,
+          "rhs_norm": 1.4142135623730951
+        },
+        "normal_correction": {
+          "after_relative_residual": 0.0,
+          "before_relative_residual": 1.0,
+          "converged_reason": 2,
+          "rhs_identical": true
+        },
+        "pass": true,
+        "returned_condensed": {
+          "relative_residual": 0.0,
+          "residual_norm": 0.0,
+          "rhs_norm": 24.758836806279895
+        }
+      },
+      "primary_npz": {
+        "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/fixtures/test_run_impl_real_v11_observe3/A1_q3/run/primary_state.npz",
+        "sha256": "f7c7ce78d7f0f674497a945b17143f09c84b9716b713575aafede4223d4d8c0e"
+      },
+      "q8_exists": true,
+      "q10_exists": false
+    }
+  ],
+  "p5_synthetic": {
+    "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/fixtures/test_compare_v11_union_reads_b0/success/artifacts/comparison/p5/v11_r9_h8_union_comparison.json",
+    "sha256": "fb65fc354c949259f7ecedb02921cbaae04e8bb9a8fb3945eda3bbdd9afc6729",
+    "status": "COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE",
+    "official_result": false,
+    "sampling_sensitivity": "SAMPLING_SENSITIVITY_UNRESOLVED",
+    "actual_FE": {
+      "Delta_FE": 1,
+      "R9": 1,
+      "R9_H8": 2
+    },
+    "q10_primary_classification": {
+      "Delta_FE": 1,
+      "Delta_G": 5e-06,
+      "Delta_G_per_added_FE_dof": 5e-06,
+      "Delta_J": 0.5,
+      "Delta_J_per_added_FE_dof": 0.5,
+      "classification": "POSITIVE_FIXED_REFERENCE_OUTPUT_RESPONSE",
+      "legacy_double_gate_pass": false,
+      "negative_or_tradeoff_condition_pass": false,
+      "positive_condition_pass": true,
+      "selection_transition_written": false
+    },
+    "q8_robustness_classification": {
+      "Delta_FE": 1,
+      "Delta_G": -1e-05,
+      "Delta_G_per_added_FE_dof": -1e-05,
+      "Delta_J": -1.0,
+      "Delta_J_per_added_FE_dof": -1.0,
+      "classification": "NEGATIVE_OR_TRADEOFF_RESPONSE",
+      "legacy_double_gate_pass": false,
+      "negative_or_tradeoff_condition_pass": true,
+      "positive_condition_pass": false,
+      "selection_transition_written": false
+    },
+    "reference_label": "Y6_1",
+    "root_read_only_observation_after_failed_test": {
+      "input_start_equals_end": true,
+      "q8_file_exists": true,
+      "q10_file_exists": true
+    },
+    "does_not_override_pytest_failure_or_not_reached_assertions": true
+  }
+}

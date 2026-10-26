@@ -1,6 +1,10 @@
 # Task43：accepted9/R9冻结，最终空间精度未达
 
-## Task43 V11当前状态：P2空间审计受控停止，无新科学结果
+## Task43 V12当前状态：支持验证受控结束，最终两处断言未运行
+
+V12两次获准的支持验证均留下测试失败：S1为10/24，窄恢复为12/14；之后两处fixture断言只作静态修复，没有在最终字节上运行。S1主验证及局部恢复合计2/2已用；V12新支持总计2/4，D1/P2R各0/1但当前前门不合格；P3/P4/P5未运行，新正式dispatch为0。资源/trace/runtime身份经root终态复核，没有额外硬失败；这不构成ABI、性能或科学资格。主控对两轮静态预审漏掉确定性fixture/断言问题负责。accepted9/R9、R10拒绝及五项科学状态不变，无READY、生产资格或merge approval。需先另行授权并验证两个受影响selector；详见[Response V12](task43_hp_adaptivity/response_v12.md)、[V12机器记录](task43_hp_adaptivity/outcomes/records/v12_recovery_and_scientific_results_v1.json)、[S1 closeout](task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/root_closeout.json)和[窄恢复 closeout](task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/root_closeout.json)。
+
+## Task43 V11历史状态：P2空间审计受控停止，无新科学结果
 
 V11 P1两次支持运行分别为`7 passed, 1 failed`和单selector恢复`1 passed`，P2唯一空间/保存场前门在840秒阈值后以`PERFORMANCE_CONTROLLED_STOP`结束（whole-watchdog 842.2889896910638 s）。计划文件的expected_forest为180根、194叶、material closure 1；最终mesh/constraint authority、FE、残差、q响应和比较均未取得。P3–P5未运行，新正式dispatch 0；历史5/6正式额度及封存末槽不变，扩展包络5/8。accepted9/R9和R10拒绝、空间/选择PARTIAL、精度NOT_PASSED、成本NOT_ESTABLISHED、迭代NOT_RUN / NOT_QUALIFIED均保持。必要闭包被错误要求为空的实现缺陷及P1覆盖缺口，未实际触发本次停止；不作科学负结果解释。详见[Response V11](task43_hp_adaptivity/response_v11.md)、[结果记录](task43_hp_adaptivity/outcomes/records/v11_scientific_results_v1.json)和[P2 closeout](task43_hp_adaptivity/outcomes/records/v11_p2_closeout.json)。
 

@@ -1,0 +1,249 @@
+{
+  "raw_trace_index": [
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/strace/sched.2284630",
+      "sha256": "64cf43a65e4f49294031c2d235bf66a552b13573b2a6121d74151f83f493f9ef",
+      "bytes": 89136
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/strace/sched.2284660",
+      "sha256": "ea2f56ae3037a1a24a82edd377db29415cf6579f9ab4246ec8219da730cd8d61",
+      "bytes": 3717
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/strace/sched.2284669",
+      "sha256": "5902f419708094719374235629e07b388804425922146cedba3e948c73fa8125",
+      "bytes": 40
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/strace/sched.2284671",
+      "sha256": "a1e75032d61caa0e52061f1d8e91ed71b1eef6c4ff722baab52108a47856446a",
+      "bytes": 40
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/strace/sched.2284672",
+      "sha256": "be392c8c363e1711119c4afa8e62359ad11d4188d4770e406746c71af2912ad6",
+      "bytes": 40
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/strace/sched.2284673",
+      "sha256": "9d66816bbb0c19ea1eadcb7ff4601b122020206b3bb1d345500a840613b09733",
+      "bytes": 40
+    }
+  ],
+  "all_nonstack_lines": [
+    {
+      "file": "sched.2284630",
+      "line": 1,
+      "raw": "1793031323.987155 sched_getaffinity(0, 128, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 125,
+      "raw": "1793031324.673026 sched_getaffinity(2284630, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 225,
+      "raw": "1793031324.961637 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 320,
+      "raw": "1793031324.977655 sched_getaffinity(2284630, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 415,
+      "raw": "1793031324.986035 sched_getaffinity(2284672, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 510,
+      "raw": "1793031324.995380 sched_getaffinity(2284673, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 605,
+      "raw": "1793031325.004182 sched_getaffinity(2284630, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 698,
+      "raw": "1793031325.013176 sched_getaffinity(2284672, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 791,
+      "raw": "1793031325.021599 sched_getaffinity(2284673, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 884,
+      "raw": "1793031325.030687 sched_getaffinity(2284630, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 977,
+      "raw": "1793031325.039319 sched_getaffinity(2284672, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 1070,
+      "raw": "1793031325.048201 sched_getaffinity(2284673, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 1163,
+      "raw": "1793031326.192681 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 1200,
+      "raw": "1793031326.227271 sched_getaffinity(2284630, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 1237,
+      "raw": "1793031326.239802 sched_getaffinity(2284672, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 1272,
+      "raw": "1793031326.252612 sched_getaffinity(2284673, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284630",
+      "line": 1307,
+      "raw": "1793031329.028676 +++ exited with 1 +++"
+    },
+    {
+      "file": "sched.2284660",
+      "line": 1,
+      "raw": "1793031324.339661 sched_getaffinity(2284660, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284660",
+      "line": 19,
+      "raw": "1793031324.448583 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284660",
+      "line": 33,
+      "raw": "1793031324.455521 sched_getaffinity(2284660, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.2284660",
+      "line": 47,
+      "raw": "1793031329.039434 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.2284669",
+      "line": 1,
+      "raw": "1793031329.026521 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.2284671",
+      "line": 1,
+      "raw": "1793031329.029607 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.2284672",
+      "line": 1,
+      "raw": "1793031328.999600 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.2284673",
+      "line": 1,
+      "raw": "1793031328.995915 +++ exited with 0 +++"
+    }
+  ],
+  "unique_stack_frames_with_counts": {
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(sched_getaffinity+0x1a) [0x10e73a]": 17,
+    " > /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so(get_num_procs+0xce) [0x39bbfe]": 1,
+    " > /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so(blas_get_cpu_number+0x35) [0x39bce5]": 1,
+    " > /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so(gotoblas_init+0x4b) [0x1480bb]": 1,
+    " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x142f) [0x571f]": 1,
+    " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x1534) [0x5824]": 1,
+    " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x132) [0x15b2]": 1,
+    " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_rtld_di_serinfo+0x2cac) [0xcd7c]": 1,
+    " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x9c) [0x151c]": 2,
+    " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_find_dso_for_object+0x184) [0xd164]": 1,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(dlmopen+0x104) [0x98284]": 1,
+    " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x1e9) [0x1669]": 1,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(dlerror+0x2c3) [0x97d63]": 1,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(dlopen+0x6f) [0x9833f]": 1,
+    " > /usr/bin/python3.12(_Py_GetLocaleconvNumeric+0x6bc) [0x2bc73c]": 1,
+    " > /usr/bin/python3.12(PyState_FindModule+0x25a) [0x2a983a]": 1,
+    " > /usr/bin/python3.12(PyImport_GetImporter+0x232) [0x2a8fc2]": 1,
+    " > /usr/bin/python3.12(PyCMethod_New+0x6f7) [0x182207]": 1,
+    " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]": 68,
+    " > /usr/bin/python3.12(PyObject_CallFunctionObjArgs+0x327) [0x149d87]": 64,
+    " > /usr/bin/python3.12(PyObject_CallMethodObjArgs+0xe3) [0x14b603]": 64,
+    " > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x395) [0x1fdab5]": 40,
+    " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x5e6e) [0x1dc49e]": 39,
+    " > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]": 66,
+    " > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]": 66,
+    " > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]": 91,
+    " > /usr/bin/python3.12(_PyWeakref_ClearRef+0xa2a4) [0x1d3724]": 25,
+    " > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x5eb) [0x1fdd0b]": 24,
+    " > /usr/bin/python3.12(PyObject_Vectorcall+0x35) [0x1499b5]": 42,
+    " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xadf) [0x1d710f]": 117,
+    " > /usr/bin/python3.12(PyObject_CallOneArg+0x4d) [0x14a69d]": 12,
+    " > /usr/bin/python3.12(_PyObject_GenericGetAttrWithDict+0xa8) [0x185008]": 12,
+    " > /usr/bin/python3.12(PyObject_GetAttr+0x4d) [0x184a2d]": 12,
+    " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xee4) [0x1d7514]": 12,
+    " > /usr/bin/python3.12(_PyObject_Call_Prepend+0x18a) [0x14a8ca]": 68,
+    " > /usr/bin/python3.12(PyType_GetModule+0x5a8) [0x1a3778]": 68,
+    " > /usr/bin/python3.12(_PyObject_MakeTpCall+0x13e) [0x14907e]": 64,
+    " > /usr/bin/python3.12(PyException_SetCause+0xeb6) [0x1552a6]": 12,
+    " > /usr/bin/python3.12(_PyList_Extend+0x204) [0x15fc04]": 12,
+    " > /usr/bin/python3.12(PyList_GetItem+0xbd6) [0x161296]": 12,
+    " > /usr/bin/python3.12(Py_RunMain+0x602) [0x2bcf22]": 16,
+    " > /usr/bin/python3.12(Py_RunMain+0x232) [0x2bcb52]": 16,
+    " > /usr/bin/python3.12(Py_BytesMain+0x2d) [0x2bc7bd]": 16,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_init_first+0x8a) [0x2a1ca]": 19,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x2a28b]": 19,
+    " > /usr/bin/python3.12(_start+0x25) [0x257a05]": 16,
+    " > /usr/lib/x86_64-linux-gnu/libc.so.6(pthread_getaffinity_np+0x20) [0x9de30]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetExportTable+0x1a0574) [0x327fc4]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetExportTable+0x13c497) [0x2c3ee7]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetExportTable+0x154f12) [0x2dc962]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetPlatformInfo+0xbb) [0x17344b]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libOpenCL.so.1.0.0(clSetContextDestructorCallback+0x98b) [0xabfb]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libOpenCL.so.1.0.0(clGetPlatformIDs+0xb0) [0xbce0]": 2,
+    " > /usr/lib/x86_64-linux-gnu/hwloc/hwloc_opencl.so() [0x1468]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_last_cpu_location+0xda46) [0x44c46]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_topology_load+0x1019) [0x106f9]": 2,
+    " > /usr/lib/x86_64-linux-gnu/pmix2/lib/libpmix.so.2.13.1(pmix_hwloc_setup_topology+0x1d26) [0x4de16]": 1,
+    " > /usr/lib/x86_64-linux-gnu/pmix2/lib/libpmix.so.2.13.1(PMIx_Init+0x21cc) [0x5357c]": 1,
+    " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pmix_ext3x.so(ext3x_client_init+0xd3) [0xfa93]": 1,
+    " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_singleton.so() [0x2e86]": 1,
+    " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_init+0x2aa) [0x9815a]": 14,
+    " > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(ompi_mpi_init+0x24c) [0xebeec]": 11,
+    " > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(PMPI_Init_thread+0x5c) [0x82eec]": 11,
+    " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6(PetscInitialize+0xd2) [0x150454]": 11,
+    " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so(__pyx_pw_8petsc4py_5PETSc_5_initialize+0x4ad) [0x34065d]": 11,
+    " > /usr/bin/python3.12(PyCMethod_New+0x65f) [0x18216f]": 11,
+    " > /usr/bin/python3.12(_PyObject_MakeTpCall+0x75) [0x148fb5]": 11,
+    " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0x19d) [0x3675d]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0x90b) [0x36ecb]": 12,
+    " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc__xml_export_topology+0x3206) [0x32bd6]": 12,
+    " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0xaae) [0x3706e]": 12,
+    " > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_hwloc_base_get_local_cpuset+0x34) [0x74d54]": 6,
+    " > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_hwloc_base_get_topology+0xcc9) [0x7b399]": 6,
+    " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_ess_base_proc_binding+0xcd1) [0x61991]": 4,
+    " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_singleton.so() [0x421c]": 10,
+    " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0x21e) [0x367de]": 10,
+    " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_ess_base_proc_binding+0x12a0) [0x61f60]": 3,
+    " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_ess_base_proc_binding+0xd18) [0x619d8]": 3,
+    " > /usr/bin/python3.12(PyOS_AfterFork_Child+0x1eb2) [0xf1d0d]": 4,
+    " > /usr/bin/python3.12(PyCMethod_New+0x572) [0x182082]": 2,
+    " > /usr/bin/python3.12(PyObject_Call+0x6c) [0x14b12c]": 4,
+    " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x14fd) [0x1d7b2d]": 2,
+    " > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_hwloc_base_get_topology+0x12a6) [0x7b976]": 1,
+    " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_hnp.so() [0x4c56]": 3,
+    " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_daemon+0xc80) [0x39540]": 3,
+    " > /usr/bin/orted() [0x11c5]": 3
+  }
+}

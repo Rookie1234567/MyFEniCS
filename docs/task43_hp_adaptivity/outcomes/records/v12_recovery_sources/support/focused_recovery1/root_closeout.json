@@ -1,0 +1,188 @@
+{
+  "schema": "task43.v12.support-root-closeout.v1",
+  "stage": "S1_LOCAL_RECOVERY",
+  "run_head": "14f94a7491c6545c6280ac2a67629e9941a38317",
+  "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1",
+  "root_audit_read_utc": "2026-10-26T16:17:22.138868+00:00",
+  "classification": "WORKER_FAILED_TEST_ASSERTIONS",
+  "tests": [
+    {
+      "name": "test_run_impl_real_v11_observer_preserves_primary_before_postprocessing[A1_q3-success-True-sample_keys0]",
+      "time": "0.199",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_run_impl_real_v11_observer_preserves_primary_before_postprocessing[R9_H8-success-True-sample_keys1]",
+      "time": "0.055",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_run_impl_real_v11_observer_preserves_primary_before_postprocessing[A1_q3-raw_failure-False-sample_keys2]",
+      "time": "0.055",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_run_impl_real_v11_observer_preserves_primary_before_postprocessing[A1_q3-q10_failure-True-sample_keys3]",
+      "time": "0.059",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_v12_actual_candidate_reader_rejects_mixed_storage_packet[None]",
+      "time": "0.143",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_v12_actual_candidate_reader_rejects_mixed_storage_packet[source_identity]",
+      "time": "0.176",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_v12_actual_candidate_reader_rejects_mixed_storage_packet[coefficients]",
+      "time": "0.105",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_v12_actual_candidate_reader_rejects_mixed_storage_packet[recovery_index]",
+      "time": "0.112",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None]",
+      "time": "0.211",
+      "status": "FAILED",
+      "failure_message": "ValueError: operands could not be broadcast together with shapes (2,) (3,)"
+    },
+    {
+      "name": "test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[terminal_read_drift]",
+      "time": "0.057",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[input_drift]",
+      "time": "0.192",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[q10_failure]",
+      "time": "0.125",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[ledger_marker_failure]",
+      "time": "0.203",
+      "status": "PASSED",
+      "failure_message": null
+    },
+    {
+      "name": "test_v12_p2_joined_source_binding_rejects_root_terminal_failure",
+      "time": "0.129",
+      "status": "FAILED",
+      "failure_message": "AssertionError: Regex pattern did not match.\n Regex: 'root-joined successful attempt'\n Input: 'V12 P2 joined terminal is not a root-verified successful attempt'"
+    }
+  ],
+  "whole_seconds": 7.066758690867573,
+  "limit_seconds": 300,
+  "rss_peak_bytes": 265719808,
+  "rss_cap_bytes": 8589934592,
+  "task_swap_peak_bytes": 0,
+  "exit_codes": {
+    "worker": 1,
+    "watchdog": 2,
+    "launcher": 2
+  },
+  "cleanup": {
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "host_proc_checks": [
+      {
+        "pid": 2284626,
+        "start_ticks": 295631792,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 2284630,
+        "start_ticks": 295631811,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 2284642,
+        "start_ticks": 295631815,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 2284660,
+        "start_ticks": 295631901,
+        "same_process_still_present": false,
+        "proc_stat": null
+      }
+    ]
+  },
+  "source_count": 51,
+  "input_count": 38,
+  "trace": {
+    "setter_count": 0,
+    "all_getters_cpu1": true,
+    "raw_event_line_count": 25,
+    "getter_count": 19,
+    "classification": "No setter or signal; all successful getters [1]; worker exit1 agrees XML; all final child lists empty."
+  },
+  "resource_read_scope": "Root independently read all 16 compact per-line rows, all raw trace syscall/exit lines and every unique stack frame. Full raw bytes scanned by readonly helper. No cache paths supplied; cache qualification NOT_MEASURED.",
+  "failure_causes": [
+    "Successful P5 synthetic branch returned expected q8/q10 classifications, then fixture compared arrays of shape (2,) and (3,) with !=, raising broadcasting ValueError",
+    "Actual verifier rejected changed joined status, but test regex root-joined does not match actual root-verified message"
+  ],
+  "not_reached_assertions": [
+    "P5 success branch after array assertion: joined key in start snapshot; start=end snapshot assertion; verify_calls length2; both q8/q10 files assertion"
+  ],
+  "continuation": {
+    "S1_recovery_permitted": false,
+    "D1_permitted": false,
+    "P2R_permitted": false,
+    "P3_P4_P5_permitted": false,
+    "reason": "Necessary S1 tests not all passed and both S1 support slots consumed; no further validation authorization. D1/P2R budgets not convertible to testing."
+  },
+  "root_observation": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/preparation/focused_recovery1_root_terminal_observations.json",
+    "sha256": "704e52a13062063906cfb96597adcdc60af43c496a995b8400438f644004595e"
+  },
+  "raw_index": [
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/watchdog/worker.log",
+      "sha256": "81d51ed11d4cbdbd8d4b5ea1fb3d914406e78ec526c5386ddb1d0eb14a21b3bf"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/watchdog/resources.jsonl",
+      "sha256": "36810384f6e534a0884d698af2f038b6711cd5f78d92c3fef41f64f8b44e44db"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/pytest_results.xml",
+      "sha256": "02a843d43d0759f871109b79851ecf2301b99082adcc4ebeb620e469fd529ba9"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/snapshots/launch_manifest.json",
+      "sha256": "b081f4442c3e608643a810f54014530fbde1f282b262dce9798e91849a26059c"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/watchdog/summary.json",
+      "sha256": "2269207a0a59ae45563144d36748360b3f71d466345a2dbb906fca5ec9a89f7b"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/focused_recovery1/watchdog_stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

@@ -1,0 +1,225 @@
+{
+  "schema": "task43.v12.compact-evidence-index.v1",
+  "scope": "Static preparation, frozen launch texts and two failed non-PDE support attempts. No D1/P2R/scientific endpoint.",
+  "items": [
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/launch/authority_profile_attempt1.sh",
+      "sha256": "8496bbf26821dbcc22dc1e97a5490bc6b691e93790c8932601b0d4e86bed1ce2",
+      "bytes": 5674
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/launch/focused_attempt1.sh",
+      "sha256": "6372c9f604f69b34d90ac80c69f3e1d353eecb64954d607d6388ee69b9b91b05",
+      "bytes": 7013
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/launch/focused_recovery1.sh",
+      "sha256": "e0350fa46d741444c3b2424a7fe847c1d2696cca8f228eb4311fc4b51a72c1e0",
+      "bytes": 6388
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/launch/space_and_saved_primary_attempt2.sh",
+      "sha256": "19f1e031fbb5753c1c372a173cc65c3b48869fe5cb631acea6d01894f932a5c3",
+      "bytes": 5683
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/final_unrun_static_check.json",
+      "sha256": "1e769d70fe4188817ceac773811dca4c1bbeaa8784ada6ae021a2b7a34206336",
+      "bytes": 734
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/final_unrun_test_assertions.diff",
+      "sha256": "fdec9915a932adfb3f5c9239e2909c0a2b412b74aea6919ab27aec612921ac19",
+      "bytes": 1457
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/historical_trace_excerpts.json",
+      "sha256": "32e5d059142425d591ad5adc9b795f596747d51c8d38ad026623cb5a0773ab42",
+      "bytes": 14377
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/initial_identity.json",
+      "sha256": "995e6550a1f5e1d86dcbe89326c4f001003046e244ed1aecd9bee0a7989cc1dc",
+      "bytes": 3729
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/initial_input_bytes.json",
+      "sha256": "7ca51b860949ef0f2ac204a7e52b698e06707f4bea9e0f3e826167c3afb06bf5",
+      "bytes": 13890
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/prelaunch_static_checks.json",
+      "sha256": "47deb23eab63e8b6a53efd2c2f3ec73b1acfc8a4ffc35c6407edd4145c4ca913",
+      "bytes": 1952
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/r9_core_static_delta.json",
+      "sha256": "8c72d71c5731334e9c68e82bfd0371a87eaa16fdde67e55df44ac31760c9eb48",
+      "bytes": 2805
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/root_static_review_notes.json",
+      "sha256": "9282ae9a396fca920d3d8d4456617761a6daf17cd5490f1ce28e2406456119d0",
+      "bytes": 1747
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/s1_local_recovery_decision.json",
+      "sha256": "e62d984074584f1aa9434544726908860cbedae5b1fd04c8f46f7f52d93bd4fa",
+      "bytes": 2463
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/s1_recovery_static_checks.json",
+      "sha256": "6caa1aa920c3c85723d5cd5d102ca8eef4418e40310dc1f3d548e3310b1da1f9",
+      "bytes": 769
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/root_read_terminal.py",
+      "sha256": "9e72112de1a6f3e24823742620e29a3ff7f032df556ea658e69fab951a63ad86",
+      "bytes": 6620
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/controlled_fault_exit.json",
+      "sha256": "293ffe7f8012def069d47cd41f30b7bfad7bae92cc42cc0a78dc0d2445ce562c",
+      "bytes": 416
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/launch_manifest.json",
+      "sha256": "8dd0253a90d26ffd78542e4e0f6387021175d13ee8f8c6686859004ec296405d",
+      "bytes": 30515
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/launcher_exit_code.txt",
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+      "bytes": 2
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/main_sentinel_runtime_identity.json",
+      "sha256": "707448721e5ac6d4df1492d8310cae2da6c5b75ab73a688a5d86ceba4d66443c",
+      "bytes": 20105
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/normal_exit.json",
+      "sha256": "3d00c69684edf437db5edea94f1dca1873ed010ffeb183387487abd49fbd0878",
+      "bytes": 406
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/pytest_results.xml",
+      "sha256": "3cf8ae20b74cc8ff522217aee20fd3a7e0b153e49bb259e20d5e3d31b103a7e5",
+      "bytes": 19993
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/resource_rows.json",
+      "sha256": "3354158a4f1d12bc93600b7a9ad5b9f1ddc3791715c35a532e8c4a42afd1a387",
+      "bytes": 94682
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/root_closeout.json",
+      "sha256": "bc8d5e6ef4ae70746d7cd9056c01d7c70bdca94d3c7d062a8cb9413f58deb50b",
+      "bytes": 11730
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/source_diff.patch",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/source_head.txt",
+      "sha256": "b6a576dc62e11988cb5bdd1a3e0be7e2b4564a2f1d0f1cc7b7f212bd46daff9e",
+      "bytes": 41
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/source_status.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/trace_events.json",
+      "sha256": "a363e9fa8debc5bf26ef11d89ae73a15cf01dfc1cb0a01b69ff6398f793f81c0",
+      "bytes": 20584
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/watchdog_exit_code.txt",
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+      "bytes": 2
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/watchdog_summary.json",
+      "sha256": "0c8427dd8c4a2c598e088d071e1ab9fbd40b0c6c65de56de7db27e1b1b7467dc",
+      "bytes": 3555
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/allowed_local_recovery.diff",
+      "sha256": "4666e05c07e60958aea9bb0414147e58ee00930a75a785dc92d6ae96d5dc033c",
+      "bytes": 3149
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/launch_manifest.json",
+      "sha256": "b081f4442c3e608643a810f54014530fbde1f282b262dce9798e91849a26059c",
+      "bytes": 30314
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/launcher_exit_code.txt",
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+      "bytes": 2
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/pytest_results.xml",
+      "sha256": "02a843d43d0759f871109b79851ecf2301b99082adcc4ebeb620e469fd529ba9",
+      "bytes": 4116
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/recovery_runtime_identity.json",
+      "sha256": "49a12dc10d965c36788b23dca90273db08e3215dbda598839a757761c7bc5ef4",
+      "bytes": 1740
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/resource_rows.json",
+      "sha256": "c74493879ace7fa7460fbea02b3198a707054f68af21c29d093ff652b05c7ecc",
+      "bytes": 24969
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/root_closeout.json",
+      "sha256": "dcde34c87c073b155e5b1aea0a70d19347472c455f47cb61f39687480021cfdb",
+      "bytes": 7240
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/root_fixture_excerpts.json",
+      "sha256": "fca5d235cd554e9c52298a304dfa2cf7ba5ed14ceceffd6b90ef206d601b38ad",
+      "bytes": 10457
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/source_diff.patch",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/source_head.txt",
+      "sha256": "bcebcef73b4869493b08925e3740673151859e837b37a89e898b7153906bb710",
+      "bytes": 41
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/source_status.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/trace_events.json",
+      "sha256": "a34e05b6ec78b2ee4e03222f8fd9b08afa3b39226e683555179d64161ce053ba",
+      "bytes": 12461
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/watchdog_exit_code.txt",
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+      "bytes": 2
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/watchdog_summary.json",
+      "sha256": "2269207a0a59ae45563144d36748360b3f71d466345a2dbb906fca5ec9a89f7b",
+      "bytes": 3543
+    }
+  ],
+  "total_bytes": 375366,
+  "raw_artifact_prefix": "benchmarks/artifacts/task43/v11_science/recovery_v12",
+  "source_snapshot_note": "Actual source/input snapshot identities in each launch_manifest; complete source copies and raw trace/resources remain ignored. Root terminal observations absolute paths+hashes in closeout.",
+  "no_scientific_field_arrays_committed": true
+}

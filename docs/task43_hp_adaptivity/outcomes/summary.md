@@ -1,6 +1,17 @@
 # Task43 结果：部分完成，受控负结果
 
-## V11 当前状态：P2 空间前门受控停止；无新科学结果
+## V12 当前状态：受控停止；两处最终断言未运行
+
+| 项目 | V12 实际结果 | 证据边界 |
+|---|---|---|
+| S1支持验证 | 24个节点：10 passed、14 failed；whole-watchdog `42.5156832835637 s`，RSS采样峰`284,934,144 B` | 两个确定性fixture缺陷：observer向量复制方向错误、orders JSON未创建；不是ABI、数学或性能结果 |
+| 窄恢复 | 14个节点：12 passed、2 failed；whole-watchdog `7.066758690867573 s`，RSS采样峰`265,719,808 B` | 一个NumPy不同shape数组比较断言错误，一个拒绝信息regex不匹配；之后只静态改正两处，最终字节未运行 |
+| 资源与trace | 两次合计`49.582441974431276 s`；worker/watchdog/launcher退出码分别为1/2/2，CPU观察为1、task swap 0、清理完成 | S1 57 getter/0 setter/4 SIGCHLD（其中一条为预设exit-7）；窄恢复19 getter/0 setter/0 signal。资源是采样，不等于连续峰值 |
+| 后续阶段 / 科学结果 | D1、P2R、P3、P4、P5均`NOT_RUN`；新正式dispatch 0 | S1主验证及局部恢复合计2/2已用；V12新支持总计2/4，D1/P2R各0/1但当前前门不合格。accepted9/R9、R10拒绝与五项科学状态不变；无READY、生产资格或merge approval |
+
+两个最终静态修正对应的测试节点尚待新授权：`test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None]`和`test_v12_p2_joined_source_binding_rejects_root_terminal_failure`。取得并完成这两个节点的验证前，不续接科学链。主控对两轮静态预审遗漏fixture/断言问题负责，不归咎ABI、数学或性能。详见[Response V12](../response_v12.md)、[V12机器记录](records/v12_recovery_and_scientific_results_v1.json)、[S1 root closeout](records/v12_recovery_sources/support/focused_attempt1/root_closeout.json)及[窄恢复 root closeout](records/v12_recovery_sources/support/focused_recovery1/root_closeout.json)。
+
+## V11 历史状态：P2 空间前门受控停止；无新科学结果
 
 | 项目 | V11 实际结果 | 证据边界 |
 |---|---|---|

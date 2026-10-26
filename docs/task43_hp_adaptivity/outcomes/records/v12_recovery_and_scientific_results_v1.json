@@ -1,0 +1,356 @@
+{
+  "schema": "task43.v12.recovery-and-scientific-results.v1",
+  "created_utc": "2026-10-26T16:20:06.160165+00:00",
+  "repository": "Rookie1234567/MyFEniCS",
+  "branch": "task43_hp_adaptivity",
+  "canonical_worktree": "/home/fenics/Projects/NN-Lab-V2",
+  "review_sha": "cd4112a0079aba28e9ce1513b58a1b9a51fd6938",
+  "fixed_reviewed_code": "6755cf4ace94c6d06b50c98f13489d8726de67be",
+  "long_term_base_sha": "405e3aff42ac421a4c99315df1ed9b96941ecbe4",
+  "contract": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+    "sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+    "unchanged": true
+  },
+  "recovery_manifest": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+    "sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+    "initial_identity_preserved": true
+  },
+  "classification": "CONTROLLED_STOP_AT_S1_TEST_GATE",
+  "engineering": "PARTIAL_MEASURED_REAL_RESEARCH_PATH_FIXTURES; two final assertion fixes static only",
+  "scientific": "NO_NEW_SCIENTIFIC_ENDPOINT",
+  "merge_approval": false,
+  "source_and_tests": [
+    {
+      "run_head": "4ab4e4e8a80fb13f4c4dde63decfe282b897567e",
+      "test_sha256": "bc3d1f01fa246d6a79a2faa2bb57a5270d20c1df375780b8ecccd6049900532e",
+      "tests_passed": 10,
+      "tests_failed": 14,
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/root_closeout.json"
+    },
+    {
+      "run_head": "14f94a7491c6545c6280ac2a67629e9941a38317",
+      "test_sha256": "5dcfcddb3253266bc3eff5c93172c9e84af553252166ea574db92765a5bdaf2d",
+      "tests_passed": 12,
+      "tests_failed": 2,
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/root_closeout.json"
+    }
+  ],
+  "initial_source_sha256": {
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py": "3519df0768ace646cd34fcb44219a9f62c67df80e86edde59186c0c189e4b5ba",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "19c611bb33d04a3bc640b0ffd78f9357fe5cf8e0d2cc3b7876fa82f5a744bbb9",
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "22c35c356c9c12cb30ee01347b2348be22b55301cd35d18d057b5fb82c888a1c",
+    "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+    "src/test/test_task43_v11_scientific_restart.py": "bc3d1f01fa246d6a79a2faa2bb57a5270d20c1df375780b8ecccd6049900532e"
+  },
+  "final_source_sha256": {
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py": "3519df0768ace646cd34fcb44219a9f62c67df80e86edde59186c0c189e4b5ba",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "19c611bb33d04a3bc640b0ffd78f9357fe5cf8e0d2cc3b7876fa82f5a744bbb9",
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "22c35c356c9c12cb30ee01347b2348be22b55301cd35d18d057b5fb82c888a1c",
+    "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+    "src/test/test_task43_v11_scientific_restart.py": "451f0a71d84b5bc7df28e79124d2f4e9022c7d69b541d03517538ca7e6e743ae"
+  },
+  "final_test_status": "STATIC_FIX_ONLY_NOT_RUN_AFTER_LAST_TWO_ASSERTION_FIXES",
+  "stages": {
+    "S1": {
+      "status": "FAILED",
+      "launches": 1,
+      "tests": {
+        "passed": 10,
+        "failed": 14
+      }
+    },
+    "S1_recovery": {
+      "status": "FAILED",
+      "launches": 1,
+      "tests": {
+        "passed": 12,
+        "failed": 2
+      }
+    },
+    "D1": {
+      "status": "NOT_RUN",
+      "count": 0,
+      "reason": "S1 necessary validation not all passed; one main and one permitted local recovery consumed; no conversion of remaining slots to tests."
+    },
+    "P2R": {
+      "status": "NOT_RUN",
+      "count": 0,
+      "reason": "S1 necessary validation not all passed; one main and one permitted local recovery consumed; no conversion of remaining slots to tests."
+    },
+    "P3": {
+      "status": "NOT_RUN",
+      "count": 0,
+      "reason": "S1 necessary validation not all passed; one main and one permitted local recovery consumed; no conversion of remaining slots to tests."
+    },
+    "P4": {
+      "status": "NOT_RUN",
+      "count": 0,
+      "reason": "S1 necessary validation not all passed; one main and one permitted local recovery consumed; no conversion of remaining slots to tests."
+    },
+    "P5": {
+      "status": "NOT_RUN",
+      "count": 0,
+      "reason": "S1 necessary validation not all passed; one main and one permitted local recovery consumed; no conversion of remaining slots to tests."
+    }
+  },
+  "attempt_costs": [
+    {
+      "stage": "S1",
+      "head": "4ab4e4e8a80fb13f4c4dde63decfe282b897567e",
+      "whole_seconds": 42.5156832835637,
+      "whole_limit_seconds": 300,
+      "rss_peak_bytes": 284934144,
+      "rss_cap_bytes": 8589934592,
+      "task_swap_peak_bytes": 0,
+      "exit_codes": {
+        "worker": 1,
+        "watchdog": 2,
+        "launcher": 2
+      },
+      "cleared": true
+    },
+    {
+      "stage": "S1_LOCAL_RECOVERY",
+      "head": "14f94a7491c6545c6280ac2a67629e9941a38317",
+      "whole_seconds": 7.066758690867573,
+      "whole_limit_seconds": 300,
+      "rss_peak_bytes": 265719808,
+      "rss_cap_bytes": 8589934592,
+      "task_swap_peak_bytes": 0,
+      "exit_codes": {
+        "worker": 1,
+        "watchdog": 2,
+        "launcher": 2
+      },
+      "cleared": true
+    }
+  ],
+  "cost_accounting": {
+    "new_whole_support_seconds": 49.582441974431276,
+    "new_support_whole_budget_seconds": 3000,
+    "old_v11_support_whole_seconds": 853.8004706790671,
+    "formal_whole_seconds_this_round": 0,
+    "mutually_exclusive_whole_only": true,
+    "phase_seconds_added_to_whole": false,
+    "not_measured": [
+      "manual reading/editing",
+      "agent static actions except records explicitly timed",
+      "root evidence extraction and terminal audit helper total wall",
+      "Git operations and documentation checks unless separately timed"
+    ],
+    "static_explicit_timing_records": [
+      "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/prelaunch_static_checks.json",
+      "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/initial_input_bytes.json",
+      "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/s1_recovery_static_checks.json",
+      "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/final_unrun_static_check.json"
+    ],
+    "explicit_measured_static_subtotal_seconds": 7.670738293323666,
+    "static_subtotal_is_not_total_wall": true
+  },
+  "quota": {
+    "new_support_launches": 2,
+    "new_support_max": 4,
+    "S1": {
+      "used": 1,
+      "limit": 1
+    },
+    "S1_recovery": {
+      "used": 1,
+      "limit": 1
+    },
+    "D1": {
+      "used": 0,
+      "limit": 1,
+      "eligible_now": false
+    },
+    "P2R": {
+      "used": 0,
+      "limit": 1,
+      "eligible_now": false
+    },
+    "P3_A1_q3": {
+      "used": 0,
+      "limit": 1,
+      "eligible_now": false
+    },
+    "P4_R9_H8": {
+      "used": 0,
+      "limit": 1,
+      "eligible_now": false
+    },
+    "P5": {
+      "used": 0,
+      "limit": 1,
+      "eligible_now": false
+    },
+    "old_formal_used": 5,
+    "old_formal_max": 6,
+    "old_last_slot_sealed": true,
+    "expanded_formal_used": 5,
+    "expanded_formal_max": 8,
+    "new_formal_dispatch": 0,
+    "new_PDE": 0,
+    "new_READY": 0,
+    "new_independent_ABI_probe": 0,
+    "new_collect_only": 0,
+    "old_sanity": "1/1 exhausted",
+    "old_D3": "1/1 exhausted"
+  },
+  "scientific_values": {
+    "actual_h_FE": "NOT_MEASURED",
+    "h_FE_gate": {
+      "lower_exclusive": 110472,
+      "upper_exclusive": 237600
+    },
+    "old_A2_saved_arrays_recomputation": "NOT_RUN",
+    "A1_q3_q8_q10_response": "NOT_RUN",
+    "R9_H8_solve": "NOT_RUN",
+    "P5_actual_three_field_union": "NOT_RUN",
+    "Delta_FE_J_G_eta_benefit": "NOT_MEASURED",
+    "synthetic_fixture_numbers_are_not_science": true
+  },
+  "capabilities": {
+    "space": "PARTIAL",
+    "selection": "PARTIAL",
+    "accuracy": "NOT_PASSED",
+    "same_accuracy_whole_cost": "NOT_ESTABLISHED",
+    "iteration": "NOT_RUN / NOT_QUALIFIED"
+  },
+  "blocker": {
+    "kind": "REQUIRED_SUPPORT_TEST_GATE_NOT_PASSED_AND_RECOVERY_EXHAUSTED",
+    "observed_failures": [
+      "P5 success-path test uses != for arrays shape (2,) versus (3,), raises ValueError after comparison returned",
+      "joined rejection negative test expects root-joined text while real validator raises root-verified text"
+    ],
+    "not_reached": [
+      "P5 test assertions after array comparison: joined path/start-end identity equality, verifier call count and q8/q10 file assertions"
+    ],
+    "minimal_change": "Two test assertions only: use not np.array_equal, match actual root-verified rejection. Static fixes delivered; no remaining validation slot. Need explicit further affected-test validation authorization before D1/P2/science eligibility can be reassessed. No numerical/ABI/cache change justified.",
+    "root_supervision_responsibility": "Initial and recovery static reviews missed fixture omissions and two assertion errors; prior summary/PASS does not close them."
+  },
+  "review_items": {
+    "V11-01": "Mapping import and legacy-no-seed true audit path passed in S1; no shared numerical core change",
+    "V11-02": "real plan builder and audit/postgate tested with necessary closure/parent p and refusal cases; native authority replaced at costly boundary; actual FE not measured",
+    "V11-03": "actual registered observer 4 cases pass on recovery source; primary before later field sampler; normal1 extra0 synthetic evidence only",
+    "V11-04": "same RHS/solution/opposite residual signs and coefficient/recovery-array identity; real disk reader 4 cases pass, raw consistency tests S1 pass; actual PDE not run",
+    "V11-05": "P2/P4 binding and P5 before/after identity code implemented; affected success and rejection tests still failed; final assertions static-only; root external join for actual P2/P4/P5 NOT_RUN",
+    "V11-06": "24 first parameter cases,14 local recovery cases; no entire-file or old20 suite; final two assertions NOT_RUN",
+    "V11-07": "old-A2-first atomic persistence and delegating authority wrappers implemented; wrapper cache/restore fixture passed; D1 actual phase/CPU/remaining workload NOT_RUN, no performance conclusion",
+    "V11-08": "existing trace continuous excerpts and provenance corrections only; V10 evidence not reopened"
+  },
+  "evidence_closeouts": [
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/root_closeout.json",
+      "sha256": "bc8d5e6ef4ae70746d7cd9056c01d7c70bdca94d3c7d062a8cb9413f58deb50b"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/root_closeout.json",
+      "sha256": "dcde34c87c073b155e5b1aea0a70d19347472c455f47cb61f39687480021cfdb"
+    }
+  ],
+  "root_read_scope": [
+    "all final raw trace event/signal/exit lines and all unique stack frames through readonly parsing",
+    "all55+16 compact resource rows plus runtime identity and host post-exit checks",
+    "both XML full failures and recorded actual paths",
+    "4 persisted observer raw audits and synthetic P5 JSON after recovery; read only, no rerun"
+  ],
+  "evidence_limits": [
+    "No fresh scientific arrays, field resampling/integration or PDE in this round",
+    "Only fixture execution, not production ABI/full CI/scientific precision or merge qualification",
+    "No cache paths: empty cache stamp is not global JIT cache audit",
+    "Historical R9/accepted9,R10 rejection,independent accuracy failure,A1/A2 negative endpoints preserved"
+  ],
+  "locked": [
+    "A1_R",
+    "A2_R",
+    "other B/C models",
+    "fresh baseline",
+    "same-accuracy cost campaign",
+    "iterative wiring",
+    "0.7nm",
+    "NN/FTT",
+    "shared activation/ABI changes",
+    "environment rebuild",
+    "parameter scans",
+    "merge"
+  ],
+  "initial_identity_caveat": "initial_identity.json captured after fetch before freeze while current round agent edits and excerpt were present. Its only-excerpt note is incomplete; not a clean dispatch snapshot. Actual two launch source_status files empty.",
+  "static_local_failures": [
+    {
+      "operation": "initial ls-remote",
+      "result": "exit128 DNS; controller incorrectly parallelized fetch before probe result; fetch succeeded",
+      "measured_seconds": null,
+      "driver_consumed": false
+    },
+    {
+      "operation": "agent bare python",
+      "result": "exit127 no code executed",
+      "measured_seconds": null,
+      "driver_consumed": false
+    },
+    {
+      "operation": "root old P2 head file read",
+      "result": "one wrong path, exit1; correct source read later",
+      "measured_seconds": null,
+      "driver_consumed": false
+    },
+    {
+      "operation": "root rg dyadic_hexa_forest.py",
+      "result": "one nonexistent path, exit2",
+      "measured_seconds": null,
+      "driver_consumed": false
+    },
+    {
+      "operation": "root S1 tail worker.log",
+      "result": "one wrong parent path, exit1",
+      "measured_seconds": null,
+      "driver_consumed": false
+    },
+    {
+      "operation": "root bare ruff in subprocess",
+      "result": "FileNotFoundError; later .venv/bin/ruff passed",
+      "measured_seconds": null,
+      "driver_consumed": false
+    },
+    {
+      "operation": "root ls ~/.local/bin/ruff",
+      "result": "one missing path, exit2; .venv/bin/ruff exists",
+      "measured_seconds": null,
+      "driver_consumed": false
+    },
+    {
+      "operation": "root P5 fixture rg",
+      "result": "one path omitted artifacts segment, exit2; corrected read completed",
+      "measured_seconds": null,
+      "driver_consumed": false
+    }
+  ],
+  "not_run_root_observations": [
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1",
+      "exists": false
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2",
+      "exists": false
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3",
+      "exists": false
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1",
+      "exists": false
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1",
+      "exists": false
+    }
+  ],
+  "final_unrun_test_check": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/final_unrun_static_check.json",
+    "sha256": "1e769d70fe4188817ceac773811dca4c1bbeaa8784ada6ae021a2b7a34206336"
+  }
+}

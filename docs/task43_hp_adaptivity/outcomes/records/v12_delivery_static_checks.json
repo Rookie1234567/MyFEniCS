@@ -1,0 +1,211 @@
+{
+  "schema": "task43.v12.static-delivery-check.v1",
+  "checks": [
+    "JSON decode",
+    "index hashes",
+    "source final hashes",
+    "original contract/recovery manifest byte preservation",
+    "XML counts",
+    "current V12 relative links exist",
+    "git diff whitespace",
+    "protected paths unchanged since review"
+  ],
+  "json_files": 27,
+  "index_files": 43,
+  "current_v12_links": [
+    {
+      "file": "docs/README.md",
+      "target": "task43_hp_adaptivity/response_v12.md",
+      "exists": true
+    },
+    {
+      "file": "docs/README.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v12_recovery_and_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/README.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/root_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/README.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/root_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/README.md",
+      "target": "task43_hp_adaptivity/response_v12.md",
+      "exists": true
+    },
+    {
+      "file": "docs/README.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v12_recovery_and_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/development_model_registry.md",
+      "target": "task43_hp_adaptivity/response_v12.md",
+      "exists": true
+    },
+    {
+      "file": "docs/development_model_registry.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v12_recovery_and_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/development_model_registry.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/root_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/development_model_registry.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/root_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/development_progress.md",
+      "target": "task43_hp_adaptivity/response_v12.md",
+      "exists": true
+    },
+    {
+      "file": "docs/development_progress.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v12_recovery_and_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/development_progress.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/root_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/development_progress.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/root_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/development_progress.md",
+      "target": "task038_extra_full3d_iterative_0p7nm/outcomes/next_pc_architecture_after_v12.md",
+      "exists": true
+    },
+    {
+      "file": "docs/development_progress.md",
+      "target": "task038_extra_full3d_iterative_0p7nm/response_v12.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "response_v12.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "outcomes/records/v12_recovery_and_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "response_v12.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "response_v12.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "outcomes/records/v12_recovery_and_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "outcomes/records/v12_recovery_sources/support/focused_attempt1/root_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/README.md",
+      "target": "outcomes/records/v12_recovery_sources/support/focused_recovery1/root_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/summary.md",
+      "target": "../response_v12.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/summary.md",
+      "target": "records/v12_recovery_and_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/summary.md",
+      "target": "records/v12_recovery_sources/support/focused_attempt1/root_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/summary.md",
+      "target": "records/v12_recovery_sources/support/focused_recovery1/root_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+      "target": "../response_v12.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+      "target": "records/v12_recovery_and_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+      "target": "records/v12_recovery_sources/support/focused_attempt1/root_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+      "target": "records/v12_recovery_sources/support/focused_recovery1/root_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/response_v12.md",
+      "target": "outcomes/records/v12_recovery_sources/support/focused_attempt1/root_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/response_v12.md",
+      "target": "outcomes/records/v12_recovery_sources/support/focused_recovery1/root_closeout.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/response_v12.md",
+      "target": "outcomes/records/v12_recovery_and_scientific_results_v1.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/response_v12.md",
+      "target": "outcomes/records/v12_recovery_sources/preparation/final_unrun_static_check.json",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/response_v12.md",
+      "target": "outcomes/records/v12_recovery_sources/preparation/final_unrun_test_assertions.diff",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/README.md",
+      "target": "../../../response_v12.md",
+      "exists": true
+    },
+    {
+      "file": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/README.md",
+      "target": "../v12_recovery_and_scientific_results_v1.json",
+      "exists": true
+    }
+  ],
+  "protected_path_changes": [],
+  "dynamic_runs": 0,
+  "elapsed_seconds": "not_measured",
+  "scope": "Offline text/JSON/hash/path checks only; no test, ABI or native/project import; no GitHub rendering claim."
+}

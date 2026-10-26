@@ -1,0 +1,1082 @@
+[
+  {
+    "line": 1,
+    "elapsed_seconds": 0.2309170658700168,
+    "exit_code": null,
+    "rss_bytes": 56795136,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [
+      2284630,
+      2284642
+    ],
+    "resource_sample_cost": {
+      "wall_seconds": 0.09375665429979563,
+      "cpu_seconds": 0.04545187900000003
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1233042792448,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.29,
+        "rss_bytes": 38060032,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284630,
+        "ppid": 2284626,
+        "start_ticks": 295631811,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.08,
+        "rss_bytes": 16240640,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284642,
+        "ppid": 2284626,
+        "start_ticks": 295631815,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.01,
+        "rss_bytes": 2494464,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 2,
+    "elapsed_seconds": 0.7130604372359812,
+    "exit_code": null,
+    "rss_bytes": 81993728,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [
+      2284630,
+      2284642
+    ],
+    "resource_sample_cost": {
+      "wall_seconds": 0.09447798226028681,
+      "cpu_seconds": 0.046068111999999994
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1232613388288,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.41,
+        "rss_bytes": 38080512,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284630,
+        "ppid": 2284626,
+        "start_ticks": 295631811,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.43,
+        "rss_bytes": 41418752,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284642,
+        "ppid": 2284626,
+        "start_ticks": 295631815,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.02,
+        "rss_bytes": 2494464,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 3,
+    "elapsed_seconds": 1.1997526460327208,
+    "exit_code": null,
+    "rss_bytes": 127475712,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [
+      2284630,
+      2284642,
+      2284660
+    ],
+    "resource_sample_cost": {
+      "wall_seconds": 0.09127723705023527,
+      "cpu_seconds": 0.045627185999999986
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1231841574912,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.52,
+        "rss_bytes": 38096896,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284630,
+        "ppid": 2284626,
+        "start_ticks": 295631811,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.58,
+        "rss_bytes": 64999424,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284642,
+        "ppid": 2284626,
+        "start_ticks": 295631815,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.13,
+        "rss_bytes": 3579904,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284660,
+        "ppid": 2284630,
+        "start_ticks": 295631901,
+        "state": "t",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.1,
+        "rss_bytes": 20799488,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 4,
+    "elapsed_seconds": 1.6885692370124161,
+    "exit_code": null,
+    "rss_bytes": 149368832,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [
+      2284630,
+      2284642,
+      2284660
+    ],
+    "resource_sample_cost": {
+      "wall_seconds": 0.09361272538080812,
+      "cpu_seconds": 0.044556452000000024
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1231841382400,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.64,
+        "rss_bytes": 38100992,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284630,
+        "ppid": 2284626,
+        "start_ticks": 295631811,
+        "state": "t",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.72,
+        "rss_bytes": 81690624,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284642,
+        "ppid": 2284626,
+        "start_ticks": 295631815,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.29,
+        "rss_bytes": 3645440,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284660,
+        "ppid": 2284630,
+        "start_ticks": 295631901,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.17,
+        "rss_bytes": 25931776,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 5,
+    "elapsed_seconds": 2.173272952903062,
+    "exit_code": null,
+    "rss_bytes": 170307584,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [
+      2284630,
+      2284642,
+      2284660
+    ],
+    "resource_sample_cost": {
+      "wall_seconds": 0.09467726526781917,
+      "cpu_seconds": 0.04641310799999998
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1232350670848,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.75,
+        "rss_bytes": 38100992,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284630,
+        "ppid": 2284626,
+        "start_ticks": 295631811,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.94,
+        "rss_bytes": 102694912,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284642,
+        "ppid": 2284626,
+        "start_ticks": 295631815,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.45,
+        "rss_bytes": 3579904,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284660,
+        "ppid": 2284630,
+        "start_ticks": 295631901,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.17,
+        "rss_bytes": 25931776,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 6,
+    "elapsed_seconds": 2.656564502045512,
+    "exit_code": null,
+    "rss_bytes": 237707264,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [
+      2284630,
+      2284642,
+      2284660
+    ],
+    "resource_sample_cost": {
+      "wall_seconds": 0.09224388701841235,
+      "cpu_seconds": 0.045438367000000035
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1232419586048,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.87,
+        "rss_bytes": 38113280,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284630,
+        "ppid": 2284626,
+        "start_ticks": 295631811,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 1.27,
+        "rss_bytes": 170082304,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284642,
+        "ppid": 2284626,
+        "start_ticks": 295631815,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.48,
+        "rss_bytes": 3579904,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284660,
+        "ppid": 2284630,
+        "start_ticks": 295631901,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.17,
+        "rss_bytes": 25931776,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 7,
+    "elapsed_seconds": 3.131907009985298,
+    "exit_code": null,
+    "rss_bytes": 255336448,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [
+      2284630,
+      2284642,
+      2284660
+    ],
+    "resource_sample_cost": {
+      "wall_seconds": 0.08927359292283654,
+      "cpu_seconds": 0.045635549
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1232022204416,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.98,
+        "rss_bytes": 38113280,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284630,
+        "ppid": 2284626,
+        "start_ticks": 295631811,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 1.57,
+        "rss_bytes": 187518976,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284642,
+        "ppid": 2284626,
+        "start_ticks": 295631815,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.54,
+        "rss_bytes": 3772416,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284660,
+        "ppid": 2284630,
+        "start_ticks": 295631901,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.17,
+        "rss_bytes": 25931776,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 8,
+    "elapsed_seconds": 3.619450537953526,
+    "exit_code": null,
+    "rss_bytes": 255942656,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [
+      2284630,
+      2284642,
+      2284660
+    ],
+    "resource_sample_cost": {
+      "wall_seconds": 0.09589410107582808,
+      "cpu_seconds": 0.04589642599999988
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1231816974336,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 1.1,
+        "rss_bytes": 38117376,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284630,
+        "ppid": 2284626,
+        "start_ticks": 295631811,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 1.84,
+        "rss_bytes": 188121088,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284642,
+        "ppid": 2284626,
+        "start_ticks": 295631815,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.62,
+        "rss_bytes": 3772416,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284660,
+        "ppid": 2284630,
+        "start_ticks": 295631901,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.17,
+        "rss_bytes": 25931776,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 9,
+    "elapsed_seconds": 4.104946370236576,
+    "exit_code": null,
+    "rss_bytes": 256069632,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [
+      2284630,
+      2284642,
+      2284660
+    ],
+    "resource_sample_cost": {
+      "wall_seconds": 0.09147393610328436,
+      "cpu_seconds": 0.045075116000000026
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1231841103872,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 1.21,
+        "rss_bytes": 38117376,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284630,
+        "ppid": 2284626,
+        "start_ticks": 295631811,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 2.11,
+        "rss_bytes": 188248064,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284642,
+        "ppid": 2284626,
+        "start_ticks": 295631815,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.72,
+        "rss_bytes": 3772416,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284660,
+        "ppid": 2284630,
+        "start_ticks": 295631901,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.17,
+        "rss_bytes": 25931776,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 10,
+    "elapsed_seconds": 4.59032744821161,
+    "exit_code": null,
+    "rss_bytes": 261468160,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [
+      2284630,
+      2284642,
+      2284660
+    ],
+    "resource_sample_cost": {
+      "wall_seconds": 0.0955827347934246,
+      "cpu_seconds": 0.046302808000000084
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1232723234816,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 1.34,
+        "rss_bytes": 38117376,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284630,
+        "ppid": 2284626,
+        "start_ticks": 295631811,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 2.38,
+        "rss_bytes": 193646592,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284642,
+        "ppid": 2284626,
+        "start_ticks": 295631815,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.81,
+        "rss_bytes": 3772416,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284660,
+        "ppid": 2284630,
+        "start_ticks": 295631901,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.17,
+        "rss_bytes": 25931776,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 11,
+    "elapsed_seconds": 5.076676394790411,
+    "exit_code": null,
+    "rss_bytes": 263565312,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [
+      2284630,
+      2284642,
+      2284660
+    ],
+    "resource_sample_cost": {
+      "wall_seconds": 0.09735787706449628,
+      "cpu_seconds": 0.04592898100000009
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1232733138944,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 1.45,
+        "rss_bytes": 38117376,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284630,
+        "ppid": 2284626,
+        "start_ticks": 295631811,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 2.69,
+        "rss_bytes": 195743744,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284642,
+        "ppid": 2284626,
+        "start_ticks": 295631815,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.87,
+        "rss_bytes": 3772416,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284660,
+        "ppid": 2284630,
+        "start_ticks": 295631901,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.17,
+        "rss_bytes": 25931776,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 12,
+    "elapsed_seconds": 5.559027553070337,
+    "exit_code": null,
+    "rss_bytes": 265719808,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [
+      2284630,
+      2284642,
+      2284660
+    ],
+    "resource_sample_cost": {
+      "wall_seconds": 0.09432722395285964,
+      "cpu_seconds": 0.046161564000000155
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1232342220800,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 1.56,
+        "rss_bytes": 38117376,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284630,
+        "ppid": 2284626,
+        "start_ticks": 295631811,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 3.05,
+        "rss_bytes": 197898240,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284642,
+        "ppid": 2284626,
+        "start_ticks": 295631815,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.88,
+        "rss_bytes": 3772416,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      },
+      {
+        "pid": 2284660,
+        "ppid": 2284630,
+        "start_ticks": 295631901,
+        "state": "S",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 0.17,
+        "rss_bytes": 25931776,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 13,
+    "elapsed_seconds": 5.918176433071494,
+    "exit_code": 1,
+    "rss_bytes": 38117376,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [],
+    "resource_sample_cost": {
+      "wall_seconds": 0.042851182632148266,
+      "cpu_seconds": 0.04284971399999993
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1231727054848,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 1.67,
+        "rss_bytes": 38117376,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 14,
+    "elapsed_seconds": 6.278264296241105,
+    "exit_code": 1,
+    "rss_bytes": 38117376,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [],
+    "resource_sample_cost": {
+      "wall_seconds": 0.042702421080321074,
+      "cpu_seconds": 0.042702908000000095
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1231274598400,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 1.79,
+        "rss_bytes": 38117376,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 15,
+    "elapsed_seconds": 6.63896458921954,
+    "exit_code": 1,
+    "rss_bytes": 38117376,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [],
+    "resource_sample_cost": {
+      "wall_seconds": 0.043811661656945944,
+      "cpu_seconds": 0.04381260399999998
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1231466430464,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 1.9,
+        "rss_bytes": 38117376,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  },
+  {
+    "line": 16,
+    "elapsed_seconds": 6.999670995865017,
+    "exit_code": 1,
+    "rss_bytes": 38117376,
+    "swap_bytes": 0,
+    "launch_cap_bytes": 8589934592,
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "live_or_unreaped_children": [],
+    "resource_sample_cost": {
+      "wall_seconds": 0.04383849585428834,
+      "cpu_seconds": 0.043836146999999714
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1232071553024,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "members": [
+      {
+        "pid": 2284626,
+        "ppid": 2284466,
+        "start_ticks": 295631792,
+        "state": "R",
+        "affinity": [
+          1
+        ],
+        "cpu_seconds": 2.0,
+        "rss_bytes": 38117376,
+        "swap_bytes": 0,
+        "cmdline_empty": false
+      }
+    ]
+  }
+]

@@ -1471,7 +1471,10 @@ def test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8(
         assert len(fixture["quadrature_calls"]) == 2
         assert fixture["quadrature_calls"][0][0] == 8
         assert fixture["quadrature_calls"][1][0] == 10
-        assert fixture["quadrature_calls"][0][1][0] != fixture["quadrature_calls"][0][1][1]
+        assert not np.array_equal(
+            fixture["quadrature_calls"][0][1][0],
+            fixture["quadrature_calls"][0][1][1],
+        )
         joined_key = str(fixture["p2_joined_path"].resolve())
         assert joined_key in result["v12_p2_p4_input_identity_start"]
         assert result["v12_p2_p4_input_identity_start"] == result[
@@ -1557,7 +1560,7 @@ def test_v12_p2_joined_source_binding_rejects_root_terminal_failure(
     fixture["p2_joined_path"].write_text(
         json.dumps(joined, sort_keys=True) + "\n", encoding="utf-8"
     )
-    with pytest.raises(ValueError, match="root-joined successful attempt"):
+    with pytest.raises(ValueError, match="root-verified successful attempt"):
         h100_anchor._verify_v12_p2_source_binding(
             fixture["binding"],
             contract_sha256=fixture["contract_sha256"],

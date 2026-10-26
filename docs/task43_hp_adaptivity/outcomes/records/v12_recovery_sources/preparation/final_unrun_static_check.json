@@ -1,0 +1,16 @@
+{
+  "schema": "task43.v12.final-unrun-static-test-check.v1",
+  "measured_static_seconds": 0.14229252189397812,
+  "test_path": "src/test/test_task43_v11_scientific_restart.py",
+  "test_sha256": "451f0a71d84b5bc7df28e79124d2f4e9022c7d69b541d03517538ca7e6e743ae",
+  "diff_path": "docs/task43_hp_adaptivity/outcomes/records/v12_recovery_sources/preparation/final_unrun_test_assertions.diff",
+  "diff_sha256": "fdec9915a932adfb3f5c9239e2909c0a2b412b74aea6919ab27aec612921ac19",
+  "checks": [
+    "AST parse only",
+    "ruff F821/F822/F823 only",
+    "git diff --check"
+  ],
+  "dynamic_tests": "NOT_RUN",
+  "driver_launches": 0,
+  "scope": "Only final two assertion fixes; static checks do not grant S1 pass or downstream authorization."
+}

@@ -5,7 +5,7 @@
 | 执行分支 | `task43_hp_adaptivity` |
 | 建立日期 | 2026-10-22 |
 | 源码基线 | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` |
-| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；V11 P1 两次支持运行留下有限工程证据（首次7通过/1 fixture失败，单selector恢复通过），P2唯一支持运行在840秒阈值后以`PERFORMANCE_CONTROLLED_STOP`结束（whole 842.288990秒），最终空间authority/FE未取得；P3–P5未运行、新增正式dispatch为0。旧正式5/6及封存末槽不变，V11新2个正式槽未消耗但当前不得启动，扩展包络为5/8；五项科学状态及无合并许可不变。详见[Response V11](response_v11.md) |
+| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；V12 的 S1 与一次窄恢复支持测试均留下失败，之后只静态修复两处断言，最终字节未运行。S1主验证及局部恢复两槽已用；V12新支持总计2/4，D1/P2R各0/1但当前前门不合格，P3/P4/P5未运行；新正式dispatch为0。accepted9/R9、R10拒绝、五项科学状态、旧正式5/6及封存末槽不变；无READY、生产资格或合并许可。详见[Response V12](response_v12.md)与[V12机器收口](outcomes/records/v12_recovery_and_scientific_results_v1.json) |
 | 第一目标 | 在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环 |
 | 第一验证波长 | 13.5 nm；小规模 direct 作数值核验 |
 | 后续方向 | 自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot |
@@ -14,9 +14,9 @@
 
 ## 阅读入口
 
-**V11范围由[V11正式补充任务书](supplement_v11_scientific_restart.md)规定。**本轮已在P2空间前门受控停止，动态工作全部结束；不得自动重跑P2或启动P3–P5，恢复执行需正式审阅并授权新的具体范围。V11只前瞻调整任务书列明的范围，历史合同和负结果不改。
+**V11范围由[V11正式补充任务书](supplement_v11_scientific_restart.md)和[review §9](review_report_v11.md)规定。**V12 的 S1 主验证及局部恢复两槽已用；新支持总计2/4，D1/P2R各0/1但当前前门不合格。恢复仍有两个 selector 未通过，最终静态修复没有运行。动态工作已关闭，D1/P2R/P3/P4/P5不得自动启动；后续至少先取得对两个受影响测试节点的新明确验证授权。历史合同、原始失败与初始 manifest 均保留。
 
-上一轮[V10正式review](review_report_v10.md)已验收有限静态整改；原执行依据为[正式V9 review第9节](review_report_v9.md)，V10当轮未新增运行。其交付见[Response V10](response_v10.md)、[静态纠正记录](outcomes/records/v10_static_evidence_correction_v1.json)及[纠正版依赖表](outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json)。原V9派生表保留原字节；三个边界的12个字段更正在新文件中，不能继续把旧表当作无误记录。V11支持运行及受控停止见[Response V11](response_v11.md)；V11没有正式PDE结果或合并许可。
+上一轮[V10正式review](review_report_v10.md)已验收有限静态整改；原执行依据为[正式V9 review第9节](review_report_v9.md)，V10当轮未新增运行。其交付见[Response V10](response_v10.md)、[静态纠正记录](outcomes/records/v10_static_evidence_correction_v1.json)及[纠正版依赖表](outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json)。原V9派生表保留原字节；三个边界的12个字段更正在新文件中。V11/V12有限工程证据与受控停止见[Response V11](response_v11.md)和[Response V12](response_v12.md)；没有新增正式 PDE 结果或合并许可。
 
 1. [task.md](task.md)：科学问题、模型、阶段、接受规则和验收合同。
 2. [AGENTS.md](AGENTS.md)：本目录执行规则；任务书与工作站实施之间的边界。
@@ -38,6 +38,8 @@
 停止选择后，三个恢复参考与R9/R10共同用q8/q10进行九组方向明确的全场比较；结果已由root从原始数组独立审计，未反馈选择或增加PDE。全仓 `pytest -q` 已真实尝试，但在collection阶段发生1次skip和8个collection errors，测试体执行0项；负结果与其SLEPc/忽略artifact来源保留。没有CI通过声明。
 
 - [结果与统一模型表](outcomes/summary.md)
+- [V12执行回应](response_v12.md)；[V12 recovery/science机器记录](outcomes/records/v12_recovery_and_scientific_results_v1.json)
+- [V12 S1 closeout](outcomes/records/v12_recovery_sources/support/focused_attempt1/root_closeout.json)；[V12窄恢复 closeout](outcomes/records/v12_recovery_sources/support/focused_recovery1/root_closeout.json)
 - [V11收口回应](response_v11.md)；[V11科学结果机器记录](outcomes/records/v11_scientific_results_v1.json)
 - [执行回应](response_v1.md)
 - [V2最终执行回应](response_v2.md)
