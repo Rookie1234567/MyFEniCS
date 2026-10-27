@@ -1,0 +1,313 @@
+{
+  "schema": "task43.v15.h-recovery-validation-root-gate.v1",
+  "status": "PASS_LIMITED_SUPPORT_ENGINEERING",
+  "head": "d48ee3c389b42387dcff522cba059c0ddb5beffc",
+  "source_sha256": {
+    "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+    "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+    "benchmarks/task43_hp_adaptivity/candidate_records.py": "7f98eacb0aee5e8f3cc98c61620613d02e66c909844c2ab8e171008e1cee73aa",
+    "benchmarks/task43_hp_adaptivity/compare_initial_to_references.py": "c39d5577719ddf4a5bc22acba47d49028717a171fcbcbf2cb667341067d78a8e",
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "388de2b4b404212b47811d9fd90f37e34353debf08a72e1fae398dffe2de91ed",
+    "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py": "4c16377b491a83424f8b21cb54c9e60f64dcd5bf6f6895f45fee6f11a083ce0c",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "12c5b39ceda78d0c43d97473d798fcc6340af1b53c1cbb75b0365b9a19319d7f",
+    "benchmarks/task43_hp_adaptivity/profile.py": "ddd315bcbe897be4856c42dc68ecbf7897dcf8fa836ef91985863bb6ae8afc2e",
+    "benchmarks/task43_hp_adaptivity/reference_restore.py": "93a7170d92cacae9c9fd491637a22c676fb559d3f5a306812105888a6c0b4505",
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py": "6da8f277cf7c1bb8809d04290dfe5418c1ca61955a378eca11447ce9ec90efe2",
+    "benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py": "d1ad0a22a8e60147a0ccf3856a2c847b9ff3b74c34ec4bc04dc76c258a8d8ae9",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+    "scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+    "src/adaptivity/exact_sequence_variable_p.py": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+    "src/adaptivity/hcurl_broken_cell_trace.py": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+    "src/adaptivity/hcurl_broken_trace_graph.py": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+    "src/adaptivity/physical_g_error.py": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+    "src/adaptivity/stage4_local_h.py": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+    "src/adaptivity/variable_p_degree_plan.py": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+    "src/adaptivity/variable_p_entity_map.py": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+    "src/adaptivity/variable_p_transfer.py": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+    "src/common/analytic_fields_3d.py": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+    "src/common/config_3d.py": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+    "src/common/modes_3d.py": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+    "src/constraints/floquet_3d.py": "cfa0953ba1b6fa60b1943be2f0f977413221857290df7ceee0747df811bca309",
+    "src/geometry/mesh_builder_3d.py": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+    "src/geometry/task43_hp_adaptivity_axis_plan.py": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+    "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+    "src/postprocessing/diffraction_3d.py": "42d65299ce1cc8c2762dc1d3972ea04063b155bd8a58d4553c9ac9732213ce66",
+    "src/postprocessing/flat_layer_reference_3d.py": "ed6493bd2f13dccbcd85a8ef2edb6f6b07726ec6c41b82651525b386d44ec04a",
+    "src/postprocessing/physical_field_comparison.py": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+    "src/postprocessing/physical_field_sampling.py": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+    "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+    "src/postprocessing/rta_3d.py": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+    "src/runners/physical_intermediate.py": "f7c1cd79353911079fb17e9780afd588a5afc6d0efeccd81b4aed3b9c3c902a4",
+    "src/solvers/common_3d_case_flow.py": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+    "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+    "src/solvers/common_3d_forms.py": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+    "src/solvers/common_3d_postprocess.py": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+    "src/solvers/common_3d_solve.py": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+    "src/solvers/common_3d_utils.py": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+    "src/solvers/dtn_port_3d.py": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+    "src/solvers/hcurl_blocked_gram_tensor.py": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+    "src/solvers/hcurl_variable_p_assembly.py": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+    "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+    "src/solvers/hcurl_variable_p_reduction.py": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+    "src/solvers/independent_active_action.py": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+    "src/solvers/petsc_residual_correction.py": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+    "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb",
+    "src/test/test_task43_v11_scientific_restart.py": "336d88e3005525780e83fe5ea940f4c5ecf1f6572cf281f55fa156d1a04ddf4c",
+    "docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734"
+  },
+  "current_test_file_sha256": "336d88e3005525780e83fe5ea940f4c5ecf1f6572cf281f55fa156d1a04ddf4c",
+  "tests": {
+    "current_passed": 4,
+    "current_failed": 0,
+    "current_pytest_seconds": 6.59,
+    "previous_run_passed": 10,
+    "previous_run_failed": 1,
+    "previous_run_not_run": 2,
+    "combined_unique_nodes_passed": 13,
+    "reused_unique_nodes": 9,
+    "reuse_scope": "writer1, adapter3, ordinary union5: exact unchanged test file and implementation bodies/dependencies. Main rerun for actual worker identity; new opt-in2 and joined1 pass on final bytes. No whole-file or CI claim.",
+    "changed_source_functions": [
+      "_v15_h_saved_primary_input_snapshot",
+      "_v15_h_saved_primary_binding_and_inputs"
+    ],
+    "current_xml": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/h_saved_primary_validation_attempt2/pytest_results.xml",
+      "sha256": "c231231e28f4bbf6eb5670a71afda7a8f0d6a6cc9742a16a09d01f9c7ee5e3eb"
+    },
+    "historical_xml": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/h_saved_primary_validation_attempt1/pytest_results.xml",
+      "sha256": "2e1a872cab7d6496010b23cf72efd5f928921cdaa383ed43a0c240c7c694e9bc"
+    }
+  },
+  "summary": {
+    "workflow_deadline_seconds": 270.0,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 8589934592,
+    "rss_warning_bytes": 7301444403,
+    "minimum_available_bytes": null,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "native_capacity_profile_identity": "task43_hp_adaptivity_resource_v1",
+    "native_capacity_profile_facts_sha256": "c9ef6d173968fd1c78d86eb66b78dd9720bde901f866f58281a4668f83c4b2e6",
+    "native_capacity_resource_facts": {
+      "resource_stop_policy": "legacy",
+      "absolute_cap_bytes": 206158430208,
+      "planning_cap_bytes": 206158430208,
+      "reserve_min_bytes": 68719476736,
+      "reserve_fraction": 0.15,
+      "effective_reserve_policy": "max(64GiB, 15% of effective total memory)",
+      "launch_cap_policy": "min(192GiB, 80% of effective total, effective available minus effective reserve)",
+      "planning_cap_policy": "min(192GiB, 75% of effective total, launch cap)",
+      "memavailable_runtime_policy": "stop_below_effective_reserve",
+      "rss_runtime_policy": "stop_at_launch_cap",
+      "require_zero_swap": true,
+      "swap_policy": "stop_on_nonzero_task_tree_VmSwap",
+      "global_swap_delta_policy": "observe_only",
+      "stop_on_global_swap": false,
+      "pss_sampling_policy": "disabled_by_profile",
+      "concurrent_neighbor_authorized": false,
+      "research_scope": "Task43 only; no Task39/40/41 profile alias"
+    },
+    "launch_memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 2088180297728,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 2088180297728,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "sampled_process_tree_pss_peak_bytes": null,
+    "cache_metadata_stable": true,
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      3346063,
+      3346074,
+      3346075,
+      3346088
+    ],
+    "sampled_process_tree_rss_peak_bytes": 260907008,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 4250695,
+        "pswpout_pages": 7183007
+      },
+      "end": {
+        "pswpin_pages": 4250695,
+        "pswpout_pages": 7183007
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 2088180297728,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 2088180297728,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "samples": 20,
+    "elapsed_seconds": 9.225778500083834,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": "development_worktree; not formal PDE provenance"
+  },
+  "root_observations": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/h_saved_primary_validation_attempt2_root_terminal_observations.json",
+    "sha256": "8320d6296788638d66f51d65952f44cacfaa5e0e9b1896a40907c0b70cb31d59"
+  },
+  "traces": [
+    {
+      "file": "sched.3346063",
+      "sha256": "e6e51de6b67f0fa520d070a66ea9ffcfb81101d04cb379c9c6b1ec9c9ba2c0ad",
+      "bytes": 188888,
+      "lines": 2924,
+      "tail": "1793076756.388357 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3346075",
+      "sha256": "4ea9dc78856c6efe4e03b82a3138f24118dcc82e1e6e295489e28eb3018f16b8",
+      "bytes": 3717,
+      "lines": 47,
+      "tail": "1793076756.404176 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3346078",
+      "sha256": "1242945969efc1fb6817000f442ff8f179840dd0a702984fcf1719b04ca41785",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793076756.373741 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3346079",
+      "sha256": "e67536f280c2697a70ace98808192d06332bda9c9950a9756b20ef73ae27842c",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793076756.387302 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3346080",
+      "sha256": "3f4152b0368254169ebb2e38de9075fa1cabd310ec485d82acd7d868bc3ad432",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793076756.327920 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3346081",
+      "sha256": "865d5abea1779bec874ba4f1563bb79a5df1ed56673b62aaa226686e31aafe9e",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793076756.317900 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3346082",
+      "sha256": "ccb430de461c662f013f9c495d80b0a42c78598c5d9cc591fa7144d1e0fa68eb",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793076752.066350 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3346083",
+      "sha256": "e6de057462b5a242985d5151e184d5b5f2ca65906cae1b087688f33496e559e7",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793076752.293794 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3346088",
+      "sha256": "183d58d8017027171f8ab6fbc73eec3717383e7ca0a3a64b66be0e66de5f9ce2",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793076754.878598 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3346097",
+      "sha256": "f015093b612d39ea4df981e80f5a90aa026c18ae223c86b36913119ea1def3c6",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793076755.122450 +++ exited with 7 +++"
+    }
+  ],
+  "signals": [
+    {
+      "file": "sched.3346063",
+      "line": 1517,
+      "raw": "1793076752.066544 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3346082, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+    },
+    {
+      "file": "sched.3346063",
+      "line": 2118,
+      "raw": "1793076752.293933 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3346083, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+    },
+    {
+      "file": "sched.3346063",
+      "line": 2853,
+      "raw": "1793076754.878789 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3346088, si_uid=1000, si_status=0, si_utime=2 /* 0.02 s */, si_stime=0} ---"
+    },
+    {
+      "file": "sched.3346063",
+      "line": 2888,
+      "raw": "1793076755.122651 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3346097, si_uid=1000, si_status=7, si_utime=1 /* 0.01 s */, si_stime=1 /* 0.01 s */} ---"
+    }
+  ],
+  "trace_classification": "all final events/tails read; zero setters; all getters CPU1; 4SIGCHLD, child3346097 intentional exit7;103unique frames incl11new read",
+  "empty_cmdline": "sample16 known worker/tracer/orted Z, zeroRSS/swap; final hostPIDticks absent",
+  "cleanup": [
+    {
+      "pid": 3346062,
+      "start_ticks": 300174338,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3346063,
+      "start_ticks": 300174357,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3346074,
+      "start_ticks": 300174361,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3346075,
+      "start_ticks": 300174434,
+      "same_process_still_present": false,
+      "proc_stat": null
+    }
+  ],
+  "runtime_identity": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/h_saved_primary_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/main_sentinel_runtime_identity.json",
+    "sha256": "230819c6805b0f54ed7c5b52a4fc426b6929f7fc8121286e02c17b8f05be2808"
+  },
+  "source_count": 51,
+  "input_count": 62,
+  "caveats": [
+    "No auto-qualification: root must classify signals, failed calls, transient observations and phase/test/numerical results.",
+    "No --cache-path: cache_metadata_stable does not audit shared JIT/global caches.",
+    "Read from real host /proc; sampled RSS/swap, not continuous high-water marks."
+  ],
+  "production_or_science_qualified": false
+}
