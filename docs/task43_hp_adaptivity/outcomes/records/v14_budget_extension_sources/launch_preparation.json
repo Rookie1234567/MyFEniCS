@@ -1,0 +1,22 @@
+{
+  "schema": "task43.v14.p2r-launch-preparation.v1",
+  "authorization": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_user_budget_authorization.json",
+    "sha256": "2997cc77bce47e744ad21a6219134abfd7eb9ce1aebb4ee47c6db14e51af1b47"
+  },
+  "old_unused_shell": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/preparation/v14/space_and_saved_primary_attempt2_pre_user_extension_unused.sh",
+    "sha256": "19f1e031fbb5753c1c372a173cc65c3b48869fe5cb631acea6d01894f932a5c3"
+  },
+  "new_shell": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/launch/space_and_saved_primary_attempt2.sh",
+    "sha256": "858b36634584aa10e68dc916ad496708b12480231ad6dd7874330508b686b97a"
+  },
+  "changed_shell_lines": "only work5400/whole5580 and additive hash-bound human authorization/source/previous-closeout/diff snapshots; worker argv and source list unchanged",
+  "source_matches_S1": 51,
+  "bash_syntax_exit": 0,
+  "embedded_stdlib_AST": "PASS",
+  "root_absent": true,
+  "new_native_driver_tests_PDE": 0,
+  "measured_seconds": 0.07047322392463684
+}
