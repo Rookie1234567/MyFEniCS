@@ -116,3 +116,9 @@ V14 reader 现在可在收到按 attempt 绑定的 replay inputs 时调用 `_tas
 - source `a337690fdcf5fc0132f32f681b61a65f7d50f931`；服务 `myfenics-case-20261027T101520-3410209.service`。在worker前，collector仍只认旧metadata v1，拒绝已完成的v2恢复manifest。A/meta文件不变，未重复扫描/统计。
 - 服务collector现明确识别v2并分别核对framed/raw摘要与源record；子checker仍从NPY实际重算。对应服务分支7项通过（3.75秒）。
 - 下一attempt复用同一attempt05 Stage A resume及原window，不刷新T0。
+
+### attempt07：区分局部trace行与active列位置
+
+沿同窗与05保存A接续，source `2de17690039cc856d0e5f00df3eaf657c7d3886f`，unit `myfenics-case-20261027T101821-3411233.service`。A/meta未重算，B因`cell446 selected active position differs`退出；旧负回执保留。原始V8 metadata小数组逐一hash核验后，cell446的局部trace行75经保存E映射到active_ids列111，后者值87567；原守卫错误要求75等于111。修复只取消这项错误的编号等同，仍要求active row唯一、E canonical、该E行唯一且系数1、实际列精确对应active row。错误E和重复active id仍拒绝。
+
+service父段22.2098349459秒、监督child13.3214382641秒、systemd wall25.949551秒，嵌套不相加；tree采样峰537612288 B、cgroup内核峰444903424 B、task swap0、后代清空。全部attempt01–07真实成本已保存在ignored `v16_main_handoff/costs_attempt01_07.json`。其中05 cgroup内核peak为2521493504 B，采样current峰与之区分，不以较低采样值替代内核峰。新接续继续复用05 A manifest，不重复metadata或统计。

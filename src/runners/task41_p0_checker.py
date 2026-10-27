@@ -1840,6 +1840,29 @@ def _task41_p0_v16_persist_metadata_bundle(
     }
 
 
+def _task41_p0_v16_selected_trace_active_position(
+    *,
+    active_ids: np.ndarray,
+    active_row: int,
+    local_trace_row: int,
+    expansion: Any,
+    label: str,
+) -> int:
+    """Bind the saved trace row through E; trace rows and active-id columns may differ."""
+    target_locations = np.flatnonzero(np.asarray(active_ids) == int(active_row))
+    if target_locations.size != 1:
+        raise ValueError(f"{label} selected active row is not uniquely mapped")
+    target_location = int(target_locations[0])
+    e_row = expansion.getrow(int(local_trace_row))
+    if (
+        e_row.nnz != 1
+        or int(e_row.indices[0]) != target_location
+        or complex(e_row.data[0]) != 1.0 + 0.0j
+    ):
+        raise ValueError(f"{label} selected E row differs")
+    return target_location
+
+
 def _task41_p0_v16_attempt01_replay_inputs(
     *,
     candidate: Mapping[str, Any],
@@ -1979,9 +2002,6 @@ def _task41_p0_v16_attempt01_replay_inputs(
             or not np.array_equal(np.sort(np.r_[interior, trace]), np.arange(interior.size + trace.size))
         ):
             raise ValueError(f"V16 attempt01 V8 cell{cell} row-map layout differs")
-        target_locations = np.flatnonzero(active_ids == int(spec["active_row"]))
-        if target_locations.size != 1 or int(target_locations[0]) != expected_local_rows[cell]:
-            raise ValueError(f"V16 attempt01 V8 cell{cell} selected active position differs")
         expansion = csr_matrix(
             (
                 np.asarray(local["trace_expansion_data"], dtype=np.complex128),
@@ -1993,13 +2013,13 @@ def _task41_p0_v16_attempt01_replay_inputs(
         if not expansion.has_canonical_format:
             raise ValueError(f"V16 attempt01 V8 cell{cell} trace expansion is not canonical")
         local_trace_row = expected_local_rows[cell]
-        e_row = expansion.getrow(local_trace_row)
-        if (
-            e_row.nnz != 1
-            or int(e_row.indices[0]) != int(target_locations[0])
-            or complex(e_row.data[0]) != 1.0 + 0.0j
-        ):
-            raise ValueError(f"V16 attempt01 V8 cell{cell} selected E row differs")
+        target_location = _task41_p0_v16_selected_trace_active_position(
+            active_ids=active_ids,
+            active_row=int(spec["active_row"]),
+            local_trace_row=local_trace_row,
+            expansion=expansion,
+            label=f"V16 attempt01 V8 cell{cell}",
+        )
         candidate_cell = replay_cell_by_id[cell]
         candidate_refs = candidate_cell.get("candidate_artifacts")
         if not isinstance(candidate_refs, Mapping):
@@ -2023,9 +2043,9 @@ def _task41_p0_v16_attempt01_replay_inputs(
             "interior_positions": interior,
             "trace_positions": trace,
             "selected_row_weights": np.asarray(
-                expansion[:, int(target_locations[0])].toarray(), dtype=np.complex128
+                expansion[:, target_location].toarray(), dtype=np.complex128
             ).reshape(-1),
-            "target_active_position": int(target_locations[0]),
+            "target_active_position": target_location,
             "expansion": expansion,
             "S": np.asarray(S),
             "R": np.asarray(R),

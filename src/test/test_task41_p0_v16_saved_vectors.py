@@ -550,6 +550,50 @@ def test_v16_v14_attempt01_binds_y_and_g_separately_without_state_field():
         )
 
 
+def test_v16_attempt01_selected_trace_row_maps_to_nonmatching_active_id_column():
+    active_ids = np.arange(432, dtype=np.int64)
+    active_ids[111] = 87_567
+    row_indices = np.arange(432, dtype=np.int32)
+    column_indices = np.arange(432, dtype=np.int32)
+    column_indices[[75, 111]] = column_indices[[111, 75]]
+    expansion = csr_matrix(
+        (
+            np.ones(432, dtype=np.complex128),
+            (row_indices, column_indices),
+        ),
+        shape=(432, 432),
+    )
+
+    assert v16_checker._task41_p0_v16_selected_trace_active_position(
+        active_ids=active_ids,
+        active_row=87_567,
+        local_trace_row=75,
+        expansion=expansion,
+        label="V16 attempt01 V8 cell446",
+    ) == 111
+
+    wrong_expansion = csr_matrix(np.eye(432, dtype=np.complex128))
+    with pytest.raises(ValueError, match="selected E row differs"):
+        v16_checker._task41_p0_v16_selected_trace_active_position(
+            active_ids=active_ids,
+            active_row=87_567,
+            local_trace_row=75,
+            expansion=wrong_expansion,
+            label="V16 attempt01 V8 cell446",
+        )
+
+    duplicate_ids = active_ids.copy()
+    duplicate_ids[112] = 87_567
+    with pytest.raises(ValueError, match="not uniquely mapped"):
+        v16_checker._task41_p0_v16_selected_trace_active_position(
+            active_ids=duplicate_ids,
+            active_row=87_567,
+            local_trace_row=75,
+            expansion=expansion,
+            label="V16 attempt01 V8 cell446",
+        )
+
+
 def test_v16_v14_attempt04_preserves_j0_j3_terminal_bindings():
     spec = {
         "active_row": 1,
