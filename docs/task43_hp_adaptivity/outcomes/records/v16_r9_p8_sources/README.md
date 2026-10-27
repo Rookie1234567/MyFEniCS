@@ -1,5 +1,7 @@
 # V16 轻量证据索引
 
+当前新增用户授权单节点已实测1 passed；见[主控终态](T_user_completion/terminal_review.json)、[XML](T_user_completion/pytest_results.xml)、[原始stdout](T_user_completion/worker_stdout.txt)、[原件索引](T_user_completion/raw_index.json)、[字节复用范围](T_user_completion/test_byte_scope.json)及[当前机器收口](../v16_single_node_completion_v1.json)。实际HEAD为087ef600a4531c9e65643df787eb71e965f41b65，原T两次失败不改；S/F/C/E未调用。以下为原交付索引历史，其中最终字节与NOT_RERUN均指旧交付。
+
 本目录仅对应 V15 review 的固定 P8 实验。T 两次调用结束；S/F/C/E均未调用。大 trace、resource流、source快照与fixture仍在ignored `benchmarks/artifacts/task43/v16_p8/`。
 
 - [T主验证原始stdout](T_main/worker_stdout.txt)、[XML](T_main/pytest_results.xml)、[主控终态](T_main/terminal_review.json)。实际HEAD c620c96ef98adac4e1caf05e28dae7744e73a328。

@@ -1,0 +1,136 @@
+{
+  "schema": "task43.v16.single-node-completion.v1",
+  "created_utc": "2026-10-27T08:36:53.135246+00:00",
+  "authorization_record": "v16_r9_p8_sources/user_single_node_authorization.json",
+  "review_sha": "f72e1c8d031de7acc374f0806ddac06099c461c4",
+  "base_delivery_sha": "1fb881f4d6fb836d96c650329529d0d1e18c03c5",
+  "actual_run_head": "087ef600a4531c9e65643df787eb71e965f41b65",
+  "test_sha256": "c7ae026e40ac782652b17e87e7399eef541c139ff62900b20caf7ea59e34a236",
+  "status": "SINGLE_NODE_PASSED_ROOT_REVIEWED",
+  "pytest": {
+    "tests": 1,
+    "passed": 1,
+    "failures": 0,
+    "stdout_seconds": 5.59,
+    "other_17_rerun": false
+  },
+  "cost": {
+    "original_T_whole_seconds": 82.05409320862964,
+    "new_whole_seconds": 12.767253825906664,
+    "all_three_whole_seconds": 94.8213470345363,
+    "pytest_seconds_included_in_whole": true,
+    "current_static_and_manual_wall": "not_measured",
+    "previous_initial_input_check_seconds": 1.8255486912094057
+  },
+  "quotas": {
+    "original_T_used": 2,
+    "original_T_cap": 2,
+    "user_single_node_used": 1,
+    "user_single_node_cap": 1,
+    "original_review_support_used": 2,
+    "original_review_support_cap": 5,
+    "support_calls_total_including_user_completion": 3,
+    "new_formal_PDE": 0,
+    "formal_envelope_used": 7,
+    "formal_envelope_cap": 9,
+    "P8_formal_used": 0,
+    "historical_last_slot": "SEALED"
+  },
+  "stages": {
+    "S": "NOT_RUN",
+    "F": "NOT_RUN",
+    "C": "NOT_RUN",
+    "E_full_dispatch": "NOT_IMPLEMENTED_OR_QUALIFIED"
+  },
+  "scope": "User authorized one node, not a new solve. No automatic READY issued in this completion. Original conditional scientific slots unchanged.",
+  "source_reuse": {
+    "historical_pass_head": "3b9d5e0adb43f69a1fdf339691b26d7eec506686",
+    "current_run_head": "087ef600a4531c9e65643df787eb71e965f41b65",
+    "current_test_sha256": "c7ae026e40ac782652b17e87e7399eef541c139ff62900b20caf7ea59e34a236",
+    "changed_top_level_definitions": [
+      "test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound"
+    ],
+    "other_top_level_definitions_exact_text_equal": true,
+    "unchanged_definition_count": 41,
+    "whole_file_rerun": false,
+    "coverage": "17 historical passing nodes plus one newly measured node; not one final 18-node batch"
+  },
+  "resource": {
+    "whole_limit_seconds": 300,
+    "work_stop_seconds": 270,
+    "RSS_cap_bytes": 8589934592,
+    "sampled_tree_RSS_peak_bytes": 256032768,
+    "sampled_task_VmSwap_peak_bytes": 0,
+    "CPU": [
+      1
+    ],
+    "MPI": 1,
+    "six_thread_variables": {
+      "BLIS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "descendants_cleared": true
+  },
+  "local_read_failure": [
+    {
+      "command": "cat <run_root>/watchdog/log.txt",
+      "error": "No such file or directory",
+      "resolution": "Read existing watchdog/worker.log; no run repeated",
+      "wall": "not_measured"
+    },
+    {
+      "command": "git diff --cached --check (before commit)",
+      "exit_code": 2,
+      "error": "Original launch_context.txt argv has a trailing space",
+      "resolution": "Preserve byte-exact copied evidence; exclude only this raw file from whitespace style check, independently verify hash equal to ignored original; commit had not run",
+      "wall": "not_measured"
+    }
+  ],
+  "qualifications": {
+    "engineering": "Only fixed one-node fixture/runtime evidence, plus explicitly bound historical 17 nodes",
+    "scientific": "No new data; space/selection PARTIAL, accuracy NOT_PASSED, cost NOT_ESTABLISHED, iteration NOT_RUN/NOT_QUALIFIED",
+    "merge": "NOT_APPROVED"
+  },
+  "evidence": [
+    {
+      "path": "v16_r9_p8_sources/T_user_completion/fixture_observation.json",
+      "sha256": "f0f834312d5e6ae545431374153f21b8272897a6c0f78b1a17dfafb3f67a3edf"
+    },
+    {
+      "path": "v16_r9_p8_sources/T_user_completion/launch_context.txt",
+      "sha256": "5595312693e0afd64f08aa33744b026e7633e12cb32c6cf6c190d9934dcb488f"
+    },
+    {
+      "path": "v16_r9_p8_sources/T_user_completion/launch_manifest.json",
+      "sha256": "abcfcc2d9093db37de41b16adb766d3d0027c6a159e3be09b40f2f4f9b58ded3"
+    },
+    {
+      "path": "v16_r9_p8_sources/T_user_completion/pytest_results.xml",
+      "sha256": "776e616925fdfcba0b113216692481feabab2570a0f9d9eac387fe2a883c1f4e"
+    },
+    {
+      "path": "v16_r9_p8_sources/T_user_completion/raw_index.json",
+      "sha256": "9bcdbe51b2258d09df89e968414717b798a32c368e44f2950cc26612995da573"
+    },
+    {
+      "path": "v16_r9_p8_sources/T_user_completion/terminal_review.json",
+      "sha256": "131cd70b43ad84bfffea1d79163d4a4b0bc89cc9a56dee2b83f912252e9a9c14"
+    },
+    {
+      "path": "v16_r9_p8_sources/T_user_completion/test_byte_scope.json",
+      "sha256": "6383971fe56f94eefe9664e1e2af149370e83d35758d783c02270695af5aaa1f"
+    },
+    {
+      "path": "v16_r9_p8_sources/T_user_completion/watchdog_summary.json",
+      "sha256": "11091d5510f27e0b1fcb89c3454bc6b6f982747c70e58643eee2ab562fea2c62"
+    },
+    {
+      "path": "v16_r9_p8_sources/T_user_completion/worker_stdout.txt",
+      "sha256": "a87b7eb7df59e2f4b392fe0daee3b1327ddaf8123d5434efe0a9d811828666d8"
+    }
+  ]
+}

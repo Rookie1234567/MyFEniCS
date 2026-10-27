@@ -1,0 +1,12 @@
+{
+  "historical_pass_head": "3b9d5e0adb43f69a1fdf339691b26d7eec506686",
+  "current_run_head": "087ef600a4531c9e65643df787eb71e965f41b65",
+  "current_test_sha256": "c7ae026e40ac782652b17e87e7399eef541c139ff62900b20caf7ea59e34a236",
+  "changed_top_level_definitions": [
+    "test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound"
+  ],
+  "other_top_level_definitions_exact_text_equal": true,
+  "unchanged_definition_count": 41,
+  "whole_file_rerun": false,
+  "coverage": "17 historical passing nodes plus one newly measured node; not one final 18-node batch"
+}

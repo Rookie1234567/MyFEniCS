@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="5.572" timestamp="2026-10-27T16:31:50.360350" hostname="fenics-ws01"><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound" time="0.599" /></testsuite></testsuites>

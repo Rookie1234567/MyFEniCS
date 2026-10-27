@@ -1,0 +1,3 @@
+.
+- generated xml file: /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/resume_phase_completion_attempt1/pytest_results.xml -
+1 passed in 5.59s

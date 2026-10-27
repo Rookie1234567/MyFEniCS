@@ -1,4 +1,31 @@
-# Task43 Response V16：P8 实现完成，T 两槽用尽后停止科学链
+# Task43 Response V16：用户授权的末节点补验通过，P8 科学阶段未运行
+
+## 当前补验收口（2026-10-27）
+
+T 是工程验证：检查研究入口、身份绑定和留证流程能否正确工作。此前失败来自测试夹具对 phase 文件生命周期的错误假设，不是残差、精度或物理量不达标。用户随后明确回复“授权一次单节点补验”，范围为一个非 PDE 节点，CPU1、8 GiB、270秒工作／300秒含清理；不重跑其他17项，不启动正式求解。
+
+本次把末 fixture 改成可以独立运行：若 phase 不存在，先通过真实首次启动门，再用真实 WorkflowLedger 创建；若已存在，则核当前 worker 身份并保留原文件。后续调用真实 identity reader，固定 PID/start_ticks、tracer 和绝对路径；生产 unused-phase 默认不变。实际本次走“不存在→真实 ledger→同 worker 续接”路径，所有断言完成，phase 前后 SHA256 均为 `7c1fc04475c1f7b7bd4d942668511d8adf55fc0a426213a6e929df9511a1a602`。已存在分支本次未单独重跑。
+
+| 补验项目 | 实际证据／边界 |
+|---|---|
+| 运行 HEAD | `087ef600a4531c9e65643df787eb71e965f41b65`；base交付 `1fb881f4d6fb836d96c650329529d0d1e18c03c5` |
+| 测试字节 | SHA256 `c7ae026e40ac782652b17e87e7399eef541c139ff62900b20caf7ea59e34a236` |
+| 唯一节点 | `test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound`，**1 passed**，pytest stdout 5.59 s |
+| 费用 | whole **12.767253825906664 s**，包括测试及清理；原两次82.05409320862964 s不退款，三次合计94.8213470345363 s；本次静态／人工操作not_measured |
+| 资源 | 树RSS采样同时峰256032768 B，限8589934592 B；task VmSwap0，MPI1，六线程变量1，CPU1 |
+| trace／清理 | 6文件1918行、35次getter均[1]、0 setter、0信号；21资源行；launcher/watchdog/worker=0/0/0；全部后代清除 |
+| 当前次数 | 原review T2/2保留；用户新增单节点1/1已用。原review支持2/5与用户新增1次分列；不挪用S/C/E |
+| 科学阶段 | S/F/C均NOT_RUN；新增正式PDE0、P8槽0/1、正式包络7/9；历史末槽封存 |
+
+主控亲读全部最终 raw trace（重复栈帧仅显示去重，原件未改）、实际 fixture/runtime、XML、资源流、退出与清理。第17资源行出现worker和orted两个已知Z态空cmdline，之后后代为空，按终态退出记录分类，不解释为活进程身份缺失。运行前后源码快照和输入hash无漂移；共享JIT/global cache没有专门监控，仍为NOT_MEASURED。只读收口中误读不存在的 `watchdog/log.txt`，改读已存在的 `watchdog/worker.log`；未重复运行。
+
+其余17个历史通过节点及共同helper相对 `3b9d5e0adb43f69a1fdf339691b26d7eec506686` 逐定义文本相同，只有末fixture改变。资格表述是“17项同字节历史复用＋1项本次实测”，不是一次最终18项批次全通过。该节点验证恢复绑定 helper，**不代表完整E CLI或同worker测试后恢复链已实现／资格化**。
+
+本次按用户限定只完成单节点补验，没有写自动READY或调用S/F/C；原条件科学槽未消耗。五项能力及无merge approval不变。原两次失败与原V16结果v1完整保留，下面为补验授权前的历史交付，不能当作当前补验失败。
+
+证据：[本次机器收口](outcomes/records/v16_single_node_completion_v1.json)、[主控终态](outcomes/records/v16_r9_p8_sources/T_user_completion/terminal_review.json)、[测试字节复用核对](outcomes/records/v16_r9_p8_sources/T_user_completion/test_byte_scope.json)、[用户授权](outcomes/records/v16_r9_p8_sources/user_single_node_authorization.json)。
+
+## 原V16交付历史（两次T停止，保留原失败）
 
 本轮实际完成 P8 研究入口、固定合同和定向测试，并执行两次获授权的 T driver。恢复批次 **17 passed、1 failed**；失败仍在测试 fixture，尚未进入真实 P8 空间或求解。最终 fixture 已静态修正，但没有第三次 T 权限，不能写成通过。按正式 [V15 review §9.3](review_report_v15.md)，S/F/C 未启动，P8 正式槽未消耗。这是工程前门未完成，不是 p 加密的科学负结果。
 

@@ -1,6 +1,21 @@
 # Task43：面向三维 Maxwell 的自适应 h/p 网格
 
-## V16 当前状态：T 工程前门未合格，P8 求解未启动
+## V16 当前补验：单节点通过，未新增正式计算
+
+用户在原T两槽耗尽后授权一次单节点非PDE补验。末fixture已消除对前序测试创建phase的依赖，保留真实首次启动、ledger和同worker身份检查；生产门和数值源码未改。
+
+| 项目 | 当前结果 |
+|---|---|
+| 补验 | 1 passed；运行HEAD `087ef600a4531c9e65643df787eb71e965f41b65`；其余17项只复用同字节历史证据 |
+| 资源／费用 | whole12.767253825906664 s；树RSS采样峰256032768 B；CPU1、MPI1、六线程变量1、task swap0、退出0/0/0且清理完成 |
+| 次数 | 原T2/2及两次失败不变；用户新增单节点1/1；三次whole94.8213470345363 s |
+| 科学／资格 | S/F/C未运行；正式新增0、P8槽0/1、包络7/9、旧末槽封存；完整E CLI未资格化；无READY或合并许可 |
+
+不是数值门失败，也不是新科学结果。17项历史复用＋1项本次实测不冒称一次最终18项批次；五项能力保持。依赖组仍为research-only与compact evidence/docs；不提升production默认。此次授权只补该节点，不据此启动正式求解。旧失败、合同和原结果v1保留；以下原交付段落中的“未补验”描述均属历史。
+
+[单节点结果、字节身份与证据索引](outcomes/records/v16_single_node_completion_v1.json)。
+
+## V16 原交付历史：T 工程前门未合格，P8 求解未启动
 
 已完成固定 R9_P8 实现、合同和两次 T 调用；恢复批次17通过、1失败。最后的 same-worker 续接fixture 已静态修复但未重跑；V15 review §9.3限定的两个T槽已用尽，S/F/C未执行。新增正式PDE=0，P8专用槽0/1、正式包络7/9，旧封存槽不动。两次支持whole合计82.05409320862964 s，CPU1、task swap0且后代已清除。这是测试前门停止，不是P8科学负结果。
 
@@ -17,7 +32,7 @@ P5 whole=1,134.8697960400023 s、RSS采样峰1,621,196,800 B、swap0、退出0/0
 | 执行分支 | `task43_hp_adaptivity` |
 | 建立日期 | 2026-10-22 |
 | 源码基线 | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` |
-| 当前状态 | V16：T恢复17通过/1失败，最终fixture静态修复未重跑；S/F/C未运行。正式7/9、P8槽0/1、历史槽封存。见[Response V16](response_v16.md)。 |
+| 当前状态 | V16：原T恢复17通过/1失败保留；新增授权末节点1通过，17项历史复用；S/F/C未运行。正式7/9、P8槽0/1、历史槽封存。见[Response V16](response_v16.md)。 |
 | 第一目标 | 在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环 |
 | 第一验证波长 | 13.5 nm；小规模 direct 作数值核验 |
 | 后续方向 | 自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot |
@@ -26,7 +41,7 @@ P5 whole=1,134.8697960400023 s、RSS采样峰1,621,196,800 B、swap0、退出0/0
 
 ## 阅读入口
 
-**当前执行权威为[正式 V15 review 第9节](review_report_v15.md)：开展 R9_P8 与既有 H8 的同位置配对实验。最新交付为[Response V16](response_v16.md)，受控止于T前门。** V14 的 P2 后置字段门失败、当时仅静态修复及预算限制属于历史状态，见[Response V14](response_v14.md)；V15 已继续完成 P2 与 P5，原失败保留。新实验只使用 V15 review 明确的 T/S/F/C/E 槽，不恢复旧额度，也不授予合并许可。
+**当前执行权威为[正式 V15 review 第9节](review_report_v15.md)：开展 R9_P8 与既有 H8 的同位置配对实验。最新交付为[Response V16](response_v16.md)：原T失败保留，用户授权的末节点补验现已通过，S/F/C未启动。** V14 的 P2 后置字段门失败、当时仅静态修复及预算限制属于历史状态，见[Response V14](response_v14.md)；V15 已继续完成 P2 与 P5，原失败保留。新实验只使用 V15 review 明确的 T/S/F/C/E 槽，不恢复旧额度，也不授予合并许可。
 
 上一轮[V10正式review](review_report_v10.md)已验收有限静态整改；原执行依据为[正式V9 review第9节](review_report_v9.md)，V10当轮未新增运行。其交付见[Response V10](response_v10.md)、[静态纠正记录](outcomes/records/v10_static_evidence_correction_v1.json)及[纠正版依赖表](outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json)。原V9派生表保留原字节；三个边界的12个字段更正在新文件中。V11/V12/V13有限工程证据与受控停止见[Response V11](response_v11.md)、[Response V12](response_v12.md)和[Response V13](response_v13.md)；没有新增正式 PDE 结果或合并许可。
 
