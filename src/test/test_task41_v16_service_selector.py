@@ -144,3 +144,65 @@ def test_v16_analysis_uses_numeric_cutoff_not_closeout_allowance():
         assert values['wall_seconds'] == (20400 if mode else 1200)
         assert values['campaign_phase'] == ('numeric' if mode else 'closeout')
         assert values['campaign_phase_authorization'] == (None if mode else {'old':'closeout'})
+
+
+def test_v16_saved_contract_uses_diagnostic_strategy_and_selector_first(tmp_path):
+    """Exercise actual dispatcher and scope guard with the prepared V16 contract shape."""
+    import ast
+    root = Path(__file__).resolve().parents[2]
+    module = ast.parse((root / 'scripts/task40_v20_service_workflow.py').read_text())
+    service = next(n for n in module.body if isinstance(n, ast.FunctionDef)
+                   and n.name == '_run_task41_p0_service')
+    assignments = [n for n in service.body if isinstance(n, ast.Assign)]
+    names = ('is_v16_saved_vector_analysis', 'saved_scope')
+    scope_nodes = [n for n in assignments if any(isinstance(t, ast.Name) and t.id in names
+                                               for t in n.targets)]
+    matching = [n for n in service.body if isinstance(n, ast.If)
+                and any(isinstance(x, ast.Name) and x.id == 'is_v16_saved_vector_analysis'
+                        for x in ast.walk(n.test))]
+    guard = next(n for n in service.body if isinstance(n, ast.If)
+                 and isinstance(n.test, ast.BoolOp)
+                 and any(isinstance(x, ast.Name) and x.id == 'saved_scope'
+                         for x in ast.walk(n.test))
+                 and any(isinstance(x, ast.Name) and x.id == 'b0_v16_saved_vector_analysis_mode'
+                         for x in ast.walk(n.test)))
+    scope = {'kind':'saved_vector_diagnostics_only'}
+    window = Path('window-v16.json')
+    ns = dict(repo_root=tmp_path, case_id='B0', contract={'execution_scope':scope},
+              contract_window=tmp_path/window,
+              strategy={'schema':'task41.p0.b0.internal_rhs_strategy.v1',
+                        'internal_rhs_strategy':'same_lu_rhs_solve'},
+              TASK41_B0_V16_SAVED_VECTOR_SCOPE=scope,
+              TASK41_B0_V16_SAVED_VECTOR_WINDOW_RELATIVE=window,
+              b0_v16_saved_vector_analysis_mode=True,
+              **{name:False for name in ('b0_v9_failed_terminal_audit_mode',
+                  'b0_saved_y_g_comparison_mode','b0_v14_saved_rhs_candidate_mode',
+                  'v15_full_acceptance_selector','b0_v8_selected_trace_star_metadata_only_mode',
+                  'b0_v8_selected_trace_star_candidate_replay_mode',
+                  'b0_v11_candidate_report_replayed_read_only_mode')})
+    code = compile(ast.Module(body=[scope_nodes[0], *matching, scope_nodes[1], guard],
+                              type_ignores=[]), '<actual-v16-scope>', 'exec')
+    exec(code, ns)
+    assert ns['is_v16_saved_vector_analysis'] is True
+    ns['strategy'] = {'schema':'wrong'}
+    with pytest.raises(ValueError, match='exact fixed contract'):
+        exec(code, ns)
+    # Saved routes use selector first; the DAT is taken from the bound contract.
+    dispatcher = next(n for n in module.body if isinstance(n, ast.FunctionDef)
+                      and n.name == 'run_service')
+    captured = {}
+    def extract(args, option):
+        index = args.index(option)
+        return args[:index] + args[index+2:], Path(args[index+1])
+    def target(**kwargs):
+        captured.update(kwargs)
+        return 0
+    dispatch_ns = dict(Path=Path, ROOT=tmp_path, _extract_v29_path_arg=extract,
+                       _run_task41_p0_service=target)
+    exec(compile(ast.Module(body=[dispatcher], type_ignores=[]), '<actual-dispatch>', 'exec'), dispatch_ns)
+    selector = '--task41-p0-saved-b0-v16-vector-analysis'
+    args = [selector, '--manifest', '/saved/input.json', '--manifest-sha256', 'a'*64,
+            '--output-dir', '/saved/attempt02', '--task41-p0-execution-contract', '/contract.json']
+    assert dispatch_ns['run_service'](unit='fixture', runtime_prefix=tmp_path,
+        abi_receipt=tmp_path, jit_cache=tmp_path, case_args=args, repo_root=tmp_path) == 0
+    assert captured['case_args'][0] == selector

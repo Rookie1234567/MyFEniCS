@@ -69,3 +69,13 @@ V14 reader 现在可在收到按 attempt 绑定的 replay inputs 时调用 `_tas
 准备阶段尚无正式 V16 T0；用户授权已核实，不再请求确认。准备开始可核实的执行对话 turn 时间为 2026-10-27 06:47:25 UTC；该跨度含编辑、等待、主控审查和测试，不作为 CPU 或正式分析实测时间。正式窗口将从冻结后首项正式准入/读取开始一次登记，保留旧 V15 窗口、账本与 unknown。
 
 正式输入清单草稿 SHA256：`61dadbe8dd9ba3ec0e8fccf47a3e329548636d5a871cf13a6e43733466e0141c`。它只引用旧文件，不重署旧 source/window。实际 prepare 输出合同/命令、T0、账本和运行收据将在正式结果中记录；本准备记录不声明 A/B/C 或原 action 通过。
+
+## 首次正式入口失败与同窗修复
+
+窗口已于 `2026-10-27T09:26:25.501825940Z` 正式冻结；数值截止 `15:06:25.501825940Z`，总截止 `15:26:25.501825940Z`，window SHA256 `3d22e02f713c4a68c79759b2c5cb7cbcec693b7b3277ad98b529838008e38beb`，入口 source `5eed6872243035a6efa6aa0eb662375bd035af8d`。不得刷新。
+
+`myfenics-case-20261027T092655-3402492.service` 在 saved-route guard 前置失败，exit1、MainPID0、ControlGroup为空；未启动分析子进程。主控生成命令误把DAT放在saved selector前，而该已有服务约定selector必须居首；另发现V16诊断scope误复用V15全域策略v2守卫，而实际prepare正确产生旧诊断策略v1。修复命令顺序，并令V16只匹配其准确诊断策略及原scope/window；未放宽科学门或允许full owner。
+
+原日志：`benchmarks/artifacts/user_services/myfenics-case-20261027T092655-3402492.log`。systemd原字段：ExecMainStartTimestampMonotonic=3018212875316、Exit=3018219095710（微秒），相减得到该进程墙钟6.220394秒；CPUUsageNSec=8440974000。MemoryPeak已不可得，保留UNKNOWN；不以CPU时间冒充墙钟，也不把此短进程成本重复加到固定窗口跨度。旧失败日志保留。
+
+本次只复验受影响服务路径：原两层selector/collector/截止测试加真实dispatcher和策略守卫回归，**6 passed in 3.61s**；不重跑无关科学测试。下一attempt仍复用同一授权/T0、旧manifest和全部科学数据。

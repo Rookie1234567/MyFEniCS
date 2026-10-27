@@ -15423,7 +15423,10 @@ def _run_task41_p0_service(
         and contract.get("execution_scope") == TASK41_B0_V16_SAVED_VECTOR_SCOPE
         and contract_window.resolve()
         == (repo_root / TASK41_B0_V16_SAVED_VECTOR_WINDOW_RELATIVE).resolve()
-        and strategy == expected_strategy
+        and strategy == {
+            "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+            "internal_rhs_strategy": "same_lu_rhs_solve",
+        }
     )
     if b0_v16_saved_vector_analysis_mode != is_v16_saved_vector_analysis:
         raise ValueError(
