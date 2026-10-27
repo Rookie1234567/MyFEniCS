@@ -594,6 +594,91 @@ def test_v16_attempt01_selected_trace_row_maps_to_nonmatching_active_id_column()
         )
 
 
+def test_v16_attempt04_filters_full_v8_numeric_inventory_to_exact_incident_star():
+    cells = [23_352, 23_493]
+    full_v8_cells = [0, 1, 2, 5, 6, 7_505, *cells, 26_762, 26_897]
+    metadata_cells = {
+        str(cell): {
+            "cell_index": cell,
+            "cell_tag": 1 if cell in cells else 3,
+            "cell_permutation": 0,
+            "arrays": {"actual_geometry_coordinates": {"name": f"coords-{cell}"}},
+        }
+        for cell in full_v8_cells
+    }
+    numeric_rows = [
+        {
+            "cell_index": cell,
+            "is_target_row_incident": cell in cells,
+            "roles": [
+                {"role": role, "raw_oriented_RTS_artifacts": {"R": f"{role}-{cell}-R"}}
+                for role in ("candidate", "reference")
+            ],
+        }
+        for cell in full_v8_cells
+    ]
+    p3_rows = [
+        {
+            "cell_index": cell,
+            "roles_and_states": [
+                {
+                    "column": column,
+                    "state": state,
+                    "roles": [
+                        {
+                            "role": role,
+                            "local_values": {"u_i": f"{cell}-{column}-{state}-u"},
+                            "signed_action_artifacts": {"S_action": f"{cell}-{column}-{state}-S"},
+                        }
+                        for role in ("candidate", "reference")
+                    ],
+                }
+                for column in (0, 1)
+                for state in ("j0", "j3")
+            ],
+        }
+        for cell in cells
+    ]
+
+    numeric_by_cell, p3_by_cell = v16_checker._task41_p0_v16_v8_star_cell_inventory(
+        metadata_cells=metadata_cells,
+        numeric_rows=numeric_rows,
+        p3_rows=p3_rows,
+        cells=cells,
+    )
+    assert list(numeric_by_cell) == cells
+    assert list(p3_by_cell) == cells
+    assert all(numeric_by_cell[cell]["is_target_row_incident"] is True for cell in cells)
+    assert [len(p3_by_cell[cell]["roles_and_states"]) for cell in cells] == [4, 4]
+
+    missing_incident = [
+        {**item, "is_target_row_incident": False}
+        if item["cell_index"] == cells[1] else item
+        for item in numeric_rows
+    ]
+    with pytest.raises(ValueError, match="exact two-cell star"):
+        v16_checker._task41_p0_v16_v8_star_cell_inventory(
+            metadata_cells=metadata_cells,
+            numeric_rows=missing_incident,
+            p3_rows=p3_rows,
+            cells=cells,
+        )
+    with pytest.raises(ValueError, match="numeric cell inventory is duplicated"):
+        v16_checker._task41_p0_v16_v8_star_cell_inventory(
+            metadata_cells=metadata_cells,
+            numeric_rows=[*numeric_rows, numeric_rows[0]],
+            p3_rows=p3_rows,
+            cells=cells,
+        )
+    with pytest.raises(ValueError, match="exact two-cell star"):
+        v16_checker._task41_p0_v16_v8_star_cell_inventory(
+            metadata_cells=metadata_cells,
+            numeric_rows=numeric_rows,
+            p3_rows=list(reversed(p3_rows)),
+            cells=cells,
+        )
+
+
 def test_v16_attempt01_legacy_basename_sources_bind_only_to_pinned_v3_donor_root(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):

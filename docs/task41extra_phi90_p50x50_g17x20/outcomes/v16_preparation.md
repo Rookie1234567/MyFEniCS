@@ -126,3 +126,7 @@ service父段22.2098349459秒、监督child13.3214382641秒、systemd wall25.949
 ### attempt08：旧donor basename路径接线
 
 source `1d1a83894359942e4bcaea7845de10bd86bf8db2`，unit `myfenics-case-20261027T102656-3413245.service`。复用05 A后，B读取V14旧`base_b_t_source`时把basename拼到task结果根，实际文件位于原V3 donor `20261019T053402.514018Z`。原文件未丢失，失败不代表科学数据损坏。修复按已固定SHA的V3索引与manifest先核唯一donor根，再分别绑定两列full RHS与Balpha rows/values；volume RHS仍独立使用原native保存数据。旧路径/hash/source不改；短path/hash引用由索引补全形状字节，已有元数据不一致仍拒绝。fixture覆盖根目录同名诱饵、错误hash、目录穿越和错误绝对路径。未重算A/meta、无新积分/分解/GETRS。
+
+### attempt09：旧V8代表键与目标star覆盖区分
+
+source `694808e5e63bfb7cf0d1170508b0df8bd094d73c`，unit `myfenics-case-20261027T103912-3414939.service`，仍复用05 A。旧donor路径已闭合，随后因attempt04的two-cell覆盖guard退出。主控原样回读V8报告SHA `1bdd07ac38bce95d58a153bacdca0de6cf5941d08d2706dc127e8b00d8e2764f`：numeric和metadata库存有10个cell，只有23352/23493的`is_target_row_incident=true`，其余8个是历史代表键；P3贡献清单恰为目标两cell。读取器原来要求完整numeric清单只含两项，错误拒绝完整旧证据。应选择被原报告标记的全部incident，同时拒绝重复/缺失/乱序或映射不一致，不读取无关八键数值、不重跑其资格。原08/09失败回执及成本保留；T0与05保存数据不变。

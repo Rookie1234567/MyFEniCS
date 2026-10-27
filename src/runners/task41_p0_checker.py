@@ -2510,6 +2510,60 @@ def _task41_p0_v16_v3_volume_rhs_scalars(
     return scalars, bindings
 
 
+def _task41_p0_v16_v8_star_cell_inventory(
+    *,
+    metadata_cells: Mapping[str, Any],
+    numeric_rows: Sequence[Any],
+    p3_rows: Sequence[Any],
+    cells: Sequence[int],
+) -> tuple[dict[int, Mapping[str, Any]], dict[int, Mapping[str, Any]]]:
+    """Bind the requested P3 star while retaining the full V8 numeric inventory."""
+    metadata_cell_ids: set[int] = set()
+    for key, item in metadata_cells.items():
+        if (
+            not isinstance(key, str)
+            or not key.isdecimal()
+            or str(int(key)) != key
+            or not isinstance(item, Mapping)
+            or type(item.get("cell_index")) is not int
+            or item.get("cell_index") != int(key)
+        ):
+            raise ValueError("V16 attempt04 V8 metadata cell inventory is malformed")
+        metadata_cell_ids.add(int(key))
+
+    def unique_cell_records(records: Sequence[Any], label: str) -> dict[int, Mapping[str, Any]]:
+        by_cell: dict[int, Mapping[str, Any]] = {}
+        for item in records:
+            if not isinstance(item, Mapping) or type(item.get("cell_index")) is not int:
+                raise ValueError(f"V16 attempt04 V8 {label} cell inventory is malformed")
+            cell = int(item["cell_index"])
+            if cell in by_cell:
+                raise ValueError(f"V16 attempt04 V8 {label} cell inventory is duplicated")
+            by_cell[cell] = item
+        return by_cell
+
+    numeric_by_cell = unique_cell_records(numeric_rows, "numeric")
+    p3_by_cell = unique_cell_records(p3_rows, "P3")
+    target_cells = set(cells)
+    incident_numeric_order = [
+        int(item["cell_index"])
+        for item in numeric_rows
+        if isinstance(item, Mapping) and item.get("is_target_row_incident") is True
+    ]
+    if (
+        not target_cells
+        or len(target_cells) != len(cells)
+        or not target_cells.issubset(metadata_cell_ids)
+        or set(numeric_by_cell) != metadata_cell_ids
+        or any(type(item.get("is_target_row_incident")) is not bool for item in numeric_rows)
+        or incident_numeric_order != list(cells)
+        or set(p3_by_cell) != target_cells
+        or list(p3_by_cell) != list(cells)
+    ):
+        raise ValueError("V16 attempt04 V8 report does not cover the exact two-cell star")
+    return {cell: numeric_by_cell[cell] for cell in cells}, p3_by_cell
+
+
 def _task41_p0_v16_attempt04_replay_inputs(
     *,
     candidate: Mapping[str, Any],
@@ -2593,25 +2647,12 @@ def _task41_p0_v16_attempt04_replay_inputs(
         if name in inventory:
             raise ValueError(f"V16 attempt04 V8 persisted-array name is duplicated: {name}")
         inventory[name] = item
-    numeric_by_cell = {
-        int(item["cell_index"]): item
-        for item in numeric_rows
-        if isinstance(item, Mapping) and type(item.get("cell_index")) is int
-    }
-    p3_by_cell = {
-        int(item["cell_index"]): item
-        for item in p3_rows
-        if isinstance(item, Mapping) and type(item.get("cell_index")) is int
-    }
-    if (
-        set(numeric_by_cell) != set(cells)
-        or len(numeric_by_cell) != len(numeric_rows)
-        or set(p3_by_cell) != set(cells)
-        or len(p3_by_cell) != len(p3_rows)
-        or list(p3_by_cell) != cells
-        or set(str(cell) for cell in cells) - set(metadata_cells)
-    ):
-        raise ValueError("V16 attempt04 V8 report does not cover the exact two-cell star")
+    numeric_by_cell, p3_by_cell = _task41_p0_v16_v8_star_cell_inventory(
+        metadata_cells=metadata_cells,
+        numeric_rows=numeric_rows,
+        p3_rows=p3_rows,
+        cells=cells,
+    )
 
     array_cache: dict[str, tuple[dict[str, Any], np.ndarray]] = {}
 
