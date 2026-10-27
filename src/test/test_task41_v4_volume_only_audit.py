@@ -1451,6 +1451,13 @@ def _task41_v9_compact_terminal_fixture(
 
     def persist_array(name, values):
         array = np.asarray(values)
+        if terminal_layout == "v15_terminal_sufficient":
+            from src.solvers.task40_v25_complete_volume import _atomic_save_array
+            saved = _atomic_save_array(evidence_directory, f"{name}.npy", array)
+            return {"path": str(evidence_directory / saved["path"]),
+                    "bytes": saved["bytes"], "sha256": saved["file_sha256"],
+                    "array_sha256": saved["array_sha256"],
+                    "shape": saved["shape"], "dtype": saved["dtype"]}
         path = evidence_directory / f"{name}.npy"
         np.save(path, array, allow_pickle=False)
         return {
@@ -1483,9 +1490,8 @@ def _task41_v9_compact_terminal_fixture(
         )
         baseline_array_path = baseline_root / "frozen_same_s_action.npy"
         np.save(baseline_array_path, baseline_array, allow_pickle=False)
-        baseline_array_sha = hashlib.sha256(
-            np.ascontiguousarray(baseline_array).tobytes()
-        ).hexdigest()
+        from src.solvers.task40_v25_complete_volume import _array_sha256
+        baseline_array_sha = _array_sha256(baseline_array)
         baseline_array_ref = {
             "path": str(baseline_array_path.resolve()),
             "bytes": baseline_array_path.stat().st_size,
@@ -2502,6 +2508,29 @@ def test_v15_prepared_contract_compact_terminal_run_chain(tmp_path, monkeypatch,
     )
     assert result["audit_completed"] is True, result
     assert result["acceptance_qualified"] is action_ok, result
+    # Re-audit writes a new consumer-source file and preserves the original report.
+    import subprocess
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    write_json(output_path, result)
+    original_bytes = output_path.read_bytes()
+    consumer_sha = "e" * 40
+    recheck_path = output_path.with_name(f"task41_p0_checker_result_recheck_{consumer_sha}.json")
+    with monkeypatch.context() as mp:
+        mp.setattr(subprocess, "check_output", lambda argv, **kw:
+                   consumer_sha if argv[1] == "rev-parse" else "")
+        mp.setattr(subprocess, "run", lambda *a, **kw: SimpleNamespace(returncode=0))
+        replay = checker.check_task41_p0_b0_v15_terminal_run(
+            run_root=run, summary_path=summary_path, manifest_path=manifest_path,
+            contract_path=contract_path, contract_sha256=digest,
+            output_path=recheck_path, repo_root=tmp_path)
+        assert replay["audit_completed"] is True
+        assert replay["read_only_recheck"]["consumer_source_sha"] == consumer_sha
+        assert output_path.read_bytes() == original_bytes
+        with pytest.raises(ValueError, match="registered descendant"):
+            checker.check_task41_p0_b0_v15_terminal_run(
+                run_root=run, summary_path=summary_path, manifest_path=manifest_path,
+                contract_path=contract_path, contract_sha256=digest,
+                output_path=recheck_path.with_name("unregistered.json"), repo_root=tmp_path)
     checker_authority = dict(runtime_authority, classification="COMPLETED", leader_exit_code=0)
     decision = _task41_v15_terminal_decision(checker_authority, result)
     assert decision["acceptance_qualified"] is action_ok
@@ -2517,3 +2546,21 @@ def test_v15_prepared_contract_compact_terminal_run_chain(tmp_path, monkeypatch,
     )
     assert bad["acceptance_qualified"] is False
     assert bad["audit_completed"] is True
+
+
+def test_v15_terminal_rejects_corrupt_saved_artifact_payload(tmp_path, monkeypatch):
+    checker, report, donor, checkpoint, run = _task41_v9_compact_terminal_fixture(
+        tmp_path, monkeypatch, action_passes=False,
+        terminal_layout="v15_terminal_sufficient")
+    artifact = report["candidate_full_action_gate"]["column_artifacts"][0]["full_action_artifact"]
+    path = Path(artifact["path"])
+    values = np.load(path, allow_pickle=False).copy()
+    values[0] += 1.0j
+    np.save(path, values, allow_pickle=False)
+    result = checker.check_task41_p0_b0_v15_terminal_sufficient_audit(
+        report, donor, output_directory=run, checkpoint=checkpoint,
+        expected_candidate_identity="task41extra_actual_qmetric_blocked_gram_ffcx_profile_v1",
+        expected_cache_identity="fixture-cache-identity")
+    assert result["audit_completed"] is False
+    assert result["data_integrity"] is False
+    assert result["errors"]

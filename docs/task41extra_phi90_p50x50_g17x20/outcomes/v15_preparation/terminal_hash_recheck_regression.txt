@@ -1,0 +1,5 @@
+2026-10-27: qualified WSL complex128/int32, local targeted regression.
+Command: python -m pytest -q src/test/test_task41_p0_contract.py src/test/test_task41_v4_volume_only_audit.py -k 'prepared_contract_authorizes_actual_terminal_watchdog or outer_worker_propagates or v15_terminal_sufficient_producer or v15_prepared_contract_compact_terminal_run_chain or v15_terminal_rejects_corrupt'
+Final result: 10 passed, 95 deselected in 1.48s.
+Real _atomic_save_array is used for V15 artifact fixtures. Artifact digest includes shape/dtype; raw recovery-state digest retains its old definition. Tampered payload rejected. Registered read-only recheck keeps original checker report and requires clean consumer source/ancestry and existing same window/contract watchdog.
+Earlier test-only failure: adding local SimpleNamespace import shadowed module import; 2 failed/2 passed. Removed redundant local import; final rerun above passed. No scientific computation repeated.

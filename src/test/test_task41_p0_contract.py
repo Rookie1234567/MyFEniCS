@@ -2473,6 +2473,22 @@ def test_task41_v15_prepared_contract_authorizes_actual_terminal_watchdog_withou
     assert watchdog._validate_campaign_closeout_authorization(
         command=command, campaign=window, authorization=auth, worker_environment=environment) == auth
     assert not (run_root / "numerical_output").exists()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text('{"historical":"failed"}\n')
+    recheck = output.with_name(f"task41_p0_checker_result_recheck_{auth['source_sha']}.json")
+    recheck_command = command[:-1] + [str(recheck)]
+    recheck_auth = dict(auth, command_sha256=hashlib.sha256(
+        json.dumps(recheck_command, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest())
+    recheck_env = dict(environment, TASK41_P0_SAVED_OUTPUT_CONTINUATION="1",
+                       TASK41_P0_CONSUMER_SOURCE_SHA=auth["source_sha"])
+    assert watchdog._validate_campaign_closeout_authorization(
+        command=recheck_command, campaign=window, authorization=recheck_auth,
+        worker_environment=recheck_env) == recheck_auth
+    assert output.read_text() == '{"historical":"failed"}\n'
+    with pytest.raises(ValueError, match="recheck"):
+        watchdog._validate_campaign_closeout_authorization(
+            command=recheck_command, campaign=window, authorization=recheck_auth,
+            worker_environment=environment)
     wrong = dict(environment, TASK41_P0_V15_FULL_ACCEPTANCE="0")
     with pytest.raises(ValueError, match="exact full-acceptance"):
         watchdog._validate_campaign_closeout_authorization(

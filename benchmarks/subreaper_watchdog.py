@@ -301,12 +301,27 @@ def _validate_campaign_closeout_authorization(
             service_root = Path(str(contract['evidence']['service_directory']))
             if not service_root.is_absolute():
                 service_root = root / service_root
+            registered_output = (service_root / 'task41_p0_checker_result.json').resolve()
+            requested_output = Path(argv[15]).resolve()
+            if requested_output != registered_output:
+                recheck_output = registered_output.with_name(
+                    f"task41_p0_checker_result_recheck_{authorization['source_sha']}.json"
+                )
+                if (
+                    not continuation
+                    or environment.get('TASK41_P0_CONSUMER_SOURCE_SHA') != authorization['source_sha']
+                    or requested_output != recheck_output
+                    or requested_output.exists()
+                    or not registered_output.is_file()
+                ):
+                    raise ValueError('V15 read-only recheck path/source is not registered')
+                registered_output = recheck_output
             if (
                 not run_root.is_relative_to(results_root)
                 or summary_path != run_root / 'task40_v10_p6_candidate_summary.json'
                 or manifest_path != run_root / 'run_manifest.json'
                 or Path(argv[11]).resolve() != Path(str(contract_path)).resolve()
-                or Path(argv[15]).resolve() != (service_root / 'task41_p0_checker_result.json').resolve()
+                or Path(argv[15]).resolve() != registered_output
             ):
                 raise ValueError('V15 terminal audit paths differ from this run or service')
             input_paths = [str(summary_path), str(manifest_path)]

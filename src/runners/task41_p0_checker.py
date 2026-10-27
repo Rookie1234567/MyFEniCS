@@ -5555,11 +5555,15 @@ def check_task41_p0_b0_v15_terminal_sufficient_audit(
         if not condition:
             raise ValueError(message)
 
-    def sha256_array(values: np.ndarray) -> str:
+    def sha256_array(values: np.ndarray, *, artifact: bool = False) -> str:
         array = np.asarray(values)
         if array.ndim not in (1, 2):
             raise ValueError("V15 terminal arrays must be one- or two-dimensional")
         digest = hashlib.sha256()
+        if artifact:
+            # _atomic_save_array binds shape/dtype before payload bytes.
+            # Recovery state hashes below deliberately retain raw-byte semantics.
+            digest.update(repr((array.shape, str(array.dtype))).encode("ascii"))
         for start in range(0, array.shape[0], 262_144):
             block = np.ascontiguousarray(array[start : start + 262_144])
             digest.update(memoryview(block).cast("B"))
@@ -5850,7 +5854,7 @@ def check_task41_p0_b0_v15_terminal_sufficient_audit(
                 and values.flags.c_contiguous
                 and finite_array(values)
                 and valid_digest(binding.get("array_sha256"), 64)
-                and sha256_array(values) == binding.get("array_sha256"),
+                and sha256_array(values, artifact=True) == binding.get("array_sha256"),
                 f"{label}_array_binding",
                 f"V15 {label} array hash, shape, dtype, or finite-value check failed",
             )
@@ -5959,7 +5963,7 @@ def check_task41_p0_b0_v15_terminal_sufficient_audit(
             same_s_reference = np.load(
                 baseline_array_path, mmap_mode="r", allow_pickle=False
             )
-            same_s_array_sha256 = sha256_array(same_s_reference)
+            same_s_array_sha256 = sha256_array(same_s_reference, artifact=True)
             require(
                 same_s_reference.shape == (candidate_rows, 2)
                 and same_s_reference.dtype == np.dtype(np.complex128)
@@ -6605,6 +6609,35 @@ def check_task41_p0_b0_v15_terminal_run(
         root / str(contract["evidence"]["service_directory"])
     ).resolve()
     expected_output = service_directory / "task41_p0_checker_result.json"
+    recheck_binding = None
+    if output != expected_output:
+        # A read-only checker repair gets a new source-bound file; never overwrite
+        # the original service's negative receipt or re-sign its producer source.
+        import subprocess
+        consumer_sha = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=root, text=True
+        ).strip()
+        registered_recheck = service_directory / f"task41_p0_checker_result_recheck_{consumer_sha}.json"
+        if (
+            output != registered_recheck or output.exists()
+            or not expected_output.is_file()
+            or subprocess.check_output(
+                ["git", "status", "--porcelain", "--untracked-files=normal"],
+                cwd=root, text=True,
+            ).strip()
+            or subprocess.run(
+                ["git", "merge-base", "--is-ancestor", source_sha, consumer_sha],
+                cwd=root, check=False,
+            ).returncode != 0
+        ):
+            raise ValueError("V15 read-only recheck output/source is not a clean registered descendant")
+        recheck_binding = {
+            "consumer_source_sha": consumer_sha,
+            "original_checker_path": str(expected_output),
+            "original_checker_sha256": sha256_file(expected_output),
+            "producer_source_reassigned": False,
+        }
+        expected_output = registered_recheck
     if (
         not run.is_relative_to(results_root)
         or summary_file != run / "task40_v10_p6_candidate_summary.json"
@@ -6764,6 +6797,8 @@ def check_task41_p0_b0_v15_terminal_run(
         and isinstance(cleanup_errors, list) and not cleanup_errors
     )
     result["producer_cleanup_errors"] = cleanup_errors
+    if recheck_binding is not None:
+        result["read_only_recheck"] = recheck_binding
     authority = launcher.get("resource_authority", {})
     result["producer_runtime_passed"] = bool(
         isinstance(authority, Mapping)
