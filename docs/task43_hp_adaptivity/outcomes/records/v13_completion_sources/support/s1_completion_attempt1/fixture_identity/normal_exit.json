@@ -1,0 +1,15 @@
+{
+  "child_parent_pid": 3052983,
+  "child_pid": 3053500,
+  "child_reaped": true,
+  "child_start_ticks": 298437368,
+  "child_tracer_pid": 3052994,
+  "direct_watchdog_worker": false,
+  "expected_exit_code": 0,
+  "label": "normal_exit",
+  "observed_exit_code": 0,
+  "schema": "task43.v11.p1.traced_child_cleanup.v1",
+  "watchdog_parent_pid": 3052972,
+  "worker_pid": 3052983,
+  "worker_tracer_pid": 3052994
+}

@@ -1,0 +1,9 @@
+activation=1
+python=/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python
+node_cap=8589934592
+work_stop_seconds=270
+whole_limit_seconds=300
+worker-only HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1
+CPU1 MPI1 numerical threads=1
+cache not supplied; cache audit NOT_MEASURED
+argv=python -u -m pytest -q -s --tb=short --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/pytest_results.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/fixtures --maxfail=1 src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity src/test/test_task43_v11_scientific_restart.py::test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8\[None\] src/test/test_task43_v11_scientific_restart.py::test_v12_p2_joined_source_binding_rejects_root_terminal_failure src/test/test_task43_v11_scientific_restart.py::test_v12_observer_delegates_cache_and_restores_alias_after_errors src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs src/test/test_task43_v11_scientific_restart.py::test_v13_saved_a2_partial_checkpoint 

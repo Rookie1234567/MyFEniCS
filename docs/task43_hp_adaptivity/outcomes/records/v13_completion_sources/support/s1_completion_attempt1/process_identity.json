@@ -1,0 +1,147 @@
+{
+  "identities": [
+    {
+      "pid": 3052972,
+      "start_ticks": 298435873,
+      "unique_observations": [
+        {
+          "affinity": [
+            1
+          ],
+          "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/watchdog --wall-seconds 270 --interval 0.25 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/watchdog/workflow_phase.json -- bash -c \n   set -euo pipefail\n   cd /home/fenics/Projects/NN-Lab-V2\n   export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1\n   source scripts/activate_task40_phi90_pord64.sh\n   export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1\n   export BLIS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1\n   exec taskset -c 1 strace -D -ff -ttt -k \\\n     -e trace=sched_setaffinity,sched_getaffinity \\\n     -o \"$TASK43_V11_TRACE_PREFIX\" \"$@\"\n  task43-v11-worker python -u -m pytest -q -s --tb=short --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/pytest_results.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/fixtures --maxfail=1 src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity src/test/test_task43_v11_scientific_restart.py::test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None] src/test/test_task43_v11_scientific_restart.py::test_v12_p2_joined_source_binding_rejects_root_terminal_failure src/test/test_task43_v11_scientific_restart.py::test_v12_observer_delegates_cache_and_restores_alias_after_errors src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs src/test/test_task43_v11_scientific_restart.py::test_v13_saved_a2_partial_checkpoint",
+          "comm": "python",
+          "ppid": 3052737,
+          "state": "R"
+        }
+      ]
+    },
+    {
+      "pid": 3052983,
+      "start_ticks": 298435937,
+      "unique_observations": [
+        {
+          "affinity": [
+            1
+          ],
+          "cmdline": "python -u -m pytest -q -s --tb=short --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/pytest_results.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/fixtures --maxfail=1 src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity src/test/test_task43_v11_scientific_restart.py::test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None] src/test/test_task43_v11_scientific_restart.py::test_v12_p2_joined_source_binding_rejects_root_terminal_failure src/test/test_task43_v11_scientific_restart.py::test_v12_observer_delegates_cache_and_restores_alias_after_errors src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs src/test/test_task43_v11_scientific_restart.py::test_v13_saved_a2_partial_checkpoint",
+          "comm": "python",
+          "ppid": 3052972,
+          "state": "R"
+        },
+        {
+          "affinity": [
+            1
+          ],
+          "cmdline": "python -u -m pytest -q -s --tb=short --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/pytest_results.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/fixtures --maxfail=1 src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity src/test/test_task43_v11_scientific_restart.py::test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None] src/test/test_task43_v11_scientific_restart.py::test_v12_p2_joined_source_binding_rejects_root_terminal_failure src/test/test_task43_v11_scientific_restart.py::test_v12_observer_delegates_cache_and_restores_alias_after_errors src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs src/test/test_task43_v11_scientific_restart.py::test_v13_saved_a2_partial_checkpoint",
+          "comm": "python",
+          "ppid": 3052972,
+          "state": "S"
+        },
+        {
+          "affinity": [
+            1
+          ],
+          "cmdline": "python -u -m pytest -q -s --tb=short --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/pytest_results.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/fixtures --maxfail=1 src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity src/test/test_task43_v11_scientific_restart.py::test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None] src/test/test_task43_v11_scientific_restart.py::test_v12_p2_joined_source_binding_rejects_root_terminal_failure src/test/test_task43_v11_scientific_restart.py::test_v12_observer_delegates_cache_and_restores_alias_after_errors src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs src/test/test_task43_v11_scientific_restart.py::test_v13_saved_a2_partial_checkpoint",
+          "comm": "python",
+          "ppid": 3052972,
+          "state": "t"
+        }
+      ]
+    },
+    {
+      "pid": 3052994,
+      "start_ticks": 298435957,
+      "unique_observations": [
+        {
+          "affinity": [
+            1
+          ],
+          "cmdline": "strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/strace/sched python -u -m pytest -q -s --tb=short --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/pytest_results.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/fixtures --maxfail=1 src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity src/test/test_task43_v11_scientific_restart.py::test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None] src/test/test_task43_v11_scientific_restart.py::test_v12_p2_joined_source_binding_rejects_root_terminal_failure src/test/test_task43_v11_scientific_restart.py::test_v12_observer_delegates_cache_and_restores_alias_after_errors src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs src/test/test_task43_v11_scientific_restart.py::test_v13_saved_a2_partial_checkpoint",
+          "comm": "strace",
+          "ppid": 3052972,
+          "state": "R"
+        },
+        {
+          "affinity": [
+            1
+          ],
+          "cmdline": "strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/strace/sched python -u -m pytest -q -s --tb=short --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/pytest_results.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1/fixtures --maxfail=1 src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity src/test/test_task43_v11_scientific_restart.py::test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None] src/test/test_task43_v11_scientific_restart.py::test_v12_p2_joined_source_binding_rejects_root_terminal_failure src/test/test_task43_v11_scientific_restart.py::test_v12_observer_delegates_cache_and_restores_alias_after_errors src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs src/test/test_task43_v11_scientific_restart.py::test_v13_saved_a2_partial_checkpoint",
+          "comm": "strace",
+          "ppid": 3052972,
+          "state": "S"
+        }
+      ]
+    },
+    {
+      "pid": 3053157,
+      "start_ticks": 298436433,
+      "unique_observations": [
+        {
+          "affinity": [
+            1
+          ],
+          "cmdline": "orted --hnp --set-sid --report-uri 10 --singleton-died-pipe 11 -mca state_novm_select 1 -mca ess hnp -mca pmix ^s1,s2,cray,isolated",
+          "comm": "orted",
+          "ppid": 3052983,
+          "state": "R"
+        },
+        {
+          "affinity": [
+            1
+          ],
+          "cmdline": "orted --hnp --set-sid --report-uri 10 --singleton-died-pipe 11 -mca state_novm_select 1 -mca ess hnp -mca pmix ^s1,s2,cray,isolated",
+          "comm": "orted",
+          "ppid": 3052983,
+          "state": "S"
+        }
+      ]
+    },
+    {
+      "pid": 3053500,
+      "start_ticks": 298437368,
+      "unique_observations": [
+        {
+          "affinity": [
+            1
+          ],
+          "cmdline": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python -c import time; time.sleep(0.15); raise SystemExit(0)",
+          "comm": "python",
+          "ppid": 3052983,
+          "state": "S"
+        }
+      ]
+    }
+  ],
+  "post_exit_host_proc_checks": [
+    {
+      "pid": 3052972,
+      "start_ticks": 298435873,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3052983,
+      "start_ticks": 298435937,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3052994,
+      "start_ticks": 298435957,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3053157,
+      "start_ticks": 298436433,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3053500,
+      "start_ticks": 298437368,
+      "same_process_still_present": false,
+      "proc_stat": null
+    }
+  ]
+}

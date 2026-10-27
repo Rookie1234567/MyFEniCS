@@ -1,0 +1,1180 @@
+{
+  "raw_index": [
+    {
+      "file": "sched.3052983",
+      "sha256": "51b39760da3db07fc679c2999ebfea43726721a9130886e94378aa47af2f5b50",
+      "bytes": 189469,
+      "lines": 2933,
+      "tail": "1793059389.631251 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053157",
+      "sha256": "222374291d4182d68f4516524cbc84b34d63ca56b3fb19bc5b1b3255f3d53f6a",
+      "bytes": 3717,
+      "lines": 47,
+      "tail": "1793059389.674227 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053177",
+      "sha256": "9c14fcdb8a49a4a28eb19cbe183bd336118fdc40bb80f841efbf12e25f099ad6",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793059389.616196 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053193",
+      "sha256": "121900f67043a5c778ecdd83619b813e7bfb536b70764d2b87f2f7d5a42b5ed3",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793059389.642536 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053195",
+      "sha256": "030b5e39efacfcac9a911953a61df15a68784f2a499c4cf546bf7bbdf903b2b2",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793059389.332732 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053197",
+      "sha256": "32769c34d58f3121f6697d9e445052e9de305ac59f1cf86d79b7eb4a6559dd74",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793059389.285028 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053307",
+      "sha256": "e279c234651797b2688293fccc24133bb2b025a981c8cd578d9dd75568d2e31d",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793059373.998113 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053328",
+      "sha256": "688217c17406405a8ba2d821e2b2c3334f87b7774f5de8f5d11c6fa1678fe9dd",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793059374.223286 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053500",
+      "sha256": "db9dd13fed49ba067011b0fd4df0849c929f2b2dafee0206e445cf163aca6156",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793059379.183267 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053515",
+      "sha256": "2fe30b8ae769e4b6abec637bccbd1080d02c874f661e0ccfe24766da158d132f",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793059379.525286 +++ exited with 7 +++"
+    }
+  ],
+  "all_nonstack_lines": [
+    {
+      "file": "sched.3052983",
+      "line": 1,
+      "raw": "1793059368.696130 sched_getaffinity(0, 128, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 125,
+      "raw": "1793059370.607927 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 225,
+      "raw": "1793059371.130302 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 320,
+      "raw": "1793059371.162340 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 415,
+      "raw": "1793059371.182828 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 510,
+      "raw": "1793059371.207155 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 605,
+      "raw": "1793059371.248697 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 698,
+      "raw": "1793059371.295224 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 791,
+      "raw": "1793059371.338293 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 884,
+      "raw": "1793059371.381578 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 977,
+      "raw": "1793059371.423222 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1070,
+      "raw": "1793059371.469107 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1163,
+      "raw": "1793059373.748171 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1200,
+      "raw": "1793059373.784745 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1235,
+      "raw": "1793059373.807226 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1270,
+      "raw": "1793059373.835290 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1307,
+      "raw": "1793059373.858928 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1342,
+      "raw": "1793059373.873811 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1377,
+      "raw": "1793059373.891853 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1412,
+      "raw": "1793059373.927832 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1447,
+      "raw": "1793059373.946684 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1482,
+      "raw": "1793059373.962523 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1517,
+      "raw": "1793059373.998321 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3053307, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1560,
+      "raw": "1793059374.016682 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1595,
+      "raw": "1793059374.026818 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1630,
+      "raw": "1793059374.034493 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1665,
+      "raw": "1793059374.047235 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1700,
+      "raw": "1793059374.056017 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1735,
+      "raw": "1793059374.063809 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1770,
+      "raw": "1793059374.089401 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1805,
+      "raw": "1793059374.097870 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1840,
+      "raw": "1793059374.105571 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1875,
+      "raw": "1793059374.119347 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1910,
+      "raw": "1793059374.129956 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1945,
+      "raw": "1793059374.138432 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1980,
+      "raw": "1793059374.151387 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2015,
+      "raw": "1793059374.166310 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2050,
+      "raw": "1793059374.174756 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2085,
+      "raw": "1793059374.182010 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2120,
+      "raw": "1793059374.223426 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3053328, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2155,
+      "raw": "1793059374.265911 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2190,
+      "raw": "1793059374.290395 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2225,
+      "raw": "1793059374.309179 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2260,
+      "raw": "1793059374.336575 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2295,
+      "raw": "1793059374.355239 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2330,
+      "raw": "1793059374.373566 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2365,
+      "raw": "1793059374.628428 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2400,
+      "raw": "1793059374.647865 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2435,
+      "raw": "1793059374.661667 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2470,
+      "raw": "1793059374.671200 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2505,
+      "raw": "1793059374.718676 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2540,
+      "raw": "1793059374.740357 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2575,
+      "raw": "1793059374.754660 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2610,
+      "raw": "1793059374.763766 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2645,
+      "raw": "1793059377.279221 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2680,
+      "raw": "1793059377.374259 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2715,
+      "raw": "1793059377.411269 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2750,
+      "raw": "1793059377.502074 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2785,
+      "raw": "1793059377.552832 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2820,
+      "raw": "1793059377.577535 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2855,
+      "raw": "1793059379.184225 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3053500, si_uid=1000, si_status=0, si_utime=7 /* 0.07 s */, si_stime=3 /* 0.03 s */} ---"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2896,
+      "raw": "1793059379.525913 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3053515, si_uid=1000, si_status=7, si_utime=5 /* 0.05 s */, si_stime=3 /* 0.03 s */} ---"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2933,
+      "raw": "1793059389.631251 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053157",
+      "line": 1,
+      "raw": "1793059369.840544 sched_getaffinity(3053157, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3053157",
+      "line": 19,
+      "raw": "1793059370.040632 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3053157",
+      "line": 33,
+      "raw": "1793059370.048594 sched_getaffinity(3053157, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3053157",
+      "line": 47,
+      "raw": "1793059389.674227 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053177",
+      "line": 1,
+      "raw": "1793059389.616196 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053193",
+      "line": 1,
+      "raw": "1793059389.642536 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053195",
+      "line": 1,
+      "raw": "1793059389.332732 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053197",
+      "line": 1,
+      "raw": "1793059389.285028 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053307",
+      "line": 1,
+      "raw": "1793059373.998113 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053328",
+      "line": 1,
+      "raw": "1793059374.223286 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053500",
+      "line": 1,
+      "raw": "1793059379.183267 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3053515",
+      "line": 1,
+      "raw": "1793059379.525286 +++ exited with 7 +++"
+    }
+  ],
+  "unique_stack_frames": [
+    {
+      "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6(PetscInitialize+0xd2) [0x150454]",
+      "occurrences": 11
+    },
+    {
+      "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so(__pyx_pw_8petsc4py_5PETSc_5_initialize+0x4ad) [0x34065d]",
+      "occurrences": 11
+    },
+    {
+      "raw": " > /usr/bin/orted() [0x11c5]",
+      "occurrences": 3
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]",
+      "occurrences": 137
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyCMethod_New+0x572) [0x182082]",
+      "occurrences": 3
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyCMethod_New+0x65f) [0x18216f]",
+      "occurrences": 11
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyCMethod_New+0x6f7) [0x182207]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyDescr_IsData+0xad1) [0x151591]",
+      "occurrences": 3
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]",
+      "occurrences": 112
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyException_SetCause+0xeb6) [0x1552a6]",
+      "occurrences": 12
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyImport_GetImporter+0x232) [0x2a8fc2]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x395) [0x1fdab5]",
+      "occurrences": 40
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x5eb) [0x1fdd0b]",
+      "occurrences": 24
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyInit__io+0x399d) [0x2ef2dd]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyInit_select+0xb05) [0x2d4935]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyList_GetItem+0xbd6) [0x161296]",
+      "occurrences": 12
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyOS_AfterFork_Child+0x1eb2) [0xf1d0d]",
+      "occurrences": 46
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyObject_Call+0x6c) [0x14b12c]",
+      "occurrences": 50
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyObject_CallFunctionObjArgs+0x327) [0x149d87]",
+      "occurrences": 64
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyObject_CallMethodObjArgs+0xe3) [0x14b603]",
+      "occurrences": 64
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyObject_CallOneArg+0x4d) [0x14a69d]",
+      "occurrences": 12
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyObject_GetAttr+0x4d) [0x184a2d]",
+      "occurrences": 12
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyObject_Vectorcall+0x35) [0x1499b5]",
+      "occurrences": 90
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyObject_VectorcallMethod+0x7f) [0x14986f]",
+      "occurrences": 4
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyState_FindModule+0x25a) [0x2a983a]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyType_GetModule+0x5a8) [0x1a3778]",
+      "occurrences": 298
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyWrapper_New+0x3ae) [0x151fae]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/bin/python3.12(Py_BytesMain+0x2d) [0x2bc7bd]",
+      "occurrences": 62
+    },
+    {
+      "raw": " > /usr/bin/python3.12(Py_RunMain+0x232) [0x2bcb52]",
+      "occurrences": 62
+    },
+    {
+      "raw": " > /usr/bin/python3.12(Py_RunMain+0x602) [0x2bcf22]",
+      "occurrences": 62
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyErr_CheckSignalsTstate+0x17dba) [0x24dcaa]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyErr_CheckSignalsTstate+0x3b2e) [0x239a1e]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyErr_CheckSignalsTstate+0x5991) [0x23b881]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x14fd) [0x1d7b2d]",
+      "occurrences": 44
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x1e47) [0x1d8477]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x3596) [0x1d9bc6]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]",
+      "occurrences": 114
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x5e6e) [0x1dc49e]",
+      "occurrences": 39
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xadf) [0x1d710f]",
+      "occurrences": 349
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xee4) [0x1d7514]",
+      "occurrences": 12
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyList_Extend+0x204) [0x15fc04]",
+      "occurrences": 12
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyObject_Call_Prepend+0x18a) [0x14a8ca]",
+      "occurrences": 298
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyObject_GenericGetAttrWithDict+0xa8) [0x185008]",
+      "occurrences": 12
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyObject_MakeTpCall+0x13e) [0x14907e]",
+      "occurrences": 248
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyObject_MakeTpCall+0x75) [0x148fb5]",
+      "occurrences": 11
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]",
+      "occurrences": 112
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyWeakref_ClearRef+0xa2a4) [0x1d3724]",
+      "occurrences": 25
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_Py_GetLocaleconvNumeric+0x6bc) [0x2bc73c]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_start+0x25) [0x257a05]",
+      "occurrences": 62
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/hwloc/hwloc_opencl.so() [0x1468]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x142f) [0x571f]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x1534) [0x5824]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x132) [0x15b2]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x1e9) [0x1669]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x9c) [0x151c]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_find_dso_for_object+0x184) [0xd164]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_rtld_di_serinfo+0x2cac) [0xcd7c]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libOpenCL.so.1.0.0(clGetPlatformIDs+0xb0) [0xbce0]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libOpenCL.so.1.0.0(clSetContextDestructorCallback+0x98b) [0xabfb]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(__close+0x3c) [0x1169ec]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_init_first+0x8a) [0x2a1ca]",
+      "occurrences": 65
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x2a28b]",
+      "occurrences": 65
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(clock_nanosleep+0xbf) [0xecbdf]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(dlerror+0x2c3) [0x97d63]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(dlmopen+0x104) [0x98284]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(dlopen+0x6f) [0x9833f]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(poll+0x4d) [0x11b79d]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(pthread_getaffinity_np+0x20) [0x9de30]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(sched_getaffinity+0x1a) [0x10e73a]",
+      "occurrences": 59
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc__xml_export_topology+0x3206) [0x32bd6]",
+      "occurrences": 12
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0x19d) [0x3675d]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0x21e) [0x367de]",
+      "occurrences": 10
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0x90b) [0x36ecb]",
+      "occurrences": 12
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0xaae) [0x3706e]",
+      "occurrences": 12
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_last_cpu_location+0xda46) [0x44c46]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_topology_load+0x1019) [0x106f9]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(PMPI_Init_thread+0x5c) [0x82eec]",
+      "occurrences": 11
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(ompi_mpi_init+0x24c) [0xebeec]",
+      "occurrences": 11
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetExportTable+0x13c497) [0x2c3ee7]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetExportTable+0x154f12) [0x2dc962]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetExportTable+0x1a0574) [0x327fc4]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetPlatformInfo+0xbb) [0x17344b]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_hwloc_base_get_local_cpuset+0x34) [0x74d54]",
+      "occurrences": 6
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_hwloc_base_get_topology+0x12a6) [0x7b976]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_hwloc_base_get_topology+0xcc9) [0x7b399]",
+      "occurrences": 6
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_daemon+0xc80) [0x39540]",
+      "occurrences": 3
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_ess_base_proc_binding+0x12a0) [0x61f60]",
+      "occurrences": 3
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_ess_base_proc_binding+0xcd1) [0x61991]",
+      "occurrences": 4
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_ess_base_proc_binding+0xd18) [0x619d8]",
+      "occurrences": 3
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_init+0x2aa) [0x9815a]",
+      "occurrences": 14
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so(blas_get_cpu_number+0x35) [0x39bce5]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so(get_num_procs+0xce) [0x39bbfe]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so(gotoblas_init+0x4b) [0x1480bb]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_hnp.so() [0x4c56]",
+      "occurrences": 3
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_singleton.so() [0x2e86]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_singleton.so() [0x421c]",
+      "occurrences": 10
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pmix_ext3x.so(ext3x_client_init+0xd3) [0xfa93]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/pmix2/lib/libpmix.so.2.13.1(PMIx_Init+0x21cc) [0x5357c]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/pmix2/lib/libpmix.so.2.13.1(pmix_hwloc_setup_topology+0x1d26) [0x4de16]",
+      "occurrences": 1
+    }
+  ],
+  "setter_count": 0,
+  "getters": [
+    {
+      "file": "sched.3052983",
+      "line": 1,
+      "raw": "1793059368.696130 sched_getaffinity(0, 128, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 125,
+      "raw": "1793059370.607927 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 225,
+      "raw": "1793059371.130302 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 320,
+      "raw": "1793059371.162340 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 415,
+      "raw": "1793059371.182828 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 510,
+      "raw": "1793059371.207155 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 605,
+      "raw": "1793059371.248697 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 698,
+      "raw": "1793059371.295224 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 791,
+      "raw": "1793059371.338293 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 884,
+      "raw": "1793059371.381578 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 977,
+      "raw": "1793059371.423222 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1070,
+      "raw": "1793059371.469107 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1163,
+      "raw": "1793059373.748171 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1200,
+      "raw": "1793059373.784745 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1235,
+      "raw": "1793059373.807226 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1270,
+      "raw": "1793059373.835290 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1307,
+      "raw": "1793059373.858928 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1342,
+      "raw": "1793059373.873811 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1377,
+      "raw": "1793059373.891853 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1412,
+      "raw": "1793059373.927832 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1447,
+      "raw": "1793059373.946684 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1482,
+      "raw": "1793059373.962523 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1560,
+      "raw": "1793059374.016682 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1595,
+      "raw": "1793059374.026818 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1630,
+      "raw": "1793059374.034493 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1665,
+      "raw": "1793059374.047235 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1700,
+      "raw": "1793059374.056017 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1735,
+      "raw": "1793059374.063809 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1770,
+      "raw": "1793059374.089401 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1805,
+      "raw": "1793059374.097870 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1840,
+      "raw": "1793059374.105571 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1875,
+      "raw": "1793059374.119347 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1910,
+      "raw": "1793059374.129956 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1945,
+      "raw": "1793059374.138432 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 1980,
+      "raw": "1793059374.151387 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2015,
+      "raw": "1793059374.166310 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2050,
+      "raw": "1793059374.174756 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2085,
+      "raw": "1793059374.182010 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2155,
+      "raw": "1793059374.265911 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2190,
+      "raw": "1793059374.290395 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2225,
+      "raw": "1793059374.309179 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2260,
+      "raw": "1793059374.336575 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2295,
+      "raw": "1793059374.355239 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2330,
+      "raw": "1793059374.373566 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2365,
+      "raw": "1793059374.628428 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2400,
+      "raw": "1793059374.647865 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2435,
+      "raw": "1793059374.661667 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2470,
+      "raw": "1793059374.671200 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2505,
+      "raw": "1793059374.718676 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2540,
+      "raw": "1793059374.740357 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2575,
+      "raw": "1793059374.754660 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2610,
+      "raw": "1793059374.763766 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2645,
+      "raw": "1793059377.279221 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2680,
+      "raw": "1793059377.374259 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2715,
+      "raw": "1793059377.411269 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2750,
+      "raw": "1793059377.502074 sched_getaffinity(3052983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2785,
+      "raw": "1793059377.552832 sched_getaffinity(3053195, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2820,
+      "raw": "1793059377.577535 sched_getaffinity(3053197, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3053157",
+      "line": 1,
+      "raw": "1793059369.840544 sched_getaffinity(3053157, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3053157",
+      "line": 19,
+      "raw": "1793059370.040632 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3053157",
+      "line": 33,
+      "raw": "1793059370.048594 sched_getaffinity(3053157, 8, [1]) = 8"
+    }
+  ],
+  "signals": [
+    {
+      "file": "sched.3052983",
+      "line": 1517,
+      "raw": "1793059373.998321 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3053307, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2120,
+      "raw": "1793059374.223426 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3053328, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2855,
+      "raw": "1793059379.184225 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3053500, si_uid=1000, si_status=0, si_utime=7 /* 0.07 s */, si_stime=3 /* 0.03 s */} ---"
+    },
+    {
+      "file": "sched.3052983",
+      "line": 2896,
+      "raw": "1793059379.525913 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3053515, si_uid=1000, si_status=7, si_utime=5 /* 0.05 s */, si_stime=3 /* 0.03 s */} ---"
+    }
+  ],
+  "parse_anomalies": []
+}

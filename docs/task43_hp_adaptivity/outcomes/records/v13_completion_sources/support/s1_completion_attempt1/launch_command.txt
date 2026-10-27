@@ -1,0 +1,1 @@
+bash /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/launch/s1_completion_attempt1.sh

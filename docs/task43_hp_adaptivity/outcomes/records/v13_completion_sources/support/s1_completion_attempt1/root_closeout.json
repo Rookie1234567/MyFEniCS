@@ -1,0 +1,153 @@
+{
+  "schema": "task43.v13.s1-root-closeout.v1",
+  "review_sha": "37f3376be410657fbaec86b0412086745419c506",
+  "source_head": "7546c7bdb91b2c07c0344c41d418e8a0808ea6a6",
+  "recorded_utc": "2026-10-27T00:08:54.591217+00:00",
+  "decision": "PASS_LIMITED_SUPPORT_ENGINEERING",
+  "D1_authorized_by_review_9_5_and_verified_preconditions": true,
+  "tests": {
+    "passed": 12,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "pytest_seconds": 18.7,
+    "test_sha256": "8516a90dd558e6c2ec4d9329da26fa2aba5bdb0b253e5ac3c6838dbbda5f38ba"
+  },
+  "summary": {
+    "workflow_deadline_seconds": 270.0,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 8589934592,
+    "rss_warning_bytes": 7301444403,
+    "minimum_available_bytes": null,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "native_capacity_profile_identity": "task43_hp_adaptivity_resource_v1",
+    "native_capacity_profile_facts_sha256": "c9ef6d173968fd1c78d86eb66b78dd9720bde901f866f58281a4668f83c4b2e6",
+    "native_capacity_resource_facts": {
+      "resource_stop_policy": "legacy",
+      "absolute_cap_bytes": 206158430208,
+      "planning_cap_bytes": 206158430208,
+      "reserve_min_bytes": 68719476736,
+      "reserve_fraction": 0.15,
+      "effective_reserve_policy": "max(64GiB, 15% of effective total memory)",
+      "launch_cap_policy": "min(192GiB, 80% of effective total, effective available minus effective reserve)",
+      "planning_cap_policy": "min(192GiB, 75% of effective total, launch cap)",
+      "memavailable_runtime_policy": "stop_below_effective_reserve",
+      "rss_runtime_policy": "stop_at_launch_cap",
+      "require_zero_swap": true,
+      "swap_policy": "stop_on_nonzero_task_tree_VmSwap",
+      "global_swap_delta_policy": "observe_only",
+      "stop_on_global_swap": false,
+      "pss_sampling_policy": "disabled_by_profile",
+      "concurrent_neighbor_authorized": false,
+      "research_scope": "Task43 only; no Task39/40/41 profile alias"
+    },
+    "launch_memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 1512453111808,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 1512453111808,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "sampled_process_tree_pss_peak_bytes": null,
+    "cache_metadata_stable": true,
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      3052983,
+      3052994,
+      3053157,
+      3053500
+    ],
+    "sampled_process_tree_rss_peak_bytes": 313585664,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 4250691,
+        "pswpout_pages": 7183007
+      },
+      "end": {
+        "pswpin_pages": 4250691,
+        "pswpout_pages": 7183007
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 1512453111808,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 1512453111808,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "samples": 37,
+    "elapsed_seconds": 27.02263388223946,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": "development_worktree; not formal PDE provenance"
+  },
+  "root_read": {
+    "full_trace_lines": 2988,
+    "all_nonstack_and_unique_stack_frames": true,
+    "setters": 0,
+    "getters": 61,
+    "all_getter_masks": [
+      1
+    ],
+    "signals": {
+      "SIGCHLD": 4,
+      "exit0": 3,
+      "intentional_fixture_exit7": 1
+    },
+    "resource_rows": 37,
+    "runtime_identity_checks": 4,
+    "source_checks": 51,
+    "input_checks": 38,
+    "worker_exit": 0,
+    "watchdog_exit": 0,
+    "launcher_exit": 0,
+    "post_exit_bound_pids_absent": true,
+    "observations_requiring_classification": []
+  },
+  "fixture_scope": {
+    "main": "real main/runtime/sink/except with synthetic arithmetic and mesh/authority sentinel",
+    "raw_reader": "legitimate packet and six rebound semantic counterexamples",
+    "observer": "real entity and cell constraint dataclasses; single delegation/cache/alias/error cases",
+    "A2_helper": "synthetic saved arrays, modal/field comparison edges replaced; success and q10 failure",
+    "science": "NOT_RUN in S1"
+  },
+  "local_read_only_failure": {
+    "error": "KeyError: substage_checkpoint_refs",
+    "cause": "root post-run broad fixture glob also included old-schema unrelated P2 mock",
+    "recovery": "narrowed to main fixture and read real checkpoint files; no test/driver rerun",
+    "time": "not_measured"
+  },
+  "limits": [
+    "sampling RSS not continuous peak",
+    "TID start_ticks not independently measured",
+    "trace starts after taskset",
+    "PSS disabled",
+    "no --cache-path; global JIT/cache not audited",
+    "12 tests do not confer production ABI/scientific qualification/merge approval"
+  ]
+}
