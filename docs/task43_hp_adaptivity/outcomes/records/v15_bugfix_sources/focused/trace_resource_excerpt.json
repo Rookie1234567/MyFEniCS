@@ -1,0 +1,1199 @@
+{
+  "files": [
+    {
+      "file": "sched.3229811",
+      "sha256": "8cb3cc5951c882f92f9716d8c3e48c9cd34839ef06306ee12034bf2365b5c3f4",
+      "bytes": 188995,
+      "lines": 2925,
+      "tail": "1793066371.960785 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3229962",
+      "sha256": "17ced30b3f81c57bebd7a18e280c60c11c5897d7b4570c48f21e218866fefde3",
+      "bytes": 3717,
+      "lines": 47,
+      "tail": "1793066372.069323 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3229976",
+      "sha256": "3b82feaccc34c4e85fefc2b76ef36ccf7ce39b6ce305e608bdeaf660918bfe9f",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793066371.948379 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3229979",
+      "sha256": "eda2bdab8184328148779d5e5ec0c4d4efd53a4c0f8a90f26394431993a31643",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793066371.990418 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3229981",
+      "sha256": "b7224f1b355e1230d78804b494b6d1e1697005b19a9e66a199aea5fa03304c5a",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793066371.633838 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3229983",
+      "sha256": "b4ce5f88fcdaf6bbfe6d1281f2cae822c9591c6962064d947c0cb70c022b3a2f",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793066371.593794 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3230204",
+      "sha256": "66aa9698e28ba9f53222491445b0d7c594d5be3ddd5d07bad8d9ecf613f92655",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793066359.108441 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3230238",
+      "sha256": "8d2575634330affd9d25de19e52ce2100d106fa1dbac0cfa1c50019ccee7bac1",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793066359.773273 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3230398",
+      "sha256": "34ca0ca91d53b9e704a698c02fea981d8b6ff3ecd2f5fa8b0f0771c45909f4e6",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793066364.758559 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3230408",
+      "sha256": "ef02fbd0a1671301b6b837218f5a1dc5080c28fdf3a0f14af74521f1be782894",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793066365.125604 +++ exited with 7 +++"
+    }
+  ],
+  "syscalls": [
+    {
+      "file": "sched.3229811",
+      "line": 1,
+      "raw": "1793066349.144127 sched_getaffinity(0, 128, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 125,
+      "raw": "1793066351.492300 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 225,
+      "raw": "1793066352.088291 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 320,
+      "raw": "1793066352.159610 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 415,
+      "raw": "1793066352.179705 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 510,
+      "raw": "1793066352.200396 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 605,
+      "raw": "1793066352.221373 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 698,
+      "raw": "1793066352.241169 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 791,
+      "raw": "1793066352.259791 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 884,
+      "raw": "1793066352.278531 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 977,
+      "raw": "1793066352.298609 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1070,
+      "raw": "1793066352.317296 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1163,
+      "raw": "1793066358.882107 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1200,
+      "raw": "1793066358.911565 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1235,
+      "raw": "1793066358.921376 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1270,
+      "raw": "1793066358.944929 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1307,
+      "raw": "1793066358.959130 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1342,
+      "raw": "1793066358.967576 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1377,
+      "raw": "1793066358.974853 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1412,
+      "raw": "1793066359.000070 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1447,
+      "raw": "1793066359.010800 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1482,
+      "raw": "1793066359.018966 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1552,
+      "raw": "1793066359.207040 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1587,
+      "raw": "1793066359.262284 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1622,
+      "raw": "1793066359.294900 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1657,
+      "raw": "1793066359.351343 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1692,
+      "raw": "1793066359.392979 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1727,
+      "raw": "1793066359.427447 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1762,
+      "raw": "1793066359.538122 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1797,
+      "raw": "1793066359.581095 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1832,
+      "raw": "1793066359.594333 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1867,
+      "raw": "1793066359.637648 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1902,
+      "raw": "1793066359.657012 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1937,
+      "raw": "1793066359.668672 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 1972,
+      "raw": "1793066359.677828 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2007,
+      "raw": "1793066359.700204 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2042,
+      "raw": "1793066359.712831 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2077,
+      "raw": "1793066359.722232 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2147,
+      "raw": "1793066359.804027 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2182,
+      "raw": "1793066359.817413 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2217,
+      "raw": "1793066359.826573 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2252,
+      "raw": "1793066359.862868 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2287,
+      "raw": "1793066359.898757 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2322,
+      "raw": "1793066359.928596 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2357,
+      "raw": "1793066360.399406 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2392,
+      "raw": "1793066360.444818 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2427,
+      "raw": "1793066360.459854 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2462,
+      "raw": "1793066360.470113 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2497,
+      "raw": "1793066360.516589 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2532,
+      "raw": "1793066360.538593 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2567,
+      "raw": "1793066360.548655 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2602,
+      "raw": "1793066360.557342 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2637,
+      "raw": "1793066363.012551 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2672,
+      "raw": "1793066363.038742 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2707,
+      "raw": "1793066363.049057 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2742,
+      "raw": "1793066363.079169 sched_getaffinity(3229811, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2777,
+      "raw": "1793066363.092770 sched_getaffinity(3229981, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2812,
+      "raw": "1793066363.101272 sched_getaffinity(3229983, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229962",
+      "line": 1,
+      "raw": "1793066350.625543 sched_getaffinity(3229962, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229962",
+      "line": 19,
+      "raw": "1793066350.830685 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3229962",
+      "line": 33,
+      "raw": "1793066350.852112 sched_getaffinity(3229962, 8, [1]) = 8"
+    }
+  ],
+  "signals": [
+    {
+      "file": "sched.3229811",
+      "line": 1517,
+      "raw": "1793066359.108963 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3230204, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2112,
+      "raw": "1793066359.773680 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3230238, si_uid=1000, si_status=0, si_utime=0, si_stime=1 /* 0.01 s */} ---"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2847,
+      "raw": "1793066364.759200 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3230398, si_uid=1000, si_status=0, si_utime=4 /* 0.04 s */, si_stime=2 /* 0.02 s */} ---"
+    },
+    {
+      "file": "sched.3229811",
+      "line": 2888,
+      "raw": "1793066365.126225 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3230408, si_uid=1000, si_status=7, si_utime=5 /* 0.05 s */, si_stime=2 /* 0.02 s */} ---"
+    }
+  ],
+  "setters": [],
+  "resources": [
+    {
+      "timestamp_ns": 1793066345297083176,
+      "elapsed_seconds": 0.5643217554315925,
+      "rss_bytes": 53039104,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066346089592976,
+      "elapsed_seconds": 1.3504044064320624,
+      "rss_bytes": 64700416,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066346927980428,
+      "elapsed_seconds": 2.18968993332237,
+      "rss_bytes": 78073856,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066347753865523,
+      "elapsed_seconds": 3.018321462441236,
+      "rss_bytes": 83685376,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066348586548020,
+      "elapsed_seconds": 3.8475256701931357,
+      "rss_bytes": 84758528,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066349467678225,
+      "elapsed_seconds": 4.7277749492786825,
+      "rss_bytes": 98234368,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066350390427689,
+      "elapsed_seconds": 5.652628718409687,
+      "rss_bytes": 115896320,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066351278112226,
+      "elapsed_seconds": 6.540196406189352,
+      "rss_bytes": 141205504,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066352145749811,
+      "elapsed_seconds": 7.407033394090831,
+      "rss_bytes": 156098560,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066353021877626,
+      "elapsed_seconds": 8.288382444065064,
+      "rss_bytes": 170958848,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066353878481779,
+      "elapsed_seconds": 9.140086001250893,
+      "rss_bytes": 187719680,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066354729612748,
+      "elapsed_seconds": 9.989381544291973,
+      "rss_bytes": 188059648,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066355563709930,
+      "elapsed_seconds": 10.830742690246552,
+      "rss_bytes": 194437120,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066356367002364,
+      "elapsed_seconds": 11.629032939206809,
+      "rss_bytes": 196427776,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066357196798838,
+      "elapsed_seconds": 12.457499699201435,
+      "rss_bytes": 235540480,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066357992530562,
+      "elapsed_seconds": 13.254012931138277,
+      "rss_bytes": 252743680,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066358781079027,
+      "elapsed_seconds": 14.04194968007505,
+      "rss_bytes": 259411968,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066359578278648,
+      "elapsed_seconds": 14.834726253990084,
+      "rss_bytes": 260403200,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066360424870864,
+      "elapsed_seconds": 15.68935477733612,
+      "rss_bytes": 261165056,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793066361292023364,
+      "elapsed_seconds": 16.557240688242018,
+      "rss_bytes": 261619712,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "pass": true,
+          "record_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/A2_saved_primary_q_response.json",
+          "record_sha256": "406b2a3a465caf8b20646607756eae227979db4e82c94af6d484839a999b7282"
+        },
+        "phase": "preflight",
+        "phase_started_monotonic": 2991355.432247364,
+        "stage": "task43_v11_p2_saved_a2_response_persisted_before_authority",
+        "updated_monotonic": 2991355.456076908
+      }
+    },
+    {
+      "timestamp_ns": 1793066362142667433,
+      "elapsed_seconds": 17.404310491401702,
+      "rss_bytes": 261779456,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "pass": true,
+          "record_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/A2_saved_primary_q_response.json",
+          "record_sha256": "406b2a3a465caf8b20646607756eae227979db4e82c94af6d484839a999b7282"
+        },
+        "phase": "preflight",
+        "phase_started_monotonic": 2991355.432247364,
+        "stage": "task43_v11_p2_saved_a2_response_persisted_before_authority",
+        "updated_monotonic": 2991355.456076908
+      }
+    },
+    {
+      "timestamp_ns": 1793066362977644235,
+      "elapsed_seconds": 18.2407339643687,
+      "rss_bytes": 262377472,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "candidate_id": "v11_r9_h8",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "mesh_setup",
+        "phase_started_monotonic": 2991357.052356317,
+        "stage": "task43_v11_p2_mesh_authority_begin",
+        "updated_monotonic": 2991357.05474119
+      }
+    },
+    {
+      "timestamp_ns": 1793066363751436558,
+      "elapsed_seconds": 19.01305890409276,
+      "rss_bytes": 262496256,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066364544964146,
+      "elapsed_seconds": 19.80626914044842,
+      "rss_bytes": 262922240,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066365161203428,
+      "elapsed_seconds": 20.423832349013537,
+      "rss_bytes": 262922240,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962,
+        3230408
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066365962176122,
+      "elapsed_seconds": 21.225587144028395,
+      "rss_bytes": 263794688,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066366530179829,
+      "elapsed_seconds": 21.798355624079704,
+      "rss_bytes": 264028160,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066367339931576,
+      "elapsed_seconds": 22.60454721422866,
+      "rss_bytes": 264904704,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066368114970961,
+      "elapsed_seconds": 23.376324660144746,
+      "rss_bytes": 264904704,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066368977173232,
+      "elapsed_seconds": 24.238554298412055,
+      "rss_bytes": 264904704,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066369751264786,
+      "elapsed_seconds": 25.01275971205905,
+      "rss_bytes": 264904704,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066370540910569,
+      "elapsed_seconds": 25.806467964313924,
+      "rss_bytes": 264904704,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066371335959219,
+      "elapsed_seconds": 26.600229860283434,
+      "rss_bytes": 264904704,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066372107601014,
+      "elapsed_seconds": 27.365713321138173,
+      "rss_bytes": 38129664,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3229811,
+        3229822,
+        3229962
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066372640970914,
+      "elapsed_seconds": 27.89766858611256,
+      "rss_bytes": 38129664,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [],
+      "exit_code": 0,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066373159780680,
+      "elapsed_seconds": 28.416970745194703,
+      "rss_bytes": 38129664,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [],
+      "exit_code": 0,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066373550929115,
+      "elapsed_seconds": 28.80687372945249,
+      "rss_bytes": 38129664,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [],
+      "exit_code": 0,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    },
+    {
+      "timestamp_ns": 1793066374052246948,
+      "elapsed_seconds": 29.3095961692743,
+      "rss_bytes": 38129664,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [],
+      "exit_code": 0,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "0e211f92cf9a66f76372400f916ef81c375f654c3dbae61f5c39cb34f5ec52bf",
+          "plan_sha256": "b5a152242c5be3c74e80ba62fc8a75c55dd14c06b60704a483d2647d920955e7"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2991357.990438781,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2991357.993998238
+      }
+    }
+  ],
+  "issues_classified": [
+    [
+      25,
+      "empty cmdline; classify by state/identity",
+      {
+        "pid": 3230408,
+        "start_ticks": 299135965,
+        "ppid": 3229811,
+        "comm": "python",
+        "state": "Z",
+        "cmdline": "",
+        "stage": "workflow",
+        "rss_bytes": 0,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793066365161193891,
+        "exit_code": null,
+        "cpu_seconds": 0.07,
+        "affinity": [
+          1
+        ],
+        "cost_sample_unavailable": true
+      }
+    ],
+    [
+      34,
+      "empty cmdline; classify by state/identity",
+      {
+        "pid": 3229811,
+        "start_ticks": 299133961,
+        "ppid": 3229797,
+        "comm": "python",
+        "state": "Z",
+        "cmdline": "",
+        "stage": "workflow",
+        "rss_bytes": 0,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793066372107220960,
+        "exit_code": null,
+        "cpu_seconds": 14.81,
+        "affinity": [
+          1
+        ],
+        "cost_sample_unavailable": true
+      }
+    ],
+    [
+      34,
+      "empty cmdline; classify by state/identity",
+      {
+        "pid": 3229822,
+        "start_ticks": 299133978,
+        "ppid": 3229797,
+        "comm": "strace",
+        "state": "Z",
+        "cmdline": "",
+        "stage": "workflow",
+        "rss_bytes": 0,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793066372107405396,
+        "exit_code": null,
+        "cpu_seconds": 1.88,
+        "affinity": [
+          1
+        ],
+        "cost_sample_unavailable": true
+      }
+    ],
+    [
+      34,
+      "empty cmdline; classify by state/identity",
+      {
+        "pid": 3229962,
+        "start_ticks": 299134523,
+        "ppid": 3229797,
+        "comm": "orted",
+        "state": "Z",
+        "cmdline": "",
+        "stage": "workflow",
+        "rss_bytes": 0,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793066372107594584,
+        "exit_code": null,
+        "cpu_seconds": 0.49,
+        "affinity": [
+          1
+        ],
+        "cost_sample_unavailable": true
+      }
+    ]
+  ]
+}

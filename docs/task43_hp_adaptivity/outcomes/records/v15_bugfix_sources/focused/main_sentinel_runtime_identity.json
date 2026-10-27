@@ -1,0 +1,792 @@
+{
+  "claim_scope": "actual pytest worker and WorkflowLedger observations through each real main mesh-before-solve sentinel only; no solver or PDE stage was entered; extra-correction absence after solve is not established by this sentinel and must be established from saved raw-vector/formal run evidence",
+  "environments": [
+    {
+      "math_threads": {
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "mpi_size": 1,
+      "petsc_int_type": "<class 'numpy.int64'>",
+      "petsc_scalar_type": "<class 'numpy.complex128'>",
+      "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+      "python_version": "3.12.3",
+      "qualified_activation_marker": true,
+      "rank_affinity": [
+        [
+          1
+        ]
+      ],
+      "task43_watchdog_resource_gate": {
+        "effective_reserve_bytes": 324465057792,
+        "launch_cap_bytes": 8589934592,
+        "planning_cap_bytes": 8589934592,
+        "resource_profile_identity": "task43_hp_adaptivity_resource_v1",
+        "resource_stop_policy": "legacy",
+        "status": "verified",
+        "zero_task_tree_swap_required": true
+      },
+      "v11_math_threads": {
+        "BLIS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": "1"
+      },
+      "v11_mumps_available": true,
+      "v11_watchdog_worker_identity": {
+        "direct_watchdog_parent_verified": true,
+        "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+        "tracer_descends_from_watchdog": true,
+        "tracer_parent_pid": 3229797,
+        "tracer_pid": 3229822,
+        "tracer_proc_status_verified": true,
+        "tracer_start_ticks": 299133978,
+        "watchdog_parent_pid_environment": 3229797,
+        "watchdog_pid": 3229797,
+        "watchdog_start_ticks": 299133902,
+        "worker_parent_pid": 3229797,
+        "worker_pid": 3229811,
+        "worker_start_ticks": 299133961,
+        "worker_tid_affinities": [
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3229811
+          },
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3229981
+          },
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3229983
+          }
+        ]
+      },
+      "v11_worker_affinity": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229811
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229981
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229983
+        }
+      ],
+      "v11_worker_local_environment": {
+        "HWLOC_COMPONENTS": "-x86",
+        "OMPI_MCA_pml": "ob1"
+      }
+    },
+    {
+      "math_threads": {
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "mpi_size": 1,
+      "petsc_int_type": "<class 'numpy.int64'>",
+      "petsc_scalar_type": "<class 'numpy.complex128'>",
+      "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+      "python_version": "3.12.3",
+      "qualified_activation_marker": true,
+      "rank_affinity": [
+        [
+          1
+        ]
+      ],
+      "task43_watchdog_resource_gate": {
+        "effective_reserve_bytes": 324465057792,
+        "launch_cap_bytes": 8589934592,
+        "planning_cap_bytes": 8589934592,
+        "resource_profile_identity": "task43_hp_adaptivity_resource_v1",
+        "resource_stop_policy": "legacy",
+        "status": "verified",
+        "zero_task_tree_swap_required": true
+      },
+      "v11_math_threads": {
+        "BLIS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": "1"
+      },
+      "v11_mumps_available": true,
+      "v11_watchdog_worker_identity": {
+        "direct_watchdog_parent_verified": true,
+        "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+        "tracer_descends_from_watchdog": true,
+        "tracer_parent_pid": 3229797,
+        "tracer_pid": 3229822,
+        "tracer_proc_status_verified": true,
+        "tracer_start_ticks": 299133978,
+        "watchdog_parent_pid_environment": 3229797,
+        "watchdog_pid": 3229797,
+        "watchdog_start_ticks": 299133902,
+        "worker_parent_pid": 3229797,
+        "worker_pid": 3229811,
+        "worker_start_ticks": 299133961,
+        "worker_tid_affinities": [
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3229811
+          },
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3229981
+          },
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3229983
+          }
+        ]
+      },
+      "v11_worker_affinity": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229811
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229981
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229983
+        }
+      ],
+      "v11_worker_local_environment": {
+        "HWLOC_COMPONENTS": "-x86",
+        "OMPI_MCA_pml": "ob1"
+      }
+    },
+    {
+      "math_threads": {
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "mpi_size": 1,
+      "petsc_int_type": "<class 'numpy.int64'>",
+      "petsc_scalar_type": "<class 'numpy.complex128'>",
+      "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+      "python_version": "3.12.3",
+      "qualified_activation_marker": true,
+      "rank_affinity": [
+        [
+          1
+        ]
+      ],
+      "task43_watchdog_resource_gate": {
+        "effective_reserve_bytes": 324465057792,
+        "launch_cap_bytes": 8589934592,
+        "planning_cap_bytes": 8589934592,
+        "resource_profile_identity": "task43_hp_adaptivity_resource_v1",
+        "resource_stop_policy": "legacy",
+        "status": "verified",
+        "zero_task_tree_swap_required": true
+      },
+      "v11_math_threads": {
+        "BLIS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": "1"
+      },
+      "v11_mumps_available": true,
+      "v11_watchdog_worker_identity": {
+        "direct_watchdog_parent_verified": true,
+        "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+        "tracer_descends_from_watchdog": true,
+        "tracer_parent_pid": 3229797,
+        "tracer_pid": 3229822,
+        "tracer_proc_status_verified": true,
+        "tracer_start_ticks": 299133978,
+        "watchdog_parent_pid_environment": 3229797,
+        "watchdog_pid": 3229797,
+        "watchdog_start_ticks": 299133902,
+        "worker_parent_pid": 3229797,
+        "worker_pid": 3229811,
+        "worker_start_ticks": 299133961,
+        "worker_tid_affinities": [
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3229811
+          },
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3229981
+          },
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3229983
+          }
+        ]
+      },
+      "v11_worker_local_environment": {
+        "HWLOC_COMPONENTS": "-x86",
+        "OMPI_MCA_pml": "ob1"
+      }
+    },
+    {
+      "math_threads": {
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "mpi_size": 1,
+      "petsc_int_type": "<class 'numpy.int64'>",
+      "petsc_scalar_type": "<class 'numpy.complex128'>",
+      "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+      "python_version": "3.12.3",
+      "qualified_activation_marker": true,
+      "rank_affinity": [
+        [
+          1
+        ]
+      ],
+      "task43_watchdog_resource_gate": {
+        "effective_reserve_bytes": 324465057792,
+        "launch_cap_bytes": 8589934592,
+        "planning_cap_bytes": 8589934592,
+        "resource_profile_identity": "task43_hp_adaptivity_resource_v1",
+        "resource_stop_policy": "legacy",
+        "status": "verified",
+        "zero_task_tree_swap_required": true
+      },
+      "v11_math_threads": {
+        "BLIS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": "1"
+      },
+      "v11_mumps_available": true,
+      "v11_watchdog_worker_identity": {
+        "direct_watchdog_parent_verified": true,
+        "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+        "tracer_descends_from_watchdog": true,
+        "tracer_parent_pid": 3229797,
+        "tracer_pid": 3229822,
+        "tracer_proc_status_verified": true,
+        "tracer_start_ticks": 299133978,
+        "watchdog_parent_pid_environment": 3229797,
+        "watchdog_pid": 3229797,
+        "watchdog_start_ticks": 299133902,
+        "worker_parent_pid": 3229797,
+        "worker_pid": 3229811,
+        "worker_start_ticks": 299133961,
+        "worker_tid_affinities": [
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3229811
+          },
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3229981
+          },
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3229983
+          }
+        ]
+      },
+      "v11_worker_local_environment": {
+        "HWLOC_COMPONENTS": "-x86",
+        "OMPI_MCA_pml": "ob1"
+      }
+    }
+  ],
+  "forbidden_extra_correction_helper_calls": [],
+  "phase_archives": {
+    "A1_q3": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/watchdog_phase_archive/A1_q3.json",
+    "A2_q10_failure": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/watchdog_phase_archive/A2_q10_failure.json",
+    "P2": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/watchdog_phase_archive/P2.json",
+    "R9_H8": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/fixtures/test_main_reaches_v11_mesh_sen0/watchdog_phase_archive/R9_H8.json"
+  },
+  "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+  "run_impl_controls": [
+    {
+      "phase": "A1_q3",
+      "same_lu_solve_residual_correction_enabled": true,
+      "same_lu_tightening_enabled": false
+    },
+    {
+      "phase": "R9_H8",
+      "same_lu_solve_residual_correction_enabled": true,
+      "same_lu_tightening_enabled": false
+    }
+  ],
+  "schema": "task43.v11.p1.main_sentinel_runtime_identity.v1",
+  "worker_identity_checkpoints": [
+    {
+      "direct_watchdog_parent_verified": true,
+      "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+      "tracer_descends_from_watchdog": true,
+      "tracer_parent_pid": 3229797,
+      "tracer_pid": 3229822,
+      "tracer_proc_status_verified": true,
+      "tracer_start_ticks": 299133978,
+      "watchdog_parent_pid_environment": 3229797,
+      "watchdog_pid": 3229797,
+      "watchdog_start_ticks": 299133902,
+      "worker_parent_pid": 3229797,
+      "worker_pid": 3229811,
+      "worker_start_ticks": 299133961,
+      "worker_tid_affinities": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229811
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229981
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229983
+        }
+      ]
+    },
+    {
+      "direct_watchdog_parent_verified": true,
+      "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+      "tracer_descends_from_watchdog": true,
+      "tracer_parent_pid": 3229797,
+      "tracer_pid": 3229822,
+      "tracer_proc_status_verified": true,
+      "tracer_start_ticks": 299133978,
+      "watchdog_parent_pid_environment": 3229797,
+      "watchdog_pid": 3229797,
+      "watchdog_start_ticks": 299133902,
+      "worker_parent_pid": 3229797,
+      "worker_pid": 3229811,
+      "worker_start_ticks": 299133961,
+      "worker_tid_affinities": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229811
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229981
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229983
+        }
+      ]
+    },
+    {
+      "direct_watchdog_parent_verified": true,
+      "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+      "tracer_descends_from_watchdog": true,
+      "tracer_parent_pid": 3229797,
+      "tracer_pid": 3229822,
+      "tracer_proc_status_verified": true,
+      "tracer_start_ticks": 299133978,
+      "watchdog_parent_pid_environment": 3229797,
+      "watchdog_pid": 3229797,
+      "watchdog_start_ticks": 299133902,
+      "worker_parent_pid": 3229797,
+      "worker_pid": 3229811,
+      "worker_start_ticks": 299133961,
+      "worker_tid_affinities": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229811
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229981
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229983
+        }
+      ]
+    },
+    {
+      "direct_watchdog_parent_verified": true,
+      "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+      "tracer_descends_from_watchdog": true,
+      "tracer_parent_pid": 3229797,
+      "tracer_pid": 3229822,
+      "tracer_proc_status_verified": true,
+      "tracer_start_ticks": 299133978,
+      "watchdog_parent_pid_environment": 3229797,
+      "watchdog_pid": 3229797,
+      "watchdog_start_ticks": 299133902,
+      "worker_parent_pid": 3229797,
+      "worker_pid": 3229811,
+      "worker_start_ticks": 299133961,
+      "worker_tid_affinities": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229811
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229981
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229983
+        }
+      ]
+    },
+    {
+      "direct_watchdog_parent_verified": true,
+      "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+      "tracer_descends_from_watchdog": true,
+      "tracer_parent_pid": 3229797,
+      "tracer_pid": 3229822,
+      "tracer_proc_status_verified": true,
+      "tracer_start_ticks": 299133978,
+      "watchdog_parent_pid_environment": 3229797,
+      "watchdog_pid": 3229797,
+      "watchdog_start_ticks": 299133902,
+      "worker_parent_pid": 3229797,
+      "worker_pid": 3229811,
+      "worker_start_ticks": 299133961,
+      "worker_tid_affinities": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229811
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229981
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229983
+        }
+      ]
+    },
+    {
+      "direct_watchdog_parent_verified": true,
+      "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+      "tracer_descends_from_watchdog": true,
+      "tracer_parent_pid": 3229797,
+      "tracer_pid": 3229822,
+      "tracer_proc_status_verified": true,
+      "tracer_start_ticks": 299133978,
+      "watchdog_parent_pid_environment": 3229797,
+      "watchdog_pid": 3229797,
+      "watchdog_start_ticks": 299133902,
+      "worker_parent_pid": 3229797,
+      "worker_pid": 3229811,
+      "worker_start_ticks": 299133961,
+      "worker_tid_affinities": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229811
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229981
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229983
+        }
+      ]
+    },
+    {
+      "direct_watchdog_parent_verified": true,
+      "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+      "tracer_descends_from_watchdog": true,
+      "tracer_parent_pid": 3229797,
+      "tracer_pid": 3229822,
+      "tracer_proc_status_verified": true,
+      "tracer_start_ticks": 299133978,
+      "watchdog_parent_pid_environment": 3229797,
+      "watchdog_pid": 3229797,
+      "watchdog_start_ticks": 299133902,
+      "worker_parent_pid": 3229797,
+      "worker_pid": 3229811,
+      "worker_start_ticks": 299133961,
+      "worker_tid_affinities": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229811
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229981
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229983
+        }
+      ]
+    },
+    {
+      "direct_watchdog_parent_verified": true,
+      "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+      "tracer_descends_from_watchdog": true,
+      "tracer_parent_pid": 3229797,
+      "tracer_pid": 3229822,
+      "tracer_proc_status_verified": true,
+      "tracer_start_ticks": 299133978,
+      "watchdog_parent_pid_environment": 3229797,
+      "watchdog_pid": 3229797,
+      "watchdog_start_ticks": 299133902,
+      "worker_parent_pid": 3229797,
+      "worker_pid": 3229811,
+      "worker_start_ticks": 299133961,
+      "worker_tid_affinities": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229811
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229981
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229983
+        }
+      ]
+    },
+    {
+      "direct_watchdog_parent_verified": true,
+      "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+      "tracer_descends_from_watchdog": true,
+      "tracer_parent_pid": 3229797,
+      "tracer_pid": 3229822,
+      "tracer_proc_status_verified": true,
+      "tracer_start_ticks": 299133978,
+      "watchdog_parent_pid_environment": 3229797,
+      "watchdog_pid": 3229797,
+      "watchdog_start_ticks": 299133902,
+      "worker_parent_pid": 3229797,
+      "worker_pid": 3229811,
+      "worker_start_ticks": 299133961,
+      "worker_tid_affinities": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229811
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229981
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229983
+        }
+      ]
+    },
+    {
+      "direct_watchdog_parent_verified": true,
+      "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+      "tracer_descends_from_watchdog": true,
+      "tracer_parent_pid": 3229797,
+      "tracer_pid": 3229822,
+      "tracer_proc_status_verified": true,
+      "tracer_start_ticks": 299133978,
+      "watchdog_parent_pid_environment": 3229797,
+      "watchdog_pid": 3229797,
+      "watchdog_start_ticks": 299133902,
+      "worker_parent_pid": 3229797,
+      "worker_pid": 3229811,
+      "worker_start_ticks": 299133961,
+      "worker_tid_affinities": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229811
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229981
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229983
+        }
+      ]
+    },
+    {
+      "direct_watchdog_parent_verified": true,
+      "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+      "tracer_descends_from_watchdog": true,
+      "tracer_parent_pid": 3229797,
+      "tracer_pid": 3229822,
+      "tracer_proc_status_verified": true,
+      "tracer_start_ticks": 299133978,
+      "watchdog_parent_pid_environment": 3229797,
+      "watchdog_pid": 3229797,
+      "watchdog_start_ticks": 299133902,
+      "worker_parent_pid": 3229797,
+      "worker_pid": 3229811,
+      "worker_start_ticks": 299133961,
+      "worker_tid_affinities": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229811
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229981
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229983
+        }
+      ]
+    },
+    {
+      "direct_watchdog_parent_verified": true,
+      "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1/watchdog/workflow_phase.json",
+      "tracer_descends_from_watchdog": true,
+      "tracer_parent_pid": 3229797,
+      "tracer_pid": 3229822,
+      "tracer_proc_status_verified": true,
+      "tracer_start_ticks": 299133978,
+      "watchdog_parent_pid_environment": 3229797,
+      "watchdog_pid": 3229797,
+      "watchdog_start_ticks": 299133902,
+      "worker_parent_pid": 3229797,
+      "worker_pid": 3229811,
+      "worker_start_ticks": 299133961,
+      "worker_tid_affinities": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229811
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229981
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3229983
+        }
+      ]
+    }
+  ]
+}
