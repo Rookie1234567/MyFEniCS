@@ -1,0 +1,394 @@
+{
+  "schema": "task43.v16.root-support-closeout.v1",
+  "stage": "T_main",
+  "status": "FAILED_FIXTURE_NOT_QUALIFIED",
+  "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/focused_attempt1",
+  "source_head": "c620c96ef98adac4e1caf05e28dae7744e73a328",
+  "test_sha256": "6fa8f1c85d8352a789b1b9c3faea90388b6375ff0635994d212467181e9aad87",
+  "test_results": [
+    {
+      "name": "test_v16_p8_real_main_writer_terminal_and_rollback",
+      "seconds": 0.752,
+      "status": "FAILED",
+      "failure": "src/test/test_task43_v11_scientific_restart.py:6142: in test_v16_p8_real_main_writer_terminal_and_rollback\n    h100_anchor.main(\nbenchmarks/task43_hp_adaptivity/h100_anchor.py:10352: in main\n    summary = _run(\nbenchmarks/task43_hp_adaptivity/h100_anchor.py:9946: in _run\n    return _run_with_v3_failure_terminal(_run_impl, *args, **kwargs)\nbenchmarks/task43_hp_adaptivity/h100_anchor.py:9807: in _run_with_v3_failure_terminal\n    return run_impl(*args, **kwargs)\nbenchmarks/task43_hp_adaptivity/h100_anchor.py:8680: in _run_impl\n    summary = run_stage4b_block_grating_3d_case(\nsrc/test/test_task43_v11_scientific_restart.py:6120: in fake_solver\n    kwargs[\"variable_p_live_observer\"](view)\nbenchmarks/task43_hp_adaptivity/h100_anchor.py:7918: in active_observer\n    checkpoint_v16_p8_identity = _v16_p8_endpoint_identity(\nbenchmarks/task43_hp_adaptivity/h100_anchor.py:1001: in _v16_p8_endpoint_identity\n    physical = task43_v2_physical_configuration_identity(\nbenchmarks/task43_hp_adaptivity/compare_v2_endpoints.py:152: in task43_v2_physical_configuration_identity\n    raise ValueError(f\"{name} must be a lowercase SHA256 identity\")\nE   ValueError: active_degree_plan_sha256 must be a lowercase SHA256 identity"
+    }
+  ],
+  "not_run": 17,
+  "whole_watchdog_seconds": 20.264135509729385,
+  "pytest_seconds": 12.007,
+  "resources": {
+    "sample_count": 32,
+    "sampled_simultaneous_tree_RSS_peak_bytes": 304947200,
+    "task_swap_peak_bytes": 0,
+    "cap_bytes": 8589934592,
+    "reserve_bytes": 324465057792,
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 4250695,
+        "pswpout_pages": 7183007
+      },
+      "end": {
+        "pswpin_pages": 4250695,
+        "pswpout_pages": 7183007
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "nominal_interval_seconds": 0.25,
+    "observed_interval_seconds": {
+      "min": 0.38051493698731065,
+      "max": 0.7584067969582975
+    }
+  },
+  "exits": {
+    "launcher": 2,
+    "watchdog": 2,
+    "worker": 1
+  },
+  "cleanup": {
+    "descendants_cleared": true,
+    "remaining": [],
+    "host_proc": [
+      {
+        "pid": 3391858,
+        "start_ticks": 301351749,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 3391859,
+        "start_ticks": 301351806,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 3391870,
+        "start_ticks": 301351820,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 3391898,
+        "start_ticks": 301352328,
+        "same_process_still_present": false,
+        "proc_stat": null
+      }
+    ]
+  },
+  "identity_checks": {
+    "source_snapshot_matches": true,
+    "input_matches": true,
+    "source_count": 51,
+    "input_count": 79
+  },
+  "trace": {
+    "files": [
+      {
+        "file": "sched.3391859",
+        "sha256": "af827a63f8d74bfa62a1c97cc30cdb996196f056513095c410fe5e4ca40dfa66",
+        "bytes": 138833,
+        "lines": 2114,
+        "tail": "1793088541.487873 +++ exited with 1 +++"
+      },
+      {
+        "file": "sched.3391898",
+        "sha256": "f0c09132c455f87a375414c32d0f93999e8e062fabde43bbda40a9ce0a832de4",
+        "bytes": 3717,
+        "lines": 47,
+        "tail": "1793088541.578374 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3391899",
+        "sha256": "80de43dc62e487a67bcf32159e4f6371e807a300117d2fa7e9a859cddcd88e09",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793088541.458302 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3391900",
+        "sha256": "e358ec55588dcbb9c942cc82545a980428b397e37a3b225dac102fa3833e2f17",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793088541.508214 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3391901",
+        "sha256": "85f9dc75250bc7b0a35580f2cad027d182c22c7eeeb15908874d79075dd5b358",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793088541.178394 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3391902",
+        "sha256": "b9e2b70f5485408399d41109b5497f7b6434ce0b492602a26ad0ab0092b4cee9",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793088541.146370 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3391926",
+        "sha256": "219df4a4ce0aa3ed72d28d66af77b19ef8475ca648ce8774523f9dbbef681424",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793088534.402918 +++ exited with 0 +++"
+      }
+    ],
+    "setters": [],
+    "parse_anomalies": [],
+    "syscalls": [
+      {
+        "file": "sched.3391859",
+        "line": 1,
+        "raw": "1793088527.474798 sched_getaffinity(0, 128, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 125,
+        "raw": "1793088529.092319 sched_getaffinity(3391859, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 225,
+        "raw": "1793088529.474525 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 320,
+        "raw": "1793088529.542010 sched_getaffinity(3391859, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 415,
+        "raw": "1793088529.584241 sched_getaffinity(3391901, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 510,
+        "raw": "1793088529.622255 sched_getaffinity(3391902, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 605,
+        "raw": "1793088529.663605 sched_getaffinity(3391859, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 698,
+        "raw": "1793088529.705226 sched_getaffinity(3391901, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 791,
+        "raw": "1793088529.743395 sched_getaffinity(3391902, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 884,
+        "raw": "1793088529.763447 sched_getaffinity(3391859, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 977,
+        "raw": "1793088529.780789 sched_getaffinity(3391901, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1070,
+        "raw": "1793088529.796692 sched_getaffinity(3391902, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1163,
+        "raw": "1793088533.860563 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1200,
+        "raw": "1793088533.879369 sched_getaffinity(3391859, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1237,
+        "raw": "1793088533.887783 sched_getaffinity(3391901, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1272,
+        "raw": "1793088533.895050 sched_getaffinity(3391902, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1307,
+        "raw": "1793088534.034120 sched_getaffinity(3391859, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1342,
+        "raw": "1793088534.071242 sched_getaffinity(3391901, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1377,
+        "raw": "1793088534.090248 sched_getaffinity(3391902, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1412,
+        "raw": "1793088534.122162 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1447,
+        "raw": "1793088534.138684 sched_getaffinity(3391859, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1482,
+        "raw": "1793088534.157295 sched_getaffinity(3391901, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1517,
+        "raw": "1793088534.175213 sched_getaffinity(3391902, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1552,
+        "raw": "1793088534.215112 sched_getaffinity(3391859, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1587,
+        "raw": "1793088534.252435 sched_getaffinity(3391901, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1622,
+        "raw": "1793088534.288221 sched_getaffinity(3391902, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1694,
+        "raw": "1793088534.430482 sched_getaffinity(3391859, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1729,
+        "raw": "1793088534.443148 sched_getaffinity(3391901, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1764,
+        "raw": "1793088534.451644 sched_getaffinity(3391902, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1799,
+        "raw": "1793088534.466713 sched_getaffinity(3391859, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1834,
+        "raw": "1793088534.476636 sched_getaffinity(3391901, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1869,
+        "raw": "1793088534.484276 sched_getaffinity(3391902, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1904,
+        "raw": "1793088534.497549 sched_getaffinity(3391859, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1939,
+        "raw": "1793088534.505978 sched_getaffinity(3391901, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 1974,
+        "raw": "1793088534.512973 sched_getaffinity(3391902, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 2009,
+        "raw": "1793088534.531780 sched_getaffinity(3391859, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 2044,
+        "raw": "1793088534.544736 sched_getaffinity(3391901, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391859",
+        "line": 2079,
+        "raw": "1793088534.552785 sched_getaffinity(3391902, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391898",
+        "line": 1,
+        "raw": "1793088528.564722 sched_getaffinity(3391898, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391898",
+        "line": 19,
+        "raw": "1793088528.626594 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3391898",
+        "line": 33,
+        "raw": "1793088528.632099 sched_getaffinity(3391898, 8, [1]) = 8"
+      }
+    ],
+    "signals": [
+      {
+        "file": "sched.3391859",
+        "line": 1657,
+        "raw": "1793088534.403310 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3391926, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+      }
+    ],
+    "signals_interpretation": "SIGCHLD CLD_EXITED status0 matches source-identity subprocess trace; no termination signal",
+    "all_getter_masks": "[1]",
+    "empty_cmdline": "Only final Z worker/tracer/orted entries; PID/start_ticks bound and reaped, not live missing identity."
+  },
+  "root_read_scope": "All final raw syscall/exit lines, exact de-duplicated stack lines, all resource rows, runtime identity, logs/XML and host PID/startticks cleanup; no new native probe",
+  "raw_observation": {
+    "path": "benchmarks/artifacts/task43/v16_p8/preparation/focused_attempt1_root_terminal_observations.json",
+    "sha256": "e6573ac510b6d868995969be5ee94da5dedb8d9a99ff068df739521a45d5e26a",
+    "size_bytes": 204818
+  },
+  "evidence": [
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/focused_attempt1/watchdog/resources.jsonl",
+      "sha256": "06c2b68153a9348356a9b03e3102cf2adbeeac6c2b405e345cd4eec1ace11534",
+      "size_bytes": 215782
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/focused_attempt1/watchdog/worker.log",
+      "sha256": "b12fdbe0232f59bd9fbeb8bd5d787fa5f0d0cd0599405d82d82a2a0827491caa",
+      "size_bytes": 1802
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/focused_attempt1/watchdog/summary.json",
+      "sha256": "466b1f9d3e0e9dc99cfab94836cbb1d7e1218d8537da324cc6975f527ff8e275",
+      "size_bytes": 3544
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/focused_attempt1/snapshots/launch_manifest.json",
+      "sha256": "7c6baabbb568ff720fe507501a742789dba6962824435858ffcb69a117fb0d19",
+      "size_bytes": 37528
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/focused_attempt1/pytest_results.xml",
+      "sha256": "fab97064e585fca68f5bc8d046404110559e7bc7b4ddc067b46d74eb26950305",
+      "size_bytes": 1688
+    }
+  ],
+  "cache_scope": "No cache path provided; shared JIT/global cache not measured",
+  "new_formal_PDE": 0
+}

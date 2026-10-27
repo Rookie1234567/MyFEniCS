@@ -1,6 +1,19 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V15 当前状态：P5诊断完成但不获接受，失败原件保留
+## V16 当前状态：T 两槽用尽；没有科学或合并资格
+
+| 依赖组 | 变化／验证 | 合入顺序与边界 |
+|---|---|---|
+| research-only | 三个既有研究入口的P8计划、primary/writer和旧三场复用比较；既有测试文件。T恢复17通过/1失败，末fixture静态修复未测 | 保持opt-in；真实S/F/C未运行，不提升生产默认；先审合同/绑定与失败，再审代码，不授权合并 |
+| compact evidence/docs | response_v16、固定合同、机器结果、两次T终态/XML/日志、最终字节差异及当前导航 | 保存历史失败和NOT_RUN；可审文档不等于merge approval |
+| production numerical/core | 无改动 | 无本轮fresh PDE资格 |
+| reusable runner/watchdog | 仅新固定薄launch，通用watchdog/activation未改 | launch对应失败和未执行阶段分列，不称通用运行资格 |
+| checker/benchmark | 有限研究模式与fixture；没有新通用算法 | 合成metric/owner测试不能替代真实P8结果 |
+| do-not-merge | ignored大原件、未资格化研究路径和整分支 | 轻量失败证据可保留；不得重写原FAILED、accepted9或科学能力 |
+
+S/F/C尚未进入；P8正式0/1、正式账7/9。T2/2耗尽不能借E补跑。末节点仅静态修正；E完整恢复链尚未实现或资格化。见[Response V16](../response_v16.md)及[结果](records/v16_r9_p8_results_v1.json)。
+
+## V15 历史状态：P5诊断完成但不获接受，失败原件保留
 
 | 依赖组 | V15 文件/证据与验证 | 建议合入顺序与边界 |
 |---|---|---|

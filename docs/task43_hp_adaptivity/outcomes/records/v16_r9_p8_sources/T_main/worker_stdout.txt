@@ -1,0 +1,27 @@
+F
+=================================== FAILURES ===================================
+______________ test_v16_p8_real_main_writer_terminal_and_rollback ______________
+src/test/test_task43_v11_scientific_restart.py:6142: in test_v16_p8_real_main_writer_terminal_and_rollback
+    h100_anchor.main(
+benchmarks/task43_hp_adaptivity/h100_anchor.py:10352: in main
+    summary = _run(
+benchmarks/task43_hp_adaptivity/h100_anchor.py:9946: in _run
+    return _run_with_v3_failure_terminal(_run_impl, *args, **kwargs)
+benchmarks/task43_hp_adaptivity/h100_anchor.py:9807: in _run_with_v3_failure_terminal
+    return run_impl(*args, **kwargs)
+benchmarks/task43_hp_adaptivity/h100_anchor.py:8680: in _run_impl
+    summary = run_stage4b_block_grating_3d_case(
+src/test/test_task43_v11_scientific_restart.py:6120: in fake_solver
+    kwargs["variable_p_live_observer"](view)
+benchmarks/task43_hp_adaptivity/h100_anchor.py:7918: in active_observer
+    checkpoint_v16_p8_identity = _v16_p8_endpoint_identity(
+benchmarks/task43_hp_adaptivity/h100_anchor.py:1001: in _v16_p8_endpoint_identity
+    physical = task43_v2_physical_configuration_identity(
+benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py:152: in task43_v2_physical_configuration_identity
+    raise ValueError(f"{name} must be a lowercase SHA256 identity")
+E   ValueError: active_degree_plan_sha256 must be a lowercase SHA256 identity
+- generated xml file: /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/focused_attempt1/pytest_results.xml -
+=========================== short test summary info ============================
+FAILED src/test/test_task43_v11_scientific_restart.py::test_v16_p8_real_main_writer_terminal_and_rollback
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 12.01s

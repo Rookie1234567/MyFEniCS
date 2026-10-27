@@ -1,0 +1,119 @@
+{
+  "schema": "task43.v16.r9_p8-results.v1",
+  "created_utc": "2026-10-27T08:17:44.408666+00:00",
+  "repository": "Rookie1234567/MyFEniCS",
+  "branch": "task43_hp_adaptivity",
+  "review_commit": "f72e1c8d031de7acc374f0806ddac06099c461c4",
+  "reviewed_base": "1290b4f283c01d81f23ba9e1a187458d24bde2af",
+  "implementation_commit": "c620c96ef98adac4e1caf05e28dae7744e73a328",
+  "T_recovery_commit": "3b9d5e0adb43f69a1fdf339691b26d7eec506686",
+  "contract": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json",
+    "sha256": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+    "size_bytes": 21251
+  },
+  "status": "STOPPED_T_QUOTA_EXHAUSTED",
+  "scientific_classification": "ACTION_ENDPOINT_NOT_QUALIFIED",
+  "stop_reason": "T main failed a synthetic SHA identity. T recovery passed17, failed final same-worker resume fixture because it incorrectly requested unused phase. Final local fixture fix is static only. Review9.3 prohibits S/F/C after two T slots with incomplete gate.",
+  "phases": {
+    "T_main": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_sources/T_main/terminal_review.json",
+      "sha256": "ae50590a15a440c3c6388dc2e87d09c7c3f555550442599b093e487ce3543020",
+      "size_bytes": 13381
+    },
+    "T_recovery": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_sources/T_recovery/terminal_review.json",
+      "sha256": "418bd5a4a9fc8673a72282b4747e7247639d39593dd6ca2cbbba69c693b39a3e",
+      "size_bytes": 22866
+    },
+    "S": "NOT_RUN_T_GATE_NOT_MET",
+    "F": "NOT_RUN_T_GATE_NOT_MET",
+    "C": "NOT_RUN_T_GATE_NOT_MET",
+    "E": "NOT_RUN_NOT_AVAILABLE_FOR_T"
+  },
+  "runtime_counts": {
+    "T_main": 1,
+    "T_recovery": 1,
+    "S": 0,
+    "F": 0,
+    "C": 0,
+    "E": 0,
+    "support_total": 2,
+    "support_authorized_max": 5,
+    "formal_new": 0,
+    "formal_envelope_used": 7,
+    "formal_envelope_max": 9,
+    "P8_used": 0,
+    "P8_max": 1,
+    "old_sealed_slot_stays_sealed": true,
+    "separate_sanity": 0,
+    "separate_native_or_ABI_probe": 0,
+    "ready": 0
+  },
+  "costs": {
+    "support_whole_watchdog_seconds": 82.05409320862964,
+    "support_whole_limit_seconds": 6000,
+    "formal_whole_seconds": null,
+    "formal_status": "NOT_RUN",
+    "initial_input_identity_measured_static_seconds": 1.8255486912094057,
+    "not_measured": [
+      "manual/static reading, editing and local lookup repairs",
+      "AST/Ruff/bash-n/git diff checks",
+      "root read-only terminal/hash/trace/resource postprocessing",
+      "Git/document closeout"
+    ],
+    "accounting": "Pytest time and phase times are contained in whole-watchdog, not added; tool response latency is not a reconstructed total wall; old V15 costs separate."
+  },
+  "scientific_values": {
+    "P8_FE": null,
+    "P8_delta_FE": null,
+    "P8_R_T_Av": null,
+    "P8_q8_q10_J_G": null,
+    "P8_efficiency": null,
+    "reason": "S/F/C not run; fixture FE110682 and synthetic metrics are not measurements of P8",
+    "historical_R9_FE": 110472,
+    "historical_H8_FE": 116740,
+    "historical_H8_delta_J": 0.09051462124265441,
+    "historical_epsilon_J": 0.12716416232413652,
+    "historical_epsilon_G": 9.088158796603444e-06,
+    "history_scope": "from V15 existing delivery, no new sampling/integration/solve"
+  },
+  "implementation_boundaries": [
+    "Three existing opt-in research entry modules, test and fixed contract; shared numerical core, default writer, activation and ABI unchanged.",
+    "E resume destination/same-worker binding helper exists; full conditional E dispatch was not selected, implemented or qualified, because T did not pass.",
+    "C fixture uses synthetic metric boundary values; passes establish orchestration/persistence, not scientific metric accuracy.",
+    "No actual P8 space, FE, solve, primary or four-field result exists."
+  ],
+  "final_byte_scope": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_sources/final_byte_scope.json",
+    "sha256": "7d033b5717c395c1e3546ad029fca5781020622865f44dbace68aae7c0ebb379",
+    "size_bytes": 966
+  },
+  "capabilities": {
+    "space": "PARTIAL",
+    "selection": "PARTIAL",
+    "accuracy": "NOT_PASSED",
+    "equal_accuracy_total_cost": "NOT_ESTABLISHED",
+    "iteration": "NOT_RUN / NOT_QUALIFIED"
+  },
+  "merge_approval": false,
+  "minimum_remaining_task": "Review the static existing-phase fixture fix and authorize an explicit bounded completion test with runtime identity in the same worker; only if all T gates become qualified may the unchanged S->F->C conditional chain proceed. No automatic third T or E substitution.",
+  "preparation_local_failures": [
+    {
+      "kind": "read-only lookup/path/shell command",
+      "count": 4,
+      "record": "v16_r9_p8_sources/root_static_notes.jsonl",
+      "timing": "not_measured"
+    },
+    {
+      "kind": "static Ruff F821",
+      "detail": "accidental V16 fixture contract block in old V11 pending fixture removed before initial freeze; subsequent static check passed",
+      "timing": "not_measured"
+    },
+    {
+      "kind": "root log lookup",
+      "detail": "watchdog/command.log did not exist; actual worker.log then read",
+      "timing": "not_measured"
+    }
+  ]
+}

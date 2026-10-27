@@ -1,0 +1,54 @@
+{
+  "classification": "synthetic_fixture_only_not_P8_science",
+  "raw_audit": {
+    "full_active_transformed": {
+      "active_interior_rows": 110681,
+      "independent_active_fe_dofs": 110682,
+      "independent_reduced_trace_rows": 1,
+      "interior_metric": "Euclidean",
+      "raw_full_entity_map_rows": 110683,
+      "raw_trace_rows": 2,
+      "reduced_trace_dtn_rows_including_auxiliary": 613,
+      "relative_residual": 0.0,
+      "residual_norm": 0.0,
+      "rhs_norm": 24.758836806279895,
+      "trace_metric": "saved same-pass Gram inverse action"
+    },
+    "gates": {
+      "extra_correction_count_zero": true,
+      "full_active_metric_raw_relative_le_1e-8": true,
+      "independent_A6_raw_relative_le_1e-8": true,
+      "normal_correction_exactly_once": true,
+      "normal_correction_positive_reason": true,
+      "normal_correction_raw_residual_strictly_decreased": true,
+      "returned_condensed_raw_relative_le_1e-9": true
+    },
+    "independent_A6": {
+      "relative_residual": 0.0,
+      "residual_norm": 0.0,
+      "rhs_norm": 332.689044003556
+    },
+    "normal_correction": {
+      "after_relative_residual": 0.0,
+      "before_relative_residual": 1.0,
+      "converged_reason": 2,
+      "rhs_identical": true
+    },
+    "pass": true,
+    "returned_condensed": {
+      "relative_residual": 0.0,
+      "residual_norm": 0.0,
+      "rhs_norm": 24.758836806279895
+    }
+  },
+  "terminal": {
+    "continuation_all_false": true,
+    "error": "_WriterReached: stop after the actual shared writer",
+    "official_result": false,
+    "passed": false,
+    "status": "FAILED"
+  },
+  "primary_sha256_after_failure": "130e29b97ceb1ec9bd8f91cf89431ad3bbbd78b68c3f2da357baa378c1c1445a",
+  "terminal_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/focused_recovery1/fixtures/test_v16_p8_real_main_writer_t0/artifacts/task43/v16_p8/formal/R9_P8_attempt1/run/task43_v16_p8_partial_terminal.json",
+  "terminal_sha256": "cc8df34eb9b9f88b8e4283a68c3b7870ed2d781a0f729e026a5b66fae3e456d8"
+}

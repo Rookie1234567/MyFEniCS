@@ -1,6 +1,20 @@
 # Task43 当前收口（2026-10-27）：PARTIAL / CONTROLLED_NEGATIVE
 
-## Task43 当前收口（V15）：P5诊断完成未接受，A1/P4失败保留
+## Task43 V16 当前状态：P8 前门未完成，正式槽未调用
+
+V15 review授权固定global cell8/root4的p5→p6无h实验，已冻结三个研究入口与合同。T首次main fixture身份格式错误；修复后T恢复17通过/1失败，最后同worker续接fixture误用unused-phase门。最终局部修复仅静态核对，NOT_RERUN。T2/2用尽，按review §9.3停止S/F/C，不挪用E。
+
+| 登记 | 实际状态 |
+|---|---|
+| 本轮支持 | 2次，whole82.05409320862964 s；RSS采样峰304947200/519254016 B；swap0，CPU1，后代清理 |
+| P8模型 | 实际FE、R/T/Av、J/G、收益/FE均NOT_RUN；fixture不作科学实值 |
+| 正式额度 | 新增0；原7/8前瞻为7/9，P8槽0/1；旧末槽封存 |
+| 五项能力 | 空间PARTIAL；选择PARTIAL；精度NOT_PASSED；同精度全过程成本NOT_ESTABLISHED；迭代NOT_RUN/NOT_QUALIFIED |
+| 资格 | 17项有限fixture证据；最终测试文件不称18/18；无READY或merge approval |
+
+主控承认冻结前漏识别两处fixture错误。最小剩余任务是有界补验最终同worker续接门；只有明确后续授权和T资格满足后，才继续原S→F→C。旧R9/H8/P5和负结果不回写。详见[Response V16](task43_hp_adaptivity/response_v16.md)与[V16机器记录](task43_hp_adaptivity/outcomes/records/v16_r9_p8_results_v1.json)。
+
+## Task43 历史收口（V15）：P5诊断完成未接受，A1/P4失败保留
 
 V15 用户明确授权普通bug修复后继续，不因普通接线缺陷停止；数值Gate失败仍须暂停审阅，资源安全门不变。固定 P2_BUGFIX 来源已通过root joined审计：194叶、FE 116,740、较R9增加6,268。P3 A1正式求解因只读视图将scope转为tuple、保存JSON为list而raw-scope检查FAILED；从保存primary独立重算raw residual在阈值内，授权的非official saved-primary q8/q10与Av后处理另通过，但原A1 terminal仍失败。R9_H8正式求解的raw数值门也通过，收尾summary writer因ndarray JSON序列化失败；P4 terminal保持FAILED。P5原槽现已通过固定saved-primary绑定完成q8/q10 union诊断；记录状态为COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE，root已写joined closeout。
 

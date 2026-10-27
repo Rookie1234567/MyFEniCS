@@ -1,0 +1,15 @@
+.................F
+=================================== FAILURES ===================================
+_________ test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound __________
+src/test/test_task43_v11_scientific_restart.py:6819: in test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound
+    runtime = h100_anchor._check_v11_runtime_envelope(h100_anchor.MPI.COMM_WORLD)
+benchmarks/task43_hp_adaptivity/h100_anchor.py:2503: in _check_v11_runtime_envelope
+    identity = _require_v11_watchdog_worker_identity(
+benchmarks/task43_hp_adaptivity/h100_anchor.py:6020: in _require_v11_watchdog_worker_identity
+    raise RuntimeError("V11 watchdog phase file already exists")
+E   RuntimeError: V11 watchdog phase file already exists
+- generated xml file: /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/focused_recovery1/pytest_results.xml -
+=========================== short test summary info ============================
+FAILED src/test/test_task43_v11_scientific_restart.py::test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 17 passed in 54.26s

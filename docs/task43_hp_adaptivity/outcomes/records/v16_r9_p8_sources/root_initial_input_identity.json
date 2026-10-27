@@ -1,0 +1,270 @@
+{
+  "schema": "task43.v16.root-initial-consumed-input-check.v1",
+  "created_utc": "2026-10-27T06:21:29.014207+00:00",
+  "review_head": "f72e1c8d031de7acc374f0806ddac06099c461c4",
+  "scope": "Read-only byte identity of directly consumed R9/Y6/H8 and P5 inputs; no NPZ numeric/geometry claim; S must validate layout and geometry support.",
+  "files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/dtn_auxiliary_amplitudes_3d.json",
+      "expected_sha256": "ba628da18c0e107625c393b7ab33a5e1ec19861892d596ac67156cb65c9fdae8",
+      "actual_sha256": "ba628da18c0e107625c393b7ab33a5e1ec19861892d596ac67156cb65c9fdae8",
+      "bytes": 492153,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/dtn_port_diffraction_orders_3d.json",
+      "expected_sha256": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463",
+      "actual_sha256": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463",
+      "bytes": 840324,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/full3d_reference_samples.json",
+      "expected_sha256": "dc6df754f565d3af41c8d561904c75dfd3667299a405b1c57d2a2804c9786fe3",
+      "actual_sha256": "dc6df754f565d3af41c8d561904c75dfd3667299a405b1c57d2a2804c9786fe3",
+      "bytes": 1969,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/full3d_reference_samples.npz",
+      "expected_sha256": "2735c75f4a2fa559ae2ba79022e0af6b5b27b892f0d8f8df2fef20127c9bce04",
+      "actual_sha256": "2735c75f4a2fa559ae2ba79022e0af6b5b27b892f0d8f8df2fef20127c9bce04",
+      "bytes": 1325421,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/p6_condensed_direct_summary.json",
+      "expected_sha256": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc",
+      "actual_sha256": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc",
+      "bytes": 88808,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/recovered_p6_storage_coefficients.npy",
+      "expected_sha256": "a4d38aa88da897e4274160d7f23944e5870d253b0a3e4033e28332bbf430570c",
+      "actual_sha256": "a4d38aa88da897e4274160d7f23944e5870d253b0a3e4033e28332bbf430570c",
+      "bytes": 6237440,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/recovered_reference_bundle.npz",
+      "expected_sha256": "6c244fae7e246c171cef1f66ae3f1d607622c89da1f9cd4474e55908bfd6b6d4",
+      "actual_sha256": "6c244fae7e246c171cef1f66ae3f1d607622c89da1f9cd4474e55908bfd6b6d4",
+      "bytes": 16595861,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/resolved_config.json",
+      "expected_sha256": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc",
+      "actual_sha256": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc",
+      "bytes": 12897,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/restore_identity_record.json",
+      "expected_sha256": "ef77da1e68136e08b48dc0e352690f9c9fdcd132dcc2b765dcb12413b7cf3300",
+      "actual_sha256": "ef77da1e68136e08b48dc0e352690f9c9fdcd132dcc2b765dcb12413b7cf3300",
+      "bytes": 17180,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_only_authority_attempt1/plan_output/plans/round9_p_up.json",
+      "expected_sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+      "actual_sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+      "bytes": 47658,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+      "expected_sha256": "7a71623b15afea662956ecd6af89b1d08701631174d1a048d5320e7a3217b893",
+      "actual_sha256": "7a71623b15afea662956ecd6af89b1d08701631174d1a048d5320e7a3217b893",
+      "bytes": 6066934,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_up_attempt1/run/task43_round1_candidate_record.json",
+      "expected_sha256": "5b6454d4234cf254536f1c1d4263c3e804ed508cdc644614649b592e818027ea",
+      "actual_sha256": "5b6454d4234cf254536f1c1d4263c3e804ed508cdc644614649b592e818027ea",
+      "bytes": 3312110,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_root_audit/seed_geometry_audit.json",
+      "expected_sha256": "3fc78f7d728f357fc33b26decd0e6aaa5d3981197cdef4dc49f83633c169a524",
+      "actual_sha256": "3fc78f7d728f357fc33b26decd0e6aaa5d3981197cdef4dc49f83633c169a524",
+      "bytes": 2215,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+      "expected_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+      "actual_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+      "bytes": 5319,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+      "expected_sha256": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9",
+      "actual_sha256": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9",
+      "bytes": 10704,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_plan.json",
+      "expected_sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+      "actual_sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+      "bytes": 47658,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/round9_p_up_attempt1/candidate_comparison_v2.json",
+      "expected_sha256": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30",
+      "actual_sha256": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30",
+      "bytes": 77297,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/comparison_contract_v1.json",
+      "expected_sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1",
+      "actual_sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1",
+      "bytes": 6271,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/task43_v11_partial_terminal.json",
+      "expected_sha256": "613a455c2f4443aa1a711e3f1a82f050d48b8d6e8060969edfef7075e0fcb7aa",
+      "actual_sha256": "613a455c2f4443aa1a711e3f1a82f050d48b8d6e8060969edfef7075e0fcb7aa",
+      "bytes": 1617806,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/primary_state.npz",
+      "expected_sha256": "a337b20719fe8e255acf0f6fe7ebd4c8a81f88856eb961f07c5dc962829526a0",
+      "actual_sha256": "a337b20719fe8e255acf0f6fe7ebd4c8a81f88856eb961f07c5dc962829526a0",
+      "bytes": 16195388,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/primary_raw_vector_audit.json",
+      "expected_sha256": "ba5f77b62952ab4e056f409993d44b4d414e69071a2054952f9eef783b8321fd",
+      "actual_sha256": "ba5f77b62952ab4e056f409993d44b4d414e69071a2054952f9eef783b8321fd",
+      "bytes": 1712954,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/pre_validation_checkpoint.json",
+      "expected_sha256": "344c0410e21cad82c1535bcb4a14848562f3f69aea83d545943914584241a9af",
+      "actual_sha256": "344c0410e21cad82c1535bcb4a14848562f3f69aea83d545943914584241a9af",
+      "bytes": 1218098,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/pre_validation_checkpoint.npz",
+      "expected_sha256": "4fd313f966cf3787cfe76e15d42eb0c52e9a91a425f4169f2ff5105b0172de62",
+      "actual_sha256": "4fd313f966cf3787cfe76e15d42eb0c52e9a91a425f4169f2ff5105b0172de62",
+      "bytes": 6540874,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/candidate_plan.json",
+      "expected_sha256": "f26dc8a9c4a0c6d4aed7d9767477e142e57dadb69db39a437bb05b9bed701688",
+      "actual_sha256": "f26dc8a9c4a0c6d4aed7d9767477e142e57dadb69db39a437bb05b9bed701688",
+      "bytes": 40422,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json",
+      "expected_sha256": "cd035508492b0f65798afc669db4e9f93516608d965612f6650ab327d83d8ed3",
+      "actual_sha256": "cd035508492b0f65798afc669db4e9f93516608d965612f6650ab327d83d8ed3",
+      "bytes": 905608,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/solve/dtn_port_power_metrics_3d.json",
+      "expected_sha256": "df7fba16cd2addf8955252f03fb0f0ffde1b7c33bf1cf066349a82a9bcb78c81",
+      "actual_sha256": "df7fba16cd2addf8955252f03fb0f0ffde1b7c33bf1cf066349a82a9bcb78c81",
+      "bytes": 5641,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/solve/dtn_auxiliary_amplitudes_3d.json",
+      "expected_sha256": "935b778c5b501f80122f99c1dc3be31cc314b8be9500430a09acedb438726084",
+      "actual_sha256": "935b778c5b501f80122f99c1dc3be31cc314b8be9500430a09acedb438726084",
+      "bytes": 552161,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/solve/volume_absorption.json",
+      "expected_sha256": "63fad5942ada7021ce18c4394ec557dc2133c4e19136da2741fb2bcfbe2657cb",
+      "actual_sha256": "63fad5942ada7021ce18c4394ec557dc2133c4e19136da2741fb2bcfbe2657cb",
+      "bytes": 2350,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/snapshots/launch_manifest.json",
+      "expected_sha256": "7a83ac558bce05f336c91eed0cefde7791f38641707aa5639bbe38f6c985911e",
+      "actual_sha256": "7a83ac558bce05f336c91eed0cefde7791f38641707aa5639bbe38f6c985911e",
+      "bytes": 37665,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/snapshots/launch.sh",
+      "expected_sha256": "15e7158e75ef98d70403bdddc1a4c4d309d8bcde417aeec80ac40ace1e5ec3ef",
+      "actual_sha256": "15e7158e75ef98d70403bdddc1a4c4d309d8bcde417aeec80ac40ace1e5ec3ef",
+      "bytes": 11336,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/watchdog/summary.json",
+      "expected_sha256": "357f7d5d55d023613afa49c01dea4c6b69b82b9129d6e819b209808d4c8bd6ad",
+      "actual_sha256": "357f7d5d55d023613afa49c01dea4c6b69b82b9129d6e819b209808d4c8bd6ad",
+      "bytes": 3554,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/launcher_exit_code.txt",
+      "expected_sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+      "actual_sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+      "bytes": 2,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/watchdog_exit_code.txt",
+      "expected_sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+      "actual_sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+      "bytes": 2,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/source_head.txt",
+      "expected_sha256": "db3e2d35a938475c74d1532b45670206204e1ffe840557dc61a13b1c70afa54e",
+      "actual_sha256": "db3e2d35a938475c74d1532b45670206204e1ffe840557dc61a13b1c70afa54e",
+      "bytes": 41,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_comparison.json",
+      "expected_sha256": "26c836ba9abab4ec2636c7c3467381a25b087e7b9c6e85cd655508589abe8097",
+      "actual_sha256": "26c836ba9abab4ec2636c7c3467381a25b087e7b9c6e85cd655508589abe8097",
+      "bytes": 1544040,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_q8.npz",
+      "expected_sha256": "7286c09d6b3f3bb3a7ece1cd46284a9a5faafd6ebbcb213e2568b6a32ed1119e",
+      "actual_sha256": "7286c09d6b3f3bb3a7ece1cd46284a9a5faafd6ebbcb213e2568b6a32ed1119e",
+      "bytes": 159170916,
+      "matched": true
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_q10.npz",
+      "expected_sha256": "82d7bc676e23bea0794caf5e16b3d6c28ee02cb18c57cb59e4bfc08a55759f99",
+      "actual_sha256": "82d7bc676e23bea0794caf5e16b3d6c28ee02cb18c57cb59e4bfc08a55759f99",
+      "bytes": 310869877,
+      "matched": true
+    }
+  ],
+  "all_match": true,
+  "measured_static_seconds": 1.8255486912094057,
+  "new_native_or_driver_or_PDE": 0
+}

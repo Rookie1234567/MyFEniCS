@@ -1,0 +1,17 @@
+{
+  "schema": "task43.v16.final-byte-scope.v1",
+  "tested_head": "3b9d5e0adb43f69a1fdf339691b26d7eec506686",
+  "tested_test_sha256": "29b3d134f77f76c952d497a268e89c8727c3173c017be809fea3c2a8b46181f7",
+  "final_test_sha256": "80a80fc82f67bebb8b218f5f2f7489b1f37e640da52fb22643b93eb5384ebe6e",
+  "changed_top_level_definitions": [
+    "test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound"
+  ],
+  "17_passed_node_functions_and_shared_helpers_identical": true,
+  "final_changed_node": "NOT_RERUN",
+  "full_final_test_file": "NOT_TESTED_AS_A_WHOLE",
+  "research_source": {
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py": "fd64d1ba70ecbac2b09afb3581fd05af2bcfedc71a379982be70c39ff1f63508",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "2279e43a4bab41f21b900f4eded95135f2198cff633f39f897ecff16069b1d84",
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "342d57b7552934125c22bf42d035f57bbf8c284ce19d4d85f1901e88a11701e3"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "task43.v16.delivery-static-check.v1",
+  "checks": {
+    "JSON_files_parsed": 17,
+    "new_response_and_evidence_readme_relative_links": "all exist",
+    "four_changed_python_AST": "pass",
+    "git_diff_check": "pass",
+    "S_F_C_E_attempt_roots": "absent",
+    "T_root_qualification": "absent",
+    "final_fixture_pytest": "NOT_RERUN"
+  },
+  "dynamic_test_counts_unchanged": true,
+  "not_measured": [
+    "static document/JSON/link/AST checks; no reconstructed total wall"
+  ],
+  "result_sha256": "82f876bfc1209f9bbb7d55be16311f400b82e3c0b45dc0fd567b9bfa837497ea"
+}

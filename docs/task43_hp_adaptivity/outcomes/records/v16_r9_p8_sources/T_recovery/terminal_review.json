@@ -1,0 +1,746 @@
+{
+  "schema": "task43.v16.root-support-closeout.v1",
+  "stage": "T_recovery",
+  "status": "FAILED_FIXTURE_NOT_QUALIFIED",
+  "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/focused_recovery1",
+  "source_head": "3b9d5e0adb43f69a1fdf339691b26d7eec506686",
+  "test_sha256": "29b3d134f77f76c952d497a268e89c8727c3173c017be809fea3c2a8b46181f7",
+  "test_results": [
+    {
+      "name": "test_v16_p8_real_main_writer_terminal_and_rollback",
+      "seconds": 1.564,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_plan_builder_and_actual_gate",
+      "seconds": 4.747,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_raw_identity_and_normal_gates[valid_disk_reader]",
+      "seconds": 0.064,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_raw_identity_and_normal_gates[raw_residual_sign]",
+      "seconds": 0.021,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_raw_identity_and_normal_gates[rebound_coefficient_mixture]",
+      "seconds": 0.068,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_raw_identity_and_normal_gates[rebound_mesh_index_mixture]",
+      "seconds": 0.048,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_raw_identity_and_normal_gates[nonzero_terminal]",
+      "seconds": 0.026,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_raw_identity_and_normal_gates[unknown_terminal]",
+      "seconds": 0.025,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_raw_identity_and_normal_gates[missing_source_selector]",
+      "seconds": 0.02,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_raw_identity_and_normal_gates[missing_contract]",
+      "seconds": 0.005,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_raw_identity_and_normal_gates[missing_plan]",
+      "seconds": 0.019,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_compare_reuses_old_samples_and_samples_p8_once[paired_success]",
+      "seconds": 0.595,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_compare_reuses_old_samples_and_samples_p8_once[q10_failure_keeps_q8]",
+      "seconds": 0.223,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_compare_reuses_old_samples_and_samples_p8_once[input_drift_keeps_outputs]",
+      "seconds": 0.609,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_compare_reuses_old_samples_and_samples_p8_once[binding_drift_keeps_outputs]",
+      "seconds": 0.532,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_compare_reuses_old_samples_and_samples_p8_once[joined_terminal_rejected]",
+      "seconds": 0.066,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_saved_sample_owner_and_partition_bindings",
+      "seconds": 34.17,
+      "status": "PASSED",
+      "failure": null
+    },
+    {
+      "name": "test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound",
+      "seconds": 0.052,
+      "status": "FAILED",
+      "failure": "src/test/test_task43_v11_scientific_restart.py:6819: in test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound\n    runtime = h100_anchor._check_v11_runtime_envelope(h100_anchor.MPI.COMM_WORLD)\nbenchmarks/task43_hp_adaptivity/h100_anchor.py:2503: in _check_v11_runtime_envelope\n    identity = _require_v11_watchdog_worker_identity(\nbenchmarks/task43_hp_adaptivity/h100_anchor.py:6020: in _require_v11_watchdog_worker_identity\n    raise RuntimeError(\"V11 watchdog phase file already exists\")\nE   RuntimeError: V11 watchdog phase file already exists"
+    }
+  ],
+  "not_run": 0,
+  "whole_watchdog_seconds": 61.78995769890025,
+  "pytest_seconds": 54.177,
+  "resources": {
+    "sample_count": 94,
+    "sampled_simultaneous_tree_RSS_peak_bytes": 519254016,
+    "task_swap_peak_bytes": 0,
+    "cap_bytes": 8589934592,
+    "reserve_bytes": 324465057792,
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 4250695,
+        "pswpout_pages": 7183007
+      },
+      "end": {
+        "pswpin_pages": 4250695,
+        "pswpout_pages": 7183007
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "nominal_interval_seconds": 0.25,
+    "observed_interval_seconds": {
+      "min": 0.37652384396642447,
+      "max": 0.7839593598619103
+    }
+  },
+  "exits": {
+    "launcher": 2,
+    "watchdog": 2,
+    "worker": 1
+  },
+  "cleanup": {
+    "descendants_cleared": true,
+    "remaining": [],
+    "host_proc": [
+      {
+        "pid": 3393135,
+        "start_ticks": 301379865,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 3393136,
+        "start_ticks": 301379921,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 3393147,
+        "start_ticks": 301379935,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 3393148,
+        "start_ticks": 301380214,
+        "same_process_still_present": false,
+        "proc_stat": null
+      }
+    ]
+  },
+  "identity_checks": {
+    "source_snapshot_matches": true,
+    "input_matches": true,
+    "source_count": 51,
+    "input_count": 79
+  },
+  "trace": {
+    "files": [
+      {
+        "file": "sched.3393136",
+        "sha256": "8d99523c61f6a98afac8e32413380466fa3a1c6bf604e626da4dedb43f1c66d2",
+        "bytes": 246466,
+        "lines": 3864,
+        "tail": "1793088864.347496 +++ exited with 1 +++"
+      },
+      {
+        "file": "sched.3393148",
+        "sha256": "d0644e909115937f128f5a43d7f4f18e93981088822e29f9f0b36ac5a8a25df7",
+        "bytes": 3717,
+        "lines": 47,
+        "tail": "1793088864.385920 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3393149",
+        "sha256": "33538bf6a4c82b9e7ef63dd0d425b560a16554483a4bfae0ccf4354fd4d99f62",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793088864.342364 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3393150",
+        "sha256": "5b987a88ef61eb3800209ece7059788fcef0f4b521e873786d436ff3e84f4f0c",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793088864.352309 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3393151",
+        "sha256": "e05a980c142401928b4bcfaaf1ffc7dd12cb15142ebe9f10550453d0a3176401",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793088864.088871 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3393152",
+        "sha256": "a74929347449c9c48a302b6abcb860d8f4f4df2cd1e689522e3c598b7f89dba0",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793088864.054376 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3393171",
+        "sha256": "3ab7d378135a230095d4d7650ed0b437deee36036f59a907751ebdd9490face6",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793088814.337601 +++ exited with 0 +++"
+      }
+    ],
+    "setters": [],
+    "parse_anomalies": [],
+    "syscalls": [
+      {
+        "file": "sched.3393136",
+        "line": 1,
+        "raw": "1793088806.923565 sched_getaffinity(0, 128, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 125,
+        "raw": "1793088807.920869 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 225,
+        "raw": "1793088808.332818 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 320,
+        "raw": "1793088808.365381 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 415,
+        "raw": "1793088808.386486 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 510,
+        "raw": "1793088808.404509 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 605,
+        "raw": "1793088808.421898 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 698,
+        "raw": "1793088808.438504 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 791,
+        "raw": "1793088808.454473 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 884,
+        "raw": "1793088808.470848 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 977,
+        "raw": "1793088808.488415 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1070,
+        "raw": "1793088808.505698 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1163,
+        "raw": "1793088813.592501 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1200,
+        "raw": "1793088813.621834 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1237,
+        "raw": "1793088813.633489 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1272,
+        "raw": "1793088813.641899 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1307,
+        "raw": "1793088813.817896 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1342,
+        "raw": "1793088813.900266 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1377,
+        "raw": "1793088813.931593 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1412,
+        "raw": "1793088813.977235 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1447,
+        "raw": "1793088814.028966 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1482,
+        "raw": "1793088814.066483 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1517,
+        "raw": "1793088814.097471 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1552,
+        "raw": "1793088814.166542 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1587,
+        "raw": "1793088814.209230 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1622,
+        "raw": "1793088814.245263 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1694,
+        "raw": "1793088814.367623 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1729,
+        "raw": "1793088814.380082 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1764,
+        "raw": "1793088814.388187 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1799,
+        "raw": "1793088814.402513 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1834,
+        "raw": "1793088814.410114 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1869,
+        "raw": "1793088814.417254 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1904,
+        "raw": "1793088814.430885 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1939,
+        "raw": "1793088814.438466 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 1974,
+        "raw": "1793088814.445517 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2009,
+        "raw": "1793088814.462912 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2044,
+        "raw": "1793088814.470894 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2079,
+        "raw": "1793088814.478092 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2114,
+        "raw": "1793088820.315671 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2149,
+        "raw": "1793088820.339417 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2184,
+        "raw": "1793088820.348227 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2219,
+        "raw": "1793088820.361687 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2254,
+        "raw": "1793088820.372766 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2289,
+        "raw": "1793088820.380316 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2324,
+        "raw": "1793088820.387554 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2359,
+        "raw": "1793088820.497602 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2394,
+        "raw": "1793088820.538432 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2429,
+        "raw": "1793088820.573492 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2464,
+        "raw": "1793088820.687393 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2499,
+        "raw": "1793088820.730250 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2534,
+        "raw": "1793088820.761895 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2569,
+        "raw": "1793088820.926315 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2604,
+        "raw": "1793088820.943753 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2639,
+        "raw": "1793088820.953549 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2674,
+        "raw": "1793088820.968210 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2709,
+        "raw": "1793088820.979527 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2744,
+        "raw": "1793088820.987746 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2779,
+        "raw": "1793088820.994695 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2814,
+        "raw": "1793088821.038809 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2849,
+        "raw": "1793088821.054711 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2884,
+        "raw": "1793088821.064249 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2919,
+        "raw": "1793088821.169770 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2954,
+        "raw": "1793088821.213408 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 2989,
+        "raw": "1793088821.249211 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3024,
+        "raw": "1793088821.293431 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3059,
+        "raw": "1793088821.330562 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3094,
+        "raw": "1793088821.365445 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3129,
+        "raw": "1793088821.391368 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3164,
+        "raw": "1793088821.515679 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3199,
+        "raw": "1793088821.558685 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3234,
+        "raw": "1793088821.594019 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3269,
+        "raw": "1793088821.656709 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3304,
+        "raw": "1793088821.671872 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3339,
+        "raw": "1793088821.681162 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3374,
+        "raw": "1793088821.765978 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3409,
+        "raw": "1793088821.784044 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3444,
+        "raw": "1793088821.792802 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3479,
+        "raw": "1793088821.806331 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3514,
+        "raw": "1793088821.817222 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3549,
+        "raw": "1793088821.824761 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3584,
+        "raw": "1793088821.831886 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3619,
+        "raw": "1793088821.886870 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3654,
+        "raw": "1793088821.926360 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3689,
+        "raw": "1793088821.962885 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3724,
+        "raw": "1793088822.075619 sched_getaffinity(3393136, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3759,
+        "raw": "1793088822.118759 sched_getaffinity(3393151, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3794,
+        "raw": "1793088822.160230 sched_getaffinity(3393152, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393136",
+        "line": 3829,
+        "raw": "1793088856.536590 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393148",
+        "line": 1,
+        "raw": "1793088807.465458 sched_getaffinity(3393148, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393148",
+        "line": 19,
+        "raw": "1793088807.594722 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3393148",
+        "line": 33,
+        "raw": "1793088807.607209 sched_getaffinity(3393148, 8, [1]) = 8"
+      }
+    ],
+    "signals": [
+      {
+        "file": "sched.3393136",
+        "line": 1657,
+        "raw": "1793088814.338168 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3393171, si_uid=1000, si_status=0, si_utime=0, si_stime=1 /* 0.01 s */} ---"
+      }
+    ],
+    "signals_interpretation": "SIGCHLD CLD_EXITED status0 matches source-identity subprocess trace; no termination signal",
+    "all_getter_masks": "[1]",
+    "empty_cmdline": "Only final Z worker/tracer/orted entries; PID/start_ticks bound and reaped, not live missing identity."
+  },
+  "root_read_scope": "All final raw syscall/exit lines, exact de-duplicated stack lines, all resource rows, runtime identity, logs/XML and host PID/startticks cleanup; no new native probe",
+  "raw_observation": {
+    "path": "benchmarks/artifacts/task43/v16_p8/preparation/focused_recovery1_root_terminal_observations.json",
+    "sha256": "d7d1bcae39537af3869cdca7881a01139f4c019ff98cbaf836fd3a42a3d8ce87",
+    "size_bytes": 1550896
+  },
+  "evidence": [
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/focused_recovery1/watchdog/resources.jsonl",
+      "sha256": "5c9badb657b68c3fe7d0292e129f4c8533a4b592af8dbb36468429eea4fef591",
+      "size_bytes": 1278646
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/focused_recovery1/watchdog/worker.log",
+      "sha256": "68cd8e078de204f6486bcce6dc80b743024df9435887b63fce6ab9dfbc5b1dbd",
+      "size_bytes": 1176
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/focused_recovery1/watchdog/summary.json",
+      "sha256": "32890ec11d5e7372ec7cbd9ad7880ecc19088e03f8620d716eff3454846dea8a",
+      "size_bytes": 3543
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/focused_recovery1/snapshots/launch_manifest.json",
+      "sha256": "0bf1f78cd09e41e9ddd11bd1a655ccef87913283aaa27474f7ba46e8c101a178",
+      "size_bytes": 37581
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/focused_recovery1/pytest_results.xml",
+      "sha256": "439ac369e32db4d840e17808ae2dbe78665ff08eef3581117e3b6a836d201153",
+      "size_bytes": 3637
+    }
+  ],
+  "cache_scope": "No cache path provided; shared JIT/global cache not measured",
+  "new_formal_PDE": 0
+}

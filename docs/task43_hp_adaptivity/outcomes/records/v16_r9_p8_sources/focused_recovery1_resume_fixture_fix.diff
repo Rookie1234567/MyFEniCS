@@ -1,0 +1,35 @@
+diff --git a/src/test/test_task43_v11_scientific_restart.py b/src/test/test_task43_v11_scientific_restart.py
+index 0e6cd0d3..23c6fd97 100644
+--- a/src/test/test_task43_v11_scientific_restart.py
++++ b/src/test/test_task43_v11_scientific_restart.py
+@@ -6816,7 +6816,29 @@ def test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound(tmp_path, monkey
+             encoding="utf-8"
+         )
+     )
+-    runtime = h100_anchor._check_v11_runtime_envelope(h100_anchor.MPI.COMM_WORLD)
++    original_require = h100_anchor._require_v11_watchdog_worker_identity
++    identity = original_require(require_unused_phase_file=False)
++    phase_path = Path(identity["phase_path"])
++    assert phase_path.is_file()
++    assert phase_path.resolve() == Path(
++        os.environ["PHYSICAL_WATCHDOG_PHASE_PATH"]
++    ).resolve()
++
++    def allow_existing_phase(
++        *, require_unused_phase_file=True, expected_identity=None
++    ):
++        return original_require(
++            require_unused_phase_file=False,
++            expected_identity=expected_identity or identity,
++        )
++
++    monkeypatch.setattr(
++        h100_anchor, "_require_v11_watchdog_worker_identity", allow_existing_phase
++    )
++    runtime = h100_anchor._check_v11_runtime_envelope(
++        h100_anchor.MPI.COMM_WORLD, expected_identity=identity
++    )
++    assert runtime["v11_watchdog_worker_identity"] == identity
+     identity = runtime["v11_watchdog_worker_identity"]
+     result = h100_anchor._v16_p8_resume_output_binding(
+         contract, "C", worker_identity=identity

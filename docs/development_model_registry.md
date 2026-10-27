@@ -1,6 +1,20 @@
 # Task43：accepted9/R9冻结，最终空间精度未达
 
-## Task43 V15 当前科研状态：P5诊断完成未接受；P3/P4失败端点保留
+## Task43 V16 当前状态：P8 前门未完成，正式槽未调用
+
+V15 review授权固定global cell8/root4的p5→p6无h实验，已冻结三个研究入口与合同。T首次main fixture身份格式错误；修复后T恢复17通过/1失败，最后同worker续接fixture误用unused-phase门。最终局部修复仅静态核对，NOT_RERUN。T2/2用尽，按review §9.3停止S/F/C，不挪用E。
+
+| 登记 | 实际状态 |
+|---|---|
+| 本轮支持 | 2次，whole82.05409320862964 s；RSS采样峰304947200/519254016 B；swap0，CPU1，后代清理 |
+| P8模型 | 实际FE、R/T/Av、J/G、收益/FE均NOT_RUN；fixture不作科学实值 |
+| 正式额度 | 新增0；原7/8前瞻为7/9，P8槽0/1；旧末槽封存 |
+| 五项能力 | 空间PARTIAL；选择PARTIAL；精度NOT_PASSED；同精度全过程成本NOT_ESTABLISHED；迭代NOT_RUN/NOT_QUALIFIED |
+| 资格 | 17项有限fixture证据；最终测试文件不称18/18；无READY或merge approval |
+
+主控承认冻结前漏识别两处fixture错误。最小剩余任务是有界补验最终同worker续接门；只有明确后续授权和T资格满足后，才继续原S→F→C。旧R9/H8/P5和负结果不回写。详见[Response V16](task43_hp_adaptivity/response_v16.md)与[V16机器记录](task43_hp_adaptivity/outcomes/records/v16_r9_p8_results_v1.json)。
+
+## Task43 V15 历史科研状态：P5诊断完成未接受；P3/P4失败端点保留
 
 V15 按用户授权修复普通代码/接线错误并继续原P2→P5链。P2实际得到194叶、FE 116,740（较accepted9/R9的110,472增加6,268），joined空间审计通过。P3正式A1_q_attempt3因只读视图将scope转为tuple而保存JSON为list，raw-scope gate失败；固定primary离线raw重算过阈值，另有非official保存场续接通过q8/q10与Av闭合，但不改原失败终态。P4 R9_H8 solve raw数值门通过，worker在共享summary writer JSON序列化NumPy ndarray时失败，故P4最终仍FAILED。P5现已通过固定binding完成FAILED P4保存场的union诊断；状态为COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE，不改变P4 endpoint或accepted state。
 

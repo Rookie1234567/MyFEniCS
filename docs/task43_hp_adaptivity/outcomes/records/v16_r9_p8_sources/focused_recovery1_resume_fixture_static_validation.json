@@ -1,0 +1,29 @@
+{
+  "change": "test-only explicit allow-existing phase wrapper delegates to the real worker identity reader and pins the preexisting same-worker identity",
+  "checks": [
+    {
+      "command": "python3 -I AST parse src/test/test_task43_v11_scientific_restart.py",
+      "exit_code": 0,
+      "result": "AST_OK"
+    },
+    {
+      "command": ".venv/bin/ruff check --select F821,F822,F823 src/test/test_task43_v11_scientific_restart.py",
+      "exit_code": 0,
+      "result": "All checks passed!"
+    },
+    {
+      "command": "git diff --check -- src/test/test_task43_v11_scientific_restart.py",
+      "exit_code": 0,
+      "result": "clean"
+    }
+  ],
+  "classification": "static_fixture_fix_not_rerun",
+  "driver": "NOT_RUN",
+  "native": "NOT_RUN",
+  "patch_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/focused_recovery1_resume_fixture_fix.diff",
+  "patch_sha256": "a6e00bf99c3076c843f6ef1a398e1ffd56fc7a63ac48da865cc28d70bc8bd3be",
+  "pytest": "NOT_RERUN",
+  "schema": "task43.v16.t-resume-fixture-static-validation.v1",
+  "source_path": "/home/fenics/Projects/NN-Lab-V2/src/test/test_task43_v11_scientific_restart.py",
+  "source_sha256": "80a80fc82f67bebb8b218f5f2f7489b1f37e640da52fb22643b93eb5384ebe6e"
+}

@@ -1,6 +1,24 @@
 # Task43 结果：部分完成，受控负结果
 
-## V15 当前状态：P5诊断完成但不获接受；A1/P4 FAILED 保留
+## V16 当前状态：P8 定向验证 17 通过、1 失败，T 两槽用尽
+
+p 加密在同一单元内部提高多项式阶次，以增加未知量换取表达能力。本轮固定 R9 的 global cell8/root4 从 p5 到 p6，无 h 分裂；目标是与旧 H8 比较同位置输出响应和新增自由度代价。尚未进入真实空间或求解，不能从 fixture 数量推断 P8 的 FE 或收益。
+
+| 阶段／项目 | 本轮结果 | 边界 |
+|---|---|---|
+| 实现／合同 | 三个既有研究入口的 P8 显式模式、固定合同及18节点，已提交冻结 | 共享数值核心、默认 writer、activation、ABI 未改；E 完整恢复链未实现／未资格化 |
+| T 主验证 | 1 failed、17 NOT_RUN；whole20.264135509729385 s；RSS304947200 B | main fixture 的标签不是合法 SHA256，真实身份门拒绝；原失败保留 |
+| T 恢复 | 17 passed、1 failed；whole61.78995769890025 s；RSS519254016 B | 最后 same-worker fixture 误要求 phase 不存在；局部静态修复已做，NOT_RERUN |
+| S／F／C | 全部 NOT_RUN | 真实 P8 FE、primary、q8/q10 J/G、收益/FE 未取得；不是 p 方法的数值负结果 |
+| 资源／终态 | 两次 CPU1/MPI1/六线程变量1、task swap0；退出均 launcher/watchdog/worker=2/2/1，后代清除 | trace无setter、getter及活进程采样均[1]；原件亲读，不以pytest标签替代终态 |
+| 本轮费用与次数 | 支持2/5，其中T两槽2/2；whole累计82.05409320862964 s；正式新增0 | S/C/E未使用，不能挪用补T；P8专用槽0/1，正式包络7/9，旧槽封存 |
+| 科学／合并 | 五项能力保持；ACTION_ENDPOINT_NOT_QUALIFIED；无merge approval | accepted9/R9、R10拒绝、旧P4 FAILED及P5无明确收益均保留 |
+
+最终测试文件SHA256 `80a80fc82f67bebb8b218f5f2f7489b1f37e640da52fb22643b93eb5384ebe6e` 仅静态核对；实际恢复测试字节为 `29b3d134f77f76c952d497a268e89c8727c3173c017be809fea3c2a8b46181f7`。只改变最后一个fixture，其他17通过节点及共同helper同字节，不能写最终18/18。主控承认预审漏掉两处fixture错误。按V15 review §9.3，必须停止受影响动态链，剩余工作为有界补验同worker续接门，再按原条件恢复S→F→C；本说明不新增授权。
+
+详见[Response V16](../response_v16.md)、[V16机器结果](records/v16_r9_p8_results_v1.json)、[T终态与字节索引](records/v16_r9_p8_sources/README.md)。初始旧输入hash核对另计1.8255486912094057 s；其他静态/人工wall为not_measured。没有旧场重采样、积分或新PDE。
+
+## V15 历史状态：P5诊断完成但不获接受；A1/P4 FAILED 保留
 
 本轮把少量大网格单元切成小单元（局部 h 加密），只测试预先固定的 seed8，并保留相邻面需要的闭包。FE 是约束后独立未知量数；J 把各输出与固定 Y6_1 场的差除以各自容差，取其中最大值，因此 J>1 表示至少一项尚超容差。G（文中 η）衡量全域电场及其旋度的加权相对差，越小越接近这个离散参考，不代表已知连续真误差。ΔJ、ΔG均为R9减h；每新增FE收益再除以6,268。primary 指正常修正之后、额外诊断修正之前的固定场，本轮normal一次、extra零。A_volume表示体内吸收占入射功率的比例。
 
