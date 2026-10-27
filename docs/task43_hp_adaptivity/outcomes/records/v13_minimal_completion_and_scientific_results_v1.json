@@ -1,0 +1,1166 @@
+{
+  "schema": "task43.v13.minimal-completion-and-scientific-results.v1",
+  "created_utc": "2026-10-27T00:25:30.817054+00:00",
+  "repository": "Rookie1234567/MyFEniCS",
+  "execution_branch": "task43_hp_adaptivity",
+  "canonical_worktree": "/home/fenics/Projects/NN-Lab-V2",
+  "authority": {
+    "review_sha": "37f3376be410657fbaec86b0412086745419c506",
+    "fixed_reviewed_head": "30333c5705d6a9ef64ba22d0d7030dd63a9c763d",
+    "baseline_sha": "405e3aff42ac421a4c99315df1ed9b96941ecbe4",
+    "section": "review_report_v12.md section 9",
+    "original_contract": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+      "sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1"
+    },
+    "original_recovery_manifest": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+      "sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734"
+    }
+  },
+  "implementation_commit": "7546c7bdb91b2c07c0344c41d418e8a0808ea6a6",
+  "run_heads": {
+    "S1_completion": "7546c7bdb91b2c07c0344c41d418e8a0808ea6a6",
+    "D1": "d8cba4f1377b526101c37213d5bc8e88db23effc"
+  },
+  "source_sha256": {
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py": "72716b9f7219a9f6ae78f4b7b736796d072ef4ffa46505ff9b3aac4d8523c71e",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "086bdf560e3836a19009e86c74ad818870b534ec8b891b818a87fbf9137a1323",
+    "src/test/test_task43_v11_scientific_restart.py": "8516a90dd558e6c2ec4d9329da26fa2aba5bdb0b253e5ac3c6838dbbda5f38ba"
+  },
+  "validation": {
+    "node_count": 12,
+    "limit": 16,
+    "maxfail": 1,
+    "passed": 12,
+    "failed": 0,
+    "junit": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/pytest_results.xml",
+      "sha256": "4f689ff125515f209f221822dbff7311498a31fe575fcac89636cf6ca5bc5431"
+    },
+    "tests_after_last_code_and_test_change": true,
+    "formal_science_qualification": false,
+    "historical_reuse": "Prior observer4/reader4/P5negative4 only in unchanged coverage; no final full-file or whole repository claim",
+    "selected_expanded_nodes": [
+      "src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity",
+      "src/test/test_task43_v11_scientific_restart.py::test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None]",
+      "src/test/test_task43_v11_scientific_restart.py::test_v12_p2_joined_source_binding_rejects_root_terminal_failure",
+      "src/test/test_task43_v11_scientific_restart.py::test_v12_observer_delegates_cache_and_restores_alias_after_errors",
+      "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[valid]",
+      "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[rhs]",
+      "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[solution]",
+      "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[residual_sign]",
+      "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[missing_solution]",
+      "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[zero_rhs]",
+      "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[modal_rhs]",
+      "src/test/test_task43_v11_scientific_restart.py::test_v13_saved_a2_partial_checkpoint"
+    ],
+    "selector_range_count": 6
+  },
+  "V12_findings": {
+    "V12-01": {
+      "implementation": "real entity-map and cell-constraint summaries distinguished; delegated once, object/cache/aliases preserved",
+      "new_support": "PASS_real_dataclass_fixture",
+      "D1": "entity map real result reached; real cell map remained IN_PROGRESS_AT_STOP, so its production return is not observed"
+    },
+    "V12-02": {
+      "implementation": "reject any nonzero homogeneous modal RHS; existing Gram norm/producer/tolerance unchanged",
+      "new_support": "PASS_valid_and_six_hash_rebound_semantic_counterexamples_through_checker_and_reader",
+      "formal_primary": "NOT_RUN"
+    },
+    "V12-03": {
+      "implementation": "raw/modal/q8/q10 completion checkpoint and failure references, original exception retained",
+      "new_support": "PASS_success_and_q10_failure_in_helper_and_real_main_sink",
+      "D1": "all_four_actual_saved_array_checkpoints_persisted_before_authority"
+    },
+    "V12-04": {
+      "new_support": "PASS_compare_success_full_tail_and_joined_rejection_final_assertions",
+      "historical_failures": "retained; no retroactive PASS"
+    }
+  },
+  "stages": {
+    "S1_completion": {
+      "launch_calls": 1,
+      "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1",
+      "status": "PASS_LIMITED_SUPPORT_ENGINEERING",
+      "whole_seconds": 27.02263388223946,
+      "rss_sampled_tree_peak_bytes": 313585664,
+      "worker_watchdog_launcher_exit": [
+        0,
+        0,
+        0
+      ],
+      "root_closeout": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/root_closeout.json",
+        "sha256": "3e246063117d37c01c9f01ad44f834d919196073cb0cfdc595d3db0cb9c48db1"
+      }
+    },
+    "D1": {
+      "launch_calls": 1,
+      "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1",
+      "status": "PERFORMANCE_CONTROLLED_STOP",
+      "work_stop_seconds": 540,
+      "whole_limit_seconds": 600,
+      "whole_seconds": 541.9988412610255,
+      "rss_sampled_tree_peak_bytes": 1302609920,
+      "worker_watchdog_launcher_exit": [
+        -15,
+        2,
+        2
+      ],
+      "root_closeout": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json",
+        "sha256": "7a8e70b887a9d76ba5533801f358a264a4274f082f3ed32f7d5528f0261d209d"
+      },
+      "A2_saved_array_gate": "PASS_LIMITED_DIAGNOSTIC",
+      "actual_P2_gate": "NOT_REACHED",
+      "independent_FE": null,
+      "matrix_rows": null,
+      "matrix_NNZ": null
+    },
+    "P2R": {
+      "launch_calls": 0,
+      "status": "NOT_RUN_CONSERVATIVE_BUDGET_UNPROVEN",
+      "required_work_bound_seconds": 1740,
+      "whole_limit_seconds": 1800,
+      "decision": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json",
+        "sha256": "97adbe6f7ec14460cc53107034b0e0fdd08e659fc08c0e3baf3ad7c4f624337d"
+      }
+    },
+    "P3_A1_q3": {
+      "launch_calls": 0,
+      "status": "NOT_RUN_P2_GATE_NOT_PASSED"
+    },
+    "P4_R9_H8": {
+      "launch_calls": 0,
+      "status": "NOT_RUN_P2_AND_P3_NOT_PASSED"
+    },
+    "P5_union": {
+      "launch_calls": 0,
+      "status": "NOT_RUN_P4_NOT_REACHED"
+    }
+  },
+  "scientific_observations": {
+    "A2_q19_q32_R13_vs_fixed_Y6_1": {
+      "classification": "measured_from_old_saved_arrays_in_D1_no_new_solve_resampling_or_integration",
+      "raw": {
+        "A6_relative_to_native_effective_rhs": 3.078522812304335e-10,
+        "full_active_modal_port_l2": 1.715018697172072e-12,
+        "full_active_zero_slave_carrier_l2": 1.4299132653967826e-11,
+        "full_active_zero_slave_carrier_plus_modal_port_euclidean_relative_to_native_effective_rhs": 1.1972486317982494e-11,
+        "normal_correction_relative_history": [
+          2.2945939789534043e-09,
+          3.0440529386035694e-12
+        ],
+        "normal_raw_state_limitation": "legacy packet lacks separate normal RHS/solution vectors; verifies the returned RHS/solution/residual and two b-Ax snapshots only",
+        "pass": true,
+        "returned_condensed_relative_to_returned_rhs": 3.0440529386035694e-12,
+        "scope": "native explicit full-active residual: zero-slave carrier and modal-port Euclidean components, normalized by native effective RHS; not a variable-p Gram metric norm; no operator application, resampling, material integration, or PDE solve",
+        "stored_scalar_identity_absolute_differences": {
+          "condensed_b_minus_Ax_relative": 1.7771458472818954e-26,
+          "full_active_zero_slave_carrier_plus_modal_port_euclidean_relative": 0.0,
+          "independent_A6_relative": 0.0
+        }
+      },
+      "modal": {
+        "boundary_amplitude_groups": {
+          "bottom_p": {
+            "difference_boundary_amplitude_l2": 1.534058493598624e-11,
+            "mode_count": 153,
+            "reference_boundary_amplitude_l2": 0.00027720997077159245,
+            "relative_to_reference": 5.53392249683044e-08,
+            "relative_with_unit_incident_modal_floor": 1.534058493598624e-11
+          },
+          "bottom_s": {
+            "difference_boundary_amplitude_l2": 1.4668589996279054e-11,
+            "mode_count": 153,
+            "reference_boundary_amplitude_l2": 0.1708593117579208,
+            "relative_to_reference": 8.585186165950384e-11,
+            "relative_with_unit_incident_modal_floor": 1.4668589996279054e-11
+          },
+          "top_p": {
+            "difference_boundary_amplitude_l2": 5.4374146700925e-11,
+            "mode_count": 153,
+            "reference_boundary_amplitude_l2": 0.0002660223339478603,
+            "relative_to_reference": 2.0439692372439e-07,
+            "relative_with_unit_incident_modal_floor": 5.4374146700925e-11
+          },
+          "top_s": {
+            "difference_boundary_amplitude_l2": 6.139994079567577e-11,
+            "mode_count": 153,
+            "reference_boundary_amplitude_l2": 0.5013228858864879,
+            "relative_to_reference": 1.2247583847504273e-10,
+            "relative_with_unit_incident_modal_floor": 6.139994079567577e-11
+          }
+        },
+        "boundary_amplitude_vector_absolute_l2_difference": 8.471718620104984e-11,
+        "boundary_amplitude_vector_max_abs_difference": 6.137211389552834e-11,
+        "candidate_label": "A2_saved_primary",
+        "individual_channel_power_ratio_absolute_difference_l2": 4.507706901522967e-11,
+        "maximum_individual_channel_power_ratio_absolute_difference": 4.5076775645469525e-11,
+        "maximum_individual_channel_power_ratio_key": [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        "ordered_mode_count": 612,
+        "ordered_mode_keys_sha256": "854e0302db798e534f4cb7698a2dd3a6b28f3d247002a5c0c033319ea1a50eb2",
+        "phase_fit": false,
+        "power_absolute_differences": {
+          "A_volume": 4.146905041579885e-11,
+          "R00_p": 1.3919772668589033e-21,
+          "R00_s": 4.5076775645469525e-11,
+          "R00_total": 4.5076775645469525e-11,
+          "R_total": 4.508154960447541e-11,
+          "T_total": 1.8893220321558601e-13
+        },
+        "reference_label": "Y6_1"
+      },
+      "field_q8_q10": {
+        "q10": {
+          "sample_count": 1008000,
+          "volume_nm3": 349999.9999999998,
+          "metrics": {
+            "E_scattered_code": {
+              "candidate_l2": 321.70508583233357,
+              "difference_l2": 3.5752243670560286e-08,
+              "reference_l2": 321.70508582252256,
+              "reference_norm_floor": 591.6079783099616,
+              "relative_to_reference": 1.1113359796333463e-10,
+              "relative_to_reference_defined": true,
+              "relative_to_reference_or_floor": 6.04323217085294e-11
+            },
+            "E_total_code": {
+              "candidate_l2": 392.103368700513,
+              "difference_l2": 3.575224367460067e-08,
+              "reference_l2": 392.10336871399426,
+              "reference_norm_floor": 591.6079783099616,
+              "relative_to_reference": 9.118065930384511e-11,
+              "relative_to_reference_defined": true,
+              "relative_to_reference_or_floor": 6.04323217153589e-11
+            },
+            "G": {
+              "candidate_g_norm": 554.563010677582,
+              "difference_g_norm": 5.056549735466767e-08,
+              "incident_g_norm_floor": 836.6600265340755,
+              "reference_g_norm": 554.5630106966477,
+              "relative_to_reference": 9.11807970948996e-11,
+              "relative_to_reference_defined": true,
+              "relative_with_incident_floor": 6.04373290835214e-11
+            },
+            "H_scattered_A_per_m": {
+              "candidate_l2": 0.8539782867390758,
+              "difference_l2": 9.491715144979496e-11,
+              "reference_l2": 0.8539782867130334,
+              "reference_norm_floor": 1.5703752972513016,
+              "relative_to_reference": 1.1114703140185395e-10,
+              "relative_to_reference_defined": true,
+              "relative_to_reference_or_floor": 6.044233605554845e-11
+            },
+            "H_total_A_per_m": {
+              "candidate_l2": 1.0409758529319595,
+              "difference_l2": 9.491715143966161e-11,
+              "reference_l2": 1.0409758529677469,
+              "reference_norm_floor": 1.5703752972513016,
+              "relative_to_reference": 9.118093485940109e-11,
+              "relative_to_reference_defined": true,
+              "relative_to_reference_or_floor": 6.044233604909563e-11
+            },
+            "curl_E_over_k0_code": {
+              "candidate_l2": 392.16715959587134,
+              "difference_l2": 3.5758168246043426e-08,
+              "reference_l2": 392.1671596093533,
+              "reference_norm_floor": 591.6079783099616,
+              "relative_to_reference": 9.118093488925222e-11,
+              "relative_to_reference_defined": true,
+              "relative_to_reference_or_floor": 6.044233606888348e-11
+            }
+          },
+          "gates": {
+            "E_scattered_code": true,
+            "E_total_code": true,
+            "G": true,
+            "H_scattered_A_per_m": true,
+            "H_total_A_per_m": true
+          },
+          "pass": true
+        },
+        "q8": {
+          "sample_count": 516096,
+          "volume_nm3": 349999.9999999999,
+          "metrics": {
+            "E_scattered_code": {
+              "candidate_l2": 321.70508583233374,
+              "difference_l2": 3.575224388568727e-08,
+              "reference_l2": 321.70508582252245,
+              "reference_norm_floor": 591.6079783099616,
+              "relative_to_reference": 1.1113359863204336e-10,
+              "relative_to_reference_defined": true,
+              "relative_to_reference_or_floor": 6.043232207216038e-11
+            },
+            "E_total_code": {
+              "candidate_l2": 392.10336870051276,
+              "difference_l2": 3.5752243879496666e-08,
+              "reference_l2": 392.103368713994,
+              "reference_norm_floor": 591.6079783099616,
+              "relative_to_reference": 9.118065982640124e-11,
+              "relative_to_reference_defined": true,
+              "relative_to_reference_or_floor": 6.043232206169635e-11
+            },
+            "G": {
+              "candidate_g_norm": 554.5630106775818,
+              "difference_g_norm": 5.056549756339993e-08,
+              "incident_g_norm_floor": 836.6600265340755,
+              "reference_g_norm": 554.5630106966477,
+              "relative_to_reference": 9.118079747129013e-11,
+              "relative_to_reference_defined": true,
+              "relative_with_incident_floor": 6.043732933300416e-11
+            },
+            "H_scattered_A_per_m": {
+              "candidate_l2": 0.8539782867390763,
+              "difference_l2": 9.49171517283278e-11,
+              "reference_l2": 0.8539782867130331,
+              "reference_norm_floor": 1.5703752972513016,
+              "relative_to_reference": 1.1114703172801314e-10,
+              "relative_to_reference_defined": true,
+              "relative_to_reference_or_floor": 6.044233623291549e-11
+            },
+            "H_total_A_per_m": {
+              "candidate_l2": 1.0409758529319597,
+              "difference_l2": 9.491715173363083e-11,
+              "reference_l2": 1.0409758529677473,
+              "reference_norm_floor": 1.5703752972513016,
+              "relative_to_reference": 9.118093514179877e-11,
+              "relative_to_reference_defined": true,
+              "relative_to_reference_or_floor": 6.044233623629242e-11
+            },
+            "curl_E_over_k0_code": {
+              "candidate_l2": 392.16715959587134,
+              "difference_l2": 3.5758168377095676e-08,
+              "reference_l2": 392.16715960935306,
+              "reference_norm_floor": 591.6079783099616,
+              "relative_to_reference": 9.118093522342674e-11,
+              "relative_to_reference_defined": true,
+              "relative_to_reference_or_floor": 6.04423362904022e-11
+            }
+          },
+          "gates": {
+            "E_scattered_code": true,
+            "E_total_code": true,
+            "G": true,
+            "H_scattered_A_per_m": true,
+            "H_total_A_per_m": true
+          },
+          "pass": true
+        }
+      },
+      "A_volume": {
+        "historical_automatic_rule_reinterpreted_as_q19": false,
+        "inferred_from_one_minus_R_minus_T": false,
+        "material_region_sum": 0.6915175267406917,
+        "reintegrated": false,
+        "saved_value": 0.6915175267406917
+      },
+      "gate_checks": {
+        "A6": true,
+        "full_active": true,
+        "condensed": true,
+        "normal_decrease": true,
+        "modal_612": true,
+        "aggregate": true,
+        "each_channel": true,
+        "R00_s_p": true,
+        "four_amplitude_groups": true,
+        "q10_fields": true,
+        "q8_fields": true
+      },
+      "full612_values_and_mode_reconstruction": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response.json",
+        "sha256": "4503811d2ab3e39b0755aa67c951d0102300a94cedc56655dc291117936aa275"
+      },
+      "four_checkpoint_refs": [
+        {
+          "stage": "modal",
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/modal.json",
+          "sha256": "a0919ee8e917da2aa71c561b77995a6920330be7f76dc043829ca59f1328459f",
+          "bytes": 94209
+        },
+        {
+          "stage": "q10",
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/q10.json",
+          "sha256": "d420e3795fd862a125d45f571857756396e3e55dbb5c078830d6577af1f21e60",
+          "bytes": 16631
+        },
+        {
+          "stage": "q8",
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/q8.json",
+          "sha256": "240af00db78d99ba41607df9f72fd8e0f6015cdfb782faa573102dfcdc850e32",
+          "bytes": 16633
+        },
+        {
+          "stage": "raw",
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/raw.json",
+          "sha256": "96301a2e564fdfd68e6516dbe7623d49bea71544b6b7103ba06b5b4e2f42f69a",
+          "bytes": 32499
+        }
+      ],
+      "historical_endpoint_status": "INCOMPLETE_NOT_QUALIFIED",
+      "historical_extra_failure_unchanged": true,
+      "normal_state_limitation": "legacy packet lacks separate normal RHS/solution vectors; verifies the returned RHS/solution/residual and two b-Ax snapshots only"
+    },
+    "h_seed8": {
+      "requested_seed_global_cell_id": 8,
+      "actual_mesh_leaf_count_observed": 194,
+      "actual_entity_map_degree_key_count": 25,
+      "multiplicity_total": 194,
+      "actual_independent_FE": null,
+      "required_FE_interval_open": [
+        110472,
+        237600
+      ],
+      "classification": "PARTIAL_space_authority_not_complete",
+      "output_J_G_and_gain_per_added_FE": "NOT_RUN"
+    }
+  },
+  "D1_profile": {
+    "raw_event_count": 182,
+    "unique_degree_keys": 25,
+    "completed_unique_keys": 7,
+    "in_progress_unique_keys": 1,
+    "not_started_unique_keys": 17,
+    "uncompleted_unique_keys": 18,
+    "cold_reference_seconds": [
+      19.671300588175654,
+      59.10681286128238,
+      30.101596585009247,
+      19.83430577116087,
+      32.33455295627937,
+      1.1756181921809912,
+      41.322860554326326
+    ],
+    "cell_map_prefix_before_first_reference_call_seconds": 189.26700541004539,
+    "sampled_max_cpu_seconds": {
+      "3065572": 175.85,
+      "3065595": 363.23,
+      "3065609": 1.06,
+      "3065651": 0.26
+    },
+    "pending_calls": [
+      {
+        "stage": "space_authority",
+        "call_id": 1,
+        "function": "space_authority",
+        "begin_line": 11,
+        "begin": {
+          "arguments": {
+            "args": [
+              {
+                "floquet_phase_x": {
+                  "complex": [
+                    1.0,
+                    1.4247242291537984e-15
+                  ]
+                },
+                "floquet_phase_y": {
+                  "complex": [
+                    -0.29019682129303004,
+                    -0.9569669821427598
+                  ]
+                },
+                "stage4_local_h_refinement_plan": null,
+                "type": "src.common.config_3d.SimulationConfig3D"
+              }
+            ],
+            "kwargs": {
+              "candidate_id": "v11_r9_h8",
+              "comm": {
+                "type": "mpi4py.MPI.Intracomm"
+              },
+              "parent_independent_fe_dofs": 110472,
+              "parent_root_degree_by_box": {
+                "(0.0, 0.0, -10.0, 16.5, 5.0, 0.0)": 5,
+                "(0.0, 0.0, 0.0, 16.5, 5.0, 30.0)": 6,
+                "(0.0, 0.0, 120.0, 16.5, 5.0, 130.0)": 6,
+                "(0.0, 0.0, 30.0, 16.5, 5.0, 60.0)": 6,
+                "(0.0, 0.0, 60.0, 16.5, 5.0, 90.0)": 6,
+                "(0.0, 0.0, 90.0, 16.5, 5.0, 120.0)": 6,
+                "(0.0, 10.0, -10.0, 16.5, 15.0, 0.0)": 6,
+                "(0.0, 10.0, 0.0, 16.5, 15.0, 30.0)": 6,
+                "(0.0, 10.0, 120.0, 16.5, 15.0, 130.0)": 6,
+                "(0.0, 10.0, 30.0, 16.5, 15.0, 60.0)": 6,
+                "(0.0, 10.0, 60.0, 16.5, 15.0, 90.0)": 6,
+                "(0.0, 10.0, 90.0, 16.5, 15.0, 120.0)": 6,
+                "(0.0, 15.0, -10.0, 16.5, 20.0, 0.0)": 5,
+                "(0.0, 15.0, 0.0, 16.5, 20.0, 30.0)": 6,
+                "(0.0, 15.0, 120.0, 16.5, 20.0, 130.0)": 6,
+                "(0.0, 15.0, 30.0, 16.5, 20.0, 60.0)": 6,
+                "(0.0, 15.0, 60.0, 16.5, 20.0, 90.0)": 6,
+                "(0.0, 15.0, 90.0, 16.5, 20.0, 120.0)": 6,
+                "(0.0, 20.0, -10.0, 16.5, 25.0, 0.0)": 5,
+                "(0.0, 20.0, 0.0, 16.5, 25.0, 30.0)": 6,
+                "(0.0, 20.0, 120.0, 16.5, 25.0, 130.0)": 6,
+                "(0.0, 20.0, 30.0, 16.5, 25.0, 60.0)": 6,
+                "(0.0, 20.0, 60.0, 16.5, 25.0, 90.0)": 6,
+                "(0.0, 20.0, 90.0, 16.5, 25.0, 120.0)": 6,
+                "(0.0, 25.0, -10.0, 16.5, 30.0, 0.0)": 5,
+                "(0.0, 25.0, 0.0, 16.5, 30.0, 30.0)": 6,
+                "(0.0, 25.0, 120.0, 16.5, 30.0, 130.0)": 6,
+                "(0.0, 25.0, 30.0, 16.5, 30.0, 60.0)": 6,
+                "(0.0, 25.0, 60.0, 16.5, 30.0, 90.0)": 6,
+                "(0.0, 25.0, 90.0, 16.5, 30.0, 120.0)": 6,
+                "(0.0, 30.0, -10.0, 16.5, 35.0, 0.0)": 5,
+                "(0.0, 30.0, 0.0, 16.5, 35.0, 30.0)": 6,
+                "(0.0, 30.0, 120.0, 16.5, 35.0, 130.0)": 6,
+                "(0.0, 30.0, 30.0, 16.5, 35.0, 60.0)": 6,
+                "(0.0, 30.0, 60.0, 16.5, 35.0, 90.0)": 6,
+                "(0.0, 30.0, 90.0, 16.5, 35.0, 120.0)": 6,
+                "(0.0, 35.0, -10.0, 16.5, 40.0, 0.0)": 5,
+                "(0.0, 35.0, 0.0, 16.5, 40.0, 30.0)": 6,
+                "(0.0, 35.0, 120.0, 16.5, 40.0, 130.0)": 6,
+                "(0.0, 35.0, 30.0, 16.5, 40.0, 60.0)": 6,
+                "(0.0, 35.0, 60.0, 16.5, 40.0, 90.0)": 6,
+                "(0.0, 35.0, 90.0, 16.5, 40.0, 120.0)": 6,
+                "(0.0, 40.0, -10.0, 16.5, 45.0, 0.0)": 5,
+                "(0.0, 40.0, 0.0, 16.5, 45.0, 30.0)": 6,
+                "(0.0, 40.0, 120.0, 16.5, 45.0, 130.0)": 6,
+                "(0.0, 40.0, 30.0, 16.5, 45.0, 60.0)": 6,
+                "(0.0, 40.0, 60.0, 16.5, 45.0, 90.0)": 6,
+                "(0.0, 40.0, 90.0, 16.5, 45.0, 120.0)": 6,
+                "(0.0, 45.0, -10.0, 16.5, 50.0, 0.0)": 5,
+                "(0.0, 45.0, 0.0, 16.5, 50.0, 30.0)": 6,
+                "(0.0, 45.0, 120.0, 16.5, 50.0, 130.0)": 6,
+                "(0.0, 45.0, 30.0, 16.5, 50.0, 60.0)": 6,
+                "(0.0, 45.0, 60.0, 16.5, 50.0, 90.0)": 6,
+                "(0.0, 45.0, 90.0, 16.5, 50.0, 120.0)": 6,
+                "(0.0, 5.0, -10.0, 16.5, 10.0, 0.0)": 5,
+                "(0.0, 5.0, 0.0, 16.5, 10.0, 30.0)": 6,
+                "(0.0, 5.0, 120.0, 16.5, 10.0, 130.0)": 6,
+                "(0.0, 5.0, 30.0, 16.5, 10.0, 60.0)": 6,
+                "(0.0, 5.0, 60.0, 16.5, 10.0, 90.0)": 6,
+                "(0.0, 5.0, 90.0, 16.5, 10.0, 120.0)": 6,
+                "(16.5, 0.0, -10.0, 33.5, 5.0, 0.0)": 5,
+                "(16.5, 0.0, 0.0, 33.5, 5.0, 30.0)": 6,
+                "(16.5, 0.0, 120.0, 33.5, 5.0, 130.0)": 6,
+                "(16.5, 0.0, 30.0, 33.5, 5.0, 60.0)": 6,
+                "(16.5, 0.0, 60.0, 33.5, 5.0, 90.0)": 6,
+                "(16.5, 0.0, 90.0, 33.5, 5.0, 120.0)": 6,
+                "(16.5, 10.0, -10.0, 33.5, 15.0, 0.0)": 5,
+                "(16.5, 10.0, 0.0, 33.5, 15.0, 30.0)": 6,
+                "(16.5, 10.0, 120.0, 33.5, 15.0, 130.0)": 6,
+                "(16.5, 10.0, 30.0, 33.5, 15.0, 60.0)": 6,
+                "(16.5, 10.0, 60.0, 33.5, 15.0, 90.0)": 6,
+                "(16.5, 10.0, 90.0, 33.5, 15.0, 120.0)": 6,
+                "(16.5, 15.0, -10.0, 33.5, 20.0, 0.0)": 5,
+                "(16.5, 15.0, 0.0, 33.5, 20.0, 30.0)": 6,
+                "(16.5, 15.0, 120.0, 33.5, 20.0, 130.0)": 6,
+                "(16.5, 15.0, 30.0, 33.5, 20.0, 60.0)": 6,
+                "(16.5, 15.0, 60.0, 33.5, 20.0, 90.0)": 6,
+                "(16.5, 15.0, 90.0, 33.5, 20.0, 120.0)": 6,
+                "(16.5, 20.0, -10.0, 33.5, 25.0, 0.0)": 5,
+                "(16.5, 20.0, 0.0, 33.5, 25.0, 30.0)": 6,
+                "(16.5, 20.0, 120.0, 33.5, 25.0, 130.0)": 6,
+                "(16.5, 20.0, 30.0, 33.5, 25.0, 60.0)": 6,
+                "(16.5, 20.0, 60.0, 33.5, 25.0, 90.0)": 6,
+                "(16.5, 20.0, 90.0, 33.5, 25.0, 120.0)": 6,
+                "(16.5, 25.0, -10.0, 33.5, 30.0, 0.0)": 5,
+                "(16.5, 25.0, 0.0, 33.5, 30.0, 30.0)": 6,
+                "(16.5, 25.0, 120.0, 33.5, 30.0, 130.0)": 6,
+                "(16.5, 25.0, 30.0, 33.5, 30.0, 60.0)": 6,
+                "(16.5, 25.0, 60.0, 33.5, 30.0, 90.0)": 6,
+                "(16.5, 25.0, 90.0, 33.5, 30.0, 120.0)": 6,
+                "(16.5, 30.0, -10.0, 33.5, 35.0, 0.0)": 5,
+                "(16.5, 30.0, 0.0, 33.5, 35.0, 30.0)": 6,
+                "(16.5, 30.0, 120.0, 33.5, 35.0, 130.0)": 6,
+                "(16.5, 30.0, 30.0, 33.5, 35.0, 60.0)": 6,
+                "(16.5, 30.0, 60.0, 33.5, 35.0, 90.0)": 6,
+                "(16.5, 30.0, 90.0, 33.5, 35.0, 120.0)": 6,
+                "(16.5, 35.0, -10.0, 33.5, 40.0, 0.0)": 5,
+                "(16.5, 35.0, 0.0, 33.5, 40.0, 30.0)": 6,
+                "(16.5, 35.0, 120.0, 33.5, 40.0, 130.0)": 6,
+                "(16.5, 35.0, 30.0, 33.5, 40.0, 60.0)": 6,
+                "(16.5, 35.0, 60.0, 33.5, 40.0, 90.0)": 6,
+                "(16.5, 35.0, 90.0, 33.5, 40.0, 120.0)": 6,
+                "(16.5, 40.0, -10.0, 33.5, 45.0, 0.0)": 5,
+                "(16.5, 40.0, 0.0, 33.5, 45.0, 30.0)": 6,
+                "(16.5, 40.0, 120.0, 33.5, 45.0, 130.0)": 6,
+                "(16.5, 40.0, 30.0, 33.5, 45.0, 60.0)": 6,
+                "(16.5, 40.0, 60.0, 33.5, 45.0, 90.0)": 6,
+                "(16.5, 40.0, 90.0, 33.5, 45.0, 120.0)": 6,
+                "(16.5, 45.0, -10.0, 33.5, 50.0, 0.0)": 5,
+                "(16.5, 45.0, 0.0, 33.5, 50.0, 30.0)": 6,
+                "(16.5, 45.0, 120.0, 33.5, 50.0, 130.0)": 6,
+                "(16.5, 45.0, 30.0, 33.5, 50.0, 60.0)": 6,
+                "(16.5, 45.0, 60.0, 33.5, 50.0, 90.0)": 6,
+                "(16.5, 45.0, 90.0, 33.5, 50.0, 120.0)": 6,
+                "(16.5, 5.0, -10.0, 33.5, 10.0, 0.0)": 5,
+                "(16.5, 5.0, 0.0, 33.5, 10.0, 30.0)": 6,
+                "(16.5, 5.0, 120.0, 33.5, 10.0, 130.0)": 6,
+                "(16.5, 5.0, 30.0, 33.5, 10.0, 60.0)": 6,
+                "(16.5, 5.0, 60.0, 33.5, 10.0, 90.0)": 6,
+                "(16.5, 5.0, 90.0, 33.5, 10.0, 120.0)": 6,
+                "(33.5, 0.0, -10.0, 50.0, 5.0, 0.0)": 5,
+                "(33.5, 0.0, 0.0, 50.0, 5.0, 30.0)": 6,
+                "(33.5, 0.0, 120.0, 50.0, 5.0, 130.0)": 6,
+                "(33.5, 0.0, 30.0, 50.0, 5.0, 60.0)": 6,
+                "(33.5, 0.0, 60.0, 50.0, 5.0, 90.0)": 6,
+                "(33.5, 0.0, 90.0, 50.0, 5.0, 120.0)": 6,
+                "(33.5, 10.0, -10.0, 50.0, 15.0, 0.0)": 6,
+                "(33.5, 10.0, 0.0, 50.0, 15.0, 30.0)": 6,
+                "(33.5, 10.0, 120.0, 50.0, 15.0, 130.0)": 6,
+                "(33.5, 10.0, 30.0, 50.0, 15.0, 60.0)": 6,
+                "(33.5, 10.0, 60.0, 50.0, 15.0, 90.0)": 6,
+                "(33.5, 10.0, 90.0, 50.0, 15.0, 120.0)": 6,
+                "(33.5, 15.0, -10.0, 50.0, 20.0, 0.0)": 5,
+                "(33.5, 15.0, 0.0, 50.0, 20.0, 30.0)": 6,
+                "(33.5, 15.0, 120.0, 50.0, 20.0, 130.0)": 6,
+                "(33.5, 15.0, 30.0, 50.0, 20.0, 60.0)": 6,
+                "(33.5, 15.0, 60.0, 50.0, 20.0, 90.0)": 6,
+                "(33.5, 15.0, 90.0, 50.0, 20.0, 120.0)": 6,
+                "(33.5, 20.0, -10.0, 50.0, 25.0, 0.0)": 5,
+                "(33.5, 20.0, 0.0, 50.0, 25.0, 30.0)": 6,
+                "(33.5, 20.0, 120.0, 50.0, 25.0, 130.0)": 6,
+                "(33.5, 20.0, 30.0, 50.0, 25.0, 60.0)": 6,
+                "(33.5, 20.0, 60.0, 50.0, 25.0, 90.0)": 6,
+                "(33.5, 20.0, 90.0, 50.0, 25.0, 120.0)": 6,
+                "(33.5, 25.0, -10.0, 50.0, 30.0, 0.0)": 5,
+                "(33.5, 25.0, 0.0, 50.0, 30.0, 30.0)": 6,
+                "(33.5, 25.0, 120.0, 50.0, 30.0, 130.0)": 6,
+                "(33.5, 25.0, 30.0, 50.0, 30.0, 60.0)": 6,
+                "(33.5, 25.0, 60.0, 50.0, 30.0, 90.0)": 6,
+                "(33.5, 25.0, 90.0, 50.0, 30.0, 120.0)": 6,
+                "(33.5, 30.0, -10.0, 50.0, 35.0, 0.0)": 5,
+                "(33.5, 30.0, 0.0, 50.0, 35.0, 30.0)": 6,
+                "(33.5, 30.0, 120.0, 50.0, 35.0, 130.0)": 6,
+                "(33.5, 30.0, 30.0, 50.0, 35.0, 60.0)": 6,
+                "(33.5, 30.0, 60.0, 50.0, 35.0, 90.0)": 6,
+                "(33.5, 30.0, 90.0, 50.0, 35.0, 120.0)": 6,
+                "(33.5, 35.0, -10.0, 50.0, 40.0, 0.0)": 5,
+                "(33.5, 35.0, 0.0, 50.0, 40.0, 30.0)": 6,
+                "(33.5, 35.0, 120.0, 50.0, 40.0, 130.0)": 6,
+                "(33.5, 35.0, 30.0, 50.0, 40.0, 60.0)": 6,
+                "(33.5, 35.0, 60.0, 50.0, 40.0, 90.0)": 6,
+                "(33.5, 35.0, 90.0, 50.0, 40.0, 120.0)": 6,
+                "(33.5, 40.0, -10.0, 50.0, 45.0, 0.0)": 5,
+                "(33.5, 40.0, 0.0, 50.0, 45.0, 30.0)": 6,
+                "(33.5, 40.0, 120.0, 50.0, 45.0, 130.0)": 6,
+                "(33.5, 40.0, 30.0, 50.0, 45.0, 60.0)": 6,
+                "(33.5, 40.0, 60.0, 50.0, 45.0, 90.0)": 6,
+                "(33.5, 40.0, 90.0, 50.0, 45.0, 120.0)": 6,
+                "(33.5, 45.0, -10.0, 50.0, 50.0, 0.0)": 5,
+                "(33.5, 45.0, 0.0, 50.0, 50.0, 30.0)": 6,
+                "(33.5, 45.0, 120.0, 50.0, 50.0, 130.0)": 6,
+                "(33.5, 45.0, 30.0, 50.0, 50.0, 60.0)": 6,
+                "(33.5, 45.0, 60.0, 50.0, 50.0, 90.0)": 6,
+                "(33.5, 45.0, 90.0, 50.0, 50.0, 120.0)": 6,
+                "(33.5, 5.0, -10.0, 50.0, 10.0, 0.0)": 5,
+                "(33.5, 5.0, 0.0, 50.0, 10.0, 30.0)": 6,
+                "(33.5, 5.0, 120.0, 50.0, 10.0, 130.0)": 6,
+                "(33.5, 5.0, 30.0, 50.0, 10.0, 60.0)": 6,
+                "(33.5, 5.0, 60.0, 50.0, 10.0, 90.0)": 6,
+                "(33.5, 5.0, 90.0, 50.0, 10.0, 120.0)": 6
+              },
+              "plan_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/plans/v11_r9_h8.json"
+            }
+          },
+          "cache_before": null,
+          "call_id": 1,
+          "event": "BEGIN",
+          "function": "space_authority",
+          "key_occurrence": 1,
+          "monotonic": 2984866.062943949,
+          "stage": "space_authority",
+          "unreturned_status": "IN_PROGRESS_AT_STOP",
+          "worker_cpu_seconds": 40.955258565,
+          "worker_pid": 3065595
+        },
+        "status": "IN_PROGRESS_AT_STOP",
+        "elapsed_lower_bound_to_stop_seconds": 476.2367445612326
+      },
+      {
+        "stage": "space_authority",
+        "call_id": 4,
+        "function": "src.adaptivity.stage4_local_h.build_stage4_local_h_reduction_authority",
+        "begin_line": 16,
+        "begin": {
+          "arguments": {
+            "args": [
+              {
+                "type": "src.adaptivity.stage4_local_h.Stage4LocalHContext"
+              }
+            ],
+            "kwargs": {
+              "active_fe_dof_gate_policy": "task43_hp_adaptivity_192gib_v1",
+              "phase_x": {
+                "complex": [
+                  1.0,
+                  1.4247242291537984e-15
+                ]
+              },
+              "phase_y": {
+                "complex": [
+                  -0.29019682129303004,
+                  -0.9569669821427598
+                ]
+              }
+            }
+          },
+          "cache_before": null,
+          "call_id": 4,
+          "event": "BEGIN",
+          "function": "src.adaptivity.stage4_local_h.build_stage4_local_h_reduction_authority",
+          "key_occurrence": 1,
+          "monotonic": 2984866.979951499,
+          "stage": "space_authority",
+          "unreturned_status": "IN_PROGRESS_AT_STOP",
+          "worker_cpu_seconds": 41.531237961,
+          "worker_pid": 3065595
+        },
+        "status": "IN_PROGRESS_AT_STOP",
+        "elapsed_lower_bound_to_stop_seconds": 475.3197370111011
+      },
+      {
+        "stage": "space_authority",
+        "call_id": 18,
+        "function": "src.adaptivity.hcurl_broken_cell_trace.build_broken_hexa_cell_trace_constraint_map",
+        "begin_line": 43,
+        "begin": {
+          "arguments": {
+            "args": [
+              {
+                "leaf_count": 194,
+                "root_count": 180,
+                "type": "src.adaptivity.dyadic_hexa_refinement.BalancedDyadicHexForest"
+              },
+              {
+                "type": "src.adaptivity.dyadic_hexa_broken_mesh.BrokenDyadicHexCarrier"
+              },
+              {
+                "type": "src.adaptivity.variable_p_entity_map.VariablePGlobalEntityMap"
+              },
+              {
+                "degree": 6,
+                "type": "src.adaptivity.hcurl_broken_trace_graph.BrokenHexTraceConstraintAuthority"
+              }
+            ],
+            "kwargs": {}
+          },
+          "cache_before": null,
+          "call_id": 18,
+          "event": "BEGIN",
+          "function": "src.adaptivity.hcurl_broken_cell_trace.build_broken_hexa_cell_trace_constraint_map",
+          "key_occurrence": 1,
+          "monotonic": 2984929.242456202,
+          "stage": "space_authority",
+          "unreturned_status": "IN_PROGRESS_AT_STOP",
+          "worker_cpu_seconds": 82.148587423,
+          "worker_pid": 3065595
+        },
+        "status": "IN_PROGRESS_AT_STOP",
+        "elapsed_lower_bound_to_stop_seconds": 413.0572323082015
+      },
+      {
+        "stage": "space_authority",
+        "call_id": 87,
+        "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+        "begin_line": 180,
+        "begin": {
+          "arguments": {
+            "args": [
+              {
+                "cell": 6,
+                "edges": [
+                  5,
+                  6,
+                  6,
+                  5,
+                  5,
+                  5,
+                  6,
+                  6,
+                  6,
+                  6,
+                  6,
+                  6
+                ],
+                "exact_sequence_monotone": true,
+                "faces": [
+                  6,
+                  6,
+                  6,
+                  6,
+                  6,
+                  6
+                ],
+                "signature": "e[5,6,6,5,5,5,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]",
+                "uniform_degree": null
+              }
+            ],
+            "kwargs": {}
+          },
+          "cache_before": {
+            "currsize": 7,
+            "hits": 3,
+            "maxsize": 128,
+            "misses": 7
+          },
+          "call_id": 87,
+          "event": "BEGIN",
+          "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+          "key_occurrence": 1,
+          "monotonic": 2985323.387558126,
+          "stage": "space_authority",
+          "unreturned_status": "IN_PROGRESS_AT_STOP",
+          "worker_cpu_seconds": 350.173704052,
+          "worker_pid": 3065595
+        },
+        "status": "IN_PROGRESS_AT_STOP",
+        "elapsed_lower_bound_to_stop_seconds": 18.9121303842403
+      },
+      {
+        "stage": "space_authority",
+        "call_id": 88,
+        "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+        "begin_line": 181,
+        "begin": {
+          "arguments": {
+            "args": [
+              "hcurl",
+              {
+                "cell": 6,
+                "edges": [
+                  5,
+                  6,
+                  6,
+                  5,
+                  5,
+                  5,
+                  6,
+                  6,
+                  6,
+                  6,
+                  6,
+                  6
+                ],
+                "exact_sequence_monotone": true,
+                "faces": [
+                  6,
+                  6,
+                  6,
+                  6,
+                  6,
+                  6
+                ],
+                "signature": "e[5,6,6,5,5,5,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]",
+                "uniform_degree": null
+              }
+            ],
+            "kwargs": {}
+          },
+          "cache_before": {
+            "currsize": 14,
+            "hits": 0,
+            "maxsize": 32,
+            "misses": 14
+          },
+          "call_id": 88,
+          "event": "BEGIN",
+          "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+          "key_occurrence": 1,
+          "monotonic": 2985323.390715581,
+          "stage": "space_authority",
+          "unreturned_status": "IN_PROGRESS_AT_STOP",
+          "worker_cpu_seconds": 350.174277076,
+          "worker_pid": 3065595
+        },
+        "status": "IN_PROGRESS_AT_STOP",
+        "elapsed_lower_bound_to_stop_seconds": 18.908972929231822
+      },
+      {
+        "stage": "space_authority",
+        "call_id": 89,
+        "function": "basix.interpolation.compute_interpolation_operator",
+        "begin_line": 182,
+        "begin": {
+          "arguments": {
+            "args": [
+              {
+                "cell_type": 5,
+                "degree": 6,
+                "dim": 878,
+                "family": 0,
+                "type": "basix.finite_element.FiniteElement"
+              },
+              {
+                "cell_type": 5,
+                "degree": 6,
+                "dim": 882,
+                "family": 3,
+                "type": "basix.finite_element.FiniteElement"
+              }
+            ],
+            "kwargs": {}
+          },
+          "cache_before": null,
+          "call_id": 89,
+          "event": "BEGIN",
+          "function": "basix.interpolation.compute_interpolation_operator",
+          "key_occurrence": 1,
+          "monotonic": 2985328.609484745,
+          "stage": "space_authority",
+          "unreturned_status": "IN_PROGRESS_AT_STOP",
+          "worker_cpu_seconds": 353.779966165,
+          "worker_pid": 3065595
+        },
+        "status": "IN_PROGRESS_AT_STOP",
+        "elapsed_lower_bound_to_stop_seconds": 13.690203764941543
+      }
+    ],
+    "full_profile": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/authority_work_profile.json",
+      "sha256": "900dd6a2111c44350e1b3ab60e910867e96aa2b39f949a448a963875ed51b4d5"
+    },
+    "conservative_1740_bound": null,
+    "reason": [
+      "18 degree keys not completed, including one in progress; observed maxima are not proven upper bounds for unseen keys",
+      "cell-map entity transforms/rank and expansion audit/completion not returned",
+      "reduction authority audit and _audit_plan closure/FE verification not reached",
+      "post-space input/source checks and output persistence have no complete measured tail",
+      "new process repeats cold prefix and in-process caches; no resume or warmed-worker assumption"
+    ]
+  },
+  "quota": {
+    "current_round_support_calls": 2,
+    "old_S1_calls": 2,
+    "S1_completion": {
+      "used": 1,
+      "limit": 1
+    },
+    "D1": {
+      "used": 1,
+      "limit": 1
+    },
+    "P2R": {
+      "used": 0,
+      "limit": 1,
+      "conditional_gate": "NOT_ESTABLISHED"
+    },
+    "recovery_support_envelope": {
+      "used": 4,
+      "limit": 5,
+      "nominal_whole_seconds": 3300
+    },
+    "P5": {
+      "used": 0,
+      "limit": 1,
+      "conditional_gate": "NOT_REACHED"
+    },
+    "new_formal_PDE_dispatch": 0,
+    "new_READY": 0,
+    "historical_formal": {
+      "used": 5,
+      "limit": 6,
+      "last_slot": "SEALED"
+    },
+    "expanded_formal": {
+      "used": 5,
+      "limit": 8,
+      "original_P3_P4_slots_unconsumed": 2
+    },
+    "A1_historical_attempts": 2,
+    "A2_attempts": 3,
+    "historical_sanity": {
+      "used": 1,
+      "limit": 1
+    },
+    "historical_D3": {
+      "used": 1,
+      "limit": 1
+    }
+  },
+  "cost": {
+    "current_whole_disjoint_seconds": 569.021475143265,
+    "current_driver_whole_seconds": [
+      27.02263388223946,
+      541.9988412610255
+    ],
+    "prior_V12_failed_support_whole_seconds": [
+      42.5156832835637,
+      7.066758690867573
+    ],
+    "prior_V12_sum_seconds": 49.582441974431276,
+    "recovery_package_spent_whole_seconds": 618.6039171176963,
+    "earlier_V11_whole_seconds": 853.8004706790671,
+    "prior_V12_measured_static_seconds": 7.670738293323666,
+    "current_measured_static_items": [
+      {
+        "record": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/input_hash_precheck.json",
+        "seconds": 7.604801240842789
+      },
+      {
+        "record": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/launch_text_static_check.json",
+        "seconds": 0.012659003026783466
+      },
+      {
+        "record": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/root_prelaunch_review.json",
+        "seconds": 0.3472657217644155
+      },
+      {
+        "record": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/d1_prelaunch_binding.json",
+        "seconds": 0.03699004603549838
+      },
+      {
+        "record": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/agent_static_checks.json",
+        "step": "ast_parse",
+        "seconds": 0.380379382
+      },
+      {
+        "record": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/agent_static_checks.json",
+        "step": "ruff_undefined_names",
+        "seconds": 0.226780151
+      },
+      {
+        "record": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/agent_static_checks.json",
+        "step": "git_diff_check",
+        "seconds": 0.160411897
+      },
+      {
+        "record": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/archive_static_cost.json",
+        "seconds": 0.4012579582631588
+      }
+    ],
+    "current_measured_static_subtotal_before_final_document_validation_seconds": 9.170545399932646,
+    "not_measured": [
+      "manual source/diff/review reading and editing",
+      "Git/network operations",
+      "root full terminal read/helper and secondary JSON audits without timers",
+      "S1 light archive",
+      "monitoring reads and temporary script preparation",
+      "document generation and count/narrative correction"
+    ],
+    "no_total_manual_wall_claim": true,
+    "nested_stage_costs_not_added": true,
+    "launcher_timestamp_envelopes": {
+      "record": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/launch_timestamp_envelopes.json",
+      "runs": [
+        {
+          "run": "s1_completion_attempt1",
+          "started_utc": "2026-10-27T00:02:38.530955185Z",
+          "finished_utc": "2026-10-27T00:03:12.006914821Z",
+          "start_sha256": "9f12c235c37a69a3781d54a0cf88265cb616a69b840a13e52de64f06e9d6b934",
+          "finish_sha256": "00525c5d56d18f3296df8473c1d027fabc0ce1d11f36fa1f3bfab8e2db8cbb8c",
+          "launcher_timestamp_span_seconds_microsecond_precision": 33.475959,
+          "watchdog_monotonic_whole_seconds": 27.02263388223946,
+          "timestamp_span_minus_watchdog_whole_seconds": 6.453325117760542,
+          "interpretation": "derived UTC timestamp envelope includes pre/post-watchdog shell work; clocks differ, not a monotonic stage timer; do not add the full span to watchdog whole"
+        },
+        {
+          "run": "authority_profile_attempt1",
+          "started_utc": "2026-10-27T00:09:58.945987293Z",
+          "finished_utc": "2026-10-27T00:19:09.604246687Z",
+          "start_sha256": "5a77bb7c2cae2068898d935842071085290294dc7b3cf83258d5086ea418b416",
+          "finish_sha256": "33d6ddc25824474521133ecb0a967f833f3b551bd7cbf26074ea0bc0c94f21cf",
+          "launcher_timestamp_span_seconds_microsecond_precision": 550.658259,
+          "watchdog_monotonic_whole_seconds": 541.9988412610255,
+          "timestamp_span_minus_watchdog_whole_seconds": 8.659417738974525,
+          "interpretation": "derived UTC timestamp envelope includes pre/post-watchdog shell work; clocks differ, not a monotonic stage timer; do not add the full span to watchdog whole"
+        }
+      ],
+      "total_launcher_timestamp_spans_seconds": 584.134218,
+      "total_watchdog_monotonic_whole_seconds": 569.021475143265,
+      "overlapping_costs_not_added": true
+    },
+    "final_document_static_check": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/final_document_static_check.json",
+      "sha256": "991c14a8253ba71cd98b44362ffa958345ef48eabeda8e204774b0ee6eff1da6",
+      "seconds": 0.31329149194061756,
+      "checks": 30,
+      "errors": []
+    },
+    "current_measured_static_total_seconds": 9.483836891873263
+  },
+  "local_failures_and_corrections": [
+    {
+      "kind": "preparation wrong source path",
+      "original": "src/adaptivity/hcurl_broken_trace.py",
+      "exit_code": 2,
+      "recovery": "read actual hcurl_broken_cell_trace.py and variable_p_entity_map.py",
+      "time": "not_measured"
+    },
+    {
+      "error": "KeyError: substage_checkpoint_refs",
+      "cause": "root post-run broad fixture glob also included old-schema unrelated P2 mock",
+      "recovery": "narrowed to main fixture and read real checkpoint files; no test/driver rerun",
+      "time": "not_measured"
+    },
+    {
+      "step": "initial monitor before plan_output creation",
+      "exit_code": 2,
+      "cause": "ls on not-yet-created output directory",
+      "recovery": "guarded exists/read; no relaunch"
+    },
+    {
+      "step": "subagent final narrative",
+      "wrong_text": "P2R 540 seconds",
+      "correction": "root rejected; P2R work1740/whole1800, D1 work540/whole600",
+      "changed_authorization": false
+    },
+    {
+      "step": "provisional live degree-key count in root commentary and subagent analysis",
+      "wrong_count": 24,
+      "correct_count": 25,
+      "evidence": "mechanical len of actual 194-cell multiplicity map: 25 keys, 7 completed, 1 in progress, 17 not started",
+      "recovery": "corrected current root closeout before commit; raw observation unchanged",
+      "time": "not_measured"
+    },
+    {
+      "step": "final staged whitespace check including newly added raw text",
+      "exit_code": 2,
+      "cause": "launch_context.txt line 9 argv retains one trailing space from actual shell output",
+      "disposition": "preserve exact raw launch-context bytes; documented format exception only, no runtime failure",
+      "record": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/staged_format_exception.json",
+      "time": "not_measured"
+    }
+  ],
+  "root_evidence_visibility": {
+    "S1": "all final raw trace/nonstack and unique stack frames,37 resource samples,4 real runtime identities,fixture checkpoint files,51 source/38 input byte hashes,terminal and host cleanup personally read",
+    "D1": "all795 trace lines represented by nonstack+all unique stack frames,769 resource rows,182 authority events,actual A2 values and four checkpoint hashes,real runtime marker,51 source/38 input byte hashes,terminal and host cleanup personally read",
+    "NPZ_numeric_recomputation": "only D1 worker executed existing saved-array arithmetic; root did not rerun native or reopen arrays for a second computation",
+    "unverified": [
+      "actual h FE/reduction authority completion",
+      "formal A1/R9_H8 primary packets and science gates",
+      "common-partition P5 outputs",
+      "independent continuum accuracy",
+      "production ABI and whole repository CI",
+      "continuous memory peak/PSS/shared JIT cache"
+    ],
+    "resource_sum_recomputation_record": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/resource_recomputation.json"
+  },
+  "capabilities": {
+    "space": "PARTIAL",
+    "selection": "PARTIAL",
+    "accuracy": "NOT_PASSED",
+    "same_accuracy_total_cost": "NOT_ESTABLISHED",
+    "iterative": "NOT_RUN / NOT_QUALIFIED"
+  },
+  "accepted_parent": "accepted9/R9",
+  "R10_rejection_preserved": true,
+  "merge_approval": false,
+  "continuation_allowed": false,
+  "minimum_remaining_task": "Review an explicitly budgeted way to bound the 18 uncompleted cold degree keys and cell-map tail, or authorize a narrowly specified cost reduction preserving math; current round changes no core/cache/watchdog policy.",
+  "locked": [
+    "A1/A2 q retries outside original conditional slots",
+    "A1_R",
+    "A2_R",
+    "other B/C models and seeds",
+    "fresh baseline",
+    "same-accuracy cost campaign",
+    "iterative wiring",
+    "0.7nm",
+    "NN/FTT",
+    "shared activation/ABI rebuild",
+    "parameter sweep",
+    "merge"
+  ]
+}

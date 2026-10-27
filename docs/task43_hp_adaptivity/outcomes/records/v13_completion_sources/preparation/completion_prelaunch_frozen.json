@@ -1,0 +1,32 @@
+{
+  "head": "7546c7bdb91b2c07c0344c41d418e8a0808ea6a6",
+  "status": "clean",
+  "time_utc": "2026-10-27T00:02:30.969173+00:00",
+  "review_sha": "37f3376be410657fbaec86b0412086745419c506",
+  "command": [
+    "bash",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/launch/s1_completion_attempt1.sh"
+  ],
+  "shell_sha256": "82342852758fcf61130ae2edc50fd728d37a0876b2a50ca34f53aa7e6de544ea",
+  "source_sha256": {
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py": "72716b9f7219a9f6ae78f4b7b736796d072ef4ffa46505ff9b3aac4d8523c71e",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "086bdf560e3836a19009e86c74ad818870b534ec8b891b818a87fbf9137a1323",
+    "src/test/test_task43_v11_scientific_restart.py": "8516a90dd558e6c2ec4d9329da26fa2aba5bdb0b253e5ac3c6838dbbda5f38ba"
+  },
+  "expanded_nodes": [
+    "src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity",
+    "src/test/test_task43_v11_scientific_restart.py::test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v12_p2_joined_source_binding_rejects_root_terminal_failure",
+    "src/test/test_task43_v11_scientific_restart.py::test_v12_observer_delegates_cache_and_restores_alias_after_errors",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[valid]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[rhs]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[solution]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[residual_sign]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[missing_solution]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[zero_rhs]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[modal_rhs]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_saved_a2_partial_checkpoint"
+  ],
+  "authorization": "one s1_completion launch only; conditional D1 requires independent root terminal review",
+  "launch_calls_before_this_snapshot": 0
+}

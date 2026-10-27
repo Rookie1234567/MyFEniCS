@@ -1,6 +1,23 @@
 # Task43 结果：部分完成，受控负结果
 
-## V12 当前状态：受控停止；两处最终断言未运行
+## V13 当前状态：S1 有限支持验证通过；D1 性能停止；P2R 未运行
+
+| 项目 | V13 实际结果 | 证据边界 |
+|---|---|---|
+| S1 支持验证 | 12/12 节点通过；watchdog whole `27.02263388223946 s`；进程树 RSS 采样峰 `313585664 B`；worker/watchdog/launcher 退出 `0/0/0` | `PASS_LIMITED_SUPPORT_ENGINEERING`；只覆盖指定 selector/fixture，不是全文件、全仓或科学资格 |
+| D1 实际空间路径 | `PERFORMANCE_CONTROLLED_STOP`；540 s 工作停止门、600 s whole 限值，whole `541.9988412610255 s`；RSS 采样峰 `1302609920 B`；task swap `0 B` | 在真实 cell-map/reference-space 冷构造中停止；cell-trace map、reduction authority、独立 FE audit 均未返回；P2不装配PDE矩阵，rows/NNZ未测，科学 gate `NOT_REACHED` |
+| D1 观察完整性 | 769 资源行；6 trace 文件/795 行；19 affinity getter 全为 `[1]`，0 setter；51 source checks、38 input checks 未变；后代清理 | worker/watchdog/launcher exit `-15/2/2`；PSS disabled，RSS为采样口径；不以进程终态替代科学结果 |
+| 旧 A2 保存数组诊断 | raw、modal、q8、q10 四个 checkpoint 已读；A6 `3.078522812304335e-10`、full-active `1.1972486317982494e-11`、returned condensed `3.0440529386035694e-12` | 只对旧保存数组做有限复核；无新求解、采样、积分或算子应用；旧 endpoint 仍 `INCOMPLETE_NOT_QUALIFIED` |
+| 旧 A2 的 q 响应 | q8/q10 的 G 分别 `6.043732933300416e-11` / `6.04373290835214e-11`（限值 `1e-5`）；612通道最大功率差 `4.5076775645469525e-11`（限值 `1e-7`） | 同一Y6_1目标、旧保存点数组；完整 E/H/G 与通道实值见机器记录，不能提升旧端点资格 |
+| 真实 h 自由度 | 未取得；要求严格 `110472 < FE_h < 237600` | 194个实际叶单元不等于通过自由度门，新增FE和输出收益尚未取得 |
+| P2R 与下游 | P2R `NOT_RUN_CONSERVATIVE_BUDGET_UNPROVEN`；P3/P4/P5 `NOT_RUN` | P2R 要求工作界 1740 s / whole 限值 1800 s；25 unique keys 中18个未完成，cell-map及 `_audit_plan` 尾段无可审费用上界。D1 的540 s是另一阶段工作停止门 |
+| 科学状态与费用 | 旧正式5/6、末槽封存，扩展正式5/8，新 formal 0；本轮两次调用合计 `569.021475143265 s` | accepted9/R9、R10拒绝与五项科学状态不变；含V12两次失败支持调用累计 `618.6039171176963 s`；无READY或merge approval |
+
+25 unique degree keys 对应194个cell multiplicity；7个冷key已完整返回、1个进行中、17个未开始。观察到的冷构造样本时长不是未见key上界，故不能平均外推或因低RSS放行P2R。最小下一步是取得剩余18个冷key和cell-map尾段的保守费用依据，或另行审阅严格保持数学行为的窄成本修复。局部静态记账错误及修正、旧失败保留和计时口径见[Response V13](../response_v13.md)。
+
+详细来源见[V13机器结果记录](records/v13_minimal_completion_and_scientific_results_v1.json)、[S1 root closeout](records/v13_completion_sources/support/s1_completion_attempt1/root_closeout.json)、[D1 root closeout](records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json)与[P2R预算裁决](records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json)。
+
+## V12历史状态：S1与窄恢复失败；最终两处断言当时未运行
 
 | 项目 | V12 实际结果 | 证据边界 |
 |---|---|---|

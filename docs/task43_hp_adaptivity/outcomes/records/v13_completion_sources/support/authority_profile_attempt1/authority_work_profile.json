@@ -1,0 +1,1981 @@
+{
+  "event_count": 182,
+  "calls": [
+    {
+      "stage": "parent_identity",
+      "call_id": 1,
+      "function": "parent_identity",
+      "begin_line": 1,
+      "end_line": 4,
+      "status": "END",
+      "wall_seconds": 0.5743132159113884,
+      "worker_cpu_delta_seconds": 0.3512541750000011
+    },
+    {
+      "stage": "parent_identity",
+      "call_id": 2,
+      "function": "src.adaptivity.stage4_local_h._build_forest",
+      "begin_line": 2,
+      "end_line": 3,
+      "status": "END",
+      "wall_seconds": 0.46060218289494514,
+      "worker_cpu_delta_seconds": 0.256315721
+    },
+    {
+      "stage": "plan",
+      "call_id": 1,
+      "function": "plan",
+      "begin_line": 5,
+      "end_line": 10,
+      "status": "END",
+      "wall_seconds": 2.7278910102322698,
+      "worker_cpu_delta_seconds": 1.7454189130000017
+    },
+    {
+      "stage": "plan",
+      "call_id": 2,
+      "function": "src.adaptivity.stage4_local_h._build_forest",
+      "begin_line": 6,
+      "end_line": 7,
+      "status": "END",
+      "wall_seconds": 1.896461483091116,
+      "worker_cpu_delta_seconds": 1.243167954999997
+    },
+    {
+      "stage": "plan",
+      "call_id": 3,
+      "function": "src.adaptivity.stage4_local_h._build_forest",
+      "begin_line": 8,
+      "end_line": 9,
+      "status": "END",
+      "wall_seconds": 0.8027594652958214,
+      "worker_cpu_delta_seconds": 0.48080499599999627
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 1,
+      "function": "space_authority",
+      "begin_line": 11,
+      "end_line": null,
+      "status": "IN_PROGRESS_AT_STOP",
+      "wall_seconds": null,
+      "worker_cpu_delta_seconds": null
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 2,
+      "function": "src.adaptivity.stage4_local_h.build_stage4_local_h_mesh_data",
+      "begin_line": 12,
+      "end_line": 15,
+      "status": "END",
+      "wall_seconds": 0.9113047649152577,
+      "worker_cpu_delta_seconds": 0.5707949359999986
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 3,
+      "function": "src.adaptivity.stage4_local_h._build_forest",
+      "begin_line": 13,
+      "end_line": 14,
+      "status": "END",
+      "wall_seconds": 0.7511589610949159,
+      "worker_cpu_delta_seconds": 0.4732367019999941
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 4,
+      "function": "src.adaptivity.stage4_local_h.build_stage4_local_h_reduction_authority",
+      "begin_line": 16,
+      "end_line": null,
+      "status": "IN_PROGRESS_AT_STOP",
+      "wall_seconds": null,
+      "worker_cpu_delta_seconds": null
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 5,
+      "function": "src.adaptivity.hcurl_broken_trace_graph.build_broken_hexa_trace_constraint_authority",
+      "begin_line": 17,
+      "end_line": 38,
+      "status": "END",
+      "wall_seconds": 61.94650042662397,
+      "worker_cpu_delta_seconds": 40.428009406
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 6,
+      "function": "src.adaptivity.hcurl_hanging_trace.build_hanging_face_reference_pair",
+      "begin_line": 18,
+      "end_line": 21,
+      "status": "END",
+      "wall_seconds": 0.08247616421431303,
+      "worker_cpu_delta_seconds": 0.052513445999998964
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 7,
+      "function": "src.adaptivity.hcurl_hanging_trace._discrete_gradient",
+      "begin_line": 19,
+      "end_line": 20,
+      "status": "END",
+      "wall_seconds": 0.0021908539347350597,
+      "worker_cpu_delta_seconds": 0.001826066999996101
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 8,
+      "function": "src.adaptivity.hcurl_hanging_trace.build_hanging_face_reference_pair",
+      "begin_line": 22,
+      "end_line": 23,
+      "status": "END",
+      "wall_seconds": 0.0008712001144886017,
+      "worker_cpu_delta_seconds": 0.0006875660000034145
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 9,
+      "function": "src.adaptivity.hcurl_hanging_trace.build_hanging_face_reference_pair",
+      "begin_line": 24,
+      "end_line": 25,
+      "status": "END",
+      "wall_seconds": 0.0005431398749351501,
+      "worker_cpu_delta_seconds": 0.00036620400000231257
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 10,
+      "function": "src.adaptivity.hcurl_hanging_trace.build_hanging_face_reference_pair",
+      "begin_line": 26,
+      "end_line": 27,
+      "status": "END",
+      "wall_seconds": 0.0004933513700962067,
+      "worker_cpu_delta_seconds": 0.0003564159999953631
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 11,
+      "function": "src.adaptivity.hcurl_hanging_trace.build_hanging_face_reference_pair",
+      "begin_line": 28,
+      "end_line": 29,
+      "status": "END",
+      "wall_seconds": 0.0004612719640135765,
+      "worker_cpu_delta_seconds": 0.0003109150000000227
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 12,
+      "function": "src.adaptivity.hcurl_hanging_trace.build_hanging_face_reference_pair",
+      "begin_line": 30,
+      "end_line": 31,
+      "status": "END",
+      "wall_seconds": 0.0004435577429831028,
+      "worker_cpu_delta_seconds": 0.000300355999996782
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 13,
+      "function": "src.adaptivity.hcurl_hanging_trace.build_hanging_face_reference_pair",
+      "begin_line": 32,
+      "end_line": 33,
+      "status": "END",
+      "wall_seconds": 0.0005558282136917114,
+      "worker_cpu_delta_seconds": 0.0004252500000063719
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 14,
+      "function": "src.adaptivity.hcurl_hanging_trace.build_hanging_face_reference_pair",
+      "begin_line": 34,
+      "end_line": 35,
+      "status": "END",
+      "wall_seconds": 0.0004247850738465786,
+      "worker_cpu_delta_seconds": 0.00024498300000175277
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 15,
+      "function": "src.adaptivity.hcurl_hanging_trace.build_hanging_face_reference_pair",
+      "begin_line": 36,
+      "end_line": 37,
+      "status": "END",
+      "wall_seconds": 0.00039072660729289055,
+      "worker_cpu_delta_seconds": 0.0002668899999989094
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 16,
+      "function": "src.adaptivity.hcurl_broken_trace_graph.build_broken_hexa_entity_degree_arrays",
+      "begin_line": 39,
+      "end_line": 40,
+      "status": "END",
+      "wall_seconds": 0.2002501729875803,
+      "worker_cpu_delta_seconds": 0.10103430700000615
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 17,
+      "function": "src.adaptivity.variable_p_entity_map.build_variable_p_global_entity_map",
+      "begin_line": 41,
+      "end_line": 42,
+      "status": "END",
+      "wall_seconds": 0.09896376030519605,
+      "worker_cpu_delta_seconds": 0.07941949100001011
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 18,
+      "function": "src.adaptivity.hcurl_broken_cell_trace.build_broken_hexa_cell_trace_constraint_map",
+      "begin_line": 43,
+      "end_line": null,
+      "status": "IN_PROGRESS_AT_STOP",
+      "wall_seconds": null,
+      "worker_cpu_delta_seconds": null
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 19,
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "begin_line": 44,
+      "end_line": 65,
+      "status": "END",
+      "wall_seconds": 19.671300588175654,
+      "worker_cpu_delta_seconds": 13.246409986999993
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 20,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 45,
+      "end_line": 50,
+      "status": "END",
+      "wall_seconds": 18.874652564991266,
+      "worker_cpu_delta_seconds": 12.719649336000003
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 21,
+      "function": "src.adaptivity.exact_sequence_variable_p._to_p6_interpolation",
+      "begin_line": 46,
+      "end_line": 49,
+      "status": "END",
+      "wall_seconds": 16.62409761780873,
+      "worker_cpu_delta_seconds": 11.295381491
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 22,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 47,
+      "end_line": 48,
+      "status": "END",
+      "wall_seconds": 16.619784868322313,
+      "worker_cpu_delta_seconds": 11.294240776999999
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 23,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 51,
+      "end_line": 56,
+      "status": "END",
+      "wall_seconds": 0.15287397522479296,
+      "worker_cpu_delta_seconds": 0.0766079190000255
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 24,
+      "function": "src.adaptivity.exact_sequence_variable_p._to_p6_interpolation",
+      "begin_line": 52,
+      "end_line": 55,
+      "status": "END",
+      "wall_seconds": 0.08007805189117789,
+      "worker_cpu_delta_seconds": 0.03996573400002035
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 25,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 53,
+      "end_line": 54,
+      "status": "END",
+      "wall_seconds": 0.07721017394214869,
+      "worker_cpu_delta_seconds": 0.03905899700001214
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 26,
+      "function": "src.adaptivity.exact_sequence_variable_p._discrete_gradient",
+      "begin_line": 57,
+      "end_line": 58,
+      "status": "END",
+      "wall_seconds": 0.023357714992016554,
+      "worker_cpu_delta_seconds": 0.017994071999993366
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 27,
+      "function": "src.adaptivity.exact_sequence_variable_p._discrete_gradient",
+      "begin_line": 59,
+      "end_line": 60,
+      "status": "END",
+      "wall_seconds": 0.09675162192434072,
+      "worker_cpu_delta_seconds": 0.06927532400001724
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 28,
+      "function": "src.adaptivity.exact_sequence_variable_p._orientation_audit",
+      "begin_line": 61,
+      "end_line": 62,
+      "status": "END",
+      "wall_seconds": 0.15247433306649327,
+      "worker_cpu_delta_seconds": 0.07402745399997457
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 29,
+      "function": "src.adaptivity.exact_sequence_variable_p._orientation_audit",
+      "begin_line": 63,
+      "end_line": 64,
+      "status": "END",
+      "wall_seconds": 0.026820197701454163,
+      "worker_cpu_delta_seconds": 0.013699186999986068
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 30,
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "begin_line": 66,
+      "end_line": 67,
+      "status": "END",
+      "wall_seconds": 0.0013937479816377163,
+      "worker_cpu_delta_seconds": 0.001062417000014193
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 31,
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "begin_line": 68,
+      "end_line": 69,
+      "status": "END",
+      "wall_seconds": 0.0015858830884099007,
+      "worker_cpu_delta_seconds": 0.0012078459999997904
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 32,
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "begin_line": 70,
+      "end_line": 97,
+      "status": "END",
+      "wall_seconds": 59.10681286128238,
+      "worker_cpu_delta_seconds": 39.824173409000025
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 33,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 71,
+      "end_line": 78,
+      "status": "END",
+      "wall_seconds": 57.229313652031124,
+      "worker_cpu_delta_seconds": 38.524352626999985
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 34,
+      "function": "src.adaptivity.exact_sequence_variable_p._to_p6_interpolation",
+      "begin_line": 72,
+      "end_line": 73,
+      "status": "END",
+      "wall_seconds": 0.003845149651169777,
+      "worker_cpu_delta_seconds": 0.0006456730000081734
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 35,
+      "function": "src.adaptivity.exact_sequence_variable_p._to_p6_interpolation",
+      "begin_line": 74,
+      "end_line": 75,
+      "status": "END",
+      "wall_seconds": 0.003102778922766447,
+      "worker_cpu_delta_seconds": 0.0028269130000069254
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 36,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 76,
+      "end_line": 77,
+      "status": "END",
+      "wall_seconds": 46.7112162290141,
+      "worker_cpu_delta_seconds": 31.57335625899998
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 37,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 79,
+      "end_line": 90,
+      "status": "END",
+      "wall_seconds": 0.2014814130961895,
+      "worker_cpu_delta_seconds": 0.20040654900003574
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 38,
+      "function": "src.adaptivity.exact_sequence_variable_p._to_p6_interpolation",
+      "begin_line": 80,
+      "end_line": 83,
+      "status": "END",
+      "wall_seconds": 0.0043782121501863,
+      "worker_cpu_delta_seconds": 0.004126243000030172
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 39,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 81,
+      "end_line": 82,
+      "status": "END",
+      "wall_seconds": 0.0033492669463157654,
+      "worker_cpu_delta_seconds": 0.0033318019999910575
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 40,
+      "function": "src.adaptivity.exact_sequence_variable_p._to_p6_interpolation",
+      "begin_line": 84,
+      "end_line": 85,
+      "status": "END",
+      "wall_seconds": 0.0004764702171087265,
+      "worker_cpu_delta_seconds": 0.0003239220000068599
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 41,
+      "function": "src.adaptivity.exact_sequence_variable_p._to_p6_interpolation",
+      "begin_line": 86,
+      "end_line": 87,
+      "status": "END",
+      "wall_seconds": 0.0005616801790893078,
+      "worker_cpu_delta_seconds": 0.00043292399999472764
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 42,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 88,
+      "end_line": 89,
+      "status": "END",
+      "wall_seconds": 0.05657685874029994,
+      "worker_cpu_delta_seconds": 0.056368520000035005
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 43,
+      "function": "src.adaptivity.exact_sequence_variable_p._discrete_gradient",
+      "begin_line": 91,
+      "end_line": 92,
+      "status": "END",
+      "wall_seconds": 0.21656310372054577,
+      "worker_cpu_delta_seconds": 0.11971510799997986
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 44,
+      "function": "src.adaptivity.exact_sequence_variable_p._orientation_audit",
+      "begin_line": 93,
+      "end_line": 94,
+      "status": "END",
+      "wall_seconds": 0.018875732086598873,
+      "worker_cpu_delta_seconds": 0.009408420999989175
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 45,
+      "function": "src.adaptivity.exact_sequence_variable_p._orientation_audit",
+      "begin_line": 95,
+      "end_line": 96,
+      "status": "END",
+      "wall_seconds": 0.006727249827235937,
+      "worker_cpu_delta_seconds": 0.0036717950000024757
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 46,
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "begin_line": 98,
+      "end_line": 113,
+      "status": "END",
+      "wall_seconds": 30.101596585009247,
+      "worker_cpu_delta_seconds": 21.615735313000016
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 47,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 99,
+      "end_line": 102,
+      "status": "END",
+      "wall_seconds": 28.75937847374007,
+      "worker_cpu_delta_seconds": 20.636598022999976
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 48,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 100,
+      "end_line": 101,
+      "status": "END",
+      "wall_seconds": 26.320344949141145,
+      "worker_cpu_delta_seconds": 18.897228720999976
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 49,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 103,
+      "end_line": 106,
+      "status": "END",
+      "wall_seconds": 0.17864381801337004,
+      "worker_cpu_delta_seconds": 0.14747896199997967
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 50,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 104,
+      "end_line": 105,
+      "status": "END",
+      "wall_seconds": 0.07118732901290059,
+      "worker_cpu_delta_seconds": 0.052891067000018666
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 51,
+      "function": "src.adaptivity.exact_sequence_variable_p._discrete_gradient",
+      "begin_line": 107,
+      "end_line": 108,
+      "status": "END",
+      "wall_seconds": 0.08664462994784117,
+      "worker_cpu_delta_seconds": 0.04380141299998286
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 52,
+      "function": "src.adaptivity.exact_sequence_variable_p._orientation_audit",
+      "begin_line": 109,
+      "end_line": 110,
+      "status": "END",
+      "wall_seconds": 0.014682929962873459,
+      "worker_cpu_delta_seconds": 0.008569293000050493
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 53,
+      "function": "src.adaptivity.exact_sequence_variable_p._orientation_audit",
+      "begin_line": 111,
+      "end_line": 112,
+      "status": "END",
+      "wall_seconds": 0.00308633828535676,
+      "worker_cpu_delta_seconds": 0.00303644599995323
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 54,
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "begin_line": 114,
+      "end_line": 129,
+      "status": "END",
+      "wall_seconds": 19.83430577116087,
+      "worker_cpu_delta_seconds": 14.149729523000019
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 55,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 115,
+      "end_line": 118,
+      "status": "END",
+      "wall_seconds": 18.28371789632365,
+      "worker_cpu_delta_seconds": 13.084874447000004
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 56,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 116,
+      "end_line": 117,
+      "status": "END",
+      "wall_seconds": 15.994472266640514,
+      "worker_cpu_delta_seconds": 11.360402050999994
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 57,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 119,
+      "end_line": 122,
+      "status": "END",
+      "wall_seconds": 0.22534701600670815,
+      "worker_cpu_delta_seconds": 0.15293033500000774
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 58,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 120,
+      "end_line": 121,
+      "status": "END",
+      "wall_seconds": 0.11901199305430055,
+      "worker_cpu_delta_seconds": 0.05871646000002784
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 59,
+      "function": "src.adaptivity.exact_sequence_variable_p._discrete_gradient",
+      "begin_line": 123,
+      "end_line": 124,
+      "status": "END",
+      "wall_seconds": 0.08025977807119489,
+      "worker_cpu_delta_seconds": 0.04122852300002933
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 60,
+      "function": "src.adaptivity.exact_sequence_variable_p._orientation_audit",
+      "begin_line": 125,
+      "end_line": 126,
+      "status": "END",
+      "wall_seconds": 0.016942092217504978,
+      "worker_cpu_delta_seconds": 0.008522760000005292
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 61,
+      "function": "src.adaptivity.exact_sequence_variable_p._orientation_audit",
+      "begin_line": 127,
+      "end_line": 128,
+      "status": "END",
+      "wall_seconds": 0.003614123910665512,
+      "worker_cpu_delta_seconds": 0.003571618000023591
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 62,
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "begin_line": 130,
+      "end_line": 131,
+      "status": "END",
+      "wall_seconds": 0.004080235026776791,
+      "worker_cpu_delta_seconds": 0.0006704150000018672
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 63,
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "begin_line": 132,
+      "end_line": 147,
+      "status": "END",
+      "wall_seconds": 32.33455295627937,
+      "worker_cpu_delta_seconds": 23.265782150999996
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 64,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 133,
+      "end_line": 136,
+      "status": "END",
+      "wall_seconds": 30.44412196194753,
+      "worker_cpu_delta_seconds": 21.949439460000008
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 65,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 134,
+      "end_line": 135,
+      "status": "END",
+      "wall_seconds": 27.02894360711798,
+      "worker_cpu_delta_seconds": 19.443254759000013
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 66,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 137,
+      "end_line": 140,
+      "status": "END",
+      "wall_seconds": 0.3590617012232542,
+      "worker_cpu_delta_seconds": 0.2178973009999936
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 67,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 138,
+      "end_line": 139,
+      "status": "END",
+      "wall_seconds": 0.06769770989194512,
+      "worker_cpu_delta_seconds": 0.061828364999996666
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 68,
+      "function": "src.adaptivity.exact_sequence_variable_p._discrete_gradient",
+      "begin_line": 141,
+      "end_line": 142,
+      "status": "END",
+      "wall_seconds": 0.08408723725005984,
+      "worker_cpu_delta_seconds": 0.0840950339999722
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 69,
+      "function": "src.adaptivity.exact_sequence_variable_p._orientation_audit",
+      "begin_line": 143,
+      "end_line": 144,
+      "status": "END",
+      "wall_seconds": 0.01535185007378459,
+      "worker_cpu_delta_seconds": 0.007889168000019708
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 70,
+      "function": "src.adaptivity.exact_sequence_variable_p._orientation_audit",
+      "begin_line": 145,
+      "end_line": 146,
+      "status": "END",
+      "wall_seconds": 0.0032025082036852837,
+      "worker_cpu_delta_seconds": 0.0031552769999620978
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 71,
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "begin_line": 148,
+      "end_line": 163,
+      "status": "END",
+      "wall_seconds": 1.1756181921809912,
+      "worker_cpu_delta_seconds": 0.8252145150000274
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 72,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 149,
+      "end_line": 152,
+      "status": "END",
+      "wall_seconds": 0.0005514565855264664,
+      "worker_cpu_delta_seconds": 0.0003648910000038086
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 73,
+      "function": "src.adaptivity.exact_sequence_variable_p._to_p6_interpolation",
+      "begin_line": 150,
+      "end_line": 151,
+      "status": "END",
+      "wall_seconds": 0.00018037809059023857,
+      "worker_cpu_delta_seconds": 0.0001207980000117459
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 74,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 153,
+      "end_line": 156,
+      "status": "END",
+      "wall_seconds": 0.0004847981035709381,
+      "worker_cpu_delta_seconds": 0.0002999839999802134
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 75,
+      "function": "src.adaptivity.exact_sequence_variable_p._to_p6_interpolation",
+      "begin_line": 154,
+      "end_line": 155,
+      "status": "END",
+      "wall_seconds": 0.00014989683404564857,
+      "worker_cpu_delta_seconds": 8.924499996965096e-05
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 76,
+      "function": "src.adaptivity.exact_sequence_variable_p._discrete_gradient",
+      "begin_line": 157,
+      "end_line": 158,
+      "status": "END",
+      "wall_seconds": 0.04585093725472689,
+      "worker_cpu_delta_seconds": 0.045596044999967944
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 77,
+      "function": "src.adaptivity.exact_sequence_variable_p._orientation_audit",
+      "begin_line": 159,
+      "end_line": 160,
+      "status": "END",
+      "wall_seconds": 0.2219813009724021,
+      "worker_cpu_delta_seconds": 0.13734477299999526
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 78,
+      "function": "src.adaptivity.exact_sequence_variable_p._orientation_audit",
+      "begin_line": 161,
+      "end_line": 162,
+      "status": "END",
+      "wall_seconds": 0.018628450576215982,
+      "worker_cpu_delta_seconds": 0.009586100000035458
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 79,
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "begin_line": 164,
+      "end_line": 179,
+      "status": "END",
+      "wall_seconds": 41.322860554326326,
+      "worker_cpu_delta_seconds": 28.62213556400002
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 80,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 165,
+      "end_line": 168,
+      "status": "END",
+      "wall_seconds": 40.18796650413424,
+      "worker_cpu_delta_seconds": 27.79043854600002
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 81,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 166,
+      "end_line": 167,
+      "status": "END",
+      "wall_seconds": 36.239014672115445,
+      "worker_cpu_delta_seconds": 25.00256811700001
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 82,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 169,
+      "end_line": 172,
+      "status": "END",
+      "wall_seconds": 0.3228247258812189,
+      "worker_cpu_delta_seconds": 0.1872976380000182
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 83,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 170,
+      "end_line": 171,
+      "status": "END",
+      "wall_seconds": 0.1327345548197627,
+      "worker_cpu_delta_seconds": 0.06983938799999123
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 84,
+      "function": "src.adaptivity.exact_sequence_variable_p._discrete_gradient",
+      "begin_line": 173,
+      "end_line": 174,
+      "status": "END",
+      "wall_seconds": 0.047957356087863445,
+      "worker_cpu_delta_seconds": 0.047910365000007005
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 85,
+      "function": "src.adaptivity.exact_sequence_variable_p._orientation_audit",
+      "begin_line": 175,
+      "end_line": 176,
+      "status": "END",
+      "wall_seconds": 0.008634485304355621,
+      "worker_cpu_delta_seconds": 0.008507101000020612
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 86,
+      "function": "src.adaptivity.exact_sequence_variable_p._orientation_audit",
+      "begin_line": 177,
+      "end_line": 178,
+      "status": "END",
+      "wall_seconds": 0.00349519494920969,
+      "worker_cpu_delta_seconds": 0.003444748999982039
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 87,
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "begin_line": 180,
+      "end_line": null,
+      "status": "IN_PROGRESS_AT_STOP",
+      "wall_seconds": null,
+      "worker_cpu_delta_seconds": null
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 88,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 181,
+      "end_line": null,
+      "status": "IN_PROGRESS_AT_STOP",
+      "wall_seconds": null,
+      "worker_cpu_delta_seconds": null
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 89,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 182,
+      "end_line": null,
+      "status": "IN_PROGRESS_AT_STOP",
+      "wall_seconds": null,
+      "worker_cpu_delta_seconds": null
+    }
+  ],
+  "pending_calls": [
+    {
+      "stage": "space_authority",
+      "call_id": 1,
+      "function": "space_authority",
+      "begin_line": 11,
+      "begin": {
+        "arguments": {
+          "args": [
+            {
+              "floquet_phase_x": {
+                "complex": [
+                  1.0,
+                  1.4247242291537984e-15
+                ]
+              },
+              "floquet_phase_y": {
+                "complex": [
+                  -0.29019682129303004,
+                  -0.9569669821427598
+                ]
+              },
+              "stage4_local_h_refinement_plan": null,
+              "type": "src.common.config_3d.SimulationConfig3D"
+            }
+          ],
+          "kwargs": {
+            "candidate_id": "v11_r9_h8",
+            "comm": {
+              "type": "mpi4py.MPI.Intracomm"
+            },
+            "parent_independent_fe_dofs": 110472,
+            "parent_root_degree_by_box": {
+              "(0.0, 0.0, -10.0, 16.5, 5.0, 0.0)": 5,
+              "(0.0, 0.0, 0.0, 16.5, 5.0, 30.0)": 6,
+              "(0.0, 0.0, 120.0, 16.5, 5.0, 130.0)": 6,
+              "(0.0, 0.0, 30.0, 16.5, 5.0, 60.0)": 6,
+              "(0.0, 0.0, 60.0, 16.5, 5.0, 90.0)": 6,
+              "(0.0, 0.0, 90.0, 16.5, 5.0, 120.0)": 6,
+              "(0.0, 10.0, -10.0, 16.5, 15.0, 0.0)": 6,
+              "(0.0, 10.0, 0.0, 16.5, 15.0, 30.0)": 6,
+              "(0.0, 10.0, 120.0, 16.5, 15.0, 130.0)": 6,
+              "(0.0, 10.0, 30.0, 16.5, 15.0, 60.0)": 6,
+              "(0.0, 10.0, 60.0, 16.5, 15.0, 90.0)": 6,
+              "(0.0, 10.0, 90.0, 16.5, 15.0, 120.0)": 6,
+              "(0.0, 15.0, -10.0, 16.5, 20.0, 0.0)": 5,
+              "(0.0, 15.0, 0.0, 16.5, 20.0, 30.0)": 6,
+              "(0.0, 15.0, 120.0, 16.5, 20.0, 130.0)": 6,
+              "(0.0, 15.0, 30.0, 16.5, 20.0, 60.0)": 6,
+              "(0.0, 15.0, 60.0, 16.5, 20.0, 90.0)": 6,
+              "(0.0, 15.0, 90.0, 16.5, 20.0, 120.0)": 6,
+              "(0.0, 20.0, -10.0, 16.5, 25.0, 0.0)": 5,
+              "(0.0, 20.0, 0.0, 16.5, 25.0, 30.0)": 6,
+              "(0.0, 20.0, 120.0, 16.5, 25.0, 130.0)": 6,
+              "(0.0, 20.0, 30.0, 16.5, 25.0, 60.0)": 6,
+              "(0.0, 20.0, 60.0, 16.5, 25.0, 90.0)": 6,
+              "(0.0, 20.0, 90.0, 16.5, 25.0, 120.0)": 6,
+              "(0.0, 25.0, -10.0, 16.5, 30.0, 0.0)": 5,
+              "(0.0, 25.0, 0.0, 16.5, 30.0, 30.0)": 6,
+              "(0.0, 25.0, 120.0, 16.5, 30.0, 130.0)": 6,
+              "(0.0, 25.0, 30.0, 16.5, 30.0, 60.0)": 6,
+              "(0.0, 25.0, 60.0, 16.5, 30.0, 90.0)": 6,
+              "(0.0, 25.0, 90.0, 16.5, 30.0, 120.0)": 6,
+              "(0.0, 30.0, -10.0, 16.5, 35.0, 0.0)": 5,
+              "(0.0, 30.0, 0.0, 16.5, 35.0, 30.0)": 6,
+              "(0.0, 30.0, 120.0, 16.5, 35.0, 130.0)": 6,
+              "(0.0, 30.0, 30.0, 16.5, 35.0, 60.0)": 6,
+              "(0.0, 30.0, 60.0, 16.5, 35.0, 90.0)": 6,
+              "(0.0, 30.0, 90.0, 16.5, 35.0, 120.0)": 6,
+              "(0.0, 35.0, -10.0, 16.5, 40.0, 0.0)": 5,
+              "(0.0, 35.0, 0.0, 16.5, 40.0, 30.0)": 6,
+              "(0.0, 35.0, 120.0, 16.5, 40.0, 130.0)": 6,
+              "(0.0, 35.0, 30.0, 16.5, 40.0, 60.0)": 6,
+              "(0.0, 35.0, 60.0, 16.5, 40.0, 90.0)": 6,
+              "(0.0, 35.0, 90.0, 16.5, 40.0, 120.0)": 6,
+              "(0.0, 40.0, -10.0, 16.5, 45.0, 0.0)": 5,
+              "(0.0, 40.0, 0.0, 16.5, 45.0, 30.0)": 6,
+              "(0.0, 40.0, 120.0, 16.5, 45.0, 130.0)": 6,
+              "(0.0, 40.0, 30.0, 16.5, 45.0, 60.0)": 6,
+              "(0.0, 40.0, 60.0, 16.5, 45.0, 90.0)": 6,
+              "(0.0, 40.0, 90.0, 16.5, 45.0, 120.0)": 6,
+              "(0.0, 45.0, -10.0, 16.5, 50.0, 0.0)": 5,
+              "(0.0, 45.0, 0.0, 16.5, 50.0, 30.0)": 6,
+              "(0.0, 45.0, 120.0, 16.5, 50.0, 130.0)": 6,
+              "(0.0, 45.0, 30.0, 16.5, 50.0, 60.0)": 6,
+              "(0.0, 45.0, 60.0, 16.5, 50.0, 90.0)": 6,
+              "(0.0, 45.0, 90.0, 16.5, 50.0, 120.0)": 6,
+              "(0.0, 5.0, -10.0, 16.5, 10.0, 0.0)": 5,
+              "(0.0, 5.0, 0.0, 16.5, 10.0, 30.0)": 6,
+              "(0.0, 5.0, 120.0, 16.5, 10.0, 130.0)": 6,
+              "(0.0, 5.0, 30.0, 16.5, 10.0, 60.0)": 6,
+              "(0.0, 5.0, 60.0, 16.5, 10.0, 90.0)": 6,
+              "(0.0, 5.0, 90.0, 16.5, 10.0, 120.0)": 6,
+              "(16.5, 0.0, -10.0, 33.5, 5.0, 0.0)": 5,
+              "(16.5, 0.0, 0.0, 33.5, 5.0, 30.0)": 6,
+              "(16.5, 0.0, 120.0, 33.5, 5.0, 130.0)": 6,
+              "(16.5, 0.0, 30.0, 33.5, 5.0, 60.0)": 6,
+              "(16.5, 0.0, 60.0, 33.5, 5.0, 90.0)": 6,
+              "(16.5, 0.0, 90.0, 33.5, 5.0, 120.0)": 6,
+              "(16.5, 10.0, -10.0, 33.5, 15.0, 0.0)": 5,
+              "(16.5, 10.0, 0.0, 33.5, 15.0, 30.0)": 6,
+              "(16.5, 10.0, 120.0, 33.5, 15.0, 130.0)": 6,
+              "(16.5, 10.0, 30.0, 33.5, 15.0, 60.0)": 6,
+              "(16.5, 10.0, 60.0, 33.5, 15.0, 90.0)": 6,
+              "(16.5, 10.0, 90.0, 33.5, 15.0, 120.0)": 6,
+              "(16.5, 15.0, -10.0, 33.5, 20.0, 0.0)": 5,
+              "(16.5, 15.0, 0.0, 33.5, 20.0, 30.0)": 6,
+              "(16.5, 15.0, 120.0, 33.5, 20.0, 130.0)": 6,
+              "(16.5, 15.0, 30.0, 33.5, 20.0, 60.0)": 6,
+              "(16.5, 15.0, 60.0, 33.5, 20.0, 90.0)": 6,
+              "(16.5, 15.0, 90.0, 33.5, 20.0, 120.0)": 6,
+              "(16.5, 20.0, -10.0, 33.5, 25.0, 0.0)": 5,
+              "(16.5, 20.0, 0.0, 33.5, 25.0, 30.0)": 6,
+              "(16.5, 20.0, 120.0, 33.5, 25.0, 130.0)": 6,
+              "(16.5, 20.0, 30.0, 33.5, 25.0, 60.0)": 6,
+              "(16.5, 20.0, 60.0, 33.5, 25.0, 90.0)": 6,
+              "(16.5, 20.0, 90.0, 33.5, 25.0, 120.0)": 6,
+              "(16.5, 25.0, -10.0, 33.5, 30.0, 0.0)": 5,
+              "(16.5, 25.0, 0.0, 33.5, 30.0, 30.0)": 6,
+              "(16.5, 25.0, 120.0, 33.5, 30.0, 130.0)": 6,
+              "(16.5, 25.0, 30.0, 33.5, 30.0, 60.0)": 6,
+              "(16.5, 25.0, 60.0, 33.5, 30.0, 90.0)": 6,
+              "(16.5, 25.0, 90.0, 33.5, 30.0, 120.0)": 6,
+              "(16.5, 30.0, -10.0, 33.5, 35.0, 0.0)": 5,
+              "(16.5, 30.0, 0.0, 33.5, 35.0, 30.0)": 6,
+              "(16.5, 30.0, 120.0, 33.5, 35.0, 130.0)": 6,
+              "(16.5, 30.0, 30.0, 33.5, 35.0, 60.0)": 6,
+              "(16.5, 30.0, 60.0, 33.5, 35.0, 90.0)": 6,
+              "(16.5, 30.0, 90.0, 33.5, 35.0, 120.0)": 6,
+              "(16.5, 35.0, -10.0, 33.5, 40.0, 0.0)": 5,
+              "(16.5, 35.0, 0.0, 33.5, 40.0, 30.0)": 6,
+              "(16.5, 35.0, 120.0, 33.5, 40.0, 130.0)": 6,
+              "(16.5, 35.0, 30.0, 33.5, 40.0, 60.0)": 6,
+              "(16.5, 35.0, 60.0, 33.5, 40.0, 90.0)": 6,
+              "(16.5, 35.0, 90.0, 33.5, 40.0, 120.0)": 6,
+              "(16.5, 40.0, -10.0, 33.5, 45.0, 0.0)": 5,
+              "(16.5, 40.0, 0.0, 33.5, 45.0, 30.0)": 6,
+              "(16.5, 40.0, 120.0, 33.5, 45.0, 130.0)": 6,
+              "(16.5, 40.0, 30.0, 33.5, 45.0, 60.0)": 6,
+              "(16.5, 40.0, 60.0, 33.5, 45.0, 90.0)": 6,
+              "(16.5, 40.0, 90.0, 33.5, 45.0, 120.0)": 6,
+              "(16.5, 45.0, -10.0, 33.5, 50.0, 0.0)": 5,
+              "(16.5, 45.0, 0.0, 33.5, 50.0, 30.0)": 6,
+              "(16.5, 45.0, 120.0, 33.5, 50.0, 130.0)": 6,
+              "(16.5, 45.0, 30.0, 33.5, 50.0, 60.0)": 6,
+              "(16.5, 45.0, 60.0, 33.5, 50.0, 90.0)": 6,
+              "(16.5, 45.0, 90.0, 33.5, 50.0, 120.0)": 6,
+              "(16.5, 5.0, -10.0, 33.5, 10.0, 0.0)": 5,
+              "(16.5, 5.0, 0.0, 33.5, 10.0, 30.0)": 6,
+              "(16.5, 5.0, 120.0, 33.5, 10.0, 130.0)": 6,
+              "(16.5, 5.0, 30.0, 33.5, 10.0, 60.0)": 6,
+              "(16.5, 5.0, 60.0, 33.5, 10.0, 90.0)": 6,
+              "(16.5, 5.0, 90.0, 33.5, 10.0, 120.0)": 6,
+              "(33.5, 0.0, -10.0, 50.0, 5.0, 0.0)": 5,
+              "(33.5, 0.0, 0.0, 50.0, 5.0, 30.0)": 6,
+              "(33.5, 0.0, 120.0, 50.0, 5.0, 130.0)": 6,
+              "(33.5, 0.0, 30.0, 50.0, 5.0, 60.0)": 6,
+              "(33.5, 0.0, 60.0, 50.0, 5.0, 90.0)": 6,
+              "(33.5, 0.0, 90.0, 50.0, 5.0, 120.0)": 6,
+              "(33.5, 10.0, -10.0, 50.0, 15.0, 0.0)": 6,
+              "(33.5, 10.0, 0.0, 50.0, 15.0, 30.0)": 6,
+              "(33.5, 10.0, 120.0, 50.0, 15.0, 130.0)": 6,
+              "(33.5, 10.0, 30.0, 50.0, 15.0, 60.0)": 6,
+              "(33.5, 10.0, 60.0, 50.0, 15.0, 90.0)": 6,
+              "(33.5, 10.0, 90.0, 50.0, 15.0, 120.0)": 6,
+              "(33.5, 15.0, -10.0, 50.0, 20.0, 0.0)": 5,
+              "(33.5, 15.0, 0.0, 50.0, 20.0, 30.0)": 6,
+              "(33.5, 15.0, 120.0, 50.0, 20.0, 130.0)": 6,
+              "(33.5, 15.0, 30.0, 50.0, 20.0, 60.0)": 6,
+              "(33.5, 15.0, 60.0, 50.0, 20.0, 90.0)": 6,
+              "(33.5, 15.0, 90.0, 50.0, 20.0, 120.0)": 6,
+              "(33.5, 20.0, -10.0, 50.0, 25.0, 0.0)": 5,
+              "(33.5, 20.0, 0.0, 50.0, 25.0, 30.0)": 6,
+              "(33.5, 20.0, 120.0, 50.0, 25.0, 130.0)": 6,
+              "(33.5, 20.0, 30.0, 50.0, 25.0, 60.0)": 6,
+              "(33.5, 20.0, 60.0, 50.0, 25.0, 90.0)": 6,
+              "(33.5, 20.0, 90.0, 50.0, 25.0, 120.0)": 6,
+              "(33.5, 25.0, -10.0, 50.0, 30.0, 0.0)": 5,
+              "(33.5, 25.0, 0.0, 50.0, 30.0, 30.0)": 6,
+              "(33.5, 25.0, 120.0, 50.0, 30.0, 130.0)": 6,
+              "(33.5, 25.0, 30.0, 50.0, 30.0, 60.0)": 6,
+              "(33.5, 25.0, 60.0, 50.0, 30.0, 90.0)": 6,
+              "(33.5, 25.0, 90.0, 50.0, 30.0, 120.0)": 6,
+              "(33.5, 30.0, -10.0, 50.0, 35.0, 0.0)": 5,
+              "(33.5, 30.0, 0.0, 50.0, 35.0, 30.0)": 6,
+              "(33.5, 30.0, 120.0, 50.0, 35.0, 130.0)": 6,
+              "(33.5, 30.0, 30.0, 50.0, 35.0, 60.0)": 6,
+              "(33.5, 30.0, 60.0, 50.0, 35.0, 90.0)": 6,
+              "(33.5, 30.0, 90.0, 50.0, 35.0, 120.0)": 6,
+              "(33.5, 35.0, -10.0, 50.0, 40.0, 0.0)": 5,
+              "(33.5, 35.0, 0.0, 50.0, 40.0, 30.0)": 6,
+              "(33.5, 35.0, 120.0, 50.0, 40.0, 130.0)": 6,
+              "(33.5, 35.0, 30.0, 50.0, 40.0, 60.0)": 6,
+              "(33.5, 35.0, 60.0, 50.0, 40.0, 90.0)": 6,
+              "(33.5, 35.0, 90.0, 50.0, 40.0, 120.0)": 6,
+              "(33.5, 40.0, -10.0, 50.0, 45.0, 0.0)": 5,
+              "(33.5, 40.0, 0.0, 50.0, 45.0, 30.0)": 6,
+              "(33.5, 40.0, 120.0, 50.0, 45.0, 130.0)": 6,
+              "(33.5, 40.0, 30.0, 50.0, 45.0, 60.0)": 6,
+              "(33.5, 40.0, 60.0, 50.0, 45.0, 90.0)": 6,
+              "(33.5, 40.0, 90.0, 50.0, 45.0, 120.0)": 6,
+              "(33.5, 45.0, -10.0, 50.0, 50.0, 0.0)": 5,
+              "(33.5, 45.0, 0.0, 50.0, 50.0, 30.0)": 6,
+              "(33.5, 45.0, 120.0, 50.0, 50.0, 130.0)": 6,
+              "(33.5, 45.0, 30.0, 50.0, 50.0, 60.0)": 6,
+              "(33.5, 45.0, 60.0, 50.0, 50.0, 90.0)": 6,
+              "(33.5, 45.0, 90.0, 50.0, 50.0, 120.0)": 6,
+              "(33.5, 5.0, -10.0, 50.0, 10.0, 0.0)": 5,
+              "(33.5, 5.0, 0.0, 50.0, 10.0, 30.0)": 6,
+              "(33.5, 5.0, 120.0, 50.0, 10.0, 130.0)": 6,
+              "(33.5, 5.0, 30.0, 50.0, 10.0, 60.0)": 6,
+              "(33.5, 5.0, 60.0, 50.0, 10.0, 90.0)": 6,
+              "(33.5, 5.0, 90.0, 50.0, 10.0, 120.0)": 6
+            },
+            "plan_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/plans/v11_r9_h8.json"
+          }
+        },
+        "cache_before": null,
+        "call_id": 1,
+        "event": "BEGIN",
+        "function": "space_authority",
+        "key_occurrence": 1,
+        "monotonic": 2984866.062943949,
+        "stage": "space_authority",
+        "unreturned_status": "IN_PROGRESS_AT_STOP",
+        "worker_cpu_seconds": 40.955258565,
+        "worker_pid": 3065595
+      },
+      "status": "IN_PROGRESS_AT_STOP",
+      "elapsed_lower_bound_to_stop_seconds": 476.2367445612326
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 4,
+      "function": "src.adaptivity.stage4_local_h.build_stage4_local_h_reduction_authority",
+      "begin_line": 16,
+      "begin": {
+        "arguments": {
+          "args": [
+            {
+              "type": "src.adaptivity.stage4_local_h.Stage4LocalHContext"
+            }
+          ],
+          "kwargs": {
+            "active_fe_dof_gate_policy": "task43_hp_adaptivity_192gib_v1",
+            "phase_x": {
+              "complex": [
+                1.0,
+                1.4247242291537984e-15
+              ]
+            },
+            "phase_y": {
+              "complex": [
+                -0.29019682129303004,
+                -0.9569669821427598
+              ]
+            }
+          }
+        },
+        "cache_before": null,
+        "call_id": 4,
+        "event": "BEGIN",
+        "function": "src.adaptivity.stage4_local_h.build_stage4_local_h_reduction_authority",
+        "key_occurrence": 1,
+        "monotonic": 2984866.979951499,
+        "stage": "space_authority",
+        "unreturned_status": "IN_PROGRESS_AT_STOP",
+        "worker_cpu_seconds": 41.531237961,
+        "worker_pid": 3065595
+      },
+      "status": "IN_PROGRESS_AT_STOP",
+      "elapsed_lower_bound_to_stop_seconds": 475.3197370111011
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 18,
+      "function": "src.adaptivity.hcurl_broken_cell_trace.build_broken_hexa_cell_trace_constraint_map",
+      "begin_line": 43,
+      "begin": {
+        "arguments": {
+          "args": [
+            {
+              "leaf_count": 194,
+              "root_count": 180,
+              "type": "src.adaptivity.dyadic_hexa_refinement.BalancedDyadicHexForest"
+            },
+            {
+              "type": "src.adaptivity.dyadic_hexa_broken_mesh.BrokenDyadicHexCarrier"
+            },
+            {
+              "type": "src.adaptivity.variable_p_entity_map.VariablePGlobalEntityMap"
+            },
+            {
+              "degree": 6,
+              "type": "src.adaptivity.hcurl_broken_trace_graph.BrokenHexTraceConstraintAuthority"
+            }
+          ],
+          "kwargs": {}
+        },
+        "cache_before": null,
+        "call_id": 18,
+        "event": "BEGIN",
+        "function": "src.adaptivity.hcurl_broken_cell_trace.build_broken_hexa_cell_trace_constraint_map",
+        "key_occurrence": 1,
+        "monotonic": 2984929.242456202,
+        "stage": "space_authority",
+        "unreturned_status": "IN_PROGRESS_AT_STOP",
+        "worker_cpu_seconds": 82.148587423,
+        "worker_pid": 3065595
+      },
+      "status": "IN_PROGRESS_AT_STOP",
+      "elapsed_lower_bound_to_stop_seconds": 413.0572323082015
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 87,
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "begin_line": 180,
+      "begin": {
+        "arguments": {
+          "args": [
+            {
+              "cell": 6,
+              "edges": [
+                5,
+                6,
+                6,
+                5,
+                5,
+                5,
+                6,
+                6,
+                6,
+                6,
+                6,
+                6
+              ],
+              "exact_sequence_monotone": true,
+              "faces": [
+                6,
+                6,
+                6,
+                6,
+                6,
+                6
+              ],
+              "signature": "e[5,6,6,5,5,5,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]",
+              "uniform_degree": null
+            }
+          ],
+          "kwargs": {}
+        },
+        "cache_before": {
+          "currsize": 7,
+          "hits": 3,
+          "maxsize": 128,
+          "misses": 7
+        },
+        "call_id": 87,
+        "event": "BEGIN",
+        "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+        "key_occurrence": 1,
+        "monotonic": 2985323.387558126,
+        "stage": "space_authority",
+        "unreturned_status": "IN_PROGRESS_AT_STOP",
+        "worker_cpu_seconds": 350.173704052,
+        "worker_pid": 3065595
+      },
+      "status": "IN_PROGRESS_AT_STOP",
+      "elapsed_lower_bound_to_stop_seconds": 18.9121303842403
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 88,
+      "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+      "begin_line": 181,
+      "begin": {
+        "arguments": {
+          "args": [
+            "hcurl",
+            {
+              "cell": 6,
+              "edges": [
+                5,
+                6,
+                6,
+                5,
+                5,
+                5,
+                6,
+                6,
+                6,
+                6,
+                6,
+                6
+              ],
+              "exact_sequence_monotone": true,
+              "faces": [
+                6,
+                6,
+                6,
+                6,
+                6,
+                6
+              ],
+              "signature": "e[5,6,6,5,5,5,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]",
+              "uniform_degree": null
+            }
+          ],
+          "kwargs": {}
+        },
+        "cache_before": {
+          "currsize": 14,
+          "hits": 0,
+          "maxsize": 32,
+          "misses": 14
+        },
+        "call_id": 88,
+        "event": "BEGIN",
+        "function": "src.adaptivity.exact_sequence_variable_p._create_active_element",
+        "key_occurrence": 1,
+        "monotonic": 2985323.390715581,
+        "stage": "space_authority",
+        "unreturned_status": "IN_PROGRESS_AT_STOP",
+        "worker_cpu_seconds": 350.174277076,
+        "worker_pid": 3065595
+      },
+      "status": "IN_PROGRESS_AT_STOP",
+      "elapsed_lower_bound_to_stop_seconds": 18.908972929231822
+    },
+    {
+      "stage": "space_authority",
+      "call_id": 89,
+      "function": "basix.interpolation.compute_interpolation_operator",
+      "begin_line": 182,
+      "begin": {
+        "arguments": {
+          "args": [
+            {
+              "cell_type": 5,
+              "degree": 6,
+              "dim": 878,
+              "family": 0,
+              "type": "basix.finite_element.FiniteElement"
+            },
+            {
+              "cell_type": 5,
+              "degree": 6,
+              "dim": 882,
+              "family": 3,
+              "type": "basix.finite_element.FiniteElement"
+            }
+          ],
+          "kwargs": {}
+        },
+        "cache_before": null,
+        "call_id": 89,
+        "event": "BEGIN",
+        "function": "basix.interpolation.compute_interpolation_operator",
+        "key_occurrence": 1,
+        "monotonic": 2985328.609484745,
+        "stage": "space_authority",
+        "unreturned_status": "IN_PROGRESS_AT_STOP",
+        "worker_cpu_seconds": 353.779966165,
+        "worker_pid": 3065595
+      },
+      "status": "IN_PROGRESS_AT_STOP",
+      "elapsed_lower_bound_to_stop_seconds": 13.690203764941543
+    }
+  ],
+  "reference_calls": [
+    {
+      "call_id": 19,
+      "begin_line": 44,
+      "degree_map": {
+        "cell": 5,
+        "edges": [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        "exact_sequence_monotone": true,
+        "faces": [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[5]",
+        "uniform_degree": 5
+      },
+      "key_occurrence": 1,
+      "cache_before": {
+        "currsize": 0,
+        "hits": 0,
+        "maxsize": 128,
+        "misses": 0
+      },
+      "end_line": 65,
+      "wall_seconds": 19.671300588175654,
+      "cache_after": {
+        "currsize": 1,
+        "hits": 0,
+        "maxsize": 128,
+        "misses": 1
+      },
+      "status": "END"
+    },
+    {
+      "call_id": 30,
+      "begin_line": 66,
+      "degree_map": {
+        "cell": 5,
+        "edges": [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        "exact_sequence_monotone": true,
+        "faces": [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[5]",
+        "uniform_degree": 5
+      },
+      "key_occurrence": 2,
+      "cache_before": {
+        "currsize": 1,
+        "hits": 0,
+        "maxsize": 128,
+        "misses": 1
+      },
+      "end_line": 67,
+      "wall_seconds": 0.0013937479816377163,
+      "cache_after": {
+        "currsize": 1,
+        "hits": 1,
+        "maxsize": 128,
+        "misses": 1
+      },
+      "status": "END"
+    },
+    {
+      "call_id": 31,
+      "begin_line": 68,
+      "degree_map": {
+        "cell": 5,
+        "edges": [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        "exact_sequence_monotone": true,
+        "faces": [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[5]",
+        "uniform_degree": 5
+      },
+      "key_occurrence": 3,
+      "cache_before": {
+        "currsize": 1,
+        "hits": 1,
+        "maxsize": 128,
+        "misses": 1
+      },
+      "end_line": 69,
+      "wall_seconds": 0.0015858830884099007,
+      "cache_after": {
+        "currsize": 1,
+        "hits": 2,
+        "maxsize": 128,
+        "misses": 1
+      },
+      "status": "END"
+    },
+    {
+      "call_id": 32,
+      "begin_line": 70,
+      "degree_map": {
+        "cell": 6,
+        "edges": [
+          5,
+          5,
+          6,
+          5,
+          6,
+          5,
+          6,
+          5,
+          6,
+          6,
+          6,
+          6
+        ],
+        "exact_sequence_monotone": true,
+        "faces": [
+          5,
+          6,
+          6,
+          6,
+          6,
+          6
+        ],
+        "signature": "e[5,5,6,5,6,5,6,5,6,6,6,6]-f[5,6,6,6,6,6]-c[6]",
+        "uniform_degree": null
+      },
+      "key_occurrence": 1,
+      "cache_before": {
+        "currsize": 1,
+        "hits": 2,
+        "maxsize": 128,
+        "misses": 1
+      },
+      "end_line": 97,
+      "wall_seconds": 59.10681286128238,
+      "cache_after": {
+        "currsize": 2,
+        "hits": 2,
+        "maxsize": 128,
+        "misses": 2
+      },
+      "status": "END"
+    },
+    {
+      "call_id": 46,
+      "begin_line": 98,
+      "degree_map": {
+        "cell": 6,
+        "edges": [
+          5,
+          5,
+          6,
+          5,
+          5,
+          5,
+          6,
+          5,
+          6,
+          6,
+          5,
+          6
+        ],
+        "exact_sequence_monotone": true,
+        "faces": [
+          5,
+          6,
+          6,
+          5,
+          6,
+          6
+        ],
+        "signature": "e[5,5,6,5,5,5,6,5,6,6,5,6]-f[5,6,6,5,6,6]-c[6]",
+        "uniform_degree": null
+      },
+      "key_occurrence": 1,
+      "cache_before": {
+        "currsize": 2,
+        "hits": 2,
+        "maxsize": 128,
+        "misses": 2
+      },
+      "end_line": 113,
+      "wall_seconds": 30.101596585009247,
+      "cache_after": {
+        "currsize": 3,
+        "hits": 2,
+        "maxsize": 128,
+        "misses": 3
+      },
+      "status": "END"
+    },
+    {
+      "call_id": 54,
+      "begin_line": 114,
+      "degree_map": {
+        "cell": 6,
+        "edges": [
+          5,
+          6,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          6,
+          5,
+          5
+        ],
+        "exact_sequence_monotone": true,
+        "faces": [
+          6,
+          5,
+          6,
+          5,
+          5,
+          6
+        ],
+        "signature": "e[5,6,5,5,5,5,5,5,5,6,5,5]-f[6,5,6,5,5,6]-c[6]",
+        "uniform_degree": null
+      },
+      "key_occurrence": 1,
+      "cache_before": {
+        "currsize": 3,
+        "hits": 2,
+        "maxsize": 128,
+        "misses": 3
+      },
+      "end_line": 129,
+      "wall_seconds": 19.83430577116087,
+      "cache_after": {
+        "currsize": 4,
+        "hits": 2,
+        "maxsize": 128,
+        "misses": 4
+      },
+      "status": "END"
+    },
+    {
+      "call_id": 62,
+      "begin_line": 130,
+      "degree_map": {
+        "cell": 5,
+        "edges": [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        "exact_sequence_monotone": true,
+        "faces": [
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[5]",
+        "uniform_degree": 5
+      },
+      "key_occurrence": 4,
+      "cache_before": {
+        "currsize": 4,
+        "hits": 2,
+        "maxsize": 128,
+        "misses": 4
+      },
+      "end_line": 131,
+      "wall_seconds": 0.004080235026776791,
+      "cache_after": {
+        "currsize": 4,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 4
+      },
+      "status": "END"
+    },
+    {
+      "call_id": 63,
+      "begin_line": 132,
+      "degree_map": {
+        "cell": 6,
+        "edges": [
+          5,
+          5,
+          6,
+          5,
+          6,
+          5,
+          5,
+          5,
+          6,
+          6,
+          6,
+          5
+        ],
+        "exact_sequence_monotone": true,
+        "faces": [
+          5,
+          6,
+          6,
+          6,
+          5,
+          6
+        ],
+        "signature": "e[5,5,6,5,6,5,5,5,6,6,6,5]-f[5,6,6,6,5,6]-c[6]",
+        "uniform_degree": null
+      },
+      "key_occurrence": 1,
+      "cache_before": {
+        "currsize": 4,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 4
+      },
+      "end_line": 147,
+      "wall_seconds": 32.33455295627937,
+      "cache_after": {
+        "currsize": 5,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 5
+      },
+      "status": "END"
+    },
+    {
+      "call_id": 71,
+      "begin_line": 148,
+      "degree_map": {
+        "cell": 6,
+        "edges": [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6
+        ],
+        "exact_sequence_monotone": true,
+        "faces": [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6
+        ],
+        "signature": "e[6,6,6,6,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]",
+        "uniform_degree": 6
+      },
+      "key_occurrence": 1,
+      "cache_before": {
+        "currsize": 5,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 5
+      },
+      "end_line": 163,
+      "wall_seconds": 1.1756181921809912,
+      "cache_after": {
+        "currsize": 6,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 6
+      },
+      "status": "END"
+    },
+    {
+      "call_id": 79,
+      "begin_line": 164,
+      "degree_map": {
+        "cell": 6,
+        "edges": [
+          6,
+          6,
+          6,
+          5,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6
+        ],
+        "exact_sequence_monotone": true,
+        "faces": [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6
+        ],
+        "signature": "e[6,6,6,5,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]",
+        "uniform_degree": null
+      },
+      "key_occurrence": 1,
+      "cache_before": {
+        "currsize": 6,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 6
+      },
+      "end_line": 179,
+      "wall_seconds": 41.322860554326326,
+      "cache_after": {
+        "currsize": 7,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 7
+      },
+      "status": "END"
+    },
+    {
+      "call_id": 87,
+      "begin_line": 180,
+      "degree_map": {
+        "cell": 6,
+        "edges": [
+          5,
+          6,
+          6,
+          5,
+          5,
+          5,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6
+        ],
+        "exact_sequence_monotone": true,
+        "faces": [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6
+        ],
+        "signature": "e[5,6,6,5,5,5,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]",
+        "uniform_degree": null
+      },
+      "key_occurrence": 1,
+      "cache_before": {
+        "currsize": 7,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 7
+      },
+      "end_line": null,
+      "wall_seconds": null,
+      "cache_after": null,
+      "status": "IN_PROGRESS_AT_STOP"
+    }
+  ],
+  "degree_map_count": 194,
+  "unique_degree_keys": 25,
+  "completed_unique_degree_keys": 7,
+  "in_progress_unique_degree_keys": 1,
+  "not_started_unique_degree_keys": 17,
+  "uncompleted_unique_degree_keys": 18,
+  "degree_map_multiplicity": {
+    "{\"cell\": 5, \"edges\": [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5], \"exact_sequence_monotone\": true, \"faces\": [5, 5, 5, 5, 5, 5], \"signature\": \"e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[5]\", \"uniform_degree\": 5}": 35,
+    "{\"cell\": 6, \"edges\": [5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 5, 5, 6, 6, 6], \"signature\": \"e[5,5,5,5,5,5,5,6,5,5,6,6]-f[5,5,5,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 5, 5, 5, 5, 5, 6, 5, 5, 6, 5, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 5, 6, 5, 6, 6], \"signature\": \"e[5,5,5,5,5,5,6,5,5,6,5,6]-f[5,5,6,5,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 5, 5, 5, 5, 5, 6, 6, 5, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 5, 6, 6, 6, 6], \"signature\": \"e[5,5,5,5,5,5,6,6,5,6,6,6]-f[5,5,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 5, 5, 5, 6, 5, 5, 5, 6, 5, 6, 5], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 5, 6, 5, 6], \"signature\": \"e[5,5,5,5,6,5,5,5,6,5,6,5]-f[5,6,5,6,5,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 5, 5, 5, 6, 5, 5, 6, 6, 5, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 5, 6, 6, 6], \"signature\": \"e[5,5,5,5,6,5,5,6,6,5,6,6]-f[5,6,5,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 6, 5], \"exact_sequence_monotone\": true, \"faces\": [6, 5, 5, 6, 5, 6], \"signature\": \"e[5,5,5,6,5,5,5,5,5,5,6,5]-f[6,5,5,6,5,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 5, 5, 6, 5, 6, 5, 6, 5, 5, 5, 5], \"exact_sequence_monotone\": true, \"faces\": [6, 5, 5, 6, 6, 5], \"signature\": \"e[5,5,5,6,5,6,5,6,5,5,5,5]-f[6,5,5,6,6,5]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 5, 5, 6, 6, 5, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 6, 6, 6], \"signature\": \"e[5,5,5,6,6,5,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 5, 6, 5, 5, 5, 5, 5, 6, 6, 5, 5], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 6, 5, 5, 6], \"signature\": \"e[5,5,6,5,5,5,5,5,6,6,5,5]-f[5,6,6,5,5,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 5, 6, 5, 5, 5, 6, 5, 6, 6, 5, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 6, 5, 6, 6], \"signature\": \"e[5,5,6,5,5,5,6,5,6,6,5,6]-f[5,6,6,5,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 5, 6, 5, 6, 5, 5, 5, 6, 6, 6, 5], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 6, 6, 5, 6], \"signature\": \"e[5,5,6,5,6,5,5,5,6,6,6,5]-f[5,6,6,6,5,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 5, 6, 5, 6, 5, 5, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 6, 6, 6, 6], \"signature\": \"e[5,5,6,5,6,5,5,6,6,6,6,6]-f[5,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 5, 6, 5, 6, 5, 6, 5, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 6, 6, 6, 6], \"signature\": \"e[5,5,6,5,6,5,6,5,6,6,6,6]-f[5,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 5, 6, 5, 6, 5, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 6, 6, 6, 6], \"signature\": \"e[5,5,6,5,6,5,6,6,6,6,6,6]-f[5,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 22,
+    "{\"cell\": 6, \"edges\": [5, 6, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5], \"exact_sequence_monotone\": true, \"faces\": [6, 5, 6, 5, 5, 6], \"signature\": \"e[5,6,5,5,5,5,5,5,5,6,5,5]-f[6,5,6,5,5,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 6, 5, 5, 5, 6, 6, 5, 5, 5, 5, 5], \"exact_sequence_monotone\": true, \"faces\": [6, 5, 6, 5, 6, 5], \"signature\": \"e[5,6,5,5,5,6,6,5,5,5,5,5]-f[6,5,6,5,6,5]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 6, 6, 5, 5, 5, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 6, 6, 6], \"signature\": \"e[5,6,6,5,5,5,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 6, 6, 6], \"signature\": \"e[5,6,6,6,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [6, 5, 5, 6, 6, 5, 5, 5, 5, 5, 5, 5], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 5, 6, 5, 5], \"signature\": \"e[6,5,5,6,6,5,5,5,5,5,5,5]-f[6,6,5,6,5,5]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 6, 6, 6], \"signature\": \"e[6,5,6,6,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 5, 5, 5], \"signature\": \"e[6,6,6,5,5,5,5,5,5,5,5,5]-f[6,6,6,5,5,5]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [6, 6, 6, 5, 6, 6, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 6, 6, 6], \"signature\": \"e[6,6,6,5,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [6, 6, 6, 6, 6, 5, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 6, 6, 6], \"signature\": \"e[6,6,6,6,6,5,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+    "{\"cell\": 6, \"edges\": [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 6, 6, 6], \"signature\": \"e[6,6,6,6,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]\", \"uniform_degree\": 6}": 115
+  },
+  "cell_map_prefix_before_first_reference_call_seconds": 189.26700541004539,
+  "sampled_cpu_seconds": {
+    "3065572": 175.85,
+    "3065595": 363.23,
+    "3065609": 1.06,
+    "3065651": 0.26
+  },
+  "nested_timing_policy": "parent includes child; do not sum nested times into workflow"
+}

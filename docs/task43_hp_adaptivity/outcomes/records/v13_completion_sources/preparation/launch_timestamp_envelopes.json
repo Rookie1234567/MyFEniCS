@@ -1,0 +1,29 @@
+{
+  "runs": [
+    {
+      "run": "s1_completion_attempt1",
+      "started_utc": "2026-10-27T00:02:38.530955185Z",
+      "finished_utc": "2026-10-27T00:03:12.006914821Z",
+      "start_sha256": "9f12c235c37a69a3781d54a0cf88265cb616a69b840a13e52de64f06e9d6b934",
+      "finish_sha256": "00525c5d56d18f3296df8473c1d027fabc0ce1d11f36fa1f3bfab8e2db8cbb8c",
+      "launcher_timestamp_span_seconds_microsecond_precision": 33.475959,
+      "watchdog_monotonic_whole_seconds": 27.02263388223946,
+      "timestamp_span_minus_watchdog_whole_seconds": 6.453325117760542,
+      "interpretation": "derived UTC timestamp envelope includes pre/post-watchdog shell work; clocks differ, not a monotonic stage timer; do not add the full span to watchdog whole"
+    },
+    {
+      "run": "authority_profile_attempt1",
+      "started_utc": "2026-10-27T00:09:58.945987293Z",
+      "finished_utc": "2026-10-27T00:19:09.604246687Z",
+      "start_sha256": "5a77bb7c2cae2068898d935842071085290294dc7b3cf83258d5086ea418b416",
+      "finish_sha256": "33d6ddc25824474521133ecb0a967f833f3b551bd7cbf26074ea0bc0c94f21cf",
+      "launcher_timestamp_span_seconds_microsecond_precision": 550.658259,
+      "watchdog_monotonic_whole_seconds": 541.9988412610255,
+      "timestamp_span_minus_watchdog_whole_seconds": 8.659417738974525,
+      "interpretation": "derived UTC timestamp envelope includes pre/post-watchdog shell work; clocks differ, not a monotonic stage timer; do not add the full span to watchdog whole"
+    }
+  ],
+  "total_launcher_timestamp_spans_seconds": 584.134218,
+  "total_watchdog_monotonic_whole_seconds": 569.021475143265,
+  "overlapping_costs_not_added": true
+}

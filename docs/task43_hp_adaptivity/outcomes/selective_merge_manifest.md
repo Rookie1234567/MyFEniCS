@@ -1,6 +1,17 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V12 当前状态：两处最终断言未验证，不授予合并许可
+## V13 当前状态：S1有限工程通过；D1受控停止；不授予合并许可
+
+| 依赖组 | V13 文件与证据 | 合入边界 |
+|---|---|---|
+| research-only | `benchmarks/task43_hp_adaptivity/{h100_anchor.py,round1_candidates.py}`及`src/test/test_task43_v11_scientific_restart.py` | 修复 review §9.1–9.3 指定的 observer/raw checkpoint/真实读取测试问题；S1为12/12定向节点通过。D1在实际cell-map冷构造路径受控停止，未返回space authority或FE审计；这些代码仍是opt-in研究入口，不提升为默认/生产能力 |
+| compact evidence/docs | `response_v13.md`、V13机器结果、S1/D1 closeout、P2R预算裁决和本轮summary/README/manifest/model registry/progress导航 | 保留S1有限通过、D1受控停止、旧数组诊断边界、未运行阶段、局部静态错误和费用。没有新正式PDE结果或merge approval |
+| production numerical/core、reusable runner/watchdog、checker/benchmark | 无共享数值核心、默认行为、通用watchdog、profile/cache策略或通用checker改动；研究入口的raw reader修复归入上述research-only组 | S1 synthetic fixtures与D1支持剖析不构成科学、性能泛化或生产资格 |
+| do-not-merge | 未资格化研究入口及整分支；ignored D1 raw run artifacts | recovery envelope累计4/5，P2R 0/1；D1已按540 s工作门受控停止，P2R所需1740 s工作界无法保守证明；P3/P4/P5未运行。旧正式额度5/6、末槽封存，扩展正式额度5/8，新formal 0；无READY、生产资格或merge approval |
+
+下一步最小技术问题是给18个未完成冷degree keys及cell-map/audit尾段建立可审的费用界，或经另行审阅批准严格保持数学行为的窄成本修复。本manifest不授权进一步运行或合并。详见[Response V13](../response_v13.md)、[V13机器记录](records/v13_minimal_completion_and_scientific_results_v1.json)、[S1 closeout](records/v13_completion_sources/support/s1_completion_attempt1/root_closeout.json)、[D1 closeout](records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json)与[P2R预算裁决](records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json)。
+
+## V12历史状态：两轮支持验证失败，最终两处断言当时未验证
 
 | 依赖组 | V12 文件与证据 | 合入边界 |
 |---|---|---|

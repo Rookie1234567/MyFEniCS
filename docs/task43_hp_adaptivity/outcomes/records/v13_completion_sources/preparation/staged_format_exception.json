@@ -1,0 +1,16 @@
+{
+  "schema": "task43.v13.staged-format-review.v1",
+  "created_utc": "2026-10-27T00:37:05.326031+00:00",
+  "command": "git diff --cached --check",
+  "exit_code": 2,
+  "finding": "launch_context.txt line 9 argv retains one trailing space from actual shell output",
+  "archived_path": "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/launch_context.txt",
+  "raw_path": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/launch_context.txt",
+  "sha256": "30ab7414b9abf1254d21b0c39c88df19f222edd73c0f2e914f71679b889773a1",
+  "raw_bytes_equal": true,
+  "disposition": "preserve exact raw launch-context bytes; documented format exception only, no runtime failure",
+  "subsequent_check": "git diff --cached --check -- . :(exclude)docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/launch_context.txt",
+  "time": "not_measured",
+  "rerun_driver_tests_PDE": 0,
+  "subsequent_exit_code": 0
+}

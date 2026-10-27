@@ -1,0 +1,647 @@
+{
+  "raw_index": [
+    {
+      "file": "sched.3065595",
+      "sha256": "13c1e9d39d11bf1bcbde97183b33401b8ccd26ab16af714ece6efd6eb06c21f3",
+      "bytes": 53606,
+      "lines": 736,
+      "tail": "1793060347.824316 +++ killed by SIGTERM +++"
+    },
+    {
+      "file": "sched.3065651",
+      "sha256": "de8b1392ee153ab535a3b611cfbdfd9fbc32dbe0506d30dcb96a9ee04b9f41c3",
+      "bytes": 4310,
+      "lines": 55,
+      "tail": "1793060347.875241 +++ exited with 1 +++"
+    },
+    {
+      "file": "sched.3065662",
+      "sha256": "bc87ccf3902fc08873512bb179ba45c51872b57538821b924468823a5f92abde",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793060347.783372 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3065671",
+      "sha256": "5aebf931288d69cfa1d2d5a6f6977353bda9928bd09a500df6547603c4f97ed4",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793060347.793762 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3065675",
+      "sha256": "16c39c5a173986c656e9a1702935d91a98f530d954db460b1d21a9c23b83202e",
+      "bytes": 44,
+      "lines": 1,
+      "tail": "1793060347.598011 +++ killed by SIGTERM +++"
+    },
+    {
+      "file": "sched.3065677",
+      "sha256": "cc9e4d7cc32dfe5f8c228c84a5c0f4eb355eba7ac7c3df8f6b3f039e2fd458d2",
+      "bytes": 44,
+      "lines": 1,
+      "tail": "1793060347.597695 +++ killed by SIGTERM +++"
+    }
+  ],
+  "all_nonstack_lines": [
+    {
+      "file": "sched.3065595",
+      "line": 1,
+      "raw": "1793059808.094294 sched_getaffinity(0, 128, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 95,
+      "raw": "1793059809.339004 sched_getaffinity(3065595, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 151,
+      "raw": "1793059809.728328 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 202,
+      "raw": "1793059809.764430 sched_getaffinity(3065595, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 253,
+      "raw": "1793059809.787177 sched_getaffinity(3065675, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 304,
+      "raw": "1793059809.806337 sched_getaffinity(3065677, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 355,
+      "raw": "1793059809.819299 sched_getaffinity(3065595, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 404,
+      "raw": "1793059809.827167 sched_getaffinity(3065675, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 453,
+      "raw": "1793059809.835070 sched_getaffinity(3065677, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 502,
+      "raw": "1793059809.842966 sched_getaffinity(3065595, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 551,
+      "raw": "1793059809.851040 sched_getaffinity(3065675, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 600,
+      "raw": "1793059809.858645 sched_getaffinity(3065677, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 649,
+      "raw": "1793059813.200460 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 666,
+      "raw": "1793059813.228363 sched_getaffinity(3065595, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 683,
+      "raw": "1793059813.244977 sched_getaffinity(3065675, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 698,
+      "raw": "1793059813.251069 sched_getaffinity(3065677, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 713,
+      "raw": "1793060347.577874 --- SIGTERM {si_signo=SIGTERM, si_code=SI_USER, si_pid=3065572, si_uid=1000} ---"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 736,
+      "raw": "1793060347.824316 +++ killed by SIGTERM +++"
+    },
+    {
+      "file": "sched.3065651",
+      "line": 1,
+      "raw": "1793059808.743902 sched_getaffinity(3065651, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065651",
+      "line": 19,
+      "raw": "1793059808.837647 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065651",
+      "line": 33,
+      "raw": "1793059808.843994 sched_getaffinity(3065651, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065651",
+      "line": 47,
+      "raw": "1793060347.598029 --- SIGTERM {si_signo=SIGTERM, si_code=SI_USER, si_pid=3065572, si_uid=1000} ---"
+    },
+    {
+      "file": "sched.3065651",
+      "line": 55,
+      "raw": "1793060347.875241 +++ exited with 1 +++"
+    },
+    {
+      "file": "sched.3065662",
+      "line": 1,
+      "raw": "1793060347.783372 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3065671",
+      "line": 1,
+      "raw": "1793060347.793762 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3065675",
+      "line": 1,
+      "raw": "1793060347.598011 +++ killed by SIGTERM +++"
+    },
+    {
+      "file": "sched.3065677",
+      "line": 1,
+      "raw": "1793060347.597695 +++ killed by SIGTERM +++"
+    }
+  ],
+  "unique_stack_frames": [
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(sched_getaffinity+0x1a) [0x10e73a]",
+      "occurrences": 17
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so(get_num_procs+0xce) [0x39bbfe]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so(blas_get_cpu_number+0x35) [0x39bce5]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so(gotoblas_init+0x4b) [0x1480bb]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x142f) [0x571f]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(__nptl_change_stack_perm+0x1534) [0x5824]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x132) [0x15b2]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_rtld_di_serinfo+0x2cac) [0xcd7c]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x9c) [0x151c]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_find_dso_for_object+0x184) [0xd164]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(dlmopen+0x104) [0x98284]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2(_dl_catch_exception+0x1e9) [0x1669]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(dlerror+0x2c3) [0x97d63]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(dlopen+0x6f) [0x9833f]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_Py_GetLocaleconvNumeric+0x6bc) [0x2bc73c]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyState_FindModule+0x25a) [0x2a983a]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyImport_GetImporter+0x232) [0x2a8fc2]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyCMethod_New+0x6f7) [0x182207]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x4cbe) [0x1db2ee]",
+      "occurrences": 44
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyObject_CallFunctionObjArgs+0x327) [0x149d87]",
+      "occurrences": 42
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyObject_CallMethodObjArgs+0xe3) [0x14b603]",
+      "occurrences": 42
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x395) [0x1fdab5]",
+      "occurrences": 29
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x5e6e) [0x1dc49e]",
+      "occurrences": 28
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]",
+      "occurrences": 44
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]",
+      "occurrences": 44
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]",
+      "occurrences": 58
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyWeakref_ClearRef+0xa2a4) [0x1d3724]",
+      "occurrences": 14
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyImport_ImportModuleLevelObject+0x5eb) [0x1fdd0b]",
+      "occurrences": 13
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyObject_Vectorcall+0x35) [0x1499b5]",
+      "occurrences": 20
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xadf) [0x1d710f]",
+      "occurrences": 31
+    },
+    {
+      "raw": " > /usr/bin/python3.12(Py_RunMain+0x602) [0x2bcf22]",
+      "occurrences": 17
+    },
+    {
+      "raw": " > /usr/bin/python3.12(Py_RunMain+0x232) [0x2bcb52]",
+      "occurrences": 17
+    },
+    {
+      "raw": " > /usr/bin/python3.12(Py_BytesMain+0x2d) [0x2bc7bd]",
+      "occurrences": 17
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_init_first+0x8a) [0x2a1ca]",
+      "occurrences": 21
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x2a28b]",
+      "occurrences": 21
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_start+0x25) [0x257a05]",
+      "occurrences": 17
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(pthread_getaffinity_np+0x20) [0x9de30]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetExportTable+0x1a0574) [0x327fc4]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetExportTable+0x13c497) [0x2c3ee7]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetExportTable+0x154f12) [0x2dc962]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libnvidia-opencl.so.595.91.07(clGetPlatformInfo+0xbb) [0x17344b]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libOpenCL.so.1.0.0(clSetContextDestructorCallback+0x98b) [0xabfb]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libOpenCL.so.1.0.0(clGetPlatformIDs+0xb0) [0xbce0]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/hwloc/hwloc_opencl.so() [0x1468]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_last_cpu_location+0xda46) [0x44c46]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_topology_load+0x1019) [0x106f9]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/pmix2/lib/libpmix.so.2.13.1(pmix_hwloc_setup_topology+0x1d26) [0x4de16]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/pmix2/lib/libpmix.so.2.13.1(PMIx_Init+0x21cc) [0x5357c]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_pmix_ext3x.so(ext3x_client_init+0xd3) [0xfa93]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_singleton.so() [0x2e86]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_init+0x2aa) [0x9815a]",
+      "occurrences": 14
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(ompi_mpi_init+0x24c) [0xebeec]",
+      "occurrences": 11
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libmpi.so.40.30.6(PMPI_Init_thread+0x5c) [0x82eec]",
+      "occurrences": 11
+    },
+    {
+      "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/libpetsc.so.3.19.6(PetscInitialize+0xd2) [0x150454]",
+      "occurrences": 11
+    },
+    {
+      "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib/petsc4py/lib/PETSc.cpython-312-x86_64-linux-gnu.so(__pyx_pw_8petsc4py_5PETSc_5_initialize+0x4ad) [0x34065d]",
+      "occurrences": 11
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyCMethod_New+0x65f) [0x18216f]",
+      "occurrences": 11
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyObject_MakeTpCall+0x75) [0x148fb5]",
+      "occurrences": 11
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0x19d) [0x3675d]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0x90b) [0x36ecb]",
+      "occurrences": 12
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc__xml_export_topology+0x3206) [0x32bd6]",
+      "occurrences": 12
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0xaae) [0x3706e]",
+      "occurrences": 12
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_hwloc_base_get_local_cpuset+0x34) [0x74d54]",
+      "occurrences": 6
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_hwloc_base_get_topology+0xcc9) [0x7b399]",
+      "occurrences": 6
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_ess_base_proc_binding+0xcd1) [0x61991]",
+      "occurrences": 4
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_singleton.so() [0x421c]",
+      "occurrences": 10
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libhwloc.so.15.7.0(hwloc_linux_get_tid_cpubind+0x21e) [0x367de]",
+      "occurrences": 10
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_ess_base_proc_binding+0x12a0) [0x61f60]",
+      "occurrences": 3
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_ess_base_proc_binding+0xd18) [0x619d8]",
+      "occurrences": 3
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyOS_AfterFork_Child+0x1eb2) [0xf1d0d]",
+      "occurrences": 4
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyCMethod_New+0x572) [0x182082]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0x14fd) [0x1d7b2d]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libbasix.so.0.10.0(std::pair<std::vector<double, std::allocator<double> >, std::array<unsigned long, 2ul> > basix::compute_interpolation_operator<double>(basix::FiniteElement<double> const&, basix::FiniteElement<double> const&)+0x758) [0x6d5f8]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/python3/dist-packages/basix/_basixcpp.cpython-312-x86_64-linux-gnu.so(PyInit__basixcpp+0x17a3b) [0x23c19]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/python3/dist-packages/basix/_basixcpp.cpython-312-x86_64-linux-gnu.so(PyInit__basixcpp+0xdd2b) [0x19f09]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/bin/python3.12(_PyErr_CheckSignalsTstate+0x1a033) [0x24ff23]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/bin/python3.12(PyObject_Call+0x6c) [0x14b12c]",
+      "occurrences": 2
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-pal.so.40.30.3(opal_hwloc_base_get_topology+0x12a6) [0x7b976]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/mca_ess_hnp.so() [0x4c56]",
+      "occurrences": 3
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_daemon+0xc80) [0x39540]",
+      "occurrences": 3
+    },
+    {
+      "raw": " > /usr/bin/orted() [0x11c5]",
+      "occurrences": 4
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(poll+0x4d) [0x11b79d]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libevent_core-2.1.so.7.0.1(event_debugx_+0xbfd) [0x2576d]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libevent_core-2.1.so.7.0.1(event_base_loop+0x2a8) [0x20db8]",
+      "occurrences": 1
+    },
+    {
+      "raw": " > /usr/lib/x86_64-linux-gnu/libopen-rte.so.40.30.3(orte_daemon+0x176e) [0x3a02e]",
+      "occurrences": 1
+    }
+  ],
+  "setter_count": 0,
+  "getters": [
+    {
+      "file": "sched.3065595",
+      "line": 1,
+      "raw": "1793059808.094294 sched_getaffinity(0, 128, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 95,
+      "raw": "1793059809.339004 sched_getaffinity(3065595, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 151,
+      "raw": "1793059809.728328 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 202,
+      "raw": "1793059809.764430 sched_getaffinity(3065595, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 253,
+      "raw": "1793059809.787177 sched_getaffinity(3065675, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 304,
+      "raw": "1793059809.806337 sched_getaffinity(3065677, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 355,
+      "raw": "1793059809.819299 sched_getaffinity(3065595, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 404,
+      "raw": "1793059809.827167 sched_getaffinity(3065675, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 453,
+      "raw": "1793059809.835070 sched_getaffinity(3065677, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 502,
+      "raw": "1793059809.842966 sched_getaffinity(3065595, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 551,
+      "raw": "1793059809.851040 sched_getaffinity(3065675, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 600,
+      "raw": "1793059809.858645 sched_getaffinity(3065677, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 649,
+      "raw": "1793059813.200460 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 666,
+      "raw": "1793059813.228363 sched_getaffinity(3065595, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 683,
+      "raw": "1793059813.244977 sched_getaffinity(3065675, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 698,
+      "raw": "1793059813.251069 sched_getaffinity(3065677, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065651",
+      "line": 1,
+      "raw": "1793059808.743902 sched_getaffinity(3065651, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065651",
+      "line": 19,
+      "raw": "1793059808.837647 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3065651",
+      "line": 33,
+      "raw": "1793059808.843994 sched_getaffinity(3065651, 8, [1]) = 8"
+    }
+  ],
+  "signals": [
+    {
+      "file": "sched.3065595",
+      "line": 713,
+      "raw": "1793060347.577874 --- SIGTERM {si_signo=SIGTERM, si_code=SI_USER, si_pid=3065572, si_uid=1000} ---"
+    },
+    {
+      "file": "sched.3065595",
+      "line": 736,
+      "raw": "1793060347.824316 +++ killed by SIGTERM +++"
+    },
+    {
+      "file": "sched.3065651",
+      "line": 47,
+      "raw": "1793060347.598029 --- SIGTERM {si_signo=SIGTERM, si_code=SI_USER, si_pid=3065572, si_uid=1000} ---"
+    },
+    {
+      "file": "sched.3065675",
+      "line": 1,
+      "raw": "1793060347.598011 +++ killed by SIGTERM +++"
+    },
+    {
+      "file": "sched.3065677",
+      "line": 1,
+      "raw": "1793060347.597695 +++ killed by SIGTERM +++"
+    }
+  ],
+  "parse_anomalies": []
+}

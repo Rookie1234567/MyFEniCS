@@ -1,0 +1,9 @@
+activation=1
+python=/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python
+node_cap=8589934592
+work_stop_seconds=540
+whole_limit_seconds=600
+worker-only HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1
+CPU1 MPI1 numerical threads=1
+cache not supplied; cache audit NOT_MEASURED
+argv=python -u -m benchmarks.task43_hp_adaptivity.round1_candidates --primary-diagnostic-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json --execution-recovery-manifest /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json --accepted-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json 

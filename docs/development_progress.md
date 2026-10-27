@@ -1,6 +1,24 @@
 # Task43 当前收口（2026-10-27）：PARTIAL / CONTROLLED_NEGATIVE
 
-## Task43 V12当前状态：有限支持验证受控结束，最终两处断言未运行
+## Task43 V13当前状态：S1有限支持通过；D1性能受控停止
+
+V13按V12 review §9的范围完成两处opt-in研究入口和既有测试修正。S1在冻结实现上运行12个定向节点并全部通过，分类为`PASS_LIMITED_SUPPORT_ENGINEERING`。这证明本轮指定fixture和有限入口行为已通过，不代表完整测试文件、全仓CI或科学模型通过。随后唯一D1沿实际space-authority调用路径观察构造成本，在540秒工作停止门到期后受控停止；cell-trace map与最终authority没有返回，实际独立FE审计未完成；本支持阶段不装配PDE矩阵，rows/NNZ未测。它是性能停，不是数值失败。
+
+| 阶段 | 实测结果 | 解释与未取得项 |
+|---|---|---|
+| S1 | 12/12节点；whole 27.02263388223946 s；采样树RSS峰313585664 B；exit 0/0/0 | 有限support工程门通过；不等于数值/PDE资格 |
+| D1 | 540 s工作停止、600 s whole上限；whole 541.9988412610255 s；RSS采样峰1302609920 B；swap峰0 B | `PERFORMANCE_CONTROLLED_STOP`；实际cell map、reduction authority、独立FE审计未完成；本阶段不装配PDE矩阵；PSS disabled、769次采样 |
+| D1路径身份 | 6份trace/795行、19 getter全为`[1]`、0 setter；51 source和38 input checks未变 | 终态后代已清理；采样间隔约0.3796–1.0291 s，配置0.25 s另有开销，不是严格固定间隔 |
+| 旧A2检查 | 保存的raw/modal/q8/q10数组有限复核通过 | 无新解、重采样、积分或算子应用；旧endpoint仍`INCOMPLETE_NOT_QUALIFIED` |
+| P2R及下游 | P2R 0次，P3/P4/P5 0次；新formal 0 | P2R预算需1740 s工作/1800 s whole；25个unique degree keys中18个未完成，且cell-map/audit尾段成本无可审上界，故不放行 |
+
+P2R缺少18个未完成cold keys、cell-map转换/rank/expansion尾段、reduction authority和`_audit_plan`闭包/FE门、空间后输出持久化费用的保守界。D1观测到的key时长不同，不能用均值或warm hit外推。最小下一技术任务是取得这些剩余路径的可审成本上界，或另行审阅严格保持数学行为的窄成本修复；这不意味着模型数学无效或不可行。
+
+本轮S1+D1两次whole-watchdog合计569.021475143265秒；计入V12两次失败支持运行后为618.6039171176963秒。shell timestamp区间S1 33.475959秒、D1 550.658259秒与watchdog时钟有重叠，不相加。最终文档检查前静态小计9.170545399932646秒，文档/证据静态校验另计0.31329149194061756秒，合计9.483836891873263秒；手工阅读、编辑及Git等未计时活动保持`not_measured`。已登记的局部错误包括执行subagent曾将D1的540秒误称P2R预算，主控拒绝并订正（已更正为P2R 1740/1800）；主控早期把degree keys数成24（最终完整profile为25）；一次post-run broad fixture extraction遇旧schema mock缺`substage_checkpoint_refs`而报KeyError，后收窄为实际fixture读取且未重跑；一次对尚未建立目录执行`ls`以exit 2结束。上述是阶段准备/记账问题，不是D1 worker或科学结果失败。
+
+正式额度保持5/6、末槽封存，扩展formal为5/8；recovery envelope累计4/5，P2R 0/1。五项能力保持空间/选择`PARTIAL`、精度`NOT_PASSED`、同精度全过程成本`NOT_ESTABLISHED`、迭代`NOT_RUN / NOT_QUALIFIED`，0.7 nm未运行；accepted9/R9仍是最后接受态，R10仍拒绝。无READY、生产资格、CI通过或merge approval。机器数据与逐项回应见[Response V13](task43_hp_adaptivity/response_v13.md)、[V13 machine record](task43_hp_adaptivity/outcomes/records/v13_minimal_completion_and_scientific_results_v1.json)、[D1 closeout](task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json)和[P2R预算裁决](task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json)。
+
+## Task43 V12历史状态：有限支持验证受控结束，最终两处断言当时未运行
 
 获准的S1支持验证为10/24通过，窄恢复为12/14通过；S1失败来自observer向量复制方向和缺少orders JSON fixture，恢复失败来自不同shape数组断言与实际错误信息regex不匹配。后两处随后只作静态修正，最终字节未运行。主控对两轮静态预审漏掉确定性fixture/断言问题负责，不归因于ABI、数学或求解性能。两轮whole-watchdog合计49.582441974431276s，进程树RSS采样峰分别284934144B和265719808B；CPU观察为1，task swap为0，清理完成。S1为57 getter/0 setter/4个fixture SIGCHLD，恢复为19 getter/0 setter/0 signal。root完整复核trace、资源和runtime身份未见额外硬失败；不由此推导科学或D1性能资格。
 

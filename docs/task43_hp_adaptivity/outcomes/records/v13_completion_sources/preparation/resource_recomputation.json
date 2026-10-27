@@ -1,0 +1,30 @@
+{
+  "runs": {
+    "s1_completion_attempt1": {
+      "member_RSS_and_swap_sums_match_each_row": true,
+      "peak_recomputed_bytes": 313585664,
+      "peak_matches_summary": true,
+      "actual_sample_interval_min_seconds": 0.5373129290528595,
+      "actual_sample_interval_max_seconds": 0.9271544707007706,
+      "configured_interval_seconds": 0.25,
+      "interpretation": "configured interval plus measurement and scheduling overhead; not a uniform 0.25 second stream",
+      "sample_cost_wall_sum_seconds": 6.3654795666225255,
+      "sample_cost_cpu_sum_seconds": 3.3554132369999983,
+      "timing_not_added_to_whole": true
+    },
+    "authority_profile_attempt1": {
+      "member_RSS_and_swap_sums_match_each_row": true,
+      "peak_recomputed_bytes": 1302609920,
+      "peak_matches_summary": true,
+      "actual_sample_interval_min_seconds": 0.3795865047723055,
+      "actual_sample_interval_max_seconds": 1.0290934331715107,
+      "configured_interval_seconds": 0.25,
+      "interpretation": "configured interval plus measurement and scheduling overhead; not a uniform 0.25 second stream",
+      "sample_cost_wall_sum_seconds": 129.7411545291543,
+      "sample_cost_cpu_sum_seconds": 64.84655413100012,
+      "timing_not_added_to_whole": true
+    }
+  },
+  "classification": "root offline check of existing JSON only",
+  "manual_audit_cost": "not_measured"
+}

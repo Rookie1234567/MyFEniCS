@@ -1,0 +1,266 @@
+{
+  "scope": "arithmetic on old saved vectors/samples within D1; no new A2 solve, resampling or integration",
+  "response_sha256": "4503811d2ab3e39b0755aa67c951d0102300a94cedc56655dc291117936aa275",
+  "packet_sha256": "cc368ed3d9baa391d70b8c368ab2868e5e78c60df464184fbbfa6536c5077feb",
+  "raw": {
+    "A6_relative_to_native_effective_rhs": 3.078522812304335e-10,
+    "full_active_modal_port_l2": 1.715018697172072e-12,
+    "full_active_zero_slave_carrier_l2": 1.4299132653967826e-11,
+    "full_active_zero_slave_carrier_plus_modal_port_euclidean_relative_to_native_effective_rhs": 1.1972486317982494e-11,
+    "normal_correction_relative_history": [
+      2.2945939789534043e-09,
+      3.0440529386035694e-12
+    ],
+    "normal_raw_state_limitation": "legacy packet lacks separate normal RHS/solution vectors; verifies the returned RHS/solution/residual and two b-Ax snapshots only",
+    "pass": true,
+    "returned_condensed_relative_to_returned_rhs": 3.0440529386035694e-12,
+    "scope": "native explicit full-active residual: zero-slave carrier and modal-port Euclidean components, normalized by native effective RHS; not a variable-p Gram metric norm; no operator application, resampling, material integration, or PDE solve",
+    "stored_scalar_identity_absolute_differences": {
+      "condensed_b_minus_Ax_relative": 1.7771458472818954e-26,
+      "full_active_zero_slave_carrier_plus_modal_port_euclidean_relative": 0.0,
+      "independent_A6_relative": 0.0
+    }
+  },
+  "modal": {
+    "boundary_amplitude_groups": {
+      "bottom_p": {
+        "difference_boundary_amplitude_l2": 1.534058493598624e-11,
+        "mode_count": 153,
+        "reference_boundary_amplitude_l2": 0.00027720997077159245,
+        "relative_to_reference": 5.53392249683044e-08,
+        "relative_with_unit_incident_modal_floor": 1.534058493598624e-11
+      },
+      "bottom_s": {
+        "difference_boundary_amplitude_l2": 1.4668589996279054e-11,
+        "mode_count": 153,
+        "reference_boundary_amplitude_l2": 0.1708593117579208,
+        "relative_to_reference": 8.585186165950384e-11,
+        "relative_with_unit_incident_modal_floor": 1.4668589996279054e-11
+      },
+      "top_p": {
+        "difference_boundary_amplitude_l2": 5.4374146700925e-11,
+        "mode_count": 153,
+        "reference_boundary_amplitude_l2": 0.0002660223339478603,
+        "relative_to_reference": 2.0439692372439e-07,
+        "relative_with_unit_incident_modal_floor": 5.4374146700925e-11
+      },
+      "top_s": {
+        "difference_boundary_amplitude_l2": 6.139994079567577e-11,
+        "mode_count": 153,
+        "reference_boundary_amplitude_l2": 0.5013228858864879,
+        "relative_to_reference": 1.2247583847504273e-10,
+        "relative_with_unit_incident_modal_floor": 6.139994079567577e-11
+      }
+    },
+    "boundary_amplitude_vector_absolute_l2_difference": 8.471718620104984e-11,
+    "boundary_amplitude_vector_max_abs_difference": 6.137211389552834e-11,
+    "candidate_label": "A2_saved_primary",
+    "individual_channel_power_ratio_absolute_difference_l2": 4.507706901522967e-11,
+    "maximum_individual_channel_power_ratio_absolute_difference": 4.5076775645469525e-11,
+    "maximum_individual_channel_power_ratio_key": [
+      "top",
+      0,
+      0,
+      "s"
+    ],
+    "ordered_mode_count": 612,
+    "ordered_mode_keys_sha256": "854e0302db798e534f4cb7698a2dd3a6b28f3d247002a5c0c033319ea1a50eb2",
+    "phase_fit": false,
+    "power_absolute_differences": {
+      "A_volume": 4.146905041579885e-11,
+      "R00_p": 1.3919772668589033e-21,
+      "R00_s": 4.5076775645469525e-11,
+      "R00_total": 4.5076775645469525e-11,
+      "R_total": 4.508154960447541e-11,
+      "T_total": 1.8893220321558601e-13
+    },
+    "reference_label": "Y6_1"
+  },
+  "raw612_differences_saved_in": "plan_output/A2_saved_primary_q_response.json",
+  "fields": {
+    "q10": {
+      "sample_count": 1008000,
+      "volume_nm3": 349999.9999999998,
+      "metrics": {
+        "E_scattered_code": {
+          "candidate_l2": 321.70508583233357,
+          "difference_l2": 3.5752243670560286e-08,
+          "reference_l2": 321.70508582252256,
+          "reference_norm_floor": 591.6079783099616,
+          "relative_to_reference": 1.1113359796333463e-10,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 6.04323217085294e-11
+        },
+        "E_total_code": {
+          "candidate_l2": 392.103368700513,
+          "difference_l2": 3.575224367460067e-08,
+          "reference_l2": 392.10336871399426,
+          "reference_norm_floor": 591.6079783099616,
+          "relative_to_reference": 9.118065930384511e-11,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 6.04323217153589e-11
+        },
+        "G": {
+          "candidate_g_norm": 554.563010677582,
+          "difference_g_norm": 5.056549735466767e-08,
+          "incident_g_norm_floor": 836.6600265340755,
+          "reference_g_norm": 554.5630106966477,
+          "relative_to_reference": 9.11807970948996e-11,
+          "relative_to_reference_defined": true,
+          "relative_with_incident_floor": 6.04373290835214e-11
+        },
+        "H_scattered_A_per_m": {
+          "candidate_l2": 0.8539782867390758,
+          "difference_l2": 9.491715144979496e-11,
+          "reference_l2": 0.8539782867130334,
+          "reference_norm_floor": 1.5703752972513016,
+          "relative_to_reference": 1.1114703140185395e-10,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 6.044233605554845e-11
+        },
+        "H_total_A_per_m": {
+          "candidate_l2": 1.0409758529319595,
+          "difference_l2": 9.491715143966161e-11,
+          "reference_l2": 1.0409758529677469,
+          "reference_norm_floor": 1.5703752972513016,
+          "relative_to_reference": 9.118093485940109e-11,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 6.044233604909563e-11
+        },
+        "curl_E_over_k0_code": {
+          "candidate_l2": 392.16715959587134,
+          "difference_l2": 3.5758168246043426e-08,
+          "reference_l2": 392.1671596093533,
+          "reference_norm_floor": 591.6079783099616,
+          "relative_to_reference": 9.118093488925222e-11,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 6.044233606888348e-11
+        }
+      },
+      "gates": {
+        "E_scattered_code": true,
+        "E_total_code": true,
+        "G": true,
+        "H_scattered_A_per_m": true,
+        "H_total_A_per_m": true
+      },
+      "pass": true
+    },
+    "q8": {
+      "sample_count": 516096,
+      "volume_nm3": 349999.9999999999,
+      "metrics": {
+        "E_scattered_code": {
+          "candidate_l2": 321.70508583233374,
+          "difference_l2": 3.575224388568727e-08,
+          "reference_l2": 321.70508582252245,
+          "reference_norm_floor": 591.6079783099616,
+          "relative_to_reference": 1.1113359863204336e-10,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 6.043232207216038e-11
+        },
+        "E_total_code": {
+          "candidate_l2": 392.10336870051276,
+          "difference_l2": 3.5752243879496666e-08,
+          "reference_l2": 392.103368713994,
+          "reference_norm_floor": 591.6079783099616,
+          "relative_to_reference": 9.118065982640124e-11,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 6.043232206169635e-11
+        },
+        "G": {
+          "candidate_g_norm": 554.5630106775818,
+          "difference_g_norm": 5.056549756339993e-08,
+          "incident_g_norm_floor": 836.6600265340755,
+          "reference_g_norm": 554.5630106966477,
+          "relative_to_reference": 9.118079747129013e-11,
+          "relative_to_reference_defined": true,
+          "relative_with_incident_floor": 6.043732933300416e-11
+        },
+        "H_scattered_A_per_m": {
+          "candidate_l2": 0.8539782867390763,
+          "difference_l2": 9.49171517283278e-11,
+          "reference_l2": 0.8539782867130331,
+          "reference_norm_floor": 1.5703752972513016,
+          "relative_to_reference": 1.1114703172801314e-10,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 6.044233623291549e-11
+        },
+        "H_total_A_per_m": {
+          "candidate_l2": 1.0409758529319597,
+          "difference_l2": 9.491715173363083e-11,
+          "reference_l2": 1.0409758529677473,
+          "reference_norm_floor": 1.5703752972513016,
+          "relative_to_reference": 9.118093514179877e-11,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 6.044233623629242e-11
+        },
+        "curl_E_over_k0_code": {
+          "candidate_l2": 392.16715959587134,
+          "difference_l2": 3.5758168377095676e-08,
+          "reference_l2": 392.16715960935306,
+          "reference_norm_floor": 591.6079783099616,
+          "relative_to_reference": 9.118093522342674e-11,
+          "relative_to_reference_defined": true,
+          "relative_to_reference_or_floor": 6.04423362904022e-11
+        }
+      },
+      "gates": {
+        "E_scattered_code": true,
+        "E_total_code": true,
+        "G": true,
+        "H_scattered_A_per_m": true,
+        "H_total_A_per_m": true
+      },
+      "pass": true
+    }
+  },
+  "A_volume": {
+    "historical_automatic_rule_reinterpreted_as_q19": false,
+    "inferred_from_one_minus_R_minus_T": false,
+    "material_region_sum": 0.6915175267406917,
+    "reintegrated": false,
+    "saved_value": 0.6915175267406917
+  },
+  "checkpoint_refs": [
+    {
+      "stage": "modal",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/modal.json",
+      "sha256": "a0919ee8e917da2aa71c561b77995a6920330be7f76dc043829ca59f1328459f",
+      "bytes": 94209
+    },
+    {
+      "stage": "q10",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/q10.json",
+      "sha256": "d420e3795fd862a125d45f571857756396e3e55dbb5c078830d6577af1f21e60",
+      "bytes": 16631
+    },
+    {
+      "stage": "q8",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/q8.json",
+      "sha256": "240af00db78d99ba41607df9f72fd8e0f6015cdfb782faa573102dfcdc850e32",
+      "bytes": 16633
+    },
+    {
+      "stage": "raw",
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/raw.json",
+      "sha256": "96301a2e564fdfd68e6516dbe7623d49bea71544b6b7103ba06b5b4e2f42f69a",
+      "bytes": 32499
+    }
+  ],
+  "root_recomputed_checks_from_actual_json_values": {
+    "A6": true,
+    "full_active": true,
+    "condensed": true,
+    "normal_decrease": true,
+    "modal_612": true,
+    "aggregate": true,
+    "each_channel": true,
+    "R00_s_p": true,
+    "four_amplitude_groups": true,
+    "q10_fields": true,
+    "q8_fields": true
+  },
+  "historical_endpoint": "INCOMPLETE_NOT_QUALIFIED",
+  "normal_state_limitation": "legacy packet lacks separate normal RHS/solution vectors; verifies the returned RHS/solution/residual and two b-Ax snapshots only"
+}

@@ -1,0 +1,27 @@
+{
+  "measured_seconds": 0.4012579582631588,
+  "kind": "stdlib read/hash/JSON/light evidence archival; no native or diagnostic driver",
+  "manual_review": "not_measured",
+  "local_failures": [
+    {
+      "step": "initial monitor before plan_output creation",
+      "exit_code": 2,
+      "cause": "ls on not-yet-created output directory",
+      "recovery": "guarded exists/read; no relaunch"
+    },
+    {
+      "step": "subagent final narrative",
+      "wrong_text": "P2R 540 seconds",
+      "correction": "root rejected; P2R work1740/whole1800, D1 work540/whole600",
+      "changed_authorization": false
+    },
+    {
+      "step": "provisional live degree-key count in root commentary and subagent analysis",
+      "wrong_count": 24,
+      "correct_count": 25,
+      "evidence": "mechanical len of actual 194-cell multiplicity map: 25 keys, 7 completed, 1 in progress, 17 not started",
+      "recovery": "corrected current root closeout before commit; raw observation unchanged",
+      "time": "not_measured"
+    }
+  ]
+}

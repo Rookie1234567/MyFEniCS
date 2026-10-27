@@ -1,0 +1,565 @@
+{
+  "schema": "task43.v13.final-document-static-check.v1",
+  "created_utc": "2026-10-27T00:35:29.892057+00:00",
+  "command": "python3 /tmp/task43_v13_final_static_check.py",
+  "script_sha256": "dc713982793799db811bdb96cb3d3f02d30d0d24eb81c2b831c8a21aeb534aad",
+  "head": "d8cba4f1377b526101c37213d5bc8e88db23effc",
+  "checks": [
+    {
+      "name": "frozen_source:benchmarks/task43_hp_adaptivity/round1_candidates.py",
+      "pass": true,
+      "detail": "72716b9f7219a9f6ae78f4b7b736796d072ef4ffa46505ff9b3aac4d8523c71e"
+    },
+    {
+      "name": "frozen_source:benchmarks/task43_hp_adaptivity/h100_anchor.py",
+      "pass": true,
+      "detail": "086bdf560e3836a19009e86c74ad818870b534ec8b891b818a87fbf9137a1323"
+    },
+    {
+      "name": "frozen_source:src/test/test_task43_v11_scientific_restart.py",
+      "pass": true,
+      "detail": "8516a90dd558e6c2ec4d9329da26fa2aba5bdb0b253e5ac3c6838dbbda5f38ba"
+    },
+    {
+      "name": "original_contract",
+      "pass": true,
+      "detail": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+        "sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1"
+      }
+    },
+    {
+      "name": "original_recovery_manifest",
+      "pass": true,
+      "detail": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+        "sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734"
+      }
+    },
+    {
+      "name": "branch",
+      "pass": true,
+      "detail": "task43_hp_adaptivity"
+    },
+    {
+      "name": "run_HEAD_not_relabelled",
+      "pass": true,
+      "detail": {
+        "S1_completion": "7546c7bdb91b2c07c0344c41d418e8a0808ea6a6",
+        "D1": "d8cba4f1377b526101c37213d5bc8e88db23effc"
+      }
+    },
+    {
+      "name": "tracked_scope_and_history_unchanged",
+      "pass": true,
+      "detail": [
+        "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+        "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+        "docs/README.md",
+        "docs/development_model_registry.md",
+        "docs/development_progress.md",
+        "docs/task43_hp_adaptivity/README.md",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/agent_static_checks.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/authority_profile_attempt1.sh",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/d1_prelaunch_binding.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/initial_identity.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/input_hash_precheck.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/launch_text_static_check.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/root_prelaunch_review.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/s1_completion_attempt1.sh",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/fixture_identity/controlled_fault_exit.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/fixture_identity/main_sentinel_runtime_identity.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/fixture_identity/normal_exit.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/launch_command.txt",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/launch_context.txt",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/launcher_exit_code.txt",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/process_identity.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/pytest_results.xml",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/raw_index.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/resource_rows.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/root_closeout.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/snapshots/launch.sh",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/snapshots/launch_manifest.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/source_head.txt",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/source_input_checks.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/source_status.txt",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/trace_excerpt_and_index.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/watchdog/summary.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/watchdog_exit_code.txt",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/watchdog_stderr.txt",
+        "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/watchdog_stdout.json",
+        "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+        "docs/task43_hp_adaptivity/outcomes/summary.md",
+        "src/test/test_task43_v11_scientific_restart.py"
+      ]
+    },
+    {
+      "name": "JSON_read",
+      "pass": true,
+      "detail": {
+        "count": 46,
+        "paths": [
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/agent_static_checks.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/completion_prelaunch_frozen.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/d1_dispatch_preflight.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/d1_prelaunch_binding.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/initial_identity.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/input_hash_precheck.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/launch_text_static_check.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/launch_timestamp_envelopes.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/resource_recomputation.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/preparation/root_prelaunch_review.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/A2_key_values_and_root_checks.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/archive_static_cost.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/authority_work_profile.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/modal.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/q10.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/q8.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/raw.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/plan_output/parent_identity_observation_complete.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/plan_output/plan_observation_complete.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/plan_output/plans/v11_r9_h8.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/process_identity.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/raw_index.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/resource_rows.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/snapshots/launch_manifest.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/source_input_checks.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/trace_excerpt_and_index.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/watchdog/summary.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/watchdog/workflow_phase.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/watchdog_stdout.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/fixture_identity/controlled_fault_exit.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/fixture_identity/main_sentinel_runtime_identity.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/fixture_identity/normal_exit.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/process_identity.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/raw_index.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/resource_member_samples.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/resource_rows.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/root_closeout.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/snapshots/launch_manifest.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/source_input_checks.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/trace_excerpt_and_index.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/watchdog/summary.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/watchdog_stdout.json",
+          "docs/task43_hp_adaptivity/outcomes/records/v13_minimal_completion_and_scientific_results_v1.json"
+        ]
+      }
+    },
+    {
+      "name": "light_reference_hash:/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+      "pass": true,
+      "detail": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1"
+    },
+    {
+      "name": "light_reference_hash:/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+      "pass": true,
+      "detail": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734"
+    },
+    {
+      "name": "light_reference_hash:/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/pytest_results.xml",
+      "pass": true,
+      "detail": "4f689ff125515f209f221822dbff7311498a31fe575fcac89636cf6ca5bc5431"
+    },
+    {
+      "name": "light_reference_hash:/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/root_closeout.json",
+      "pass": true,
+      "detail": "3e246063117d37c01c9f01ad44f834d919196073cb0cfdc595d3db0cb9c48db1"
+    },
+    {
+      "name": "light_reference_hash:/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json",
+      "pass": true,
+      "detail": "7a8e70b887a9d76ba5533801f358a264a4274f082f3ed32f7d5528f0261d209d"
+    },
+    {
+      "name": "light_reference_hash:/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json",
+      "pass": true,
+      "detail": "97adbe6f7ec14460cc53107034b0e0fdd08e659fc08c0e3baf3ad7c4f624337d"
+    },
+    {
+      "name": "light_reference_hash:/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response.json",
+      "pass": true,
+      "detail": "4503811d2ab3e39b0755aa67c951d0102300a94cedc56655dc291117936aa275"
+    },
+    {
+      "name": "light_reference_hash:/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/modal.json",
+      "pass": true,
+      "detail": "a0919ee8e917da2aa71c561b77995a6920330be7f76dc043829ca59f1328459f"
+    },
+    {
+      "name": "light_reference_hash:/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/q10.json",
+      "pass": true,
+      "detail": "d420e3795fd862a125d45f571857756396e3e55dbb5c078830d6577af1f21e60"
+    },
+    {
+      "name": "light_reference_hash:/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/q8.json",
+      "pass": true,
+      "detail": "240af00db78d99ba41607df9f72fd8e0f6015cdfb782faa573102dfcdc850e32"
+    },
+    {
+      "name": "light_reference_hash:/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/authority_profile_attempt1/plan_output/A2_saved_primary_q_response_substages/raw.json",
+      "pass": true,
+      "detail": "96301a2e564fdfd68e6516dbe7623d49bea71544b6b7103ba06b5b4e2f42f69a"
+    },
+    {
+      "name": "light_reference_hash:/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/authority_work_profile.json",
+      "pass": true,
+      "detail": "900dd6a2111c44350e1b3ab60e910867e96aa2b39f949a448a963875ed51b4d5"
+    },
+    {
+      "name": "saved_JUnit_12_pass",
+      "pass": true,
+      "detail": {
+        "case_count": 12,
+        "names": [
+          "test_main_reaches_v11_mesh_sentinel_with_watchdog_identity",
+          "test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None]",
+          "test_v12_p2_joined_source_binding_rejects_root_terminal_failure",
+          "test_v12_observer_delegates_cache_and_restores_alias_after_errors",
+          "test_v13_raw_packet_same_state_and_zero_modal_rhs[valid]",
+          "test_v13_raw_packet_same_state_and_zero_modal_rhs[rhs]",
+          "test_v13_raw_packet_same_state_and_zero_modal_rhs[solution]",
+          "test_v13_raw_packet_same_state_and_zero_modal_rhs[residual_sign]",
+          "test_v13_raw_packet_same_state_and_zero_modal_rhs[missing_solution]",
+          "test_v13_raw_packet_same_state_and_zero_modal_rhs[zero_rhs]",
+          "test_v13_raw_packet_same_state_and_zero_modal_rhs[modal_rhs]",
+          "test_v13_saved_a2_partial_checkpoint"
+        ]
+      }
+    },
+    {
+      "name": "compact_resource_arithmetic:support/s1_completion_attempt1/resource_member_samples.json",
+      "pass": true,
+      "detail": {
+        "rows": 37,
+        "peak": 313585664
+      }
+    },
+    {
+      "name": "compact_resource_arithmetic:support/authority_profile_attempt1/resource_rows.json",
+      "pass": true,
+      "detail": {
+        "rows": 769,
+        "peak": 1302609920
+      }
+    },
+    {
+      "name": "unlaunched_root_absent:recovery_v12/support/space_and_saved_primary_attempt2",
+      "pass": true,
+      "detail": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2"
+    },
+    {
+      "name": "unlaunched_root_absent:formal/A1_q_attempt3",
+      "pass": true,
+      "detail": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3"
+    },
+    {
+      "name": "unlaunched_root_absent:formal/R9_H8_attempt1",
+      "pass": true,
+      "detail": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1"
+    },
+    {
+      "name": "unlaunched_root_absent:support/union_comparison_attempt1",
+      "pass": true,
+      "detail": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1"
+    },
+    {
+      "name": "new_or_changed_markdown_links",
+      "pass": true,
+      "detail": [
+        {
+          "from": "docs/README.md",
+          "target": "task43_hp_adaptivity/response_v13.md",
+          "exists": true
+        },
+        {
+          "from": "docs/README.md",
+          "target": "task43_hp_adaptivity/outcomes/records/v13_minimal_completion_and_scientific_results_v1.json",
+          "exists": true
+        },
+        {
+          "from": "docs/README.md",
+          "target": "task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/root_closeout.json",
+          "exists": true
+        },
+        {
+          "from": "docs/README.md",
+          "target": "task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json",
+          "exists": true
+        },
+        {
+          "from": "docs/README.md",
+          "target": "task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json",
+          "exists": true
+        },
+        {
+          "from": "docs/README.md",
+          "target": "task43_hp_adaptivity/response_v12.md",
+          "exists": true
+        },
+        {
+          "from": "docs/README.md",
+          "target": "task43_hp_adaptivity/outcomes/summary.md",
+          "exists": true
+        },
+        {
+          "from": "docs/README.md",
+          "target": "task43_hp_adaptivity/README.md",
+          "exists": true
+        },
+        {
+          "from": "docs/README.md",
+          "target": "task43_hp_adaptivity/response_v13.md",
+          "exists": true
+        },
+        {
+          "from": "docs/README.md",
+          "target": "task43_hp_adaptivity/outcomes/records/v13_minimal_completion_and_scientific_results_v1.json",
+          "exists": true
+        },
+        {
+          "from": "docs/README.md",
+          "target": "task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json",
+          "exists": true
+        },
+        {
+          "from": "docs/README.md",
+          "target": "task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json",
+          "exists": true
+        },
+        {
+          "from": "docs/development_model_registry.md",
+          "target": "task43_hp_adaptivity/response_v13.md",
+          "exists": true
+        },
+        {
+          "from": "docs/development_model_registry.md",
+          "target": "task43_hp_adaptivity/outcomes/records/v13_minimal_completion_and_scientific_results_v1.json",
+          "exists": true
+        },
+        {
+          "from": "docs/development_progress.md",
+          "target": "task43_hp_adaptivity/response_v13.md",
+          "exists": true
+        },
+        {
+          "from": "docs/development_progress.md",
+          "target": "task43_hp_adaptivity/outcomes/records/v13_minimal_completion_and_scientific_results_v1.json",
+          "exists": true
+        },
+        {
+          "from": "docs/development_progress.md",
+          "target": "task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json",
+          "exists": true
+        },
+        {
+          "from": "docs/development_progress.md",
+          "target": "task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "response_v13.md",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "outcomes/records/v13_minimal_completion_and_scientific_results_v1.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "supplement_v11_scientific_restart.md",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "review_report_v12.md",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "response_v13.md",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "review_report_v10.md",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "review_report_v9.md",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "response_v10.md",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "outcomes/records/v10_static_evidence_correction_v1.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "response_v11.md",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "response_v12.md",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "response_v13.md",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "response_v13.md",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "outcomes/records/v13_minimal_completion_and_scientific_results_v1.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "outcomes/records/v13_completion_sources/support/s1_completion_attempt1/root_closeout.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "outcomes/records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/README.md",
+          "target": "outcomes/records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+          "target": "../response_v13.md",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+          "target": "records/v13_minimal_completion_and_scientific_results_v1.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+          "target": "records/v13_completion_sources/support/s1_completion_attempt1/root_closeout.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+          "target": "records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+          "target": "records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/outcomes/summary.md",
+          "target": "../response_v13.md",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/outcomes/summary.md",
+          "target": "records/v13_minimal_completion_and_scientific_results_v1.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/outcomes/summary.md",
+          "target": "records/v13_completion_sources/support/s1_completion_attempt1/root_closeout.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/outcomes/summary.md",
+          "target": "records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/outcomes/summary.md",
+          "target": "records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/response_v13.md",
+          "target": "review_report_v12.md",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/response_v13.md",
+          "target": "outcomes/records/v13_completion_sources/support/authority_profile_attempt1/A2_key_values_and_root_checks.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/response_v13.md",
+          "target": "outcomes/records/v13_minimal_completion_and_scientific_results_v1.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/response_v13.md",
+          "target": "outcomes/records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/response_v13.md",
+          "target": "outcomes/records/v13_completion_sources/support/authority_profile_attempt1/authority_work_profile.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/response_v13.md",
+          "target": "outcomes/records/v13_completion_sources/preparation/root_prelaunch_review.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/response_v13.md",
+          "target": "outcomes/records/v13_minimal_completion_and_scientific_results_v1.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/response_v13.md",
+          "target": "outcomes/records/v13_completion_sources/support/s1_completion_attempt1/root_closeout.json",
+          "exists": true
+        },
+        {
+          "from": "docs/task43_hp_adaptivity/response_v13.md",
+          "target": "outcomes/records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "git_diff_check",
+      "pass": true,
+      "detail": {
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    }
+  ],
+  "errors": [],
+  "skipped_large_raw_rehash": [],
+  "source_and_test_bytes_unchanged": true,
+  "new_driver_native_pytest_PDE_count": 0,
+  "measured_seconds": 0.31329149194061756,
+  "scope": "stdlib-only JSON/hash/XML/link/resource arithmetic; no terminal-audit replay, native import or test execution"
+}

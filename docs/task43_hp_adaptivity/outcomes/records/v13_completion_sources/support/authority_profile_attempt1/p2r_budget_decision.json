@@ -1,0 +1,40 @@
+{
+  "schema": "task43.v13.p2r-budget-decision.v1",
+  "decision": "NOT_AUTHORIZED_PRECONDITION_NOT_ESTABLISHED",
+  "P2R_launch_calls": 0,
+  "D1_performance_only_stop": true,
+  "D1_identity_resource_trace_cleanup_acceptable": true,
+  "required_new_worker_work_bound_seconds": 1740,
+  "whole_limit_seconds": 1800,
+  "conservative_total_bound_seconds": null,
+  "actual_work_profile": "authority_work_profile.json",
+  "observed_reference_cold_seconds": [
+    19.671300588175654,
+    59.10681286128238,
+    30.101596585009247,
+    19.83430577116087,
+    32.33455295627937,
+    1.1756181921809912,
+    41.322860554326326
+  ],
+  "uncompleted_unique_keys": 18,
+  "missing_costs": [
+    "18 degree keys not completed, including one in progress; observed maxima are not proven upper bounds for unseen keys",
+    "cell-map entity transforms/rank and expansion audit/completion not returned",
+    "reduction authority audit and _audit_plan closure/FE verification not reached",
+    "post-space input/source checks and output persistence have no complete measured tail",
+    "new process repeats cold prefix and in-process caches; no resume or warmed-worker assumption"
+  ],
+  "root_static_read": {
+    "round1_candidates.py": "one mesh/reduction call in _audit_plan; parent_storage_path absent, so no transfer branch",
+    "stage4_local_h.py": "one cell-map call, then degree/box/audit completion",
+    "hcurl_broken_cell_trace.py": "per-cell reference space plus transformations/rank/expansion and global audit"
+  },
+  "interpretation": "No evidence-backed conservative <=1740-second estimate; not a claim that the model is mathematically invalid or impossible. Do not use sample average, one warm hit, low RSS, or doubled prior deadline.",
+  "downstream": {
+    "P3": "NOT_RUN_P2_GATE_NOT_PASSED",
+    "P4": "NOT_RUN_P2_AND_P3_NOT_PASSED",
+    "P5": "NOT_RUN_P4_NOT_REACHED"
+  },
+  "minimum_next_technical_task": "Review an explicitly budgeted way to bound the 18 uncompleted cold degree keys and cell-map tail, or authorize a narrowly specified cost reduction preserving math; current round changes no core/cache/watchdog policy."
+}

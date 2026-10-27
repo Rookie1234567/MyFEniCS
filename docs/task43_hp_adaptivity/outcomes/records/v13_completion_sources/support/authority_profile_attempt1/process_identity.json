@@ -1,0 +1,72 @@
+{
+  "sampled_identity": [
+    {
+      "pid": 3065572,
+      "ppid": 3065346,
+      "start_ticks": 298480159,
+      "comm": "python",
+      "affinity": [
+        1
+      ]
+    },
+    {
+      "pid": 3065595,
+      "ppid": 3065572,
+      "start_ticks": 298480227,
+      "comm": "python",
+      "affinity": [
+        1
+      ]
+    },
+    {
+      "pid": 3065609,
+      "ppid": 3065572,
+      "start_ticks": 298480243,
+      "comm": "strace",
+      "affinity": [
+        1
+      ]
+    },
+    {
+      "pid": 3065651,
+      "ppid": 3065595,
+      "start_ticks": 298480344,
+      "comm": "orted",
+      "affinity": [
+        1
+      ]
+    }
+  ],
+  "post_exit_host_proc_checks": [
+    {
+      "pid": 3065572,
+      "start_ticks": 298480159,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3065595,
+      "start_ticks": 298480227,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3065609,
+      "start_ticks": 298480243,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3065651,
+      "start_ticks": 298480344,
+      "same_process_still_present": false,
+      "proc_stat": null
+    }
+  ],
+  "sampled_max_cpu_seconds": {
+    "3065572": 175.85,
+    "3065595": 363.23,
+    "3065609": 1.06,
+    "3065651": 0.26
+  }
+}

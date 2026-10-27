@@ -1,6 +1,20 @@
 # Task43：accepted9/R9冻结，最终空间精度未达
 
-## Task43 V12当前状态：支持验证受控结束，最终两处断言未运行
+## Task43 V13当前状态：S1有限工程通过；D1性能停止；P2R未运行
+
+V13在review §9的限定范围修正两个opt-in研究入口及其现有测试。S1指定selector 12/12通过（`PASS_LIMITED_SUPPORT_ENGINEERING`）；D1随后在真实space-authority构造中达到540 s工作停止门，whole为541.9988412610255 s，未返回最终cell-map及独立FE审计；本支持阶段不装配PDE矩阵，rows/NNZ未测。停止为性能受控停止，不能解释为数值或数学失败。P2R要求1740 s工作预算/1800 s whole上限，但25种degree-map配置中18种冷构造未完成，cell-map及audit尾段也无上界，因此P2R `NOT_RUN_CONSERVATIVE_BUDGET_UNPROVEN`；P3/P4/P5未运行。旧保存A2数组有限诊断通过，不改变其`INCOMPLETE_NOT_QUALIFIED`端点身份。
+
+| V13对象 | 结果与单位 | 数据身份与证据边界 |
+|---|---|---|
+| S1定向验证 | 12/12 nodes；whole 27.02263388223946 s；采样进程树RSS峰313585664 B；exit 0/0/0 | measured有限支持验证；不是全文件/全仓或science qualification |
+| D1实际空间调用 | 工作停止540 s、whole 541.9988412610255 s；采样RSS峰1302609920 B；769资源样本；进程树swap峰0 B | measured受控停止；PSS disabled；authority/FE尚未返回 |
+| 冷构造进展 | 25 unique keys、194 cell multiplicity；7 completed、1 in progress、17 not started | measured work profile；18未完成，sample cold duration不能作上界 |
+| 旧A2数组 | A6 3.078522812304335e-10；full-active 1.1972486317982494e-11；returned condensed 3.0440529386035694e-12 | 从旧保存数组重算；无新求解、采样、积分或算子应用，旧端点仍不完整 |
+| P2R及科学状态 | P2R/P3/P4/P5 dispatch均0；新formal 0；旧formal 5/6、扩展formal 5/8 | NOT_RUN/NOT_AUTHORIZED；accepted9/R9及五项科学状态不变，无READY或merge approval |
+
+本轮两次受控调用whole-watchdog合计569.021475143265 s；连同V12两次失败支持运行累计618.6039171176963 s。D1有6份trace共795行、19个affinity getter均为CPU `[1]`、0 setter；resource sample interval实际约0.3796–1.0291 s（配置0.25 s另含采样/调度开销），不得描述为严格每0.25 s。终态由主控审核且后代清理。完整回应与原始索引见[Response V13](task43_hp_adaptivity/response_v13.md)和[V13结果记录](task43_hp_adaptivity/outcomes/records/v13_minimal_completion_and_scientific_results_v1.json)。
+
+## Task43 V12历史状态：支持验证受控结束，最终两处断言当时未运行
 
 V12两次获准的支持验证均留下测试失败：S1为10/24，窄恢复为12/14；之后两处fixture断言只作静态修复，没有在最终字节上运行。S1主验证及局部恢复合计2/2已用；V12新支持总计2/4，D1/P2R各0/1但当前前门不合格；P3/P4/P5未运行，新正式dispatch为0。资源/trace/runtime身份经root终态复核，没有额外硬失败；这不构成ABI、性能或科学资格。主控对两轮静态预审漏掉确定性fixture/断言问题负责。accepted9/R9、R10拒绝及五项科学状态不变，无READY、生产资格或merge approval。需先另行授权并验证两个受影响selector；详见[Response V12](task43_hp_adaptivity/response_v12.md)、[V12机器记录](task43_hp_adaptivity/outcomes/records/v12_recovery_and_scientific_results_v1.json)、[S1 closeout](task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_attempt1/root_closeout.json)和[窄恢复 closeout](task43_hp_adaptivity/outcomes/records/v12_recovery_sources/support/focused_recovery1/root_closeout.json)。
 
