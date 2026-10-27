@@ -5735,6 +5735,11 @@ def test_v16_p8_real_main_writer_terminal_and_rollback(tmp_path, monkeypatch):
     artifact_root = tmp_path / "artifacts/task43/v16_p8"
     plan_path = artifact_root / "support/space_attempt1/plan_output/plans/v16_r9_p8.json"
     plan_path.parent.mkdir(parents=True)
+    degree_plan_sha = hashlib.sha256(b"v16-main-fixture-degree-plan").hexdigest()
+    entity_map_sha = hashlib.sha256(b"v16-main-fixture-entity-map").hexdigest()
+    leaf_catalog_sha = hashlib.sha256(b"v16-main-fixture-leaf-catalog").hexdigest()
+    root_catalog_sha = hashlib.sha256(b"v16-main-fixture-root-catalog").hexdigest()
+    mesh_catalog_sha = hashlib.sha256(b"v16-main-fixture-mesh-catalog").hexdigest()
     fixed_contract = json.loads(
         Path("docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json").read_text(
             encoding="utf-8"
@@ -5787,7 +5792,7 @@ def test_v16_p8_real_main_writer_terminal_and_rollback(tmp_path, monkeypatch):
             },
         },
         "cell_interior_degrees": [],
-        "cell_interior_degree_plan_sha256": "degree-plan",
+        "cell_interior_degree_plan_sha256": degree_plan_sha,
         "marked_root_boxes": [],
         "trace_degree": 3,
         "cell_interior_degree": 6,
@@ -5813,12 +5818,12 @@ def test_v16_p8_real_main_writer_terminal_and_rollback(tmp_path, monkeypatch):
             "forest": {
                 "root_cell_count": 180,
                 "actual_leaf_cell_count": 180,
-                "leaf_catalog_sha256": "leaf",
+                "leaf_catalog_sha256": leaf_catalog_sha,
                 "closure_split_counts": {},
             },
             "degrees": {
-                "entity_degree_plan_sha256": "degree-plan",
-                "entity_map_sha256": "entity-map",
+                "entity_degree_plan_sha256": degree_plan_sha,
+                "entity_map_sha256": entity_map_sha,
                 "cell_interior_histogram": {"p5": 27, "p6": 153},
                 "distinct_physical_trace_degrees": [3],
             },
@@ -5841,7 +5846,7 @@ def test_v16_p8_real_main_writer_terminal_and_rollback(tmp_path, monkeypatch):
                     "full_p6_global_matrix_constructed": False,
                 },
             },
-            "actual_geometry": {"mesh_box_catalog_sha256": "mesh-catalog"},
+            "actual_geometry": {"mesh_box_catalog_sha256": mesh_catalog_sha},
         },
     }
     monkeypatch.setattr(
@@ -5886,7 +5891,7 @@ def test_v16_p8_real_main_writer_terminal_and_rollback(tmp_path, monkeypatch):
                 "root_cell_count": 180,
                 "leaf_cell_count": 180,
                 "hanging_patch_count": 0,
-                "cell_interior_degree_plan_sha256": "degree-plan",
+                "cell_interior_degree_plan_sha256": degree_plan_sha,
                 "cell_interior_degree_counts": {"p5": 27, "p6": 153},
                 "variable_trace_from_cell_degrees": True,
                 "allow_no_refinement": True,
@@ -5906,11 +5911,11 @@ def test_v16_p8_real_main_writer_terminal_and_rollback(tmp_path, monkeypatch):
         h100_anchor,
         "_assert_mesh_profile",
         lambda *_args, **_kwargs: {
-            "leaf_catalog_sha256": "leaf",
-            "root_catalog_sha256": "root",
+            "leaf_catalog_sha256": leaf_catalog_sha,
+            "root_catalog_sha256": root_catalog_sha,
             "closure_split_counts": {},
             "hanging_patch_count": 0,
-            "mesh_box_catalog_sha256": "mesh-catalog",
+            "mesh_box_catalog_sha256": mesh_catalog_sha,
         },
     )
     constraints = {"pass": True, "hanging_slave_rows": 0}
@@ -5932,9 +5937,9 @@ def test_v16_p8_real_main_writer_terminal_and_rollback(tmp_path, monkeypatch):
             audit={
                 "pass": True,
                 "cell_degree_counts": {"p5": 27, "p6": 153},
-                "cell_degree_plan_sha256": "degree-plan",
-                "runtime_global_entity_degree_sha256": "entity-map",
-                "mesh_cell_box_catalog_sha256": "mesh-catalog",
+                "cell_degree_plan_sha256": degree_plan_sha,
+                "runtime_global_entity_degree_sha256": entity_map_sha,
+                "mesh_cell_box_catalog_sha256": mesh_catalog_sha,
                 "trace_degree_values": [3],
             },
             entity_map=entity_map,
@@ -5992,6 +5997,34 @@ def test_v16_p8_real_main_writer_terminal_and_rollback(tmp_path, monkeypatch):
         for name, values in raw.items()
         if name.startswith("normal_")
     }
+    storage_arrays = {
+        "recovered_p6_local_coefficients": np.asarray([1.0 + 0j], dtype=np.complex128),
+        "recovered_p6_owned_coefficients": np.asarray([1.0 + 0j], dtype=np.complex128),
+        "mesh_geometry_coordinates_nm": np.zeros((8, 3), dtype=np.float64),
+        "mesh_geometry_dofmap": np.arange(8, dtype=np.int32).reshape(1, 8),
+        "mesh_owned_cell_global_ids": np.asarray([8], dtype=np.int64),
+        "mesh_cell_vertex_dofmap": np.arange(8, dtype=np.int32).reshape(1, 8),
+        "p6_function_space_dofmap": np.arange(8, dtype=np.int32).reshape(1, 8),
+        "p6_owned_global_dof_block_ids": np.asarray([0], dtype=np.int64),
+        "p6_ghost_global_dof_block_ids": np.asarray([], dtype=np.int64),
+        "active_full_solution_owned": raw["full_active_active_full_solution"],
+        "active_full_rhs_owned": raw["full_active_active_full_rhs"],
+    }
+    mesh_identity_array_names = (
+        "mesh_geometry_coordinates_nm",
+        "mesh_geometry_dofmap",
+        "mesh_owned_cell_global_ids",
+        "mesh_cell_vertex_dofmap",
+        "p6_function_space_dofmap",
+        "p6_owned_global_dof_block_ids",
+        "p6_ghost_global_dof_block_ids",
+    )
+    mesh_order_sha = h100_anchor._sha256_json(
+        {
+            name: h100_anchor._array_identity(storage_arrays[name])
+            for name in mesh_identity_array_names
+        }
+    )
     axes = {name: [0.0, 1.0] for name in ("x", "y", "z")}
 
     def fake_field_capture(*_args, **_kwargs):
@@ -6002,24 +6035,10 @@ def test_v16_p8_real_main_writer_terminal_and_rollback(tmp_path, monkeypatch):
         h100_anchor,
         "_active_solution_storage",
         lambda _view: (
+            storage_arrays,
             {
-                "recovered_p6_local_coefficients": np.asarray([1.0 + 0j], dtype=np.complex128),
-                "recovered_p6_owned_coefficients": np.asarray([1.0 + 0j], dtype=np.complex128),
-                "mesh_geometry_coordinates_nm": np.zeros((8, 3), dtype=np.float64),
-                "mesh_geometry_dofmap": np.arange(8, dtype=np.int32).reshape(1, 8),
-                "mesh_owned_cell_global_ids": np.asarray([8], dtype=np.int64),
-                "mesh_cell_vertex_dofmap": np.arange(8, dtype=np.int32).reshape(1, 8),
-                "p6_function_space_dofmap": np.arange(8, dtype=np.int32).reshape(1, 8),
-                "p6_owned_global_dof_block_ids": np.asarray([0], dtype=np.int64),
-                "p6_ghost_global_dof_block_ids": np.asarray([], dtype=np.int64),
-                "active_full_solution_owned": raw[
-                    "full_active_active_full_solution"
-                ],
-                "active_full_rhs_owned": raw["full_active_active_full_rhs"],
-            },
-            {
-                "active_degree_plan_sha256": "degree-plan",
-                "mesh_and_dof_order_sha256": "mesh-order",
+                "active_degree_plan_sha256": degree_plan_sha,
+                "mesh_and_dof_order_sha256": mesh_order_sha,
                 "independent_active_fe_dofs": 110682,
                 "active_rows": 110683,
                 "active_trace_rows": 1,
@@ -6062,7 +6081,7 @@ def test_v16_p8_real_main_writer_terminal_and_rollback(tmp_path, monkeypatch):
         field=object(),
         mesh_data=mesh_data,
         reduction=SimpleNamespace(
-            degree_plan=SimpleNamespace(audit={"trace_degree_values": [3], "cell_degree_plan_sha256": "degree-plan", "cell_degree_counts": {"p5": 27, "p6": 153}}),
+            degree_plan=SimpleNamespace(audit={"trace_degree_values": [3], "cell_degree_plan_sha256": degree_plan_sha, "cell_degree_counts": {"p5": 27, "p6": 153}}),
             build_audit={"active_fe_dof_gate_pass": True},
             system=SimpleNamespace(
                 active_trace_rows=1,

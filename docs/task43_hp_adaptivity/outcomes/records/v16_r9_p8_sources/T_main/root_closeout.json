@@ -1,0 +1,93 @@
+{
+  "schema": "task43.v16.root-T-main-closeout.v1",
+  "status": "FIXTURE_FAILED_RECOVERY_ALLOWED",
+  "review_commit": "f72e1c8d031de7acc374f0806ddac06099c461c4",
+  "source_head": "c620c96ef98adac4e1caf05e28dae7744e73a328",
+  "driver_count": 1,
+  "pytest": {
+    "passed": 0,
+    "failed": 1,
+    "not_run": 17
+  },
+  "cause": "synthetic degree-plan identity was a label rather than lowercase 64-digit SHA256; actual identity reader rejected it",
+  "hard_gate_failure": false,
+  "source_input_snapshot_matches": true,
+  "trace_setters": [],
+  "all_trace_exit_tails": [
+    {
+      "file": "sched.3391859",
+      "sha256": "af827a63f8d74bfa62a1c97cc30cdb996196f056513095c410fe5e4ca40dfa66",
+      "bytes": 138833,
+      "lines": 2114,
+      "tail": "1793088541.487873 +++ exited with 1 +++"
+    },
+    {
+      "file": "sched.3391898",
+      "sha256": "f0c09132c455f87a375414c32d0f93999e8e062fabde43bbda40a9ce0a832de4",
+      "bytes": 3717,
+      "lines": 47,
+      "tail": "1793088541.578374 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3391899",
+      "sha256": "80de43dc62e487a67bcf32159e4f6371e807a300117d2fa7e9a859cddcd88e09",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793088541.458302 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3391900",
+      "sha256": "e358ec55588dcbb9c942cc82545a980428b397e37a3b225dac102fa3833e2f17",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793088541.508214 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3391901",
+      "sha256": "85f9dc75250bc7b0a35580f2cad027d182c22c7eeeb15908874d79075dd5b358",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793088541.178394 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3391902",
+      "sha256": "b9e2b70f5485408399d41109b5497f7b6434ce0b492602a26ad0ab0092b4cee9",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793088541.146370 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3391926",
+      "sha256": "219df4a4ce0aa3ed72d28d66af77b19ef8475ca648ce8774523f9dbbef681424",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793088534.402918 +++ exited with 0 +++"
+    }
+  ],
+  "signals_classification": "one SIGCHLD CLD_EXITED status0 for source-identity subprocess3391926, observed trace exits0; no stop signal",
+  "empty_cmdline_classification": "three final Z entries for worker/tracer/orted, known PID/start_ticks and later reaped; no live empty cmdline",
+  "runtime_abi": "complex128/int64,MPI1,MUMPS available",
+  "cpu": [
+    1
+  ],
+  "sampled_peak_rss_bytes": 304947200,
+  "task_swap_bytes": 0,
+  "whole_watchdog_seconds": 20.264135509729385,
+  "launcher_watchdog_worker_exit_codes": [
+    2,
+    2,
+    1
+  ],
+  "cleanup": {
+    "descendants_cleared": true,
+    "remaining": [],
+    "host_proc_same_identity_remaining": false
+  },
+  "sampling_note": "nominal0.25s, actual intervals visible in raw resources; sampled RSS not continuous high-water",
+  "cache_scope": "no dedicated cache path; shared JIT/global cache not audited",
+  "root_reading": "All raw syscall/exit lines and de-duplicated exact stack-frame lines read; all resource rows audited and printed; raw retained ignored",
+  "root_raw_observation": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/focused_attempt1_root_terminal_observations.json",
+    "sha256": "e6573ac510b6d868995969be5ee94da5dedb8d9a99ff068df739521a45d5e26a"
+  }
+}

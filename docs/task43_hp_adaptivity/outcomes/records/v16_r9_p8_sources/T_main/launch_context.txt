@@ -1,0 +1,9 @@
+activation=1
+python=/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python
+node_cap=8589934592
+work_stop_seconds=270
+whole_limit_seconds=300
+worker-only HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1
+CPU1 MPI1 numerical threads=1
+cache not supplied; cache audit NOT_MEASURED
+argv=python -u -m pytest -q -s --tb=short --maxfail=1 --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/focused_attempt1/pytest_results.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/focused_attempt1/fixtures src/test/test_task43_v11_scientific_restart.py::test_v16_p8_real_main_writer_terminal_and_rollback src/test/test_task43_v11_scientific_restart.py::test_v16_p8_plan_builder_and_actual_gate src/test/test_task43_v11_scientific_restart.py::test_v16_p8_raw_identity_and_normal_gates src/test/test_task43_v11_scientific_restart.py::test_v16_p8_compare_reuses_old_samples_and_samples_p8_once src/test/test_task43_v11_scientific_restart.py::test_v16_p8_saved_sample_owner_and_partition_bindings src/test/test_task43_v11_scientific_restart.py::test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound 
