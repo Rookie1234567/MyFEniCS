@@ -1,0 +1,6 @@
+Targeted local qualified-WSL regression, 2026-10-27.
+ABI: Python .venv/bin/python; PETSc complex128/int32; qualified activation marker=1.
+Command: python -m pytest -q src/test/test_task41_p0_contract.py -k outer_worker_propagates_acceptance_exit
+Result: 3 passed, 52 deselected in 0.54s.
+Scope: actual outer worker dispatch AST, expensive target builder replaced; explicit V15 terminal result exits before reference/carrier, normal None continues, arbitrary passed=True rejected, non-V15 terminal rejected, finally executes.
+No FE, owner, factor, carrier or scientific recomputation.

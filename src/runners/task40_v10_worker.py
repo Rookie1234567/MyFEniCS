@@ -11396,7 +11396,7 @@ def run_task40_v10_p6_reference_worker(
         def build_target_context(
             reference_owner: Mapping[str, Any] | None = None,
             mode_inventory: tuple[Any, Any, str] | None = None,
-        ) -> None:
+        ) -> dict[str, Any] | None:
             nonlocal target_levels, target_bundle, target_condensed, target_action, target_fast_bundle
             nonlocal target_identity_cache_audit, mode_inventory_preflight, target_backend_facts
             nonlocal task41_mode_inventory
@@ -13204,7 +13204,20 @@ def run_task40_v10_p6_reference_worker(
             summary["b0_profile_capability"] = b0_profile_capability
 
         if route_contract is None:
-            build_target_context()
+            target_result = build_target_context()
+            if target_result is not None:
+                if (
+                    not task41_v15_acceptance_only
+                    or not isinstance(target_result, Mapping)
+                    or target_result.get("status")
+                    != "acceptance_only_terminal_audit_pending"
+                    or target_result.get("official_result") is not False
+                ):
+                    raise RuntimeError("unexpected target-builder terminal result")
+                # Propagate the nested acceptance exit through the outer worker;
+                # otherwise the reference builder regenerates the carrier after FAIL.
+                worker_result = target_result
+                return worker_result
 
         qualified_q_csr_provider = _task40_v30_q_csr_provider(
             selector_binding,

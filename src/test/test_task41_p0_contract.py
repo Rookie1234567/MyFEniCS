@@ -2704,3 +2704,48 @@ def test_task41_v15_actual_allocation_callback_reports_time_stop_before_memory_b
     assert record["remaining_numerical_seconds"] == 97244.77301950839
     assert record["measured_prefix"]["prefix_records"] == facts["prefix_records"]
     assert events[-1][0] == "task41_v15_build_and_acceptance_time_admission"
+
+
+@pytest.mark.parametrize("gate_status", ["GATE_FAILED", "PASSED", "PARTIAL"])
+def test_v15_outer_worker_propagates_acceptance_exit_before_reference(gate_status):
+    """Run the real outer dispatch branch, replacing only expensive construction."""
+    import ast
+    import textwrap
+    import src.runners.task40_v10_worker as worker
+
+    tree = ast.parse(Path(worker.__file__).read_text())
+    outer = next(n for n in tree.body if isinstance(n, ast.FunctionDef)
+                 and n.name == "run_task40_v10_p6_reference_worker")
+    branch = next(n for n in ast.walk(outer) if isinstance(n, ast.If)
+                  and ast.unparse(n.test) == "route_contract is None"
+                  and "build_target_context()" in ast.unparse(n))
+    calls = []
+    terminal = {"status": "acceptance_only_terminal_audit_pending",
+                "passed": True, "official_result": False,
+                "summary": {"full_action_gate_status": gate_status}}
+    namespace = {"Mapping": dict, "calls": calls}
+    source = ("def run(builder, acceptance=True):\n"
+              "    route_contract = None\n"
+              "    task41_v15_acceptance_only = acceptance\n"
+              "    build_target_context = builder\n"
+              "    worker_result = None\n"
+              "    try:\n"
+              + textwrap.indent(ast.unparse(branch), "        ")
+              + "\n        calls.append('reference_carrier')\n"
+                "        return None\n"
+                "    finally:\n"
+                "        calls.append(('cleanup', worker_result))\n")
+    exec(compile(source, worker.__file__, "exec"), namespace)
+    assert namespace["run"](lambda: terminal) is terminal
+    assert calls == [("cleanup", terminal)]
+    calls.clear()
+    assert namespace["run"](lambda: None, False) is None
+    assert calls == ["reference_carrier", ("cleanup", None)]
+    calls.clear()
+    with pytest.raises(RuntimeError, match="unexpected target-builder"):
+        namespace["run"](lambda: {"passed": True})
+    assert calls == [("cleanup", None)]
+    calls.clear()
+    with pytest.raises(RuntimeError, match="unexpected target-builder"):
+        namespace["run"](lambda: terminal, False)
+    assert calls == [("cleanup", None)]
