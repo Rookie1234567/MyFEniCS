@@ -27,6 +27,8 @@ V15已结束的8次support whole累计2,240.4899401497096 s；2次formal whole�
 
 详见[Response V15](../response_v15.md)与[V15机器结果](records/v15_bugfix_and_scientific_results_v1.json)。
 
+V15 review 补充确认两条超限功率通道（候选减固定 Y6_1）：R9 的 top/bottom `(0,0,s)` 分别为 `+4.065061945224269e-6` / `−2.1482450713386503e-6`，H8 分别为 `+3.974547323981614e-6` / `−2.1129819847975906e-6`，绝对值均超过 `1e-6`；其余610条功率通道在该门内。V15 的 round1 修改是新增 P2_BUGFIX 来源绑定及实际运行验证；`hanging_or_floquet_slave_rows_globally_numbered` 字段修正已存在于本轮基点，不能归入那八行绑定改动。旧 response/review 原字节保留，当前勘误以此及[正式 V15 review](../review_report_v15.md)为准。
+
 ## V14 历史状态：P2R一次已执行；实际FE取得，字段门失败
 
 用户授权原P2R工作90分钟/含清理93分钟后，实际执行一次，whole **1596.6148925269954 s**；树RSS采样峰 **2210361344 B**、task swap0、CPU1/MPI1/单线程及清理符合记录。实际seed8及必要材料闭包得到194叶、**FE 116740，较R9增加6268**，满足110472与237600之间的数值区间；但研究入口误读periodic/floquet字段后抛错，worker/watchdog/launcher退出1/2/2，P2整体失败。已作键名和现有fixture的最小静态修复，AST通过、修复后pytest未运行。旧S1 12/12仅对应旧字节与覆盖范围。

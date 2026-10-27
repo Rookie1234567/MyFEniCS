@@ -5401,3 +5401,1427 @@ def test_v15_saved_primary_postprocess_cli_uses_only_opt_in_route(
     assert result == 0
     assert len(calls) == 1
     assert calls[0][:2] == (run_root, source_root)
+
+
+def _v16_p8_reader_packet_fixture(root: Path, *, changed_member: str | None = None):
+    """Create real, small pre-validation and primary NPZ files for the V16 reader."""
+
+    root.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = root / "pre_validation_checkpoint.npz"
+    primary_path = root / "primary_state.npz"
+    checkpoint_arrays = {
+        "recovered_p6_local_coefficients": np.asarray(
+            [1.0 + 2.0j, 3.0 - 1.0j], dtype=np.complex128
+        ),
+        "recovered_mesh_cell_vertex_dofmap": np.asarray(
+            [[0, 1, 2, 3, 4, 5, 6, 7]], dtype=np.int32
+        ),
+    }
+    checkpoint = candidate_checkpoints.write_pre_validation_checkpoint(
+        checkpoint_path,
+        checkpoint_arrays,
+        identity={"phase": "R9_P8", "official_result": False},
+    )
+    packet_arrays = {
+        "recovered_" + name: values.copy()
+        for name, values in checkpoint_arrays.items()
+    }
+    if changed_member is not None:
+        changed = packet_arrays[changed_member]
+        changed.flat[0] = changed.flat[0] + 1
+    packet = candidate_checkpoints.write_atomic_npz(
+        primary_path,
+        packet_arrays,
+        identity={
+            "phase": "R9_P8",
+            "pre_validation_checkpoint": checkpoint,
+            "official_result": False,
+        },
+        schema="task43.v16.p8.primary_state.v1",
+        classification="fixture_nonofficial_primary",
+    )
+    return primary_path, packet, checkpoint_path, checkpoint
+
+
+def _v16_frozen_terminal_failure_fixture(root: Path, monkeypatch, *, failure: str):
+    """Build the minimum real on-disk lifecycle set needed to reach F terminal checks."""
+
+    repository = root / "repository"
+    artifact_root = repository / "benchmarks/artifacts/task43/v16_p8"
+    launch_root = artifact_root / "formal/R9_P8_attempt1"
+    run_root = launch_root / "run"
+    run_root.mkdir(parents=True, exist_ok=True)
+    contract_path = repository / "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json"
+    contract_path.parent.mkdir(parents=True, exist_ok=True)
+    contract_bytes = b'{"fixture":"V16 P8 endpoint reader"}\n'
+    contract_path.write_bytes(contract_bytes)
+    contract_sha = hashlib.sha256(contract_bytes).hexdigest()
+    selection_path = repository / "docs/selection.json"
+    selection_path.parent.mkdir(parents=True, exist_ok=True)
+    selection_path.write_text("fixed R9 parent selection\n", encoding="utf-8")
+    selection_sha = hashlib.sha256(selection_path.read_bytes()).hexdigest()
+    contract = {
+        "artifact_prefix": str(artifact_root),
+        "phases": {
+            "F": {
+                "root": "formal/R9_P8_attempt1",
+                "joined_terminal_path": "formal/R9_P8_attempt1/v16_p8_endpoint_joined_terminal.json",
+            }
+        },
+        "inputs": [
+            {"role": "R9_selection_transition", "path": "docs/selection.json", "sha256": selection_sha}
+        ],
+        "comparison": {"attempt_id": "fixture_attempt"},
+    }
+    monkeypatch.setattr(comparison, "ROOT", repository)
+    monkeypatch.setattr(
+        comparison,
+        "_v11_source_snapshot",
+        lambda: {"benchmarks/fake_source.py": "1" * 64},
+    )
+    monkeypatch.setattr(
+        round1_candidates,
+        "_load_v16_p8_contract",
+        lambda _path: (contract, contract_sha),
+    )
+    input_snapshot = {str(selection_path.resolve()): selection_sha}
+    space_binding = {
+        "input_snapshot": {},
+        "space_audit": {"saved_p5_geometry_gate": {"pass": True}},
+    }
+
+    def load_context(_path, *, source_id, run_root):
+        if source_id != "S_MAIN":
+            raise ValueError("V16 P8 requires explicit S_MAIN or E_S source selection")
+        return contract, contract_sha, space_binding
+
+    if failure != "missing_source":
+        monkeypatch.setattr(comparison, "_load_v16_p8_context", load_context)
+    monkeypatch.setattr(
+        round1_candidates, "_v16_p8_input_snapshot", lambda _contract: input_snapshot
+    )
+    monkeypatch.setattr(
+        comparison,
+        "_verify_v16_p8_source_snapshot",
+        lambda binding: binding["input_snapshot"],
+    )
+    observation_path = launch_root / "root_observation.json"
+    observation_path.write_text('{"fixture":true}\n', encoding="utf-8")
+    observation_sha = hashlib.sha256(observation_path.read_bytes()).hexdigest()
+    lifecycle = {
+        "joined": artifact_root / "formal/R9_P8_attempt1/v16_p8_endpoint_joined_terminal.json",
+        "terminal": run_root / "task43_v16_p8_primary_terminal.json",
+        "endpoint": run_root / "task43_round1_candidate_record.json",
+        "primary_packet": run_root / "primary_state.npz",
+        "raw_gate_checkpoint": run_root / "primary_raw_vector_audit.json",
+        "candidate_plan": run_root / "candidate_plan.json",
+        "prevalidation_checkpoint": run_root / "pre_validation_checkpoint.npz",
+        "prevalidation_record": run_root / "pre_validation_checkpoint.json",
+        "launch_manifest": launch_root / "snapshots/launch_manifest.json",
+        "watchdog_summary": launch_root / "watchdog/summary.json",
+        "launcher_exit": launch_root / "launcher_exit_code.txt",
+        "watchdog_exit": launch_root / "watchdog_exit_code.txt",
+        "source_head": launch_root / "source_head.txt",
+    }
+    if failure != "missing_plan":
+        lifecycle["candidate_plan"].write_text("{}\n", encoding="utf-8")
+    lifecycle["terminal"].write_text(
+        json.dumps(
+            {
+                "schema": "task43.v16.p8.primary-terminal.v1",
+                "phase": "R9_P8",
+                "status": "FAILED" if failure == "terminal_failed" else "UNKNOWN_TERMINAL",
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    # The endpoint failure cases must reach the intended terminal-status gate.
+    # The reader parses JSON before it evaluates that gate, so keep these
+    # disposable documents syntactically valid even when their semantics are
+    # deliberately incomplete.
+    lifecycle["endpoint"].write_text(
+        json.dumps({"schema": "fixture.endpoint", "status": "FAILED"}) + "\n",
+        encoding="utf-8",
+    )
+    lifecycle["raw_gate_checkpoint"].write_text(
+        json.dumps({"schema": "fixture.raw_gate", "pass": False}) + "\n",
+        encoding="utf-8",
+    )
+    for name in ("primary_packet", "prevalidation_checkpoint", "prevalidation_record"):
+        lifecycle[name].write_bytes(b"fixture product\n")
+    lifecycle["launch_manifest"].parent.mkdir(parents=True, exist_ok=True)
+    source_id = "UNKNOWN_SOURCE" if failure == "missing_source" else "S_MAIN"
+    launch_source = [
+        {"path": name, "sha256": digest}
+        for name, digest in {
+            **comparison._v11_source_snapshot(),
+            contract_path.resolve().relative_to(repository).as_posix(): contract_sha,
+        }.items()
+    ]
+    lifecycle["launch_manifest"].write_text(
+        json.dumps(
+            {"space_source_id": source_id, "head": "a" * 40, "source": launch_source},
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    lifecycle["watchdog_summary"].parent.mkdir(parents=True, exist_ok=True)
+    lifecycle["watchdog_summary"].write_text(
+        json.dumps(
+            {"classification": "COMPLETED", "leader_exit_code": 0, "descendants_cleared": True, "remaining_child_pids": []},
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    lifecycle["launcher_exit"].write_text("0\n", encoding="ascii")
+    lifecycle["watchdog_exit"].write_text("0\n", encoding="ascii")
+    lifecycle["source_head"].write_text("a" * 40 + "\n", encoding="ascii")
+    products = {}
+    for name in ("terminal", "endpoint", "primary_packet", "raw_gate_checkpoint"):
+        products[name] = {
+            "path": str(lifecycle[name].resolve()),
+            "sha256": hashlib.sha256(lifecycle[name].read_bytes()).hexdigest(),
+        }
+    gates = {
+        name: {"pass": True, "evidence": {"path": str(observation_path.resolve()), "sha256": observation_sha}}
+        for name in ("source", "input", "resource", "trace", "raw", "space", "numerical_endpoint")
+    }
+    lifecycle["joined"].write_text(
+        json.dumps(
+            {
+                "schema": "task43.v16.p8-endpoint-root-joined-terminal.v1",
+                "status": "F_COMPLETE_ROOT_VERIFIED",
+                "space_source_id": "S_MAIN",
+                "contract_sha256": contract_sha,
+                "review_commit": "f72e1c8d031de7acc374f0806ddac06099c461c4",
+                "source_head": "a" * 40,
+                "launcher_exit_code": 0,
+                "watchdog_exit_code": 0,
+                "worker_exit_code": 0,
+                "descendants_cleared": True,
+                "remaining_child_pids": [],
+                "products": products,
+                "root_observation_record": {"path": str(observation_path.resolve()), "sha256": observation_sha},
+                "gates": gates,
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    binding = dict(space_binding)
+    binding["input_snapshot"] = {}
+    return contract_path, selection_path, lifecycle, binding
+
+
+@pytest.mark.parametrize(
+    "case",
+    (
+        "valid",
+        "residual_sign",
+        "mixed_coefficient",
+        "mixed_mesh_index",
+        "terminal_failed",
+        "terminal_unknown",
+        "missing_source",
+        "missing_contract",
+        "missing_plan",
+    ),
+    ids=(
+        "valid_disk_reader",
+        "raw_residual_sign",
+        "rebound_coefficient_mixture",
+        "rebound_mesh_index_mixture",
+        "nonzero_terminal",
+        "unknown_terminal",
+        "missing_source_selector",
+        "missing_contract",
+        "missing_plan",
+    ),
+)
+def test_v16_p8_raw_identity_and_normal_gates(tmp_path, monkeypatch, case):
+    if case in {"valid", "mixed_coefficient", "mixed_mesh_index"}:
+        changed_member = {
+            "mixed_coefficient": "recovered_recovered_p6_local_coefficients",
+            "mixed_mesh_index": "recovered_recovered_mesh_cell_vertex_dofmap",
+        }.get(case)
+        primary_path, packet, checkpoint_path, checkpoint = _v16_p8_reader_packet_fixture(
+            tmp_path / case, changed_member=changed_member
+        )
+        sidecar_path = Path(checkpoint["sidecar_path"])
+        reader_kwargs = {
+            "expected_primary_sha256": packet["npz_sha256"],
+            "expected_checkpoint_sha256": checkpoint["npz_sha256"],
+            "expected_record_sha256": checkpoint["sidecar_sha256"],
+        }
+        if changed_member is None:
+            restored = comparison._v16_p8_read_and_bind_prevalidation_checkpoint(
+                primary_path,
+                packet,
+                checkpoint_path,
+                sidecar_path,
+                **reader_kwargs,
+            )
+            assert set(restored) == set(checkpoint["arrays"])
+        else:
+            with pytest.raises(ValueError, match="primary and pre-validation arrays differ"):
+                comparison._v16_p8_read_and_bind_prevalidation_checkpoint(
+                    primary_path,
+                    packet,
+                    checkpoint_path,
+                    sidecar_path,
+                    **reader_kwargs,
+                )
+        if case == "valid":
+            arrays = _raw_vectors()
+            audit = h100_anchor._v11_raw_vector_gates(
+                arrays, **_raw_gate_arguments()
+            )
+            assert audit["pass"] is True
+            assert audit["gates"]["normal_correction_exactly_once"] is True
+            assert audit["gates"]["normal_correction_raw_residual_strictly_decreased"] is True
+            assert audit["gates"]["extra_correction_count_zero"] is True
+            assert audit["normal_correction"]["before_relative_residual"] > audit[
+                "normal_correction"
+            ]["after_relative_residual"]
+            assert audit["normal_correction"]["after_relative_residual"] == 0.0
+            assert audit["independent_A6"]["relative_residual"] == 0.0
+        return
+    if case == "residual_sign":
+        arrays = _raw_vectors()
+        residual = 1.0e-20
+        arrays["full_active_reduced_trace_dtn_residual_Ax_minus_b_owned"][0] = -residual
+        arrays["full_active_reduced_trace_dtn_residual_trace_metric_action"][0] = -residual
+        arrays["returned_trace_dtn_b_minus_Ax"][0] = -residual
+        with pytest.raises(ValueError, match="full-active reduced RHS/solution/residual do not match"):
+            h100_anchor._v11_raw_vector_gates(arrays, **_raw_gate_arguments())
+        return
+    if case in {"terminal_failed", "terminal_unknown", "missing_source", "missing_plan"}:
+        contract_path, selection_path, lifecycle, _binding = _v16_frozen_terminal_failure_fixture(
+            tmp_path / case, monkeypatch, failure=case
+        )
+        expected = {
+            "terminal_failed": "endpoint, primary packet, raw checkpoint or terminal differs",
+            "terminal_unknown": "endpoint, primary packet, raw checkpoint or terminal differs",
+            "missing_source": "explicit S_MAIN or E_S",
+            "missing_plan": "complete root-joined F product set",
+        }[case]
+        with pytest.raises((FileNotFoundError, ValueError), match=expected):
+            comparison._v16_p8_frozen_endpoint(contract_path, selection_path)
+        return
+    if case == "missing_contract":
+        with pytest.raises(ValueError, match="unique tracked experiment contract"):
+            round1_candidates._load_v16_p8_contract(tmp_path / "missing-contract.json")
+        return
+
+
+def test_v16_p8_real_main_writer_terminal_and_rollback(tmp_path, monkeypatch):
+    """Drive main through the real observer, guarded shared writer and failure terminal."""
+
+    runtime = h100_anchor._check_v11_runtime_envelope(h100_anchor.MPI.COMM_WORLD)
+    worker_identity = runtime["v11_watchdog_worker_identity"]
+    (tmp_path / "v16_runtime_identity.json").write_text(
+        json.dumps(runtime, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    assert runtime["mpi_size"] == 1
+    assert worker_identity["direct_watchdog_parent_verified"] is True
+    assert worker_identity["tracer_descends_from_watchdog"] is True
+
+    contract_path = tmp_path / "v16_r9_p8_contract.json"
+    artifact_root = tmp_path / "artifacts/task43/v16_p8"
+    plan_path = artifact_root / "support/space_attempt1/plan_output/plans/v16_r9_p8.json"
+    plan_path.parent.mkdir(parents=True)
+    fixed_contract = json.loads(
+        Path("docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    selection_item = next(
+        item for item in fixed_contract["inputs"]
+        if item["role"] == "R9_selection_transition"
+    )
+    acceptance_item = next(
+        item for item in fixed_contract["inputs"]
+        if item["role"] == "frozen_acceptance_contract"
+    )
+    selection_path = Path(selection_item["path"]).resolve()
+    acceptance_path = Path(acceptance_item["path"]).resolve()
+    contract = {
+        "artifact_prefix": str(artifact_root),
+        "parent": {"selection_path": selection_item["path"]},
+        "phases": {
+            "F": {
+                "root": "formal/R9_P8_attempt1",
+                "candidate_plan_sources": {
+                    "S_MAIN": "support/space_attempt1/plan_output/plans/v16_r9_p8.json",
+                    "E_S": "support/engineering_recovery_attempt1/space/plan_output/plans/v16_r9_p8.json",
+                },
+            }
+        },
+        "physics": {
+            "operator_volume_q": 15,
+            "incident_port_q": 28,
+            "normal_corrections": 1,
+            "extra_corrections": 0,
+        },
+        "inputs": [
+            {"role": "R9_selection_transition", "path": selection_item["path"], "sha256": selection_item["sha256"]},
+            {"role": "frozen_acceptance_contract", "path": acceptance_item["path"], "sha256": acceptance_item["sha256"]},
+        ],
+    }
+    contract_path.write_text(
+        json.dumps(contract, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    contract_sha = hashlib.sha256(contract_path.read_bytes()).hexdigest()
+    plan = {
+        "task43_candidate": {
+            "candidate_id": "v16_r9_p8",
+            "action": "p_up",
+            "provenance": {
+                "v16_contract_sha256": "0" * 64,
+                "accepted_parent_selection_sha256": selection_item["sha256"],
+            },
+        },
+        "cell_interior_degrees": [],
+        "cell_interior_degree_plan_sha256": "degree-plan",
+        "marked_root_boxes": [],
+        "trace_degree": 3,
+        "cell_interior_degree": 6,
+        "variable_trace_from_cell_degrees": True,
+        "allow_no_refinement": True,
+    }
+    plan["task43_candidate"]["provenance"]["v16_contract_sha256"] = contract_sha
+    plan_path.write_text(json.dumps(plan, sort_keys=True) + "\n", encoding="utf-8")
+    plan_sha = hashlib.sha256(plan_path.read_bytes()).hexdigest()
+    space_binding = {
+        "space_source_id": "S_MAIN",
+        "source_head": "a" * 40,
+        "contract_path": str(contract_path.resolve()),
+        "contract_sha256": contract_sha,
+        "plan_path": str(plan_path.resolve()),
+        "input_snapshot": {
+            str(contract_path.resolve()): contract_sha,
+            str(selection_path): selection_item["sha256"],
+            str(acceptance_path): acceptance_item["sha256"],
+        },
+        "products": {"plan": {"path": str(plan_path.resolve()), "sha256": plan_sha}},
+        "space_audit": {
+            "forest": {
+                "root_cell_count": 180,
+                "actual_leaf_cell_count": 180,
+                "leaf_catalog_sha256": "leaf",
+                "closure_split_counts": {},
+            },
+            "degrees": {
+                "entity_degree_plan_sha256": "degree-plan",
+                "entity_map_sha256": "entity-map",
+                "cell_interior_histogram": {"p5": 27, "p6": 153},
+                "distinct_physical_trace_degrees": [3],
+            },
+            "dofs": {
+                "parent_independent_fe_dofs": 110472,
+                "active_cell_interior_rows": 110681,
+                "independent_active_fe_dofs": 110682,
+            },
+            "space_authority_detail": {
+                "independent_trace_rows": 1,
+                "hanging_slave_rows": 0,
+                "floquet_periodic_relations": {},
+                "hanging_or_floquet_slave_rows_globally_numbered": 0,
+                "p6_carrier": {
+                    "container_degree": 6,
+                    "uniform_p6_global_rows": 110683,
+                    "uniform_p6_trace_rows": 2,
+                    "active_entity_rows": 110683,
+                    "inactive_p6_rows": 0,
+                    "full_p6_global_matrix_constructed": False,
+                },
+            },
+            "actual_geometry": {"mesh_box_catalog_sha256": "mesh-catalog"},
+        },
+    }
+    monkeypatch.setattr(
+        round1_candidates, "_load_v16_p8_contract", lambda _path: (contract, contract_sha)
+    )
+    monkeypatch.setattr(h100_anchor, "_V16_P8_CONTRACT_REL", contract_path.resolve())
+    monkeypatch.setattr(
+        h100_anchor,
+        "_load_v16_p8_context",
+        lambda _path, *, source_id, run_root: (contract, contract_sha, space_binding),
+    )
+    monkeypatch.setattr(
+        h100_anchor,
+        "_validate_accepted_candidate_inputs",
+        lambda **_kwargs: (
+            plan,
+            plan_sha,
+            {
+                "candidate_id": "v16_r9_p8",
+                "action": "p_up",
+                "parent_candidate_id": "round9_p_up",
+                "accepted_parent_selection_sha256": selection_item["sha256"],
+            },
+        ),
+    )
+
+    class _Topology:
+        dim = 3
+
+        def index_map(self, _dimension):
+            return SimpleNamespace(size_global=180)
+
+        def create_connectivity(self, *_args):
+            return None
+
+    mesh_data = SimpleNamespace(
+        mesh=SimpleNamespace(topology=_Topology()),
+        local_h_context=SimpleNamespace(
+            audit={
+                "status": "passed",
+                "pass": True,
+                "root_cell_count": 180,
+                "leaf_cell_count": 180,
+                "hanging_patch_count": 0,
+                "cell_interior_degree_plan_sha256": "degree-plan",
+                "cell_interior_degree_counts": {"p5": 27, "p6": 153},
+                "variable_trace_from_cell_degrees": True,
+                "allow_no_refinement": True,
+                "forest": {"closure_split_counts": {}},
+            },
+            cell_interior_degree=6,
+        ),
+    )
+    monkeypatch.setattr(h100_anchor, "build_airbox_mesh_3d", lambda *_args, **_kwargs: mesh_data)
+    monkeypatch.setattr(h100_anchor, "build_stage4_local_h_mesh_data", lambda *_args, **_kwargs: mesh_data)
+    monkeypatch.setattr(
+        h100_anchor,
+        "_mesh_axes",
+        lambda *_args, **_kwargs: tuple(np.asarray([0.0, 1.0]) for _ in range(3)),
+    )
+    monkeypatch.setattr(
+        h100_anchor,
+        "_assert_mesh_profile",
+        lambda *_args, **_kwargs: {
+            "leaf_catalog_sha256": "leaf",
+            "root_catalog_sha256": "root",
+            "closure_split_counts": {},
+            "hanging_patch_count": 0,
+            "mesh_box_catalog_sha256": "mesh-catalog",
+        },
+    )
+    constraints = {"pass": True, "hanging_slave_rows": 0}
+    entity_map = SimpleNamespace(
+        active_trace_rows=2,
+        active_cell_interior_rows=110681,
+        active_rows=110683,
+        uniform_p6_rows=110683,
+        uniform_p6_trace_rows=2,
+        audit={"full_p6_global_matrix_constructed": False},
+    )
+    authority = SimpleNamespace(
+        audit={
+            "pass": True,
+            "trace_constraints": constraints,
+            "hanging_or_floquet_slave_rows_globally_numbered": 0,
+        },
+        degree_plan=SimpleNamespace(
+            audit={
+                "pass": True,
+                "cell_degree_counts": {"p5": 27, "p6": 153},
+                "cell_degree_plan_sha256": "degree-plan",
+                "runtime_global_entity_degree_sha256": "entity-map",
+                "mesh_cell_box_catalog_sha256": "mesh-catalog",
+                "trace_degree_values": [3],
+            },
+            entity_map=entity_map,
+        ),
+        trace_constraints=SimpleNamespace(independent_trace_rows=1),
+    )
+    monkeypatch.setattr(
+        h100_anchor,
+        "build_stage4_local_h_reduction_authority",
+        lambda *_args, **_kwargs: authority,
+    )
+    monkeypatch.setattr(
+        h100_anchor,
+        "resolve_stage4_full3d_assembly_backend",
+        lambda *_args, **_kwargs: {"actual": h100_anchor.ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND},
+    )
+    monkeypatch.setattr(h100_anchor, "_log_stage", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        h100_anchor,
+        "task43_profile_identity",
+        lambda *_args, **_kwargs: {"profile": "synthetic-live-observer"},
+    )
+
+    raw = _raw_vectors()
+    raw["independent_A6_independent_active_residual_cell_interior"] = np.zeros(
+        110681, dtype=np.complex128
+    )
+    raw["independent_A6_independent_active_rhs_cell_interior"] = np.ones(
+        110681, dtype=np.complex128
+    )
+    raw["full_active_active_full_rhs"] = np.zeros(110683, dtype=np.complex128)
+    raw["full_active_active_full_rhs"][2] = 1.0
+    raw["full_active_active_full_solution"] = np.zeros(110683, dtype=np.complex128)
+    raw["full_active_eliminated_active_interior_residual"] = np.zeros(
+        110683, dtype=np.complex128
+    )
+    raw["recovered_active_full_rhs_owned"] = raw[
+        "full_active_active_full_rhs"
+    ].copy()
+    raw["recovered_active_full_solution_owned"] = raw[
+        "full_active_active_full_solution"
+    ].copy()
+    full_raw = {
+        name.removeprefix("full_active_"): values
+        for name, values in raw.items()
+        if name.startswith("full_active_")
+    }
+    a6_raw = {
+        name.removeprefix("independent_A6_"): values
+        for name, values in raw.items()
+        if name.startswith("independent_A6_")
+    }
+    normal_vectors = {
+        name.removeprefix("normal_"): values
+        for name, values in raw.items()
+        if name.startswith("normal_")
+    }
+    axes = {name: [0.0, 1.0] for name in ("x", "y", "z")}
+
+    def fake_field_capture(*_args, **_kwargs):
+        return {"axes_nm": axes, "mesh_identity": {"global_cells": 180}, "samples": {}}
+
+    monkeypatch.setattr(h100_anchor, "_field_capture", fake_field_capture)
+    monkeypatch.setattr(
+        h100_anchor,
+        "_active_solution_storage",
+        lambda _view: (
+            {
+                "recovered_p6_local_coefficients": np.asarray([1.0 + 0j], dtype=np.complex128),
+                "recovered_p6_owned_coefficients": np.asarray([1.0 + 0j], dtype=np.complex128),
+                "mesh_geometry_coordinates_nm": np.zeros((8, 3), dtype=np.float64),
+                "mesh_geometry_dofmap": np.arange(8, dtype=np.int32).reshape(1, 8),
+                "mesh_owned_cell_global_ids": np.asarray([8], dtype=np.int64),
+                "mesh_cell_vertex_dofmap": np.arange(8, dtype=np.int32).reshape(1, 8),
+                "p6_function_space_dofmap": np.arange(8, dtype=np.int32).reshape(1, 8),
+                "p6_owned_global_dof_block_ids": np.asarray([0], dtype=np.int64),
+                "p6_ghost_global_dof_block_ids": np.asarray([], dtype=np.int64),
+                "active_full_solution_owned": raw[
+                    "full_active_active_full_solution"
+                ],
+                "active_full_rhs_owned": raw["full_active_active_full_rhs"],
+            },
+            {
+                "active_degree_plan_sha256": "degree-plan",
+                "mesh_and_dof_order_sha256": "mesh-order",
+                "independent_active_fe_dofs": 110682,
+                "active_rows": 110683,
+                "active_trace_rows": 1,
+                "active_cell_interior_rows": 110681,
+                "independent_trace_rows": 1,
+                "active_cell_degree_counts": {"p5": 27, "p6": 153},
+                "active_fe_dof_gate_pass": True,
+                "degree_plan_pass": True,
+                "trace_constraints_pass": True,
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        h100_anchor,
+        "compute_stage4_independent_active_action",
+        lambda *_args, **_kwargs: {
+            "relative_residual": 0.0,
+            "finite": True,
+            "rows": {"independent_trace": 1, "active_cell_interior": 110681, "modal_lower": 612},
+            "raw_vectors": dict(a6_raw),
+            "raw_vector_scope": {"trace_rows": 1, "active_interior_rows": 110681, "modal_lower_rows": 612},
+        },
+    )
+    mode_cfg = h100_anchor._h100_config(
+        kind="empty_h_active_p3", case_name="fixture", geometry_profile="initial_180"
+    )
+    h100_anchor._configure_v16_p8_endpoint(mode_cfg, contract)
+    modes = h100_anchor.outgoing_port_modes_3d(mode_cfg)
+    class _IdentityMatrix:
+        def mult(self, vector, result):
+            result.values[...] = vector.values
+
+        def getSize(self):
+            return (613, 613)
+
+    view = SimpleNamespace(
+        ksp=SimpleNamespace(getPC=lambda: SimpleNamespace(getFactorSolverType=lambda: "mumps")),
+        config=None,
+        goal_context={"modes": modes},
+        field=object(),
+        mesh_data=mesh_data,
+        reduction=SimpleNamespace(
+            degree_plan=SimpleNamespace(audit={"trace_degree_values": [3], "cell_degree_plan_sha256": "degree-plan", "cell_degree_counts": {"p5": 27, "p6": 153}}),
+            build_audit={"active_fe_dof_gate_pass": True},
+            system=SimpleNamespace(
+                active_trace_rows=1,
+                entity_map=SimpleNamespace(active_cell_interior_rows=110681, active_rows=110683),
+            ),
+        ),
+        A=_IdentityMatrix(),
+        b=_ObserverVector(np.ones(613, dtype=np.complex128)),
+        x=_ObserverVector(np.ones(613, dtype=np.complex128)),
+        full_active_residual={
+            "raw_vectors": full_raw,
+            "raw_vector_scope": {
+                "reduced_trace_dtn_rows": 613,
+                "reduced_trace_dtn_owned_range": [0, 613],
+                "mpi_size": 1,
+            },
+            "linear_system_relative_residual": 0.0,
+        },
+        normal_correction_raw_vectors=normal_vectors,
+        primal_solver_telemetry={
+            "normal_correction_count": 1,
+            "normal_correction_audit": {
+                "status": "passed",
+                "correction_ksp": {"converged_reason": 2},
+            },
+        },
+        port_metrics={},
+    )
+
+    class _WriterReached(RuntimeError):
+        pass
+
+    common_flow = h100_anchor._common_3d_case_flow
+    writer = common_flow._write_case_outputs
+    writer_source = {}
+    writer_error = _WriterReached("stop after the actual shared writer")
+    writer_hashes = {}
+    run_root = artifact_root / "formal/R9_P8_attempt1/run"
+    packet_path = run_root / "primary_state.npz"
+
+    def delegating_writer(out_dir, summary, log_lines, comm):
+        packet_hash_before = hashlib.sha256(packet_path.read_bytes()).hexdigest()
+        result = writer(out_dir, summary, log_lines, comm)
+        packet_hash_after = hashlib.sha256(packet_path.read_bytes()).hexdigest()
+        writer_hashes.update(
+            before=packet_hash_before,
+            after=packet_hash_after,
+        )
+        raise writer_error
+
+    monkeypatch.setattr(common_flow, "_write_case_outputs", delegating_writer)
+
+    def fake_solver(cfg, solve_root, **kwargs):
+        view.config = cfg
+        kwargs["variable_p_live_observer"](view)
+        solve_root.mkdir(parents=True, exist_ok=True)
+        aliased_residual = {"raw_vectors": full_raw}
+        writer_source["summary"] = {
+            "official_result": False,
+            "diagnostic_only": True,
+            "case_status": "fixture_after_live_observer",
+            "cell_static_condensation_audit": {
+                "full_operator_true_residual": aliased_residual,
+                "full_explicit_true_residual": aliased_residual,
+            },
+        }
+        writer_source["alias"] = aliased_residual
+        common_flow._write_case_outputs(
+            solve_root,
+            writer_source["summary"],
+            ["fixture writer called after the actual live observer"],
+            h100_anchor.MPI.COMM_WORLD,
+        )
+
+    monkeypatch.setattr(h100_anchor, "run_stage4b_block_grating_3d_case", fake_solver)
+    with pytest.raises(_WriterReached, match="actual shared writer") as caught:
+        h100_anchor.main(
+            [
+                "--case", "round1_candidate_mpi1",
+                "--run-root", str(run_root),
+                "--candidate-plan", str(plan_path),
+                "--candidate-id", "v16_r9_p8",
+                "--candidate-acceptance-contract", str(acceptance_path),
+                "--candidate-parent-selection-record", str(selection_path),
+                "--primary-diagnostic-phase", "R9_P8",
+                "--paired-p8-contract", str(contract_path),
+                "--direct-factor-backend", "mumps",
+                "--same-lu-solve-residual-correction",
+            ]
+        )
+    assert caught.value is writer_error
+
+    packet_path = run_root / "primary_state.npz"
+    raw_path = run_root / "primary_raw_vector_audit.json"
+    summary_path = run_root / "solve/run_summary.json"
+    terminal_path = run_root / "task43_v16_p8_partial_terminal.json"
+    assert packet_path.is_file() and raw_path.is_file() and summary_path.is_file()
+    terminal = json.loads(terminal_path.read_text(encoding="utf-8"))
+    packet = terminal["primary_packet"]
+    raw_checkpoint = json.loads(raw_path.read_text(encoding="utf-8"))
+    assert raw_checkpoint["pass"] is True and raw_checkpoint["official_result"] is False
+    assert raw_checkpoint["audit"]["gates"]["normal_correction_exactly_once"] is True
+    assert raw_checkpoint["audit"]["gates"]["normal_correction_raw_residual_strictly_decreased"] is True
+    assert raw_checkpoint["audit"]["gates"]["extra_correction_count_zero"] is True
+    saved_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    operator_ref = saved_summary["cell_static_condensation_audit"]["full_operator_true_residual"]["raw_vectors"]
+    explicit_ref = saved_summary["cell_static_condensation_audit"]["full_explicit_true_residual"]["raw_vectors"]
+    assert operator_ref == explicit_ref
+    assert operator_ref["arrays"]["reduced_trace_dtn_residual_Ax_minus_b_owned"]["npz_key"] == (
+        "full_active_reduced_trace_dtn_residual_Ax_minus_b_owned"
+    )
+    assert writer_source["summary"]["cell_static_condensation_audit"][
+        "full_operator_true_residual"
+    ] is writer_source["alias"]
+    assert writer_source["alias"]["raw_vectors"] is full_raw
+    with np.load(packet_path, allow_pickle=False) as archive:
+        assert np.array_equal(
+            archive["full_active_reduced_trace_dtn_rhs_owned"], raw["full_active_reduced_trace_dtn_rhs_owned"]
+        )
+    assert terminal["status"] == "FAILED"
+    assert terminal["official_result"] is False and terminal["passed"] is False
+    assert terminal["primary_packet"]["npz_sha256"] == packet["npz_sha256"]
+    assert writer_hashes["before"] == writer_hashes["after"] == packet["npz_sha256"]
+    assert common_flow._write_case_outputs is delegating_writer
+
+    pending_root = tmp_path / "successful_pending_terminal"
+    pending_root.mkdir()
+    endpoint_path = pending_root / "task43_round1_candidate_record.json"
+    endpoint_path.write_text('{"status":"SOLVED_PRIMARY_PENDING_PAIRED_COMPARISON"}\n')
+    pending = h100_anchor._write_v16_p8_primary_terminal(
+        pending_root,
+        source_identity={"git_head": "a" * 40},
+        candidate_identity={"candidate_id": "v16_r9_p8"},
+        endpoint_record_path=endpoint_path,
+        candidate_plan_sha256=plan_sha,
+        contract_sha256=contract_sha,
+        space_source_binding=space_binding,
+        primary_packet=packet,
+        raw_gate_checkpoint=raw_checkpoint,
+        gates={"pass": True, "fixture_gates_complete": True},
+        endpoint_identity={"phase": "R9_P8", "official_result": False},
+    )
+    pending_terminal = json.loads(
+        Path(pending["path"]).read_text(encoding="utf-8")
+    )
+    assert pending_terminal["status"] == "SOLVED_PRIMARY_PENDING_PAIRED_COMPARISON"
+    assert pending_terminal["official_result"] is False
+    blocked_root = tmp_path / "blocked_pending_terminal"
+    blocked_root.mkdir()
+    with pytest.raises(ValueError, match="cannot write a successful terminal"):
+        h100_anchor._write_v16_p8_primary_terminal(
+            blocked_root,
+            source_identity={"git_head": "a" * 40},
+            candidate_identity={"candidate_id": "v16_r9_p8"},
+            endpoint_record_path=endpoint_path,
+            candidate_plan_sha256=plan_sha,
+            contract_sha256=contract_sha,
+            space_source_binding=space_binding,
+            primary_packet=packet,
+            raw_gate_checkpoint=raw_checkpoint,
+            gates={"pass": False},
+            endpoint_identity={"phase": "R9_P8", "official_result": False},
+        )
+    assert not (blocked_root / "task43_v16_p8_primary_terminal.json").exists()
+
+
+def test_v16_p8_plan_builder_and_actual_gate(tmp_path, monkeypatch):
+    """Actual p builder/closure and gate; no native mesh or space authority."""
+    contract_path = Path('docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json')
+    contract, actual_contract_sha = round1_candidates._load_v16_p8_contract(contract_path)
+    assert actual_contract_sha == hashlib.sha256(contract_path.read_bytes()).hexdigest()
+    roles = {item['role']: item for item in contract['inputs']}
+    old_plan_path = round1_candidates.ROOT / roles['R9_authority_plan']['path']
+    old_plan = json.loads(old_plan_path.read_text())
+    cfg = h100_anchor._h100_config(
+        kind='empty_h_active_p3', case_name='v16_plan_fixture', geometry_profile='initial_180'
+    )
+    forest = round1_candidates._build_forest(
+        cfg, comm_size=1, marked_root_boxes=(), maximum_level=1, allow_no_refinement=True
+    )
+    degrees = {
+        tuple(map(float, (*row['lower'], *row['upper']))): int(row['degree'])
+        for row in old_plan['cell_interior_degrees']
+    }
+    parent = {
+        'selected_candidate_id': 'round9_p_up', 'parent_independent_fe_dofs': 110472,
+        'parent_forest': forest, 'parent_degree_by_box': degrees,
+        'parent_boxes_by_global_id': {8: tuple(round1_candidates._V16_P8_BOX)},
+        'parent_marked_root_boxes': [], 'selection_path': str(SELECTION_PATH),
+        'selection_sha256': roles['R9_selection_transition']['sha256'],
+        'parent_run_root': str(old_plan_path.parent),
+        'parent_record_sha256': roles['R9_candidate_record']['sha256'],
+        'parent_storage_sha256': roles['R9_candidate_storage']['sha256'],
+        'parent_plan_sha256': roles['R9_authority_plan']['sha256'],
+        'parent_comparison_path': roles['R9_comparison']['path'],
+        'parent_comparison_sha256': roles['R9_comparison']['sha256'],
+    }
+    # No substitution of _build_next_round_plan, raise_cell_degrees_for_p_up,
+    # stage4_local_h_refinement_plan_payload or _validate_v16_p8_audit.
+    plan, status = round1_candidates._build_v16_p8_plan(
+        cfg, parent=parent, comm_size=1,
+        contract_sha256=hashlib.sha256(contract_path.read_bytes()).hexdigest(),
+    )
+    assert status['status'] == 'plan_built'
+    assert plan['marked_root_boxes'] == []
+    assert len(plan['cell_interior_degrees']) == len(forest.leaves) == 180
+    prov = plan['task43_candidate']['provenance']
+    assert prov['marked_global_cell_ids'] == [8]
+    assert prov['v16_predeclared_box_nm'] == list(round1_candidates._V16_P8_BOX)
+    changes = prov['v16_actual_degree_changes']
+    seed_change = next(x for x in changes if x['box_nm'] == list(round1_candidates._V16_P8_BOX))
+    assert (seed_change['parent_degree'], seed_change['candidate_degree']) == (5, 6)
+    forced = {tuple(x['box']): x['increment'] for x in prov['p_up_closure']['forced_increments']}
+    assert {tuple(x['box_nm']): x['candidate_degree']-x['parent_degree'] for x in changes
+            if x is not seed_change} == forced
+    histogram = {}
+    for row in plan['cell_interior_degrees']:
+        key = 'p' + str(row['degree']); histogram[key] = histogram.get(key, 0) + 1
+    # A declared small authority fixture supplies counts only. Production
+    # post-audit checks still run and reject each changed measured count.
+    audit = {
+        'candidate_id': 'v16_r9_p8', 'action': 'p_up',
+        'forest': {'requested_h_root_splits': 0, 'actual_one_level_root_splits': 0,
+                   'root_cell_count': 180, 'actual_leaf_cell_count': 180, 'forced_closure_h_splits': 0},
+        'degrees': {'degree_plan_pass': True, 'entity_constraints_pass': True,
+                    'cell_interior_histogram': histogram},
+        'dofs': {'parent_independent_fe_dofs': 110472,
+                 'independent_active_fe_dofs': 110682, 'added_independent_fe_dofs': 210},
+    }
+    good = round1_candidates._validate_v16_p8_audit(plan, audit)
+    assert good['pass'], good
+    for fe in (110472, 110471, 237600):
+        bad = copy.deepcopy(audit)
+        bad['dofs'].update(independent_active_fe_dofs=fe, added_independent_fe_dofs=fe-110472)
+        assert not round1_candidates._validate_v16_p8_audit(plan, bad)['pass']
+    bad = copy.deepcopy(audit)
+    bad['forest'].update(actual_one_level_root_splits=1, actual_leaf_cell_count=187)
+    assert not round1_candidates._validate_v16_p8_audit(plan, bad)['pass']
+    for key, value in (('v16_predeclared_global_cell_id', 9),
+                       ('v16_predeclared_box_nm', [0.0]*6), ('v16_requested_degree', 7)):
+        bad_plan = copy.deepcopy(plan)
+        bad_plan['task43_candidate']['provenance'][key] = value
+        assert not round1_candidates._validate_v16_p8_audit(bad_plan, audit)['pass']
+    for corrupt in ('box', 'parent_p', 'h'):
+        bad_parent = dict(parent)
+        if corrupt == 'box': bad_parent['parent_boxes_by_global_id'] = {8: forest.leaves[0].box}
+        elif corrupt == 'parent_p':
+            bad_parent['parent_degree_by_box'] = dict(degrees)
+            bad_parent['parent_degree_by_box'][tuple(round1_candidates._V16_P8_BOX)] = 6
+        else: bad_parent['parent_marked_root_boxes'] = [forest.leaves[0].box]
+        with pytest.raises(ValueError, match='accepted R9 parent identity'):
+            round1_candidates._build_v16_p8_plan(cfg, parent=bad_parent, comm_size=1, contract_sha256='c'*64)
+
+
+@pytest.mark.parametrize(
+    "case",
+    ("success", "q10_failure", "input_drift", "binding_drift", "joined_rejection"),
+    ids=("paired_success", "q10_failure_keeps_q8", "input_drift_keeps_outputs", "binding_drift_keeps_outputs", "joined_terminal_rejected"),
+)
+def test_v16_p8_compare_reuses_old_samples_and_samples_p8_once(
+    tmp_path, monkeypatch, case
+):
+    if case == "joined_rejection":
+        contract_path, selection_path, lifecycle, _binding = (
+            _v16_frozen_terminal_failure_fixture(
+                tmp_path / case, monkeypatch, failure="terminal_failed"
+            )
+        )
+        with pytest.raises(ValueError, match="endpoint, primary packet, raw checkpoint or terminal"):
+            comparison.compare_v16_p8_paired(
+                lifecycle["terminal"].parent,
+                selection_path,
+                contract_path=contract_path,
+                attempt_id="fixture_attempt",
+            )
+        return
+
+    repository = tmp_path / "repository"
+    artifact_root = repository / "benchmarks/artifacts/task43/v16_p8"
+    contract_relative = Path(
+        "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json"
+    )
+    contract_path = repository / contract_relative
+    contract_path.parent.mkdir(parents=True)
+    selection_path = repository / "docs/round9_selection.json"
+    selection_path.parent.mkdir(parents=True, exist_ok=True)
+    selection_path.write_text('{"candidate_id":"round9_p_up"}\n', encoding="utf-8")
+    candidate_root = artifact_root / "formal/R9_P8_attempt1/run"
+    candidate_root.mkdir(parents=True)
+    sample_root = repository / "benchmarks/artifacts/task43/v11_science/p5"
+    sample_root.mkdir(parents=True)
+    input_root = repository / "benchmarks/artifacts/task43/inputs"
+    input_root.mkdir(parents=True)
+
+    monkeypatch.setattr(comparison, "ROOT", repository)
+    monkeypatch.setattr(round1_candidates, "ROOT", repository)
+    monkeypatch.setattr(round1_candidates, "_V16_P8_CONTRACT_REL", contract_relative)
+    source_bound_path = repository / "docs/space_source.json"
+    source_bound_path.parent.mkdir(parents=True, exist_ok=True)
+    source_bound_path.write_text('{"source":"S_MAIN"}\n', encoding="utf-8")
+    source_bound_sha = hashlib.sha256(source_bound_path.read_bytes()).hexdigest()
+    space_binding = {
+        "input_snapshot": {str(source_bound_path.resolve()): source_bound_sha}
+    }
+
+    power = {
+        "R_total": 0.2,
+        "T_total": 0.7,
+        "A_volume": 0.1,
+        "R00_s": 0.1,
+        "R00_p": 0.1,
+        "R00_total": 0.2,
+    }
+    metric_codes = {"R9": 1, "R9_H8": 2, "R9_P8": 3}
+    metric_eta = {1: 0.1, 2: 0.09, 3: 0.08}
+    metric_j = {"R9": 1.0, "R9_H8": 0.9, "R9_P8": 0.5}
+    signed_values = {
+        key: 0.0
+        for key in ("R_total", "T_total", "A_volume", "R00_s", "R00_p", "R00_total")
+    }
+    monkeypatch.setattr(
+        comparison.base,
+        "_field_metrics",
+        lambda _reference, candidate, _points, _weights, _cfg: {
+            "G": {
+                "relative_with_incident_floor": metric_eta[
+                    int(round(float(np.real(candidate["E"][0, 0]))))
+                ]
+            },
+            "fixture_field_code": int(round(float(np.real(candidate["E"][0, 0])))),
+        },
+    )
+    monkeypatch.setattr(
+        comparison.base,
+        "_modal_comparison",
+        lambda _reference, candidate: {"candidate_label": candidate["label"]},
+    )
+    monkeypatch.setattr(
+        comparison,
+        "_j_infinity",
+        lambda modal, _field: {"value": metric_j[modal["candidate_label"]]},
+    )
+    monkeypatch.setattr(
+        comparison,
+        "_v11_signed_mode_differences",
+        lambda _reference, _candidate: {
+            "aggregate_signed_candidate_minus_reference": dict(signed_values)
+        },
+    )
+    monkeypatch.setattr(
+        comparison.base,
+        "_validate_mode_physics",
+        lambda *_args, **_kwargs: {"pass": True, "fixture": "four modes bound"},
+    )
+    monkeypatch.setattr(
+        comparison,
+        "_post_selection_full_mode_physics",
+        lambda case_record: {"label": case_record["label"], "count": 612},
+    )
+    monkeypatch.setattr(
+        comparison.base,
+        "_physical_configuration_identity",
+        lambda _cfg: {"shared_physics": "fixture"},
+    )
+    monkeypatch.setattr(
+        comparison.base,
+        "_scalar_power_record",
+        lambda *_args, **_kwargs: dict(power),
+    )
+
+    cfgs = {}
+
+    def make_cfg(*, kind, case_name, geometry_profile):
+        cfg = SimpleNamespace(label=case_name, kind=kind, geometry_profile=geometry_profile)
+        cfgs[case_name] = cfg
+        return cfg
+
+    monkeypatch.setattr(comparison, "_h100_config", make_cfg)
+    monkeypatch.setattr(
+        comparison.base,
+        "_configure_historical_direct_route",
+        lambda _config, _identity: SimpleNamespace(label="Y6_1"),
+    )
+
+    roles = []
+
+    def add_json_role(role, relative, payload):
+        path = repository / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        roles.append({"role": role, "path": relative, "sha256": digest})
+        return path
+
+    metrics = {key: power[key] for key in ("R_total", "T_total", "R00_s", "R00_p", "R00_total")}
+    add_json_role(
+        "R9_candidate_record",
+        "benchmarks/artifacts/task43/inputs/r9_record.json",
+        {
+            "resolved_config": {"case_name": "R9"},
+            "power": {"aggregate": metrics, "A_volume_total": power["A_volume"]},
+            "recovered_solution_storage": {"independent_active_fe_dofs": 110472},
+        },
+    )
+    add_json_role(
+        "H8_volume_absorption",
+        "benchmarks/artifacts/task43/inputs/h8_absorption.json",
+        {"A_volume_total": power["A_volume"]},
+    )
+    for role, name in (
+        ("R9_modal_orders", "r9_orders"),
+        ("H8_modal_orders", "h8_orders"),
+        ("Y6_1_modal_orders", "y6_orders"),
+    ):
+        add_json_role(
+            role,
+            f"benchmarks/artifacts/task43/inputs/{name}.json",
+            {"metrics": metrics},
+        )
+    add_json_role(
+        "Y6_1_restore_identity",
+        "benchmarks/artifacts/task43/inputs/y6_restore.json",
+        {
+            "resolved_identity": {
+                "mesh_axes_nm": {"x": [0.0, 50.0], "y": [0.0, 50.0], "z": [-10.0, 130.0]},
+                "quadrature_and_cutoff": {
+                    "surface_and_incident_degree": 28,
+                    "volume_degree": 15,
+                    "volume_rule": "fixture",
+                    "cutoff_policy": "fixture",
+                    "cutoff_relative_tolerance": 1.0e-8,
+                },
+            }
+        },
+    )
+    add_json_role(
+        "Y6_1_resolved_config",
+        "benchmarks/task43/inputs/y6_config.json",
+        {"case_name": "Y6_1"},
+    )
+    h8_packet_path = repository / "benchmarks/artifacts/task43/inputs/h8_primary.npz"
+    candidate_checkpoints.write_atomic_npz(
+        h8_packet_path,
+        {"fixture": np.asarray([1], dtype=np.int64)},
+        identity={"endpoint_identity": {"actual_cfg": {"case_name": "R9_H8"}}},
+        schema="fixture.h8.primary.v1",
+        classification="fixture_nonofficial",
+    )
+    roles.append(
+        {
+            "role": "H8_P4_primary_packet",
+            "path": str(h8_packet_path.relative_to(repository)),
+            "sha256": hashlib.sha256(h8_packet_path.read_bytes()).hexdigest(),
+        }
+    )
+    add_json_role(
+        "V15_P5_comparison_record",
+        "benchmarks/artifacts/task43/inputs/p5_comparison.json",
+        {"classification": "fixture"},
+    )
+
+    p5_results = {"q8": {}, "q10": {}}
+    saved_samples = {}
+    sample_role_items = []
+    for order, count in (("q8", 1), ("q10", 1)):
+        points = np.tile(np.asarray([[25.0, 25.0, 60.0]], dtype=np.float64), (count, 1))
+        weights = np.full(count, 350000.0 / count, dtype=np.float64)
+        sample_arrays = {"points_nm": points, "weights_nm3": weights}
+        sample_codes = {"R9": 1, "R9_H8": 2, "Y6_1": 0}
+        for label, code in sample_codes.items():
+            field = np.zeros((count, 3), dtype=np.complex128)
+            field[:, 0] = code
+            sample_arrays[f"{label}_E"] = field
+            sample_arrays[f"{label}_curl_E"] = field.copy()
+        sample_path = sample_root / f"{order}.npz"
+        sample_sha256 = comparison.base._array_identity(points)["sha256"]
+        weight_sha256 = comparison.base._array_identity(weights)["sha256"]
+        candidate_checkpoints.write_atomic_npz(
+            sample_path,
+            sample_arrays,
+            identity={
+                "quadrature_order": int(order.removeprefix("q")),
+                "p4_original_terminal_status": "FAILED",
+                "rule_sha256": f"{order}-rule",
+            },
+            schema="task43.v11.union_comparison_samples.v1",
+            classification="measured_shared_union_samples_nonofficial",
+        )
+        sample_digest = hashlib.sha256(sample_path.read_bytes()).hexdigest()
+        sample_role = {
+            "role": f"V15_P5_{order}_union_npz",
+            "path": str(sample_path.relative_to(repository)),
+            "sha256": sample_digest,
+            "sample_count": count,
+            "point_sha256": sample_sha256,
+            "weight_sha256": weight_sha256,
+            "rule_sha256": f"{order}-rule",
+        }
+        sample_role_items.append(sample_role)
+        saved_samples[order] = {"path": str(sample_path), "sha256": sample_digest}
+        for label in ("R9", "R9_H8"):
+            code = metric_codes[label]
+            field_metrics = {
+                "G": {"relative_with_incident_floor": metric_eta[code]},
+                "fixture_field_code": code,
+            }
+            modal_metrics = {"candidate_label": label}
+            signed = {"aggregate_signed_candidate_minus_reference": dict(signed_values)}
+            p5_results[order][label] = {
+                "reference_label": "Y6_1",
+                "candidate_label": label,
+                "modal_metrics": modal_metrics,
+                "field_metrics": field_metrics,
+                "J_infinity": {"value": metric_j[label]},
+                "eta": metric_eta[code],
+                "signed_observables": signed,
+            }
+
+    roles.extend(sample_role_items)
+    contract = {
+        "artifact_prefix": str(artifact_root),
+        "comparison": {
+            "attempt_id": "fixture_v16_attempt",
+            "output_root": "support/pair_fixture/comparison",
+            "epsilon_J": 0.1,
+            "epsilon_G": 0.01,
+        },
+        "inputs": roles,
+    }
+    contract_path.write_text(json.dumps(contract, sort_keys=True) + "\n", encoding="utf-8")
+    contract_sha256 = hashlib.sha256(contract_path.read_bytes()).hexdigest()
+    contract_input_snapshot = round1_candidates._v16_p8_input_snapshot(contract)
+
+    lifecycle_root = artifact_root / "formal/R9_P8_attempt1"
+    lifecycle_root.mkdir(parents=True, exist_ok=True)
+    lifecycle_paths = {}
+    for name in ("joined", "terminal", "endpoint", "primary_packet", "raw_gate_checkpoint", "candidate_plan"):
+        path = lifecycle_root / f"{name}.json"
+        path.write_text(json.dumps({"fixture_product": name}) + "\n", encoding="utf-8")
+        lifecycle_paths[name] = path.resolve()
+    lifecycle_snapshot = {
+        name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for name, path in lifecycle_paths.items()
+    }
+    frozen = {
+        "contract": contract,
+        "contract_sha256": contract_sha256,
+        "source_id": "S_MAIN",
+        "contract_input_snapshot": contract_input_snapshot,
+        "space_binding": space_binding,
+        "p5_comparison": {
+            "results": p5_results,
+            "saved_union_samples": saved_samples,
+            "same_physics": {"shared_identity": {"shared_physics": "fixture"}},
+            "actual_FE": {"R9": 110472, "R9_H8": 110600},
+        },
+        "run_root": candidate_root,
+        "endpoint": {"independent_active_fe_dofs": 110682, "power": {"A_volume_total": power["A_volume"]}},
+        "terminal": {"candidate_identity": {"candidate_id": "v16_r9_p8"}},
+        "lifecycle_paths": lifecycle_paths,
+        "lifecycle_snapshot": lifecycle_snapshot,
+    }
+    monkeypatch.setattr(comparison, "_v16_p8_frozen_endpoint", lambda *_args: frozen)
+    monkeypatch.setattr(comparison, "_v11_source_snapshot", lambda: {"fixture_source.py": "f" * 64})
+
+    def restore(_frozen):
+        return {
+            "label": "R9_P8",
+            "candidate_id": "v16_r9_p8",
+            "cfg": SimpleNamespace(label="R9_P8"),
+            "mesh_data": SimpleNamespace(mesh=object()),
+            "field": object(),
+            "axes": (np.asarray([0.0, 50.0]),) * 3,
+            "record": {"fixture": "P8 endpoint"},
+            "mode_payload": {},
+            "power": dict(power),
+            "mesh_identity": {"fixture_mesh": "mesh-sha"},
+            "mesh_boxes": {
+                "global_ids": np.asarray([8], dtype=np.int64),
+                "lower": np.asarray([[0.0, 0.0, -10.0]]),
+                "upper": np.asarray([[50.0, 50.0, 130.0]]),
+            },
+        }
+
+    monkeypatch.setattr(comparison, "_restore_v16_p8_field", restore)
+    points_sampled = []
+
+    def sample_p8(field, points):
+        assert field["label"] == "R9_P8"
+        points_sampled.append(points.copy())
+        if case == "q10_failure" and len(points_sampled) == 2:
+            raise RuntimeError("fixture q10 sample failure")
+        if case == "input_drift" and len(points_sampled) == 1:
+            (repository / "benchmarks/task43/inputs/y6_config.json").write_text(
+                '{"case_name":"mutated"}\n', encoding="utf-8"
+            )
+        if case == "binding_drift" and len(points_sampled) == 1:
+            source_bound_path.write_text('{"source":"mutated"}\n', encoding="utf-8")
+        values = np.zeros((points.shape[0], 3), dtype=np.complex128)
+        values[:, 0] = 3.0
+        return {"E": values, "curl_E": values.copy()}
+
+    monkeypatch.setattr(comparison, "_sample_field", sample_p8)
+    monkeypatch.setattr(
+        comparison.base,
+        "_cell_slot_for_points",
+        lambda _mesh, _axes, points: (
+            np.asarray([8], dtype=np.int64),
+            np.zeros(points.shape[0], dtype=np.int64),
+        ),
+    )
+    original_require = h100_anchor._require_v11_watchdog_worker_identity
+    worker_identity = original_require(require_unused_phase_file=False)
+    phase_path = Path(worker_identity["phase_path"])
+    assert phase_path.is_file()
+    assert phase_path.resolve() == Path(os.environ["PHYSICAL_WATCHDOG_PHASE_PATH"]).resolve()
+
+    def allow_existing_phase(*, require_unused_phase_file=True, expected_identity=None):
+        return original_require(
+            require_unused_phase_file=False,
+            expected_identity=expected_identity or worker_identity,
+        )
+
+    monkeypatch.setattr(h100_anchor, "_require_v11_watchdog_worker_identity", allow_existing_phase)
+    monkeypatch.setattr(round1_candidates, "ROOT", repository)
+    monkeypatch.setattr(round1_candidates, "_V16_P8_CONTRACT_REL", contract_relative)
+
+    if case in {"q10_failure", "input_drift", "binding_drift"}:
+        with pytest.raises(RuntimeError):
+            comparison.compare_v16_p8_paired(
+                candidate_root,
+                selection_path,
+                contract_path=contract_path,
+                attempt_id="fixture_v16_attempt",
+            )
+        result_path = artifact_root / contract["comparison"]["output_root"] / "v16_r9_p8_comparison_failure.json"
+        failure = json.loads(result_path.read_text(encoding="utf-8"))
+        assert "q8" in failure["completed_q_orders"]
+        progress_path = result_path.parent / "comparison_progress.json"
+        assert progress_path.is_file()
+        progress = json.loads(progress_path.read_text(encoding="utf-8"))
+        q8_sample = progress["results"]["q8"]["R9_P8"]["sample"]
+        q8_sample_path = Path(q8_sample["path"])
+        assert q8_sample["P8_sampled_once"] is True
+        assert q8_sample_path.is_file()
+        assert hashlib.sha256(q8_sample_path.read_bytes()).hexdigest() == q8_sample["sha256"]
+        if case == "q10_failure":
+            assert failure["completed_q_orders"] == ["q8"]
+            assert len(points_sampled) == 2
+        return
+
+    result = comparison.compare_v16_p8_paired(
+        candidate_root,
+        selection_path,
+        contract_path=contract_path,
+        attempt_id="fixture_v16_attempt",
+    )
+    assert result["status"] == "COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE"
+    assert result["P5_old_samples_resampled"] is False
+    assert len(points_sampled) == 2
+    assert result["results"]["q8"]["R9_P8"]["sample"]["P8_sampled_once"] is True
+    assert result["results"]["q10"]["R9_P8"]["sample"]["P8_sampled_once"] is True
+    for order in ("q8", "q10"):
+        sample_path = Path(result["results"][order]["R9_P8"]["sample"]["path"])
+        assert sample_path.is_file()
+        with np.load(sample_path, allow_pickle=False) as archive:
+            assert archive["P8_E"].shape[0] == 1
+        assert result["results"][order]["R9"]["candidate_label"] == "R9"
+        assert result["results"][order]["R9_H8"]["candidate_label"] == "R9_H8"
+
+
+def test_v16_p8_saved_sample_owner_and_partition_bindings(tmp_path):
+    """Real disk/sample/geometry checker; synthetic arrays, no field sampling."""
+    count = 565248
+    vertices = np.asarray([[x,y,z] for z in (-10.,130.) for y in (0.,50.) for x in (0.,50.)])
+    mesh = {'mesh_owned_cell_global_ids': np.array([8], dtype=np.int64),
+            'mesh_geometry_coordinates_nm': vertices,
+            'mesh_geometry_dofmap': np.arange(8, dtype=np.int32).reshape(1,8)}
+    mesh_path = tmp_path/'synthetic_mesh.npz'
+    np.savez_compressed(mesh_path, **mesh)
+    labels = ('R9','R9_H8','Y6_1')
+    axes = [[0.,16.5,33.5,50.],[0.,5.,10.,15.,35.,50.],[-10.,0.,120.,130.]]
+    comparison_record = {'case_identities': {label: {'mesh_identity': {
+        'restored_mesh_arrays': {name: round1_candidates._v16_array_identity(v) for name,v in mesh.items()},
+        'recorded_mesh': {'axes_nm': axes}}} for label in labels}}
+    points = np.tile(np.array([[25.,25.,60.]]), (count,1))
+    weights = np.full(count, 350000./count)
+    arrays = {'points_nm': points, 'weights_nm3': weights}
+    for label in labels:
+        arrays.update({f'{label}_E': np.zeros((count,3), dtype=np.complex128),
+                       f'{label}_curl_E': np.zeros((count,3), dtype=np.complex128),
+                       f'{label}_cell_global_ids': np.array([8], dtype=np.int64),
+                       f'{label}_point_cell_local_slots': np.zeros(count, dtype=np.int64),
+                       f'{label}_point_cell_global_ids': np.full(count, 8, dtype=np.int64)})
+    identity = {'quadrature_order': 8, 'sample_count': count, 'candidate_id': 'v11_r9_h8',
+                'reference_label': 'Y6_1', 'p4_original_terminal_status': 'FAILED',
+                'p4_terminal_sha256': 'a'*64, 'contract_sha256': 'b'*64,
+                'partition_box_count': 1104, 'integrated_domain_volume_nm3': 350000.,
+                'rule_sha256': 'c'*64, 'axis_breakpoints_nm': axes}
+    expected = {'sample_count': count, 'point_hash': round1_candidates._v16_p8_array_hash(points),
+                'weight_hash': round1_candidates._v16_p8_array_hash(weights), 'rule_sha256': 'c'*64}
+    for case in ('valid', 'owner', 'axis', 'reference', 'point_hash', 'weight_hash'):
+        trial_arrays = dict(arrays); trial_identity = copy.deepcopy(identity); trial_expected = dict(expected)
+        if case == 'owner':
+            trial_arrays['R9_point_cell_global_ids'] = arrays['R9_point_cell_global_ids'].copy()
+            trial_arrays['R9_point_cell_global_ids'][0] = 99
+        elif case == 'axis': trial_identity['axis_breakpoints_nm'][0].remove(16.5)
+        elif case == 'reference': trial_identity['reference_label'] = 'Y5_1'
+        elif case == 'point_hash': trial_expected['point_hash'] = 'd'*64
+        elif case == 'weight_hash': trial_expected['weight_hash'] = 'e'*64
+        packet_path = tmp_path/(case+'.npz')
+        candidate_checkpoints.write_atomic_npz(packet_path, trial_arrays, identity=trial_identity,
+            schema='task43.v11.union_comparison_samples.v1',
+            classification='measured_shared_union_samples_nonofficial')
+        kwargs = dict(npz_path=packet_path, expected_record=trial_expected,
+            comparison=comparison_record, mesh_roles={label:(mesh_path,'') for label in labels},
+            p4_terminal_sha256='a'*64, expected_contract_sha256='b'*64, expected_order=8)
+        if case == 'valid':
+            result = round1_candidates._validate_v16_saved_sample_geometry(**kwargs)
+            assert result['pass'] and result['owner_box_checks'] == dict.fromkeys(labels,count)
+        else:
+            message = {'owner':'owner points', 'axis':'mesh-axis breakpoint',
+                       'reference':'sample layout/domain', 'point_hash':'point/weight/rule',
+                       'weight_hash':'point/weight/rule'}[case]
+            with pytest.raises(ValueError, match=message):
+                round1_candidates._validate_v16_saved_sample_geometry(**kwargs)
+
+
+def test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound(tmp_path, monkeypatch):
+    contract = json.loads(
+        Path("docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    runtime = h100_anchor._check_v11_runtime_envelope(h100_anchor.MPI.COMM_WORLD)
+    identity = runtime["v11_watchdog_worker_identity"]
+    result = h100_anchor._v16_p8_resume_output_binding(
+        contract, "C", worker_identity=identity
+    )
+    assert result["stage"] == "C"
+    assert result["same_worker"] is True and result["exactly_one_choice"] is True
+    selected_roots = {result["output_root"]}
+    for stage in ("S", "F_POSTPROCESS"):
+        selected = h100_anchor._v16_p8_resume_output_binding(
+            contract, stage, worker_identity=identity
+        )
+        assert selected["stage"] == stage
+        assert selected["output_root"].startswith(contract["artifact_prefix"])
+        selected_roots.add(selected["output_root"])
+        assert selected["worker_identity"] == identity
+    assert len(selected_roots) == 3
+    changed_worker = dict(identity)
+    changed_worker["worker_pid"] = int(identity["worker_pid"]) + 1
+    with pytest.raises(RuntimeError, match="identity changed"):
+        h100_anchor._v16_p8_resume_output_binding(
+            contract, "C", worker_identity=changed_worker
+        )
+    for stage in ("invalid", "S,C"):
+        with pytest.raises(ValueError, match="select exactly one fixed stage"):
+            h100_anchor._v16_p8_resume_output_binding(
+                contract, stage, worker_identity=identity
+            )

@@ -9,7 +9,7 @@
 | production numerical/core | V15无共享src数值内核、方程/离散/约束、容差或材料模型修改 | 无fresh numerical-core qualification，本组无V15合并项 |
 | reusable runner/watchdog | 未改通用watchdog、资源采样、缓存或ABI策略 | V15执行证据不构成通用runner变更 |
 | checker/benchmark | 未将V15恢复逻辑提升为通用checker；定向测试仅验证固定研究路径 | 不据saved-primary fixture授予benchmark资格 |
-| do-not-merge | 原A1_q_attempt3 FAILED终态；原R9_H8_attempt1 FAILED终态；所有ignored raw artifacts及未资格化研究分支 | 不改写历史。P5诊断不改变accepted9/R9；accuracy NOT_PASSED、formal7/8与末槽封存不变；无READY/production/merge approval |
+| do-not-merge | 所有 ignored 大原件及未资格化研究路径／整分支；禁止覆写或升级原 A1/H8 FAILED 端点 | 轻量失败 closeout 属于上列可保留证据，不能与大原件混列为禁止归档。P5 不改变 accepted9/R9 或 accuracy NOT_PASSED；V15 历史 formal7/8 保留，新 P8 专用槽仅由最新 review 前瞻授权，无 production/merge approval |
 
 费用分账：本轮8次support whole累计2,240.4899401497096 s、formal whole 5,210.411748223938 s；V12/V14 recovery历史2,215.2188096446916 s、V11 support 853.8004706790671 s另列。P5比较/watchdog原件位于`benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/`；root joined closeout位于`docs/task43_hp_adaptivity/outcomes/records/v15_bugfix_sources/P5/P5_joined_root_closeout.json`，SHA256为`5f2312d3bdf52a410a777e8e119ec8dbf6af992adb8bd575e12e0579e381165d`。后续动作及配额须由最新review明确；本manifest不授予新seed、计算、重试或合并。
 

@@ -21,7 +21,10 @@ from mpi4py import MPI
 from benchmarks.task43_hp_adaptivity.candidate_records import (
     load_accepted_parent_artifacts,
 )
-from benchmarks.task43_hp_adaptivity.candidate_checkpoints import write_atomic_json
+from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
+    _array_identity as _v16_array_identity,
+    write_atomic_json,
+)
 from benchmarks.task43_hp_adaptivity import compare_initial_to_references as base
 from benchmarks.task43_hp_adaptivity.compare_initial_to_references import (
     _actual_mesh_identity,
@@ -85,6 +88,39 @@ DEFAULT_ACCEPTANCE = (
     ROOT / "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json"
 )
 DEFAULT_OUTPUT = ROOT / "benchmarks/artifacts/task43/round1_candidates/attempt2"
+_V16_P8_CONTRACT_REL = Path(
+    "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json"
+)
+_V16_P8_BOX = (16.5, 5.0, -10.0, 33.5, 10.0, 0.0)
+_V16_P8_INPUT_ROLES = {
+    "R9_authority_plan",
+    "R9_candidate_plan_copy",
+    "R9_candidate_storage",
+    "R9_candidate_record",
+    "R9_selection_transition",
+    "R9_comparison",
+    "frozen_acceptance_contract",
+    "frozen_comparison_contract",
+    "reference_calibration",
+    "V11_base_contract",
+    "V15_P5_comparison_record",
+    "V15_P5_q8_union_npz",
+    "V15_P5_q10_union_npz",
+    "H8_P4_primary_packet",
+    "H8_P4_partial_terminal",
+    "H8_P4_prevalidation_checkpoint",
+    "H8_P4_candidate_plan",
+    "R9_modal_orders",
+    "H8_modal_orders",
+    "H8_volume_absorption",
+    "Y6_1_recovered_bundle",
+    "Y6_1_resolved_config",
+    "Y6_1_restore_identity",
+    "Y6_1_modal_orders",
+    "Y6_1_saved_samples_metadata",
+    "Y6_1_saved_samples",
+    "Y6_1_native_summary",
+}
 V11_SEED8_IDENTITY = {
     "global_cell_id": 8,
     "lower_nm": [16.5, 5.0, -10.0],
@@ -532,6 +568,1080 @@ def _build_next_round_plan(
         ),
         "closure_or_inheritance": closure,
     }
+
+
+def _load_v16_p8_contract(path: Path) -> tuple[dict[str, Any], str]:
+    contract_path = Path(path).resolve()
+    expected_path = (ROOT / _V16_P8_CONTRACT_REL).resolve()
+    if contract_path != expected_path:
+        raise ValueError("V16 P8 requires the unique tracked experiment contract")
+    initial_contract_sha256 = _sha256_file(contract_path)
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    if (
+        not isinstance(contract, dict)
+        or contract.get("schema") != "task43.v16.r9_p8_contract.v1"
+        or contract.get("status") != "frozen_for_one_fixed_R9_P8_experiment"
+        or contract.get("authority", {}).get("review_section") != "9"
+        or contract.get("authority", {}).get("review_commit")
+        != "f72e1c8d031de7acc374f0806ddac06099c461c4"
+        or contract.get("authority", {}).get("review_sha256")
+        != "4296647040864d95c4eaf487e143daaf21beb6c6342474f81b098180d65139e4"
+        or contract.get("artifact_prefix")
+        != str(ROOT / "benchmarks/artifacts/task43/v16_p8")
+    ):
+        raise ValueError("V16 P8 contract is not the fixed review-9 experiment")
+    expected_launches = {
+        "T_main": "focused_attempt1.sh",
+        "T_recovery": "focused_recovery1.sh",
+        "S": "space_attempt1.sh",
+        "F": "R9_P8_attempt1.sh",
+        "C": "paired_comparison_attempt1.sh",
+        "E": "engineering_recovery_attempt1.sh",
+    }
+    expected_selectors = [
+        "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_real_main_writer_terminal_and_rollback",
+        "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_plan_builder_and_actual_gate",
+        "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_raw_identity_and_normal_gates",
+        "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_compare_reuses_old_samples_and_samples_p8_once",
+        "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_saved_sample_owner_and_partition_bindings",
+        "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound",
+    ]
+    expected_allowed_files = [
+        "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+        "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+        "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+        "src/test/test_task43_v11_scientific_restart.py",
+        "docs/README.md",
+        "docs/task43_hp_adaptivity/README.md",
+        "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json",
+        "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_results_v1.json",
+        "docs/task43_hp_adaptivity/response_v16.md",
+        "docs/task43_hp_adaptivity/outcomes/summary.md",
+        "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+        "docs/development_model_registry.md",
+        "docs/development_progress.md",
+    ]
+    expected_recovery_sources = {
+        "S_MAIN": {
+            "plan_path": "support/space_attempt1/plan_output/plans/v16_r9_p8.json",
+            "audit_path": "support/space_attempt1/plan_output/plans/v16_r9_p8.audit.json",
+            "bundle_path": "support/space_attempt1/plan_output/plan_audit.json",
+            "joined_terminal_path": "support/space_attempt1/v16_p8_space_joined_terminal.json",
+        },
+        "E_S": {
+            "plan_path": "support/engineering_recovery_attempt1/space/plan_output/plans/v16_r9_p8.json",
+            "audit_path": "support/engineering_recovery_attempt1/space/plan_output/plans/v16_r9_p8.audit.json",
+            "bundle_path": "support/engineering_recovery_attempt1/space/plan_output/plan_audit.json",
+            "joined_terminal_path": "support/engineering_recovery_attempt1/space/v16_p8_space_joined_terminal.json",
+        },
+    }
+    expected_threads = {
+        "OMP_NUM_THREADS": 1,
+        "OPENBLAS_NUM_THREADS": 1,
+        "MKL_NUM_THREADS": 1,
+        "BLIS_NUM_THREADS": 1,
+        "NUMEXPR_NUM_THREADS": 1,
+        "VECLIB_MAXIMUM_THREADS": 1,
+    }
+    physics = contract.get("physics", {})
+    science = contract.get("science_gates", {})
+    phases = contract.get("phases", {})
+    if (
+        contract.get("launches") != expected_launches
+        or contract.get("allowed_files") != expected_allowed_files
+        or contract.get("evidence_directory")
+        != "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_sources/"
+        or contract.get("required_T_selectors") != expected_selectors
+        or contract.get("cumulative_quota")
+        != {
+            "support_slots_max": 5,
+            "support_whole_seconds_max": 6000,
+            "formal_slots_max": 1,
+            "formal_whole_seconds_max": 7200,
+            "combined_whole_seconds_max": 13200,
+            "formal_envelope": "7/9 before this authorization; at most 8/9 after one R9_P8 invocation",
+            "sealed_slots": ["A1_R", "A2_R", "D3", "historical_last_formal_slot"],
+            "failed_invocations_count": True,
+        }
+        or contract.get("resume_policy")
+        != {
+            "allowed_choices": ["S", "F_POSTPROCESS", "C"],
+            "exactly_one_choice": True,
+            "outputs": {
+                "S": "support/engineering_recovery_attempt1/space/plan_output",
+                "F_POSTPROCESS": "support/engineering_recovery_attempt1/postprocess",
+                "C": "support/engineering_recovery_attempt1/comparison",
+            },
+            "no_directory_scan_latest": True,
+        }
+        or contract.get("recovery_sources") != expected_recovery_sources
+        or contract.get("phases", {}).get("F", {}).get("candidate_plan_sources")
+        != {
+            "S_MAIN": expected_recovery_sources["S_MAIN"]["plan_path"],
+            "E_S": expected_recovery_sources["E_S"]["plan_path"],
+        }
+        or contract.get("science_gates", {}).get("A6_relative_residual_max") != 1.0e-8
+        or contract.get("science_gates", {}).get("full_active_gram_residual_max") != 1.0e-8
+        or contract.get("science_gates", {}).get("condensed_residual_max") != 1.0e-9
+        or contract.get("science_gates", {}).get("normal_corrections_exact") != 1
+        or contract.get("science_gates", {}).get("extra_corrections_exact") != 0
+        or contract.get("science_gates", {}).get("energy_closure_abs_max") != 1.0e-5
+        or contract.get("science_gates", {}).get("J_epsilon") != 0.12716416232413652
+        or contract.get("science_gates", {}).get("G_epsilon") != 9.088158796603444e-6
+        or contract.get("phases", {}).get("T", {}).get("expanded_nodes_max") != 20
+        or contract.get("phases", {}).get("F", {}).get("root") != "formal/R9_P8_attempt1"
+        or contract.get("phases", {}).get("F", {}).get("joined_terminal_path")
+        != "formal/R9_P8_attempt1/v16_p8_endpoint_joined_terminal.json"
+        or contract.get("phases", {}).get("S", {}).get("root") != "support/space_attempt1"
+        or contract.get("phases", {}).get("C", {}).get("root") != "support/paired_comparison_attempt1"
+        or contract.get("phases", {}).get("E", {}).get("root") != "support/engineering_recovery_attempt1"
+        or phases.get("T", {}).get("work_seconds") != 270
+        or phases.get("T", {}).get("whole_seconds") != 300
+        or phases.get("S", {}).get("work_seconds") != 1740
+        or phases.get("S", {}).get("whole_seconds") != 1800
+        or phases.get("S", {}).get("rss_cap_bytes") != 8589934592
+        or phases.get("F", {}).get("work_seconds") != 6900
+        or phases.get("F", {}).get("whole_seconds") != 7200
+        or phases.get("F", {}).get("rss_cap_bytes") != 34359738368
+        or phases.get("C", {}).get("work_seconds") != 1740
+        or phases.get("C", {}).get("whole_seconds") != 1800
+        or phases.get("C", {}).get("rss_cap_bytes") != 8589934592
+        or phases.get("E", {}).get("work_seconds") != 1740
+        or phases.get("E", {}).get("whole_seconds") != 1800
+        or phases.get("E", {}).get("rss_cap_bytes") != 8589934592
+        or physics.get("phi_deg") != 90.0
+        or physics.get("wavelength_nm") != 13.5
+        or physics.get("geometry_nm") != {
+            "domain": [50.0, 50.0, 140.0],
+            "x": [16.5, 33.5],
+            "y": [15.0, 35.0],
+            "z": [0.0, 120.0],
+            "z_domain": [-10.0, 130.0],
+        }
+        or physics.get("operator_volume_q") != 15
+        or physics.get("incident_port_q") != 28
+        or physics.get("modal_count") != 612
+        or physics.get("factor_backend") != "mumps"
+        or physics.get("mpi_size") != 1
+        or physics.get("scalar_type") != "complex128"
+        or physics.get("integer_type") != "int64"
+        or physics.get("normal_corrections") != 1
+        or physics.get("extra_corrections") != 0
+        or physics.get("threads") != expected_threads
+        or science.get("A6_relative_residual_max") != 1.0e-8
+        or science.get("full_active_gram_residual_max") != 1.0e-8
+        or science.get("condensed_residual_max") != 1.0e-9
+        or science.get("normal_corrections_exact") != 1
+        or science.get("normal_residual_strict_decrease") is not True
+        or science.get("extra_corrections_exact") != 0
+        or science.get("energy_closure_abs_max") != 1.0e-5
+        or science.get("all_612_modal_values_finite") is not True
+        or science.get("J_epsilon") != 0.12716416232413652
+        or science.get("G_epsilon") != 9.088158796603444e-6
+        or science.get("fe_exclusive_bounds") != [110472, 237600]
+    ):
+        raise ValueError("V16 P8 contract changes a fixed review-9 gate, quota, path, or selector")
+    request = contract.get("request", {})
+    if (
+        contract.get("parent", {}).get("candidate_id") != "round9_p_up"
+        or request.get("candidate_id") != "v16_r9_p8"
+        or request.get("action") != "p_up"
+        or request.get("global_cell_id") != 8
+        or request.get("forest_root_id") != 4
+        or request.get("box_lower_nm") != [16.5, 5.0, -10.0]
+        or request.get("box_upper_nm") != [33.5, 10.0, 0.0]
+        or request.get("parent_degree") != 5
+        or request.get("target_degree") != 6
+        or request.get("h_refinements") != 0
+        or request.get("maximum_level") != 0
+        or request.get("fe_bounds")
+        != {"parent_exclusive_lower": 110472, "target_exclusive_upper": 237600}
+    ):
+        raise ValueError("V16 P8 contract changes the one-cell p5-to-p6 request")
+    inputs = contract.get("inputs")
+    if not isinstance(inputs, list):
+        raise ValueError("V16 P8 contract has no fixed input inventory")
+    found: dict[str, Mapping[str, Any]] = {}
+    for item in inputs:
+        if not isinstance(item, Mapping) or not isinstance(item.get("role"), str):
+            raise ValueError("V16 P8 input inventory contains a malformed entry")
+        role = str(item["role"])
+        if role in found:
+            raise ValueError(f"V16 P8 input role is repeated: {role}")
+        found[role] = item
+        rel = Path(str(item.get("path", "")))
+        if rel.is_absolute() or ".." in rel.parts:
+            raise ValueError(f"V16 P8 input path is not repository-relative: {role}")
+        input_path = (ROOT / rel).resolve()
+        digest = str(item.get("sha256", ""))
+        if (
+            len(digest) != 64
+            or not input_path.is_relative_to(ROOT)
+            or input_path.is_symlink()
+            or not input_path.is_file()
+            or _sha256_file(input_path) != digest
+        ):
+            raise ValueError(f"V16 P8 fixed input differs: {role}")
+    missing = _V16_P8_INPUT_ROLES.difference(found)
+    if missing:
+        raise ValueError(f"V16 P8 contract omits required inputs: {sorted(missing)}")
+    if set(found) != _V16_P8_INPUT_ROLES:
+        raise ValueError("V16 P8 contract input inventory contains unreviewed roles")
+    parent_selection = found["R9_selection_transition"]
+    p5_comparison_input = found["V15_P5_comparison_record"]
+    if (
+        contract.get("parent", {}).get("selection_path")
+        != parent_selection.get("path")
+        or contract.get("parent", {}).get("selection_sha256")
+        != parent_selection.get("sha256")
+        or contract.get("comparison", {}).get("old_samples", {}).get(
+            "comparison_path"
+        )
+        != p5_comparison_input.get("path")
+        or contract.get("comparison", {}).get("old_samples", {}).get(
+            "comparison_sha256"
+        )
+        != p5_comparison_input.get("sha256")
+    ):
+        raise ValueError("V16 P8 parent or P5 record path/hash is inconsistently bound")
+    p5 = json.loads(
+        (ROOT / found["V15_P5_comparison_record"]["path"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    for order in ("q8", "q10"):
+        item = found[f"V15_P5_{order}_union_npz"]
+        recorded = p5.get("saved_union_samples", {}).get(order, {})
+        if any(
+            item.get(key) != recorded.get(source_key)
+            for key, source_key in (
+                ("sha256", "sha256"),
+                ("point_sha256", "point_hash"),
+                ("weight_sha256", "weight_hash"),
+                ("rule_sha256", "rule_sha256"),
+                ("sample_count", "sample_count"),
+            )
+        ) or Path(str(recorded.get("path", ""))).resolve() != (
+            ROOT / item["path"]
+        ).resolve():
+            raise ValueError(f"V16 P8 {order} sample identity differs from P5")
+    if (
+        p5.get("status") != "COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE"
+        or p5.get("candidate_terminal_status") != "FAILED"
+        or p5.get("contract_sha256")
+        != found["V11_base_contract"]["sha256"]
+        or p5.get("candidate_primary_packet_sha256")
+        != found["H8_P4_primary_packet"]["sha256"]
+        or p5.get("candidate_terminal_sha256")
+        != found["H8_P4_partial_terminal"]["sha256"]
+    ):
+        raise ValueError("V16 P8 saved P5 comparison no longer binds the original H8 FAILED primary")
+    terminal = json.loads(
+        (ROOT / found["H8_P4_partial_terminal"]["path"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    if terminal.get("status") != "FAILED":
+        raise ValueError("V16 P8 cannot reuse a non-FAILED historical H8 terminal")
+    if (
+        p5.get("case_identities", {}).get("R9", {}).get("mesh_identity", {}).get(
+            "recorded_mesh", {}
+        ).get("plan_sha256")
+        != found["R9_candidate_plan_copy"]["sha256"]
+        or p5.get("case_identities", {}).get("R9_H8", {}).get("mesh_identity", {}).get(
+            "recorded_mesh", {}
+        ).get("plan_sha256")
+        != found["H8_P4_candidate_plan"]["sha256"]
+    ):
+        raise ValueError("V16 P8 P5 mesh identities do not bind the fixed R9/H8 plans")
+    with np.load(ROOT / found["H8_P4_primary_packet"]["path"], allow_pickle=False) as packet:
+        packet_record = json.loads(
+            np.asarray(packet["__task43_record_json__"], dtype=np.uint8).tobytes().decode("utf-8")
+        )
+    packet_identity = packet_record.get("identity", {})
+    if (
+        packet_record.get("schema") != "task43.v11.primary_state.v1"
+        or packet_record.get("official_result") is not False
+        or packet_record.get("passed") is not False
+        or packet_identity.get("phase") != "R9_H8"
+        or packet_identity.get("candidate_plan_sha256")
+        != found["H8_P4_candidate_plan"]["sha256"]
+        or packet_identity.get("contract_sha256") != found["V11_base_contract"]["sha256"]
+    ):
+        raise ValueError("V16 P8 H8 primary packet identity differs from its FAILED endpoint")
+    actual_contract_sha256 = _sha256_file(contract_path)
+    if actual_contract_sha256 != initial_contract_sha256:
+        raise RuntimeError("V16 P8 contract changed while it was being read")
+    return contract, actual_contract_sha256
+
+
+def _v16_p8_input_snapshot(contract: Mapping[str, Any]) -> dict[str, str]:
+    result: dict[str, str] = {}
+    for item in contract["inputs"]:
+        path = (ROOT / str(item["path"])).resolve()
+        actual = _sha256_file(path)
+        if actual != str(item["sha256"]):
+            raise RuntimeError(f"V16 P8 input changed: {item['role']}")
+        result[str(path)] = actual
+    contract_path = (ROOT / _V16_P8_CONTRACT_REL).resolve()
+    result[str(contract_path)] = _sha256_file(contract_path)
+    return result
+
+
+def _v16_p8_array_hash(values: np.ndarray) -> str:
+    array = np.ascontiguousarray(values)
+    digest = hashlib.sha256()
+    digest.update(array.dtype.str.encode("ascii"))
+    digest.update(json.dumps(list(array.shape)).encode("ascii"))
+    digest.update(array.view(np.uint8))
+    return digest.hexdigest()
+
+
+def _v16_p8_mesh_boxes(storage: Mapping[str, np.ndarray]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    global_ids = np.asarray(storage["mesh_owned_cell_global_ids"], dtype=np.int64)
+    coordinates = np.asarray(storage["mesh_geometry_coordinates_nm"], dtype=np.float64)
+    dofmap = np.asarray(storage["mesh_geometry_dofmap"], dtype=np.int64)
+    if (
+        global_ids.ndim != 1
+        or coordinates.ndim != 2
+        or coordinates.shape[1] != 3
+        or dofmap.shape != (global_ids.size, 8)
+        or not np.isfinite(coordinates).all()
+        or np.unique(global_ids).size != global_ids.size
+        or np.any(dofmap < 0)
+        or np.any(dofmap >= coordinates.shape[0])
+    ):
+        raise ValueError("V16 P8 saved mesh identity has an invalid cell/geometry layout")
+    vertices = coordinates[dofmap]
+    lower = vertices.min(axis=1)
+    upper = vertices.max(axis=1)
+    if np.any(upper <= lower):
+        raise ValueError("V16 P8 saved mesh contains a degenerate cell box")
+    for axis in range(3):
+        expected = np.sort(
+            np.tile(np.stack((lower[:, axis], upper[:, axis]), axis=1), 4),
+            axis=1,
+        )
+        actual = np.sort(vertices[:, :, axis], axis=1)
+        if not np.allclose(actual, expected, rtol=0.0, atol=1.0e-12):
+            raise ValueError("V16 P8 saved mesh cells are not axis-aligned hexahedra")
+    upper_bits = np.isclose(
+        vertices, upper[:, None, :], rtol=0.0, atol=1.0e-12
+    ).astype(np.int64)
+    corner_codes = sum(upper_bits[:, :, axis] << axis for axis in range(3))
+    if not np.array_equal(
+        np.sort(corner_codes, axis=1), np.tile(np.arange(8), (global_ids.size, 1))
+    ):
+        raise ValueError("V16 P8 saved mesh cells do not contain all eight box corners")
+    return global_ids, lower, upper
+
+
+def _validate_v16_saved_sample_geometry(
+    *,
+    npz_path: Path,
+    expected_record: Mapping[str, Any],
+    comparison: Mapping[str, Any],
+    mesh_roles: Mapping[str, tuple[Path, str]],
+    p4_terminal_sha256: str,
+    expected_contract_sha256: str,
+    expected_order: int,
+) -> dict[str, Any]:
+    required = {"points_nm", "weights_nm3"}
+    labels = ("R9", "R9_H8", "Y6_1")
+    required.update(
+        f"{label}_{name}"
+        for label in labels
+        for name in (
+            "E",
+            "curl_E",
+            "cell_global_ids",
+            "point_cell_local_slots",
+            "point_cell_global_ids",
+        )
+    )
+    mesh_inputs: dict[str, tuple[np.ndarray, np.ndarray, np.ndarray, Mapping[str, Any]]] = {}
+    for label, (mesh_path, prefix) in mesh_roles.items():
+        with np.load(mesh_path, allow_pickle=False) as storage:
+            selected = {
+                name: np.asarray(storage[f"{prefix}{name}"])
+                for name in (
+                    "mesh_owned_cell_global_ids",
+                    "mesh_geometry_coordinates_nm",
+                    "mesh_geometry_dofmap",
+                )
+            }
+        ids, lower, upper = _v16_p8_mesh_boxes(selected)
+        recorded = comparison["case_identities"][label]["mesh_identity"]["restored_mesh_arrays"]
+        identity_names = {
+            "mesh_owned_cell_global_ids": "mesh_owned_cell_global_ids",
+            "mesh_geometry_coordinates_nm": "mesh_geometry_coordinates_nm",
+            "mesh_geometry_dofmap": "mesh_geometry_dofmap",
+        }
+        for source_name, report_name in identity_names.items():
+            if _v16_array_identity(selected[source_name]) != recorded.get(report_name):
+                raise ValueError(f"V16 P8 {label} mesh array differs from P5 case identity")
+        mesh_inputs[label] = (ids, lower, upper, recorded)
+
+    with np.load(npz_path, allow_pickle=False) as archive:
+        keys = set(archive.files)
+        if keys != required | {"__task43_record_json__"}:
+            raise ValueError(f"V16 P8 q{expected_order} NPZ inventory differs")
+        arrays = {name: np.asarray(archive[name]) for name in sorted(required)}
+        record_bytes = np.asarray(archive["__task43_record_json__"], dtype=np.uint8).tobytes()
+    record = json.loads(record_bytes.decode("utf-8"))
+    if (
+        record.get("schema") != "task43.v11.union_comparison_samples.v1"
+        or record.get("classification") != "measured_shared_union_samples_nonofficial"
+        or record.get("official_result") is not False
+        or record.get("passed") is not False
+        or record.get("continuation_all_false") is not True
+        or set(record.get("arrays", {})) != required
+        or any(
+            _v16_array_identity(values) != record["arrays"].get(name)
+            for name, values in arrays.items()
+        )
+    ):
+        raise ValueError(f"V16 P8 q{expected_order} embedded NPZ identity differs")
+    identity = record.get("identity", {})
+    points = np.asarray(arrays["points_nm"], dtype=np.float64)
+    weights = np.asarray(arrays["weights_nm3"], dtype=np.float64)
+    count = int(expected_record["sample_count"])
+    if (
+        identity.get("quadrature_order") != expected_order
+        or identity.get("sample_count") != count
+        or count != {8: 565248, 10: 1104000}[expected_order]
+        or identity.get("candidate_id") != "v11_r9_h8"
+        or identity.get("reference_label") != "Y6_1"
+        or identity.get("p4_original_terminal_status") != "FAILED"
+        or identity.get("p4_terminal_sha256") != p4_terminal_sha256
+        or identity.get("contract_sha256") != expected_contract_sha256
+        or identity.get("partition_box_count") != 1104
+        or abs(float(identity.get("integrated_domain_volume_nm3", float("nan"))) - 350000.0)
+        > 1.0e-8
+        or points.shape != (count, 3)
+        or weights.shape != (count,)
+        or not np.isfinite(points).all()
+        or not np.isfinite(weights).all()
+        or np.any(weights <= 0.0)
+        or abs(float(np.sum(weights, dtype=np.float64)) - 350000.0) > 1.0e-8
+    ):
+        raise ValueError(f"V16 P8 q{expected_order} sample layout/domain differs")
+    points_hash = _v16_p8_array_hash(points)
+    weights_hash = _v16_p8_array_hash(weights)
+    if (
+        points_hash != expected_record.get("point_hash")
+        or weights_hash != expected_record.get("weight_hash")
+        or identity.get("rule_sha256") != expected_record.get("rule_sha256")
+        or identity.get("axis_breakpoints_nm") is None
+    ):
+        raise ValueError(f"V16 P8 q{expected_order} point/weight/rule identity differs")
+    breakpoints = identity["axis_breakpoints_nm"]
+    r9_mesh_axes = comparison["case_identities"]["R9"]["mesh_identity"]["recorded_mesh"]["axes_nm"]
+    if len(breakpoints) != 3 or any(
+        any(not np.any(np.isclose(axis, value, rtol=0.0, atol=1.0e-12)) for value in required_axis)
+        for axis, required_axis in zip(breakpoints, r9_mesh_axes, strict=True)
+    ):
+        raise ValueError(f"V16 P8 q{expected_order} partition omits an R9/P8 mesh-axis breakpoint")
+    for label in labels:
+        for field_name in ("E", "curl_E"):
+            field = np.asarray(arrays[f"{label}_{field_name}"])
+            if field.shape != (count, 3) or not np.isfinite(field).all():
+                raise ValueError(f"V16 P8 q{expected_order} {label} field array is invalid")
+        ids, lower, upper, _ = mesh_inputs[label]
+        cell_ids = np.asarray(arrays[f"{label}_cell_global_ids"], dtype=np.int64)
+        slots = np.asarray(arrays[f"{label}_point_cell_local_slots"], dtype=np.int64)
+        point_ids = np.asarray(arrays[f"{label}_point_cell_global_ids"], dtype=np.int64)
+        if (
+            not np.array_equal(cell_ids, ids)
+            or slots.shape != (count,)
+            or point_ids.shape != (count,)
+            or np.any(slots < 0)
+            or np.any(slots >= ids.size)
+            or not np.array_equal(point_ids, ids[slots])
+            or not np.all(points >= lower[slots] - 1.0e-12)
+            or not np.all(points <= upper[slots] + 1.0e-12)
+        ):
+            raise ValueError(f"V16 P8 q{expected_order} {label} owner points do not match saved cell boxes")
+    return {
+        "sample_count": count,
+        "partition_box_count": 1104,
+        "integrated_domain_volume_nm3": float(np.sum(weights, dtype=np.float64)),
+        "owner_box_checks": {label: count for label in labels},
+        "axis_breakpoints_nm": breakpoints,
+        "pass": True,
+    }
+
+
+def _validate_v16_saved_p5_geometry(contract: Mapping[str, Any]) -> dict[str, Any]:
+    found = {str(item["role"]): item for item in contract["inputs"]}
+    comparison_path = ROOT / found["V15_P5_comparison_record"]["path"]
+    comparison = json.loads(comparison_path.read_text(encoding="utf-8"))
+    if (
+        comparison.get("status") != "COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE"
+        or comparison.get("candidate_terminal_status") != "FAILED"
+        or comparison.get("official_result") is not False
+        or comparison.get("passed") is not False
+        or comparison.get("continuation_all_false") is not True
+        or comparison.get("same_physics", {}).get("domain_volume_nm3") != 350000.0
+    ):
+        raise ValueError("V16 P8 P5 comparison is not the preserved nonofficial FAILED-primary record")
+    for label, differences in comparison.get("same_physics", {}).get(
+        "maximum_absolute_differences_by_case", {}
+    ).items():
+        if label not in ("R9", "R9_H8", "Y6_1") or any(
+            float(value) != 0.0 for value in differences.values()
+        ):
+            raise ValueError("V16 P8 historical P5 cases do not share the fixed physics identity")
+    ordered_mode_hashes: set[str] = set()
+    for order in ("q8", "q10"):
+        physical_reconstruction = comparison.get("full_612_physical_reconstruction", {})
+        if set(physical_reconstruction) != {"R9", "R9_H8", "Y6_1"}:
+            raise ValueError("V16 P8 saved P5 comparison omits a full R13 case")
+        for label in ("R9", "R9_H8", "Y6_1"):
+            ratios = physical_reconstruction[label].get("recomputed_all612_power_ratios")
+            if (
+                not isinstance(ratios, list)
+                or len(ratios) != 612
+                or any(not math.isfinite(float(value)) for value in ratios)
+            ):
+                raise ValueError("V16 P8 saved P5 full R13 power inventory is incomplete")
+        for label in ("R9", "R9_H8"):
+            modal = comparison["results"][order][label]["modal_metrics"]
+            values = modal.get("individual_channel_power_ratio_absolute_differences")
+            signed = comparison["results"][order][label]["signed_observables"].get(
+                "signed_individual_channel_power_ratio_differences"
+            )
+            expected_modes = {
+                (side, m, n, pol)
+                for side in ("top", "bottom")
+                for m in range(-4, 5)
+                for n in range(-8, 9)
+                for pol in ("s", "p")
+            }
+            actual_modes = {
+                tuple(item["mode_key"])
+                for item in signed
+                if isinstance(item, Mapping) and isinstance(item.get("mode_key"), list)
+            } if isinstance(signed, list) else set()
+            if (
+                modal.get("ordered_mode_count") != 612
+                or not isinstance(values, list)
+                or len(values) != 612
+                or any(not math.isfinite(float(value)) for value in values)
+                or actual_modes != expected_modes
+                or len(signed) != 612
+                or any(
+                    not math.isfinite(float(item["candidate_minus_reference"]))
+                    for item in signed
+                )
+                or set(modal.get("boundary_amplitude_groups", {}))
+                != {"top_s", "top_p", "bottom_s", "bottom_p"}
+                or any(
+                    item.get("mode_count") != 153
+                    for item in modal["boundary_amplitude_groups"].values()
+                )
+            ):
+                raise ValueError(f"V16 P8 saved P5 {order}/{label} modal inventory differs")
+            ordered_mode_hashes.add(str(modal.get("ordered_mode_keys_sha256", "")))
+    if len(ordered_mode_hashes) != 1 or "" in ordered_mode_hashes:
+        raise ValueError("V16 P8 saved P5 modal keys do not share one ordered R13 identity")
+    modal_orders_gate = _validate_v16_saved_modal_orders(found, comparison)
+    terminal_item = found["H8_P4_partial_terminal"]
+    terminal_path = ROOT / terminal_item["path"]
+    old_contract_sha = found["V11_base_contract"]["sha256"]
+    mesh_roles = {
+        "R9": (
+            ROOT / found["R9_candidate_storage"]["path"],
+            "",
+        ),
+        "R9_H8": (
+            ROOT / found["H8_P4_primary_packet"]["path"],
+            "recovered_",
+        ),
+        "Y6_1": (
+            ROOT / found["Y6_1_recovered_bundle"]["path"],
+            "",
+        ),
+    }
+    orders = {}
+    for order in ("q8", "q10"):
+        item = found[f"V15_P5_{order}_union_npz"]
+        orders[order] = _validate_v16_saved_sample_geometry(
+            npz_path=ROOT / item["path"],
+            expected_record={
+                "sample_count": item["sample_count"],
+                "point_hash": item["point_sha256"],
+                "weight_hash": item["weight_sha256"],
+                "rule_sha256": item["rule_sha256"],
+            },
+            comparison=comparison,
+            mesh_roles=mesh_roles,
+            p4_terminal_sha256=_sha256_file(terminal_path),
+            expected_contract_sha256=old_contract_sha,
+            expected_order=int(order.removeprefix("q")),
+        )
+    return {
+        "schema": "task43.v16.saved_p5_geometry_gate.v1",
+        "classification": "measured_existing_sample_owner_box_checks_no_resampling",
+        "p4_original_status": "FAILED",
+        "q8": orders["q8"],
+        "q10": orders["q10"],
+        "shared_physics_identity": True,
+        "ordered_r13_modal_identity_sha256": next(iter(ordered_mode_hashes)),
+        "saved_modal_orders": modal_orders_gate,
+        "pass": modal_orders_gate["pass"] and all(item["pass"] for item in orders.values()),
+    }
+
+
+def _validate_v16_saved_modal_orders(
+    found: Mapping[str, Mapping[str, Any]], comparison: Mapping[str, Any]
+) -> dict[str, Any]:
+    expected_keys = [
+        [side, m, n, polarization]
+        for side in ("top", "bottom")
+        for m in range(-4, 5)
+        for n in range(-8, 9)
+        for polarization in ("s", "p")
+    ]
+    summaries: dict[str, Any] = {}
+    r9_record = json.loads(
+        (ROOT / str(found["R9_candidate_record"]["path"])).read_text(encoding="utf-8")
+    )
+    h8_absorption = json.loads(
+        (ROOT / str(found["H8_volume_absorption"]["path"])).read_text(encoding="utf-8")
+    )
+    y6_restore_identity = json.loads(
+        (ROOT / str(found["Y6_1_restore_identity"]["path"])).read_text(
+            encoding="utf-8"
+        )
+    )
+    r9_absorbed = float(r9_record["power"]["A_volume_total"])
+    h8_absorbed = float(h8_absorption["A_volume_total"])
+    y6_absorbed = float(
+        y6_restore_identity["resolved_identity"]["historical_power_diagnostic"][
+            "A_volume"
+        ]
+    )
+    if not all(math.isfinite(value) for value in (r9_absorbed, h8_absorbed, y6_absorbed)) or (
+        h8_absorption.get("method") != "volume_absorption"
+        or h8_absorption.get("status") != "ok"
+    ):
+        raise ValueError("V16 P8 historical volume-absorption evidence is incomplete")
+    for order in ("q8", "q10"):
+        r9_signed = comparison["results"][order]["R9"]["signed_observables"][
+            "aggregate_signed_candidate_minus_reference"
+        ]
+        h8_signed = comparison["results"][order]["R9_H8"]["signed_observables"][
+            "aggregate_signed_candidate_minus_reference"
+        ]
+        if (
+            not math.isclose(
+                r9_absorbed - y6_absorbed,
+                float(r9_signed["A_volume"]),
+                rel_tol=0.0,
+                abs_tol=1.0e-12,
+            )
+            or not math.isclose(
+                h8_absorbed - y6_absorbed,
+                float(h8_signed["A_volume"]),
+                rel_tol=0.0,
+                abs_tol=1.0e-12,
+            )
+        ):
+            raise ValueError("V16 P8 P5 volume absorption differs across saved historical cases")
+    for label, role in (("R9", "R9_modal_orders"), ("R9_H8", "H8_modal_orders")):
+        payload = json.loads((ROOT / str(found[role]["path"])).read_text(encoding="utf-8"))
+        rows = payload.get("orders")
+        metrics = payload.get("metrics")
+        if not isinstance(rows, list) or len(rows) != 612 or not isinstance(metrics, Mapping):
+            raise ValueError(f"V16 P8 {label} saved modal-order inventory is incomplete")
+        mode_keys = [
+            [str(row.get("side")), int(row.get("m")), int(row.get("n")), str(row.get("polarization"))]
+            for row in rows
+            if isinstance(row, Mapping)
+        ]
+        ratios = [float(row["power_ratio"]) for row in rows if isinstance(row, Mapping)]
+        if (
+            len(mode_keys) != 612
+            or mode_keys != expected_keys
+            or len({tuple(key) for key in mode_keys}) != 612
+            or any(not math.isfinite(value) or value < 0.0 for value in ratios)
+            or payload.get("boundary_amplitude_scale_policy")
+            != "boundary_magnitude_scaled_r5_v1"
+        ):
+            raise ValueError(f"V16 P8 {label} saved modal order keys or values differ")
+        reconstruction = comparison["full_612_physical_reconstruction"][label]
+        reconstructed = reconstruction.get("recomputed_all612_power_ratios")
+        reconstructed_sums = reconstruction.get("recomputed_power_sums")
+        if (
+            not isinstance(reconstructed, list)
+            or len(reconstructed) != 612
+            or not isinstance(reconstructed_sums, Mapping)
+            or len(reconstructed_sums) < 5
+        ):
+            raise ValueError(f"V16 P8 {label} P5 full-612 reconstruction is incomplete")
+        for index, (actual, recorded) in enumerate(zip(ratios, reconstructed, strict=True)):
+            if not math.isfinite(float(recorded)) or not math.isclose(
+                actual, float(recorded), rel_tol=1.0e-13, abs_tol=0.0
+            ):
+                raise ValueError(
+                    f"V16 P8 {label} modal order {index} differs from P5 full-612 reconstruction"
+                )
+        for key in ("R_total", "T_total", "R00_total", "R00_s", "R00_p"):
+            if not math.isclose(
+                float(metrics[key]),
+                float(reconstructed_sums[key]),
+                rel_tol=1.0e-13,
+                abs_tol=1.0e-15,
+            ):
+                raise ValueError(f"V16 P8 {label} {key} differs from P5 full-612 reconstruction")
+        for order in ("q8", "q10"):
+            signed = comparison["results"][order][label]["signed_observables"][
+                "signed_individual_channel_power_ratio_differences"
+            ]
+            if [item.get("mode_key") for item in signed] != expected_keys:
+                raise ValueError(f"V16 P8 {label} {order} signed modes use a different order")
+        summaries[label] = {
+            "path": str(found[role]["path"]),
+            "sha256": str(found[role]["sha256"]),
+            "mode_count": len(mode_keys),
+            "ordered_keys_match_p5": True,
+            "power_ratios_match_p5_full_612": True,
+            "aggregate_power_matches_p5": True,
+        }
+    return {
+        "schema": "task43.v16.saved_modal_orders_gate.v1",
+        "cases": summaries,
+        "volume_absorption": {
+            "R9_A_volume": r9_absorbed,
+            "H8_A_volume": h8_absorbed,
+            "Y6_A_volume_historical": y6_absorbed,
+            "Y6_source_path": str(found["Y6_1_restore_identity"]["path"]),
+            "Y6_source_sha256": str(found["Y6_1_restore_identity"]["sha256"]),
+            "H8_source_path": str(found["H8_volume_absorption"]["path"]),
+            "H8_source_sha256": str(found["H8_volume_absorption"]["sha256"]),
+        },
+        "pass": len(summaries) == 2,
+    }
+
+
+def _build_v16_p8_plan(
+    cfg,
+    *,
+    parent: dict[str, Any],
+    comm_size: int,
+    contract_sha256: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    seed_box = _V16_P8_BOX
+    root_cells_by_id = {
+        int(cell.key.root): cell for cell in parent["parent_forest"].leaves
+    }
+    parent_histogram: dict[int, int] = {}
+    for degree in parent["parent_degree_by_box"].values():
+        parent_histogram[int(degree)] = parent_histogram.get(int(degree), 0) + 1
+    if (
+        parent.get("selected_candidate_id") != "round9_p_up"
+        or int(parent.get("parent_independent_fe_dofs", -1)) != 110472
+        or len(parent["parent_forest"].root_boxes) != 180
+        or len(parent["parent_forest"].leaves) != 180
+        or set(root_cells_by_id) != set(range(180))
+        or any(
+            cell.key.level != 0 or cell.key.root not in range(180)
+            for cell in parent["parent_forest"].leaves
+        )
+        or tuple(sorted(parent["parent_forest"].root_boxes))
+        != tuple(sorted(parent["parent_forest"].leaves[i].box for i in range(180)))
+        or root_cells_by_id[4].box != seed_box
+        or parent["parent_boxes_by_global_id"].get(8) != seed_box
+        or int(parent["parent_degree_by_box"].get(seed_box, -1)) != 5
+        or parent_histogram != {5: 28, 6: 152}
+        or set(parent["parent_degree_by_box"]) != set(parent["parent_forest"].root_boxes)
+        or parent.get("parent_marked_root_boxes")
+    ):
+        raise ValueError("V16 P8 accepted R9 parent identity or cell-8 geometry differs")
+    p8_parent = dict(parent)
+    p8_parent["marked_global_cell_ids"] = [8]
+    p8_parent["marked_boxes"] = (seed_box,)
+    p8_parent["marked_global_cell_ids_sha256"] = _sha256_json([8])
+    plan, status = _build_next_round_plan(
+        cfg,
+        action="p_up",
+        candidate_id="v16_r9_p8",
+        parent=p8_parent,
+        comm_size=comm_size,
+    )
+    if plan is None or status.get("status") != "plan_built":
+        raise ValueError(f"V16 P8 p-up plan was not built: {status}")
+    candidate = plan["task43_candidate"]
+    provenance = candidate["provenance"]
+    provenance["marked_global_cell_ids_source"] = "v16_predeclared_global_cell_8_for_R9_P8_pair"
+    provenance.pop("marking_theta", None)
+    provenance.update(
+        {
+            "v16_phase": "R9_P8",
+            "v16_contract_path": str((ROOT / _V16_P8_CONTRACT_REL).resolve()),
+            "v16_contract_sha256": contract_sha256,
+            "v16_predeclared_global_cell_id": 8,
+            "v16_predeclared_box_nm": list(seed_box),
+            "v16_parent_degree": 5,
+            "v16_requested_degree": 6,
+            "v16_no_h_refinement": True,
+        }
+    )
+    requested_rows = []
+    plan_boxes: set[tuple[float, ...]] = set()
+    plan_histogram: dict[str, int] = {}
+    for row in plan["cell_interior_degrees"]:
+        box = tuple(map(float, (*row["lower"], *row["upper"])))
+        if box in plan_boxes:
+            raise ValueError("V16 P8 plan repeats a cell degree row")
+        plan_boxes.add(box)
+        before = parent["parent_degree_by_box"].get(box)
+        after = int(row["degree"])
+        if before is None:
+            raise ValueError("V16 P8 plan contains a cell outside the accepted R9 parent")
+        plan_histogram[str(after)] = plan_histogram.get(str(after), 0) + 1
+        if after != int(before):
+            requested_rows.append((box, int(before), after))
+    if plan_boxes != set(parent["parent_degree_by_box"]):
+        raise ValueError("V16 P8 plan degree rows do not cover the complete accepted R9 mesh")
+    if not requested_rows:
+        raise ValueError("V16 P8 plan omits the requested cell degree change")
+    if any(after < before or after > 6 for _, before, after in requested_rows):
+        raise ValueError("V16 P8 p-up plan has an invalid actual degree change")
+    seed_changes = [item for item in requested_rows if item[0] == seed_box]
+    if len(seed_changes) != 1 or seed_changes[0][1:] != (5, 6):
+        raise ValueError("V16 P8 plan does not raise selected global cell 8 from p5 to p6")
+    expected_forced = {
+        tuple(map(float, item["box"])): int(item["increment"])
+        for item in plan["task43_candidate"]["provenance"]["p_up_closure"]["forced_increments"]
+    }
+    observed_forced = {
+        box: after - before
+        for box, before, after in requested_rows
+        if box != seed_box
+    }
+    if observed_forced != expected_forced:
+        raise ValueError("V16 P8 actual changed degrees differ from recorded p-up closure")
+    actual_degree_changes = [
+        {
+            "box_nm": list(box),
+            "parent_degree": before,
+            "candidate_degree": after,
+        }
+        for box, before, after in requested_rows
+    ]
+    provenance["v16_actual_degree_changes"] = actual_degree_changes
+    status["v16_request"] = {
+        "global_cell_id": 8,
+        "box_nm": list(seed_box),
+        "parent_degree": 5,
+        "requested_degree": 6,
+        "h_refinements": 0,
+        "actual_degree_histogram": plan_histogram,
+        "actual_degree_changes": actual_degree_changes,
+        "closure_forced_increments": [
+            dict(item)
+            for item in plan["task43_candidate"]["provenance"]["p_up_closure"]["forced_increments"]
+        ],
+    }
+    return plan, status
+
+
+def _validate_v16_p8_audit(
+    plan: Mapping[str, Any], audit: Mapping[str, Any]
+) -> dict[str, Any]:
+    candidate = plan.get("task43_candidate", {})
+    provenance = candidate.get("provenance", {})
+    forest = audit.get("forest", {})
+    dofs = audit.get("dofs", {})
+    actual_fe = int(dofs.get("independent_active_fe_dofs", -1))
+    degrees = audit.get("degrees", {})
+    plan_histogram: dict[str, int] = {}
+    for row in plan.get("cell_interior_degrees", []):
+        degree = str(int(row["degree"]))
+        plan_histogram[degree] = plan_histogram.get(degree, 0) + 1
+    audit_histogram = {
+        str(key): int(value)
+        for key, value in degrees.get("cell_interior_histogram", {}).items()
+    }
+    actual_degree_changes = provenance.get("v16_actual_degree_changes", [])
+    checks = {
+        "candidate": candidate.get("candidate_id") == "v16_r9_p8",
+        "audit_candidate": audit.get("candidate_id") == "v16_r9_p8",
+        "action": candidate.get("action") == "p_up",
+        "audit_action": audit.get("action") == "p_up",
+        "fixed_global_cell": provenance.get("v16_predeclared_global_cell_id") == 8,
+        "fixed_box": provenance.get("v16_predeclared_box_nm") == list(_V16_P8_BOX),
+        "requested_p6": provenance.get("v16_requested_degree") == 6,
+        "no_h_roots_requested": forest.get("requested_h_root_splits") == 0,
+        "no_actual_h_split": forest.get("actual_one_level_root_splits") == 0,
+        "forest_180": forest.get("root_cell_count") == 180
+        and forest.get("actual_leaf_cell_count") == 180,
+        "no_h_closure": forest.get("forced_closure_h_splits") == 0,
+        "degree_plan": degrees.get("degree_plan_pass") is True,
+        "entity_constraints": degrees.get("entity_constraints_pass") is True,
+        "degree_histogram_matches_actual_plan": audit_histogram
+        == {
+            f"p{degree}": count for degree, count in plan_histogram.items()
+        }
+        and sum(audit_histogram.values()) == 180,
+        "positive_fe_increment": dofs.get("parent_independent_fe_dofs") == 110472
+        and dofs.get("added_independent_fe_dofs", 0) > 0
+        and actual_fe
+        == dofs.get("parent_independent_fe_dofs", 0)
+        + dofs.get("added_independent_fe_dofs", 0),
+        "fe_growth": actual_fe > 110472,
+        "fe_below_control": actual_fe < 237600,
+    }
+    return {
+        "schema": "task43.v16.r9_p8.actual-space-gate.v1",
+        "classification": "measured_actual_space_no_pde_solve",
+        "checks": checks,
+        "actual_independent_fe_dofs": actual_fe,
+        "actual_degree_histogram": {f"p{key}": value for key, value in plan_histogram.items()},
+        "actual_degree_changes": [dict(item) for item in actual_degree_changes],
+        "pass": all(checks.values()),
+    }
+
+
+def _run_v16_p8_space_plan(args, contract: Mapping[str, Any], contract_sha256: str, cfg, comm) -> None:
+    expected_selection = (ROOT / contract["parent"]["selection_path"]).resolve()
+    selection = next(
+        item for item in contract["inputs"] if item["role"] == "R9_selection_transition"
+    )
+    if _sha256_file(expected_selection) != selection["sha256"]:
+        raise ValueError("V16 P8 fixed R9 selection bytes changed")
+    if (
+        args.accepted_parent_selection_record is not None
+        or args.round_id != "round1"
+        or args.output_root.resolve() != DEFAULT_OUTPUT.resolve()
+    ):
+        raise ValueError("V16 P8 space mode accepts only its paired contract argument")
+    expected_root = (Path(contract["artifact_prefix"]) / contract["phases"]["S"]["root"]).resolve()
+    output_root = expected_root / "plan_output"
+    if not expected_root.is_dir() or expected_root.is_symlink():
+        raise ValueError("V16 P8 S root must be precreated by its frozen launch shell")
+    if output_root.exists():
+        raise FileExistsError(f"refusing to reuse V16 P8 plan output: {output_root}")
+    runtime = _check_v11_runtime_envelope(comm)
+    worker = runtime["v11_watchdog_worker_identity"]
+    _require_v11_watchdog_worker_identity(expected_identity=worker)
+    source_before = _v11_source_snapshot()
+    input_before = _v16_p8_input_snapshot(contract)
+    if input_before.get(str((ROOT / _V16_P8_CONTRACT_REL).resolve())) != contract_sha256:
+        raise RuntimeError("V16 P8 contract changed after its first read")
+    output_root.mkdir(parents=False, exist_ok=False)
+    ledger = WorkflowLedger(expected_root, Path(worker["phase_path"]))
+    ledger.set_phase("preflight")
+    ledger.marker(
+        "task43_v16_p8_space_worker_bound",
+        {
+            "worker_identity": worker,
+            "runtime_environment": runtime,
+            "contract_sha256": contract_sha256,
+            "input_sha256": input_before,
+            "source_sha256": source_before,
+            "pde_matrix_constructed": False,
+            "factorization_performed": False,
+            "solve_performed": False,
+        },
+    )
+    parent = _load_accepted_parent_state(
+        expected_selection, cfg=cfg, comm_size=comm.size
+    )
+    p5_geometry_gate = _validate_v16_saved_p5_geometry(contract)
+    write_atomic_json(
+        output_root / "saved_p5_input_gate.json",
+        {
+            "schema": "task43.v16.p8.saved-p5-input-gate.v1",
+            "classification": "measured_existing_samples_no_resampling",
+            "contract_sha256": contract_sha256,
+            "gate": p5_geometry_gate,
+            "official_result": False,
+        },
+    )
+    plan, plan_status = _build_v16_p8_plan(
+        cfg, parent=parent, comm_size=comm.size, contract_sha256=contract_sha256
+    )
+    plan_path = output_root / "plans/v16_r9_p8.json"
+    plan_path.parent.mkdir()
+    plan_path.write_text(
+        json.dumps(plan, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    write_atomic_json(
+        output_root / "pre_authority_plan_status.json",
+        {
+            "schema": "task43.v16.p8.pre-authority-plan-status.v1",
+            "classification": "measured_plan_ready_before_authority",
+            "contract_sha256": contract_sha256,
+            "plan_path": str(plan_path.resolve()),
+            "plan_sha256": _sha256_file(plan_path),
+            "plan_status": plan_status,
+            "saved_p5_input_gate_path": str(
+                (output_root / "saved_p5_input_gate.json").resolve()
+            ),
+            "saved_p5_input_gate_sha256": _sha256_file(
+                output_root / "saved_p5_input_gate.json"
+            ),
+            "official_result": False,
+        },
+    )
+    ledger.set_phase("mesh_setup")
+    audit = _audit_plan(
+        cfg,
+        plan_path=plan_path,
+        candidate_id="v16_r9_p8",
+        comm=comm,
+        parent_independent_fe_dofs=parent["parent_independent_fe_dofs"],
+    )
+    actual_gate = _validate_v16_p8_audit(plan, audit)
+    audit["plan_status"] = plan_status
+    audit["v16_contract"] = {
+        "path": str((ROOT / _V16_P8_CONTRACT_REL).resolve()),
+        "sha256": contract_sha256,
+    }
+    audit["actual_space_gate"] = actual_gate
+    audit["saved_p5_geometry_gate"] = p5_geometry_gate
+    write_atomic_json(output_root / "plans/v16_r9_p8.audit.json", audit)
+    bundle = {
+        "schema": "task43.v16.r9_p8.plan-audit-bundle.v1",
+        "classification": "measured_actual_space_no_pde_solve",
+        "candidate_id": "v16_r9_p8",
+        "plan_path": str(plan_path.resolve()),
+        "plan_sha256": _sha256_file(plan_path),
+        "audit_path": str((output_root / "plans/v16_r9_p8.audit.json").resolve()),
+        "audit_sha256": _sha256_file(output_root / "plans/v16_r9_p8.audit.json"),
+        "contract_sha256": contract_sha256,
+        "actual_space_gate": actual_gate,
+        "saved_p5_geometry_gate": p5_geometry_gate,
+        "pass": actual_gate["pass"] and p5_geometry_gate["pass"],
+        "pde_matrix_constructed": False,
+        "factorization_performed": False,
+        "solve_performed": False,
+        "official_result": False,
+    }
+    write_atomic_json(output_root / "plan_audit.json", bundle)
+    _require_v11_watchdog_worker_identity(
+        expected_identity=worker, require_unused_phase_file=False
+    )
+    source_after = _v11_source_snapshot()
+    input_after = _v16_p8_input_snapshot(contract)
+    if source_after != source_before or input_after != input_before:
+        raise RuntimeError("V16 P8 S source/input identity changed during space audit")
+    ledger.marker(
+        "task43_v16_p8_space_complete",
+        {
+            "plan_sha256": bundle["plan_sha256"],
+            "audit_sha256": bundle["audit_sha256"],
+            "actual_space_gate": actual_gate,
+            "source_sha256_end": source_after,
+            "input_sha256_end": input_after,
+        },
+    )
+    if not actual_gate["pass"] or not p5_geometry_gate["pass"]:
+        raise RuntimeError("V16 P8 actual space or saved P5 input gate failed")
 
 
 def _build_v11_seed8_plan(
@@ -1963,6 +3073,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--accepted-parent-selection-record", type=Path)
     parser.add_argument("--primary-diagnostic-contract", type=Path)
     parser.add_argument("--execution-recovery-manifest", type=Path)
+    parser.add_argument("--paired-p8-contract", type=Path)
     parser.add_argument(
         "--skip-parent-transfer",
         action="store_true",
@@ -1976,6 +3087,26 @@ def main(argv: list[str] | None = None) -> int:
     comm = MPI.COMM_WORLD
     if comm.size != 1:
         parser.error("candidate plan audit is qualified here for MPI1 only")
+    if args.paired_p8_contract is not None:
+        if (
+            args.primary_diagnostic_contract is not None
+            or args.execution_recovery_manifest is not None
+            or args.skip_parent_transfer
+        ):
+            parser.error("V16 P8 space mode uses its own contract and no transfer option")
+        try:
+            p8_contract, p8_contract_sha256 = _load_v16_p8_contract(
+                args.paired_p8_contract
+            )
+            cfg = _h100_config(
+                kind="empty_h_active_p3",
+                case_name="task43_v16_r9_p8_space_authority_mpi1",
+                geometry_profile="initial_180",
+            )
+            _run_v16_p8_space_plan(args, p8_contract, p8_contract_sha256, cfg, comm)
+        except (OSError, json.JSONDecodeError, KeyError, RuntimeError, TypeError, ValueError) as exc:
+            parser.error(f"V16 P8 space contract or authority failed: {exc}")
+        return 0
     if args.skip_parent_transfer and args.accepted_parent_selection_record is None:
         parser.error("--skip-parent-transfer requires --accepted-parent-selection-record")
     v11_contract = None

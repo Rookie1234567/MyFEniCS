@@ -1,0 +1,497 @@
+{
+  "allowed_files": [
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+    "src/test/test_task43_v11_scientific_restart.py",
+    "docs/README.md",
+    "docs/task43_hp_adaptivity/README.md",
+    "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json",
+    "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_results_v1.json",
+    "docs/task43_hp_adaptivity/response_v16.md",
+    "docs/task43_hp_adaptivity/outcomes/summary.md",
+    "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+    "docs/development_model_registry.md",
+    "docs/development_progress.md"
+  ],
+  "artifact_prefix": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8",
+  "authority": {
+    "base_execution_head": "f72e1c8d031de7acc374f0806ddac06099c461c4",
+    "branch": "task43_hp_adaptivity",
+    "canonical_repository": "/home/fenics/Projects/NN-Lab-V2",
+    "contract_sha_is_not_self_referential": true,
+    "does_not_authorize_merge_or_transition10": true,
+    "review_commit": "f72e1c8d031de7acc374f0806ddac06099c461c4",
+    "review_path": "docs/task43_hp_adaptivity/review_report_v15.md",
+    "review_section": "9",
+    "review_sha256": "4296647040864d95c4eaf487e143daaf21beb6c6342474f81b098180d65139e4",
+    "source_identity_scope": "51-source snapshot is frozen by each launch manifest; this contract binds experiment inputs only"
+  },
+  "comparison": {
+    "attempt_id": "v16_r9_p8_paired_attempt1",
+    "classifications": {
+      "hard_gate_failure": "ACTION_ENDPOINT_NOT_QUALIFIED",
+      "negative_or_tradeoff": "J_P8 > J_R9 + epsilon_J or G_P8 > G_R9 + epsilon_G",
+      "positive": "Delta_J > epsilon_J and G_P8 <= G_R9 + epsilon_G for both orders",
+      "unresolved": "Otherwise; q8/q10 label disagreement is SAMPLING_SENSITIVITY_UNRESOLVED"
+    },
+    "efficiency_interval": "I_a=[(Delta_J_a-epsilon_J)/Delta_FE_a,(Delta_J_a+epsilon_J)/Delta_FE_a]; compare only if P8 positive and G gate passes; P8 lower bound must exceed H8 upper bound at both orders.",
+    "epsilon_G": 9.088158796603444e-06,
+    "epsilon_J": 0.12716416232413652,
+    "fixed_reference": "Y6_1",
+    "mode": "R9/H8/Y6 saved P5 samples plus actual P8, same physical points and weights",
+    "old_samples": {
+      "comparison_path": "benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_comparison.json",
+      "comparison_sha256": "26c836ba9abab4ec2636c7c3467381a25b087e7b9c6e85cd655508589abe8097",
+      "q10": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_q10.npz",
+        "point_hash": "679fb3959e3be7f1d0179b65ff2dd21d9d1bf0f3a910a39dbb2fb7224bda3dfd",
+        "rule_sha256": "94d9b90c6fa3ef11811edb7f1604c9d3480750d8a101e514bff3b5a25c8d1384",
+        "sample_count": 1104000,
+        "sha256": "82d7bc676e23bea0794caf5e16b3d6c28ee02cb18c57cb59e4bfc08a55759f99",
+        "weight_hash": "9bdfb7548ed2c7c3a5dabfe6c02883118d3e15684e30ee20115cd2488e17da73"
+      },
+      "q8": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_q8.npz",
+        "point_hash": "79133226dbc3a87db3fca45aedc21318b71d81b96e504f7dad3fbd6f617781ca",
+        "rule_sha256": "177037524abe59e7712d7b6803b975242e8b6208466c8df0a57cf43828f80bb5",
+        "sample_count": 565248,
+        "sha256": "7286c09d6b3f3bb3a7ece1cd46284a9a5faafd6ebbcb213e2568b6a32ed1119e",
+        "weight_hash": "00e92e61b9f4ae1b3ab2cc57cad2f9e678072257b5ae75c5eef3ecebf7ee319d"
+      }
+    },
+    "output_root": "support/paired_comparison_attempt1/comparison"
+  },
+  "cumulative_quota": {
+    "combined_whole_seconds_max": 13200,
+    "failed_invocations_count": true,
+    "formal_envelope": "7/9 before this authorization; at most 8/9 after one R9_P8 invocation",
+    "formal_slots_max": 1,
+    "formal_whole_seconds_max": 7200,
+    "sealed_slots": [
+      "A1_R",
+      "A2_R",
+      "D3",
+      "historical_last_formal_slot"
+    ],
+    "support_slots_max": 5,
+    "support_whole_seconds_max": 6000
+  },
+  "inputs": [
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/candidate_plan.json",
+      "role": "H8_P4_candidate_plan",
+      "sha256": "f26dc8a9c4a0c6d4aed7d9767477e142e57dadb69db39a437bb05b9bed701688"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/task43_v11_partial_terminal.json",
+      "role": "H8_P4_partial_terminal",
+      "sha256": "613a455c2f4443aa1a711e3f1a82f050d48b8d6e8060969edfef7075e0fcb7aa"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/pre_validation_checkpoint.npz",
+      "role": "H8_P4_prevalidation_checkpoint",
+      "sha256": "4fd313f966cf3787cfe76e15d42eb0c52e9a91a425f4169f2ff5105b0172de62"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/primary_state.npz",
+      "role": "H8_P4_primary_packet",
+      "sha256": "a337b20719fe8e255acf0f6fe7ebd4c8a81f88856eb961f07c5dc962829526a0"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json",
+      "role": "H8_modal_orders",
+      "sha256": "cd035508492b0f65798afc669db4e9f93516608d965612f6650ab327d83d8ed3"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/solve/volume_absorption.json",
+      "role": "H8_volume_absorption",
+      "sha256": "63fad5942ada7021ce18c4394ec557dc2133c4e19136da2741fb2bcfbe2657cb"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/plan_output/plans/round9_p_up.json",
+      "role": "R9_authority_plan",
+      "sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_plan.json",
+      "role": "R9_candidate_plan_copy",
+      "sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/task43_round1_candidate_record.json",
+      "role": "R9_candidate_record",
+      "sha256": "5b6454d4234cf254536f1c1d4263c3e804ed508cdc644614649b592e818027ea"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+      "role": "R9_candidate_storage",
+      "sha256": "7a71623b15afea662956ecd6af89b1d08701631174d1a048d5320e7a3217b893"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/solve/dtn_port_diffraction_orders_3d.json",
+      "role": "R9_modal_orders",
+      "sha256": "443bd3683027534b349903fc11c97ef21a69fb3982d1bc70fd47781fed28be0e"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round9_p_up_attempt1/candidate_comparison_v2.json",
+      "role": "R9_comparison",
+      "sha256": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+      "role": "R9_selection_transition",
+      "sha256": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+      "role": "V11_base_contract",
+      "sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_comparison.json",
+      "role": "V15_P5_comparison_record",
+      "sha256": "26c836ba9abab4ec2636c7c3467381a25b087e7b9c6e85cd655508589abe8097"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_q10.npz",
+      "point_sha256": "679fb3959e3be7f1d0179b65ff2dd21d9d1bf0f3a910a39dbb2fb7224bda3dfd",
+      "role": "V15_P5_q10_union_npz",
+      "rule_sha256": "94d9b90c6fa3ef11811edb7f1604c9d3480750d8a101e514bff3b5a25c8d1384",
+      "sample_count": 1104000,
+      "sha256": "82d7bc676e23bea0794caf5e16b3d6c28ee02cb18c57cb59e4bfc08a55759f99",
+      "weight_sha256": "9bdfb7548ed2c7c3a5dabfe6c02883118d3e15684e30ee20115cd2488e17da73"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_q8.npz",
+      "point_sha256": "79133226dbc3a87db3fca45aedc21318b71d81b96e504f7dad3fbd6f617781ca",
+      "role": "V15_P5_q8_union_npz",
+      "rule_sha256": "177037524abe59e7712d7b6803b975242e8b6208466c8df0a57cf43828f80bb5",
+      "sample_count": 565248,
+      "sha256": "7286c09d6b3f3bb3a7ece1cd46284a9a5faafd6ebbcb213e2568b6a32ed1119e",
+      "weight_sha256": "00e92e61b9f4ae1b3ab2cc57cad2f9e678072257b5ae75c5eef3ecebf7ee319d"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/dtn_port_diffraction_orders_3d.json",
+      "role": "Y6_1_modal_orders",
+      "sha256": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/p6_condensed_direct_summary.json",
+      "role": "Y6_1_native_summary",
+      "sha256": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/recovered_reference_bundle.npz",
+      "role": "Y6_1_recovered_bundle",
+      "sha256": "6c244fae7e246c171cef1f66ae3f1d607622c89da1f9cd4474e55908bfd6b6d4"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/resolved_config.json",
+      "role": "Y6_1_resolved_config",
+      "sha256": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/restore_identity_record.json",
+      "role": "Y6_1_restore_identity",
+      "sha256": "ef77da1e68136e08b48dc0e352690f9c9fdcd132dcc2b765dcb12413b7cf3300"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/full3d_reference_samples.npz",
+      "role": "Y6_1_saved_samples",
+      "sha256": "2735c75f4a2fa559ae2ba79022e0af6b5b27b892f0d8f8df2fef20127c9bce04"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/full3d_reference_samples.json",
+      "role": "Y6_1_saved_samples_metadata",
+      "sha256": "dc6df754f565d3af41c8d561904c75dfd3667299a405b1c57d2a2804c9786fe3"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+      "role": "frozen_acceptance_contract",
+      "sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/comparison_contract_v1.json",
+      "role": "frozen_comparison_contract",
+      "sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/reference_comparison/attempt2/reference_calibration_v1.json",
+      "role": "reference_calibration",
+      "sha256": "d3b0d0660f419357bf05ad74282fadfb853027a54ecdb4b9f3586547c8c1e61b"
+    }
+  ],
+  "launch_policy": {
+    "T_outer": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/launch/focused_attempt1.sh",
+    "cache": "No cache-policy changes or cache flag; no warming/clearing.",
+    "stages": "Only exact review9.7 roots and shell names; root owner releases each later stage.",
+    "watchdog": "Reuse existing subreaper watchdog, strace -D affinity tracing, phase ledger, task resource gate and direct-parent worker identity. No subprocess pytest/worker for E."
+  },
+  "launches": {
+    "C": "paired_comparison_attempt1.sh",
+    "E": "engineering_recovery_attempt1.sh",
+    "F": "R9_P8_attempt1.sh",
+    "S": "space_attempt1.sh",
+    "T_main": "focused_attempt1.sh",
+    "T_recovery": "focused_recovery1.sh"
+  },
+  "not_authorized": [
+    "A1/A2 q retry, A1_R, A2_R, general B/C, second seed, p7, h+p, fresh baseline, q/port scan, transition10, iteration, merge",
+    "changing tolerances, equations, solver/cache policy, shared core, activation or ABI"
+  ],
+  "parent": {
+    "candidate_id": "round9_p_up",
+    "degree_histogram": {
+      "p5": 28,
+      "p6": 152
+    },
+    "independent_fe_dofs": 110472,
+    "leaves": 180,
+    "root_cells": 180,
+    "selection_path": "docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+    "selection_sha256": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9"
+  },
+  "phases": {
+    "C": {
+      "launch": "paired_comparison_attempt1.sh",
+      "old_p5_fields_resampled": false,
+      "orders": [
+        8,
+        10
+      ],
+      "p8_samples_per_order": 1,
+      "reference": "Y6_1",
+      "root": "support/paired_comparison_attempt1",
+      "rss_cap_bytes": 8589934592,
+      "whole_seconds": 1800,
+      "work_seconds": 1740
+    },
+    "E": {
+      "attempts_max": 1,
+      "launch": "engineering_recovery_attempt1.sh",
+      "mutually_exclusive_resume_outputs": {
+        "C": "support/engineering_recovery_attempt1/comparison",
+        "F_POSTPROCESS": "support/engineering_recovery_attempt1/postprocess",
+        "S": "support/engineering_recovery_attempt1/space/plan_output"
+      },
+      "pde": false,
+      "pde_matrix_factor_solve_forbidden": true,
+      "requires_same_worker_and_original_failed_product_binding": true,
+      "resume_choices": [
+        "S",
+        "F_POSTPROCESS",
+        "C"
+      ],
+      "root": "support/engineering_recovery_attempt1",
+      "rss_cap_bytes": 8589934592,
+      "same_worker": true,
+      "whole_seconds": 1800,
+      "work_seconds": 1740
+    },
+    "F": {
+      "attempts_max": 1,
+      "candidate_id": "v16_r9_p8",
+      "candidate_plan_source_choices": [
+        "S_MAIN",
+        "E_S"
+      ],
+      "candidate_plan_sources": {
+        "E_S": "support/engineering_recovery_attempt1/space/plan_output/plans/v16_r9_p8.json",
+        "S_MAIN": "support/space_attempt1/plan_output/plans/v16_r9_p8.json"
+      },
+      "launch": "R9_P8_attempt1.sh",
+      "joined_terminal_path": "formal/R9_P8_attempt1/v16_p8_endpoint_joined_terminal.json",
+      "phase": "R9_P8",
+      "root": "formal/R9_P8_attempt1",
+      "rss_cap_bytes": 34359738368,
+      "whole_seconds": 7200,
+      "work_seconds": 6900
+    },
+    "S": {
+      "audit_path": "support/space_attempt1/plan_output/plans/v16_r9_p8.audit.json",
+      "bundle_path": "support/space_attempt1/plan_output/plan_audit.json",
+      "factorization": false,
+      "joined_terminal_path": "support/space_attempt1/v16_p8_space_joined_terminal.json",
+      "launch": "space_attempt1.sh",
+      "pde_matrix": false,
+      "plan_path": "support/space_attempt1/plan_output/plans/v16_r9_p8.json",
+      "root": "support/space_attempt1",
+      "rss_cap_bytes": 8589934592,
+      "solve": false,
+      "whole_seconds": 1800,
+      "work_seconds": 1740,
+      "worker_argv": [
+        "python",
+        "-u",
+        "-m",
+        "benchmarks.task43_hp_adaptivity.round1_candidates",
+        "--paired-p8-contract",
+        "<fixed-contract>"
+      ]
+    },
+    "T": {
+      "attempts_max": 2,
+      "expanded_nodes_max": 20,
+      "launch_main": "focused_attempt1.sh",
+      "launch_recovery": "focused_recovery1.sh",
+      "main_root": "support/focused_attempt1",
+      "pytest_worker_count": 1,
+      "recovery_root": "support/focused_recovery1",
+      "rss_cap_bytes": 8589934592,
+      "selectors": [
+        "test_v16_p8_real_main_writer_terminal_and_rollback",
+        "test_v16_p8_plan_builder_and_actual_gate",
+        "test_v16_p8_raw_identity_and_normal_gates",
+        "test_v16_p8_compare_reuses_old_samples_and_samples_p8_once",
+        "test_v16_p8_saved_sample_owner_and_partition_bindings",
+        "test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound"
+      ],
+      "whole_seconds": 300,
+      "work_seconds": 270
+    }
+  },
+  "physics": {
+    "absorption": "Use the actual frozen R9 volume absorption rule; record actual form metadata. Do not substitute the A1 q19 rule.",
+    "activation": "scripts/activate_task40_phi90_pord64.sh",
+    "extra_corrections": 0,
+    "factor_backend": "mumps",
+    "geometry_nm": {
+      "domain": [
+        50.0,
+        50.0,
+        140.0
+      ],
+      "x": [
+        16.5,
+        33.5
+      ],
+      "y": [
+        15.0,
+        35.0
+      ],
+      "z": [
+        0.0,
+        120.0
+      ],
+      "z_domain": [
+        -10.0,
+        130.0
+      ]
+    },
+    "incident_port_q": 28,
+    "integer_type": "int64",
+    "modal_count": 612,
+    "modal_inventory": "R13",
+    "mpi_size": 1,
+    "normal_corrections": 1,
+    "operator_volume_q": 15,
+    "phi_deg": 90.0,
+    "scalar_type": "complex128",
+    "threads": {
+      "BLIS_NUM_THREADS": 1,
+      "MKL_NUM_THREADS": 1,
+      "NUMEXPR_NUM_THREADS": 1,
+      "OMP_NUM_THREADS": 1,
+      "OPENBLAS_NUM_THREADS": 1,
+      "VECLIB_MAXIMUM_THREADS": 1
+    },
+    "wavelength_nm": 13.5,
+    "worker_affinity_cpu_list": [
+      1
+    ],
+    "worker_local_environment": {
+      "HWLOC_COMPONENTS": "-x86",
+      "OMPI_MCA_pml": "ob1"
+    }
+  },
+  "recovery_sources": {
+    "E_S": {
+      "audit_path": "support/engineering_recovery_attempt1/space/plan_output/plans/v16_r9_p8.audit.json",
+      "bundle_path": "support/engineering_recovery_attempt1/space/plan_output/plan_audit.json",
+      "joined_terminal_path": "support/engineering_recovery_attempt1/space/v16_p8_space_joined_terminal.json",
+      "plan_path": "support/engineering_recovery_attempt1/space/plan_output/plans/v16_r9_p8.json"
+    },
+    "S_MAIN": {
+      "audit_path": "support/space_attempt1/plan_output/plans/v16_r9_p8.audit.json",
+      "bundle_path": "support/space_attempt1/plan_output/plan_audit.json",
+      "joined_terminal_path": "support/space_attempt1/v16_p8_space_joined_terminal.json",
+      "plan_path": "support/space_attempt1/plan_output/plans/v16_r9_p8.json"
+    }
+  },
+  "request": {
+    "action": "p_up",
+    "box_lower_nm": [
+      16.5,
+      5.0,
+      -10.0
+    ],
+    "box_upper_nm": [
+      33.5,
+      10.0,
+      0.0
+    ],
+    "candidate_id": "v16_r9_p8",
+    "expected_single_cell_interior_increment": 210,
+    "fe_bounds": {
+      "parent_exclusive_lower": 110472,
+      "target_exclusive_upper": 237600
+    },
+    "forced_closure": "Use actual existing p-up entity/Floquet closure; report every forced degree change. Do not force the H8 material root34 into this p action.",
+    "forest_root_id": 4,
+    "global_cell_id": 8,
+    "h_refinements": 0,
+    "maximum_level": 0,
+    "parent_degree": 5,
+    "target_degree": 6
+  },
+  "required_T_selectors": [
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_real_main_writer_terminal_and_rollback",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_plan_builder_and_actual_gate",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_raw_identity_and_normal_gates",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_compare_reuses_old_samples_and_samples_p8_once",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_saved_sample_owner_and_partition_bindings",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound"
+  ],
+  "resume_policy": {
+    "allowed_choices": [
+      "S",
+      "F_POSTPROCESS",
+      "C"
+    ],
+    "exactly_one_choice": true,
+    "no_directory_scan_latest": true,
+    "outputs": {
+      "C": "support/engineering_recovery_attempt1/comparison",
+      "F_POSTPROCESS": "support/engineering_recovery_attempt1/postprocess",
+      "S": "support/engineering_recovery_attempt1/space/plan_output"
+    }
+  },
+  "schema": "task43.v16.r9_p8_contract.v1",
+  "science_gates": {
+    "A6_relative_residual_max": 1e-08,
+    "G_epsilon": 9.088158796603444e-06,
+    "J_epsilon": 0.12716416232413652,
+    "all_612_modal_values_finite": true,
+    "classification_rules": {
+      "any_hard_gate_failure": "ACTION_ENDPOINT_NOT_QUALIFIED",
+      "negative_or_tradeoff": "J_P8 > J_R9 + epsilon_J or G_P8 > G_R9 + epsilon_G",
+      "otherwise": "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE",
+      "positive": "Delta_J > epsilon_J and G_P8 <= G_R9 + epsilon_G at both q8/q10",
+      "q8_q10_disagree": "SAMPLING_SENSITIVITY_UNRESOLVED"
+    },
+    "condensed_residual_max": 1e-09,
+    "efficiency_interval": "I_a=[(Delta_J_a-epsilon_J)/Delta_FE_a,(Delta_J_a+epsilon_J)/Delta_FE_a]; only compare when P8 positive and G gate passes; require both q orders lower(P8)>upper(H8)",
+    "energy_closure_abs_max": 1e-05,
+    "extra_corrections_exact": 0,
+    "fe_exclusive_bounds": [
+      110472,
+      237600
+    ],
+    "full_active_gram_residual_max": 1e-08,
+    "normal_corrections_exact": 1,
+    "normal_residual_strict_decrease": true
+  },
+  "status": "frozen_for_one_fixed_R9_P8_experiment",
+  "evidence_directory": "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_sources/"
+}

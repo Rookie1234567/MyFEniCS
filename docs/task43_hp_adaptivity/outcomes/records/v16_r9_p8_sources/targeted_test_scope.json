@@ -1,0 +1,36 @@
+{
+  "schema": "task43.v16.frozen-targeted-selectors.v1",
+  "created_utc": "2026-10-27T08:08:10.318704+00:00",
+  "selectors": [
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_real_main_writer_terminal_and_rollback",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_plan_builder_and_actual_gate",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_raw_identity_and_normal_gates",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_compare_reuses_old_samples_and_samples_p8_once",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_saved_sample_owner_and_partition_bindings",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound"
+  ],
+  "expanded_nodes": [
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_real_main_writer_terminal_and_rollback",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_plan_builder_and_actual_gate",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_raw_identity_and_normal_gates[valid_disk_reader]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_raw_identity_and_normal_gates[raw_residual_sign]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_raw_identity_and_normal_gates[rebound_coefficient_mixture]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_raw_identity_and_normal_gates[rebound_mesh_index_mixture]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_raw_identity_and_normal_gates[nonzero_terminal]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_raw_identity_and_normal_gates[unknown_terminal]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_raw_identity_and_normal_gates[missing_source_selector]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_raw_identity_and_normal_gates[missing_contract]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_raw_identity_and_normal_gates[missing_plan]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_compare_reuses_old_samples_and_samples_p8_once[paired_success]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_compare_reuses_old_samples_and_samples_p8_once[q10_failure_keeps_q8]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_compare_reuses_old_samples_and_samples_p8_once[input_drift_keeps_outputs]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_compare_reuses_old_samples_and_samples_p8_once[binding_drift_keeps_outputs]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_compare_reuses_old_samples_and_samples_p8_once[joined_terminal_rejected]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_saved_sample_owner_and_partition_bindings",
+    "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound"
+  ],
+  "count": 18,
+  "test_sha256": "6fa8f1c85d8352a789b1b9c3faea90388b6375ff0635994d212467181e9aad87",
+  "validation": "AST-only; no pytest collection or native import; actual nodes NOT_RUN",
+  "fixture_limits": "Synthetic mesh/solver boundaries; C fixture exercises real orchestration and persistence but uses fixed metric fixtures, not new scientific validation."
+}

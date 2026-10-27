@@ -150,6 +150,11 @@ _V15_USER_AUTHORIZATION_SHA256 = (
 )
 _V15_BASE_DELIVERY_SHA = "12c7d4b2d35d033defead807e3e4c5d3407dc85f"
 _V15_REVIEW_SHA = "37f3376be410657fbaec86b0412086745419c506"
+_V16_P8_CONTRACT_REL = Path(
+    "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json"
+)
+_V16_P8_REVIEW_COMMIT = "f72e1c8d031de7acc374f0806ddac06099c461c4"
+_V16_P8_REVIEW_SHA256 = "4296647040864d95c4eaf487e143daaf21beb6c6342474f81b098180d65139e4"
 _V15_OLD_MANIFEST_SHA256 = "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734"
 _V15_P2_SOURCE_ID = "P2_BUGFIX"
 _V12_REVIEW_COMMIT_SHA256 = "cd4112a0079aba28e9ce1513b58a1b9a51fd6938"
@@ -827,6 +832,8 @@ def _v11_primary_raw_vector_reference(
     *,
     run_root: Path,
     packet_record: Mapping[str, Any],
+    packet_key_prefix: str = "full_active_",
+    storage_label: str = "task43.v11.primary_state.npz",
 ) -> dict[str, Any]:
     """Replace large summary arrays by the already persisted primary-packet identity."""
 
@@ -844,7 +851,7 @@ def _v11_primary_raw_vector_reference(
     for name, values in raw_vectors.items():
         if not isinstance(values, np.ndarray):
             raise TypeError(f"V11 P4 raw summary vector {name} is not an ndarray")
-        packet_key = f"full_active_{name}"
+        packet_key = f"{packet_key_prefix}{name}"
         declared = packet_arrays.get(packet_key)
         actual = _array_identity(values)
         if not isinstance(declared, Mapping) or any(
@@ -862,7 +869,7 @@ def _v11_primary_raw_vector_reference(
     if not array_references:
         raise ValueError("V11 P4 raw summary vector set is empty")
     return {
-        "storage": "task43.v11.primary_state.npz",
+        "storage": storage_label,
         "path": str(packet_path),
         "sha256": str(packet_record["npz_sha256"]),
         "arrays": array_references,
@@ -875,10 +882,11 @@ def _v11_primary_case_output_serialization(
     *,
     primary_phase: str | None,
     captured: dict[str, Any],
+    v16_p8: bool = False,
 ):
-    """Keep the shared writer but bind V11 P4 raw arrays to its saved NPZ packet."""
+    """Keep the shared writer and bind primary raw arrays to their saved packet."""
 
-    if primary_phase != "R9_H8":
+    if primary_phase != "R9_H8" and not (v16_p8 and primary_phase == "R9_P8"):
         yield
         return
     original_writer = _common_3d_case_flow._write_case_outputs
@@ -887,9 +895,10 @@ def _v11_primary_case_output_serialization(
     def write_v11_safe_case_outputs(out_dir, summary, log_lines, comm):
         if Path(out_dir).resolve() != expected_solve_root:
             return original_writer(out_dir, summary, log_lines, comm)
-        packet_record = captured.get("v11_primary_packet")
+        packet_key = "v16_p8_primary_packet" if v16_p8 else "v11_primary_packet"
+        packet_record = captured.get(packet_key)
         if not isinstance(packet_record, Mapping):
-            raise ValueError("V11 P4 shared summary write preceded its primary packet")
+            raise ValueError("primary shared summary write preceded its raw packet")
         replacements = 0
         replacement_cache: dict[int, dict[str, Any]] = {}
 
@@ -907,6 +916,11 @@ def _v11_primary_case_output_serialization(
                                 item,
                                 run_root=run_root,
                                 packet_record=packet_record,
+                                storage_label=(
+                                    "task43.v16.p8.primary_state.npz"
+                                    if v16_p8
+                                    else "task43.v11.primary_state.npz"
+                                ),
                             )
                             replacement_cache[id(item)] = reference
                         replacements += 1
@@ -922,8 +936,12 @@ def _v11_primary_case_output_serialization(
 
         safe_summary = safe_summary_copy(summary)
         if replacements == 0:
-            raise ValueError("V11 P4 shared summary did not expose the expected raw_vectors")
-        captured["v11_primary_json_safe_solver_summary"] = safe_summary
+            raise ValueError("primary shared summary did not expose the expected raw_vectors")
+        captured[
+            "v16_p8_json_safe_solver_summary"
+            if v16_p8
+            else "v11_primary_json_safe_solver_summary"
+        ] = safe_summary
         return original_writer(out_dir, safe_summary, log_lines, comm)
 
     _common_3d_case_flow._write_case_outputs = write_v11_safe_case_outputs
@@ -931,6 +949,310 @@ def _v11_primary_case_output_serialization(
         yield
     finally:
         _common_3d_case_flow._write_case_outputs = original_writer
+
+
+def _configure_v16_p8_endpoint(cfg, contract: Mapping[str, Any]) -> dict[str, Any]:
+    physics = contract["physics"]
+    cfg.stage4_volume_quadrature_degree = int(physics["operator_volume_q"])
+    cfg.stage4_incident_quadrature_degree = int(physics["incident_port_q"])
+    cfg.stage4_dtn_quadrature_degree = int(physics["incident_port_q"])
+    cfg.stage4_dtn_order_policy = "explicit_rectangle"
+    cfg.stage4_dtn_rectangle_max_m = 4
+    cfg.stage4_dtn_rectangle_max_n = 8
+    if (
+        cfg.stage4_volume_quadrature_degree != 15
+        or cfg.stage4_incident_quadrature_degree != 28
+        or cfg.stage4_dtn_quadrature_degree != 28
+        or cfg.stage4_dtn_order_policy != "explicit_rectangle"
+        or cfg.stage4_dtn_rectangle_max_m != 4
+        or cfg.stage4_dtn_rectangle_max_n != 8
+    ):
+        raise ValueError("V16 R9_P8 actual quadrature/modal controls differ from contract")
+    return {
+        "phase": "R9_P8",
+        "volume_quadrature_degree": int(cfg.stage4_volume_quadrature_degree),
+        "incident_and_port_quadrature_degree": int(cfg.stage4_dtn_quadrature_degree),
+        "modal_rectangle": {"max_abs_m": 4, "max_abs_n": 8, "count": 612},
+        "normal_correction_count": int(physics["normal_corrections"]),
+        "extra_correction_count": int(physics["extra_corrections"]),
+        "volume_rule_source": "frozen accepted-R9 physics contract; actual form metadata captured at use",
+    }
+
+
+def _v16_p8_endpoint_identity(
+    cfg,
+    modes,
+    *,
+    axes_nm: Mapping[str, Any],
+    candidate_plan_sha256: str,
+    active_degree_plan_sha256: str,
+    independent_active_fe_dofs: int,
+    contract_sha256: str,
+) -> dict[str, Any]:
+    mode_inventory = [_mode_identity(mode) for mode in modes]
+    mode_keys = [
+        [item["side"], item["m"], item["n"], item["polarization"]]
+        for item in mode_inventory
+    ]
+    if len(mode_keys) != 612 or {
+        (item[0], item[1], item[2], item[3]) for item in mode_keys
+    } != R13_MODE_KEYS:
+        raise ValueError("V16 R9_P8 live endpoint does not contain the exact R13 modes")
+    physical = task43_v2_physical_configuration_identity(
+        cfg.as_jsonable(),
+        axis_values_nm=dict(axes_nm),
+        candidate_plan_sha256=candidate_plan_sha256,
+        active_degree_plan_sha256=active_degree_plan_sha256,
+    )
+    controls = {
+        "phase": "R9_P8",
+        "quadrature_degree": {
+            "volume": int(cfg.stage4_volume_quadrature_degree),
+            "incident": int(cfg.stage4_incident_quadrature_degree),
+            "ports": int(cfg.stage4_dtn_quadrature_degree),
+        },
+        "A_volume_resolved_rule": {
+            "degree": int(cfg.stage4_volume_quadrature_degree),
+            "quadrature_rule": str(
+                getattr(cfg, "stage4_volume_quadrature_rule", "default")
+            ),
+            "form_metadata_sources": [
+                "src/solvers/common_3d_forms.py",
+                "src/postprocessing/rta_3d.py",
+            ],
+        },
+        "modal_selection": {
+            "policy": str(cfg.stage4_dtn_order_policy),
+            "max_abs_m": int(cfg.stage4_dtn_rectangle_max_m),
+            "max_abs_n": int(cfg.stage4_dtn_rectangle_max_n),
+            "count": len(mode_inventory),
+            "ordered_keys_sha256": _sha256_json(mode_keys),
+            "mode_inventory_sha256": _sha256_json(mode_inventory),
+        },
+        "candidate_plan_sha256": candidate_plan_sha256,
+        "active_degree_plan_sha256": active_degree_plan_sha256,
+        "independent_active_fe_dofs": int(independent_active_fe_dofs),
+        "assembly_backend": str(cfg.stage4_full3d_assembly_backend),
+        "factor_solver": str(
+            dict(cfg.petsc_extra_options or {}).get(
+                "pc_factor_mat_solver_type", ""
+            )
+        ),
+        "normal_correction_count": 1,
+        "extra_correction_count": 0,
+    }
+    return {
+        "schema": "task43.v16.p8.endpoint-identity.v1",
+        "contract_sha256": contract_sha256,
+        "physical_configuration": physical,
+        "numerical_controls": controls,
+        "numerical_controls_sha256": _sha256_json(controls),
+        "actual_cfg": cfg.as_jsonable(),
+    }
+
+
+def _persist_v16_p8_raw_gate_before_postprocessing(
+    run_root: Path, *, audit: Mapping[str, Any], identity: Mapping[str, Any]
+) -> dict[str, Any]:
+    record = {
+        "schema": "task43.v16.p8.primary-raw-gate-checkpoint.v1",
+        "classification": "measured_R9_P8_raw_gate_before_field_postprocessing",
+        "identity": dict(identity),
+        "audit": dict(audit),
+        "gates": dict(audit.get("gates", {})),
+        "pass": audit.get("pass") is True,
+        "official_result": False,
+        "passed": False,
+    }
+    path = Path(run_root) / "primary_raw_vector_audit.json"
+    checkpoint = write_atomic_json(path, record)
+    if record["pass"] is not True:
+        raise RuntimeError(
+            f"V16 R9_P8 raw residual gates failed; preserved {checkpoint['path']}"
+        )
+    return checkpoint
+
+
+def _write_v16_p8_partial_terminal(
+    run_root: Path,
+    *,
+    source_identity: Mapping[str, Any],
+    captured: Mapping[str, Any],
+    candidate_identity: Mapping[str, Any] | None,
+    contract_binding: Mapping[str, Any],
+    error: BaseException,
+) -> dict[str, Any]:
+    path = Path(run_root) / "task43_v16_p8_partial_terminal.json"
+    if path.is_file():
+        return {"path": str(path), "sha256": _sha256_file(path)}
+    record = {
+        "schema": "task43.v16.p8.partial-terminal.v1",
+        "phase": "R9_P8",
+        "status": "FAILED" if captured.get("v16_p8_primary_packet") else "INCOMPLETE",
+        "classification": "measured_or_partial_nonofficial_R9_P8",
+        "error": f"{type(error).__name__}: {error}",
+        "source_identity": dict(source_identity),
+        "contract_binding": dict(contract_binding),
+        "candidate_identity": (
+            dict(candidate_identity) if isinstance(candidate_identity, Mapping) else None
+        ),
+        "primary_packet": captured.get("v16_p8_primary_packet"),
+        "primary_raw_vector_audit": captured.get("v16_p8_raw_gate_audit"),
+        "primary_raw_vector_audit_checkpoint": captured.get(
+            "v16_p8_raw_gate_checkpoint"
+        ),
+        "endpoint_identity": captured.get("v16_p8_endpoint_identity"),
+        "official_result": False,
+        "passed": False,
+        "selection_eligible": False,
+        "selection_candidate": False,
+        "candidate_selected": False,
+        "continuation_all_false": True,
+    }
+    terminal = write_atomic_json(path, record)
+    summary_path = Path(run_root) / "solve/run_summary.json"
+    if summary_path.is_file():
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        if isinstance(summary, dict):
+            summary["legacy_solver_reported_official_result"] = summary.get(
+                "legacy_solver_reported_official_result", summary.get("official_result")
+            )
+            summary["official_result"] = False
+            summary["diagnostic_only"] = True
+            summary["task43_v16_p8_failure_terminal_path"] = str(path.resolve())
+            write_atomic_json(summary_path, summary, refuse_overwrite=False)
+    endpoint_path = Path(run_root) / "task43_round1_candidate_record.json"
+    if endpoint_path.is_file():
+        endpoint = json.loads(endpoint_path.read_text(encoding="utf-8"))
+        if isinstance(endpoint, dict):
+            endpoint["legacy_pre_demote_status"] = endpoint.get("status")
+            endpoint.update(
+                {
+                    "status": "FAILED_OR_INCOMPLETE",
+                    "classification": "partial_nonofficial_v16_p8_endpoint",
+                    "official_result": False,
+                    "pass": False,
+                    "selection_eligible": False,
+                    "selection_candidate": False,
+                    "candidate_selected": False,
+                    "continuation_all_false": True,
+                }
+            )
+            write_atomic_json(endpoint_path, endpoint, refuse_overwrite=False)
+    return terminal
+
+
+def _write_v16_p8_primary_terminal(
+    run_root: Path,
+    *,
+    source_identity: Mapping[str, Any],
+    candidate_identity: Mapping[str, Any],
+    endpoint_record_path: Path,
+    candidate_plan_sha256: str,
+    contract_sha256: str,
+    space_source_binding: Mapping[str, Any],
+    primary_packet: Mapping[str, Any],
+    raw_gate_checkpoint: Mapping[str, Any],
+    gates: Mapping[str, Any],
+    endpoint_identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    if gates.get("pass") is not True:
+        raise ValueError("V16 R9_P8 cannot write a successful terminal before all endpoint gates pass")
+    path = Path(run_root) / "task43_v16_p8_primary_terminal.json"
+    return write_atomic_json(
+        path,
+        {
+            "schema": "task43.v16.p8.primary-terminal.v1",
+            "phase": "R9_P8",
+            "status": "SOLVED_PRIMARY_PENDING_PAIRED_COMPARISON",
+            "classification": "measured_primary_nonofficial_v16_p8_endpoint",
+            "source_identity": dict(source_identity),
+            "candidate_identity": dict(candidate_identity),
+            "contract_binding": {
+                "path": str((_REPOSITORY_ROOT / _V16_P8_CONTRACT_REL).resolve()),
+                "sha256": contract_sha256,
+            },
+            "space_source_binding": dict(space_source_binding),
+            "candidate_plan_sha256": candidate_plan_sha256,
+            "primary_packet": dict(primary_packet),
+            "primary_raw_vector_audit_checkpoint": dict(raw_gate_checkpoint),
+            "endpoint_identity": dict(endpoint_identity),
+            "endpoint_record": {
+                "path": str(endpoint_record_path.resolve()),
+                "sha256": _sha256_file(endpoint_record_path),
+            },
+            "gates": dict(gates),
+            "official_result": False,
+            "passed": False,
+            "selection_eligible": False,
+            "selection_candidate": False,
+            "candidate_selected": False,
+            "continuation_all_false": True,
+        },
+    )
+
+
+@contextmanager
+def _v16_p8_actual_absorption_forms(captured: dict[str, Any], cfg):
+    """Record metadata from the actual R9 volume-absorption forms only."""
+
+    original_absorption = _common_3d_case_flow.compute_volume_absorption_3d
+
+    def observed_absorption(*args, **kwargs):
+        from src.postprocessing import rta_3d
+
+        original_form = rta_3d.fem.form
+        forms: list[dict[str, Any]] = []
+
+        def observed_form(ufl_form, *form_args, **form_kwargs):
+            for integral in ufl_form.integrals():
+                forms.append(
+                    {
+                        "integral_type": str(integral.integral_type()),
+                        "subdomain_id": integral.subdomain_id(),
+                        "metadata": dict(integral.metadata() or {}),
+                    }
+                )
+            return original_form(ufl_form, *form_args, **form_kwargs)
+
+        rta_3d.fem.form = observed_form
+        try:
+            return original_absorption(*args, **kwargs)
+        finally:
+            rta_3d.fem.form = original_form
+            captured["v16_p8_actual_absorption_form_metadata"] = forms
+
+    _common_3d_case_flow.compute_volume_absorption_3d = observed_absorption
+    try:
+        yield
+    finally:
+        _common_3d_case_flow.compute_volume_absorption_3d = original_absorption
+
+
+def _validate_v16_p8_actual_absorption_forms(
+    forms: list[Mapping[str, Any]], cfg
+) -> dict[str, Any]:
+    degree = int(cfg.stage4_volume_quadrature_degree)
+    rule = str(getattr(cfg, "stage4_volume_quadrature_rule", "default"))
+    material = [
+        item
+        for item in forms
+        if item.get("metadata", {}).get("quadrature_degree") == degree
+        and item.get("metadata", {}).get("quadrature_rule") == rule
+    ]
+    automatic = [item for item in forms if not item.get("metadata")]
+    if len(material) != 2 or len(automatic) != 2:
+        raise ValueError(
+            "V16 R9_P8 actual Av must expose two material forms at the frozen q/rule and two automatic region-volume forms"
+        )
+    return {
+        "status": "actual_forms_observed",
+        "material_form_count": len(material),
+        "material_quadrature_degree": degree,
+        "material_quadrature_rule": rule,
+        "automatic_region_volume_form_count": len(automatic),
+        "forms": [dict(item) for item in forms],
+    }
 
 
 def _active_solution_storage(view) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
@@ -3742,6 +4064,580 @@ def _v11_phase_definition(contract: Mapping[str, Any], phase: str) -> Mapping[st
     return entry
 
 
+def _load_v16_p8_context(
+    contract_path: Path, *, source_id: str, run_root: Path
+) -> tuple[dict[str, Any], str, dict[str, Any]]:
+    """Load the independent P8 contract and one fixed, root-joined S source."""
+
+    from benchmarks.task43_hp_adaptivity.round1_candidates import (
+        _load_v16_p8_contract,
+    )
+
+    contract, contract_sha256 = _load_v16_p8_contract(contract_path)
+    source_paths = contract.get("recovery_sources", {}).get(source_id)
+    if source_id not in {"S_MAIN", "E_S"} or not isinstance(source_paths, Mapping):
+        raise ValueError("V16 P8 requires explicit S_MAIN or E_S source selection")
+    declared_plan = contract.get("phases", {}).get("F", {}).get(
+        "candidate_plan_sources", {}
+    ).get(source_id)
+    if declared_plan != source_paths.get("plan_path"):
+        raise ValueError("V16 P8 F plan selector differs from the fixed source table")
+    artifact_root = Path(str(contract["artifact_prefix"])).resolve()
+    resolved = {
+        key: (artifact_root / str(value)).resolve()
+        for key, value in source_paths.items()
+    }
+    if any(artifact_root not in path.parents for path in resolved.values()):
+        raise ValueError("V16 P8 S source path escaped its fixed artifact prefix")
+    expected_run_root = (
+        artifact_root / str(contract["phases"]["F"]["root"]) / "run"
+    ).resolve()
+    if Path(run_root).resolve() != expected_run_root:
+        raise ValueError("V16 P8 F run root differs from its fixed contract")
+    products_root = resolved["plan_path"].parents[2]
+    lifecycle_root = (
+        products_root
+        if source_id == "S_MAIN"
+        else (artifact_root / str(contract["phases"]["E"]["root"])).resolve()
+    )
+    joined_path = resolved["joined_terminal_path"]
+    required_paths = {
+        "plan": resolved["plan_path"],
+        "audit": resolved["audit_path"],
+        "bundle": resolved["bundle_path"],
+        "joined": joined_path,
+        "launch_manifest": lifecycle_root / "snapshots/launch_manifest.json",
+        "watchdog_summary": lifecycle_root / "watchdog/summary.json",
+        "launcher_exit": lifecycle_root / "launcher_exit_code.txt",
+        "watchdog_exit": lifecycle_root / "watchdog_exit_code.txt",
+        "source_head": lifecycle_root / "source_head.txt",
+    }
+    if any(not path.is_file() or path.is_symlink() for path in required_paths.values()):
+        raise FileNotFoundError("V16 P8 selected S source is missing a fixed product or lifecycle record")
+    before = {str(path): _sha256_file(path) for path in required_paths.values()}
+    joined = json.loads(joined_path.read_text(encoding="utf-8"))
+    launch_manifest_path = required_paths["launch_manifest"]
+    launch_manifest = json.loads(launch_manifest_path.read_text(encoding="utf-8"))
+    joined_products = joined.get("products")
+    expected_product_names = {"plan", "audit", "bundle"}
+    if (
+        joined.get("schema") != "task43.v16.p8-space-root-joined-terminal.v1"
+        or joined.get("status") != "S_COMPLETE_ROOT_VERIFIED"
+        or joined.get("space_source_id") != source_id
+        or joined.get("contract_sha256") != contract_sha256
+        or joined.get("review_commit") != _V16_P8_REVIEW_COMMIT
+        or joined.get("launcher_exit_code") != 0
+        or joined.get("watchdog_exit_code") != 0
+        or joined.get("worker_exit_code") != 0
+        or joined.get("descendants_cleared") is not True
+        or joined.get("remaining_child_pids") != []
+        or not isinstance(joined_products, Mapping)
+        or set(joined_products) != expected_product_names
+        or launch_manifest.get("contract_sha256") != contract_sha256
+    ):
+        raise ValueError("V16 P8 selected S joined terminal is not root-verified")
+    source_head = joined.get("source_head")
+    if (
+        not isinstance(source_head, str)
+        or len(source_head) != 40
+        or any(char not in "0123456789abcdef" for char in source_head)
+        or launch_manifest.get("head") != source_head
+        or required_paths["source_head"].read_text(encoding="ascii").strip()
+        != source_head
+    ):
+        raise ValueError("V16 P8 selected S source HEAD differs across its joined records")
+    snapshots: dict[str, str] = {}
+    for entry in launch_manifest.get("source", []):
+        if not isinstance(entry, Mapping):
+            raise ValueError("V16 P8 S source snapshot entry is malformed")
+        name = str(entry.get("path", ""))
+        digest = str(entry.get("sha256", ""))
+        snapshot_path = Path(str(entry.get("snapshot", "")))
+        if (
+            not name
+            or name in snapshots
+            or not snapshot_path.is_absolute()
+            or snapshot_path.resolve() != snapshot_path
+            or not snapshot_path.is_file()
+            or _sha256_file(snapshot_path) != digest
+        ):
+            raise ValueError("V16 P8 S source snapshot is absent or changed")
+        snapshots[name] = digest
+    expected_sources = _v11_source_snapshot()
+    expected_sources[Path(contract_path).resolve().relative_to(_REPOSITORY_ROOT).as_posix()] = contract_sha256
+    if snapshots != expected_sources:
+        raise ValueError(
+            "V16 P8 selected S launch source snapshot differs from the current frozen worker source set"
+        )
+    def input_snapshot_map(manifest: Mapping[str, Any]) -> dict[str, str]:
+        result: dict[str, str] = {}
+        for entry in manifest.get("inputs", []):
+            if not isinstance(entry, Mapping):
+                raise ValueError("V16 P8 launch input entry is malformed")
+            input_path = Path(str(entry.get("path", "")))
+            digest = str(entry.get("sha256", ""))
+            if (
+                not input_path.is_absolute()
+                or input_path.resolve() != input_path
+                or str(input_path) in result
+                or len(digest) != 64
+            ):
+                raise ValueError("V16 P8 launch input identity is malformed")
+            result[str(input_path)] = digest
+        return result
+
+    expected_contract_inputs = {
+        str((_REPOSITORY_ROOT / str(item["path"])).resolve()): str(item["sha256"])
+        for item in contract["inputs"]
+    }
+    expected_contract_inputs[str(Path(contract_path).resolve())] = contract_sha256
+    if any(
+        input_snapshot_map(launch_manifest).get(path) != digest
+        for path, digest in expected_contract_inputs.items()
+    ):
+        raise ValueError("V16 P8 S launch snapshot omits a contract-bound input")
+    gate_evidence: dict[str, str] = {}
+    gates = joined.get("gates")
+    if not isinstance(gates, Mapping) or set(gates) != {
+        "source", "input", "resource", "trace", "space", "old_samples"
+    }:
+        raise ValueError("V16 P8 S joined terminal lacks its six root gates")
+    for name, gate in gates.items():
+        evidence = gate.get("evidence") if isinstance(gate, Mapping) else None
+        if not isinstance(gate, Mapping) or gate.get("pass") is not True or not isinstance(evidence, Mapping):
+            raise ValueError(f"V16 P8 S {name} gate did not pass with evidence")
+        evidence_path = Path(str(evidence.get("path", "")))
+        evidence_sha = str(evidence.get("sha256", ""))
+        if (
+            not evidence_path.is_absolute()
+            or evidence_path.resolve() != evidence_path
+            or not evidence_path.is_file()
+            or evidence_sha != _sha256_file(evidence_path)
+        ):
+            raise ValueError(f"V16 P8 S {name} gate evidence is invalid")
+        gate_evidence[str(evidence_path)] = evidence_sha
+    for name, path in (("plan", resolved["plan_path"]), ("audit", resolved["audit_path"]), ("bundle", resolved["bundle_path"])):
+        item = joined_products[name]
+        if (
+            not isinstance(item, Mapping)
+            or item.get("path") != str(path)
+            or item.get("sha256") != _sha256_file(path)
+        ):
+            raise ValueError(f"V16 P8 S joined {name} path/hash differs")
+    observation = joined.get("root_observation_record")
+    if not isinstance(observation, Mapping):
+        raise ValueError("V16 P8 S joined terminal has no root observation record")
+    observation_path = Path(str(observation.get("path", "")))
+    if (
+        not observation_path.is_absolute()
+        or observation_path.resolve() != observation_path
+        or not observation_path.is_file()
+        or observation.get("sha256") != _sha256_file(observation_path)
+    ):
+        raise ValueError("V16 P8 S root observation record changed")
+    watchdog_summary = json.loads(
+        required_paths["watchdog_summary"].read_text(encoding="utf-8")
+    )
+    if (
+        watchdog_summary.get("classification") != "COMPLETED"
+        or watchdog_summary.get("leader_exit_code") != 0
+        or watchdog_summary.get("descendants_cleared") is not True
+        or watchdog_summary.get("remaining_child_pids") != []
+        or required_paths["launcher_exit"].read_text(encoding="ascii").strip()
+        != "0"
+        or required_paths["watchdog_exit"].read_text(encoding="ascii").strip()
+        != "0"
+    ):
+        raise ValueError("V16 P8 S watchdog/launcher exit or cleanup record failed")
+    p8_launch_manifest_path = Path(run_root).resolve().parent / "snapshots/launch_manifest.json"
+    if not p8_launch_manifest_path.is_file() or p8_launch_manifest_path.is_symlink():
+        raise FileNotFoundError("V16 P8 F launch snapshot is missing")
+    p8_launch_manifest_sha256 = _sha256_file(p8_launch_manifest_path)
+    p8_launch_manifest = json.loads(p8_launch_manifest_path.read_text(encoding="utf-8"))
+    if (
+        p8_launch_manifest.get("contract_sha256") != contract_sha256
+        or p8_launch_manifest.get("space_source_id") != source_id
+    ):
+        raise ValueError("V16 P8 F launch snapshot does not bind its selected S source")
+    p8_inputs = input_snapshot_map(p8_launch_manifest)
+    required_s_inputs = {
+        **expected_contract_inputs,
+        **before,
+        **gate_evidence,
+        str(observation_path): str(observation["sha256"]),
+        **{
+            str((_REPOSITORY_ROOT / name).resolve()): digest
+            for name, digest in snapshots.items()
+        },
+    }
+    if any(p8_inputs.get(path) != digest for path, digest in required_s_inputs.items()):
+        raise ValueError("V16 P8 F launch snapshot omits or changes an S source/input")
+    plan = json.loads(resolved["plan_path"].read_text(encoding="utf-8"))
+    audit = json.loads(resolved["audit_path"].read_text(encoding="utf-8"))
+    bundle = json.loads(resolved["bundle_path"].read_text(encoding="utf-8"))
+    if (
+        plan.get("task43_candidate", {}).get("candidate_id") != "v16_r9_p8"
+        or plan.get("task43_candidate", {}).get("provenance", {}).get(
+            "v16_contract_sha256"
+        ) != contract_sha256
+        or audit.get("actual_space_gate", {}).get("pass") is not True
+        or audit.get("saved_p5_geometry_gate", {}).get("pass") is not True
+        or bundle.get("pass") is not True
+        or bundle.get("pde_matrix_constructed") is not False
+        or bundle.get("factorization_performed") is not False
+        or bundle.get("solve_performed") is not False
+    ):
+        raise ValueError("V16 P8 selected S products do not satisfy the actual-space gate")
+    for path, digest in gate_evidence.items():
+        before[path] = digest
+    before[str(observation_path)] = str(observation["sha256"])
+    before[str(p8_launch_manifest_path)] = p8_launch_manifest_sha256
+    if any(_sha256_file(Path(path)) != digest for path, digest in before.items()):
+        raise RuntimeError("V16 P8 S source changed during first-read validation")
+    binding = {
+        "schema": "task43.v16.p8-space-source-binding.v1",
+        "space_source_id": source_id,
+        "contract_path": str(Path(contract_path).resolve()),
+        "contract_sha256": contract_sha256,
+        **{name: str(path) for name, path in resolved.items()},
+        "products": {
+            name: {"path": str(path), "sha256": _sha256_file(path)}
+            for name, path in (
+                ("plan", resolved["plan_path"]),
+                ("audit", resolved["audit_path"]),
+                ("bundle", resolved["bundle_path"]),
+                ("joined_terminal", joined_path),
+                ("root_observation_record", observation_path),
+            )
+        },
+        "source_head": source_head,
+        "space_audit": {
+            "forest": audit.get("forest"),
+            "degrees": audit.get("degrees"),
+            "dofs": audit.get("dofs"),
+            "space_authority_detail": audit.get("space_authority_detail"),
+            "actual_geometry": audit.get("actual_geometry"),
+            "actual_space_gate": audit.get("actual_space_gate"),
+            "saved_p5_geometry_gate": audit.get("saved_p5_geometry_gate"),
+        },
+    }
+    return contract, contract_sha256, {**binding, "input_snapshot": before}
+
+
+def _v16_p8_resume_output_binding(
+    contract: Mapping[str, Any],
+    stage: str,
+    *,
+    worker_identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Bind one permitted engineering-resume destination to this worker."""
+
+    policy = contract.get("resume_policy", {})
+    allowed = tuple(policy.get("allowed_choices", ()))
+    outputs = policy.get("outputs", {})
+    if (
+        policy.get("exactly_one_choice") is not True
+        or policy.get("no_directory_scan_latest") is not True
+        or allowed != ("S", "F_POSTPROCESS", "C")
+        or stage not in allowed
+        or set(outputs) != set(allowed)
+    ):
+        raise ValueError("V16 P8 engineering resume must select exactly one fixed stage")
+    artifact_root = Path(str(contract["artifact_prefix"])).resolve()
+    relative_output = Path(str(outputs[stage]))
+    if relative_output.is_absolute() or ".." in relative_output.parts:
+        raise ValueError("V16 P8 engineering-resume output escaped its fixed artifact root")
+    output_root = (artifact_root / relative_output).resolve()
+    if artifact_root not in output_root.parents:
+        raise ValueError("V16 P8 engineering-resume output escaped its fixed artifact root")
+    current_identity = _require_v11_watchdog_worker_identity(
+        require_unused_phase_file=False,
+        expected_identity=worker_identity,
+    )
+    return {
+        "stage": stage,
+        "output_root": str(output_root),
+        "worker_identity": current_identity,
+        "same_worker": True,
+        "exactly_one_choice": True,
+    }
+
+
+def _v16_p8_actual_space_audit(
+    *,
+    cfg,
+    mesh_data,
+    plan: Mapping[str, Any],
+    source_binding: Mapping[str, Any],
+    actual_mesh_identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Rebuild and bind the actual P8 trace/interior authority to S before assembly."""
+
+    expected_space = source_binding.get("space_audit")
+    if not isinstance(expected_space, Mapping):
+        raise ValueError("V16 P8 selected S source lacks its saved space audit")
+    expected_forest = expected_space.get("forest")
+    expected_degrees = expected_space.get("degrees")
+    expected_dofs = expected_space.get("dofs")
+    expected_detail = expected_space.get("space_authority_detail")
+    expected_geometry = expected_space.get("actual_geometry")
+    if not all(
+        isinstance(value, Mapping)
+        for value in (
+            expected_forest,
+            expected_degrees,
+            expected_dofs,
+            expected_detail,
+            expected_geometry,
+        )
+    ):
+        raise ValueError("V16 P8 selected S source lacks complete actual authority fields")
+
+    context = mesh_data.local_h_context
+    actual_authority = build_stage4_local_h_reduction_authority(
+        context,
+        phase_x=complex(cfg.floquet_phase_x),
+        phase_y=complex(cfg.floquet_phase_y),
+        active_fe_dof_gate_policy=TASK43_VARIABLE_P_ACTIVE_FE_DOF_GATE_POLICY,
+    )
+    actual_authority_audit = dict(actual_authority.audit)
+    actual_degree_audit = dict(actual_authority.degree_plan.audit)
+    actual_constraint_audit = dict(actual_authority_audit["trace_constraints"])
+    actual_entity_map = actual_authority.degree_plan.entity_map
+    actual_context_audit = dict(context.audit)
+    actual_detail = {
+        "independent_trace_rows": int(
+            actual_authority.trace_constraints.independent_trace_rows
+        ),
+        "raw_active_trace_rows": int(actual_entity_map.active_trace_rows),
+        "independent_cell_interior_rows": int(
+            actual_entity_map.active_cell_interior_rows
+        ),
+        "independent_fe_dofs": int(
+            actual_authority.trace_constraints.independent_trace_rows
+            + actual_entity_map.active_cell_interior_rows
+        ),
+        "hanging_slave_rows": int(
+            actual_constraint_audit.get("hanging_slave_rows", 0)
+        ),
+        "floquet_periodic_relations": {
+            str(key): int(value)
+            for key, value in actual_constraint_audit.items()
+            if str(key).startswith("periodic_")
+            and isinstance(value, (int, np.integer))
+        },
+        "hanging_or_floquet_slave_rows_globally_numbered": actual_authority_audit.get(
+            "hanging_or_floquet_slave_rows_globally_numbered"
+        ),
+        "p6_carrier": {
+            "container_degree": int(context.cell_interior_degree),
+            "uniform_p6_global_rows": int(actual_entity_map.uniform_p6_rows),
+            "uniform_p6_trace_rows": int(actual_entity_map.uniform_p6_trace_rows),
+            "active_entity_rows": int(actual_entity_map.active_rows),
+            "inactive_p6_rows": int(
+                actual_entity_map.uniform_p6_rows - actual_entity_map.active_rows
+            ),
+            "full_p6_global_matrix_constructed": actual_entity_map.audit.get(
+                "full_p6_global_matrix_constructed"
+            ),
+        },
+    }
+    actual_histogram = {
+        str(key): int(value)
+        for key, value in actual_degree_audit["cell_degree_counts"].items()
+        if int(value) > 0
+    }
+    plan_degree_sha = plan.get("cell_interior_degree_plan_sha256")
+    context_degree_sha = actual_context_audit.get(
+        "cell_interior_degree_plan_sha256"
+    )
+    authority_degree_sha = actual_degree_audit.get("cell_degree_plan_sha256")
+    s_degree_sha = expected_degrees.get("entity_degree_plan_sha256")
+    authority_entity_sha = actual_degree_audit.get(
+        "runtime_global_entity_degree_sha256"
+    )
+    s_entity_sha = expected_degrees.get("entity_map_sha256")
+    plan_geometry_sha = actual_degree_audit.get(
+        "mesh_cell_box_catalog_sha256"
+    )
+    s_geometry_sha = expected_geometry.get("mesh_box_catalog_sha256")
+    actual_trace_degrees = actual_degree_audit.get("trace_degree_values")
+    s_trace_degrees = expected_degrees.get("distinct_physical_trace_degrees")
+    checks = {
+        "plan_degree_identity_present_and_bound": (
+            isinstance(plan_degree_sha, str)
+            and bool(plan_degree_sha)
+            and isinstance(context_degree_sha, str)
+            and bool(context_degree_sha)
+            and isinstance(authority_degree_sha, str)
+            and bool(authority_degree_sha)
+            and isinstance(s_degree_sha, str)
+            and bool(s_degree_sha)
+            and plan_degree_sha == context_degree_sha == authority_degree_sha == s_degree_sha
+        ),
+        "entity_map_identity_present_and_bound": (
+            isinstance(authority_entity_sha, str)
+            and bool(authority_entity_sha)
+            and isinstance(s_entity_sha, str)
+            and bool(s_entity_sha)
+            and authority_entity_sha == s_entity_sha
+        ),
+        "mesh_box_catalog_present_and_bound": (
+            isinstance(plan_geometry_sha, str)
+            and bool(plan_geometry_sha)
+            and isinstance(s_geometry_sha, str)
+            and bool(s_geometry_sha)
+            and plan_geometry_sha == s_geometry_sha
+        ),
+        "actual_forest_root_count": actual_context_audit.get("root_cell_count")
+        == expected_forest.get("root_cell_count"),
+        "actual_forest_leaf_count": actual_context_audit.get("leaf_cell_count")
+        == expected_forest.get("actual_leaf_cell_count"),
+        "actual_leaf_catalog": actual_mesh_identity.get("leaf_catalog_sha256")
+        == expected_forest.get("leaf_catalog_sha256"),
+        "actual_closure_counts": actual_mesh_identity.get("closure_split_counts")
+        == expected_forest.get("closure_split_counts"),
+        "actual_degree_histogram": actual_histogram
+        == expected_degrees.get("cell_interior_histogram"),
+        "candidate_plan_identity": plan.get("task43_candidate", {}).get(
+            "candidate_id"
+        )
+        == "v16_r9_p8",
+        "parent_FE_bound": expected_dofs.get("parent_independent_fe_dofs")
+        == 110472,
+        "actual_trace_degrees": actual_trace_degrees
+        == s_trace_degrees,
+        "actual_independent_trace_rows": actual_detail["independent_trace_rows"]
+        == expected_detail.get("independent_trace_rows"),
+        "actual_cell_interior_rows": actual_detail[
+            "independent_cell_interior_rows"
+        ]
+        == expected_dofs.get("active_cell_interior_rows"),
+        "actual_independent_FE": actual_detail["independent_fe_dofs"]
+        == expected_dofs.get("independent_active_fe_dofs"),
+        "active_entity_row_partition": actual_detail["raw_active_trace_rows"]
+        + actual_detail["independent_cell_interior_rows"]
+        == actual_detail["p6_carrier"]["active_entity_rows"],
+        "actual_FE_inside_frozen_bounds": (
+            110472 < actual_detail["independent_fe_dofs"] < 237600
+        ),
+        "actual_hanging_constraints": actual_detail["hanging_slave_rows"]
+        == expected_detail.get("hanging_slave_rows"),
+        "actual_periodic_constraints": actual_detail[
+            "floquet_periodic_relations"
+        ]
+        == expected_detail.get("floquet_periodic_relations"),
+        "actual_constraint_numbering": actual_detail[
+            "hanging_or_floquet_slave_rows_globally_numbered"
+        ]
+        == expected_detail.get("hanging_or_floquet_slave_rows_globally_numbered"),
+        "actual_p6_carrier": actual_detail["p6_carrier"]
+        == expected_detail.get("p6_carrier"),
+        "authority_pass": actual_authority_audit.get("pass") is True
+        and actual_degree_audit.get("pass") is True
+        and actual_constraint_audit.get("pass") is True,
+        "no_h_refinement": not bool(plan.get("marked_root_boxes")),
+    }
+    return {
+        "schema": "task43.v16.p8.preassembly-space-binding.v1",
+        "actual_authority_audit": actual_authority_audit,
+        "actual_degree_audit": actual_degree_audit,
+        "actual_constraint_audit": actual_constraint_audit,
+        "actual_forest": {
+            key: actual_context_audit.get(key)
+            for key in (
+                "root_cell_count",
+                "leaf_cell_count",
+                "cell_interior_degree_plan_sha256",
+                "cell_interior_degree_counts",
+                "forest",
+            )
+        },
+        "actual_space": actual_detail,
+        "actual_mesh_identity": dict(actual_mesh_identity),
+        "checks": checks,
+        "pass": all(value is True for value in checks.values()),
+        "pde_matrix_constructed": False,
+        "official_result": False,
+    }
+
+
+def _validate_v16_p8_cli(
+    *,
+    contract: Mapping[str, Any],
+    source_binding: Mapping[str, Any],
+    run_root: Path,
+    candidate_id: str | None,
+    candidate_plan_path: Path | None,
+    candidate_parent_selection_record: Path | None,
+    candidate_acceptance_contract: Path | None,
+    normal_correction_enabled: bool,
+    extra_correction_enabled: bool,
+    direct_factor_backend: str,
+) -> None:
+    contract_path = (_REPOSITORY_ROOT / _V16_P8_CONTRACT_REL).resolve()
+    if (
+        source_binding.get("space_source_id") not in {"S_MAIN", "E_S"}
+        or source_binding.get("contract_path") != str(contract_path)
+        or source_binding.get("contract_sha256") != _sha256_file(contract_path)
+    ):
+        raise ValueError("V16 R9_P8 requires one explicit completed S source")
+    _verify_v16_p8_source_snapshot(source_binding)
+    expected_root = (
+        Path(str(contract["artifact_prefix"]))
+        / str(contract["phases"]["F"]["root"])
+        / "run"
+    ).resolve()
+    if Path(run_root).resolve() != expected_root:
+        raise ValueError("V16 R9_P8 run root differs from its fixed contract")
+    if candidate_id != "v16_r9_p8":
+        raise ValueError("V16 R9_P8 requires candidate id v16_r9_p8")
+    if (
+        candidate_plan_path is None
+        or Path(candidate_plan_path).resolve()
+        != Path(str(source_binding.get("plan_path", ""))).resolve()
+    ):
+        raise ValueError("V16 R9_P8 plan differs from its explicit S source")
+    roles = {str(item.get("role")): str(item.get("path")) for item in contract["inputs"]}
+    selection = roles.get("R9_selection_transition")
+    acceptance = roles.get("frozen_acceptance_contract")
+    if (
+        selection is None
+        or acceptance is None
+        or candidate_parent_selection_record is None
+        or Path(candidate_parent_selection_record).resolve()
+        != (_REPOSITORY_ROOT / selection).resolve()
+        or candidate_acceptance_contract is None
+        or Path(candidate_acceptance_contract).resolve()
+        != (_REPOSITORY_ROOT / acceptance).resolve()
+    ):
+        raise ValueError("V16 R9_P8 must bind the accepted R9 parent and frozen acceptance")
+    if not normal_correction_enabled or extra_correction_enabled:
+        raise ValueError("V16 R9_P8 requires exactly one normal correction and no extra correction")
+    if direct_factor_backend != "mumps":
+        raise ValueError("V16 R9_P8 requires its frozen direct MUMPS backend")
+
+
+def _verify_v16_p8_source_snapshot(binding: Mapping[str, Any]) -> dict[str, str]:
+    snapshot = binding.get("input_snapshot")
+    if not isinstance(snapshot, Mapping) or not snapshot:
+        raise ValueError("V16 R9_P8 selected S source has no first-read snapshot")
+    result: dict[str, str] = {}
+    for raw_path, raw_digest in snapshot.items():
+        path = Path(str(raw_path))
+        digest = str(raw_digest)
+        if (
+            not path.is_absolute()
+            or path.resolve() != path
+            or not path.is_file()
+            or len(digest) != 64
+            or _sha256_file(path) != digest
+        ):
+            raise RuntimeError(f"V16 R9_P8 selected S input changed: {path}")
+        result[str(path)] = digest
+    return result
+
+
 def _v11_input_snapshot(
     contract: Mapping[str, Any], roles: set[str]
 ) -> dict[str, dict[str, str]]:
@@ -5239,6 +6135,21 @@ def _record_v11_identity_checkpoint(
     return current
 
 
+def _record_v16_p8_identity_checkpoint(
+    *, baseline: Mapping[str, Any], workflow_ledger: WorkflowLedger | None, checkpoint: str
+) -> dict[str, Any]:
+    current = _require_v11_watchdog_worker_identity(
+        require_unused_phase_file=False,
+        expected_identity=baseline,
+    )
+    if workflow_ledger is not None:
+        workflow_ledger.marker(
+            "task43_v16_p8_worker_identity_checkpoint",
+            {"checkpoint": checkpoint, "identity": current},
+        )
+    return current
+
+
 @contextmanager
 def _v11_solver_progress_identity_guard(
     *,
@@ -5268,6 +6179,44 @@ def _v11_solver_progress_identity_guard(
         status = kwargs.get("status")
         if stage in checkpoint_stages:
             _record_v11_identity_checkpoint(
+                baseline=baseline,
+                workflow_ledger=workflow_ledger,
+                checkpoint=f"{stage}:{status}",
+            )
+        return original(*args, **kwargs)
+
+    _dtn_port_solver._write_progress_event = checked_progress_event
+    try:
+        yield
+    finally:
+        _dtn_port_solver._write_progress_event = original
+
+
+@contextmanager
+def _v16_p8_solver_progress_identity_guard(
+    *, baseline: Mapping[str, Any], workflow_ledger: WorkflowLedger | None
+):
+    original = _dtn_port_solver._write_progress_event
+    checkpoint_stages = {
+        "stage4_full3d_assembly_backend",
+        "stage4_dtn_base_matrix_assembled",
+        "after_base_matrix_assembly",
+        "stage4_dtn_augmented_matrix_finalized",
+        "stage4_dtn_augmented_ksp_setup",
+        "before_ksp_setup",
+        "after_ksp_setup_factorized",
+        "before_ksp_solve",
+        "after_ksp_solve",
+        "variable_p_same_lu_residual_correction",
+        "after_true_residual",
+        "after_fe_field_reconstruction",
+    }
+
+    def checked_progress_event(*args, **kwargs):
+        stage = kwargs.get("stage")
+        status = kwargs.get("status")
+        if stage in checkpoint_stages:
+            _record_v16_p8_identity_checkpoint(
                 baseline=baseline,
                 workflow_ledger=workflow_ledger,
                 checkpoint=f"{stage}:{status}",
@@ -5747,6 +6696,10 @@ def _run_impl(
     v11_contract_sha256: str | None = None,
     v11_initial_worker_identity: Mapping[str, Any] | None = None,
     v12_recovery_binding: Mapping[str, Any] | None = None,
+    v16_p8_contract_path: Path | None = None,
+    v16_p8_contract_sha256: str | None = None,
+    v16_p8_source_binding: Mapping[str, Any] | None = None,
+    v16_p8_initial_worker_identity: Mapping[str, Any] | None = None,
     _failure_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     comm = MPI.COMM_WORLD
@@ -5755,11 +6708,48 @@ def _run_impl(
     current_case = case == _CURRENT_CASE
     candidate_case = case == _ROUND1_CANDIDATE_CASE
     v2_diagnostic = v2_diagnostic_phase is not None
+    v16_p8_diagnostic = v16_p8_contract_path is not None
     v11_diagnostic = v11_primary_diagnostic_phase is not None
+    primary_raw_diagnostic = v11_diagnostic or v16_p8_diagnostic
     v11_contract: dict[str, Any] | None = None
-    if v11_diagnostic and (v2_diagnostic or v3_failure_evidence_enabled):
+    if primary_raw_diagnostic and (v2_diagnostic or v3_failure_evidence_enabled):
         raise ValueError("V11 primary diagnostics cannot be combined with V2/V3 modes")
-    if v11_diagnostic:
+    if v16_p8_diagnostic:
+        if (
+            v11_diagnostic
+            or v16_p8_contract_sha256 is None
+            or not isinstance(v16_p8_source_binding, Mapping)
+            or v16_p8_initial_worker_identity is None
+            or v11_contract_path is not None
+            or v11_contract_sha256 is not None
+            or v12_recovery_binding is not None
+        ):
+            raise ValueError("V16 R9_P8 requires only its own contract, S binding and worker identity")
+        from benchmarks.task43_hp_adaptivity.round1_candidates import (
+            _load_v16_p8_contract,
+        )
+
+        v11_contract, actual_p8_sha256 = _load_v16_p8_contract(v16_p8_contract_path)
+        if actual_p8_sha256 != v16_p8_contract_sha256:
+            raise ValueError("V16 P8 contract bytes changed between CLI validation and run")
+        _validate_v16_p8_cli(
+            contract=v11_contract,
+            source_binding=v16_p8_source_binding,
+            run_root=run_root,
+            candidate_id=candidate_id,
+            candidate_plan_path=candidate_plan_path,
+            candidate_parent_selection_record=candidate_parent_selection_record,
+            candidate_acceptance_contract=candidate_acceptance_contract,
+            normal_correction_enabled=same_lu_solve_residual_correction_enabled,
+            extra_correction_enabled=same_lu_tightening_enabled,
+            direct_factor_backend=direct_factor_backend,
+        )
+        v11_primary_diagnostic_phase = "R9_P8"
+        v11_contract_path = Path(v16_p8_contract_path)
+        v11_contract_sha256 = v16_p8_contract_sha256
+        v11_initial_worker_identity = v16_p8_initial_worker_identity
+        v11_diagnostic = True
+    elif v11_diagnostic:
         if (
             v11_contract_path is None
             or v11_contract_sha256 is None
@@ -5803,7 +6793,7 @@ def _run_impl(
             v11_contract_sha256,
             v12_recovery_binding,
         )
-    ):
+    ) and not v16_p8_diagnostic:
         raise ValueError("V11 contract inputs require --primary-diagnostic-phase")
     if v3_failure_evidence_enabled and not v2_diagnostic:
         raise ValueError("V3 failure evidence requires a frozen V2 endpoint route")
@@ -5931,6 +6921,15 @@ def _run_impl(
                 separators=(",", ":"),
             )
         ),
+        (
+            None
+            if v16_p8_source_binding is None
+            else json.dumps(
+                dict(v16_p8_source_binding),
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+        ),
     )
     root_contracts = comm.allgather(root_contract)
     if any(contract != root_contracts[0] for contract in root_contracts[1:]):
@@ -5953,6 +6952,11 @@ def _run_impl(
         )
         _failure_context["v12_recovery_binding"] = (
             None if v12_recovery_binding is None else dict(v12_recovery_binding)
+        )
+        _failure_context["v16_p8_source_binding"] = (
+            None
+            if v16_p8_source_binding is None
+            else dict(v16_p8_source_binding)
         )
     reference_run_root = (
         None if root_contract[1] is None else Path(root_contract[1])
@@ -6001,8 +7005,19 @@ def _run_impl(
     v12_recovery_binding = (
         None if root_contract[24] is None else json.loads(root_contract[24])
     )
+    v16_p8_source_binding = (
+        None if root_contract[25] is None else json.loads(root_contract[25])
+    )
     v2_diagnostic = v2_diagnostic_phase is not None
-    v11_diagnostic = v11_primary_diagnostic_phase is not None
+    v16_p8_diagnostic = v16_p8_source_binding is not None
+    if v16_p8_diagnostic:
+        v16_p8_contract_path = v11_contract_path
+        v16_p8_contract_sha256 = str(v11_contract_sha256)
+        v16_p8_initial_worker_identity = v11_initial_worker_identity
+    v11_diagnostic = (
+        v11_primary_diagnostic_phase is not None and not v16_p8_diagnostic
+    )
+    primary_raw_diagnostic = v11_diagnostic or v16_p8_diagnostic
     v2_contract = (
         _load_v2_diagnostic_contract(v2_contract_path, str(v2_contract_sha256))
         if v2_diagnostic
@@ -6038,6 +7053,23 @@ def _run_impl(
             "task43_v11_primary_worker_identity_bound", watchdog_identity
         )
         _record_v11_identity_checkpoint(
+            baseline=watchdog_identity,
+            workflow_ledger=v11_workflow_ledger,
+            checkpoint="preflight_ledger_created",
+        )
+        if _failure_context is not None:
+            _failure_context["workflow_ledger"] = v11_workflow_ledger
+        workflow_ledger = v11_workflow_ledger
+    if v16_p8_diagnostic and comm.rank == 0:
+        watchdog_identity = v11_watchdog_identity or _require_v11_watchdog_worker_identity()
+        v11_workflow_ledger = WorkflowLedger(
+            run_root, Path(watchdog_identity["phase_path"])
+        )
+        v11_workflow_ledger.set_phase("preflight")
+        v11_workflow_ledger.marker(
+            "task43_v16_p8_worker_identity_bound", watchdog_identity
+        )
+        _record_v16_p8_identity_checkpoint(
             baseline=watchdog_identity,
             workflow_ledger=v11_workflow_ledger,
             checkpoint="preflight_ledger_created",
@@ -6141,6 +7173,26 @@ def _run_impl(
                 None
                 if v12_recovery_binding is None
                 else dict(v12_recovery_binding)
+            )
+        if v16_p8_diagnostic:
+            assert candidate_plan is not None
+            assert candidate_plan_sha256 is not None
+            source_products = v16_p8_source_binding.get("products", {})
+            plan_product = source_products.get("plan") if isinstance(source_products, Mapping) else None
+            provenance = candidate_plan.get("task43_candidate", {}).get("provenance", {})
+            if (
+                not isinstance(plan_product, Mapping)
+                or plan_product.get("path") != str(candidate_plan_path.resolve())
+                or plan_product.get("sha256") != candidate_plan_sha256
+                or provenance.get("v16_contract_sha256") != v16_p8_contract_sha256
+                or candidate_identity.get("action") != "p_up"
+                or candidate_identity.get("parent_candidate_id") != "round9_p_up"
+            ):
+                raise ValueError("V16 R9_P8 candidate differs from its selected S plan or accepted parent")
+            candidate_identity["v16_phase"] = "R9_P8"
+            candidate_identity["v16_contract_sha256"] = v16_p8_contract_sha256
+            candidate_identity["v16_space_source_binding"] = dict(
+                v16_p8_source_binding
             )
         if v3_workflow_ledger is not None:
             v3_workflow_ledger.marker(
@@ -6310,6 +7362,25 @@ def _run_impl(
                 expected_identity=v11_watchdog_identity,
             )
         )
+    if v16_p8_diagnostic:
+        assert v16_p8_contract_path is not None and v16_p8_contract_sha256 is not None
+        assert isinstance(v16_p8_source_binding, Mapping)
+        source_identity["v16_p8_contract"] = {
+            "path": str(v16_p8_contract_path.resolve()),
+            "sha256": v16_p8_contract_sha256,
+            "phase": "R9_P8",
+        }
+        source_identity["v16_p8_space_source"] = {
+            "space_source_id": v16_p8_source_binding["space_source_id"],
+            "source_head": v16_p8_source_binding["source_head"],
+            "products": v16_p8_source_binding["products"],
+        }
+        source_identity["v16_p8_watchdog_worker_identity"] = (
+            _require_v11_watchdog_worker_identity(
+                require_unused_phase_file=False,
+                expected_identity=v11_watchdog_identity,
+            )
+        )
     source_hashes_before = source_identity["file_sha256"]
 
     cfg = _h100_config(
@@ -6338,6 +7409,10 @@ def _run_impl(
         v11_phase_controls = _configure_v11_primary_endpoint(
             cfg, str(v11_primary_diagnostic_phase), v11_contract
         )
+    v16_p8_phase_controls = None
+    if v16_p8_diagnostic:
+        assert v11_contract is not None
+        v16_p8_phase_controls = _configure_v16_p8_endpoint(cfg, v11_contract)
     _log_stage(
         comm,
         started,
@@ -6347,8 +7422,13 @@ def _run_impl(
     )
     if workflow_ledger is not None:
         workflow_ledger.set_phase("mesh_setup")
-    if v11_diagnostic:
-        _record_v11_identity_checkpoint(
+    if primary_raw_diagnostic:
+        identity_checkpoint = (
+            _record_v16_p8_identity_checkpoint
+            if v16_p8_diagnostic
+            else _record_v11_identity_checkpoint
+        )
+        identity_checkpoint(
             baseline=v11_watchdog_identity,
             workflow_ledger=v11_workflow_ledger,
             checkpoint="mesh_setup_begin",
@@ -6366,7 +7446,12 @@ def _run_impl(
     if v3_workflow_ledger is not None:
         v3_workflow_ledger.marker("task43_v3_a1_mesh_setup_complete", {})
     if v11_workflow_ledger is not None:
-        _record_v11_identity_checkpoint(
+        identity_checkpoint = (
+            _record_v16_p8_identity_checkpoint
+            if v16_p8_diagnostic
+            else _record_v11_identity_checkpoint
+        )
+        identity_checkpoint(
             baseline=v11_watchdog_identity,
             workflow_ledger=v11_workflow_ledger,
             checkpoint="mesh_setup_complete",
@@ -6384,6 +7469,7 @@ def _run_impl(
             )
     local_h_plan_identity = None
     v11_p4_actual_space_audit = None
+    v16_p8_preassembly_audit = None
     if kind == "empty_h_active_p3":
         if candidate_case:
             assert candidate_plan is not None
@@ -6483,6 +7569,39 @@ def _run_impl(
             ),
             "allow_no_refinement": bool(plan.get("allow_no_refinement", False)),
         }
+        if v16_p8_diagnostic:
+            v16_p8_preassembly_audit = _v16_p8_actual_space_audit(
+                cfg=cfg,
+                mesh_data=mesh_data,
+                plan=plan,
+                source_binding=v16_p8_source_binding,
+                actual_mesh_identity=actual_mesh_identity,
+            )
+            v16_p8_preassembly_audit.update(
+                {
+                    "selected_space_source_id": v16_p8_source_binding.get(
+                        "space_source_id"
+                    ),
+                    "selected_plan_path": v16_p8_source_binding.get("plan_path"),
+                    "selected_plan_sha256": candidate_plan_sha256,
+                    "selected_audit_path": v16_p8_source_binding.get("audit_path"),
+                    "selected_audit_sha256": v16_p8_source_binding.get(
+                        "products", {}
+                    )
+                    .get("audit", {})
+                    .get("sha256"),
+                    "selected_mesh_box_catalog_sha256": v16_p8_source_binding.get(
+                        "space_audit", {}
+                    )
+                    .get("actual_geometry", {})
+                    .get("mesh_box_catalog_sha256"),
+                }
+            )
+            if not v16_p8_preassembly_audit["pass"]:
+                raise ValueError(
+                    "V16 R9_P8 actual trace/interior/constraint/carrier authority "
+                    "differs from selected S source"
+                )
         if v11_diagnostic and v11_primary_diagnostic_phase == "R9_H8":
             assert v11_contract is not None
             assert candidate_plan_sha256 is not None
@@ -6544,6 +7663,8 @@ def _run_impl(
     captured: dict[str, Any] = {}
     if v11_p4_actual_space_audit is not None:
         captured["v11_p4_preassembly_space_audit"] = v11_p4_actual_space_audit
+    if v16_p8_preassembly_audit is not None:
+        captured["v16_p8_preassembly_space_audit"] = v16_p8_preassembly_audit
     if _failure_context is not None:
         _failure_context["captured"] = captured
 
@@ -6702,12 +7823,17 @@ def _run_impl(
         captured["port_metrics"] = kwargs["dtn_result"]["port_metrics"]
 
     def active_observer(view) -> None:
-        if v11_diagnostic:
+        if primary_raw_diagnostic:
             live_mode_keys, live_mode_count = _v11_live_mode_identity(view)
             captured["mode_count"] = live_mode_count
             captured["ordered_mode_keys"] = live_mode_keys
-        if v11_diagnostic:
-            _record_v11_identity_checkpoint(
+        if primary_raw_diagnostic:
+            identity_checkpoint = (
+                _record_v16_p8_identity_checkpoint
+                if v16_p8_diagnostic
+                else _record_v11_identity_checkpoint
+            )
+            identity_checkpoint(
                 baseline=v11_watchdog_identity,
                 workflow_ledger=v11_workflow_ledger,
                 checkpoint="live_observer_after_factor_solve_and_recovery",
@@ -6787,6 +7913,22 @@ def _run_impl(
                         contract_sha256=str(v11_contract_sha256),
                     )
                     captured["v11_endpoint_identity"] = checkpoint_v11_identity
+                checkpoint_v16_p8_identity = None
+                if v16_p8_diagnostic:
+                    checkpoint_v16_p8_identity = _v16_p8_endpoint_identity(
+                        view.config,
+                        modes,
+                        axes_nm=resolved_axes,
+                        candidate_plan_sha256=str(candidate_plan_sha256),
+                        active_degree_plan_sha256=str(
+                            storage_metadata["active_degree_plan_sha256"]
+                        ),
+                        independent_active_fe_dofs=int(
+                            storage_metadata["independent_active_fe_dofs"]
+                        ),
+                        contract_sha256=str(v16_p8_contract_sha256),
+                    )
+                    captured["v16_p8_endpoint_identity"] = checkpoint_v16_p8_identity
                 checkpoint_identity = {
                     "case_id": case,
                     "candidate_id": candidate_id if candidate_case else None,
@@ -6808,6 +7950,7 @@ def _run_impl(
                     "resolved_profile_identity": checkpoint_profile_identity,
                     "v2_endpoint_identity": checkpoint_v2_identity,
                     "v11_endpoint_identity": checkpoint_v11_identity,
+                    "v16_p8_endpoint_identity": checkpoint_v16_p8_identity,
                     "resolved_axes_nm": resolved_axes,
                     "local_h_plan_identity": local_h_plan_identity,
                     "ordered_mode_count": len(ordered_mode_keys),
@@ -6899,7 +8042,7 @@ def _run_impl(
                 stage_duration_seconds=time.perf_counter() - capture_started,
             )
 
-        if not (v3_failure_evidence_enabled or v11_diagnostic):
+        if not (v3_failure_evidence_enabled or primary_raw_diagnostic):
             capture_primary_fields(capture_v3_samples=False)
         captured["distinct_physical_trace_degrees"] = sorted(
             {
@@ -6920,9 +8063,9 @@ def _run_impl(
         try:
             independent_action = compute_stage4_independent_active_action(
                 view,
-                capture_raw_vectors=(v3_failure_evidence_enabled or v11_diagnostic),
+                capture_raw_vectors=(v3_failure_evidence_enabled or primary_raw_diagnostic),
             )
-            if v3_failure_evidence_enabled or v11_diagnostic:
+            if v3_failure_evidence_enabled or primary_raw_diagnostic:
                 captured["independent_active_action_raw_vectors"] = (
                     independent_action.pop("raw_vectors", None)
                 )
@@ -6953,7 +8096,7 @@ def _run_impl(
             captured["explicit_active_residual"] = _linear_residual(
                 view.A, view.b, view.x
             )
-        if v3_failure_evidence_enabled or v11_diagnostic:
+        if v3_failure_evidence_enabled or primary_raw_diagnostic:
             captured["full_active_residual_raw_vectors"] = (
                 view.full_active_residual.get("raw_vectors")
             )
@@ -6985,7 +8128,7 @@ def _run_impl(
         captured["local_h_audit"]["closure_split_counts"] = dict(
             audit["forest"]["closure_split_counts"]
         )
-        if v11_diagnostic:
+        if primary_raw_diagnostic:
             raw_action = view.b.duplicate()
             raw_residual = view.b.duplicate()
             try:
@@ -7071,7 +8214,7 @@ def _run_impl(
                         storage_metadata["independent_active_fe_dofs"]
                     ),
                 }
-                v11_packet_identity = {
+                primary_packet_identity = {
                     "phase": v11_primary_diagnostic_phase,
                     "contract_sha256": v11_contract_sha256,
                     "source_identity": source_identity,
@@ -7112,25 +8255,68 @@ def _run_impl(
                     "official_result": False,
                     "passed": False,
                 }
+                if v16_p8_diagnostic:
+                    primary_packet_identity = {
+                        "phase": "R9_P8",
+                        "contract_sha256": v16_p8_contract_sha256,
+                        "source_identity": source_identity,
+                        "candidate_identity": candidate_identity,
+                        "candidate_plan_sha256": candidate_plan_sha256,
+                        "space_source_binding": dict(v16_p8_source_binding),
+                        "endpoint_identity": captured.get("v16_p8_endpoint_identity"),
+                        "pre_validation_checkpoint": captured.get(
+                            "pre_validation_checkpoint"
+                        ),
+                        "normal_correction_audit": _plain_nested_containers(
+                            normal_audit
+                        ),
+                        "normal_correction_count": int(
+                            view.primal_solver_telemetry["normal_correction_count"]
+                        ),
+                        "extra_correction_count": 0,
+                        "independent_active_fe_dofs": int(
+                            storage_metadata["independent_active_fe_dofs"]
+                        ),
+                        "raw_full_active_scope": full_scope_record,
+                        "independent_A6_raw_vector_scope": dict(a6_scope),
+                        "raw_vector_gate_status": "pending_independent_recomputation",
+                        "ordered_mode_keys": captured["ordered_mode_keys"],
+                        "ordered_mode_count": int(captured["mode_count"]),
+                        "official_result": False,
+                        "passed": False,
+                    }
                 packet_record = None
                 packet_error = None
                 if comm.rank == 0:
                     try:
-                        packet_record = write_v11_primary_packet(
-                            run_root / "primary_state.npz",
-                            packet_arrays,
-                            phase=str(v11_primary_diagnostic_phase),
-                            identity=v11_packet_identity,
-                        )
-                        captured["v11_primary_packet"] = packet_record
+                        if v16_p8_diagnostic:
+                            packet_record = write_atomic_npz(
+                                run_root / "primary_state.npz",
+                                packet_arrays,
+                                schema="task43.v16.p8.primary_state.v1",
+                                classification="measured_R9_P8_primary_not_official",
+                                identity=primary_packet_identity,
+                            )
+                            captured["v16_p8_primary_packet"] = packet_record
+                        else:
+                            packet_record = write_v11_primary_packet(
+                                run_root / "primary_state.npz",
+                                packet_arrays,
+                                phase=str(v11_primary_diagnostic_phase),
+                                identity=primary_packet_identity,
+                            )
+                            captured["v11_primary_packet"] = packet_record
                     except (OSError, TypeError, ValueError) as error:
                         packet_error = f"{type(error).__name__}: {error}"
                 packet_record, packet_error = comm.bcast(
                     (packet_record, packet_error), root=0
                 )
                 if packet_error is not None:
-                    raise RuntimeError(f"V11 primary raw packet write failed: {packet_error}")
-                captured["v11_primary_packet"] = packet_record
+                    label = "V16 R9_P8" if v16_p8_diagnostic else "V11 primary"
+                    raise RuntimeError(f"{label} raw packet write failed: {packet_error}")
+                captured[
+                    "v16_p8_primary_packet" if v16_p8_diagnostic else "v11_primary_packet"
+                ] = packet_record
                 raw_gate_audit = _v11_raw_vector_gates(
                     packet_arrays,
                     active_trace_rows=active_trace_rows,
@@ -7148,31 +8334,58 @@ def _run_impl(
                     normal_correction_status=str(normal_audit.get("status", "")),
                     extra_correction_count=0,
                 )
-                captured["v11_primary_raw_gate_audit"] = raw_gate_audit
-                try:
-                    raw_checkpoint = _persist_v11_raw_gate_before_postprocessing(
-                        run_root,
-                        audit=raw_gate_audit,
-                        identity={
-                            "phase": v11_primary_diagnostic_phase,
-                            "contract_sha256": v11_contract_sha256,
-                            "candidate_identity": candidate_identity,
-                            "candidate_plan_sha256": candidate_plan_sha256,
-                            "primary_packet": packet_record,
-                        },
-                        on_pass=lambda: capture_primary_fields(
-                            capture_v3_samples=False
-                        ),
-                    )
-                except RuntimeError:
-                    captured["v11_primary_raw_gate_checkpoint"] = {
-                        "path": str(run_root / "primary_raw_vector_audit.json"),
-                        "sha256": _sha256_file(
-                            run_root / "primary_raw_vector_audit.json"
-                        ),
-                    }
-                    raise
-                captured["v11_primary_raw_gate_checkpoint"] = raw_checkpoint
+                captured[
+                    "v16_p8_raw_gate_audit" if v16_p8_diagnostic else "v11_primary_raw_gate_audit"
+                ] = raw_gate_audit
+                if v16_p8_diagnostic:
+                    try:
+                        raw_checkpoint = _persist_v16_p8_raw_gate_before_postprocessing(
+                            run_root,
+                            audit=raw_gate_audit,
+                            identity={
+                                "phase": "R9_P8",
+                                "contract_sha256": v16_p8_contract_sha256,
+                                "candidate_identity": candidate_identity,
+                                "candidate_plan_sha256": candidate_plan_sha256,
+                                "space_source_binding": v16_p8_source_binding,
+                                "primary_packet": packet_record,
+                            },
+                        )
+                    except RuntimeError:
+                        captured["v16_p8_raw_gate_checkpoint"] = {
+                            "path": str(run_root / "primary_raw_vector_audit.json"),
+                            "sha256": _sha256_file(
+                                run_root / "primary_raw_vector_audit.json"
+                            ),
+                        }
+                        raise
+                    captured["v16_p8_raw_gate_checkpoint"] = raw_checkpoint
+                    capture_primary_fields(capture_v3_samples=False)
+                else:
+                    try:
+                        raw_checkpoint = _persist_v11_raw_gate_before_postprocessing(
+                            run_root,
+                            audit=raw_gate_audit,
+                            identity={
+                                "phase": v11_primary_diagnostic_phase,
+                                "contract_sha256": v11_contract_sha256,
+                                "candidate_identity": candidate_identity,
+                                "candidate_plan_sha256": candidate_plan_sha256,
+                                "primary_packet": packet_record,
+                            },
+                            on_pass=lambda: capture_primary_fields(
+                                capture_v3_samples=False
+                            ),
+                        )
+                    except RuntimeError:
+                        captured["v11_primary_raw_gate_checkpoint"] = {
+                            "path": str(run_root / "primary_raw_vector_audit.json"),
+                            "sha256": _sha256_file(
+                                run_root / "primary_raw_vector_audit.json"
+                            ),
+                        }
+                        raise
+                    captured["v11_primary_raw_gate_checkpoint"] = raw_checkpoint
             finally:
                 raw_action.destroy()
                 raw_residual.destroy()
@@ -7436,24 +8649,34 @@ def _run_impl(
         workflow_ledger=workflow_ledger,
     )
     try:
-        identity_guard = (
-            _v11_solver_progress_identity_guard(
+        if v16_p8_diagnostic:
+            identity_guard = _v16_p8_solver_progress_identity_guard(
                 baseline=v11_watchdog_identity,
                 workflow_ledger=v11_workflow_ledger,
             )
-            if v11_diagnostic
-            else nullcontext()
-        )
+        elif v11_diagnostic:
+            identity_guard = _v11_solver_progress_identity_guard(
+                baseline=v11_watchdog_identity,
+                workflow_ledger=v11_workflow_ledger,
+            )
+        else:
+            identity_guard = nullcontext()
         case_output_guard = (
             _v11_primary_case_output_serialization(
                 run_root,
                 primary_phase=v11_primary_diagnostic_phase,
                 captured=captured,
+                v16_p8=v16_p8_diagnostic,
             )
-            if v11_diagnostic
+            if primary_raw_diagnostic
             else nullcontext()
         )
-        with identity_guard, case_output_guard:
+        absorption_form_guard = (
+            _v16_p8_actual_absorption_forms(captured, cfg)
+            if v16_p8_diagnostic
+            else nullcontext()
+        )
+        with identity_guard, case_output_guard, absorption_form_guard:
             summary = run_stage4b_block_grating_3d_case(
                 cfg,
                 run_root / "solve",
@@ -7465,9 +8688,19 @@ def _run_impl(
                     same_lu_solve_residual_correction_enabled
                 ),
                 variable_p_capture_normal_correction_vectors=(
-                    v3_failure_evidence_enabled or v11_diagnostic
+                    v3_failure_evidence_enabled or primary_raw_diagnostic
                 ),
                 mesh_data_override=mesh_data,
+            )
+        if v16_p8_diagnostic:
+            summary = captured.pop("v16_p8_json_safe_solver_summary", None)
+            if not isinstance(summary, Mapping):
+                raise ValueError("V16 R9_P8 shared writer did not retain its safe summary copy")
+            summary = dict(summary)
+            captured["v16_p8_absorption_form_audit"] = (
+                _validate_v16_p8_actual_absorption_forms(
+                    captured.get("v16_p8_actual_absorption_form_metadata", []), cfg
+                )
             )
         if v11_diagnostic and v11_primary_diagnostic_phase == "R9_H8":
             summary = captured.pop("v11_primary_json_safe_solver_summary", None)
@@ -8177,16 +9410,198 @@ def _run_impl(
                 gates["status"] = "passed" if gates["pass"] else "failed"
                 record["gates"] = gates
                 task43_gated_official_result = False
-            record_path.write_text(
-                json.dumps(
-                    _plain_nested_containers(record),
-                    indent=2,
-                    sort_keys=True,
-                    default=_json_default,
+            if v16_p8_diagnostic:
+                raw_gate_audit = captured.get("v16_p8_raw_gate_audit")
+                primary_packet = captured.get("v16_p8_primary_packet")
+                endpoint_identity = captured.get("v16_p8_endpoint_identity")
+                absorption_audit = captured.get("v16_p8_absorption_form_audit")
+                preassembly_audit = captured.get("v16_p8_preassembly_space_audit")
+                if not all(
+                    isinstance(value, Mapping)
+                    for value in (
+                        raw_gate_audit,
+                        primary_packet,
+                        endpoint_identity,
+                        absorption_audit,
+                        preassembly_audit,
+                    )
+                ):
+                    raise ValueError("V16 R9_P8 endpoint lacks its primary, space, raw or Av binding")
+                _v2_validated_rows(
+                    port_payload,
+                    label="V16 R9_P8 primary",
+                    expected=R13_MODE_KEYS,
                 )
-                + "\n",
-                encoding="utf-8",
-            )
+                p8_expected_space = v16_p8_source_binding.get("space_audit", {})
+                p8_expected_dofs = p8_expected_space.get("dofs", {})
+                p8_expected_detail = p8_expected_space.get(
+                    "space_authority_detail", {}
+                )
+                p8_expected_carrier = p8_expected_detail.get("p6_carrier", {})
+                p8_actual_space = preassembly_audit.get("actual_space", {})
+                p8_full_raw = raw_gate_audit.get("full_active_transformed", {})
+                p8_storage = captured.get("solution_storage_metadata", {})
+                actual_fe = int(storage_metadata["independent_active_fe_dofs"])
+                p8_required_counts = (
+                    actual_fe,
+                    p8_expected_dofs.get("independent_active_fe_dofs"),
+                    p8_actual_space.get("independent_fe_dofs"),
+                    p8_storage.get("independent_trace_rows"),
+                    p8_expected_detail.get("independent_trace_rows"),
+                    p8_actual_space.get("independent_trace_rows"),
+                    p8_storage.get("active_trace_rows"),
+                    p8_expected_detail.get("independent_trace_rows"),
+                    p8_storage.get("active_cell_interior_rows"),
+                    p8_expected_dofs.get("active_cell_interior_rows"),
+                    p8_actual_space.get("independent_cell_interior_rows"),
+                    p8_storage.get("active_rows"),
+                    p8_expected_carrier.get("active_entity_rows"),
+                    p8_actual_space.get("p6_carrier", {}).get(
+                        "active_entity_rows"
+                    ),
+                    p8_full_raw.get("independent_reduced_trace_rows"),
+                    p8_full_raw.get("independent_active_fe_dofs"),
+                    p8_full_raw.get("raw_full_entity_map_rows"),
+                    p8_full_raw.get("raw_trace_rows"),
+                    p8_full_raw.get("active_interior_rows"),
+                    p8_full_raw.get("reduced_trace_dtn_rows_including_auxiliary"),
+                )
+                p8_required_counts_present = all(
+                    type(value) is int for value in p8_required_counts
+                )
+                p8_gates = dict(gates)
+                for name, value in raw_gate_audit["gates"].items():
+                    p8_gates[f"primary_raw_{name}"] = value is True
+                p8_gates["strict_parent_and_target_FE_bounds"] = bool(
+                    110472 < actual_fe < 237600
+                )
+                p8_gates["primary_FE_exactly_matches_S"] = (
+                    p8_required_counts_present
+                    and actual_fe
+                    == p8_expected_dofs.get("independent_active_fe_dofs")
+                    == p8_actual_space.get("independent_fe_dofs")
+                )
+                p8_gates["primary_storage_trace_interior_and_carrier_match_S"] = (
+                    p8_required_counts_present
+                    and p8_storage.get("independent_trace_rows")
+                    == p8_expected_detail.get("independent_trace_rows")
+                    == p8_actual_space.get("independent_trace_rows")
+                    and p8_storage.get("active_trace_rows")
+                    == p8_expected_detail.get("independent_trace_rows")
+                    and p8_storage.get("active_cell_interior_rows")
+                    == p8_expected_dofs.get("active_cell_interior_rows")
+                    == p8_actual_space.get("independent_cell_interior_rows")
+                    and p8_storage.get("active_rows")
+                    == p8_expected_carrier.get("active_entity_rows")
+                    == p8_actual_space.get("p6_carrier", {}).get(
+                        "active_entity_rows"
+                    )
+                )
+                expected_raw_trace_rows = (
+                    p8_expected_carrier.get("active_entity_rows", -1)
+                    - p8_expected_dofs.get("active_cell_interior_rows", -1)
+                )
+                p8_gates["primary_raw_active_scope_matches_S"] = (
+                    p8_required_counts_present
+                    and p8_full_raw.get("independent_reduced_trace_rows")
+                    == p8_expected_detail.get("independent_trace_rows")
+                    and p8_full_raw.get("independent_active_fe_dofs")
+                    == p8_expected_dofs.get("independent_active_fe_dofs")
+                    and p8_full_raw.get("raw_full_entity_map_rows")
+                    == p8_expected_carrier.get("active_entity_rows")
+                    and p8_full_raw.get("raw_trace_rows")
+                    == expected_raw_trace_rows
+                    and p8_full_raw.get("active_interior_rows")
+                    == p8_expected_dofs.get("active_cell_interior_rows")
+                    and p8_full_raw.get(
+                        "reduced_trace_dtn_rows_including_auxiliary"
+                    )
+                    == p8_expected_detail.get("independent_trace_rows", -1) + 612
+                )
+                p8_gates["actual_S_space_matches_mesh"] = (
+                    preassembly_audit.get("pass") is True
+                )
+                p8_gates["actual_R9_absorption_form_metadata"] = (
+                    absorption_audit.get("status") == "actual_forms_observed"
+                )
+                p8_gates["actual_factor_backend_is_mumps"] = (
+                    actual_factor_backend == "mumps"
+                    and actual_live_factor_backend == "mumps"
+                )
+                p8_gates["pass"] = all(
+                    value is True
+                    for key, value in p8_gates.items()
+                    if key not in {"pass", "status"}
+                )
+                p8_gates["status"] = "passed" if p8_gates["pass"] else "failed"
+                record.update(
+                    {
+                        "schema": "task43.v16.p8.primary-endpoint.v1",
+                        "classification": "measured_primary_nonofficial_v16_p8_endpoint",
+                        "phase": "R9_P8",
+                        "status": (
+                            "SOLVED_PRIMARY_PENDING_PAIRED_COMPARISON"
+                            if p8_gates["pass"]
+                            else "FAILED"
+                        ),
+                        "contract": {
+                            "path": str(
+                                (_REPOSITORY_ROOT / _V16_P8_CONTRACT_REL).resolve()
+                            ),
+                            "sha256": v16_p8_contract_sha256,
+                        },
+                        "space_source_binding": dict(v16_p8_source_binding),
+                        "candidate_plan_sha256": candidate_plan_sha256,
+                        "endpoint_controls": v16_p8_phase_controls,
+                        "endpoint_identity": endpoint_identity,
+                        "primary_packet": primary_packet,
+                        "primary_raw_vector_audit": raw_gate_audit,
+                        "primary_raw_vector_audit_checkpoint": captured.get(
+                            "v16_p8_raw_gate_checkpoint"
+                        ),
+                        "preassembly_space_audit": preassembly_audit,
+                        "actual_absorption_form_audit": absorption_audit,
+                        "independent_active_fe_dofs": actual_fe,
+                        "official_result": False,
+                        "selection_status": "diagnostic_only_no_transition_authorized",
+                        "selection_eligible": False,
+                        "selection_candidate": False,
+                        "candidate_selected": False,
+                        "continuation_all_false": True,
+                        "continuation": {
+                            "same_group_R": False,
+                            "A1_R": False,
+                            "A2_q": False,
+                            "A2_R": False,
+                            "B": False,
+                            "C": False,
+                            "cost_campaign": False,
+                            "iteration": False,
+                        },
+                        "gates": p8_gates,
+                        "pass": False,
+                    }
+                )
+                record["solver"]["official_result"] = False
+                record["solver"]["official_result_scope"] = (
+                    "nonofficial V16 R9_P8 primary; comparison and acceptance remain separate"
+                )
+                task43_gated_official_result = False
+                gates = p8_gates
+                if not p8_gates["pass"]:
+                    post_error = f"V16 R9_P8 endpoint gates failed; see {record_path}"
+                write_atomic_json(record_path, _plain_nested_containers(record))
+            else:
+                record_path.write_text(
+                    json.dumps(
+                        _plain_nested_containers(record),
+                        indent=2,
+                        sort_keys=True,
+                        default=_json_default,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
             if not gates["pass"] and not v2_diagnostic:
                 post_error = f"Task43 case gates failed; see {record_path}"
             _log_stage(
@@ -8318,17 +9733,58 @@ def _run_impl(
         terminal_error = comm.bcast(terminal_error, root=0)
         if terminal_error is not None:
             raise RuntimeError(f"V11 successful terminal write failed: {terminal_error}")
+    if v16_p8_diagnostic:
+        terminal_error = None
+        if comm.rank == 0:
+            try:
+                endpoint_path = run_root / "task43_round1_candidate_record.json"
+                endpoint_record = json.loads(endpoint_path.read_text(encoding="utf-8"))
+                terminal = _write_v16_p8_primary_terminal(
+                    run_root,
+                    source_identity=source_identity,
+                    candidate_identity=candidate_identity or {},
+                    endpoint_record_path=endpoint_path,
+                    candidate_plan_sha256=str(candidate_plan_sha256),
+                    contract_sha256=str(v16_p8_contract_sha256),
+                    space_source_binding=v16_p8_source_binding,
+                    primary_packet=captured["v16_p8_primary_packet"],
+                    raw_gate_checkpoint=captured["v16_p8_raw_gate_checkpoint"],
+                    gates=endpoint_record["gates"],
+                    endpoint_identity=captured["v16_p8_endpoint_identity"],
+                )
+                if v11_workflow_ledger is not None:
+                    _record_v16_p8_identity_checkpoint(
+                        baseline=v11_watchdog_identity,
+                        workflow_ledger=v11_workflow_ledger,
+                        checkpoint="primary_terminal_written",
+                    )
+                    v11_workflow_ledger.marker(
+                        "task43_v16_p8_primary_endpoint_solved",
+                        {
+                            "terminal_path": terminal["path"],
+                            "terminal_sha256": terminal["sha256"],
+                            "endpoint_record_sha256": _sha256_file(endpoint_path),
+                            "phase": "R9_P8",
+                            "status": "SOLVED_PRIMARY_PENDING_PAIRED_COMPARISON",
+                        },
+                    )
+            except BaseException as exc:  # noqa: BLE001 - preserve terminal failures collectively
+                terminal_error = f"{type(exc).__name__}: {exc}"
+        terminal_error = comm.bcast(terminal_error, root=0)
+        if terminal_error is not None:
+            raise RuntimeError(f"V16 R9_P8 successful terminal write failed: {terminal_error}")
     return summary
 
 
 def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
-    """Persist V3/V11 failure terminals after an acquired run root."""
+    """Persist phase-specific failure terminals after an acquired run root."""
     from inspect import signature
 
     bound = signature(_run_impl).bind_partial(*args, **kwargs)
     arguments = bound.arguments
     v3_enabled = bool(arguments.get("v3_failure_evidence_enabled", False))
     v11_enabled = arguments.get("v11_primary_diagnostic_phase") is not None
+    v16_p8_enabled = arguments.get("v16_p8_contract_path") is not None
     context: dict[str, Any] = {
         "run_root": arguments.get("run_root"),
         "run_root_acquired": False,
@@ -8338,6 +9794,13 @@ def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
         "captured": {},
         "candidate_identity": None,
         "v12_recovery_binding": arguments.get("v12_recovery_binding"),
+        "v16_p8_contract_binding": {
+            "path": str(arguments["v16_p8_contract_path"]),
+            "sha256": arguments.get("v16_p8_contract_sha256"),
+            "space_source_binding": arguments.get("v16_p8_source_binding"),
+        }
+        if v16_p8_enabled
+        else None,
     }
     kwargs["_failure_context"] = context
     try:
@@ -8366,6 +9829,29 @@ def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
             except BaseException as terminal_error:  # noqa: BLE001
                 print(
                     "failed to persist V11 failure terminal after escaped error: "
+                    f"{type(terminal_error).__name__}: {terminal_error}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+        if (
+            v16_p8_enabled
+            and context.get("run_root_acquired") is True
+            and run_root is not None
+            and Path(run_root).is_dir()
+            and MPI.COMM_WORLD.rank == 0
+        ):
+            try:
+                terminal_record = _write_v16_p8_partial_terminal(
+                    Path(run_root),
+                    source_identity=context.get("source_identity") or {},
+                    captured=context.get("captured") or {},
+                    candidate_identity=context.get("candidate_identity"),
+                    contract_binding=context.get("v16_p8_contract_binding") or {},
+                    error=error,
+                )
+            except BaseException as terminal_error:  # noqa: BLE001
+                print(
+                    "failed to persist V16 R9_P8 failure terminal after escaped error: "
                     f"{type(terminal_error).__name__}: {terminal_error}",
                     file=sys.stderr,
                     flush=True,
@@ -8434,6 +9920,25 @@ def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
                     file=sys.stderr,
                     flush=True,
                 )
+        if v16_p8_enabled and workflow_ledger is not None:
+            try:
+                workflow_ledger.marker(
+                    "task43_v16_p8_failed",
+                    {
+                        "previous_stage": workflow_ledger.last_stage,
+                        "exception_type": type(error).__name__,
+                        "exception_message": str(error),
+                        "terminal_reference": terminal_record,
+                    },
+                    allow_stop=True,
+                )
+            except BaseException as ledger_error:  # noqa: BLE001
+                print(
+                    "failed to persist V16 R9_P8 workflow failure marker: "
+                    f"{type(ledger_error).__name__}: {ledger_error}",
+                    file=sys.stderr,
+                    flush=True,
+                )
         raise
 
 
@@ -8460,10 +9965,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--v2-contract-sha256")
     parser.add_argument("--v2-reference-run-root", type=Path)
     parser.add_argument(
-        "--primary-diagnostic-phase", choices=("A1_q3", "R9_H8")
+        "--primary-diagnostic-phase", choices=("A1_q3", "R9_H8", "R9_P8")
     )
     parser.add_argument("--primary-diagnostic-contract", type=Path)
     parser.add_argument("--execution-recovery-manifest", type=Path)
+    parser.add_argument("--paired-p8-contract", type=Path)
     parser.add_argument(
         "--v3-failure-evidence",
         action="store_true",
@@ -8548,8 +10054,88 @@ def main(argv: list[str] | None = None) -> int:
     is_native = kind == "native_p3"
     is_mpi2 = args.case == "empty_h_active_p3_mpi2"
     v2_diagnostic = args.v2_diagnostic_phase is not None
-    v11_diagnostic = args.primary_diagnostic_phase is not None
+    v16_p8_diagnostic = args.primary_diagnostic_phase == "R9_P8"
+    v11_diagnostic = (
+        args.primary_diagnostic_phase is not None and not v16_p8_diagnostic
+    )
     v12_recovery_binding = None
+    v16_p8_contract = None
+    v16_p8_contract_sha256 = None
+    v16_p8_source_binding = None
+    v16_p8_worker_identity = None
+    if v16_p8_diagnostic:
+        if args.paired_p8_contract is None:
+            parser.error("R9_P8 requires --paired-p8-contract")
+        if (
+            not is_candidate
+            or v2_diagnostic
+            or args.v3_failure_evidence
+            or args.primary_diagnostic_contract is not None
+            or args.execution_recovery_manifest is not None
+            or args.same_lu_tightening
+            or not args.same_lu_solve_residual_correction
+            or args.direct_factor_backend != "mumps"
+            or args.reference_run_root is not None
+            or args.parallel_reference_run_root is not None
+            or any(
+                value is not None
+                for value in (
+                    args.candidate_parent_run_root,
+                    args.candidate_tightening_run_root,
+                    args.candidate_marking_record,
+                )
+            )
+        ):
+            parser.error(
+                "R9_P8 requires only the accepted-parent candidate route, one normal correction, zero extra corrections and MUMPS"
+            )
+        try:
+            from benchmarks.task43_hp_adaptivity.round1_candidates import (
+                _load_v16_p8_contract as _load_p8_contract,
+            )
+
+            v16_p8_contract, v16_p8_contract_sha256 = _load_p8_contract(
+                args.paired_p8_contract
+            )
+            plan_sources = v16_p8_contract["phases"]["F"][
+                "candidate_plan_sources"
+            ]
+            artifact_root = Path(
+                str(v16_p8_contract["artifact_prefix"])
+            ).resolve()
+            selected_sources = [
+                source_id
+                for source_id, relative in plan_sources.items()
+                if args.candidate_plan is not None
+                and args.candidate_plan.resolve()
+                == (artifact_root / str(relative)).resolve()
+            ]
+            if len(selected_sources) != 1:
+                raise ValueError(
+                    "R9_P8 candidate plan must explicitly name exactly one S_MAIN or E_S plan"
+                )
+            _, _, v16_p8_source_binding = _load_v16_p8_context(
+                args.paired_p8_contract,
+                source_id=selected_sources[0],
+                run_root=args.run_root,
+            )
+            _validate_v16_p8_cli(
+                contract=v16_p8_contract,
+                source_binding=v16_p8_source_binding,
+                run_root=args.run_root,
+                candidate_id=args.candidate_id,
+                candidate_plan_path=args.candidate_plan,
+                candidate_parent_selection_record=args.candidate_parent_selection_record,
+                candidate_acceptance_contract=args.candidate_acceptance_contract,
+                normal_correction_enabled=args.same_lu_solve_residual_correction,
+                extra_correction_enabled=args.same_lu_tightening,
+                direct_factor_backend=args.direct_factor_backend,
+            )
+            v16_p8_worker_identity = _require_v11_watchdog_worker_identity()
+        except (OSError, json.JSONDecodeError, KeyError, RuntimeError, TypeError, ValueError) as exc:
+            parser.error(f"V16 R9_P8 contract or worker identity is invalid: {exc}")
+    elif args.paired_p8_contract is not None:
+        parser.error("--paired-p8-contract requires --primary-diagnostic-phase R9_P8")
     if v11_diagnostic:
         if args.primary_diagnostic_contract is None:
             parser.error("V11 primary diagnostics require --primary-diagnostic-contract")
@@ -8789,11 +10375,19 @@ def main(argv: list[str] | None = None) -> int:
         v3_contract_sha256=_V3_CONTRACT_SHA256 if args.v3_failure_evidence else None,
         v3_plan_path=args.v3_plan,
         v3_plan_sha256=_V3_PLAN_SHA256 if args.v3_failure_evidence else None,
-        v11_primary_diagnostic_phase=args.primary_diagnostic_phase,
+        v11_primary_diagnostic_phase=(
+            args.primary_diagnostic_phase if v11_diagnostic else None
+        ),
         v11_contract_path=args.primary_diagnostic_contract,
         v11_contract_sha256=v11_contract_sha256,
         v11_initial_worker_identity=v11_worker_identity,
         v12_recovery_binding=v12_recovery_binding,
+        v16_p8_contract_path=(
+            args.paired_p8_contract if v16_p8_diagnostic else None
+        ),
+        v16_p8_contract_sha256=v16_p8_contract_sha256,
+        v16_p8_source_binding=v16_p8_source_binding,
+        v16_p8_initial_worker_identity=v16_p8_worker_identity,
     )
     if comm.rank == 0:
         print(

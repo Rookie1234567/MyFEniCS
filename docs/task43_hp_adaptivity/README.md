@@ -20,7 +20,7 @@ P5 whole=1,134.8697960400023 s、RSS采样峰1,621,196,800 B、swap0、退出0/0
 
 ## 阅读入口
 
-**当前研究范围沿用[V11科学任务书](supplement_v11_scientific_restart.md)、[V12 review第9节](review_report_v12.md)及[用户一次P2R时间授权](outcomes/records/v14_p2r_user_budget_authorization.json)。最新交付为[Response V14](response_v14.md)。** 实际空间自由度已取得，P2后置字段门失败；最小修复仅静态验证。旧V13记录保留其当时状态；本次预算不授予重试或合并。
+**当前执行权威为[正式 V15 review 第9节](review_report_v15.md)：开展 R9_P8 与既有 H8 的同位置配对实验。最近已完成交付为[Response V15](response_v15.md)。** V14 的 P2 后置字段门失败、当时仅静态修复及预算限制属于历史状态，见[Response V14](response_v14.md)；V15 已继续完成 P2 与 P5，原失败保留。新实验只使用 V15 review 明确的 T/S/F/C/E 槽，不恢复旧额度，也不授予合并许可。
 
 上一轮[V10正式review](review_report_v10.md)已验收有限静态整改；原执行依据为[正式V9 review第9节](review_report_v9.md)，V10当轮未新增运行。其交付见[Response V10](response_v10.md)、[静态纠正记录](outcomes/records/v10_static_evidence_correction_v1.json)及[纠正版依赖表](outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json)。原V9派生表保留原字节；三个边界的12个字段更正在新文件中。V11/V12/V13有限工程证据与受控停止见[Response V11](response_v11.md)、[Response V12](response_v12.md)和[Response V13](response_v13.md)；没有新增正式 PDE 结果或合并许可。
 

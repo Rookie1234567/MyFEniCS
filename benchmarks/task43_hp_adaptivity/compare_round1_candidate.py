@@ -7,7 +7,7 @@ import hashlib
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 import numpy as np
 from dolfinx import fem
@@ -19,6 +19,7 @@ from benchmarks.task43_hp_adaptivity.candidate_records import (
 )
 from benchmarks.task43_hp_adaptivity.h100_anchor import (
     _V12_RECOVERY_MANIFEST_REL,
+    _load_v16_p8_context,
     _check_v11_runtime_envelope,
     _assert_mesh_profile,
     _h100_config,
@@ -31,11 +32,13 @@ from benchmarks.task43_hp_adaptivity.h100_anchor import (
     _verify_v12_p2_source_binding,
     _require_v11_watchdog_worker_identity,
     _v11_raw_vector_gates,
+    _verify_v16_p8_source_snapshot,
     _validate_round1_candidate_inputs,
     task43_v2_physical_configuration_identity,
 )
 from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
     _array_identity as _checkpoint_array_identity,
+    write_atomic_json,
     write_atomic_npz,
 )
 from src.runners.physical_intermediate import WorkflowLedger
@@ -3033,6 +3036,1241 @@ def compare_post_selection(
     return record
 
 
+def _v16_p8_read_and_bind_prevalidation_checkpoint(
+    primary_packet_path: Path,
+    primary_packet: Mapping[str, Any],
+    checkpoint_npz_path: Path,
+    checkpoint_json_path: Path,
+    *,
+    expected_primary_sha256: str,
+    expected_checkpoint_sha256: str,
+    expected_record_sha256: str,
+) -> dict[str, dict[str, Any]]:
+    """Read both saved packets and bind every pre-validation array to primary."""
+
+    primary_packet_path = Path(primary_packet_path)
+    checkpoint_npz_path = Path(checkpoint_npz_path)
+    checkpoint_json_path = Path(checkpoint_json_path)
+    paths = (primary_packet_path, checkpoint_npz_path, checkpoint_json_path)
+    if any(
+        not path.is_absolute()
+        or path.resolve() != path
+        or path.is_symlink()
+        or not path.is_file()
+        for path in paths
+    ):
+        raise FileNotFoundError("V16 P8 primary/pre-validation packet is missing")
+    initial_hashes = {
+        "primary": _sha256_file(primary_packet_path),
+        "checkpoint": _sha256_file(checkpoint_npz_path),
+        "record": _sha256_file(checkpoint_json_path),
+    }
+    if initial_hashes != {
+        "primary": expected_primary_sha256,
+        "checkpoint": expected_checkpoint_sha256,
+        "record": expected_record_sha256,
+    }:
+        raise ValueError("V16 P8 primary/pre-validation inputs changed before read")
+
+    checkpoint_metadata = primary_packet.get("identity", {}).get(
+        "pre_validation_checkpoint", {}
+    )
+    declared_checkpoint_arrays = checkpoint_metadata.get("arrays", {})
+    if (
+        checkpoint_metadata.get("npz_path") != str(checkpoint_npz_path)
+        or checkpoint_metadata.get("npz_sha256") != expected_checkpoint_sha256
+        or checkpoint_metadata.get("sidecar_path") != str(checkpoint_json_path)
+        or checkpoint_metadata.get("sidecar_sha256") != expected_record_sha256
+        or not isinstance(declared_checkpoint_arrays, Mapping)
+        or not declared_checkpoint_arrays
+    ):
+        raise ValueError("V16 P8 primary does not bind the fixed pre-validation files")
+
+    checkpoint_record = _json(checkpoint_json_path)
+    if (
+        checkpoint_record.get("schema") != "task43.pre-validation-field-checkpoint.v1"
+        or checkpoint_record.get("npz_path") != str(checkpoint_npz_path)
+        or checkpoint_record.get("npz_sha256") != expected_checkpoint_sha256
+        or checkpoint_record.get("identity") != checkpoint_metadata.get("identity")
+        or checkpoint_record.get("arrays") != declared_checkpoint_arrays
+    ):
+        raise ValueError("V16 P8 pre-validation sidecar differs from the primary binding")
+
+    restored_identities: dict[str, dict[str, Any]] = {}
+    with np.load(primary_packet_path, allow_pickle=False) as primary_archive:
+        if "__task43_record_json__" not in primary_archive.files:
+            raise ValueError("V16 P8 primary packet lacks its embedded identity")
+        embedded = json.loads(
+            np.asarray(primary_archive["__task43_record_json__"], dtype=np.uint8)
+            .tobytes()
+            .decode("utf-8")
+        )
+        if (
+            embedded.get("schema") != "task43.v16.p8.primary_state.v1"
+            or embedded.get("identity") != primary_packet.get("identity")
+            or embedded.get("arrays") != primary_packet.get("arrays")
+            or set(primary_archive.files)
+            != set(primary_packet.get("arrays", {})) | {"__task43_record_json__"}
+        ):
+            raise ValueError("V16 P8 primary packet identity changed before checkpoint read")
+        with np.load(checkpoint_npz_path, allow_pickle=False) as checkpoint_archive:
+            if set(checkpoint_archive.files) != set(declared_checkpoint_arrays):
+                raise ValueError("V16 P8 pre-validation checkpoint inventory differs")
+            for name, declared in declared_checkpoint_arrays.items():
+                packet_name = "recovered_" + str(name)
+                if packet_name not in primary_archive.files:
+                    raise ValueError(
+                        f"V16 P8 primary packet lacks checkpoint array {packet_name}"
+                    )
+                checkpoint_values = np.asarray(checkpoint_archive[name])
+                primary_values = np.asarray(primary_archive[packet_name])
+                checkpoint_identity = _checkpoint_array_identity(checkpoint_values)
+                packet_identity = _checkpoint_array_identity(primary_values)
+                packet_declared = primary_packet.get("arrays", {}).get(packet_name, {})
+                if any(
+                    checkpoint_identity.get(key) != declared.get(key)
+                    for key in ("dtype", "shape", "sha256")
+                ):
+                    raise ValueError(
+                        f"V16 P8 pre-validation array identity differs: {name}"
+                    )
+                if any(
+                    packet_identity.get(key) != packet_declared.get(key)
+                    for key in ("dtype", "shape", "sha256")
+                ):
+                    raise ValueError(f"V16 P8 primary array identity differs: {packet_name}")
+                if (
+                    primary_values.dtype != checkpoint_values.dtype
+                    or primary_values.shape != checkpoint_values.shape
+                    or not np.array_equal(primary_values, checkpoint_values)
+                ):
+                    raise ValueError(
+                        f"V16 P8 primary and pre-validation arrays differ: {name}"
+                    )
+                restored_identities[str(name)] = checkpoint_identity
+
+    if {
+        "primary": _sha256_file(primary_packet_path),
+        "checkpoint": _sha256_file(checkpoint_npz_path),
+        "record": _sha256_file(checkpoint_json_path),
+    } != initial_hashes:
+        raise RuntimeError("V16 P8 primary/pre-validation input changed while read")
+    return restored_identities
+
+
+def _v16_p8_frozen_endpoint(
+    contract_path: Path,
+    accepted_parent_selection_record: Path,
+) -> dict[str, Any]:
+    from benchmarks.task43_hp_adaptivity import h100_anchor
+    from benchmarks.task43_hp_adaptivity.round1_candidates import (
+        _load_v16_p8_contract,
+        _v16_p8_input_snapshot,
+    )
+
+    contract, contract_sha256 = _load_v16_p8_contract(contract_path)
+    run_root = (
+        Path(str(contract["artifact_prefix"]))
+        / str(contract["phases"]["F"]["root"])
+        / "run"
+    ).resolve()
+    launch_root = run_root.parent
+    launch_manifest_path = launch_root / "snapshots/launch_manifest.json"
+    launch_manifest = _json(launch_manifest_path)
+    source_id = str(launch_manifest.get("space_source_id", ""))
+    _loaded_contract, loaded_sha, space_binding = _load_v16_p8_context(
+        contract_path, source_id=source_id, run_root=run_root
+    )
+    if loaded_sha != contract_sha256:
+        raise RuntimeError("V16 P8 contract changed during C first-read binding")
+
+    joined_path = (
+        Path(str(contract["artifact_prefix"]))
+        / str(contract["phases"]["F"]["joined_terminal_path"])
+    ).resolve()
+    terminal_path = run_root / "task43_v16_p8_primary_terminal.json"
+    endpoint_path = run_root / "task43_round1_candidate_record.json"
+    packet_path = run_root / "primary_state.npz"
+    raw_path = run_root / "primary_raw_vector_audit.json"
+    p8_plan_path = run_root / "candidate_plan.json"
+    prevalidation_npz_path = run_root / "pre_validation_checkpoint.npz"
+    prevalidation_json_path = run_root / "pre_validation_checkpoint.json"
+    lifecycle_paths = {
+        "joined": joined_path,
+        "terminal": terminal_path,
+        "endpoint": endpoint_path,
+        "primary_packet": packet_path,
+        "raw_gate_checkpoint": raw_path,
+        "candidate_plan": p8_plan_path,
+        "prevalidation_checkpoint": prevalidation_npz_path,
+        "prevalidation_record": prevalidation_json_path,
+        "launch_manifest": launch_manifest_path,
+        "watchdog_summary": launch_root / "watchdog/summary.json",
+        "launcher_exit": launch_root / "launcher_exit_code.txt",
+        "watchdog_exit": launch_root / "watchdog_exit_code.txt",
+        "source_head": launch_root / "source_head.txt",
+    }
+    if any(not path.is_file() or path.is_symlink() for path in lifecycle_paths.values()):
+        raise FileNotFoundError("V16 P8 C requires the complete root-joined F product set")
+    product_before = {
+        name: _sha256_file(path) for name, path in lifecycle_paths.items()
+    }
+    joined = _json(joined_path)
+    terminal = _json(terminal_path)
+    endpoint = _json(endpoint_path)
+    raw_checkpoint = _json(raw_path)
+    watchdog_summary = _json(lifecycle_paths["watchdog_summary"])
+    source_head = str(launch_manifest.get("head", ""))
+    observation = joined.get("root_observation_record")
+    if not isinstance(observation, Mapping):
+        raise ValueError("V16 P8 F joined terminal has no root observation record")
+    observation_path = Path(str(observation.get("path", "")))
+    observation_sha256 = str(observation.get("sha256", ""))
+    if (
+        not observation_path.is_absolute()
+        or observation_path.resolve() != observation_path
+        or observation_path.is_symlink()
+        or not observation_path.is_file()
+        or _sha256_file(observation_path) != observation_sha256
+    ):
+        raise ValueError("V16 P8 F root observation record is missing or changed")
+    lifecycle_paths["root_observation_record"] = observation_path
+    product_before["root_observation_record"] = observation_sha256
+    if (
+        joined.get("schema") != "task43.v16.p8-endpoint-root-joined-terminal.v1"
+        or joined.get("status") != "F_COMPLETE_ROOT_VERIFIED"
+        or joined.get("space_source_id") != source_id
+        or joined.get("contract_sha256") != contract_sha256
+        or joined.get("review_commit") != "f72e1c8d031de7acc374f0806ddac06099c461c4"
+        or joined.get("source_head") != source_head
+        or joined.get("launcher_exit_code") != 0
+        or joined.get("watchdog_exit_code") != 0
+        or joined.get("worker_exit_code") != 0
+        or joined.get("descendants_cleared") is not True
+        or joined.get("remaining_child_pids") != []
+        or set(joined.get("products", {}))
+        != {"terminal", "endpoint", "primary_packet", "raw_gate_checkpoint"}
+        or set(joined.get("gates", {}))
+        != {"source", "input", "resource", "trace", "raw", "space", "numerical_endpoint"}
+    ):
+        raise ValueError("V16 P8 F root-joined terminal is not a successful verified endpoint")
+    if (
+        terminal.get("schema") != "task43.v16.p8.primary-terminal.v1"
+        or terminal.get("phase") != "R9_P8"
+        or terminal.get("status") != "SOLVED_PRIMARY_PENDING_PAIRED_COMPARISON"
+        or terminal.get("official_result") is not False
+        or terminal.get("passed") is not False
+        or terminal.get("continuation_all_false") is not True
+        or terminal.get("contract_binding", {}).get("sha256") != contract_sha256
+        or terminal.get("space_source_binding", {}).get("space_source_id") != source_id
+        or endpoint.get("schema") != "task43.v16.p8.primary-endpoint.v1"
+        or endpoint.get("phase") != "R9_P8"
+        or endpoint.get("status") != "SOLVED_PRIMARY_PENDING_PAIRED_COMPARISON"
+        or endpoint.get("official_result") is not False
+        or endpoint.get("selection_eligible") is not False
+        or endpoint.get("continuation_all_false") is not True
+        or endpoint.get("gates", {}).get("pass") is not True
+        or endpoint.get("preassembly_space_audit", {}).get("pass") is not True
+        or endpoint.get("actual_absorption_form_audit", {}).get("status")
+        != "actual_forms_observed"
+        or terminal.get("endpoint_record", {}).get("path") != str(endpoint_path.resolve())
+        or terminal.get("endpoint_record", {}).get("sha256") != product_before["endpoint"]
+        or terminal.get("primary_packet", {}).get("npz_path") != str(packet_path.resolve())
+        or terminal.get("primary_packet", {}).get("npz_sha256") != product_before["primary_packet"]
+        or terminal.get("primary_raw_vector_audit_checkpoint", {}).get("path")
+        != str(raw_path.resolve())
+        or terminal.get("primary_raw_vector_audit_checkpoint", {}).get("sha256")
+        != product_before["raw_gate_checkpoint"]
+        or endpoint.get("primary_packet") != terminal.get("primary_packet")
+        or endpoint.get("primary_raw_vector_audit_checkpoint")
+        != terminal.get("primary_raw_vector_audit_checkpoint")
+        or raw_checkpoint.get("pass") is not True
+        or raw_checkpoint.get("official_result") is not False
+        or raw_checkpoint.get("passed") is not False
+    ):
+        raise ValueError("V16 P8 F endpoint, primary packet, raw checkpoint or terminal differs")
+    for name, path in (
+        ("terminal", terminal_path),
+        ("endpoint", endpoint_path),
+        ("primary_packet", packet_path),
+        ("raw_gate_checkpoint", raw_path),
+    ):
+        item = joined["products"][name]
+        if (
+            not isinstance(item, Mapping)
+            or item.get("path") != str(path.resolve())
+            or item.get("sha256") != product_before[name]
+        ):
+            raise ValueError(f"V16 P8 F joined {name} product identity differs")
+    for name, gate in joined["gates"].items():
+        evidence = gate.get("evidence") if isinstance(gate, Mapping) else None
+        if not isinstance(gate, Mapping) or gate.get("pass") is not True or not isinstance(evidence, Mapping):
+            raise ValueError(f"V16 P8 F root {name} gate did not pass with evidence")
+        evidence_path = Path(str(evidence.get("path", "")))
+        evidence_sha = str(evidence.get("sha256", ""))
+        if (
+            not evidence_path.is_absolute()
+            or evidence_path.resolve() != evidence_path
+            or not evidence_path.is_file()
+            or _sha256_file(evidence_path) != evidence_sha
+        ):
+            raise ValueError(f"V16 P8 F {name} gate evidence is missing or changed")
+        lifecycle_paths[f"gate_{name}"] = evidence_path
+        product_before[f"gate_{name}"] = evidence_sha
+    if (
+        watchdog_summary.get("classification") != "COMPLETED"
+        or watchdog_summary.get("leader_exit_code") != 0
+        or watchdog_summary.get("descendants_cleared") is not True
+        or watchdog_summary.get("remaining_child_pids") != []
+        or lifecycle_paths["launcher_exit"].read_text(encoding="ascii").strip() != "0"
+        or lifecycle_paths["watchdog_exit"].read_text(encoding="ascii").strip() != "0"
+        or lifecycle_paths["source_head"].read_text(encoding="ascii").strip() != source_head
+    ):
+        raise ValueError("V16 P8 F watchdog/launcher lifecycle did not complete cleanly")
+
+    from benchmarks.task43_hp_adaptivity import round1_candidates
+
+    contract_inputs = _v16_p8_input_snapshot(contract)
+    source_snapshot = _v11_source_snapshot()
+    source_snapshot[Path(contract_path).resolve().relative_to(ROOT).as_posix()] = contract_sha256
+    launch_sources = {
+        str(item.get("path")): str(item.get("sha256"))
+        for item in launch_manifest.get("source", [])
+        if isinstance(item, Mapping)
+    }
+    if launch_sources != source_snapshot:
+        raise ValueError("V16 P8 F source snapshot differs from the current frozen worker source set")
+    selection = next(
+        item for item in contract["inputs"] if item["role"] == "R9_selection_transition"
+    )
+    expected_selection = (ROOT / selection["path"]).resolve()
+    if (
+        accepted_parent_selection_record.resolve() != expected_selection
+        or _sha256_file(expected_selection) != selection["sha256"]
+    ):
+        raise ValueError("V16 P8 C requires the fixed accepted R9 parent selection")
+
+    endpoint_identity = endpoint.get("endpoint_identity", {})
+    candidate_identity = terminal.get("candidate_identity", {})
+    primary_packet = terminal.get("primary_packet", {})
+    raw_identity = raw_checkpoint.get("identity", {})
+    p8_plan_sha256 = _sha256_file(p8_plan_path)
+    p8_plan = _json(p8_plan_path)
+    orders_path = Path(str(endpoint.get("power", {}).get("channel_rows_file", ""))).resolve()
+    if (
+        not orders_path.is_absolute()
+        or orders_path.resolve() != orders_path
+        or orders_path.is_symlink()
+        or not orders_path.is_file()
+    ):
+        raise ValueError("V16 P8 modal rows path is missing or noncanonical")
+    lifecycle_paths["modal_orders"] = orders_path
+    product_before["modal_orders"] = _sha256_file(orders_path)
+    if (
+        endpoint_identity.get("schema") != "task43.v16.p8.endpoint-identity.v1"
+        or endpoint_identity.get("contract_sha256") != contract_sha256
+        or terminal.get("candidate_plan_sha256") != p8_plan_sha256
+        or endpoint.get("candidate_plan_sha256") != p8_plan_sha256
+        or candidate_identity.get("candidate_id") != "v16_r9_p8"
+        or candidate_identity.get("action") != "p_up"
+        or p8_plan.get("task43_candidate", {}).get("candidate_id") != "v16_r9_p8"
+        or p8_plan.get("task43_candidate", {}).get("action") != "p_up"
+        or product_before["modal_orders"]
+        != endpoint.get("power", {}).get("channel_rows_sha256")
+    ):
+        raise ValueError("V16 P8 candidate plan, endpoint identity or modal rows differ")
+    modal_payload = _json(orders_path)
+    modal_rows = modal_payload.get("orders")
+    expected_modes = {
+        (side, m, n, polarization)
+        for side in ("top", "bottom")
+        for m in range(-4, 5)
+        for n in range(-8, 9)
+        for polarization in ("s", "p")
+    }
+    if (
+        not isinstance(modal_rows, list)
+        or len(modal_rows) != 612
+        or len({base._mode_key(row) for row in modal_rows}) != 612
+        or {base._mode_key(row) for row in modal_rows} != expected_modes
+        or any(
+            not np.isfinite(float(row.get("power_ratio", np.nan)))
+            or not np.isfinite(float(row.get("R", np.nan)))
+            or not np.isfinite(float(row.get("T", np.nan)))
+            for row in modal_rows
+        )
+    ):
+        raise ValueError("V16 P8 endpoint does not contain the complete finite ordered 612 modes")
+    power_record = endpoint.get("power", {})
+    aggregate = modal_payload.get("metrics", {})
+    avol = float(power_record.get("A_volume_total", np.nan))
+    r_total = float(aggregate.get("R_total", np.nan))
+    t_total = float(aggregate.get("T_total", np.nan))
+    closure = r_total + t_total + avol - 1.0
+    physics = contract["physics"]
+    solver = endpoint.get("solver", {})
+    if (
+        not all(np.isfinite(value) for value in (avol, r_total, t_total, closure))
+        or abs(closure) > float(contract["science_gates"]["energy_closure_abs_max"])
+        or endpoint.get("independent_active_fe_dofs")
+        != endpoint_identity.get("numerical_controls", {}).get(
+            "independent_active_fe_dofs"
+        )
+        or endpoint.get("independent_active_fe_dofs")
+        != endpoint.get("preassembly_space_audit", {}).get("actual_space", {}).get(
+            "independent_fe_dofs"
+        )
+        or not (
+            int(contract["parent"]["independent_fe_dofs"])
+            < int(endpoint.get("independent_active_fe_dofs", -1))
+            < int(contract["science_gates"]["fe_exclusive_bounds"][1])
+        )
+        or int(aggregate.get("dtn_port_mode_count", -1)) != 612
+        or int(endpoint_identity.get("numerical_controls", {}).get("modal_selection", {}).get("count", -1)) != 612
+        or int(endpoint_identity.get("numerical_controls", {}).get("quadrature_degree", {}).get("volume", -1)) != int(physics["operator_volume_q"])
+        or int(endpoint_identity.get("numerical_controls", {}).get("quadrature_degree", {}).get("ports", -1)) != int(physics["incident_port_q"])
+        or solver.get("actual_direct_factor_backend") != "mumps"
+        or solver.get("actual_live_direct_factor_backend") != "mumps"
+    ):
+        raise ValueError("V16 P8 actual FE, modal, backend or energy endpoint gate differs")
+
+    h8_raw = {item["role"]: item for item in contract["inputs"]}
+    old_comparison = _json(ROOT / h8_raw["V15_P5_comparison_record"]["path"])
+    p5_geometry = space_binding["space_audit"].get("saved_p5_geometry_gate", {})
+    if p5_geometry.get("pass") is not True:
+        raise ValueError("V16 P8 selected S source did not qualify the original P5 samples")
+    raw_gate = endpoint.get("primary_raw_vector_audit", {})
+    if (
+        raw_gate.get("pass") is not True
+        or raw_checkpoint.get("audit") != raw_gate
+        or raw_identity.get("primary_packet") != primary_packet
+    ):
+        raise ValueError("V16 P8 endpoint raw gate and durable checkpoint differ")
+
+    raw_keys = {
+        "returned_trace_dtn_rhs",
+        "returned_trace_dtn_solution",
+        "returned_trace_dtn_b_minus_Ax",
+        "full_active_reduced_trace_dtn_residual_Ax_minus_b_owned",
+        "full_active_reduced_trace_dtn_residual_trace_metric_action",
+        "full_active_reduced_trace_dtn_rhs_owned",
+        "full_active_reduced_trace_dtn_solution_owned",
+        "full_active_reduced_trace_dtn_rhs_trace_metric_action",
+        "full_active_active_full_rhs",
+        "full_active_active_full_solution",
+        "full_active_eliminated_active_interior_residual",
+        "recovered_active_full_rhs_owned",
+        "recovered_active_full_solution_owned",
+        "independent_A6_independent_active_residual_trace",
+        "independent_A6_independent_active_residual_cell_interior",
+        "independent_A6_independent_active_modal_lower_solver_gauge",
+        "independent_A6_independent_active_rhs_trace",
+        "independent_A6_independent_active_rhs_cell_interior",
+        "independent_A6_independent_active_modal_lower_solver_gauge_rhs",
+        "normal_before_normal_correction_rhs",
+        "normal_before_normal_correction_solution",
+        "normal_before_normal_correction_residual_b_minus_Ax",
+        "normal_after_normal_correction_rhs",
+        "normal_after_normal_correction_solution",
+        "normal_after_normal_correction_residual_b_minus_Ax",
+    }
+    mesh_packet_keys = {
+        "mesh_geometry_coordinates_nm": "recovered_mesh_geometry_coordinates_nm",
+        "mesh_geometry_dofmap": "recovered_mesh_geometry_dofmap",
+        "mesh_owned_cell_global_ids": "recovered_mesh_owned_cell_global_ids",
+        "mesh_cell_vertex_dofmap": "recovered_mesh_cell_vertex_dofmap",
+        "p6_function_space_cell_dofmap": "recovered_p6_function_space_dofmap",
+        "p6_owned_global_dof_block_ids": "recovered_p6_owned_global_dof_block_ids",
+        "p6_ghost_global_dof_block_ids": "recovered_p6_ghost_global_dof_block_ids",
+    }
+    loaded_arrays: dict[str, np.ndarray] = {}
+    with np.load(packet_path, allow_pickle=False) as packet_archive:
+        if "__task43_record_json__" not in packet_archive.files:
+            raise ValueError("V16 P8 primary packet lacks its embedded identity")
+        packet_embedded = json.loads(
+            np.asarray(packet_archive["__task43_record_json__"], dtype=np.uint8)
+            .tobytes()
+            .decode("utf-8")
+        )
+        if (
+            packet_embedded.get("schema") != "task43.v16.p8.primary_state.v1"
+            or packet_embedded.get("identity") != primary_packet.get("identity")
+            or packet_embedded.get("arrays") != primary_packet.get("arrays")
+        ):
+            raise ValueError("V16 P8 primary packet embedded identity differs from terminal")
+        declared_arrays = primary_packet.get("arrays", {})
+        if set(packet_archive.files) != set(declared_arrays) | {"__task43_record_json__"}:
+            raise ValueError("V16 P8 primary packet member inventory differs")
+        checkpoint_metadata = primary_packet.get("identity", {}).get(
+            "pre_validation_checkpoint", {}
+        )
+        checkpoint_declared_arrays = checkpoint_metadata.get("arrays", {})
+        if not isinstance(checkpoint_declared_arrays, Mapping) or not checkpoint_declared_arrays:
+            raise ValueError("V16 P8 primary does not bind its pre-validation arrays")
+        checkpoint_packet_keys = {
+            "recovered_" + str(name) for name in checkpoint_declared_arrays
+        }
+        needed_packet_keys = (
+            raw_keys
+            | set(mesh_packet_keys.values())
+            | checkpoint_packet_keys
+            | {"recovered_recovered_p6_local_coefficients"}
+        )
+        if not needed_packet_keys.issubset(packet_archive.files):
+            raise ValueError("V16 P8 primary packet omits required raw or recovery arrays")
+        for name in needed_packet_keys:
+            values = np.asarray(packet_archive[name]).copy()
+            actual = _checkpoint_array_identity(values)
+            declared = declared_arrays.get(name, {})
+            if any(actual.get(key) != declared.get(key) for key in ("dtype", "shape", "sha256")):
+                raise ValueError(f"V16 P8 primary array identity differs: {name}")
+            loaded_arrays[name] = values
+    prevalidation_array_identities = _v16_p8_read_and_bind_prevalidation_checkpoint(
+        packet_path,
+        primary_packet,
+        prevalidation_npz_path,
+        prevalidation_json_path,
+        expected_primary_sha256=product_before["primary_packet"],
+        expected_checkpoint_sha256=product_before["prevalidation_checkpoint"],
+        expected_record_sha256=product_before["prevalidation_record"],
+    )
+    for name, identity in prevalidation_array_identities.items():
+        packet_values = loaded_arrays.get("recovered_" + name)
+        if packet_values is None or _checkpoint_array_identity(packet_values) != identity:
+            raise ValueError(f"V16 P8 loaded primary array differs from checkpoint: {name}")
+    endpoint_identity_packet = primary_packet.get("identity", {})
+    if (
+        endpoint_identity_packet.get("phase") != "R9_P8"
+        or endpoint_identity_packet.get("contract_sha256") != contract_sha256
+        or endpoint_identity_packet.get("candidate_identity") != candidate_identity
+        or endpoint_identity_packet.get("space_source_binding") != terminal.get("space_source_binding")
+        or endpoint_identity_packet.get("endpoint_identity") != endpoint_identity
+        or raw_checkpoint.get("identity", {}).get("primary_packet") != primary_packet
+    ):
+        raise ValueError("V16 P8 embedded primary identity differs from its endpoint binding")
+    actual_space = endpoint.get("preassembly_space_audit", {}).get("actual_space", {})
+    raw_scope = endpoint_identity_packet.get("raw_full_active_scope", {})
+    a6_scope = endpoint_identity_packet.get("independent_A6_raw_vector_scope", {})
+    normal_audit = endpoint_identity_packet.get("normal_correction_audit", {})
+    correction_ksp = normal_audit.get("correction_ksp", {})
+    recomputed_raw = _v11_raw_vector_gates(
+        loaded_arrays,
+        active_trace_rows=int(actual_space.get("independent_trace_rows", -1)),
+        active_interior_rows=int(actual_space.get("independent_cell_interior_rows", -1)),
+        independent_fe_dofs=int(endpoint.get("independent_active_fe_dofs", -1)),
+        active_full_rows=int(raw_scope.get("active_full_rows", -1)),
+        full_active_scope=raw_scope,
+        independent_a6_scope=a6_scope,
+        normal_correction_count=int(endpoint_identity_packet.get("normal_correction_count", -1)),
+        normal_converged_reason=int(correction_ksp.get("converged_reason", -1)),
+        normal_correction_status=str(normal_audit.get("status", "")),
+        extra_correction_count=int(endpoint_identity_packet.get("extra_correction_count", -1)),
+    )
+    if recomputed_raw.get("pass") is not True or raw_gate.get("gates") != recomputed_raw.get("gates"):
+        raise ValueError("V16 P8 raw residual gates fail independent C recomputation")
+
+    for name, path in lifecycle_paths.items():
+        if _sha256_file(path) != product_before[name]:
+            raise RuntimeError(f"V16 P8 F input changed during C validation: {name}")
+    if _v16_p8_input_snapshot(contract) != contract_inputs:
+        raise RuntimeError("V16 P8 contract inputs changed during C first-read validation")
+    if _verify_v16_p8_source_snapshot(space_binding) != space_binding["input_snapshot"]:
+        raise RuntimeError("V16 P8 selected S source changed during C first-read validation")
+    return {
+        "contract": contract,
+        "contract_sha256": contract_sha256,
+        "source_id": source_id,
+        "run_root": run_root,
+        "launch_root": launch_root,
+        "space_binding": space_binding,
+        "joined_terminal": joined,
+        "terminal": terminal,
+        "endpoint": endpoint,
+        "endpoint_identity": endpoint_identity,
+        "primary_packet": primary_packet,
+        "primary_packet_arrays": loaded_arrays,
+        "prevalidation_array_identities": prevalidation_array_identities,
+        "raw_gate": recomputed_raw,
+        "modal_payload": modal_payload,
+        "modal_orders_path": orders_path,
+        "p5_comparison": old_comparison,
+        "lifecycle_paths": lifecycle_paths,
+        "lifecycle_snapshot": product_before,
+        "contract_input_snapshot": contract_inputs,
+        "source_snapshot": source_snapshot,
+    }
+
+
+def _v16_require_saved_metrics_match(
+    expected: Any, actual: Any, *, context: str
+) -> None:
+    """Cross-check saved P5 metrics against the same metrics recomputed here."""
+
+    if isinstance(expected, Mapping):
+        if not isinstance(actual, Mapping) or set(expected) != set(actual):
+            raise ValueError(f"{context} mapping fields differ from the saved P5 value")
+        for key in expected:
+            _v16_require_saved_metrics_match(
+                expected[key], actual[key], context=f"{context}.{key}"
+            )
+        return
+    if isinstance(expected, (list, tuple)):
+        if not isinstance(actual, (list, tuple)) or len(expected) != len(actual):
+            raise ValueError(f"{context} sequence layout differs from the saved P5 value")
+        for index, (expected_item, actual_item) in enumerate(
+            zip(expected, actual, strict=True)
+        ):
+            _v16_require_saved_metrics_match(
+                expected_item, actual_item, context=f"{context}[{index}]"
+            )
+        return
+    if isinstance(expected, bool) or isinstance(actual, bool):
+        if expected is not actual:
+            raise ValueError(f"{context} boolean differs from the saved P5 value")
+        return
+    if expected is None or actual is None:
+        if expected is not actual:
+            raise ValueError(f"{context} nullability differs from the saved P5 value")
+        return
+    if isinstance(expected, (int, float)) and isinstance(actual, (int, float)):
+        if not np.isclose(float(expected), float(actual), rtol=1.0e-10, atol=1.0e-14):
+            raise ValueError(f"{context} numeric value differs from the saved P5 value")
+        return
+    if expected != actual:
+        raise ValueError(f"{context} differs from the saved P5 value")
+
+
+def _restore_v16_p8_field(frozen: Mapping[str, Any]) -> dict[str, Any]:
+    from benchmarks.task43_hp_adaptivity.h100_anchor import _h100_config
+    from benchmarks.task43_hp_adaptivity.round1_candidates import _v16_p8_mesh_boxes
+
+    endpoint = frozen["endpoint"]
+    run_root = Path(frozen["run_root"])
+    plan_path = run_root / "candidate_plan.json"
+    plan = _json(plan_path)
+    cfg = _h100_config(
+        kind="empty_h_active_p3",
+        case_name=str(endpoint["resolved_config"]["case_name"]),
+        geometry_profile="initial_180",
+    )
+    cfg.stage4_local_h_refinement_plan = str(plan_path)
+    mesh_data = build_stage4_local_h_mesh_data(cfg, plan_path, comm=MPI.COMM_WORLD)
+    mesh = mesh_data.mesh
+    axes = base._axes_from_mesh(mesh)
+    plan_sha256 = _sha256_file(plan_path)
+    actual_mesh_profile = _assert_mesh_profile(
+        mesh_data,
+        axes,
+        "candidate_initial180",
+        candidate_plan=plan,
+        candidate_plan_sha256=plan_sha256,
+    )
+    if actual_mesh_profile != endpoint.get("numerical_controls", {}).get("mesh"):
+        raise ValueError("V16 P8 restored mesh differs from the primary endpoint")
+    space = _create_nedelec_space(mesh, cfg)
+    actual_arrays = base._actual_mesh_identity(mesh, space)
+    packet_arrays = frozen["primary_packet_arrays"]
+    for identity_name, packet_name in {
+        **{
+            key: "recovered_" + key
+            for key in (
+                "mesh_geometry_coordinates_nm",
+                "mesh_geometry_dofmap",
+                "mesh_owned_cell_global_ids",
+                "mesh_cell_vertex_dofmap",
+                "p6_owned_global_dof_block_ids",
+                "p6_ghost_global_dof_block_ids",
+            )
+        },
+        "p6_function_space_cell_dofmap": "recovered_p6_function_space_dofmap",
+    }.items():
+        expected = packet_arrays[packet_name]
+        actual = np.asarray(actual_arrays[identity_name])
+        if (
+            actual.dtype != expected.dtype
+            or actual.shape != expected.shape
+            or not np.array_equal(actual, expected)
+        ):
+            raise ValueError(f"V16 P8 restored mesh/DOF array differs from primary: {identity_name}")
+    coefficients = packet_arrays["recovered_recovered_p6_local_coefficients"]
+    if coefficients.dtype != np.dtype(np.complex128) or coefficients.shape != space.dofmap.index_map.local_to_global(
+        np.arange(space.dofmap.index_map.size_local, dtype=np.int32)
+    ).shape:
+        raise ValueError("V16 P8 recovered full-carrier coefficient shape differs from live P6 space")
+    field = fem.Function(space, name="v16_r9_p8_recovered_E")
+    if field.x.array.shape != coefficients.shape:
+        raise ValueError("V16 P8 recovered coefficient storage differs from local function array")
+    field.x.array[:] = coefficients
+    field.x.scatter_forward()
+    boxes_storage = {
+        "mesh_owned_cell_global_ids": actual_arrays["mesh_owned_cell_global_ids"],
+        "mesh_geometry_coordinates_nm": actual_arrays["mesh_geometry_coordinates_nm"],
+        "mesh_geometry_dofmap": actual_arrays["mesh_geometry_dofmap"],
+    }
+    ids, lower, upper = _v16_p8_mesh_boxes(boxes_storage)
+    mode_payload = frozen["modal_payload"]
+    power_metrics = mode_payload["metrics"]
+    power = {
+        "R_total": float(power_metrics["R_total"]),
+        "T_total": float(power_metrics["T_total"]),
+        "A_volume": float(endpoint["power"]["A_volume_total"]),
+        "R00_s": float(power_metrics["R00_s"]),
+        "R00_p": float(power_metrics["R00_p"]),
+        "R00_total": float(power_metrics["R00_total"]),
+    }
+    return {
+        "label": "R9_P8",
+        "candidate_id": "v16_r9_p8",
+        "cfg": cfg,
+        "mesh_data": mesh_data,
+        "field": field,
+        "axes": axes,
+        "record": endpoint,
+        "mode_payload": mode_payload,
+        "power": power,
+        "mesh_identity": {
+            name: base._array_identity(values) for name, values in actual_arrays.items()
+        },
+        "mesh_boxes": {"global_ids": ids, "lower": lower, "upper": upper},
+        "actual_arrays": actual_arrays,
+        "coefficients_identity": _checkpoint_array_identity(coefficients),
+    }
+
+
+def compare_v16_p8_paired(
+    candidate_run_root: Path,
+    accepted_parent_selection_record: Path,
+    *,
+    contract_path: Path,
+    attempt_id: str,
+) -> dict[str, Any]:
+    """Reuse the fixed P5 R9/H8/Y6 arrays and sample restored P8 exactly once per q."""
+
+    if MPI.COMM_WORLD.size != 1:
+        raise RuntimeError("V16 P8 paired comparison is fixed to MPI1")
+    contract_path = Path(contract_path).resolve()
+    frozen = _v16_p8_frozen_endpoint(
+        contract_path, Path(accepted_parent_selection_record).resolve()
+    )
+    from benchmarks.task43_hp_adaptivity import round1_candidates
+
+    if attempt_id != frozen["contract"]["comparison"]["attempt_id"]:
+        raise ValueError("V16 P8 comparison attempt id differs from the fixed contract")
+    if Path(candidate_run_root).resolve() != Path(frozen["run_root"]).resolve():
+        raise ValueError("V16 P8 comparison candidate root differs from the fixed F endpoint")
+    contract = frozen["contract"]
+    output_root = (
+        Path(str(contract["artifact_prefix"]))
+        / str(contract["comparison"]["output_root"])
+    ).resolve()
+    if output_root.exists():
+        raise FileExistsError(f"refusing to overwrite V16 P8 comparison root: {output_root}")
+    runtime_environment = _check_v11_runtime_envelope(MPI.COMM_WORLD)
+    worker_identity = runtime_environment["v11_watchdog_worker_identity"]
+    source_start = _v11_source_snapshot()
+    source_start[contract_path.relative_to(ROOT).as_posix()] = frozen["contract_sha256"]
+    output_root.mkdir(parents=True, exist_ok=False)
+    ledger = WorkflowLedger(output_root, Path(worker_identity["phase_path"]))
+    started = time.perf_counter()
+    samples_complete: dict[str, Any] = {}
+    result_path = output_root / "v16_r9_p8_paired_comparison.json"
+    progress_path = output_root / "comparison_progress.json"
+    ledger.set_phase("preflight")
+    ledger.marker(
+        "task43_v16_p8_comparison_worker_bound",
+        {
+            "runtime_environment": runtime_environment,
+            "worker_identity": worker_identity,
+            "contract_sha256": frozen["contract_sha256"],
+            "source_id": frozen["source_id"],
+            "P5_input_sha256": frozen["contract_input_snapshot"],
+        },
+    )
+    try:
+        p8 = _restore_v16_p8_field(frozen)
+        p5 = frozen["p5_comparison"]
+        roles = {str(item["role"]): item for item in contract["inputs"]}
+        r9_record = _json(ROOT / roles["R9_candidate_record"]["path"])
+        h8_absorption = _json(ROOT / roles["H8_volume_absorption"]["path"])
+        r9_orders = _json(ROOT / roles["R9_modal_orders"]["path"])
+        h8_orders = _json(ROOT / roles["H8_modal_orders"]["path"])
+        y6_orders = _json(ROOT / roles["Y6_1_modal_orders"]["path"])
+        y6_restore_identity = _json(ROOT / roles["Y6_1_restore_identity"]["path"])
+        y6_config = _json(ROOT / roles["Y6_1_resolved_config"]["path"])
+        with np.load(
+            ROOT / roles["H8_P4_primary_packet"]["path"], allow_pickle=False
+        ) as h8_packet_archive:
+            h8_packet_embedded = json.loads(
+                np.asarray(
+                    h8_packet_archive["__task43_record_json__"], dtype=np.uint8
+                ).tobytes().decode("utf-8")
+            )
+        h8_actual_cfg = h8_packet_embedded["identity"]["endpoint_identity"][
+            "actual_cfg"
+        ]
+        r9_cfg = _h100_config(
+            kind="empty_h_active_p3",
+            case_name=str(r9_record["resolved_config"]["case_name"]),
+            geometry_profile="initial_180",
+        )
+        h8_cfg = _h100_config(
+            kind="empty_h_active_p3",
+            case_name=str(h8_actual_cfg["case_name"]),
+            geometry_profile="initial_180",
+        )
+        y6_resolved = y6_restore_identity["resolved_identity"]
+        y6_quadrature = y6_resolved["quadrature_and_cutoff"]
+        y6_inventory_identity = {
+            "axis_values_nm": y6_resolved["mesh_axes_nm"],
+            "surface_q": int(y6_quadrature["surface_and_incident_degree"]),
+            "volume_q": [
+                {
+                    "quadrature_degree": int(y6_quadrature["volume_degree"]),
+                    "quadrature_rule": str(y6_quadrature["volume_rule"]),
+                }
+            ] * 2,
+            "cutoff": str(y6_quadrature["cutoff_policy"]),
+            "residuals": {
+                "dtn_sparse_cutoff_relative_tolerance": float(
+                    y6_quadrature["cutoff_relative_tolerance"]
+                )
+            },
+        }
+        y6_cfg = base._configure_historical_direct_route(
+            y6_config, y6_inventory_identity
+        )
+        r9_power = {
+            key: float(value)
+            for key, value in {
+                "R_total": r9_record["power"]["aggregate"]["R_total"],
+                "T_total": r9_record["power"]["aggregate"]["T_total"],
+                "A_volume": r9_record["power"]["A_volume_total"],
+                "R00_s": r9_record["power"]["aggregate"]["R00_s"],
+                "R00_p": r9_record["power"]["aggregate"]["R00_p"],
+                "R00_total": r9_record["power"]["aggregate"]["R00_total"],
+            }.items()
+        }
+        y6_restore_identity = _json(ROOT / roles["Y6_1_restore_identity"]["path"])
+        y6_power = base._scalar_power_record(
+            "Y6_1", y6_restore_identity, y6_orders
+        )
+        h8_power = {
+            key: float(h8_orders["metrics"][key])
+            for key in ("R_total", "T_total", "R00_s", "R00_p", "R00_total")
+        }
+        h8_power["A_volume"] = float(h8_absorption["A_volume_total"])
+        for order in ("q8", "q10"):
+            for label, actual in (("R9", r9_power), ("R9_H8", h8_power)):
+                signed = p5["results"][order][label]["signed_observables"][
+                    "aggregate_signed_candidate_minus_reference"
+                ]
+                expected_y6 = {
+                    key: actual[key] - float(signed[key])
+                    for key in ("R_total", "T_total", "A_volume", "R00_s", "R00_p", "R00_total")
+                }
+                if any(
+                    not np.isclose(expected_y6[key], y6_power[key], rtol=0.0, atol=1.0e-12)
+                    for key in expected_y6
+                ):
+                    raise ValueError(f"V16 P8 P5 {order}/{label} signed powers differ from saved modal/Av records")
+        cases = {
+            "R9": {
+                "label": "R9",
+                "cfg": r9_cfg,
+                "mode_payload": r9_orders,
+                "power": r9_power,
+                "record": r9_record,
+            },
+            "R9_H8": {
+                "label": "R9_H8",
+                "cfg": h8_cfg,
+                "mode_payload": h8_orders,
+                "power": h8_power,
+                "record": h8_packet_embedded["identity"]["endpoint_identity"],
+            },
+            "Y6_1": {
+                "label": "Y6_1",
+                "cfg": y6_cfg,
+                "mode_payload": y6_orders,
+                "power": y6_power,
+                "record": y6_restore_identity,
+            },
+            "R9_P8": p8,
+        }
+        modal_physics = base._validate_mode_physics(
+            cases, labels=("R9", "R9_H8", "Y6_1", "R9_P8")
+        )
+        full_mode_physics = {
+            label: _post_selection_full_mode_physics(cases[label])
+            for label in ("R9", "R9_H8", "Y6_1", "R9_P8")
+        }
+        expected_physics = p5["same_physics"]["shared_identity"]
+        actual_physics = {
+            label: base._physical_configuration_identity(cases[label]["cfg"])
+            for label in ("R9", "R9_H8", "Y6_1", "R9_P8")
+        }
+        if any(identity != expected_physics for identity in actual_physics.values()):
+            raise ValueError("V16 P8 reconstructed four-case configurations differ from P5 physics")
+        common_physics = {
+            "source": "P5 frozen shared identity cross-checked against four reconstructed configs",
+            "shared_identity": expected_physics,
+            "all_four_cases_match": True,
+        }
+        actual_fe = int(frozen["endpoint"]["independent_active_fe_dofs"])
+        r9_fe = int(r9_record["recovered_solution_storage"]["independent_active_fe_dofs"])
+        h8_fe = int(p5["actual_FE"]["R9_H8"])
+        if actual_fe <= r9_fe or h8_fe <= r9_fe:
+            raise ValueError("V16 P8 and H8 efficiency comparisons require positive measured Delta_FE")
+        old_sample_entries = p5["saved_union_samples"]
+        for order in ("q8", "q10"):
+            ledger.set_phase(f"sample_{order}")
+            old_sample_path = Path(str(old_sample_entries[order]["path"])).resolve()
+            old_sample_sha256 = _sha256_file(old_sample_path)
+            expected_old = roles[f"V15_P5_{order}_union_npz"]
+            if old_sample_sha256 != expected_old["sha256"]:
+                raise RuntimeError(f"V16 P8 P5 q{order} sample changed before read")
+            with np.load(old_sample_path, allow_pickle=False) as archive:
+                sample_record = json.loads(
+                    np.asarray(archive["__task43_record_json__"], dtype=np.uint8)
+                    .tobytes()
+                    .decode("utf-8")
+                )
+                identity = sample_record.get("identity", {})
+                if (
+                    sample_record.get("schema") != "task43.v11.union_comparison_samples.v1"
+                    or sample_record.get("official_result") is not False
+                    or sample_record.get("passed") is not False
+                    or int(identity.get("quadrature_order", -1))
+                    != int(order.removeprefix("q"))
+                    or identity.get("p4_original_terminal_status") != "FAILED"
+                ):
+                    raise ValueError(f"V16 P8 P5 q{order} archive identity differs")
+                points = np.asarray(archive["points_nm"], dtype=np.float64).copy()
+                weights = np.asarray(archive["weights_nm3"], dtype=np.float64).copy()
+                old_samples = {
+                    label: {
+                        "E": np.asarray(archive[f"{label}_E"], dtype=np.complex128).copy(),
+                        "curl_E": np.asarray(archive[f"{label}_curl_E"], dtype=np.complex128).copy(),
+                    }
+                    for label in ("R9", "R9_H8", "Y6_1")
+                }
+            if (
+                points.shape != (int(expected_old["sample_count"]), 3)
+                or weights.shape != (points.shape[0],)
+                or not np.isfinite(points).all()
+                or not np.isfinite(weights).all()
+                or np.any(weights <= 0.0)
+                or not np.isclose(
+                    float(np.sum(weights, dtype=np.float64)),
+                    350000.0,
+                    rtol=0.0,
+                    atol=1.0e-8,
+                )
+                or base._array_identity(points)["sha256"] != expected_old["point_sha256"]
+                or base._array_identity(weights)["sha256"] != expected_old["weight_sha256"]
+                or any(
+                    fields["E"].shape != (points.shape[0], 3)
+                    or fields["curl_E"].shape != (points.shape[0], 3)
+                    or not np.isfinite(fields["E"]).all()
+                    or not np.isfinite(fields["curl_E"]).all()
+                    for fields in old_samples.values()
+                )
+            ):
+                raise ValueError(f"V16 P8 P5 q{order} points, weights or saved fields are invalid")
+            p8_samples = _sample_field(p8, points)
+            if any(not np.isfinite(value).all() for value in p8_samples.values()):
+                raise ValueError(f"V16 P8 q{order} restored field samples are nonfinite")
+            p8_global_ids, p8_slots = base._cell_slot_for_points(
+                p8["mesh_data"].mesh, p8["axes"], points
+            )
+            boxes = p8["mesh_boxes"]
+            if (
+                p8_slots.shape != (points.shape[0],)
+                or p8_global_ids.shape != boxes["global_ids"].shape
+                or not np.array_equal(p8_global_ids, boxes["global_ids"])
+                or np.any(p8_slots < 0)
+                or np.any(p8_slots >= p8_global_ids.size)
+                or not np.array_equal(p8_global_ids[p8_slots], boxes["global_ids"][p8_slots])
+                or not np.all(points >= boxes["lower"][p8_slots] - 1.0e-12)
+                or not np.all(points <= boxes["upper"][p8_slots] + 1.0e-12)
+            ):
+                raise ValueError(f"V16 P8 q{order} sample owners are inconsistent with actual cell boxes")
+            p8_owner_ids = p8_global_ids[p8_slots]
+            p8_sample_arrays = {
+                "P8_E": np.asarray(p8_samples["E"]),
+                "P8_curl_E": np.asarray(p8_samples["curl_E"]),
+                "P8_cell_global_ids": np.asarray(p8_global_ids),
+                "P8_point_cell_local_slots": np.asarray(p8_slots),
+                "P8_point_cell_global_ids": np.asarray(p8_owner_ids),
+            }
+            p8_sample_path = output_root / f"v16_r9_p8_{order}_samples.npz"
+            p8_sample_record = write_atomic_npz(
+                p8_sample_path,
+                p8_sample_arrays,
+                schema="task43.v16.p8.paired-sample.v1",
+                classification="measured_P8_only_sample_reusing_hash_bound_P5_points",
+                identity={
+                    "contract_sha256": frozen["contract_sha256"],
+                    "F_terminal_sha256": frozen["lifecycle_snapshot"]["terminal"],
+                    "F_primary_packet_sha256": frozen["lifecycle_snapshot"]["primary_packet"],
+                    "P5_sample_path": str(old_sample_path),
+                    "P5_sample_sha256": old_sample_sha256,
+                    "quadrature_order": int(order.removeprefix("q")),
+                    "sample_count": int(points.shape[0]),
+                    "point_identity": base._array_identity(points),
+                    "weight_identity": base._array_identity(weights),
+                    "old_fields_resampled": False,
+                    "P8_sampled_once": True,
+                    "candidate_identity": frozen["terminal"]["candidate_identity"],
+                    "mesh_identity": p8["mesh_identity"],
+                },
+            )
+            recomputed_old_results: dict[str, dict[str, Any]] = {}
+            for label in ("R9", "R9_H8"):
+                old_field_metrics = base._field_metrics(
+                    old_samples["Y6_1"],
+                    old_samples[label],
+                    points,
+                    weights,
+                    cases["Y6_1"]["cfg"],
+                )
+                old_modal_metrics = base._modal_comparison(
+                    cases["Y6_1"], cases[label]
+                )
+                old_j = _j_infinity(old_modal_metrics, old_field_metrics)
+                old_signed = _v11_signed_mode_differences(
+                    cases["Y6_1"], cases[label]
+                )
+                recomputed = {
+                    "reference_label": "Y6_1",
+                    "candidate_label": label,
+                    "modal_metrics": old_modal_metrics,
+                    "field_metrics": old_field_metrics,
+                    "J_infinity": old_j,
+                    "eta": float(
+                        old_field_metrics["G"]["relative_with_incident_floor"]
+                    ),
+                    "signed_observables": old_signed,
+                }
+                expected_result = p5["results"][order].get(label)
+                if not isinstance(expected_result, Mapping):
+                    raise ValueError(
+                        f"V16 P8 original P5 {order}/{label} result is missing"
+                    )
+                _v16_require_saved_metrics_match(
+                    expected_result, recomputed, context=f"P5.{order}.{label}"
+                )
+                recomputed_old_results[label] = recomputed
+            p8_case_samples = p8_samples
+            modal_metrics = base._modal_comparison(cases["Y6_1"], cases["R9_P8"])
+            signed = _v11_signed_mode_differences(cases["Y6_1"], cases["R9_P8"])
+            field_metrics = base._field_metrics(
+                old_samples["Y6_1"], p8_case_samples, points, weights, p8["cfg"]
+            )
+            score = _j_infinity(modal_metrics, field_metrics)
+            eta_p8 = float(field_metrics["G"]["relative_with_incident_floor"])
+            r9_result = recomputed_old_results["R9"]
+            h8_result = recomputed_old_results["R9_H8"]
+            eps_j = float(contract["comparison"]["epsilon_J"])
+            eps_g = float(contract["comparison"]["epsilon_G"])
+            classification = _v11_fixed_h_classification(
+                j_r9=float(r9_result["J_infinity"]["value"]),
+                j_h=float(score["value"]),
+                eta_r9=float(r9_result["eta"]),
+                eta_h=eta_p8,
+                epsilon_j=eps_j,
+                epsilon_g=eps_g,
+            )
+            delta_fe_p8 = actual_fe - r9_fe
+            delta_fe_h8 = h8_fe - r9_fe
+            h8_classification = _v11_fixed_h_classification(
+                j_r9=float(r9_result["J_infinity"]["value"]),
+                j_h=float(h8_result["J_infinity"]["value"]),
+                eta_r9=float(r9_result["eta"]),
+                eta_h=float(h8_result["eta"]),
+                epsilon_j=eps_j,
+                epsilon_g=eps_g,
+            )
+            p8_interval = {
+                "point_estimate": classification["Delta_J"] / delta_fe_p8,
+                "lower": (classification["Delta_J"] - eps_j) / delta_fe_p8,
+                "upper": (classification["Delta_J"] + eps_j) / delta_fe_p8,
+                "Delta_J_per_added_FE_dof": classification["Delta_J"] / delta_fe_p8,
+                "Delta_G_per_added_FE_dof": classification["Delta_G"] / delta_fe_p8,
+            }
+            h8_interval = {
+                "point_estimate": h8_classification["Delta_J"] / delta_fe_h8,
+                "lower": (h8_classification["Delta_J"] - eps_j) / delta_fe_h8,
+                "upper": (h8_classification["Delta_J"] + eps_j) / delta_fe_h8,
+                "Delta_J_per_added_FE_dof": h8_classification["Delta_J"] / delta_fe_h8,
+                "Delta_G_per_added_FE_dof": h8_classification["Delta_G"] / delta_fe_h8,
+            }
+            efficiency_order = {
+                "P8": {**p8_interval, "Delta_FE": delta_fe_p8},
+                "H8": {**h8_interval, "Delta_FE": delta_fe_h8},
+                "P8_lower_exceeds_H8_upper": bool(p8_interval["lower"] > h8_interval["upper"]),
+                "ranking_qualified": bool(
+                    classification["positive_condition_pass"]
+                    and eta_p8 <= float(r9_result["eta"]) + eps_g
+                    and p8_interval["lower"] > h8_interval["upper"]
+                ),
+            }
+            p8_result = {
+                "reference_label": "Y6_1",
+                "candidate_label": "R9_P8",
+                "modal_metrics": modal_metrics,
+                "field_metrics": field_metrics,
+                "J_infinity": score,
+                "eta": eta_p8,
+                "signed_observables": signed,
+                "P8_vs_R9": classification,
+                "efficiency_per_added_FE": efficiency_order,
+                "sample": {
+                    "path": p8_sample_record["npz_path"],
+                    "sha256": p8_sample_record["npz_sha256"],
+                    "P5_sample_path": str(old_sample_path),
+                    "P5_sample_sha256": old_sample_sha256,
+                    "old_fields_resampled": False,
+                    "P8_sampled_once": True,
+                    "sample_count": int(points.shape[0]),
+                },
+            }
+            samples_complete[order] = {
+                **recomputed_old_results,
+                "Y6_1_reference": {
+                    "power": dict(y6_power),
+                    "saved_field_source": str(old_sample_path),
+                    "reference": True,
+                },
+                "R9_P8": p8_result,
+                "classification": classification,
+                "efficiency_per_added_FE": efficiency_order,
+                "P8_FE": actual_fe,
+                "R9_FE": r9_fe,
+                "H8_FE": h8_fe,
+            }
+            old_sample_digest_after = _sha256_file(old_sample_path)
+            if old_sample_digest_after != old_sample_sha256:
+                raise RuntimeError(f"V16 P8 P5 q{order} sample changed during reuse")
+            write_atomic_json(
+                progress_path,
+                {
+                    "schema": "task43.v16.p8.paired-comparison-progress.v1",
+                    "status": "Q8_COMPLETE_Q10_PENDING" if order == "q8" else "Q8_Q10_COMPLETE",
+                    "results": samples_complete,
+                    "official_result": False,
+                    "passed": False,
+                    "selection_eligible": False,
+                    "continuation_all_false": True,
+                },
+                refuse_overwrite=False,
+            )
+            _require_v11_watchdog_worker_identity(
+                expected_identity=worker_identity, require_unused_phase_file=False
+            )
+        q_classifications = [
+            samples_complete[order]["classification"]["classification"]
+            for order in ("q8", "q10")
+        ]
+        final_classification = (
+            "SAMPLING_SENSITIVITY_UNRESOLVED"
+            if q_classifications[0] != q_classifications[1]
+            else q_classifications[0]
+        )
+        both_orders_ranking_qualified = all(
+            samples_complete[order]["efficiency_per_added_FE"]["ranking_qualified"]
+            for order in ("q8", "q10")
+        )
+        for order in ("q8", "q10"):
+            samples_complete[order]["efficiency_per_added_FE"][
+                "both_orders_ranking_qualified"
+            ] = bool(both_orders_ranking_qualified)
+            samples_complete[order]["both_orders_ranking_qualified"] = bool(
+                both_orders_ranking_qualified
+            )
+        source_end = _v11_source_snapshot()
+        source_end[contract_path.relative_to(ROOT).as_posix()] = frozen["contract_sha256"]
+        inputs_end = round1_candidates._v16_p8_input_snapshot(contract)
+        if (
+            source_end != source_start
+            or inputs_end != frozen["contract_input_snapshot"]
+            or _verify_v16_p8_source_snapshot(frozen["space_binding"])
+            != frozen["space_binding"]["input_snapshot"]
+        ):
+            raise RuntimeError("V16 P8 source or input identity changed during paired comparison")
+        for name, path in frozen["lifecycle_paths"].items():
+            if _sha256_file(path) != frozen["lifecycle_snapshot"][name]:
+                raise RuntimeError(f"V16 P8 F product changed during paired comparison: {name}")
+        record = {
+            "schema": "task43.v16.p8.paired-comparison.v1",
+            "status": "COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE",
+            "classification": final_classification,
+            "qualification_boundary": "same-point four-field fixed-reference output response only; no selection/transition",
+            "official_result": False,
+            "passed": False,
+            "selection_eligible": False,
+            "selection_candidate": False,
+            "candidate_selected": False,
+            "continuation_all_false": True,
+            "attempt_id": attempt_id,
+            "contract_path": str(contract_path),
+            "contract_sha256": frozen["contract_sha256"],
+            "fixed_reference": "Y6_1",
+            "candidate_id": "v16_r9_p8",
+            "original_P4_status": "FAILED",
+            "F_joined_terminal_path": str(frozen["lifecycle_paths"]["joined"].resolve()),
+            "F_joined_terminal_sha256": frozen["lifecycle_snapshot"]["joined"],
+            "F_terminal_path": str(frozen["lifecycle_paths"]["terminal"].resolve()),
+            "F_terminal_sha256": frozen["lifecycle_snapshot"]["terminal"],
+            "F_endpoint_path": str(frozen["lifecycle_paths"]["endpoint"].resolve()),
+            "F_endpoint_sha256": frozen["lifecycle_snapshot"]["endpoint"],
+            "F_primary_packet_sha256": frozen["lifecycle_snapshot"]["primary_packet"],
+            "P5_comparison_path": str(ROOT / roles["V15_P5_comparison_record"]["path"]),
+            "P5_comparison_sha256": roles["V15_P5_comparison_record"]["sha256"],
+            "P5_old_samples_resampled": False,
+            "source_identity_start": source_start,
+            "source_identity_end": source_end,
+            "contract_input_identity_start": frozen["contract_input_snapshot"],
+            "contract_input_identity_end": inputs_end,
+            "shared_physics": common_physics,
+            "modal_physics": modal_physics,
+            "full_612_physical_reconstruction": full_mode_physics,
+            "modal_count": 612,
+            "FE": {"R9": r9_fe, "H8": h8_fe, "P8": actual_fe, "Delta_FE_P8": actual_fe - r9_fe, "Delta_FE_H8": h8_fe - r9_fe},
+            "epsilon_J": float(contract["comparison"]["epsilon_J"]),
+            "epsilon_G": float(contract["comparison"]["epsilon_G"]),
+            "results": samples_complete,
+            "both_orders_ranking_qualified": bool(both_orders_ranking_qualified),
+            "wall_seconds": time.perf_counter() - started,
+        }
+        write_atomic_json(result_path, record)
+        ledger.set_phase("complete")
+        ledger.marker("task43_v16_p8_paired_comparison_complete", {"record": str(result_path), "classification": final_classification})
+        return record
+    except BaseException as error:
+        failure = {
+            "schema": "task43.v16.p8.paired-comparison-failure.v1",
+            "status": "FAILED_AFTER_Q8_PRESERVED" if "q8" in samples_complete else "FAILED_BEFORE_Q8",
+            "classification": "ACTION_ENDPOINT_NOT_QUALIFIED",
+            "error": f"{type(error).__name__}: {error}",
+            "completed_q_orders": list(samples_complete),
+            "completed_results": samples_complete,
+            "official_result": False,
+            "passed": False,
+            "selection_eligible": False,
+            "continuation_all_false": True,
+            "contract_sha256": frozen["contract_sha256"],
+            "F_joined_terminal_sha256": frozen["lifecycle_snapshot"]["joined"],
+        }
+        write_atomic_json(output_root / "v16_r9_p8_comparison_failure.json", failure)
+        try:
+            ledger.set_phase("failed")
+            ledger.marker("task43_v16_p8_paired_comparison_failed", failure)
+        except BaseException:
+            pass
+        raise
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--candidate-run-root", type=Path)
@@ -3044,10 +4282,49 @@ def main() -> int:
     parser.add_argument("--diagnostic-contract", type=Path)
     parser.add_argument("--execution-recovery-manifest", type=Path)
     parser.add_argument("--saved-primary-recovery-binding", type=Path)
+    parser.add_argument("--paired-p8-contract", type=Path)
     args = parser.parse_args()
     if not args.attempt_id or Path(args.attempt_id).name != args.attempt_id:
         parser.error("--attempt-id must be one path component")
-    if args.diagnostic_contract is not None:
+    if args.paired_p8_contract is not None:
+        if (
+            args.candidate_run_root is None
+            or args.accepted_parent_selection_record is None
+            or args.diagnostic_contract is not None
+            or args.execution_recovery_manifest is not None
+            or args.saved_primary_recovery_binding is not None
+            or args.post_selection_record is not None
+            or args.assets_manifest is not None
+            or args.validation_reference_root is not None
+        ):
+            parser.error(
+                "V16 P8 paired comparison requires its F run and accepted R9 selection, and rejects other modes"
+            )
+        result = compare_v16_p8_paired(
+            args.candidate_run_root.resolve(),
+            args.accepted_parent_selection_record.resolve(),
+            contract_path=args.paired_p8_contract,
+            attempt_id=args.attempt_id,
+        )
+        print(
+            json.dumps(
+                {
+                    "stage": "v16_p8_paired_comparison_complete",
+                    "classification": result["classification"],
+                    "record": str(
+                        Path(str(result["results"]["q10"]["R9_P8"]["sample"]["path"]))
+                        .parent
+                        / "v16_r9_p8_paired_comparison.json"
+                    ),
+                    "q8": result["results"]["q8"]["classification"]["classification"],
+                    "q10": result["results"]["q10"]["classification"]["classification"],
+                },
+                sort_keys=True,
+                allow_nan=False,
+            ),
+            flush=True,
+        )
+    elif args.diagnostic_contract is not None:
         if (
             args.candidate_run_root is None
             or args.accepted_parent_selection_record is None
@@ -3090,7 +4367,7 @@ def main() -> int:
         or args.saved_primary_recovery_binding is not None
     ):
         parser.error(
-            "V11 recovery bindings require V11 diagnostic mode"
+            "recovery bindings require their matching diagnostic mode"
         )
     elif args.post_selection_record is not None:
         if (args.candidate_run_root is not None or args.accepted_parent_selection_record is not None
