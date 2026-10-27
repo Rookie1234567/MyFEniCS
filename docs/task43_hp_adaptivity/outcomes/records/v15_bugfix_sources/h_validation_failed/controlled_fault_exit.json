@@ -1,0 +1,15 @@
+{
+  "child_parent_pid": 3345440,
+  "child_pid": 3345490,
+  "child_reaped": true,
+  "child_start_ticks": 300160578,
+  "child_tracer_pid": 3345451,
+  "direct_watchdog_worker": false,
+  "expected_exit_code": 7,
+  "label": "controlled_fault_exit",
+  "observed_exit_code": 7,
+  "schema": "task43.v11.p1.traced_child_cleanup.v1",
+  "watchdog_parent_pid": 3345439,
+  "worker_pid": 3345440,
+  "worker_tracer_pid": 3345451
+}

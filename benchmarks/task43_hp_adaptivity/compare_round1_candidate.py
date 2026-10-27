@@ -197,10 +197,6 @@ def _v15_h_saved_primary_input_snapshot(
         raise RuntimeError("V15 P4 FAILED terminal changed during the P5 input snapshot")
     if _sha256_file(saved_primary_binding_path) != _V15_H_SAVED_PRIMARY_BINDING_SHA256:
         raise RuntimeError("V15 saved-primary binding changed during the P5 input snapshot")
-    snapshot[str(saved_primary_binding_path.resolve())] = {
-        "path": str(saved_primary_binding_path.resolve()),
-        "sha256": _V15_H_SAVED_PRIMARY_BINDING_SHA256,
-    }
     return snapshot
 
 
@@ -347,6 +343,10 @@ def _v15_h_saved_primary_binding_and_inputs(
         allow_historical_p4_sources=True,
     )
     snapshot.update(p2_snapshot)
+    snapshot[str(binding_path)] = {
+        "path": str(binding_path),
+        "sha256": _V15_H_SAVED_PRIMARY_BINDING_SHA256,
+    }
     return binding, snapshot, terminal
 
 
