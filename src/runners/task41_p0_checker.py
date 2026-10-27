@@ -3797,7 +3797,7 @@ def load_task41_p0_b0_v16_v14_star_bindings(
             or candidate.get("official_result") is not False
             or candidate.get("scientific_qualified") is not False
             or candidate.get("consumer_window_sha256") != TASK41_P0_B0_V14_WINDOW_SHA256
-            or candidate.get("producer_window_sha256") != TASK41_P0_B0_V14_WINDOW_SHA256
+            or candidate.get("producer_window_sha256") != TASK41_P0_B0_V13_WINDOW_SHA256
             or candidate.get("scope", {}).get("stage") != stage
             or candidate.get("scope", {}).get("cells") != expected_cells
             or candidate.get("scope", {}).get("columns") != [0, 1]

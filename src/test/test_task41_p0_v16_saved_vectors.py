@@ -1233,7 +1233,7 @@ def test_v16_v14_reader_hash_binds_saved_reports_and_keeps_local_pass_non_global
                 "official_result": False,
                 "scientific_qualified": False,
                 "consumer_window_sha256": window_sha,
-                "producer_window_sha256": window_sha,
+                "producer_window_sha256": v16_checker.TASK41_P0_B0_V13_WINDOW_SHA256,
                 "scope": {"stage": stage, "cells": cells, "columns": [0, 1], "full_owner": False},
                 "getrs_count": 12,
                 "new_evidence_bytes": 1,
