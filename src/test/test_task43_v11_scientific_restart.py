@@ -6817,9 +6817,28 @@ def test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound(tmp_path, monkey
         )
     )
     original_require = h100_anchor._require_v11_watchdog_worker_identity
-    identity = original_require(require_unused_phase_file=False)
-    phase_path = Path(identity["phase_path"])
-    assert phase_path.is_file()
+    phase_path = Path(os.environ["PHYSICAL_WATCHDOG_PHASE_PATH"])
+    assert phase_path.is_absolute()
+    phase_path = phase_path.resolve()
+    assert phase_path.parent.is_dir()
+    had_phase_before = phase_path.is_file()
+    if had_phase_before:
+        phase_before_sha256 = hashlib.sha256(phase_path.read_bytes()).hexdigest()
+        identity = original_require(require_unused_phase_file=False)
+    else:
+        # Keep the real first-use runtime gate intact before this fixture creates
+        # the phase file that the resume gate must accept.
+        initial_runtime = h100_anchor._check_v11_runtime_envelope(
+            h100_anchor.MPI.COMM_WORLD
+        )
+        identity = initial_runtime["v11_watchdog_worker_identity"]
+        assert Path(identity["phase_path"]).resolve() == phase_path
+        ledger_directory = tmp_path / "resume_phase_ledger"
+        ledger_directory.mkdir()
+        ledger = h100_anchor.WorkflowLedger(ledger_directory, phase_path)
+        ledger.marker("v16_resume_fixture_worker_identity", {"identity": identity})
+        phase_before_sha256 = hashlib.sha256(phase_path.read_bytes()).hexdigest()
+
     assert phase_path.resolve() == Path(
         os.environ["PHYSICAL_WATCHDOG_PHASE_PATH"]
     ).resolve()
@@ -6866,3 +6885,16 @@ def test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound(tmp_path, monkey
             h100_anchor._v16_p8_resume_output_binding(
                 contract, stage, worker_identity=identity
             )
+    phase_after_sha256 = hashlib.sha256(phase_path.read_bytes()).hexdigest()
+    assert phase_after_sha256 == phase_before_sha256
+    observation = {
+        "assertions_completed": True,
+        "phase_preexisted": had_phase_before,
+        "phase_path": str(phase_path),
+        "phase_before_sha256": phase_before_sha256,
+        "phase_after_sha256": phase_after_sha256,
+        "runtime": runtime,
+    }
+    (tmp_path / "resume_phase_fixture_observation.json").write_text(
+        json.dumps(observation, sort_keys=True) + "\n", encoding="utf-8"
+    )

@@ -1,0 +1,17 @@
+{
+  "schema": "task43.v16.single-node-static-freeze.v1",
+  "test_sha256": "c7ae026e40ac782652b17e87e7399eef541c139ff62900b20caf7ea59e34a236",
+  "launch_sha256": "547d0d4040d32b1eabb202a3068c3fbf14c5c7d64aeb1696d9b56e4207294494",
+  "selector": "test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound",
+  "expanded_nodes": 1,
+  "checks": {
+    "python_AST": "pass",
+    "ruff_F821_F822_F823": "pass",
+    "bash_n": "pass",
+    "embedded_snapshot_AST": "pass",
+    "git_diff_check": "pass",
+    "other_17_nodes_and_shared_helpers": "unchanged from 3b9d5e0adb43f69a1fdf339691b26d7eec506686"
+  },
+  "runtime_test": "NOT_RUN_AT_FREEZE",
+  "test_boundary": "real watchdog/ABI/CPU/tracer/ledger/identity helper; no PDE/mesh/solver; no claim full E dispatch is exercised"
+}

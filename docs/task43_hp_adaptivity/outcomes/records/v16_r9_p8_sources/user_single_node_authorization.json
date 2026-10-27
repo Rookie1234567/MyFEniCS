@@ -1,0 +1,24 @@
+{
+  "schema": "task43.v16.user-single-node-completion-binding.v1",
+  "recorded_utc": "2026-10-27T08:29:48.452851+00:00",
+  "user_reply": "授权一次单节点补验",
+  "question_scope": "新增一次仅验证该失败节点的非PDE运行，沿用CPU1、8GiB、270秒工作/300秒含清理上限，不重跑其余17项、不启动正式求解。",
+  "parent_review": "f72e1c8d031de7acc374f0806ddac06099c461c4",
+  "base_delivery": "1fb881f4d6fb836d96c650329529d0d1e18c03c5",
+  "scope": "One additional support call only, outside exhausted original T2/2; no refund or E substitution; no formal solve authorized by this user reply.",
+  "selector": "src/test/test_task43_v11_scientific_restart.py::test_v16_p8_resume_phase_is_exclusive_and_same_worker_bound",
+  "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/resume_phase_completion_attempt1",
+  "launch": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/launch/resume_phase_completion_attempt1.sh",
+  "max_calls": 1,
+  "work_stop_seconds": 270,
+  "whole_limit_seconds": 300,
+  "RSS_cap_bytes": 8589934592,
+  "cpu_affinity": [
+    1
+  ],
+  "MPI": 1,
+  "six_threads_each": 1,
+  "task_swap_bytes": 0,
+  "retry_authorized": false,
+  "formal_PDE_authorized": false
+}
