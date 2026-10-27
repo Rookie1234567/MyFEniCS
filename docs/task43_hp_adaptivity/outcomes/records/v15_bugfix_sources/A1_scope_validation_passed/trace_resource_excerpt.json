@@ -1,0 +1,1155 @@
+{
+  "events": [
+    {
+      "file": "sched.3334949",
+      "line": 1,
+      "raw": "1793072534.122972 sched_getaffinity(0, 128, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 125,
+      "raw": "1793072536.009966 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 225,
+      "raw": "1793072536.217785 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 320,
+      "raw": "1793072536.237536 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 415,
+      "raw": "1793072536.257212 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 510,
+      "raw": "1793072536.278167 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 605,
+      "raw": "1793072536.306453 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 698,
+      "raw": "1793072536.327287 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 791,
+      "raw": "1793072536.355177 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 884,
+      "raw": "1793072536.379379 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 977,
+      "raw": "1793072536.400109 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1070,
+      "raw": "1793072536.425711 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1163,
+      "raw": "1793072538.353364 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1200,
+      "raw": "1793072538.369293 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1235,
+      "raw": "1793072538.376728 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1270,
+      "raw": "1793072538.389800 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1307,
+      "raw": "1793072538.400185 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1342,
+      "raw": "1793072538.414224 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1377,
+      "raw": "1793072538.432167 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1412,
+      "raw": "1793072538.467004 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1447,
+      "raw": "1793072538.504837 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1482,
+      "raw": "1793072538.541241 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1554,
+      "raw": "1793072538.750970 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1589,
+      "raw": "1793072538.799547 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1624,
+      "raw": "1793072538.835270 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1659,
+      "raw": "1793072538.877657 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1694,
+      "raw": "1793072538.892403 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1729,
+      "raw": "1793072538.901246 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1764,
+      "raw": "1793072538.937266 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1799,
+      "raw": "1793072538.953483 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1834,
+      "raw": "1793072538.962239 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1869,
+      "raw": "1793072538.979523 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1904,
+      "raw": "1793072538.992270 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1939,
+      "raw": "1793072539.000371 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 1974,
+      "raw": "1793072539.007647 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2009,
+      "raw": "1793072539.030492 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2044,
+      "raw": "1793072539.042075 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2079,
+      "raw": "1793072539.049863 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2149,
+      "raw": "1793072539.140736 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2184,
+      "raw": "1793072539.176433 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2219,
+      "raw": "1793072539.200223 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2254,
+      "raw": "1793072539.250803 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2289,
+      "raw": "1793072539.295436 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2324,
+      "raw": "1793072539.330473 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2359,
+      "raw": "1793072539.717549 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2394,
+      "raw": "1793072539.747948 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2429,
+      "raw": "1793072539.759188 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2464,
+      "raw": "1793072539.767571 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2499,
+      "raw": "1793072539.808882 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2534,
+      "raw": "1793072539.830753 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2569,
+      "raw": "1793072539.841997 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2604,
+      "raw": "1793072539.851041 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2639,
+      "raw": "1793072543.348980 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2674,
+      "raw": "1793072543.374420 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2709,
+      "raw": "1793072543.383656 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2744,
+      "raw": "1793072543.410661 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2779,
+      "raw": "1793072543.424396 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2814,
+      "raw": "1793072543.432518 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2920,
+      "raw": "1793072544.277657 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2955,
+      "raw": "1793072544.332756 sched_getaffinity(3334949, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2990,
+      "raw": "1793072544.369391 sched_getaffinity(3334978, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 3025,
+      "raw": "1793072544.400210 sched_getaffinity(3334979, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334975",
+      "line": 1,
+      "raw": "1793072535.394905 sched_getaffinity(3334975, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334975",
+      "line": 19,
+      "raw": "1793072535.506906 sched_getaffinity(0, 8, [1]) = 8"
+    },
+    {
+      "file": "sched.3334975",
+      "line": 33,
+      "raw": "1793072535.516796 sched_getaffinity(3334975, 8, [1]) = 8"
+    }
+  ],
+  "signals": [
+    {
+      "file": "sched.3334949",
+      "line": 1517,
+      "raw": "1793072538.667709 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3334996, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2114,
+      "raw": "1793072539.099919 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3334997, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2849,
+      "raw": "1793072543.816084 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3335000, si_uid=1000, si_status=0, si_utime=5 /* 0.05 s */, si_stime=2 /* 0.02 s */} ---"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2884,
+      "raw": "1793072544.133130 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3335001, si_uid=1000, si_status=7, si_utime=4 /* 0.04 s */, si_stime=2 /* 0.02 s */} ---"
+    }
+  ],
+  "resource_rows": [
+    {
+      "timestamp_ns": 1793072531138488871,
+      "elapsed_seconds": 0.3314365381374955,
+      "rss_bytes": 54534144,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793072531762310908,
+      "elapsed_seconds": 0.9484422150999308,
+      "rss_bytes": 65564672,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793072532405854500,
+      "elapsed_seconds": 1.593132870271802,
+      "rss_bytes": 84488192,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793072533153994214,
+      "elapsed_seconds": 2.3411732013337314,
+      "rss_bytes": 84541440,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793072533888525237,
+      "elapsed_seconds": 3.0791851123794913,
+      "rss_bytes": 88719360,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793072534643099396,
+      "elapsed_seconds": 3.8304126202128828,
+      "rss_bytes": 99123200,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793072535412579500,
+      "elapsed_seconds": 4.600561830215156,
+      "rss_bytes": 125210624,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793072535995653128,
+      "elapsed_seconds": 5.178138297982514,
+      "rss_bytes": 141430784,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793072536544640015,
+      "elapsed_seconds": 5.727370320353657,
+      "rss_bytes": 164302848,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793072537080525188,
+      "elapsed_seconds": 6.265667502302676,
+      "rss_bytes": 174538752,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793072537617247651,
+      "elapsed_seconds": 6.799773907288909,
+      "rss_bytes": 187228160,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793072538151369675,
+      "elapsed_seconds": 7.333946953993291,
+      "rss_bytes": 247009280,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793072538864472474,
+      "elapsed_seconds": 8.051517917308956,
+      "rss_bytes": 254390272,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "validated_references": []
+        },
+        "phase": "preflight",
+        "phase_started_monotonic": 2997533.321570026,
+        "stage": "task43_preflight_end",
+        "updated_monotonic": 2997533.450027587
+      }
+    },
+    {
+      "timestamp_ns": 1793072539611241086,
+      "elapsed_seconds": 8.79420211398974,
+      "rss_bytes": 255868928,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {}
+    },
+    {
+      "timestamp_ns": 1793072540338960199,
+      "elapsed_seconds": 9.526197236962616,
+      "rss_bytes": 256667648,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "pass": true,
+          "record_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/A2_saved_primary_q_response.json",
+          "record_sha256": "900bf65cf9d05e3aafdc17722e4ce25bf7d1a8cc99d6a7fe61f36dc6c139ba34"
+        },
+        "phase": "preflight",
+        "phase_started_monotonic": 2997534.724008106,
+        "stage": "task43_v11_p2_saved_a2_response_persisted_before_authority",
+        "updated_monotonic": 2997534.763473433
+      }
+    },
+    {
+      "timestamp_ns": 1793072541078561957,
+      "elapsed_seconds": 10.265613870229572,
+      "rss_bytes": 256827392,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "pass": true,
+          "record_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/A2_saved_primary_q_response.json",
+          "record_sha256": "900bf65cf9d05e3aafdc17722e4ce25bf7d1a8cc99d6a7fe61f36dc6c139ba34"
+        },
+        "phase": "preflight",
+        "phase_started_monotonic": 2997534.724008106,
+        "stage": "task43_v11_p2_saved_a2_response_persisted_before_authority",
+        "updated_monotonic": 2997534.763473433
+      }
+    },
+    {
+      "timestamp_ns": 1793072541822941553,
+      "elapsed_seconds": 11.011484559159726,
+      "rss_bytes": 257146880,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "candidate_id": "v11_r9_h8",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "mesh_setup",
+        "phase_started_monotonic": 2997536.278912606,
+        "stage": "task43_v11_p2_mesh_authority_begin",
+        "updated_monotonic": 2997536.284563046
+      }
+    },
+    {
+      "timestamp_ns": 1793072542574499477,
+      "elapsed_seconds": 11.761955993250012,
+      "rss_bytes": 257175552,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "candidate_id": "v11_r9_h8",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "mesh_setup",
+        "phase_started_monotonic": 2997536.278912606,
+        "stage": "task43_v11_p2_mesh_authority_begin",
+        "updated_monotonic": 2997536.284563046
+      }
+    },
+    {
+      "timestamp_ns": 1793072543305669358,
+      "elapsed_seconds": 12.49751668330282,
+      "rss_bytes": 257175552,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "candidate_id": "v11_r9_h8",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "mesh_setup",
+        "phase_started_monotonic": 2997536.278912606,
+        "stage": "task43_v11_p2_mesh_authority_begin",
+        "updated_monotonic": 2997536.284563046
+      }
+    },
+    {
+      "timestamp_ns": 1793072543880656477,
+      "elapsed_seconds": 13.068503776099533,
+      "rss_bytes": 258146304,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975,
+        3335000
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072544613360939,
+      "elapsed_seconds": 13.801191067323089,
+      "rss_bytes": 259690496,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072545255404031,
+      "elapsed_seconds": 14.441210108343512,
+      "rss_bytes": 260345856,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072545782308058,
+      "elapsed_seconds": 14.964755135122687,
+      "rss_bytes": 262217728,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072546318543336,
+      "elapsed_seconds": 15.501076457090676,
+      "rss_bytes": 262922240,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072546839117443,
+      "elapsed_seconds": 16.02613007137552,
+      "rss_bytes": 262922240,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072547372647115,
+      "elapsed_seconds": 16.55508242500946,
+      "rss_bytes": 262922240,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072547891326553,
+      "elapsed_seconds": 17.07709250226617,
+      "rss_bytes": 262922240,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072548420572579,
+      "elapsed_seconds": 17.60300159594044,
+      "rss_bytes": 263032832,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072548949531627,
+      "elapsed_seconds": 18.131975832395256,
+      "rss_bytes": 263315456,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072549640040356,
+      "elapsed_seconds": 18.830665992107242,
+      "rss_bytes": 263315456,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072550389709536,
+      "elapsed_seconds": 19.57682569231838,
+      "rss_bytes": 263315456,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072551042195903,
+      "elapsed_seconds": 20.22531288303435,
+      "rss_bytes": 38084608,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [
+        3334949,
+        3334960,
+        3334975
+      ],
+      "exit_code": null,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072551530114298,
+      "elapsed_seconds": 20.71327846031636,
+      "rss_bytes": 38084608,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [],
+      "exit_code": 0,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072552019002134,
+      "elapsed_seconds": 21.202596893999726,
+      "rss_bytes": 38084608,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [],
+      "exit_code": 0,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072552501387753,
+      "elapsed_seconds": 21.684510878287256,
+      "rss_bytes": 38084608,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [],
+      "exit_code": 0,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    },
+    {
+      "timestamp_ns": 1793072552986461774,
+      "elapsed_seconds": 22.169731996953487,
+      "rss_bytes": 38084608,
+      "swap_bytes": 0,
+      "launch_cap_bytes": 8589934592,
+      "live_or_unreaped_children": [],
+      "exit_code": 0,
+      "worker_phase": {
+        "facts": {
+          "plan_audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/isolated_repo/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json",
+          "plan_audit_sha256": "4010f661dd86e51a50b79f40666d027171d77d127b9df350a0d872ef4e4f8489",
+          "plan_sha256": "5cccacbcd91884ca4103294eb1051d2dd5ea5aec85c0073c1d03c80581a743a9"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 2997538.32014169,
+        "stage": "task43_v11_p2_space_plan_complete",
+        "updated_monotonic": 2997538.323759566
+      }
+    }
+  ],
+  "issues_classified": [
+    [
+      20,
+      "empty cmdline; classify by state/identity",
+      {
+        "pid": 3335000,
+        "start_ticks": 299753838,
+        "ppid": 3334949,
+        "comm": "python",
+        "state": "Z",
+        "cmdline": "",
+        "stage": "workflow",
+        "rss_bytes": 0,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793072543880643631,
+        "exit_code": null,
+        "cpu_seconds": 0.08,
+        "affinity": [
+          1
+        ],
+        "cost_sample_unavailable": true
+      }
+    ],
+    [
+      32,
+      "empty cmdline; classify by state/identity",
+      {
+        "pid": 3334949,
+        "start_ticks": 299752568,
+        "ppid": 3334948,
+        "comm": "python",
+        "state": "Z",
+        "cmdline": "",
+        "stage": "workflow",
+        "rss_bytes": 0,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793072551041823515,
+        "exit_code": null,
+        "cpu_seconds": 11.21,
+        "affinity": [
+          1
+        ],
+        "cost_sample_unavailable": true
+      }
+    ],
+    [
+      32,
+      "empty cmdline; classify by state/identity",
+      {
+        "pid": 3334960,
+        "start_ticks": 299752574,
+        "ppid": 3334948,
+        "comm": "strace",
+        "state": "Z",
+        "cmdline": "",
+        "stage": "workflow",
+        "rss_bytes": 0,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793072551041996062,
+        "exit_code": null,
+        "cpu_seconds": 1.73,
+        "affinity": [
+          1
+        ],
+        "cost_sample_unavailable": true
+      }
+    ],
+    [
+      32,
+      "empty cmdline; classify by state/identity",
+      {
+        "pid": 3334975,
+        "start_ticks": 299752981,
+        "ppid": 3334948,
+        "comm": "orted",
+        "state": "Z",
+        "cmdline": "",
+        "stage": "workflow",
+        "rss_bytes": 0,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793072551042188991,
+        "exit_code": null,
+        "cpu_seconds": 0.42,
+        "affinity": [
+          1
+        ],
+        "cost_sample_unavailable": true
+      }
+    ]
+  ]
+}

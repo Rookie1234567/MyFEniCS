@@ -1,0 +1,309 @@
+{
+  "schema": "task43.v15.primary-recovery-validation-root-gate.v1",
+  "status": "PASS_LIMITED_SUPPORT_ENGINEERING",
+  "head": "96c57fbb481eef483c4e6dadc3358552d31c448b",
+  "source_sha256": {
+    "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+    "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+    "benchmarks/task43_hp_adaptivity/candidate_records.py": "7f98eacb0aee5e8f3cc98c61620613d02e66c909844c2ab8e171008e1cee73aa",
+    "benchmarks/task43_hp_adaptivity/compare_initial_to_references.py": "c39d5577719ddf4a5bc22acba47d49028717a171fcbcbf2cb667341067d78a8e",
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "dc51871563510b943def6a49363757df60b00ad780da4e18754dde8b9fc0e3de",
+    "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py": "4c16377b491a83424f8b21cb54c9e60f64dcd5bf6f6895f45fee6f11a083ce0c",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "863fdd17d1fc73088b24d8f98ad867be43c48a8f272bcb837e81ec787312ec0f",
+    "benchmarks/task43_hp_adaptivity/profile.py": "ddd315bcbe897be4856c42dc68ecbf7897dcf8fa836ef91985863bb6ae8afc2e",
+    "benchmarks/task43_hp_adaptivity/reference_restore.py": "93a7170d92cacae9c9fd491637a22c676fb559d3f5a306812105888a6c0b4505",
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py": "6da8f277cf7c1bb8809d04290dfe5418c1ca61955a378eca11447ce9ec90efe2",
+    "benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py": "d1ad0a22a8e60147a0ccf3856a2c847b9ff3b74c34ec4bc04dc76c258a8d8ae9",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+    "scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+    "src/adaptivity/exact_sequence_variable_p.py": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+    "src/adaptivity/hcurl_broken_cell_trace.py": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+    "src/adaptivity/hcurl_broken_trace_graph.py": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+    "src/adaptivity/physical_g_error.py": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+    "src/adaptivity/stage4_local_h.py": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+    "src/adaptivity/variable_p_degree_plan.py": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+    "src/adaptivity/variable_p_entity_map.py": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+    "src/adaptivity/variable_p_transfer.py": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+    "src/common/analytic_fields_3d.py": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+    "src/common/config_3d.py": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+    "src/common/modes_3d.py": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+    "src/constraints/floquet_3d.py": "cfa0953ba1b6fa60b1943be2f0f977413221857290df7ceee0747df811bca309",
+    "src/geometry/mesh_builder_3d.py": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+    "src/geometry/task43_hp_adaptivity_axis_plan.py": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+    "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+    "src/postprocessing/diffraction_3d.py": "42d65299ce1cc8c2762dc1d3972ea04063b155bd8a58d4553c9ac9732213ce66",
+    "src/postprocessing/flat_layer_reference_3d.py": "ed6493bd2f13dccbcd85a8ef2edb6f6b07726ec6c41b82651525b386d44ec04a",
+    "src/postprocessing/physical_field_comparison.py": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+    "src/postprocessing/physical_field_sampling.py": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+    "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+    "src/postprocessing/rta_3d.py": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+    "src/runners/physical_intermediate.py": "f7c1cd79353911079fb17e9780afd588a5afc6d0efeccd81b4aed3b9c3c902a4",
+    "src/solvers/common_3d_case_flow.py": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+    "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+    "src/solvers/common_3d_forms.py": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+    "src/solvers/common_3d_postprocess.py": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+    "src/solvers/common_3d_solve.py": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+    "src/solvers/common_3d_utils.py": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+    "src/solvers/dtn_port_3d.py": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+    "src/solvers/hcurl_blocked_gram_tensor.py": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+    "src/solvers/hcurl_variable_p_assembly.py": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+    "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+    "src/solvers/hcurl_variable_p_reduction.py": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+    "src/solvers/independent_active_action.py": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+    "src/solvers/petsc_residual_correction.py": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+    "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb",
+    "src/test/test_task43_v11_scientific_restart.py": "87e412818d5e2bb78d1e0f62501d016aea4baf265dd74c619ee1e1417d27e9ae",
+    "docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734"
+  },
+  "tests": {
+    "current_passed": 14,
+    "current_failed": 0,
+    "historical_raw_vector_pass_reused": 1,
+    "raw_test_scope": "same exact h100 implementation and unchanged raw test node; full test file differs only observer fixture phase handling",
+    "current_junit": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/pytest_results.xml",
+      "sha256": "0b245abd64ad643752069b80c6b7d0fd4c1a1e97e794ff022767c20f5dbea17b"
+    },
+    "historical_junit": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt1/pytest_results.xml",
+      "sha256": "9a8f1a81c786885873933cd930559207af724b1b701571085ac521ace765f35b"
+    }
+  },
+  "summary": {
+    "workflow_deadline_seconds": 270.0,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 8589934592,
+    "rss_warning_bytes": 7301444403,
+    "minimum_available_bytes": null,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "native_capacity_profile_identity": "task43_hp_adaptivity_resource_v1",
+    "native_capacity_profile_facts_sha256": "c9ef6d173968fd1c78d86eb66b78dd9720bde901f866f58281a4668f83c4b2e6",
+    "native_capacity_resource_facts": {
+      "resource_stop_policy": "legacy",
+      "absolute_cap_bytes": 206158430208,
+      "planning_cap_bytes": 206158430208,
+      "reserve_min_bytes": 68719476736,
+      "reserve_fraction": 0.15,
+      "effective_reserve_policy": "max(64GiB, 15% of effective total memory)",
+      "launch_cap_policy": "min(192GiB, 80% of effective total, effective available minus effective reserve)",
+      "planning_cap_policy": "min(192GiB, 75% of effective total, launch cap)",
+      "memavailable_runtime_policy": "stop_below_effective_reserve",
+      "rss_runtime_policy": "stop_at_launch_cap",
+      "require_zero_swap": true,
+      "swap_policy": "stop_on_nonzero_task_tree_VmSwap",
+      "global_swap_delta_policy": "observe_only",
+      "stop_on_global_swap": false,
+      "pss_sampling_policy": "disabled_by_profile",
+      "concurrent_neighbor_authorized": false,
+      "research_scope": "Task43 only; no Task39/40/41 profile alias"
+    },
+    "launch_memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 2092763648000,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 2092763648000,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "sampled_process_tree_pss_peak_bytes": null,
+    "cache_metadata_stable": true,
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      3334949,
+      3334960,
+      3334975,
+      3335000
+    ],
+    "sampled_process_tree_rss_peak_bytes": 263315456,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 4250695,
+        "pswpout_pages": 7183007
+      },
+      "end": {
+        "pswpin_pages": 4250695,
+        "pswpout_pages": 7183007
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 2092763648000,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 2092763648000,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "samples": 36,
+    "elapsed_seconds": 22.31426020199433,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": "development_worktree; not formal PDE provenance"
+  },
+  "root_observations": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/A1_primary_scope_validation_attempt2_root_terminal_observations.json",
+    "sha256": "c9bd7620f91184524f097de96d7410e36b82e452dbce16556e0c36077833a25b"
+  },
+  "trace_files": [
+    {
+      "file": "sched.3334949",
+      "sha256": "dc5eaa3e84f53fef376c829c9c2a01523036ea6e4156de5af60a60e9b3554925",
+      "bytes": 197249,
+      "lines": 3060,
+      "tail": "1793072550.840857 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3334975",
+      "sha256": "7e732664764adceb0be7aabe37c1a9d64a5a25fe6d6730dd387e58f6cd2d2bb6",
+      "bytes": 3717,
+      "lines": 47,
+      "tail": "1793072550.928353 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3334976",
+      "sha256": "198f7ac431c0d388fb628fe61876b599c8d53331529527e0b721f235979d3510",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793072550.828231 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3334977",
+      "sha256": "10cc8077db08f9d06c95856b430df8356cff9c40f814a435e0b5f3f5db60c8ac",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793072550.866593 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3334978",
+      "sha256": "623c7d286a8ae0aacc6f8aa682b6e23b73279e77060b11c3a63476cd79873f53",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793072550.619790 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3334979",
+      "sha256": "05a10e406660f5b6d15c237750a7e78ad9a8da8448e034be7788f9f18935538b",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793072550.605083 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3334996",
+      "sha256": "de921066a7c6a930c43d4ca7cfce68b39835fb189ab52be168ec345cb6cd56fb",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793072538.667230 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3334997",
+      "sha256": "88419f32c6ca76afba36ed65ff25719c23bbcf267c5edaf02392360a2550146b",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793072539.099525 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3335000",
+      "sha256": "ffd44c0750b2358d8c373876d4e60561489cca05db34347dc151d1c5afcc897d",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793072543.815457 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3335001",
+      "sha256": "337ce80c443cd8e2f0fd5ffc275467394e977f7f7122be8a7367dbded45c843a",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793072544.132525 +++ exited with 7 +++"
+    }
+  ],
+  "signals": [
+    {
+      "file": "sched.3334949",
+      "line": 1517,
+      "raw": "1793072538.667709 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3334996, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2114,
+      "raw": "1793072539.099919 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3334997, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2849,
+      "raw": "1793072543.816084 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3335000, si_uid=1000, si_status=0, si_utime=5 /* 0.05 s */, si_stime=2 /* 0.02 s */} ---"
+    },
+    {
+      "file": "sched.3334949",
+      "line": 2884,
+      "raw": "1793072544.133130 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3335001, si_uid=1000, si_status=7, si_utime=4 /* 0.04 s */, si_stime=2 /* 0.02 s */} ---"
+    }
+  ],
+  "trace_classification": "all final syscall records and tails read; zero setters; all getters CPU1; controlled child3335001 exit7 intentional; other child exits0; 98 unique stack frames read including 3 new vs prior",
+  "empty_cmdline_classification": "4 observations: known child3335000 Z at sample20; known worker/tracer/orted Z at32; all zeroRSS/swap; host PID/start_ticks gone",
+  "cleanup": [
+    {
+      "pid": 3334948,
+      "start_ticks": 299752538,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3334949,
+      "start_ticks": 299752568,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3334960,
+      "start_ticks": 299752574,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3334975,
+      "start_ticks": 299752981,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3335000,
+      "start_ticks": 299753838,
+      "same_process_still_present": false,
+      "proc_stat": null
+    }
+  ],
+  "runtime_identity": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2/fixtures/test_main_reaches_v11_mesh_sen0/main_sentinel_runtime_identity.json",
+    "sha256": "ce3cc2f506fb34b04a747bad37a812710d2b90478b32b6af9272b760770d3c80"
+  },
+  "source_count": 51,
+  "input_count": 57,
+  "caveats": [
+    "No auto-qualification: root must classify signals, failed calls, transient observations and phase/test/numerical results.",
+    "No --cache-path: cache_metadata_stable does not audit shared JIT/global caches.",
+    "Read from real host /proc; sampled RSS/swap, not continuous high-water marks."
+  ],
+  "production_or_science_qualified": false
+}
