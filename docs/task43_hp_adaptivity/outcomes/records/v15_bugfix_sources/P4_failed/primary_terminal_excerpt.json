@@ -1,0 +1,20 @@
+{
+  "schema": "task43.v11.partial-terminal.v1",
+  "status": "FAILED",
+  "phase": "R9_H8",
+  "error": "TypeError: Cannot JSON serialize <class 'numpy.ndarray'>",
+  "official_result": false,
+  "passed": false,
+  "continuation_all_false": true,
+  "primary_npz": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/primary_state.npz",
+    "sha256": "a337b20719fe8e255acf0f6fe7ebd4c8a81f88856eb961f07c5dc962829526a0",
+    "bytes": 16195388
+  },
+  "primary_raw_audit": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/primary_raw_vector_audit.json",
+    "sha256": "ba5f77b62952ab4e056f409993d44b4d414e69071a2054952f9eef783b8321fd",
+    "bytes": 1712954
+  },
+  "scope": "excerpt only; complete immutable original bound in root_closeout"
+}

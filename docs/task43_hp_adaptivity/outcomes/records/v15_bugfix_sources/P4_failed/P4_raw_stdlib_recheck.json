@@ -1,0 +1,404 @@
+{
+  "schema": "task43.v15.root-primary-stdlib-recheck.v1",
+  "created_utc": "2026-10-27T04:23:42.337595+00:00",
+  "source_primary": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/primary_state.npz",
+    "sha256": "a337b20719fe8e255acf0f6fe7ebd4c8a81f88856eb961f07c5dc962829526a0"
+  },
+  "source_terminal": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/task43_v11_partial_terminal.json",
+    "sha256": "613a455c2f4443aa1a711e3f1a82f050d48b8d6e8060969edfef7075e0fcb7aa"
+  },
+  "array_identity_checks": [
+    {
+      "array": "recovered_recovered_p6_local_coefficients",
+      "sha256": "dba3ce7bf54be42c6ac41ccdd53ad260a6e3103a3b14e63ad4320641f8a47842",
+      "shape": [
+        135366
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "recovered_recovered_p6_owned_coefficients",
+      "sha256": "dba3ce7bf54be42c6ac41ccdd53ad260a6e3103a3b14e63ad4320641f8a47842",
+      "shape": [
+        135366
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "recovered_mesh_geometry_coordinates_nm",
+      "sha256": "8250765fd9e7cf25d579467fbb494cdb1a43d20d4918406b92d6db6d574b4b53",
+      "shape": [
+        341,
+        3
+      ],
+      "dtype": "<f8"
+    },
+    {
+      "array": "recovered_mesh_geometry_dofmap",
+      "sha256": "aa381bb9ce9cc9e5e0e9e057a25e65f84aaa26d5bf4b35dbaaac8ef3d4d86ba9",
+      "shape": [
+        194,
+        8
+      ],
+      "dtype": "<i4"
+    },
+    {
+      "array": "recovered_mesh_owned_cell_global_ids",
+      "sha256": "540d8db0726e4e5c04a9303ff3bd9ac9f01b01bbb309c36ed895e4967a0e2dd5",
+      "shape": [
+        194
+      ],
+      "dtype": "<i8"
+    },
+    {
+      "array": "recovered_mesh_cell_vertex_dofmap",
+      "sha256": "6eaee9a9cc32f750322b204bc1dd9b224595ebd6875c317dc2e55c8ad8851007",
+      "shape": [
+        1552
+      ],
+      "dtype": "<i4"
+    },
+    {
+      "array": "recovered_p6_function_space_dofmap",
+      "sha256": "b110793db1a9928a8ed155e04b0d8a3530ca08db80cb11ab74a3f9718462cb21",
+      "shape": [
+        194,
+        882
+      ],
+      "dtype": "<i4"
+    },
+    {
+      "array": "recovered_p6_owned_global_dof_block_ids",
+      "sha256": "b782427e7b726051abe68bbecbf021964c4a2a5d0ff8db575b684a8d254a4dc0",
+      "shape": [
+        135366
+      ],
+      "dtype": "<i8"
+    },
+    {
+      "array": "recovered_p6_ghost_global_dof_block_ids",
+      "sha256": "c19bf8aaa184a847cceed6722ac8c6086f916b027a4a9e9378ad0b3dfb219777",
+      "shape": [
+        0
+      ],
+      "dtype": "<i8"
+    },
+    {
+      "array": "recovered_active_full_solution_owned",
+      "sha256": "2dd5d9be7af18c80466a6a3c968cfbe7f7242493e30f003c36d6fb404d918b98",
+      "shape": [
+        124012
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "recovered_active_full_rhs_owned",
+      "sha256": "0cd012fac055a9178a7941f03c9ef2da7093f0df07fb00bd144a11735b03b567",
+      "shape": [
+        124012
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "returned_trace_dtn_rhs",
+      "sha256": "0fbdbcdbff557466893fcfb607e7d0dbb6c5f618d024feeef814bc713b3a90f1",
+      "shape": [
+        37402
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "returned_trace_dtn_solution",
+      "sha256": "3e8df5ae2a3ca2be450adac2ee2150d50f0b7975e966d1e55d091a86bb146ea8",
+      "shape": [
+        37402
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "returned_trace_dtn_b_minus_Ax",
+      "sha256": "95534e6eb8bb448552da71b410c61d1013f89a8423a1877b214c361e71f571b0",
+      "shape": [
+        37402
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_reduced_trace_dtn_rhs_owned",
+      "sha256": "0fbdbcdbff557466893fcfb607e7d0dbb6c5f618d024feeef814bc713b3a90f1",
+      "shape": [
+        37402
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_reduced_trace_dtn_solution_owned",
+      "sha256": "3e8df5ae2a3ca2be450adac2ee2150d50f0b7975e966d1e55d091a86bb146ea8",
+      "shape": [
+        37402
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_reduced_trace_dtn_residual_Ax_minus_b_owned",
+      "sha256": "65e6624a6493cb6f204b88ebf93741c9d30c4c4bb8e9bf5fae3ada30fb40d318",
+      "shape": [
+        37402
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_reduced_trace_dtn_residual_trace_metric_action",
+      "sha256": "892edb081d3c8df345aedda986dba6e948c2def71ea96011418a4f4ff0f55732",
+      "shape": [
+        36790
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_reduced_trace_dtn_rhs_trace_metric_action",
+      "sha256": "f01bb852b399d44fc527765f9b67682de7b6d53765065b40722bf951bbb1f42c",
+      "shape": [
+        36790
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_reduced_trace_dtn_solution_trace_metric_action",
+      "sha256": "6c409fe7c99b6184ed09d1c4453af221a9e5827bcc3b4ddca382ea596c5a8f24",
+      "shape": [
+        36790
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_active_full_rhs",
+      "sha256": "0cd012fac055a9178a7941f03c9ef2da7093f0df07fb00bd144a11735b03b567",
+      "shape": [
+        124012
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_active_full_solution",
+      "sha256": "2dd5d9be7af18c80466a6a3c968cfbe7f7242493e30f003c36d6fb404d918b98",
+      "shape": [
+        124012
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_eliminated_active_interior_residual",
+      "sha256": "ba082dc3b8295746837734f6016f02413f22a4fbf8638f69bfc64394ff3b0d00",
+      "shape": [
+        124012
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_residual_trace",
+      "sha256": "e36754060dfabd81b9ef34fc99fba012436bee844b3affbb113482884c7e0ff4",
+      "shape": [
+        36790
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_residual_cell_interior",
+      "sha256": "8a50e6efde0b4410d8808dee4e5264339a04ae1a2ec56fce26781b9552fd7b38",
+      "shape": [
+        79950
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_rhs_trace",
+      "sha256": "32a1688e2e68b666ce68681a664daca69fba8e51424dba8b18ce737a3fab3bff",
+      "shape": [
+        36790
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_rhs_cell_interior",
+      "sha256": "ea56b04f83dec21decbf4111c41dbfc12aa3b22eb91e8bf64418b06bbd819488",
+      "shape": [
+        79950
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_volume_action_minus_rhs_trace",
+      "sha256": "f71a2dcf18119d6d6c871bd4bfb782b80113cdf015c08eb6f28d9f9948f98f79",
+      "shape": [
+        36790
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_volume_action_minus_rhs_cell_interior",
+      "sha256": "8a50e6efde0b4410d8808dee4e5264339a04ae1a2ec56fce26781b9552fd7b38",
+      "shape": [
+        79950
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_incident_traction_trace",
+      "sha256": "2aed8513655245fa7f32e5fa677630bedbfda21c45a532323329840ecbc53f52",
+      "shape": [
+        36790
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_incident_traction_cell_interior",
+      "sha256": "ea56b04f83dec21decbf4111c41dbfc12aa3b22eb91e8bf64418b06bbd819488",
+      "shape": [
+        79950
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_port_upper_alpha_trace",
+      "sha256": "ff324b9febd056e69839d9236832e137b8ea3e4dd1e80955dd14a63003db87e4",
+      "shape": [
+        36790
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_port_upper_incident_trace",
+      "sha256": "316cb2ae079d2313e31693567b301a18b127dfae7427206b2b9da252ef216a0b",
+      "shape": [
+        36790
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_modal_lower_raw_original_equation",
+      "sha256": "e754469c9d9f762011202d968b721a19494ae155fe196677752ad8397c5219ec",
+      "shape": [
+        612
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_modal_lower_solver_gauge",
+      "sha256": "8fc145e7fd274ee8f5d6406f42660b4230c82e089d8753e2a324174274676947",
+      "shape": [
+        612
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_modal_lower_solver_gauge_rhs",
+      "sha256": "ef5e0459c806ae6bde658aef1192ef54d50368f4a0c63085c3937c6aa00860a5",
+      "shape": [
+        612
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "normal_before_normal_correction_rhs",
+      "sha256": "0fbdbcdbff557466893fcfb607e7d0dbb6c5f618d024feeef814bc713b3a90f1",
+      "shape": [
+        37402
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "normal_before_normal_correction_solution",
+      "sha256": "8923dc2f5a0d155a44811dd5e743aa796850ae4d193a19d3c661705ed511ce6f",
+      "shape": [
+        37402
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "normal_before_normal_correction_residual_b_minus_Ax",
+      "sha256": "bc056691120923990a4d358d4283d5373504adc8c402363fd2477e7dff179c7a",
+      "shape": [
+        37402
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "normal_after_normal_correction_rhs",
+      "sha256": "0fbdbcdbff557466893fcfb607e7d0dbb6c5f618d024feeef814bc713b3a90f1",
+      "shape": [
+        37402
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "normal_after_normal_correction_solution",
+      "sha256": "3e8df5ae2a3ca2be450adac2ee2150d50f0b7975e966d1e55d091a86bb146ea8",
+      "shape": [
+        37402
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "normal_after_normal_correction_residual_b_minus_Ax",
+      "sha256": "95534e6eb8bb448552da71b410c61d1013f89a8423a1877b214c361e71f571b0",
+      "shape": [
+        37402
+      ],
+      "dtype": "<c16"
+    }
+  ],
+  "embedded_identity_equal": true,
+  "full_scope": {
+    "active_full_rows": 124012,
+    "active_interior_rows": 79950,
+    "full_operator_norm_definition": "sqrt(constraint-dual reduced-trace norm^2 + eliminated-interior Euclidean norm^2); do not take a plain concatenated Euclidean norm",
+    "independent_active_fe_dofs": 116740,
+    "independent_reduced_trace_rows": 36790,
+    "method": "same-pass exact block-Gaussian transformed residual; reduced trace/DtN residual is retained in its constraint-induced dual coordinates, while eliminated active-interior rows are retained in active-cell coordinates",
+    "mpi_size": 1,
+    "raw_trace_rows": 44062,
+    "reduced_trace_dtn_owned_range": [
+      0,
+      37402
+    ],
+    "reduced_trace_dtn_rows": 37402,
+    "trace_metric_action_definition": "same-pass Gram inverse action for dual residual/RHS and Gram action for primal solution; vdot(trace, action) plus auxiliary Euclidean contribution reproduces each reduced norm squared"
+  },
+  "raw_equalities_checked": true,
+  "values": {
+    "independent_A6": {
+      "actual": 7.77267194814766e-09,
+      "limit": 1e-08
+    },
+    "full_active_Gram": {
+      "actual": 5.203523992032973e-13,
+      "limit": 1e-08
+    },
+    "returned_condensed": {
+      "actual": 5.323075566556481e-13,
+      "limit": 1e-09
+    },
+    "normal_before": 7.133919099294296e-11,
+    "normal_after": 5.323075566556481e-13,
+    "normal_count": 1,
+    "extra_count": 0,
+    "normal_reason": 4
+  },
+  "gates": {
+    "independent_A6": true,
+    "full_active_Gram": true,
+    "returned_condensed": true,
+    "normal_once": true,
+    "extra_zero": true,
+    "normal_decreased": true,
+    "normal_reason_positive": true
+  },
+  "numerical_gates_pass": true,
+  "original_endpoint_remains": "FAILED",
+  "q8_q10": "PENDING_P5",
+  "scope": "stdlib offline arithmetic only; no operator action, native import, PDE or fresh sampling",
+  "elapsed_seconds": 0.9286130382679403
+}

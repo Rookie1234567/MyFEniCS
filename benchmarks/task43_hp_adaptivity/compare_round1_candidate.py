@@ -18,6 +18,7 @@ from benchmarks.task43_hp_adaptivity.candidate_records import (
     load_accepted_parent_artifacts,
 )
 from benchmarks.task43_hp_adaptivity.h100_anchor import (
+    _V12_RECOVERY_MANIFEST_REL,
     _check_v11_runtime_envelope,
     _assert_mesh_profile,
     _h100_config,
@@ -31,6 +32,7 @@ from benchmarks.task43_hp_adaptivity.h100_anchor import (
     _require_v11_watchdog_worker_identity,
     _v11_raw_vector_gates,
     _validate_round1_candidate_inputs,
+    task43_v2_physical_configuration_identity,
 )
 from benchmarks.task43_hp_adaptivity.candidate_checkpoints import (
     _array_identity as _checkpoint_array_identity,
@@ -87,6 +89,35 @@ _V11_P5_INPUT_ROLES = {
     "Y6_1_restore_identity",
     "Y6_1_restore_inventory",
 }
+_V15_H_SAVED_PRIMARY_BINDING_PATH = Path(
+    "docs/task43_hp_adaptivity/outcomes/records/v15_h_saved_primary_recovery_binding.json"
+)
+_V15_H_SAVED_PRIMARY_BINDING_SHA256 = (
+    "4e7e23d9fab8f46a34428d8cab76ad9d2a38bac3b99364b5e0deeb7615d6fc04"
+)
+_V15_H_HISTORICAL_SOURCE_DIFFERENCES = {
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+    "src/test/test_task43_v11_scientific_restart.py",
+}
+_V15_H_FIXED_INPUT_NAMES = {
+    "run/task43_v11_partial_terminal.json",
+    "run/primary_state.npz",
+    "run/primary_raw_vector_audit.json",
+    "run/pre_validation_checkpoint.json",
+    "run/pre_validation_checkpoint.npz",
+    "run/candidate_plan.json",
+    "run/solve/dtn_port_diffraction_orders_3d.json",
+    "run/solve/dtn_port_power_metrics_3d.json",
+    "run/solve/dtn_auxiliary_amplitudes_3d.json",
+    "run/solve/volume_absorption.json",
+    "snapshots/launch_manifest.json",
+    "snapshots/launch.sh",
+    "watchdog/summary.json",
+    "launcher_exit_code.txt",
+    "watchdog_exit_code.txt",
+    "source_head.txt",
+}
 
 
 def _json(path: Path) -> dict[str, Any]:
@@ -98,8 +129,17 @@ def _v12_p5_input_snapshot(
     *,
     contract_sha256: str,
     recovery_binding: dict[str, Any],
+    saved_primary_binding_path: Path | None = None,
 ) -> dict[str, dict[str, str]]:
     """Hash the root-joined P2 source and every P4 byte consumed by P5."""
+
+    if saved_primary_binding_path is not None:
+        return _v15_h_saved_primary_input_snapshot(
+            candidate_run_root,
+            saved_primary_binding_path=saved_primary_binding_path,
+            contract_sha256=contract_sha256,
+            recovery_binding=recovery_binding,
+        )
 
     attempt_root = candidate_run_root.resolve().parent
     snapshot = _verify_v12_p2_source_binding(
@@ -137,6 +177,510 @@ def _v12_p5_input_snapshot(
     ):
         raise ValueError("V12 P5 P4 endpoint/terminal does not bind the chosen P2 source")
     return snapshot
+
+
+def _v15_h_saved_primary_input_snapshot(
+    candidate_run_root: Path,
+    *,
+    saved_primary_binding_path: Path,
+    contract_sha256: str,
+    recovery_binding: dict[str, Any],
+) -> dict[str, dict[str, str]]:
+    binding, snapshot, _terminal = _v15_h_saved_primary_binding_and_inputs(
+        candidate_run_root,
+        binding_path=saved_primary_binding_path,
+        contract_sha256=contract_sha256,
+        recovery_binding=recovery_binding,
+    )
+    terminal_path = candidate_run_root / "task43_v11_partial_terminal.json"
+    if _sha256_file(terminal_path) != binding.get("failed_terminal_sha256"):
+        raise RuntimeError("V15 P4 FAILED terminal changed during the P5 input snapshot")
+    if _sha256_file(saved_primary_binding_path) != _V15_H_SAVED_PRIMARY_BINDING_SHA256:
+        raise RuntimeError("V15 saved-primary binding changed during the P5 input snapshot")
+    snapshot[str(saved_primary_binding_path.resolve())] = {
+        "path": str(saved_primary_binding_path.resolve()),
+        "sha256": _V15_H_SAVED_PRIMARY_BINDING_SHA256,
+    }
+    return snapshot
+
+
+def _canonical_json_sha256(value: Any) -> str:
+    payload = json.dumps(
+        value, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _v15_h_saved_primary_binding_and_inputs(
+    candidate_run_root: Path,
+    *,
+    binding_path: Path,
+    contract_sha256: str,
+    recovery_binding: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, dict[str, str]], dict[str, Any]]:
+    expected_binding_path = (ROOT / _V15_H_SAVED_PRIMARY_BINDING_PATH).resolve()
+    binding_path = Path(binding_path).resolve()
+    if (
+        binding_path != expected_binding_path
+        or not binding_path.is_file()
+        or _sha256_file(binding_path) != _V15_H_SAVED_PRIMARY_BINDING_SHA256
+    ):
+        raise ValueError("V15 P5 requires the fixed saved-primary recovery binding")
+    binding = _json(binding_path)
+    if (
+        binding.get("schema") != "task43.v15.p4-saved-primary-binding.v1"
+        or Path(str(binding.get("source_root", ""))).resolve() != candidate_run_root.resolve()
+        or binding.get("contract", {}).get("sha256") != contract_sha256
+        or binding.get("recovery_manifest", {}).get("sha256")
+        != recovery_binding.get("manifest_sha256")
+        or binding.get("v12_recovery_binding") != recovery_binding
+    ):
+        raise ValueError("V15 P5 saved-primary binding changes its fixed source identity")
+
+    terminal_path = candidate_run_root / "task43_v11_partial_terminal.json"
+    terminal_sha256 = _sha256_file(terminal_path)
+    terminal = _json(terminal_path)
+    if (
+        terminal.get("schema") != "task43.v11.partial-terminal.v1"
+        or terminal.get("phase") != "R9_H8"
+        or terminal.get("status") != "FAILED"
+        or terminal.get("official_result") is not False
+        or terminal.get("passed") is not False
+        or terminal.get("selection_eligible") is not False
+        or terminal.get("continuation_all_false") is not True
+        or terminal.get("source_identity", {}).get("git_head")
+        != binding.get("source_head")
+        or binding.get("failed_terminal_sha256") != terminal_sha256
+        or terminal.get("v12_recovery_binding") != recovery_binding
+    ):
+        raise ValueError("V15 P5 source is not the bound immutable FAILED P4 terminal")
+    if candidate_run_root.resolve() != Path(str(binding["source_root"])):
+        raise ValueError("V15 P5 saved-primary source root is not canonical")
+
+    documents = (
+        "contract",
+        "recovery_manifest",
+        "prior_user_authorization",
+        "failed_attempt_closeout",
+        "root_raw_recheck",
+        "p2_joined_terminal",
+    )
+    snapshot: dict[str, dict[str, str]] = {}
+    for name in documents:
+        item = binding.get(name)
+        if not isinstance(item, dict):
+            raise ValueError(f"V15 P5 binding lacks {name} identity")
+        path = Path(str(item.get("path", "")))
+        digest = str(item.get("sha256", ""))
+        if (
+            not path.is_absolute()
+            or path.is_symlink()
+            or path.resolve() != path
+            or not path.is_file()
+            or _sha256_file(path) != digest
+        ):
+            raise ValueError(f"V15 P5 bound {name} bytes differ")
+        snapshot[str(path)] = {"path": str(path), "sha256": digest}
+
+    if binding["contract"]["path"] != str(
+        (ROOT / "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json").resolve()
+    ):
+        raise ValueError("V15 P5 binding changes the frozen contract path")
+    if binding["recovery_manifest"]["path"] != str(
+        (ROOT / _V12_RECOVERY_MANIFEST_REL).resolve()
+    ):
+        raise ValueError("V15 P5 binding changes the frozen V12 recovery manifest path")
+    if binding["p2_joined_terminal"]["path"] != str(
+        (Path(recovery_binding["support_root"]) / "v12_p2_joined_terminal.json").resolve()
+    ):
+        raise ValueError("V15 P5 binding changes the root-joined P2 terminal")
+    closeout = _json(Path(binding["failed_attempt_closeout"]["path"]))
+    raw_recheck = _json(Path(binding["root_raw_recheck"]["path"]))
+    if (
+        closeout.get("status") != "FAILED_SUMMARY_NUMPY_SERIALIZATION_AFTER_SOLVE"
+        or closeout.get("source_head") != binding.get("source_head")
+        or closeout.get("raw_numerical_gates_pass") is not True
+        or closeout.get("original_endpoint") != "FAILED"
+        or raw_recheck.get("numerical_gates_pass") is not True
+    ):
+        raise ValueError("V15 P5 prior failed endpoint or raw recheck changed")
+
+    fixed_inputs = binding.get("fixed_inputs")
+    if not isinstance(fixed_inputs, dict) or set(fixed_inputs) != _V15_H_FIXED_INPUT_NAMES:
+        raise ValueError("V15 P5 saved-primary binding omits a fixed P4 input")
+    for name in sorted(_V15_H_FIXED_INPUT_NAMES):
+        item = fixed_inputs[name]
+        if not isinstance(item, dict):
+            raise ValueError(f"V15 P5 fixed input {name} is malformed")
+        expected_path = (
+            candidate_run_root / name.removeprefix("run/")
+            if name.startswith("run/")
+            else candidate_run_root.parent / name
+        ).resolve()
+        path = Path(str(item.get("path", "")))
+        digest = str(item.get("sha256", ""))
+        if (
+            path != expected_path
+            or path.is_symlink()
+            or not path.is_file()
+            or _sha256_file(path) != digest
+        ):
+            raise ValueError(f"V15 P5 saved-primary input changed: {name}")
+        snapshot[str(path)] = {"path": str(path), "sha256": digest}
+
+    p4_manifest_path = candidate_run_root.parent / "snapshots/launch_manifest.json"
+    p4_manifest = _json(p4_manifest_path)
+    source_head_path = candidate_run_root.parent / "source_head.txt"
+    if (
+        source_head_path.read_text(encoding="ascii").strip() != binding.get("source_head")
+        or p4_manifest.get("head") != binding.get("source_head")
+    ):
+        raise ValueError("V15 P4 source HEAD differs across terminal and launch records")
+
+    if binding.get("failed_terminal_sha256") != terminal_sha256:
+        raise RuntimeError("V15 P4 FAILED terminal changed after its first read")
+    p2_snapshot = _verify_v12_p2_source_binding(
+        recovery_binding,
+        contract_sha256=contract_sha256,
+        p4_launch_manifest_path=candidate_run_root.parent
+        / "snapshots/launch_manifest.json",
+        allow_historical_p4_sources=True,
+    )
+    snapshot.update(p2_snapshot)
+    return binding, snapshot, terminal
+
+
+def _v15_restore_h_saved_primary_candidate(
+    candidate_run_root: Path,
+    output_root: Path,
+    *,
+    contract_sha256: str,
+    recovery_binding: dict[str, Any],
+    saved_binding: dict[str, Any],
+    terminal: dict[str, Any],
+) -> dict[str, Any]:
+    """Restore only the hash-bound P4 primary field; never claim a successful P4 endpoint."""
+
+    packet_record = terminal["primary_packet"]
+    packet_path = candidate_run_root / "primary_state.npz"
+    packet_identity = packet_record.get("identity")
+    if (
+        not isinstance(packet_identity, dict)
+        or _canonical_json_sha256(packet_identity)
+        != saved_binding.get("primary_packet_identity_sha256")
+        or packet_record.get("npz_sha256")
+        != saved_binding["fixed_inputs"]["run/primary_state.npz"]["sha256"]
+        or Path(str(packet_record.get("npz_path", ""))).resolve() != packet_path.resolve()
+    ):
+        raise ValueError("V15 P5 primary packet identity differs from its fixed binding")
+    with np.load(packet_path, allow_pickle=False) as archive:
+        if "__task43_record_json__" not in archive.files:
+            raise ValueError("V15 P5 primary packet lacks its embedded identity")
+        embedded = json.loads(
+            np.asarray(archive["__task43_record_json__"], dtype=np.uint8).tobytes()
+        )
+        packet_arrays = {
+            name: np.asarray(archive[name]).copy()
+            for name in archive.files
+            if name != "__task43_record_json__"
+        }
+    if (
+        embedded.get("schema") != "task43.v11.primary_state.v1"
+        or embedded.get("identity") != packet_identity
+        or embedded.get("arrays") != packet_record.get("arrays")
+        or set(packet_arrays) != set(packet_record.get("arrays", {}))
+        or _canonical_json_sha256(embedded.get("identity"))
+        != saved_binding.get("primary_packet_identity_sha256")
+    ):
+        raise ValueError("V15 P5 primary packet embedded identity differs")
+    for name, array in packet_arrays.items():
+        actual = _checkpoint_array_identity(array)
+        declared = packet_record["arrays"].get(name, {})
+        if any(actual.get(key) != declared.get(key) for key in ("dtype", "shape", "sha256")):
+            raise ValueError(f"V15 P5 primary packet array identity differs: {name}")
+
+    candidate_identity = packet_identity.get("candidate_identity", {})
+    endpoint_identity = packet_identity.get("endpoint_identity", {})
+    actual_cfg = endpoint_identity.get("actual_cfg", {})
+    controls = endpoint_identity.get("numerical_controls", {})
+    if (
+        packet_identity.get("phase") != "R9_H8"
+        or packet_identity.get("contract_sha256") != contract_sha256
+        or candidate_identity.get("candidate_id") != "v11_r9_h8"
+        or candidate_identity.get("action") != "h_refine"
+        or candidate_identity.get("v12_recovery_binding") != recovery_binding
+        or packet_identity.get("source_identity") != terminal.get("source_identity")
+        or terminal.get("candidate_identity") != candidate_identity
+        or terminal.get("v12_recovery_binding") != recovery_binding
+        or endpoint_identity.get("schema") != "task43.v11.primary_endpoint_identity.v1"
+    ):
+        raise ValueError("V15 P5 saved primary is not the failed R9_H8 state bound to P2")
+
+    plan_path = candidate_run_root / "candidate_plan.json"
+    plan_sha256 = _sha256_file(plan_path)
+    plan = _json(plan_path)
+    if (
+        plan_sha256 != packet_identity.get("candidate_plan_sha256")
+        or candidate_identity.get("plan_sha256") != plan_sha256
+        or plan.get("task43_candidate", {}).get("candidate_id") != "v11_r9_h8"
+        or plan.get("task43_candidate", {}).get("action") != "h_refine"
+        or plan.get("task43_candidate", {}).get("provenance", {}).get(
+            "v12_recovery_binding"
+        ) != recovery_binding
+    ):
+        raise ValueError("V15 P5 saved primary does not use the fixed P2 h-refinement plan")
+
+    prevalidation_path = candidate_run_root / "pre_validation_checkpoint.json"
+    prevalidation = _json(prevalidation_path)
+    if (
+        _canonical_json_sha256(prevalidation.get("identity"))
+        != saved_binding.get("prevalidation_identity_sha256")
+        or prevalidation.get("identity")
+        != packet_identity.get("pre_validation_checkpoint", {}).get("identity")
+        or prevalidation.get("npz_sha256")
+        != saved_binding["fixed_inputs"]["run/pre_validation_checkpoint.npz"]["sha256"]
+    ):
+        raise ValueError("V15 P5 pre-validation identity differs from the fixed primary")
+    with np.load(candidate_run_root / "pre_validation_checkpoint.npz", allow_pickle=False) as archive:
+        checkpoint_arrays = {name: np.asarray(archive[name]).copy() for name in archive.files}
+    declared_checkpoint_arrays = prevalidation.get("arrays", {})
+    if set(checkpoint_arrays) != set(declared_checkpoint_arrays):
+        raise ValueError("V15 P5 pre-validation array inventory differs")
+    for name, values in checkpoint_arrays.items():
+        actual = _checkpoint_array_identity(values)
+        if any(
+            actual.get(key) != declared_checkpoint_arrays[name].get(key)
+            for key in ("dtype", "shape", "sha256")
+        ):
+            raise ValueError(f"V15 P5 pre-validation array identity differs: {name}")
+        packet_array = packet_arrays.get("recovered_" + name)
+        if (
+            packet_array is None
+            or packet_array.dtype != values.dtype
+            or packet_array.shape != values.shape
+            or not np.array_equal(packet_array, values)
+        ):
+            raise ValueError(f"V15 P5 primary and pre-validation arrays differ: {name}")
+
+    raw_path = candidate_run_root / "primary_raw_vector_audit.json"
+    raw_checkpoint = _json(raw_path)
+    recomputed_raw = _v11_raw_vector_gates(
+        packet_arrays,
+        active_trace_rows=int(packet_identity["P2_preassembly_space_audit"]["actual"]["independent_trace_rows"]),
+        active_interior_rows=int(packet_identity["P2_preassembly_space_audit"]["actual"]["active_cell_interior_rows"]),
+        independent_fe_dofs=int(packet_identity["independent_active_fe_dofs"]),
+        active_full_rows=int(packet_identity["raw_full_active_scope"]["active_full_rows"]),
+        full_active_scope=packet_identity["raw_full_active_scope"],
+        independent_a6_scope=packet_identity["independent_A6_raw_vector_scope"],
+        normal_correction_count=int(packet_identity["normal_correction_count"]),
+        normal_converged_reason=int(
+            packet_identity["normal_correction_audit"]["correction_ksp"]["converged_reason"]
+        ),
+        normal_correction_status=str(packet_identity["normal_correction_audit"]["status"]),
+        extra_correction_count=int(packet_identity["extra_correction_count"]),
+    )
+    if (
+        raw_checkpoint.get("schema") != "task43.v11.primary_raw_vector_audit_checkpoint.v1"
+        or raw_checkpoint.get("pass") is not True
+        or raw_checkpoint.get("audit") != recomputed_raw
+        or recomputed_raw.get("pass") is not True
+    ):
+        raise ValueError("V15 P5 saved primary failed independent raw-vector gates")
+
+    p2_plan_path = Path(str(recovery_binding["plan_output_path"]))
+    p2_audit = _json(Path(str(recovery_binding["audit_path"])))
+    p4_space = packet_identity.get("P2_preassembly_space_audit", {})
+    p4_actual = p4_space.get("actual", {})
+    p2_dofs = p2_audit.get("dofs", {})
+    if (
+        p4_space.get("pass") is not True
+        or p4_space.get("p2_plan_sha256") != _sha256_file(p2_plan_path)
+        or p4_space.get("p2_audit_sha256") != _sha256_file(Path(str(recovery_binding["audit_path"])))
+        or p4_actual.get("independent_active_fe_dofs")
+        != p2_dofs.get("independent_active_fe_dofs")
+        or p4_actual.get("independent_trace_rows") != p2_dofs.get("independent_trace_rows")
+        or p4_actual.get("active_cell_interior_rows")
+        != p2_dofs.get("active_cell_interior_rows")
+        or p4_actual.get("cell_interior_histogram")
+        != p2_audit.get("degrees", {}).get("cell_interior_histogram")
+    ):
+        raise ValueError("V15 P5 primary actual P2 space audit does not match its joined plan")
+
+    cfg = _h100_config(
+        kind="empty_h_active_p3",
+        case_name=str(actual_cfg["case_name"]),
+        geometry_profile="initial_180",
+    )
+    cfg.stage4_local_h_refinement_plan = str(plan_path)
+    mesh_data = build_stage4_local_h_mesh_data(cfg, plan_path, comm=MPI.COMM_WORLD)
+    mesh = mesh_data.mesh
+    axes = base._axes_from_mesh(mesh)
+    axes_record = {name: np.asarray(axis, dtype=np.float64).tolist() for name, axis in zip(("x", "y", "z"), axes, strict=True)}
+    if axes_record != prevalidation["identity"].get("resolved_axes_nm"):
+        raise ValueError("V15 P5 restored mesh axes differ from the primary checkpoint")
+    mesh_audit = _assert_mesh_profile(
+        mesh_data,
+        axes,
+        "candidate_initial180",
+        candidate_plan=plan,
+        candidate_plan_sha256=plan_sha256,
+    )
+    expected_physical = task43_v2_physical_configuration_identity(
+        cfg.as_jsonable(),
+        axis_values_nm=axes_record,
+        candidate_plan_sha256=plan_sha256,
+        active_degree_plan_sha256=str(prevalidation["identity"]["active_degree_plan_sha256"]),
+    )
+    if expected_physical != endpoint_identity.get("physical_configuration"):
+        raise ValueError("V15 P5 rebuilt physical configuration differs from the saved endpoint")
+    space = _create_nedelec_space(mesh, cfg)
+    actual_arrays = base._actual_mesh_identity(mesh, space)
+    expected_array_keys = {
+        "mesh_geometry_coordinates_nm": "mesh_geometry_coordinates_nm",
+        "mesh_geometry_dofmap": "mesh_geometry_dofmap",
+        "mesh_owned_cell_global_ids": "mesh_owned_cell_global_ids",
+        "mesh_cell_vertex_dofmap": "mesh_cell_vertex_dofmap",
+        "p6_function_space_cell_dofmap": "p6_function_space_dofmap",
+        "p6_owned_global_dof_block_ids": "p6_owned_global_dof_block_ids",
+        "p6_ghost_global_dof_block_ids": "p6_ghost_global_dof_block_ids",
+    }
+    restored_identities: dict[str, Any] = {}
+    for identity_key, storage_key in expected_array_keys.items():
+        expected_values = packet_arrays.get("recovered_" + storage_key)
+        actual_values = np.asarray(actual_arrays[identity_key])
+        checkpoint_values = checkpoint_arrays.get(storage_key)
+        if (
+            expected_values is None
+            or checkpoint_values is None
+            or expected_values.dtype != actual_values.dtype
+            or expected_values.shape != actual_values.shape
+            or not np.array_equal(expected_values, actual_values)
+            or not np.array_equal(checkpoint_values, actual_values)
+        ):
+            raise ValueError(f"V15 P5 restored mesh identity differs: {identity_key}")
+        restored_identities[storage_key] = _checkpoint_array_identity(actual_values)
+    coefficients = np.asarray(packet_arrays["recovered_recovered_p6_local_coefficients"]).copy()
+    if (
+        not np.array_equal(coefficients, checkpoint_arrays["recovered_p6_local_coefficients"])
+        or not np.array_equal(coefficients, packet_arrays["recovered_recovered_p6_owned_coefficients"])
+    ):
+        raise ValueError("V15 P5 recovered P6 coefficient arrays differ")
+    field = fem.Function(space, name="v11_r9_h8_saved_primary_E")
+    if field.x.array.shape != coefficients.shape:
+        raise ValueError("V15 P5 saved P6 carrier shape differs from rebuilt function space")
+    field.x.array[:] = coefficients
+    field.x.scatter_forward()
+
+    power_metrics = _json(candidate_run_root / "solve/dtn_port_power_metrics_3d.json")
+    mode_payload = _json(candidate_run_root / "solve/dtn_port_diffraction_orders_3d.json")
+    numerical_controls = {
+        "volume_quadrature_degree": int(controls["quadrature_degree"]["volume"]),
+        "incident_and_port_quadrature_degree": int(power_metrics["stage4_dtn_surface_quadrature_degree"]),
+        "volume_quadrature_rule": str(controls["A_volume_resolved_rule"]["quadrature_rule"]),
+        "sparse_cutoff_policy": str(power_metrics["stage4_dtn_sparse_cutoff_policy"]),
+        "sparse_cutoff_relative_tolerance": float(power_metrics["stage4_dtn_sparse_cutoff_relative_tolerance"]),
+        "ordered_mode_count": int(controls["modal_selection"]["count"]),
+        "port_amplitude_scale_policy": str(power_metrics["dtn_port_boundary_amplitude_scale_policy"]),
+        "mesh": mesh_audit,
+        "nedelec_degree": int(actual_cfg["nedelec_degree"]),
+        "active_space": {"independent_active_fe_dofs": int(packet_identity["independent_active_fe_dofs"])},
+        "assembly_backend": str(controls["assembly_backend"]),
+    }
+    adapter_record = {
+        "schema": "task43.v15.saved-primary-p4-adapter.v1",
+        "classification": "restored_failed_p4_primary_for_nonofficial_p5_diagnostic",
+        "original_endpoint_status": "FAILED",
+        "candidate_identity": candidate_identity,
+        "source_identity": packet_identity["source_identity"],
+        "v12_recovery_binding": recovery_binding,
+        "p4_preassembly_space_audit": p4_space,
+        "numerical_controls": numerical_controls,
+        "resolved_config": {"floquet_constraint_mode": str(actual_cfg["floquet_constraint_mode"])},
+        "resolved_identity": {
+            "nedelec_degree": numerical_controls["nedelec_degree"],
+            "floquet_constraint_mode": str(actual_cfg["floquet_constraint_mode"]),
+            "ordered_mode_count": numerical_controls["ordered_mode_count"],
+            "mesh_axes_nm": mesh_audit["axes_nm"],
+        },
+        "recovered_solution_storage": {
+            "active_trace_rows": int(p4_actual["independent_trace_rows"]),
+            "active_cell_interior_rows": int(p4_actual["active_cell_interior_rows"]),
+            "independent_active_fe_dofs": int(packet_identity["independent_active_fe_dofs"]),
+        },
+        "solver": {"route_identity": "not_recorded_in_failed_primary_endpoint"},
+        "method": "not_recorded_in_failed_primary_endpoint",
+        "power": {
+            "channel_rows_sha256": _sha256_file(candidate_run_root / "solve/dtn_port_diffraction_orders_3d.json"),
+            "aggregate": {
+                key: float(power_metrics[key])
+                for key in ("R_total", "T_total", "R00_s", "R00_p", "R00_total")
+            },
+            "A_volume_total": float(power_metrics["A_volume_total"]),
+        },
+    }
+    recovery_identity = {
+        "schema": "task43.v15.saved-primary-p4-restoration.v1",
+        "classification": "restored_failed_primary_for_nonofficial_union_comparison",
+        "original_status": "FAILED",
+        "original_partial_terminal_path": str((candidate_run_root / "task43_v11_partial_terminal.json").resolve()),
+        "original_partial_terminal_sha256": _sha256_file(candidate_run_root / "task43_v11_partial_terminal.json"),
+        "binding_path": str((ROOT / _V15_H_SAVED_PRIMARY_BINDING_PATH).resolve()),
+        "binding_sha256": _V15_H_SAVED_PRIMARY_BINDING_SHA256,
+        "primary_packet_path": str(packet_path.resolve()),
+        "primary_packet_sha256": _sha256_file(packet_path),
+        "prevalidation_identity_sha256": saved_binding["prevalidation_identity_sha256"],
+        "candidate_plan_sha256": plan_sha256,
+        "v12_recovery_binding": recovery_binding,
+        "mesh_profile": mesh_audit,
+        "restored_array_identities": restored_identities,
+        "active_fe_dofs": int(packet_identity["independent_active_fe_dofs"]),
+        "ordered_mode_count": int(controls["modal_selection"]["count"]),
+        "official_result": False,
+        "passed": False,
+        "selection_transition_written": False,
+    }
+    recovery_root = Path(str(saved_binding["output_root"])).resolve()
+    expected_output_root = (output_root / "saved_primary_recovery").resolve()
+    if recovery_root != expected_output_root or recovery_root.exists():
+        raise FileExistsError("V15 P5 saved-primary derived output root is not its one empty bound path")
+    recovery_root.mkdir(parents=True, exist_ok=False)
+    recovery_record_path = recovery_root / "restoration_identity.json"
+    recovery_record_path.write_text(
+        json.dumps(recovery_identity, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    return {
+        "label": "v11_r9_h8",
+        "candidate_id": "v11_r9_h8",
+        "candidate_action": "h_refine",
+        "cfg": cfg,
+        "mesh_data": mesh_data,
+        "field": field,
+        "axes": axes,
+        "record": adapter_record,
+        "mode_payload": mode_payload,
+        "power": {
+            **adapter_record["power"]["aggregate"],
+            "A_volume": adapter_record["power"]["A_volume_total"],
+        },
+        "mesh_identity": {
+            name: base._array_identity(values) for name, values in actual_arrays.items()
+        },
+        "storage_sha256": _sha256_file(packet_path),
+        "plan_sha256": plan_sha256,
+        "v12_restoration_binding": {
+            "p2_source_id": recovery_binding["p2_source_id"],
+            "recovery_manifest_sha256": recovery_binding["manifest_sha256"],
+            "primary_packet_sha256": _sha256_file(packet_path),
+            "same_array_values_dtype_and_shape": True,
+            "recovery_array_identities": restored_identities,
+        },
+        "saved_primary_recovery": {
+            "path": str(recovery_record_path.resolve()),
+            "sha256": _sha256_file(recovery_record_path),
+            "original_status": "FAILED",
+        },
+    }
 
 
 def _sha256_bytes(values: np.ndarray) -> str:
@@ -1643,6 +2187,7 @@ def compare_v11_union(
     contract_path: Path,
     recovery_manifest_path: Path,
     attempt_id: str,
+    saved_primary_recovery_binding_path: Path | None = None,
 ) -> dict[str, Any]:
     """Restore R9, pending V11 h and Y6_1; sample one common q8/q10 union."""
     if MPI.COMM_WORLD.size != 1:
@@ -1662,9 +2207,13 @@ def compare_v11_union(
     ).resolve()
     if candidate_run_root.resolve() != expected_candidate_root:
         raise ValueError("V11 P5 candidate root differs from the unique P4 run")
-    terminal_path = candidate_run_root / "task43_v11_primary_terminal.json"
+    saved_primary_mode = saved_primary_recovery_binding_path is not None
+    terminal_path = candidate_run_root / (
+        "task43_v11_partial_terminal.json"
+        if saved_primary_mode
+        else "task43_v11_primary_terminal.json"
+    )
     # Freeze the terminal bytes before inspecting its selected P2 plan path.
-    # The later complete P2/P4 snapshot must contain this exact first-read value.
     terminal_sha256_before = _sha256_file(terminal_path)
     terminal = _json(terminal_path)
     terminal_binding = terminal.get("v12_recovery_binding")
@@ -1693,13 +2242,38 @@ def compare_v11_union(
     ):
         if key in p2_source:
             recovery_binding[key] = p2_source[key]
-    if terminal_binding != recovery_binding:
-        raise ValueError("V12 P5 terminal source id/path differs from its recovery manifest")
-    v12_inputs_before = _v12_p5_input_snapshot(
-        candidate_run_root,
-        contract_sha256=contract_sha256,
-        recovery_binding=recovery_binding,
-    )
+    saved_primary_binding = None
+    if saved_primary_mode:
+        if terminal.get("status") != "FAILED":
+            raise ValueError("V15 saved-primary P5 requires the original FAILED P4 terminal")
+        if terminal_binding != recovery_binding:
+            raise ValueError("V15 saved-primary P4 source differs from the recovery manifest")
+        (
+            saved_primary_binding,
+            v12_inputs_before,
+            terminal,
+        ) = _v15_h_saved_primary_binding_and_inputs(
+            candidate_run_root,
+            binding_path=saved_primary_recovery_binding_path,
+            contract_sha256=contract_sha256,
+            recovery_binding=recovery_binding,
+        )
+        if saved_primary_binding.get("output_root") != str(
+            (
+                Path(str(contract["artifact_prefix"]))
+                / str(phase["comparison_output_root"])
+                / "saved_primary_recovery"
+            ).resolve()
+        ):
+            raise ValueError("V15 saved-primary recovery output is not its fixed P5 child")
+    else:
+        if terminal_binding != recovery_binding:
+            raise ValueError("V12 P5 terminal source id/path differs from its recovery manifest")
+        v12_inputs_before = _v12_p5_input_snapshot(
+            candidate_run_root,
+            contract_sha256=contract_sha256,
+            recovery_binding=recovery_binding,
+        )
     terminal_identity = v12_inputs_before.get(str(terminal_path.resolve()))
     if (
         terminal_identity is None
@@ -1729,6 +2303,8 @@ def compare_v11_union(
     started = time.perf_counter()
     ledger = WorkflowLedger(output_root, Path(worker_identity["phase_path"]))
     completed_samples: dict[str, dict[str, Any]] = {}
+    candidate_terminal_sha256 = terminal_sha256_before
+    saved_primary_recovery = None
     try:
         ledger.set_phase("preflight")
         ledger.marker(
@@ -1751,13 +2327,24 @@ def compare_v11_union(
         _require_v11_watchdog_worker_identity(
             expected_identity=worker_identity, require_unused_phase_file=False
         )
-        candidate = _restore_candidate(
-            candidate_run_root,
-            output_root / "restore_R9_H8",
-            v11_contract=contract,
-            v11_contract_sha256=contract_sha256,
-            v12_recovery_binding=recovery_binding,
-        )
+        if saved_primary_mode:
+            candidate = _v15_restore_h_saved_primary_candidate(
+                candidate_run_root,
+                output_root,
+                contract_sha256=contract_sha256,
+                recovery_binding=recovery_binding,
+                saved_binding=saved_primary_binding,
+                terminal=terminal,
+            )
+            saved_primary_recovery = candidate["saved_primary_recovery"]
+        else:
+            candidate = _restore_candidate(
+                candidate_run_root,
+                output_root / "restore_R9_H8",
+                v11_contract=contract,
+                v11_contract_sha256=contract_sha256,
+                v12_recovery_binding=recovery_binding,
+            )
         _require_v11_watchdog_worker_identity(
             expected_identity=worker_identity, require_unused_phase_file=False
         )
@@ -1954,8 +2541,9 @@ def compare_v11_union(
                     "reference_candidate_id": "round9_p_up",
                     "reference_label": "Y6_1",
                     "contract_sha256": contract_sha256,
-                    "p4_terminal_sha256": _sha256_file(
-                        candidate_run_root / "task43_v11_primary_terminal.json"
+                    "p4_terminal_sha256": candidate_terminal_sha256,
+                    "p4_original_terminal_status": (
+                        "FAILED" if saved_primary_mode else "SOLVED_PENDING_POSTPROCESS"
                     ),
                     "rule_sha256": quadrature.rule_sha256,
                     "sample_count": int(quadrature.point_count),
@@ -2035,11 +2623,19 @@ def compare_v11_union(
             )
         source_after = _v11_source_snapshot()
         inputs_after = _v11_input_snapshot(contract, _V11_P5_INPUT_ROLES)
-        v12_inputs_after = _v12_p5_input_snapshot(
-            candidate_run_root,
-            contract_sha256=contract_sha256,
-            recovery_binding=recovery_binding,
-        )
+        if saved_primary_mode:
+            v12_inputs_after = _v12_p5_input_snapshot(
+                candidate_run_root,
+                contract_sha256=contract_sha256,
+                recovery_binding=recovery_binding,
+                saved_primary_binding_path=saved_primary_recovery_binding_path,
+            )
+        else:
+            v12_inputs_after = _v12_p5_input_snapshot(
+                candidate_run_root,
+                contract_sha256=contract_sha256,
+                recovery_binding=recovery_binding,
+            )
         _require_v11_watchdog_worker_identity(
             expected_identity=worker_identity, require_unused_phase_file=False
         )
@@ -2070,8 +2666,16 @@ def compare_v11_union(
             "candidate_id": "v11_r9_h8",
             "reference_label": "Y6_1",
             "candidate_run_root": str(candidate_run_root.resolve()),
-            "candidate_endpoint_sha256": _sha256_file(candidate_run_root / "task43_round1_candidate_record.json"),
-            "candidate_terminal_sha256": _sha256_file(candidate_run_root / "task43_v11_primary_terminal.json"),
+            "candidate_endpoint_sha256": (
+                None
+                if saved_primary_mode
+                else _sha256_file(candidate_run_root / "task43_round1_candidate_record.json")
+            ),
+            "candidate_terminal_sha256": candidate_terminal_sha256,
+            "candidate_terminal_status": (
+                "FAILED" if saved_primary_mode else "SOLVED_PENDING_POSTPROCESS"
+            ),
+            "saved_primary_recovery": saved_primary_recovery,
             "candidate_primary_packet_sha256": _sha256_file(candidate_run_root / "primary_state.npz"),
             "P4_launch_manifest_sha256": _sha256_file(candidate_run_root.parent / "snapshots/launch_manifest.json"),
             "P4_watchdog_summary_sha256": _sha256_file(candidate_run_root.parent / "watchdog/summary.json"),
@@ -2200,6 +2804,9 @@ def compare_v11_union(
             "input_identity_end": inputs_after,
             "v12_p2_p4_input_identity_start": v12_inputs_before,
             "v12_p2_p4_input_identity_end": v12_inputs_after,
+            "saved_primary_recovery_binding_sha256": (
+                _V15_H_SAVED_PRIMARY_BINDING_SHA256 if saved_primary_mode else None
+            ),
             "unchanged_source_and_inputs": True,
             "worker_identity": worker_identity,
             "runtime_environment": runtime_environment,
@@ -2233,6 +2840,7 @@ def compare_v11_union(
             "passed": False,
             "selection_transition_written": False,
             "completed_samples": completed_samples,
+            "saved_primary_recovery": saved_primary_recovery,
             "source_identity_start": source_before,
             "input_identity_start": inputs_before,
         }
@@ -2435,6 +3043,7 @@ def main() -> int:
     parser.add_argument("--validation-reference-root", type=Path)
     parser.add_argument("--diagnostic-contract", type=Path)
     parser.add_argument("--execution-recovery-manifest", type=Path)
+    parser.add_argument("--saved-primary-recovery-binding", type=Path)
     args = parser.parse_args()
     if not args.attempt_id or Path(args.attempt_id).name != args.attempt_id:
         parser.error("--attempt-id must be one path component")
@@ -2456,6 +3065,7 @@ def main() -> int:
             contract_path=args.diagnostic_contract,
             recovery_manifest_path=args.execution_recovery_manifest,
             attempt_id=args.attempt_id,
+            saved_primary_recovery_binding_path=args.saved_primary_recovery_binding,
         )
         print(
             json.dumps(
@@ -2475,8 +3085,13 @@ def main() -> int:
             ),
             flush=True,
         )
-    elif args.execution_recovery_manifest is not None:
-        parser.error("--execution-recovery-manifest requires V11 diagnostic mode")
+    elif (
+        args.execution_recovery_manifest is not None
+        or args.saved_primary_recovery_binding is not None
+    ):
+        parser.error(
+            "V11 recovery bindings require V11 diagnostic mode"
+        )
     elif args.post_selection_record is not None:
         if (args.candidate_run_root is not None or args.accepted_parent_selection_record is not None
                 or args.assets_manifest is None or args.validation_reference_root is None):

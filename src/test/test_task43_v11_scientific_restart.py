@@ -1927,7 +1927,155 @@ def _prepare_v12_compare_fixture(root: Path, monkeypatch, *, failure: str | None
         "sample_calls": sample_calls,
         "quadrature_calls": quadrature_calls,
         "p4_plan_path": p4_plan_path,
+        "candidate_case": candidate_case,
     }
+
+
+def _prepare_v15_saved_primary_p5_binding(fixture, monkeypatch, root: Path) -> Path:
+    candidate_root = fixture["candidate_root"]
+    partial_path = candidate_root / "task43_v11_partial_terminal.json"
+    terminal = json.loads(
+        (candidate_root / "task43_v11_primary_terminal.json").read_text(encoding="utf-8")
+    )
+    source_head = "b" * 40
+    terminal.update(
+        {
+            "schema": "task43.v11.partial-terminal.v1",
+            "status": "FAILED",
+            "official_result": False,
+            "passed": False,
+            "selection_eligible": False,
+            "continuation_all_false": True,
+        }
+    )
+    terminal["source_identity"]["git_head"] = source_head
+    partial_path.write_text(json.dumps(terminal, sort_keys=True), encoding="utf-8")
+
+    attempt_root = candidate_root.parent
+    source_head_path = attempt_root / "source_head.txt"
+    source_head_path.write_text(source_head + "\n", encoding="ascii")
+    prevalidation_json = candidate_root / "pre_validation_checkpoint.json"
+    prevalidation_npz = candidate_root / "pre_validation_checkpoint.npz"
+    prevalidation_json.write_text('{"identity":{}}\n', encoding="utf-8")
+    np.savez_compressed(prevalidation_npz, fixture=np.asarray([1], dtype=np.int64))
+    solve_root = candidate_root / "solve"
+    solve_root.mkdir(parents=True, exist_ok=True)
+    for name in (
+        "dtn_port_power_metrics_3d.json",
+        "dtn_auxiliary_amplitudes_3d.json",
+        "volume_absorption.json",
+    ):
+        (solve_root / name).write_text('{"fixture":true}\n', encoding="utf-8")
+
+    p4_manifest_path = fixture["p4_manifest_path"]
+    p4_manifest = json.loads(p4_manifest_path.read_text(encoding="utf-8"))
+    p4_manifest["head"] = source_head
+    fake_source = root / "benchmarks/fake_source.py"
+    recovery_manifest = fixture["manifest_path"]
+    for entry in p4_manifest["source"]:
+        entry["snapshot"] = str(
+            recovery_manifest.resolve()
+            if entry["path"].endswith("v12_execution_recovery_manifest.json")
+            else fake_source.resolve()
+        )
+    p4_manifest_path.write_text(
+        json.dumps(p4_manifest, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+    fixed_inputs = {}
+    for name in sorted(comparison._V15_H_FIXED_INPUT_NAMES):
+        path = (
+            candidate_root / name.removeprefix("run/")
+            if name.startswith("run/")
+            else attempt_root / name
+        ).resolve()
+        fixed_inputs[name] = {
+            "path": str(path),
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        }
+
+    contract_path = fixture["contract_path"].resolve()
+    recovery_manifest_path = recovery_manifest.resolve()
+    authorization_path = root / "docs/prior_user_authorization.json"
+    closeout_path = root / "docs/failed_closeout.json"
+    raw_recheck_path = root / "docs/raw_recheck.json"
+    for path, value in (
+        (authorization_path, {"authorized": True}),
+        (
+            closeout_path,
+            {
+                "status": "FAILED_SUMMARY_NUMPY_SERIALIZATION_AFTER_SOLVE",
+                "source_head": source_head,
+                "raw_numerical_gates_pass": True,
+                "original_endpoint": "FAILED",
+            },
+        ),
+        (raw_recheck_path, {"numerical_gates_pass": True}),
+    ):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(value, sort_keys=True) + "\n", encoding="utf-8")
+
+    binding_path = root / comparison._V15_H_SAVED_PRIMARY_BINDING_PATH
+    binding_path.parent.mkdir(parents=True, exist_ok=True)
+    binding = {
+        "schema": "task43.v15.p4-saved-primary-binding.v1",
+        "source_root": str(candidate_root.resolve()),
+        "source_head": source_head,
+        "contract": {
+            "path": str(contract_path),
+            "sha256": fixture["contract_sha256"],
+        },
+        "recovery_manifest": {
+            "path": str(recovery_manifest_path),
+            "sha256": hashlib.sha256(recovery_manifest_path.read_bytes()).hexdigest(),
+        },
+        "prior_user_authorization": {
+            "path": str(authorization_path.resolve()),
+            "sha256": hashlib.sha256(authorization_path.read_bytes()).hexdigest(),
+        },
+        "failed_attempt_closeout": {
+            "path": str(closeout_path.resolve()),
+            "sha256": hashlib.sha256(closeout_path.read_bytes()).hexdigest(),
+        },
+        "root_raw_recheck": {
+            "path": str(raw_recheck_path.resolve()),
+            "sha256": hashlib.sha256(raw_recheck_path.read_bytes()).hexdigest(),
+        },
+        "p2_joined_terminal": {
+            "path": str(fixture["p2_joined_path"].resolve()),
+            "sha256": hashlib.sha256(fixture["p2_joined_path"].read_bytes()).hexdigest(),
+        },
+        "fixed_inputs": fixed_inputs,
+        "failed_terminal_sha256": hashlib.sha256(partial_path.read_bytes()).hexdigest(),
+        "primary_packet_identity_sha256": comparison._canonical_json_sha256(
+            terminal["primary_packet"]["identity"]
+        ),
+        "prevalidation_identity_sha256": comparison._canonical_json_sha256({}),
+        "v12_recovery_binding": fixture["binding"],
+        "output_root": str(
+            (
+                Path(json.loads(contract_path.read_text(encoding="utf-8"))["artifact_prefix"])
+                / "comparison/p5/saved_primary_recovery"
+            ).resolve()
+        ),
+    }
+    binding_path.write_text(json.dumps(binding, sort_keys=True) + "\n", encoding="utf-8")
+    monkeypatch.setattr(
+        comparison,
+        "_V15_H_SAVED_PRIMARY_BINDING_PATH",
+        binding_path.relative_to(root),
+    )
+    monkeypatch.setattr(
+        comparison,
+        "_V15_H_SAVED_PRIMARY_BINDING_SHA256",
+        hashlib.sha256(binding_path.read_bytes()).hexdigest(),
+    )
+    monkeypatch.setattr(
+        comparison,
+        "_verify_v12_p2_source_binding",
+        h100_anchor._verify_v12_p2_source_binding,
+    )
+    return binding_path
 
 
 @pytest.mark.parametrize(
@@ -2043,6 +2191,81 @@ def test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8(
         assert len(fixture["sample_calls"]) == 6
     else:
         assert len(fixture["verify_calls"]) == 1
+
+
+@pytest.mark.parametrize("failure", (None, "q10_failure"), ids=("success", "q10_failure"))
+def test_v15_opt_in_p5_uses_failed_partial_terminal_and_preserves_q8(
+    tmp_path, monkeypatch, failure
+):
+    fixture = _prepare_v12_compare_fixture(
+        tmp_path / str(failure or "saved_primary_success"),
+        monkeypatch,
+        failure=failure,
+    )
+    binding_path = _prepare_v15_saved_primary_p5_binding(
+        fixture, monkeypatch, tmp_path / str(failure or "saved_primary_success")
+    )
+    candidate_case = fixture["candidate_case"]
+
+    def restore_saved_primary(candidate_root, output_root, **_kwargs):
+        assert candidate_root == fixture["candidate_root"]
+        recovery_root = output_root / "saved_primary_recovery"
+        recovery_root.mkdir(parents=True)
+        identity_path = recovery_root / "restoration_identity.json"
+        identity = {"original_status": "FAILED", "official_result": False}
+        identity_path.write_text(json.dumps(identity, sort_keys=True) + "\n", encoding="utf-8")
+        return {
+            **candidate_case,
+            "saved_primary_recovery": {
+                "path": str(identity_path.resolve()),
+                "sha256": hashlib.sha256(identity_path.read_bytes()).hexdigest(),
+                "original_status": "FAILED",
+            },
+        }
+
+    monkeypatch.setattr(
+        comparison, "_v15_restore_h_saved_primary_candidate", restore_saved_primary
+    )
+    terminal_path = fixture["candidate_root"] / "task43_v11_partial_terminal.json"
+    terminal_sha = hashlib.sha256(terminal_path.read_bytes()).hexdigest()
+    contract = json.loads(fixture["contract_path"].read_text(encoding="utf-8"))
+    output_root = (
+        Path(contract["artifact_prefix"])
+        / contract["phases"]["P5"]["comparison_output_root"]
+    )
+    compare_args = {
+        "contract_path": fixture["contract_path"],
+        "recovery_manifest_path": fixture["manifest_path"],
+        "attempt_id": "v11_r9_h8_union_attempt1",
+        "saved_primary_recovery_binding_path": binding_path,
+    }
+    if failure == "q10_failure":
+        with pytest.raises(OSError, match="injected synthetic q10 field failure"):
+            comparison.compare_v11_union(
+                fixture["candidate_root"], fixture["selection_path"], **compare_args
+            )
+        failed = json.loads(
+            (output_root / "v11_r9_h8_union_failure.json").read_text(encoding="utf-8")
+        )
+        assert failed["saved_primary_recovery"]["original_status"] == "FAILED"
+        assert (output_root / "v11_r9_h8_union_q8.npz").is_file()
+        assert not (output_root / "v11_r9_h8_union_q10.npz").exists()
+        return
+
+    result = comparison.compare_v11_union(
+        fixture["candidate_root"], fixture["selection_path"], **compare_args
+    )
+    assert result["candidate_terminal_status"] == "FAILED"
+    assert result["candidate_terminal_sha256"] == terminal_sha
+    assert result["candidate_endpoint_sha256"] is None
+    assert result["saved_primary_recovery"]["original_status"] == "FAILED"
+    assert result["saved_primary_recovery_binding_sha256"] == hashlib.sha256(
+        binding_path.read_bytes()
+    ).hexdigest()
+    assert result["status"] == "COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE"
+    assert result["official_result"] is False and result["passed"] is False
+    assert (output_root / "v11_r9_h8_union_q8.npz").is_file()
+    assert (output_root / "v11_r9_h8_union_q10.npz").is_file()
 
 
 def test_v12_p2_joined_source_binding_rejects_root_terminal_failure(
@@ -4784,6 +5007,372 @@ def test_v15_saved_primary_postprocess_reuses_bound_primary_without_solving(
     assert absorption["energy_closure_residual"] == pytest.approx(0.0, abs=1.0e-15)
     assert len(absorption["actual_fem_form_integrals"]) == 2
     assert rta_3d.fem.form is delegated_form
+
+
+def test_v15_p4_shared_writer_references_aliased_primary_vectors(
+    tmp_path, monkeypatch
+):
+    run_root = tmp_path / "p4"
+    solve_root = run_root / "solve"
+    solve_root.mkdir(parents=True)
+    values = np.asarray([1.0 + 2.0j, 3.0 - 4.0j], dtype=np.complex128)
+    packet = write_v11_primary_packet(
+        run_root / "primary_state.npz",
+        {"full_active_trace": values.copy()},
+        phase="R9_H8",
+        identity={"fixture": "aliased summary writer"},
+    )
+    captured = {"v11_primary_packet": packet}
+    aliased_raw_vectors = {"trace": values}
+    aliased_residual = {"raw_vectors": aliased_raw_vectors}
+    summary = {
+        "cell_static_condensation_audit": {
+            "full_operator_true_residual": aliased_residual,
+            "full_explicit_true_residual": aliased_residual,
+        }
+    }
+    source_audit = summary["cell_static_condensation_audit"]
+    source_operator_residual = source_audit["full_operator_true_residual"]
+    source_explicit_residual = source_audit["full_explicit_true_residual"]
+    common_flow = h100_anchor._common_3d_case_flow
+    actual_writer = common_flow._write_case_outputs
+    calls = []
+
+    def counted_writer(*args):
+        calls.append(args[1])
+        return actual_writer(*args)
+
+    monkeypatch.setattr(common_flow, "_write_case_outputs", counted_writer)
+
+    class SerialComm:
+        rank = 0
+
+    with h100_anchor._v11_primary_case_output_serialization(
+        run_root, primary_phase="R9_H8", captured=captured
+    ):
+        common_flow._write_case_outputs(solve_root, summary, ["fixture"], SerialComm())
+
+    assert len(calls) == 1
+    assert common_flow._write_case_outputs is counted_writer
+    assert summary["cell_static_condensation_audit"] is source_audit
+    assert source_audit["full_operator_true_residual"] is source_operator_residual
+    assert source_audit["full_explicit_true_residual"] is source_explicit_residual
+    assert source_operator_residual is source_explicit_residual
+    assert source_operator_residual["raw_vectors"] is aliased_raw_vectors
+    assert aliased_raw_vectors["trace"] is values
+    assert np.array_equal(aliased_raw_vectors["trace"], values)
+    safe_summary = captured["v11_primary_json_safe_solver_summary"]
+    operator_reference = safe_summary["cell_static_condensation_audit"][
+        "full_operator_true_residual"
+    ]["raw_vectors"]
+    explicit_reference = safe_summary["cell_static_condensation_audit"][
+        "full_explicit_true_residual"
+    ]["raw_vectors"]
+    assert operator_reference is explicit_reference
+    assert operator_reference["arrays"]["trace"]["npz_key"] == "full_active_trace"
+    assert json.loads((solve_root / "run_summary.json").read_text(encoding="utf-8")) == safe_summary
+
+    failed_capture = {"v11_primary_packet": packet}
+    with pytest.raises(ValueError, match="differs from its primary packet array"):
+        with h100_anchor._v11_primary_case_output_serialization(
+            run_root, primary_phase="R9_H8", captured=failed_capture
+        ):
+            common_flow._write_case_outputs(
+                solve_root,
+                {"raw_vectors": {"trace": values + 1.0}},
+                ["fixture"],
+                SerialComm(),
+            )
+    assert common_flow._write_case_outputs is counted_writer
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize(
+    "mixed_array",
+    (None, "recovered_recovered_p6_local_coefficients", "recovered_mesh_geometry_dofmap"),
+    ids=("valid", "mixed_coefficients", "mixed_mesh_index"),
+)
+def test_v15_saved_primary_adapter_reads_real_packet_and_rejects_mixed_arrays(
+    tmp_path, monkeypatch, mixed_array
+):
+    candidate_root, _record, _contract, contract_sha = _pending_fixture(tmp_path)
+    packet_path = candidate_root / "primary_state.npz"
+    plan_path = candidate_root / "candidate_plan.json"
+    p2_binding = json.loads(
+        (candidate_root / "task43_v11_primary_terminal.json").read_text(encoding="utf-8")
+    )["v12_recovery_binding"]
+    plan_sha = hashlib.sha256(plan_path.read_bytes()).hexdigest()
+    p2_audit_path = Path(p2_binding["audit_path"])
+    p2_audit = json.loads(p2_audit_path.read_text(encoding="utf-8"))
+    axes = (
+        np.asarray([0.0, 50.0]),
+        np.asarray([0.0, 50.0]),
+        np.asarray([-10.0, 130.0]),
+    )
+    axes_record = {
+        name: axis.tolist()
+        for name, axis in zip(("x", "y", "z"), axes, strict=True)
+    }
+    active_degree_sha = "d" * 64
+    checkpoint_arrays = {
+        "mesh_geometry_coordinates_nm": np.asarray([[0.0, 0.0, 0.0]], dtype=np.float64),
+        "mesh_geometry_dofmap": np.asarray([[0, 1, 2]], dtype=np.int32),
+        "mesh_owned_cell_global_ids": np.asarray([0], dtype=np.int64),
+        "mesh_cell_vertex_dofmap": np.asarray([[0, 1, 2, 3]], dtype=np.int32),
+        "p6_function_space_dofmap": np.asarray([[0]], dtype=np.int32),
+        "p6_owned_global_dof_block_ids": np.asarray([0], dtype=np.int64),
+        "p6_ghost_global_dof_block_ids": np.asarray([], dtype=np.int64),
+        "recovered_p6_local_coefficients": np.asarray([1.0 + 0.0j], dtype=np.complex128),
+        "recovered_p6_owned_coefficients": np.asarray([1.0 + 0.0j], dtype=np.complex128),
+    }
+    arrays = _raw_vectors()
+    arrays.update(
+        {
+            "recovered_" + name: values.copy()
+            for name, values in checkpoint_arrays.items()
+        }
+    )
+    arrays["recovered_recovered_p6_local_coefficients"] = checkpoint_arrays[
+        "recovered_p6_local_coefficients"
+    ].copy()
+    arrays["recovered_recovered_p6_owned_coefficients"] = checkpoint_arrays[
+        "recovered_p6_owned_coefficients"
+    ].copy()
+    if mixed_array is not None:
+        arrays[mixed_array][0] += 1
+
+    actual = {
+        "root_cell_count": 1,
+        "leaf_cell_count": 1,
+        "independent_trace_rows": 1,
+        "active_cell_interior_rows": 1,
+        "independent_active_fe_dofs": 2,
+        "cell_interior_histogram": {"p6": 1},
+    }
+    p4_space = {
+        "pass": True,
+        "p2_plan_sha256": hashlib.sha256(
+            Path(str(p2_binding["plan_output_path"])).read_bytes()
+        ).hexdigest(),
+        "p2_audit_sha256": hashlib.sha256(p2_audit_path.read_bytes()).hexdigest(),
+        "actual": actual,
+    }
+    cfg_source = h100_anchor._h100_config(
+        kind="empty_h_active_p3",
+        case_name="v15_saved_primary_adapter_fixture",
+        geometry_profile="initial_180",
+    )
+    cfg_json = cfg_source.as_jsonable()
+    physical_identity = comparison.task43_v2_physical_configuration_identity(
+        cfg_json,
+        axis_values_nm=axes_record,
+        candidate_plan_sha256=plan_sha,
+        active_degree_plan_sha256=active_degree_sha,
+    )
+    endpoint_identity = {
+        "schema": "task43.v11.primary_endpoint_identity.v1",
+        "actual_cfg": {
+            "case_name": "v15_saved_primary_adapter_fixture",
+            "nedelec_degree": 6,
+            "floquet_constraint_mode": "fixture",
+        },
+        "physical_configuration": physical_identity,
+        "numerical_controls": {
+            "quadrature_degree": {"volume": 15},
+            "A_volume_resolved_rule": {"quadrature_rule": "default"},
+            "modal_selection": {"count": 612},
+            "assembly_backend": "assembly_time_variable_p_condensed",
+        },
+    }
+    candidate_identity = {
+        "candidate_id": "v11_r9_h8",
+        "action": "h_refine",
+        "plan_sha256": plan_sha,
+        "v12_recovery_binding": p2_binding,
+    }
+    source_identity = {
+        "git_head": "b" * 40,
+        "v12_recovery_binding": p2_binding,
+    }
+    prevalidation_identity = {
+        "resolved_axes_nm": axes_record,
+        "active_degree_plan_sha256": active_degree_sha,
+    }
+    prevalidation_path = candidate_root / "pre_validation_checkpoint.json"
+    prevalidation_npz = candidate_root / "pre_validation_checkpoint.npz"
+    np.savez_compressed(prevalidation_npz, **checkpoint_arrays)
+    prevalidation = {
+        "identity": prevalidation_identity,
+        "npz_sha256": hashlib.sha256(prevalidation_npz.read_bytes()).hexdigest(),
+        "arrays": {
+            name: candidate_checkpoints._array_identity(values)
+            for name, values in checkpoint_arrays.items()
+        },
+    }
+    prevalidation_path.write_text(json.dumps(prevalidation, sort_keys=True), encoding="utf-8")
+    identity = {
+        "contract_sha256": contract_sha,
+        "candidate_plan_sha256": plan_sha,
+        "candidate_identity": candidate_identity,
+        "source_identity": source_identity,
+        "v12_recovery_binding": p2_binding,
+        "endpoint_identity": endpoint_identity,
+        "P2_preassembly_space_audit": p4_space,
+        "pre_validation_checkpoint": {"identity": prevalidation_identity},
+        "independent_active_fe_dofs": 2,
+        "raw_full_active_scope": _raw_gate_arguments()["full_active_scope"],
+        "independent_A6_raw_vector_scope": _raw_gate_arguments()["independent_a6_scope"],
+        "normal_correction_count": 1,
+        "extra_correction_count": 0,
+        "normal_correction_audit": {
+            "status": "passed",
+            "correction_ksp": {"converged_reason": 2},
+        },
+    }
+    packet_path.unlink()
+    packet = write_v11_primary_packet(
+        packet_path,
+        arrays,
+        phase="R9_H8",
+        identity=identity,
+    )
+    raw_audit = h100_anchor._v11_raw_vector_gates(
+        arrays,
+        **_raw_gate_arguments(),
+    )
+    (candidate_root / "primary_raw_vector_audit.json").write_text(
+        json.dumps(
+            {
+                "schema": "task43.v11.primary_raw_vector_audit_checkpoint.v1",
+                "pass": raw_audit["pass"],
+                "audit": raw_audit,
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    terminal = {
+        "schema": "task43.v11.partial-terminal.v1",
+        "phase": "R9_H8",
+        "status": "FAILED",
+        "official_result": False,
+        "passed": False,
+        "selection_eligible": False,
+        "continuation_all_false": True,
+        "source_identity": source_identity,
+        "candidate_identity": candidate_identity,
+        "v12_recovery_binding": p2_binding,
+        "primary_packet": packet,
+    }
+    (candidate_root / "task43_v11_partial_terminal.json").write_text(
+        json.dumps(terminal, sort_keys=True), encoding="utf-8"
+    )
+    power_metrics = {
+        "stage4_dtn_surface_quadrature_degree": 28,
+        "stage4_dtn_sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "stage4_dtn_sparse_cutoff_relative_tolerance": 1.0e-13,
+        "dtn_port_boundary_amplitude_scale_policy": "boundary_magnitude_scaled_r5_v1",
+        "R_total": 0.25,
+        "T_total": 0.06,
+        "R00_s": 0.25,
+        "R00_p": 0.0,
+        "R00_total": 0.25,
+        "A_volume_total": 0.69,
+    }
+    solve_root = candidate_root / "solve"
+    solve_root.mkdir(parents=True, exist_ok=True)
+    (solve_root / "dtn_port_power_metrics_3d.json").write_text(
+        json.dumps(power_metrics, sort_keys=True), encoding="utf-8"
+    )
+    (solve_root / "dtn_port_diffraction_orders_3d.json").write_text(
+        '{"orders": []}\n', encoding="utf-8"
+    )
+
+    mesh_identity_arrays = {
+        "mesh_geometry_coordinates_nm": checkpoint_arrays["mesh_geometry_coordinates_nm"],
+        "mesh_geometry_dofmap": checkpoint_arrays["mesh_geometry_dofmap"],
+        "mesh_owned_cell_global_ids": checkpoint_arrays["mesh_owned_cell_global_ids"],
+        "mesh_cell_vertex_dofmap": checkpoint_arrays["mesh_cell_vertex_dofmap"],
+        "p6_function_space_cell_dofmap": checkpoint_arrays["p6_function_space_dofmap"],
+        "p6_owned_global_dof_block_ids": checkpoint_arrays["p6_owned_global_dof_block_ids"],
+        "p6_ghost_global_dof_block_ids": checkpoint_arrays["p6_ghost_global_dof_block_ids"],
+    }
+    mesh_audit = {"axes_nm": axes_record, "global_cells": 1}
+    cfg = SimpleNamespace(as_jsonable=lambda: cfg_json)
+    mesh_data = SimpleNamespace(mesh=object())
+    monkeypatch.setattr(comparison, "_h100_config", lambda **_kwargs: cfg)
+    monkeypatch.setattr(
+        comparison,
+        "build_stage4_local_h_mesh_data",
+        lambda *_args, **_kwargs: mesh_data,
+    )
+    monkeypatch.setattr(comparison.base, "_axes_from_mesh", lambda _mesh: axes)
+    monkeypatch.setattr(
+        comparison,
+        "_assert_mesh_profile",
+        lambda *_args, **_kwargs: mesh_audit,
+    )
+    monkeypatch.setattr(comparison, "_create_nedelec_space", lambda *_args: object())
+    monkeypatch.setattr(
+        comparison.base,
+        "_actual_mesh_identity",
+        lambda *_args: mesh_identity_arrays,
+    )
+
+    class _FakeFunction:
+        def __init__(self, _space, *, name):
+            self.name = name
+            self.x = SimpleNamespace(
+                array=np.zeros_like(checkpoint_arrays["recovered_p6_local_coefficients"]),
+                scatter_forward=lambda: None,
+            )
+
+    monkeypatch.setattr(comparison.fem, "Function", _FakeFunction)
+    output_root = tmp_path / "p5"
+    primary_hash = hashlib.sha256(packet_path.read_bytes()).hexdigest()
+    saved_binding = {
+        "primary_packet_identity_sha256": comparison._canonical_json_sha256(
+            packet["identity"]
+        ),
+        "prevalidation_identity_sha256": comparison._canonical_json_sha256(
+            prevalidation_identity
+        ),
+        "fixed_inputs": {
+            "run/primary_state.npz": {"sha256": primary_hash},
+            "run/pre_validation_checkpoint.npz": {
+                "sha256": prevalidation["npz_sha256"]
+            },
+        },
+        "output_root": str(output_root / "saved_primary_recovery"),
+    }
+    call_args = {
+        "candidate_run_root": candidate_root,
+        "output_root": output_root,
+        "contract_sha256": contract_sha,
+        "recovery_binding": p2_binding,
+        "saved_binding": saved_binding,
+        "terminal": terminal,
+    }
+    if mixed_array is not None:
+        with pytest.raises(ValueError, match="primary and pre-validation arrays differ"):
+            comparison._v15_restore_h_saved_primary_candidate(**call_args)
+        assert not output_root.exists()
+        return
+
+    restored = comparison._v15_restore_h_saved_primary_candidate(**call_args)
+    assert restored["record"]["original_endpoint_status"] == "FAILED"
+    assert restored["saved_primary_recovery"]["original_status"] == "FAILED"
+    assert restored["v12_restoration_binding"]["same_array_values_dtype_and_shape"] is True
+    assert np.array_equal(
+        restored["field"].x.array,
+        checkpoint_arrays["recovered_p6_local_coefficients"],
+    )
+    assert hashlib.sha256(packet_path.read_bytes()).hexdigest() == primary_hash
+    assert json.loads(
+        (output_root / "saved_primary_recovery/restoration_identity.json").read_text(
+            encoding="utf-8"
+        )
+    )["original_status"] == "FAILED"
 
 
 def test_v15_saved_primary_postprocess_cli_uses_only_opt_in_route(

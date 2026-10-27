@@ -104,6 +104,7 @@ from src.solvers.dtn_port_3d import (
     compute_stage4_independent_active_action,
 )
 from src.solvers import dtn_port_3d as _dtn_port_solver
+from src.solvers import common_3d_case_flow as _common_3d_case_flow
 from src.solvers.petsc_residual_correction import single_petsc_residual_correction
 from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
     run_stage4b_block_grating_3d_case,
@@ -819,6 +820,117 @@ def _array_identity(values: np.ndarray) -> dict[str, Any]:
         "shape": list(array.shape),
         "sha256": digest.hexdigest(),
     }
+
+
+def _v11_primary_raw_vector_reference(
+    raw_vectors: Mapping[str, Any],
+    *,
+    run_root: Path,
+    packet_record: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Replace large summary arrays by the already persisted primary-packet identity."""
+
+    packet_path = (run_root / "primary_state.npz").resolve()
+    if (
+        Path(str(packet_record.get("npz_path", ""))).resolve() != packet_path
+        or not packet_path.is_file()
+        or _sha256_file(packet_path) != packet_record.get("npz_sha256")
+    ):
+        raise ValueError("V11 P4 summary arrays are not bound to the saved primary packet")
+    packet_arrays = packet_record.get("arrays")
+    if not isinstance(packet_arrays, Mapping):
+        raise ValueError("V11 P4 primary packet lacks its array identity map")
+    array_references: dict[str, dict[str, Any]] = {}
+    for name, values in raw_vectors.items():
+        if not isinstance(values, np.ndarray):
+            raise TypeError(f"V11 P4 raw summary vector {name} is not an ndarray")
+        packet_key = f"full_active_{name}"
+        declared = packet_arrays.get(packet_key)
+        actual = _array_identity(values)
+        if not isinstance(declared, Mapping) or any(
+            actual.get(key) != declared.get(key) for key in ("dtype", "shape", "sha256")
+        ):
+            raise ValueError(
+                f"V11 P4 summary vector differs from its primary packet array: {name}"
+            )
+        array_references[str(name)] = {
+            "npz_key": packet_key,
+            "dtype": actual["dtype"],
+            "shape": actual["shape"],
+            "sha256": actual["sha256"],
+        }
+    if not array_references:
+        raise ValueError("V11 P4 raw summary vector set is empty")
+    return {
+        "storage": "task43.v11.primary_state.npz",
+        "path": str(packet_path),
+        "sha256": str(packet_record["npz_sha256"]),
+        "arrays": array_references,
+    }
+
+
+@contextmanager
+def _v11_primary_case_output_serialization(
+    run_root: Path,
+    *,
+    primary_phase: str | None,
+    captured: dict[str, Any],
+):
+    """Keep the shared writer but bind V11 P4 raw arrays to its saved NPZ packet."""
+
+    if primary_phase != "R9_H8":
+        yield
+        return
+    original_writer = _common_3d_case_flow._write_case_outputs
+    expected_solve_root = (run_root / "solve").resolve()
+
+    def write_v11_safe_case_outputs(out_dir, summary, log_lines, comm):
+        if Path(out_dir).resolve() != expected_solve_root:
+            return original_writer(out_dir, summary, log_lines, comm)
+        packet_record = captured.get("v11_primary_packet")
+        if not isinstance(packet_record, Mapping):
+            raise ValueError("V11 P4 shared summary write preceded its primary packet")
+        replacements = 0
+        replacement_cache: dict[int, dict[str, Any]] = {}
+
+        def safe_summary_copy(value: Any) -> Any:
+            nonlocal replacements
+            if isinstance(value, Mapping):
+                result = {}
+                for key, item in value.items():
+                    if key == "raw_vectors":
+                        if not isinstance(item, Mapping):
+                            raise TypeError("V11 P4 summary raw_vectors is not a mapping")
+                        reference = replacement_cache.get(id(item))
+                        if reference is None:
+                            reference = _v11_primary_raw_vector_reference(
+                                item,
+                                run_root=run_root,
+                                packet_record=packet_record,
+                            )
+                            replacement_cache[id(item)] = reference
+                        replacements += 1
+                        result[key] = reference
+                    else:
+                        result[key] = safe_summary_copy(item)
+                return result
+            if isinstance(value, list):
+                return [safe_summary_copy(item) for item in value]
+            if isinstance(value, tuple):
+                return tuple(safe_summary_copy(item) for item in value)
+            return value
+
+        safe_summary = safe_summary_copy(summary)
+        if replacements == 0:
+            raise ValueError("V11 P4 shared summary did not expose the expected raw_vectors")
+        captured["v11_primary_json_safe_solver_summary"] = safe_summary
+        return original_writer(out_dir, safe_summary, log_lines, comm)
+
+    _common_3d_case_flow._write_case_outputs = write_v11_safe_case_outputs
+    try:
+        yield
+    finally:
+        _common_3d_case_flow._write_case_outputs = original_writer
 
 
 def _active_solution_storage(view) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
@@ -3256,6 +3368,7 @@ def _verify_v12_p2_source_binding(
     *,
     contract_sha256: str,
     p4_launch_manifest_path: Path,
+    allow_historical_p4_sources: bool = False,
 ) -> dict[str, dict[str, str]]:
     """Verify the explicitly selected, root-joined P2 bytes before their use."""
 
@@ -3516,17 +3629,62 @@ def _verify_v12_p2_source_binding(
         or p4_manifest.get("p2_source_id") != source_id
     ):
         raise ValueError("V12 P4 launch snapshot omits selected P2/manifest identity")
-    current_p4_sources = {
-        **_v11_source_snapshot(),
-        _V12_RECOVERY_MANIFEST_REL.as_posix(): recovery_binding["manifest_sha256"],
-    }
     p4_sources = {
         str(item.get("path")): str(item.get("sha256"))
         for item in p4_manifest.get("source", [])
         if isinstance(item, Mapping)
     }
-    if p4_sources != current_p4_sources:
-        raise ValueError("V12 P4 launch source snapshot differs from the actual P4 source")
+    if allow_historical_p4_sources:
+        expected_source_names = {
+            *_v11_source_snapshot(),
+            _V12_RECOVERY_MANIFEST_REL.as_posix(),
+        }
+        source_entries = p4_manifest.get("source", [])
+        if set(p4_sources) != expected_source_names or len(source_entries) != len(
+            expected_source_names
+        ):
+            raise ValueError(
+                "V15 saved-primary binding has an incomplete historical P4 source set"
+            )
+        current_sources = _v11_source_snapshot()
+        for item in source_entries:
+            if not isinstance(item, Mapping):
+                raise ValueError("V15 historical P4 source entry is malformed")
+            name = str(item.get("path", ""))
+            snapshot_path = Path(str(item.get("snapshot", "")))
+            digest = str(item.get("sha256", ""))
+            if (
+                not snapshot_path.is_absolute()
+                or snapshot_path.resolve() != snapshot_path
+                or not snapshot_path.is_file()
+                or _sha256_file(snapshot_path) != digest
+            ):
+                raise ValueError(
+                    "V15 historical P4 source snapshot is absent or changed"
+                )
+            if (
+                name != _V12_RECOVERY_MANIFEST_REL.as_posix()
+                and name not in {
+                    "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+                    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+                    "src/test/test_task43_v11_scientific_restart.py",
+                }
+                and current_sources.get(name) != digest
+            ):
+                raise ValueError(
+                    f"V15 saved-primary P4 core source changed after the solve: {name}"
+                )
+        if p4_sources.get(_V12_RECOVERY_MANIFEST_REL.as_posix()) != recovery_binding.get(
+            "manifest_sha256"
+        ):
+            raise ValueError("V15 historical P4 source snapshot changes its V12 manifest")
+    else:
+        current_p4_sources = {
+            **_v11_source_snapshot(),
+            _V12_RECOVERY_MANIFEST_REL.as_posix(): recovery_binding["manifest_sha256"],
+        }
+        if p4_sources != current_p4_sources:
+            raise ValueError("V12 P4 launch source snapshot differs from the actual P4 source")
     p4_inputs = {
         str(Path(str(item.get("path", ""))).resolve()): str(item.get("sha256", ""))
         for item in p4_manifest.get("inputs", [])
@@ -7286,7 +7444,16 @@ def _run_impl(
             if v11_diagnostic
             else nullcontext()
         )
-        with identity_guard:
+        case_output_guard = (
+            _v11_primary_case_output_serialization(
+                run_root,
+                primary_phase=v11_primary_diagnostic_phase,
+                captured=captured,
+            )
+            if v11_diagnostic
+            else nullcontext()
+        )
+        with identity_guard, case_output_guard:
             summary = run_stage4b_block_grating_3d_case(
                 cfg,
                 run_root / "solve",
@@ -7302,6 +7469,11 @@ def _run_impl(
                 ),
                 mesh_data_override=mesh_data,
             )
+        if v11_diagnostic and v11_primary_diagnostic_phase == "R9_H8":
+            summary = captured.pop("v11_primary_json_safe_solver_summary", None)
+            if not isinstance(summary, Mapping):
+                raise ValueError("V11 P4 shared writer did not retain its safe summary copy")
+            summary = dict(summary)
     except BaseException as error:
         if v3_failure_evidence_enabled:
             terminal_error = None

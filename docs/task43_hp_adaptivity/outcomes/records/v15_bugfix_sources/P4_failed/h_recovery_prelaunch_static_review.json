@@ -1,0 +1,21 @@
+{
+  "schema": "task43.v15.h-recovery-prelaunch-static-review.v1",
+  "source_sha256": {
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "12c5b39ceda78d0c43d97473d798fcc6340af1b53c1cbb75b0365b9a19319d7f",
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "7e130009a6ca8d344ceb5498a7639d48980ad5793c4b4e8bf33289dfe7767ec2",
+    "src/test/test_task43_v11_scientific_restart.py": "336d88e3005525780e83fe5ea940f4c5ecf1f6572cf281f55fa156d1a04ddf4c"
+  },
+  "static_checks": {
+    "AST_three_files": "PASS_ROOT",
+    "shell_bash_n": "PASS_ROOT",
+    "snapshot_heredoc_AST": "PASS_ROOT",
+    "diff_check": "PASS_ROOT_PRIOR_AND_FINAL_COMMAND",
+    "Ruff_F821_F822_F823": "PASS_EXECUTOR_REPORTED_NOT_INDEPENDENTLY_RERUN"
+  },
+  "expected_nodes": 13,
+  "new_numerical_tests": "NOT_RUN",
+  "source_review": "Root read writer, adapter, binding/source verifier, P5 opt-in diff and fixtures; caught alias mutation, ndarray equality, missing modal count key, old-signature kwargs and duplicate fixture packet. Corrections completed before launch. Shared numerical core unchanged.",
+  "operation_scope": "saved h primary read/recovery and original P5; no new formal solve",
+  "timing": "static manual review not_measured; no fabricated wall total",
+  "launch_sha256": "80aa4f43c67b13de4d7e213e4e287ccf2283bc5c07a07f0903060db5b07ec943"
+}

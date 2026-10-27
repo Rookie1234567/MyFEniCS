@@ -1,0 +1,47 @@
+
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/fenics/Projects/NN-Lab-V2/benchmarks/task43_hp_adaptivity/h100_anchor.py", line 8647, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/fenics/Projects/NN-Lab-V2/benchmarks/task43_hp_adaptivity/h100_anchor.py", line 8594, in main
+    summary = _run(
+              ^^^^^
+  File "/home/fenics/Projects/NN-Lab-V2/benchmarks/task43_hp_adaptivity/h100_anchor.py", line 8269, in _run
+    return _run_with_v3_failure_terminal(_run_impl, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fenics/Projects/NN-Lab-V2/benchmarks/task43_hp_adaptivity/h100_anchor.py", line 8172, in _run_with_v3_failure_terminal
+    return run_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fenics/Projects/NN-Lab-V2/benchmarks/task43_hp_adaptivity/h100_anchor.py", line 7290, in _run_impl
+    summary = run_stage4b_block_grating_3d_case(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fenics/Projects/NN-Lab-V2/src/solvers/solve_maxwell_3d_stage_4b_block_grating.py", line 47, in run_stage4b_block_grating_3d_case
+    return run_prepared_3d_case_flow(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fenics/Projects/NN-Lab-V2/src/solvers/common_3d_case_flow.py", line 2718, in run_prepared_3d_case_flow
+    _write_case_outputs(out_dir, summary, log_lines, comm)
+  File "/home/fenics/Projects/NN-Lab-V2/src/solvers/common_3d_utils.py", line 355, in _write_case_outputs
+    json.dumps(summary, ensure_ascii=False, indent=2, default=_json_default),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/encoder.py", line 202, in encode
+    chunks = list(chunks)
+             ^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/encoder.py", line 432, in _iterencode
+    yield from _iterencode_dict(o, _current_indent_level)
+  File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+    yield from chunks
+  File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+    yield from chunks
+  File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+    yield from chunks
+  [Previous line repeated 1 more time]
+  File "/usr/lib/python3.12/json/encoder.py", line 439, in _iterencode
+    o = _default(o)
+        ^^^^^^^^^^^
+  File "/home/fenics/Projects/NN-Lab-V2/src/solvers/solve_vector_maxwell.py", line 44, in _json_default
+    raise TypeError(f"Cannot JSON serialize {type(value)!r}")
+TypeError: Cannot JSON serialize <class 'numpy.ndarray'>
