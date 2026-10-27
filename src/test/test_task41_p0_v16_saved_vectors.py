@@ -1061,6 +1061,7 @@ def test_v16_saved_array_replay_uses_rectangular_i_t_lambda_and_rejects_correcti
     )
     result01 = _task41_p0_v16_replay_v14_star_saved_arrays(**attempt01)
     assert result01["status"] == "REPLAYED_SAVED_ARRAYS"
+    assert result01["complete"] is True
     assert result01["saved_state_equation_decomposition"][
         "unlabeled_attempt01_terminal_state_assignment"
     ] is False
@@ -1085,6 +1086,7 @@ def test_v16_saved_array_replay_uses_rectangular_i_t_lambda_and_rejects_correcti
     )
     result04 = _task41_p0_v16_replay_v14_star_saved_arrays(**attempt04)
     assert result04["status"] == "REPLAYED_SAVED_ARRAYS"
+    assert result04["complete"] is True
     assert result04["attempt01_state_decomposition"] == "j0_j3_bound_separately"
     assert result04["cell_decomposition"][0]["v13_lambda_binding"]["status"] == (
         "NOT_AVAILABLE_FOR_THIS_V14_STAR_CELL"

@@ -3861,6 +3861,7 @@ def _task41_p0_v16_replay_v14_star_saved_arrays(
         "schema": "task41.p0.b0.v16.v14_saved_array_replay.v1",
         "attempt": attempt,
         "status": "REPLAYED_SAVED_ARRAYS" if all_exact else "REPLAYED_BUT_V14_SCALAR_MISMATCH",
+        "complete": bool(all_exact),
         "production_order": "ascending_cell_order; S@t then E^H projection; native_rhs once then E^H returned_correction per cell",
         "new_getrs_or_factorization_count": 0,
         "columns_and_states": list(replay_by_key.values()),
