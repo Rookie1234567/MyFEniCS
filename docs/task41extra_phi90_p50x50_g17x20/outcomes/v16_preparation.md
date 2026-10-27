@@ -110,3 +110,9 @@ V14 reader 现在可在收到按 attempt 绑定的 replay inputs 时调用 `_tas
 - Stage A SHA `a9ea40628d904187a15435877cd49582341ee06df5d3ad149f967f8544863007`；resume manifest SHA `d54c2f019df58d09c28e03e9afbb235e6dece53a9f94eb08bf5a7135fb276e22`，均在本window的`attempt05.service/`。随后仅复用，不重算。
 - B失败是误要求V14 candidate的producer与consumer同窗。真实attempt01/04 producer为V13窗口`4fc153c4...debc6`，consumer为V14窗口`4f5d3599...d47c`；现严格分别核验，旧记录不改。
 - 定向相关文件16项通过（1.04秒）。下一attempt从Stage A resume继续B/C，不重复metadata或向量统计，不改变V15 FAIL。
+
+### attempt06：Stage A恢复服务层格式接线
+
+- source `a337690fdcf5fc0132f32f681b61a65f7d50f931`；服务 `myfenics-case-20261027T101520-3410209.service`。在worker前，collector仍只认旧metadata v1，拒绝已完成的v2恢复manifest。A/meta文件不变，未重复扫描/统计。
+- 服务collector现明确识别v2并分别核对framed/raw摘要与源record；子checker仍从NPY实际重算。对应服务分支7项通过（3.75秒）。
+- 下一attempt复用同一attempt05 Stage A resume及原window，不刷新T0。

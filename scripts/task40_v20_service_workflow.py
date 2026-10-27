@@ -10282,7 +10282,7 @@ def _run_task41_p0_saved_output_service(
             or not isinstance(max_row_probe, Mapping)
             or not isinstance(metadata_source, Mapping)
             or row_provenance.get("schema")
-            != "task41.p0.b0.v16.row_incidence_metadata.v1"
+            != "task41.p0.b0.v16.row_incidence_metadata.v2"
             or row_provenance.get("row_count") != 5_688_000
             or row_provenance.get("trace_rows") != 5_688_000
             or row_provenance.get("total_rows_including_port") != 5_752_120
@@ -10293,8 +10293,11 @@ def _run_task41_p0_saved_output_service(
             or row_provenance.get("metadata_only_no_fe_operator_or_factor") is not True
             or row_provenance.get("row_group_codes_sha256") != row_group_codes.get("sha256")
             or row_provenance.get("max_row_probe_metadata_sha256") != max_row_probe.get("sha256")
-            or row_provenance.get("active_original_rows_sha256")
+            or row_provenance.get("active_original_rows_array_sha256")
             != metadata_source.get("active_original_rows_values_sha256")
+            or re.fullmatch(r"[0-9a-f]{64}", str(row_provenance.get("active_original_rows_raw_bytes_sha256", ""))) is None
+            or row_provenance.get("active_original_rows_raw_bytes_sha256")
+            != metadata_source.get("active_original_rows_raw_bytes_sha256")
         ):
             raise ValueError("V16 compact streamed row-incidence metadata is missing or unbound")
         for name in ("y9", "g9", "y15", "g15"):
@@ -10314,7 +10317,11 @@ def _run_task41_p0_saved_output_service(
         authorized.append(bind_record(max_row_probe, "maximum-row metadata", report=True))
         active_map = metadata_source.get("active_original_rows")
         authorized.append(bind_record(active_map, "source active-original-row map"))
-        if metadata_source.get("active_original_rows_file_sha256") != active_map.get("sha256"):
+        if (
+            metadata_source.get("active_original_rows_file_sha256") != active_map.get("sha256")
+            or metadata_source.get("active_original_rows_values_sha256") != active_map.get("array_sha256")
+            or metadata_source.get("active_original_rows_raw_bytes_sha256") != active_map.get("raw_bytes_sha256")
+        ):
             raise ValueError("V16 source active-row map hash does not match streamed metadata provenance")
         return list(dict.fromkeys(authorized)), sum(cumulative_parts)
 

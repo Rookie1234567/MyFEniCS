@@ -122,6 +122,32 @@ def test_v16_pending_metadata_reaches_supervised_route_without_loading_numpy(tmp
     with pytest.raises(ValueError, match='SHA-256 differs'):
         ns['collect_v16_saved_vector_inputs']()
 
+    # A completed metadata bundle must reach the actual supervised resume path.
+    # Only schema/identity/shape are inspected here; the child verifies NPY bytes.
+    manifest['producer_reports']['v15_audit'] = report
+    active.update(array_sha256='d'*64, raw_bytes_sha256='e'*64)
+    manifest['metadata_source'].update(active_original_rows_values_sha256='d'*64,
+                                      active_original_rows_raw_bytes_sha256='e'*64)
+    manifest['metadata_pending'] = False
+    manifest['row_group_codes'] = dict(arr, dtype='<i4', shape=[5688000])
+    manifest['row_group_definitions'] = [{'code':0}]
+    manifest['max_row_probe_metadata'] = report
+    manifest['row_incidence_provenance'] = dict(
+        schema='task41.p0.b0.v16.row_incidence_metadata.v2',
+        row_count=5688000, trace_rows=5688000, total_rows_including_port=5752120,
+        covered_trace_rows=5688000, port_rows_excluded_from_incidence=64120,
+        periodic_slave_e_expanded=True, one_mutually_exclusive_code_per_trace_row=True,
+        metadata_only_no_fe_operator_or_factor=True,
+        row_group_codes_sha256=arr['sha256'], max_row_probe_metadata_sha256=report['sha256'],
+        active_original_rows_array_sha256='d'*64, active_original_rows_raw_bytes_sha256='e'*64)
+    bind()
+    paths, _ = ns['collect_v16_saved_vector_inputs']()
+    assert Path(arr['path']) in paths
+    manifest['row_incidence_provenance']['active_original_rows_raw_bytes_sha256'] = 'f'*64
+    bind()
+    with pytest.raises(ValueError, match='missing or unbound'):
+        ns['collect_v16_saved_vector_inputs']()
+
 
 def test_v16_analysis_uses_numeric_cutoff_not_closeout_allowance():
     import ast
