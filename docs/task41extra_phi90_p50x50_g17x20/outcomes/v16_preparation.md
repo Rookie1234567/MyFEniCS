@@ -79,3 +79,11 @@ V14 reader 现在可在收到按 attempt 绑定的 replay inputs 时调用 `_tas
 原日志：`benchmarks/artifacts/user_services/myfenics-case-20261027T092655-3402492.log`。systemd原字段：ExecMainStartTimestampMonotonic=3018212875316、Exit=3018219095710（微秒），相减得到该进程墙钟6.220394秒；CPUUsageNSec=8440974000。MemoryPeak已不可得，保留UNKNOWN；不以CPU时间冒充墙钟，也不把此短进程成本重复加到固定窗口跨度。旧失败日志保留。
 
 本次只复验受影响服务路径：原两层selector/collector/截止测试加真实dispatcher和策略守卫回归，**6 passed in 3.61s**；不重跑无关科学测试。下一attempt仍复用同一授权/T0、旧manifest和全部科学数据。
+
+### V16 服务 attempt02 的启动失败与窄修
+
+- source `fb65e2ce588b5cb040f58748f48416a0197221f6`；服务 `myfenics-case-20261027T093146-3403305.service`。
+- helper 错读仅外层作用域存在的 `continuation_run_root`，导致 worker 启动前 `NameError`。改为 helper 已接收的 `run_root/output_root`，保留 donor/output 隔离检查。
+- systemd Start/Exit monotonic 为 3018503896204/3018512952834 微秒，服务 wall 为 9.056630 秒；CPU 11.420015 秒。退出码1，MainPID=0、ControlGroup为空；没有新科学数据或metadata构建。
+- 定向实际分支回归覆盖正确根、重叠根、错误donor根，7项通过（0.70秒）；不重复全量测试。
+- 下一 attempt 继续现有 V16 window，T0/deadline/hash 不变；两次失败与费用保留。

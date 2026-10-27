@@ -206,3 +206,39 @@ def test_v16_saved_contract_uses_diagnostic_strategy_and_selector_first(tmp_path
     assert dispatch_ns['run_service'](unit='fixture', runtime_prefix=tmp_path,
         abi_receipt=tmp_path, jit_cache=tmp_path, case_args=args, repo_root=tmp_path) == 0
     assert captured['case_args'][0] == selector
+
+
+def test_v16_saved_helper_checks_its_own_roots_before_mkdir(tmp_path):
+    """Run actual setup branch using helper parameters, without outer-scope aliases."""
+    import ast
+    root = Path(__file__).resolve().parents[2]
+    module = ast.parse((root / 'scripts/task40_v20_service_workflow.py').read_text())
+    helper = next(n for n in module.body if isinstance(n, ast.FunctionDef)
+                  and n.name == '_run_task41_p0_saved_output_service')
+    branch = next(n for n in ast.walk(helper) if isinstance(n, ast.If)
+                  and isinstance(n.test, ast.Name)
+                  and n.test.id == 'b0_v16_saved_vector_analysis_mode'
+                  and any(isinstance(x, ast.Constant) and
+                          x.value == 'V16 saved-vector route must use a disjoint manifest parent and new output attempt'
+                          for x in ast.walk(n)))
+    code = compile(ast.Module(body=branch.body, type_ignores=[]), '<actual-root-guard>', 'exec')
+    run_root = tmp_path / 'input'
+    run_root.mkdir()
+    ns = dict(checker_snapshot_path=None, checker_snapshot_sha256=None,
+              v16_authorized_input_paths=[run_root / 'input.json'],
+              v16_manifest_path=run_root / 'input.json', run_root=run_root,
+              output_root=tmp_path / 'attempt03')
+    exec(code, ns)
+    assert ns['output_root'].is_dir()
+    for bad_root in (run_root, run_root / 'nested', tmp_path):
+        ns['output_root'] = bad_root
+        with pytest.raises(ValueError, match='disjoint'):
+            exec(code, ns)
+    ns['output_root'] = tmp_path / 'attempt04'
+    ns['run_root'] = tmp_path / 'wrong-donor'
+    with pytest.raises(ValueError, match='disjoint'):
+        exec(code, ns)
+    assert not ns['output_root'].exists()
+    assert not any(isinstance(n, ast.Name) and n.id in
+                   ('continuation_run_root', 'continuation_output_root')
+                   for n in ast.walk(helper))

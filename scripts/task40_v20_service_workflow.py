@@ -10964,13 +10964,13 @@ def _run_task41_p0_saved_output_service(
             checker_snapshot_path is not None
             or checker_snapshot_sha256 is not None
             or v16_authorized_input_paths is None
-            or continuation_run_root is None
-            or continuation_output_root is None
+            or run_root is None
+            or output_root is None
             or v16_manifest_path is None
-            or continuation_run_root != v16_manifest_path.parent.resolve()
-            or continuation_output_root == continuation_run_root
-            or continuation_output_root.is_relative_to(continuation_run_root)
-            or continuation_run_root.is_relative_to(continuation_output_root)
+            or run_root != v16_manifest_path.parent.resolve()
+            or output_root == run_root
+            or output_root.is_relative_to(run_root)
+            or run_root.is_relative_to(output_root)
         ):
             raise ValueError("V16 saved-vector route must use a disjoint manifest parent and new output attempt")
         output_root.mkdir(parents=True, exist_ok=False)
