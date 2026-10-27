@@ -1,0 +1,9 @@
+activation=1
+python=/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python
+node_cap=34359738368
+work_stop_seconds=6900
+whole_limit_seconds=7200
+worker-only HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1
+CPU1 MPI1 numerical threads=1
+cache not supplied; cache audit NOT_MEASURED
+argv=python -u -m benchmarks.task43_hp_adaptivity.h100_anchor --case round1_candidate_mpi1 --run-root /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run --candidate-plan /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json --candidate-id round10_p_up --candidate-acceptance-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json --candidate-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json --same-lu-solve-residual-correction --direct-factor-backend mumps --primary-diagnostic-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json --primary-diagnostic-phase A1_q3 --execution-recovery-manifest /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json 

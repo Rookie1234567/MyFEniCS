@@ -1,0 +1,118 @@
+{
+  "schema": "task43.v15.saved-primary-recovery-binding.v1",
+  "created_utc": "2026-10-27T03:18:35.567998+00:00",
+  "scope": "Execution binding for the already-authorized ordinary-bug repair and continuation; no new physics, PDE solve or numerical gate change.",
+  "user_instruction": "如果是一些bug，你修复了再继续，不要卡在这里停下来，除非遇到数值gate再停下等待审阅",
+  "review_sha": "37f3376be410657fbaec86b0412086745419c506",
+  "prior_user_authorization": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v15_user_bugfix_recovery_authorization.json",
+    "sha256": "2b39ca0a1b86e08dfee2f88ea12e85f0b0ec55d8be6c1540ce7e5dc13ddf40cc"
+  },
+  "original_contract": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+    "sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1"
+  },
+  "original_recovery_manifest": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+    "sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734"
+  },
+  "source_run_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run",
+  "source_run_head": "d4e2be77a90e39d49fc56b4214f3bcc24843ddf4",
+  "failed_attempt_closeout": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/P3_failed_root_closeout.json",
+    "sha256": "dd532e001492a5263661cd574b2892a4f1adf62bee1b6615944cfa8b1fb83f5f"
+  },
+  "root_raw_recheck": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/P3_raw_stdlib_recheck.json",
+    "sha256": "dda4c004251a7dd9e344bb2e12234ca92570b33c9655533cde04b4371e6eb9c7"
+  },
+  "fixed_inputs": {
+    "run/task43_v11_partial_terminal.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/task43_v11_partial_terminal.json",
+      "sha256": "a37435a309511365fa32214ca702bd02b70f77dffdf692189d88b32899e6356e"
+    },
+    "run/primary_state.npz": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/primary_state.npz",
+      "sha256": "27c75edf12de4f3be93f025e985dcd2a2bde42f3a083c3110afc5e6289c24830"
+    },
+    "run/pre_validation_checkpoint.npz": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/pre_validation_checkpoint.npz",
+      "sha256": "0e3553686a87afa639a09009ff8b244c530f5ccc7baacbcf055696ffa41f286d"
+    },
+    "run/pre_validation_checkpoint.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/pre_validation_checkpoint.json",
+      "sha256": "a568fec6979d095439a53a84c5b9b9fafb257a5215b846635217d2dee5dcfe59"
+    },
+    "run/candidate_plan.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/candidate_plan.json",
+      "sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826"
+    },
+    "run/solve/dtn_port_diffraction_orders_3d.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/solve/dtn_port_diffraction_orders_3d.json",
+      "sha256": "70c22f0a74afad801214a8b99e32d68dbd744af5273d84924c54233d238dcef0"
+    },
+    "run/solve/dtn_port_power_metrics_3d.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/solve/dtn_port_power_metrics_3d.json",
+      "sha256": "ba16dfb9ec2aac7441a45752aabe94baa552633c25cc29c4b096cc844436c240"
+    },
+    "snapshots/launch_manifest.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/snapshots/launch_manifest.json",
+      "sha256": "3a4c3e4200458d592cbf1a27ee69592223b88ceca6123223c9e5c90659fc0494"
+    },
+    "snapshots/launch.sh": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/snapshots/launch.sh",
+      "sha256": "d8c109603d03b6cd845599381cc20fefd8c449d65fa248dbbfa0e66c3633e5d3"
+    },
+    "watchdog/summary.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/watchdog/summary.json",
+      "sha256": "bba67263393daaf195ee9ee76242718122b1800d43cb495cc4d099dbabe4b875"
+    },
+    "launcher_exit_code.txt": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/launcher_exit_code.txt",
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    "watchdog_exit_code.txt": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/watchdog_exit_code.txt",
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    }
+  },
+  "validation": {
+    "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt1",
+    "launch": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/launch/A1_primary_scope_validation_attempt1.sh",
+    "work_seconds": 270,
+    "whole_seconds": 300
+  },
+  "postprocess": {
+    "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_saved_primary_postprocess_attempt1",
+    "launch": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/launch/A1_saved_primary_postprocess_attempt1.sh",
+    "work_seconds": 1740,
+    "whole_seconds": 1800
+  },
+  "resources": {
+    "RSS_cap_bytes": 8589934592,
+    "stricter_dynamic_gates": true,
+    "cpu_affinity": [
+      1
+    ],
+    "mpi_size": 1,
+    "six_numeric_thread_variables": "1",
+    "task_swap_bytes": 0
+  },
+  "counts": {
+    "failed_formal_retained": 1,
+    "formal_cumulative": 6,
+    "formal_envelope": 8,
+    "fresh_formal_authorized_here": 0,
+    "new_validation_driver": 1,
+    "saved_primary_postprocess_driver": 1
+  },
+  "required_behavior": [
+    "Preserve failed attempt and primary bytes before/after",
+    "Recompute raw vector gates before mesh reconstruction",
+    "Only restore saved coefficients, integrate Av and sample original q8/q10; no PDE matrix, factorization, solve or correction",
+    "Retain q8 before q10 and partial failures in the acquired new root",
+    "Actual numerical gate failure stops dependent P4/P5",
+    "Joint root audit outside worker required; original FAILED terminal never changes"
+  ],
+  "implementation_source_binding": "Each actual launch freezes current full HEAD, diff, 51 source/test snapshots and this binding as input; old P2 and A1 source HEADs are not relabelled."
+}

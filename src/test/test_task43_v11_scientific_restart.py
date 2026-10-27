@@ -574,6 +574,26 @@ def test_raw_vector_residual_recomputation_uses_saved_gram_action():
     )
     assert result["full_active_transformed"]["trace_metric"] == "saved same-pass Gram inverse action"
 
+    tuple_scope_arguments = _raw_gate_arguments()
+    tuple_scope_arguments["full_active_scope"][
+        "reduced_trace_dtn_owned_range"
+    ] = (0, 613)
+    tuple_scope_result = h100_anchor._v11_raw_vector_gates(
+        _raw_vectors(), **tuple_scope_arguments
+    )
+    assert tuple_scope_result["pass"] is True
+
+    wrong_tuple_scope_arguments = _raw_gate_arguments()
+    wrong_tuple_scope_arguments["full_active_scope"][
+        "reduced_trace_dtn_owned_range"
+    ] = (0, 612)
+    with pytest.raises(
+        ValueError, match="reduced trace/DtN raw scope is not the complete serial vector"
+    ):
+        h100_anchor._v11_raw_vector_gates(
+            _raw_vectors(), **wrong_tuple_scope_arguments
+        )
+
     malformed = _raw_vectors()
     malformed["returned_trace_dtn_rhs"] = np.ones(1, dtype=np.complex128)
     with pytest.raises(ValueError, match="returned condensed RHS"):
@@ -4341,3 +4361,430 @@ def test_main_reaches_v11_mesh_sentinel_with_watchdog_identity(tmp_path, monkeyp
 
     traced_child("normal_exit", 0)
     traced_child("controlled_fault_exit", 7)
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    (
+        "success",
+        "wrong_scope",
+        "source_drift",
+        "q10_failure",
+        "nonempty_output",
+        "late_source_drift",
+        "closure_fail",
+        "mesh_identity_drift",
+    ),
+    ids=(
+        "success",
+        "wrong_scope",
+        "source_drift",
+        "q10_failure",
+        "nonempty_output",
+        "late_source_drift",
+        "closure_fail",
+        "mesh_identity_drift",
+    ),
+)
+def test_v15_saved_primary_postprocess_reuses_bound_primary_without_solving(
+    tmp_path, monkeypatch, outcome
+):
+    repository = tmp_path / "repository"
+    contract_path = repository / h100_anchor._V11_CONTRACT_REL
+    contract_path.parent.mkdir(parents=True)
+    contract_path.write_bytes(CONTRACT_PATH.read_bytes())
+    monkeypatch.setattr(h100_anchor, "_REPOSITORY_ROOT", repository)
+    source_root = repository / "saved_primary/run"
+    source_root.mkdir(parents=True)
+    output_run = tmp_path / "postprocess/run"
+    plan_path = source_root / "candidate_plan.json"
+    plan_path.write_text('{"fixture":"saved-plan"}\n', encoding="utf-8")
+    plan_sha = hashlib.sha256(plan_path.read_bytes()).hexdigest()
+    contract, contract_sha = h100_anchor._load_v11_primary_contract(contract_path)
+    cfg = h100_anchor._h100_config(
+        kind="empty_h_active_p3",
+        case_name="v15_saved_primary_fixture",
+        geometry_profile="initial_180",
+    )
+    cfg.stage4_local_h_refinement_plan = str(plan_path)
+    h100_anchor._configure_direct_factor_backend(cfg, "mumps")
+    h100_anchor._configure_v11_primary_endpoint(cfg, "A1_q3", contract)
+    axes = tuple(np.asarray([0.0, 1.0]) for _ in range(3))
+    axes_record = dict(zip(("x", "y", "z"), (axis.tolist() for axis in axes)))
+    endpoint_identity = h100_anchor._v11_endpoint_identity(
+        cfg,
+        h100_anchor.outgoing_port_modes_3d(cfg),
+        axes_nm=axes_record,
+        candidate_plan_sha256=plan_sha,
+        active_degree_plan_sha256="d" * 64,
+        independent_active_fe_dofs=2,
+        phase="A1_q3",
+        contract_sha256=contract_sha,
+    )
+    storage = {
+        "mesh_geometry_coordinates_nm": np.asarray([[0.0, 1.0, 2.0]], dtype=np.float64),
+        "mesh_geometry_dofmap": np.asarray([0, 1, 2], dtype=np.int32),
+        "mesh_owned_cell_global_ids": np.asarray([5], dtype=np.int64),
+        "mesh_cell_vertex_dofmap": np.asarray([[0, 1, 2, 3]], dtype=np.int32),
+        "p6_function_space_dofmap": np.asarray([[0, 1]], dtype=np.int32),
+        "p6_owned_global_dof_block_ids": np.asarray([1, 2], dtype=np.int64),
+        "p6_ghost_global_dof_block_ids": np.asarray([], dtype=np.int64),
+        "recovered_p6_local_coefficients": np.asarray([1.0 + 2.0j, 3.0 - 1.0j]),
+    }
+    packet_arrays = _raw_vectors()
+    packet_arrays.update({f"recovered_{key}": value.copy() for key, value in storage.items()})
+    source_identity = {"git_head": "e" * 40}
+    recovery_identity = {
+        "manifest_path": str((repository / h100_anchor._V12_RECOVERY_MANIFEST_REL).resolve()),
+        "manifest_sha256": h100_anchor._V15_OLD_MANIFEST_SHA256,
+        "contract_sha256": contract_sha,
+        "p2_source_id": None,
+    }
+    candidate_identity = {
+        "candidate_id": "round10_p_up",
+        "v11_phase": "A1_q3",
+        "plan_sha256": plan_sha,
+        "acceptance_contract_sha256": "a" * 64,
+    }
+    primary_identity = {
+        "phase": "A1_q3",
+        "contract_sha256": contract_sha,
+        "candidate_plan_sha256": plan_sha,
+        "candidate_identity": candidate_identity,
+        "source_identity": source_identity,
+        "v12_recovery_binding": recovery_identity,
+        "endpoint_identity": endpoint_identity,
+        "independent_active_fe_dofs": 2,
+        "raw_full_active_scope": {
+            **copy.deepcopy(_raw_gate_arguments()["full_active_scope"]),
+            "active_interior_rows": 1,
+            "independent_reduced_trace_rows": 1,
+            "independent_active_fe_dofs": 2,
+        },
+        "independent_A6_raw_vector_scope": _raw_gate_arguments()["independent_a6_scope"],
+        "normal_correction_count": 1,
+        "extra_correction_count": 0,
+        "normal_correction_audit": {
+            "status": "passed",
+            "correction_ksp": {"converged_reason": 2},
+        },
+    }
+    if outcome == "wrong_scope":
+        primary_identity["raw_full_active_scope"]["reduced_trace_dtn_owned_range"] = [0, 612]
+    packet = write_v11_primary_packet(
+        source_root / "primary_state.npz",
+        packet_arrays,
+        phase="A1_q3",
+        identity=primary_identity,
+    )
+    candidate_checkpoints.write_pre_validation_checkpoint(
+        source_root / "pre_validation_checkpoint.npz",
+        storage,
+        identity={"phase": "A1_q3", "official_result": False},
+    )
+    terminal = {
+        "schema": "task43.v11.partial-terminal.v1",
+        "phase": "A1_q3",
+        "status": "FAILED",
+        "source_identity": source_identity,
+        "candidate_identity": candidate_identity,
+        "v12_recovery_binding": recovery_identity,
+        "primary_packet": packet,
+        "primary_samples": {},
+        "official_result": False,
+    }
+    (source_root / "task43_v11_partial_terminal.json").write_text(
+        json.dumps(terminal, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    (source_root / "solve").mkdir()
+    mode_metrics = {
+        "R_total": 0.2,
+        "T_total": 0.7,
+        "R00_s": 0.1,
+        "R00_p": 0.0,
+        "R00_total": 0.1,
+    }
+    (source_root / "solve/dtn_port_diffraction_orders_3d.json").write_text(
+        json.dumps({"orders": [{}] * 612, "metrics": mode_metrics}), encoding="utf-8"
+    )
+    (source_root / "solve/dtn_port_power_metrics_3d.json").write_text(
+        json.dumps({"dtn_port_mode_count": 612, **mode_metrics}), encoding="utf-8"
+    )
+    for relative, value in {
+        "snapshots/launch_manifest.json": "{}\n",
+        "snapshots/launch.sh": "#!/bin/sh\nexit 0\n",
+        "watchdog/summary.json": "{}\n",
+        "launcher_exit_code.txt": "1\n",
+        "watchdog_exit_code.txt": "2\n",
+    }.items():
+        path = source_root.parent / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(value, encoding="utf-8")
+    fixed_inputs = {}
+    input_names = (
+        "run/task43_v11_partial_terminal.json",
+        "run/primary_state.npz",
+        "run/pre_validation_checkpoint.npz",
+        "run/pre_validation_checkpoint.json",
+        "run/candidate_plan.json",
+        "run/solve/dtn_port_diffraction_orders_3d.json",
+        "run/solve/dtn_port_power_metrics_3d.json",
+        "snapshots/launch_manifest.json",
+        "snapshots/launch.sh",
+        "watchdog/summary.json",
+        "launcher_exit_code.txt",
+        "watchdog_exit_code.txt",
+    )
+    for relative in input_names:
+        path = source_root.parent / relative
+        fixed_inputs[relative] = {
+            "path": str(path.resolve()),
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        }
+    binding = {
+        "source_run_root": str(source_root.resolve()),
+        "source_run_head": source_identity["git_head"],
+        "original_contract": {"path": str(contract_path.resolve()), "sha256": contract_sha},
+        "failed_attempt_closeout": {"path": "fixture-closeout.json", "sha256": "f" * 64},
+        "postprocess": {"root": str(output_run.parent.resolve())},
+        "fixed_inputs": fixed_inputs,
+    }
+    monkeypatch.setattr(h100_anchor, "_load_v15_saved_primary_recovery_binding", lambda: binding)
+    phase_path = tmp_path / "watchdog_phase.json"
+    monkeypatch.setattr(
+        h100_anchor,
+        "_check_v11_runtime_envelope",
+        lambda _comm: {"v11_watchdog_worker_identity": {"phase_path": str(phase_path)}},
+    )
+
+    class SerialComm:
+        rank = 0
+        size = 1
+
+        @staticmethod
+        def bcast(value, root=0):
+            return value
+
+        @staticmethod
+        def allgather(value):
+            return [value]
+
+        @staticmethod
+        def Barrier():
+            return None
+
+    mesh_data = SimpleNamespace(mesh=object(), local_h_context=None)
+    monkeypatch.setattr(h100_anchor, "build_stage4_local_h_mesh_data", lambda *_args, **_kwargs: mesh_data)
+    monkeypatch.setattr(h100_anchor, "_mesh_axes", lambda *_args, **_kwargs: axes)
+    monkeypatch.setattr(h100_anchor, "_assert_mesh_profile", lambda *_args, **_kwargs: {"fixture": True})
+    from benchmarks.task43_hp_adaptivity import compare_initial_to_references as base
+
+    actual_mesh_arrays = {
+        "mesh_geometry_coordinates_nm": storage["mesh_geometry_coordinates_nm"],
+        "mesh_geometry_dofmap": storage["mesh_geometry_dofmap"],
+        "mesh_owned_cell_global_ids": storage["mesh_owned_cell_global_ids"],
+        "mesh_cell_vertex_dofmap": storage["mesh_cell_vertex_dofmap"],
+        "p6_function_space_cell_dofmap": storage["p6_function_space_dofmap"],
+        "p6_owned_global_dof_block_ids": storage["p6_owned_global_dof_block_ids"],
+        "p6_ghost_global_dof_block_ids": storage["p6_ghost_global_dof_block_ids"],
+    }
+    if outcome == "mesh_identity_drift":
+        actual_mesh_arrays["mesh_owned_cell_global_ids"] = np.asarray([6], dtype=np.int64)
+    monkeypatch.setattr(base, "_actual_mesh_identity", lambda *_args: actual_mesh_arrays)
+    monkeypatch.setattr(h100_anchor, "_create_nedelec_space", lambda *_args: object())
+    import dolfinx.fem as dolfinx_fem
+
+    class FakeFunction:
+        def __init__(self, _space, name):
+            self.name = name
+            self.x = SimpleNamespace(
+                array=np.zeros_like(storage["recovered_p6_local_coefficients"]),
+                scatter_forward=lambda: None,
+            )
+
+    monkeypatch.setattr(dolfinx_fem, "Function", FakeFunction)
+    monkeypatch.setattr(
+        h100_anchor,
+        "prepare_cell_local_vector_field_export",
+        lambda _field: SimpleNamespace(
+            electric_dgq6=object(), curl_electric_dgq6=object(),
+            source_degree=6, target_degree=6, representation="fixture",
+        ),
+    )
+    def quadrature(_axes, *, gauss_order):
+        if outcome == "q10_failure" and gauss_order == 10:
+            raise RuntimeError("q10 fixture failure")
+        return SimpleNamespace(points_nm=np.zeros((1, 3)), weights_nm3=np.ones(1))
+
+    monkeypatch.setattr(h100_anchor, "build_common_volume_quadrature", quadrature)
+    monkeypatch.setattr(
+        h100_anchor,
+        "sample_cell_local_vector_fields",
+        lambda *_args: {
+            "E_total": np.ones((1, 3), dtype=np.complex128),
+            "curl_E_total": np.ones((1, 3), dtype=np.complex128),
+        },
+    )
+    monkeypatch.setattr(h100_anchor, "magnetic_field_from_electric_curl", lambda *_args, **_kwargs: np.ones((1, 3)))
+    from src.postprocessing import rta_3d
+
+    class Integral:
+        def __init__(self, metadata):
+            self._metadata = metadata
+
+        def integral_type(self):
+            return "cell"
+
+        def subdomain_id(self):
+            return 0
+
+        def metadata(self):
+            return self._metadata
+
+    class Form:
+        def integrals(self):
+            return [
+                Integral({"quadrature_degree": 19, "quadrature_rule": cfg.stage4_volume_quadrature_rule}),
+                Integral({}),
+            ]
+
+    form_calls = []
+    def delegated_form(value, *args, **kwargs):
+        form_calls.append(value)
+        return value
+
+    monkeypatch.setattr(rta_3d.fem, "form", delegated_form)
+
+    def fake_absorption(*_args, **_kwargs):
+        rta_3d.fem.form(Form())
+        return {"A_volume_total": 0.4 if outcome == "closure_fail" else 0.1}
+
+    monkeypatch.setattr(h100_anchor, "compute_volume_absorption_3d", fake_absorption)
+    monkeypatch.setattr(
+        h100_anchor,
+        "_v2_legacy_r10_reference",
+        lambda: {
+            "payload": {}, "A_volume_total": 0.1,
+            "physical_configuration_sha256": "reference-physics",
+            "discretization_sha256": "reference-space", "phase": "A1_q",
+            "record_sha256": "record", "payload_sha256": "modes",
+            "samples_sha256": "field-samples",
+            "solver_source_compatibility": {"pass": True},
+            "samples_path": tmp_path / "reference_samples.npz",
+        },
+    )
+    monkeypatch.setattr(h100_anchor, "compare_r13_modal_outputs", lambda *_args, **_kwargs: {"pass_10_percent_perturbation_gate": True})
+    monkeypatch.setattr(h100_anchor, "_v2_field_bundle_from_npz", lambda _path, order, *_args: {"order": order})
+    monkeypatch.setattr(h100_anchor, "_v2_field_bundle_from_capture", lambda sample, *_args: sample)
+    monkeypatch.setattr(h100_anchor, "compare_field_sample_bundles", lambda *_args, **_kwargs: {"pass_10_percent_perturbation_gate": True})
+
+    if outcome == "late_source_drift":
+        original_sample_writer = h100_anchor.write_v11_primary_field_sample
+        power_path = source_root / "solve/dtn_port_power_metrics_3d.json"
+
+        def write_then_drift(path, order, sample, **kwargs):
+            record = original_sample_writer(path, order, sample, **kwargs)
+            if int(order) == 8:
+                power_path.write_text('{"drift":true}\n', encoding="utf-8")
+            return record
+
+        monkeypatch.setattr(h100_anchor, "write_v11_primary_field_sample", write_then_drift)
+
+    if outcome == "source_drift":
+        plan_path.write_text('{"fixture":"drift"}\n', encoding="utf-8")
+        with pytest.raises(ValueError, match="bytes differ from the binding"):
+            h100_anchor._run_v15_saved_primary_postprocess(output_run, source_root, comm=SerialComm())
+        assert not output_run.exists()
+        return
+    if outcome == "nonempty_output":
+        output_run.mkdir(parents=True)
+        sentinel = output_run / "preserve.txt"
+        sentinel.write_text("keep", encoding="utf-8")
+        with pytest.raises(RuntimeError, match="refusing to overwrite nonempty output root"):
+            h100_anchor._run_v15_saved_primary_postprocess(output_run, source_root, comm=SerialComm())
+        assert sentinel.read_text(encoding="utf-8") == "keep"
+        return
+    if outcome == "wrong_scope":
+        with pytest.raises(ValueError, match="reduced trace/DtN raw scope"):
+            h100_anchor._run_v15_saved_primary_postprocess(output_run, source_root, comm=SerialComm())
+        failed = json.loads((output_run / "saved_primary_postprocess_terminal.json").read_text(encoding="utf-8"))
+        assert failed["failure_stage"] == "raw_vector_gate"
+        assert not failed["primary_samples"]
+        assert failed["completed_stages"] == ["source_packet_and_checkpoint_identity"]
+        return
+    if outcome == "q10_failure":
+        with pytest.raises(RuntimeError, match="field sample postprocessing failed collectively"):
+            h100_anchor._run_v15_saved_primary_postprocess(output_run, source_root, comm=SerialComm())
+        failed = json.loads((output_run / "saved_primary_postprocess_terminal.json").read_text(encoding="utf-8"))
+        assert set(failed["primary_samples"]) == {"q8"}
+        assert (output_run / "primary_field_sample_q8.npz").is_file()
+        assert not (output_run / "primary_field_sample_q10.npz").exists()
+        assert failed["official_result"] is False and failed["passed"] is False
+        return
+    if outcome == "mesh_identity_drift":
+        with pytest.raises(ValueError, match="restored primary mesh/DOF identity differs"):
+            h100_anchor._run_v15_saved_primary_postprocess(output_run, source_root, comm=SerialComm())
+        failed = json.loads((output_run / "saved_primary_postprocess_terminal.json").read_text(encoding="utf-8"))
+        assert failed["failure_stage"] == "mesh_and_space_restore"
+        assert not failed["primary_samples"]
+        return
+    if outcome == "late_source_drift":
+        with pytest.raises(ValueError, match="bytes differ from the binding") as caught:
+            h100_anchor._run_v15_saved_primary_postprocess(output_run, source_root, comm=SerialComm())
+        failed = json.loads((output_run / "saved_primary_postprocess_terminal.json").read_text(encoding="utf-8"))
+        assert failed["primary_samples"].keys() == {"q8", "q10"}
+        assert failed["source_input_snapshot_after"] is None
+        assert "after-snapshot could not be verified" in caught.value.__notes__[0]
+        assert failed["official_result"] is False and failed["passed"] is False
+        return
+    if outcome == "closure_fail":
+        with pytest.raises(RuntimeError, match="energy-closure gate failed"):
+            h100_anchor._run_v15_saved_primary_postprocess(output_run, source_root, comm=SerialComm())
+        failed = json.loads((output_run / "saved_primary_postprocess_terminal.json").read_text(encoding="utf-8"))
+        absorption = json.loads((output_run / "saved_primary_volume_absorption.json").read_text(encoding="utf-8"))
+        assert failed["failure_stage"] == "q8_q10_and_volume_postprocess"
+        assert absorption["energy_closure_pass"] is False
+        assert absorption["A_volume_total"] == pytest.approx(0.4)
+        assert not (output_run / "saved_primary_q_response.json").exists()
+        return
+
+    terminal_record = h100_anchor._run_v15_saved_primary_postprocess(output_run, source_root, comm=SerialComm())
+    assert terminal_record["status"] == "POSTPROCESS_COMPLETE_DIAGNOSTIC_NOT_OFFICIAL"
+    assert terminal_record["q_response_pass"] is True
+    assert terminal_record["source_input_snapshot_before"] == terminal_record["source_input_snapshot_after"]
+    assert set(terminal_record["primary_samples"]) == {"q8", "q10"}
+    assert terminal_record["official_result"] is False and terminal_record["passed"] is False
+    assert len(form_calls) == 1
+    absorption = json.loads((output_run / "saved_primary_volume_absorption.json").read_text(encoding="utf-8"))
+    assert absorption["energy_closure_pass"] is True
+    assert absorption["energy_closure_residual"] == pytest.approx(0.0, abs=1.0e-15)
+    assert len(absorption["actual_fem_form_integrals"]) == 2
+    assert rta_3d.fem.form is delegated_form
+
+
+def test_v15_saved_primary_postprocess_cli_uses_only_opt_in_route(
+    tmp_path, monkeypatch
+):
+    calls = []
+    monkeypatch.setattr(
+        h100_anchor,
+        "_run_v15_saved_primary_postprocess",
+        lambda run_root, source_root, *, comm: calls.append(
+            (run_root, source_root, comm)
+        ) or {"status": "POSTPROCESS_COMPLETE_DIAGNOSTIC_NOT_OFFICIAL"},
+    )
+    run_root = tmp_path / "new-run"
+    source_root = tmp_path / "saved-source"
+    result = h100_anchor.main(
+        [
+            "--case",
+            "round1_candidate_mpi1",
+            "--run-root",
+            str(run_root),
+            "--v11-primary-postprocess-source-root",
+            str(source_root),
+        ]
+    )
+    assert result == 0
+    assert len(calls) == 1
+    assert calls[0][:2] == (run_root, source_root)

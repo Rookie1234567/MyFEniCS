@@ -1,0 +1,5648 @@
+{
+  "candidate_identity": {
+    "acceptance_contract_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+    "accepted_parent_selection_sha256": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9",
+    "action": "p_up",
+    "adaptive_round_id": "round10",
+    "candidate_id": "round10_p_up",
+    "parent_candidate_id": "round9_p_up",
+    "parent_case_record_sha256": "5b6454d4234cf254536f1c1d4263c3e804ed508cdc644614649b592e818027ea",
+    "parent_comparison_record_sha256": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30",
+    "parent_plan_sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+    "parent_recovered_storage_sha256": "7a71623b15afea662956ecd6af89b1d08701631174d1a048d5320e7a3217b893",
+    "parent_run_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_up_attempt1/run",
+    "parent_selection_record_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+    "plan_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json",
+    "plan_sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+    "run_plan_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/candidate_plan.json",
+    "v11_contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+    "v11_phase": "A1_q3",
+    "v12_recovery_binding": {
+      "audit_path": null,
+      "bundle_path": null,
+      "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+      "manifest_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+      "manifest_sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+      "output_root": null,
+      "p2_source_id": null,
+      "plan_output_path": null,
+      "support_root": null
+    }
+  },
+  "candidate_selected": false,
+  "classification": "measured_or_partial_nonofficial_endpoint",
+  "continuation": {
+    "A1_R": false,
+    "A2_R": false,
+    "A2_q": false,
+    "B": false,
+    "C": false,
+    "cost_campaign": false,
+    "iteration": false,
+    "same_group_R": false
+  },
+  "continuation_all_false": true,
+  "error": "Stage4VariablePLiveObserverError: variable-p live observer failed collectively after all ranks left the callback: [{\"exception_type\": \"ValueError\", \"message\": \"V11 reduced trace/DtN raw scope is not the complete serial vector\", \"phase\": \"callback\", \"rank\": 0}]",
+  "official_result": false,
+  "passed": false,
+  "phase": "A1_q3",
+  "primary_packet": {
+    "arrays": {
+      "full_active_active_full_rhs": {
+        "dtype": "<c16",
+        "sha256": "54a6e6fd920ef60ead42fa985f05eec1f1d11e0a7ab94c19471ed340d6abf8dc",
+        "shape": [
+          124530
+        ]
+      },
+      "full_active_active_full_solution": {
+        "dtype": "<c16",
+        "sha256": "9beb146ee87827804a6c087b1bedb5222f297f0b174a1a801316fd05a0759d8e",
+        "shape": [
+          124530
+        ]
+      },
+      "full_active_eliminated_active_interior_residual": {
+        "dtype": "<c16",
+        "sha256": "816299cdf94199dadb14d86c03271d04f4ba555e497bcf64d304c37eefe843f3",
+        "shape": [
+          124530
+        ]
+      },
+      "full_active_reduced_trace_dtn_residual_Ax_minus_b_owned": {
+        "dtype": "<c16",
+        "sha256": "b65040daa4b55bb81fca8b9cc63c2a150ec49340ca0164ea65b60d3302a6a1da",
+        "shape": [
+          38412
+        ]
+      },
+      "full_active_reduced_trace_dtn_residual_trace_metric_action": {
+        "dtype": "<c16",
+        "sha256": "394ca686f855ab9f1ab199338ad348185a55bb4e77a37a510ab7b4ae9e5fdb8e",
+        "shape": [
+          37800
+        ]
+      },
+      "full_active_reduced_trace_dtn_rhs_owned": {
+        "dtype": "<c16",
+        "sha256": "c7769a3db2551d3bece2397b0e3f025425afa28d53679aa64b24b7dab073d4ff",
+        "shape": [
+          38412
+        ]
+      },
+      "full_active_reduced_trace_dtn_rhs_trace_metric_action": {
+        "dtype": "<c16",
+        "sha256": "1cb2cd41ab4a81061b53870d49c1edc8c7c4a8a8da2fa104b1ea8e6006917fd3",
+        "shape": [
+          37800
+        ]
+      },
+      "full_active_reduced_trace_dtn_solution_owned": {
+        "dtype": "<c16",
+        "sha256": "8f0b9373fb301f0ed054d737b0db54cc4c9f285bbf5aea2c7d5cd29dccb280ac",
+        "shape": [
+          38412
+        ]
+      },
+      "full_active_reduced_trace_dtn_solution_trace_metric_action": {
+        "dtype": "<c16",
+        "sha256": "450c6670a3b6f67e3266cf5d5e615f711ab6eea4a1c1fdbe8392aa338051aceb",
+        "shape": [
+          37800
+        ]
+      },
+      "independent_A6_independent_active_incident_traction_cell_interior": {
+        "dtype": "<c16",
+        "sha256": "bdd213004131e66697ee95861601a6a656a8ee427738b36d75b0a9a8b85984ef",
+        "shape": [
+          81000
+        ]
+      },
+      "independent_A6_independent_active_incident_traction_trace": {
+        "dtype": "<c16",
+        "sha256": "cf2cd7250288d2fa73a495dcf5441d7040b6a7708161df897bbce0e23005f6d1",
+        "shape": [
+          37800
+        ]
+      },
+      "independent_A6_independent_active_modal_lower_raw_original_equation": {
+        "dtype": "<c16",
+        "sha256": "72040ce841fcc9e8fdfd9b3d12e35d6b8355c8e53f896db60d077be7abad6608",
+        "shape": [
+          612
+        ]
+      },
+      "independent_A6_independent_active_modal_lower_solver_gauge": {
+        "dtype": "<c16",
+        "sha256": "9cfa288f52d4012b00518f97ed7254389b947adff579c10aa582d38289ae264a",
+        "shape": [
+          612
+        ]
+      },
+      "independent_A6_independent_active_modal_lower_solver_gauge_rhs": {
+        "dtype": "<c16",
+        "sha256": "ef5e0459c806ae6bde658aef1192ef54d50368f4a0c63085c3937c6aa00860a5",
+        "shape": [
+          612
+        ]
+      },
+      "independent_A6_independent_active_port_upper_alpha_trace": {
+        "dtype": "<c16",
+        "sha256": "267730d6d5ed391049ccbb7105874d6844449a82a8f9e57387d8b58f84f4f61c",
+        "shape": [
+          37800
+        ]
+      },
+      "independent_A6_independent_active_port_upper_incident_trace": {
+        "dtype": "<c16",
+        "sha256": "fb0d20f68abe96ae5c613899b3bf9143ea3b57bd85b75131dc8fe52dcafdf791",
+        "shape": [
+          37800
+        ]
+      },
+      "independent_A6_independent_active_residual_cell_interior": {
+        "dtype": "<c16",
+        "sha256": "8968bf2a1d70a5d67809105a161e361a79a9c3ee976ded1f449c929db9fd5c66",
+        "shape": [
+          81000
+        ]
+      },
+      "independent_A6_independent_active_residual_trace": {
+        "dtype": "<c16",
+        "sha256": "caaa30c8cbe9cb45da3817e2fb06f8908a471dcc20b40b2f64a7a3edf4b4bc32",
+        "shape": [
+          37800
+        ]
+      },
+      "independent_A6_independent_active_rhs_cell_interior": {
+        "dtype": "<c16",
+        "sha256": "bdd213004131e66697ee95861601a6a656a8ee427738b36d75b0a9a8b85984ef",
+        "shape": [
+          81000
+        ]
+      },
+      "independent_A6_independent_active_rhs_trace": {
+        "dtype": "<c16",
+        "sha256": "e2c4bcb294bbc5e78083e2f812511ce913ba0d7b1c959ec5b5e890c079b85e41",
+        "shape": [
+          37800
+        ]
+      },
+      "independent_A6_independent_active_volume_action_minus_rhs_cell_interior": {
+        "dtype": "<c16",
+        "sha256": "8968bf2a1d70a5d67809105a161e361a79a9c3ee976ded1f449c929db9fd5c66",
+        "shape": [
+          81000
+        ]
+      },
+      "independent_A6_independent_active_volume_action_minus_rhs_trace": {
+        "dtype": "<c16",
+        "sha256": "1ece48e06876959f070401ae30a1d1545ef011a768b45b3fcd62e123d90aabbb",
+        "shape": [
+          37800
+        ]
+      },
+      "normal_after_normal_correction_residual_b_minus_Ax": {
+        "dtype": "<c16",
+        "sha256": "0548a6c7ab9a643346a6924c3f1079b513451f09af180400a8febe3a21c83fad",
+        "shape": [
+          38412
+        ]
+      },
+      "normal_after_normal_correction_rhs": {
+        "dtype": "<c16",
+        "sha256": "c7769a3db2551d3bece2397b0e3f025425afa28d53679aa64b24b7dab073d4ff",
+        "shape": [
+          38412
+        ]
+      },
+      "normal_after_normal_correction_solution": {
+        "dtype": "<c16",
+        "sha256": "8f0b9373fb301f0ed054d737b0db54cc4c9f285bbf5aea2c7d5cd29dccb280ac",
+        "shape": [
+          38412
+        ]
+      },
+      "normal_before_normal_correction_residual_b_minus_Ax": {
+        "dtype": "<c16",
+        "sha256": "db4a0c44f0d5d88329c45db61623ff2c2c52995c4fea62be88ceac2d47716d40",
+        "shape": [
+          38412
+        ]
+      },
+      "normal_before_normal_correction_rhs": {
+        "dtype": "<c16",
+        "sha256": "c7769a3db2551d3bece2397b0e3f025425afa28d53679aa64b24b7dab073d4ff",
+        "shape": [
+          38412
+        ]
+      },
+      "normal_before_normal_correction_solution": {
+        "dtype": "<c16",
+        "sha256": "5a08aa5fc425c1816b0cfe4e1b85610e72c09800c293d30394921bd143565d27",
+        "shape": [
+          38412
+        ]
+      },
+      "recovered_active_full_rhs_owned": {
+        "dtype": "<c16",
+        "sha256": "54a6e6fd920ef60ead42fa985f05eec1f1d11e0a7ab94c19471ed340d6abf8dc",
+        "shape": [
+          124530
+        ]
+      },
+      "recovered_active_full_solution_owned": {
+        "dtype": "<c16",
+        "sha256": "9beb146ee87827804a6c087b1bedb5222f297f0b174a1a801316fd05a0759d8e",
+        "shape": [
+          124530
+        ]
+      },
+      "recovered_mesh_cell_vertex_dofmap": {
+        "dtype": "<i4",
+        "sha256": "d4201beb24de1d89e2a7fd6bd266697fc84c9f7bc400ce1a7b84d742f8eec9b9",
+        "shape": [
+          1440
+        ]
+      },
+      "recovered_mesh_geometry_coordinates_nm": {
+        "dtype": "<f8",
+        "sha256": "957c09813c619b05d6c7a1392465f857fa5e1c228be020eb4a1b4ded7cc71598",
+        "shape": [
+          308,
+          3
+        ]
+      },
+      "recovered_mesh_geometry_dofmap": {
+        "dtype": "<i4",
+        "sha256": "b1e32e81beead7e01b564405a63e458353b19912ea4eca11cfbcce64d1e5b2e6",
+        "shape": [
+          180,
+          8
+        ]
+      },
+      "recovered_mesh_owned_cell_global_ids": {
+        "dtype": "<i8",
+        "sha256": "9422c248a5c23afc46d87ce8339a644d938174401a67403c2799c48b6f8ba508",
+        "shape": [
+          180
+        ]
+      },
+      "recovered_p6_function_space_dofmap": {
+        "dtype": "<i4",
+        "sha256": "3709991448da37ed047e51c0d37a32fe5ac2ca05d7e1824bd3421444711b11ef",
+        "shape": [
+          180,
+          882
+        ]
+      },
+      "recovered_p6_ghost_global_dof_block_ids": {
+        "dtype": "<i8",
+        "sha256": "c19bf8aaa184a847cceed6722ac8c6086f916b027a4a9e9378ad0b3dfb219777",
+        "shape": [
+          0
+        ]
+      },
+      "recovered_p6_owned_global_dof_block_ids": {
+        "dtype": "<i8",
+        "sha256": "104ad379f862300d545bdea1e20f43a8a1eeebf9c305affbf10eaf383ed3fefb",
+        "shape": [
+          124530
+        ]
+      },
+      "recovered_recovered_p6_local_coefficients": {
+        "dtype": "<c16",
+        "sha256": "d838d2fdc9abac0d6472fd3dd8b163df54d974cfdc014178fd6730ddd6f2d7b9",
+        "shape": [
+          124530
+        ]
+      },
+      "recovered_recovered_p6_owned_coefficients": {
+        "dtype": "<c16",
+        "sha256": "d838d2fdc9abac0d6472fd3dd8b163df54d974cfdc014178fd6730ddd6f2d7b9",
+        "shape": [
+          124530
+        ]
+      },
+      "returned_trace_dtn_b_minus_Ax": {
+        "dtype": "<c16",
+        "sha256": "0548a6c7ab9a643346a6924c3f1079b513451f09af180400a8febe3a21c83fad",
+        "shape": [
+          38412
+        ]
+      },
+      "returned_trace_dtn_rhs": {
+        "dtype": "<c16",
+        "sha256": "c7769a3db2551d3bece2397b0e3f025425afa28d53679aa64b24b7dab073d4ff",
+        "shape": [
+          38412
+        ]
+      },
+      "returned_trace_dtn_solution": {
+        "dtype": "<c16",
+        "sha256": "8f0b9373fb301f0ed054d737b0db54cc4c9f285bbf5aea2c7d5cd29dccb280ac",
+        "shape": [
+          38412
+        ]
+      }
+    },
+    "candidate_selected": false,
+    "classification": "measured_primary_only_not_official_pending_endpoint_gates",
+    "continuation": {
+      "A1_R": false,
+      "A2_R": false,
+      "A2_q": false,
+      "A2_q3": false,
+      "B": false,
+      "C": false,
+      "cost_campaign": false,
+      "iteration": false,
+      "same_group_R": false
+    },
+    "continuation_all_false": true,
+    "identity": {
+      "P2_preassembly_space_audit": null,
+      "candidate_identity": {
+        "acceptance_contract_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+        "accepted_parent_selection_sha256": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9",
+        "action": "p_up",
+        "adaptive_round_id": "round10",
+        "candidate_id": "round10_p_up",
+        "parent_candidate_id": "round9_p_up",
+        "parent_case_record_sha256": "5b6454d4234cf254536f1c1d4263c3e804ed508cdc644614649b592e818027ea",
+        "parent_comparison_record_sha256": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30",
+        "parent_plan_sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+        "parent_recovered_storage_sha256": "7a71623b15afea662956ecd6af89b1d08701631174d1a048d5320e7a3217b893",
+        "parent_run_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_up_attempt1/run",
+        "parent_selection_record_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+        "plan_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json",
+        "plan_sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+        "run_plan_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/candidate_plan.json",
+        "v11_contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+        "v11_phase": "A1_q3",
+        "v12_recovery_binding": {
+          "audit_path": null,
+          "bundle_path": null,
+          "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+          "manifest_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+          "manifest_sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+          "output_root": null,
+          "p2_source_id": null,
+          "plan_output_path": null,
+          "support_root": null
+        }
+      },
+      "candidate_plan_sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+      "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+      "endpoint_identity": {
+        "actual_cfg": {
+          "air_height": 130.0,
+          "case_name": "task43_round10_p_up",
+          "cell_notch": null,
+          "custom_polarization": null,
+          "diffraction_bottom_probe_z": null,
+          "diffraction_compute_modal_diagnostic": false,
+          "diffraction_order_max_m": null,
+          "diffraction_order_max_n": null,
+          "diffraction_probe_fraction": 0.75,
+          "diffraction_rayleigh_tol": 1e-06,
+          "diffraction_sample_count_x": 32,
+          "diffraction_sample_count_y": 32,
+          "diffraction_top_probe_z": null,
+          "diffraction_zero_order_only": false,
+          "direct_release_base_after_augmentation": false,
+          "direct_release_solver_before_postprocess": false,
+          "divergence_penalty": 0.0,
+          "domain_z_max": 130.0,
+          "domain_z_min": -10.0,
+          "dtn_auxiliary_direct_projection_audit": false,
+          "dtn_auxiliary_direct_projection_tolerance": 1e-10,
+          "dtn_trace_alias_overlap_tolerance": 1e-08,
+          "dtn_y_invariant_n0_alias_preflight": false,
+          "electric_field_unit": "V/m",
+          "eps_air": [
+            1.0,
+            0.0
+          ],
+          "eps_grating": [
+            0.9980022690345409,
+            0.0036493427323206554
+          ],
+          "eps_r": [
+            1.0,
+            0.0
+          ],
+          "eps_substrate": [
+            0.9980022690345409,
+            0.0036493427323206554
+          ],
+          "floquet_constraint_mode": "auto",
+          "floquet_constraint_mode_requested": "auto",
+          "floquet_phase_x": [
+            1.0,
+            1.4247242291537984e-15
+          ],
+          "floquet_phase_y": [
+            -0.29019682129303004,
+            -0.9569669821427598
+          ],
+          "full3d_reference_export": false,
+          "full3d_reference_plane_z": [],
+          "full3d_reference_sample_count_x": 40,
+          "full3d_reference_sample_count_y": 20,
+          "geometry_kind": "rectangular_block_grating",
+          "grating_background_eps": [
+            1.0,
+            0.0
+          ],
+          "grating_bounds": {
+            "x_max": 33.5,
+            "x_min": 16.5,
+            "y_max": 35.0,
+            "y_min": 15.0,
+            "z_max": 120.0,
+            "z_min": 0.0
+          },
+          "grating_height": 120.0,
+          "grating_index": [
+            0.999002304859,
+            0.00182649365
+          ],
+          "grating_material_label": "Si / silicon",
+          "grating_width_x": 17.0,
+          "grating_width_y": 20.0,
+          "incident_amplitude": [
+            1.0,
+            0.0
+          ],
+          "incident_e0_v_per_m": 1.0,
+          "incident_phi_deg": 90.0,
+          "incident_theta_deg": 89.0,
+          "interface_z": 0.0,
+          "k0": 0.46542113386515455,
+          "lambda0": 13.5,
+          "length_unit": "nm",
+          "magnetic_field_scale_A_per_m": 0.002654418727984993,
+          "magnetic_field_unit": "A/m",
+          "matrix_diagnostics_assemble_only": false,
+          "matrix_diagnostics_assemble_unconstrained": false,
+          "matrix_diagnostics_factorization_only": false,
+          "mesh_axis_cell_counts": [
+            3,
+            10,
+            6
+          ],
+          "mesh_axis_cell_counts_requested": [
+            3,
+            10,
+            6
+          ],
+          "mesh_axis_x_values": [
+            0.0,
+            16.5,
+            33.5,
+            50.0
+          ],
+          "mesh_axis_x_values_requested": [
+            0.0,
+            16.5,
+            33.5,
+            50.0
+          ],
+          "mesh_axis_y_values": [
+            0.0,
+            5.0,
+            10.0,
+            15.0,
+            20.0,
+            25.0,
+            30.0,
+            35.0,
+            40.0,
+            45.0,
+            50.0
+          ],
+          "mesh_axis_y_values_requested": [
+            0.0,
+            5.0,
+            10.0,
+            15.0,
+            20.0,
+            25.0,
+            30.0,
+            35.0,
+            40.0,
+            45.0,
+            50.0
+          ],
+          "mesh_axis_z_profile": null,
+          "mesh_axis_z_profile_requested": null,
+          "mesh_axis_z_values": [
+            -10.0,
+            0.0,
+            30.0,
+            60.0,
+            90.0,
+            120.0,
+            130.0
+          ],
+          "mesh_axis_z_values_requested": [
+            -10.0,
+            0.0,
+            30.0,
+            60.0,
+            90.0,
+            120.0,
+            130.0
+          ],
+          "mesh_cell_type": "hexahedron",
+          "mesh_cell_type_resolved": "hexahedron",
+          "mesh_cells": [
+            2,
+            2,
+            5
+          ],
+          "mesh_plan_id": "task43_hp_adaptivity_3x10x6_axes_v1",
+          "mesh_plan_sha256": "08c78cd927c6cd1dc268b9003a151178a5670f53a1940734f5761f3553eccdd0",
+          "mesh_refined_size": null,
+          "mesh_refined_size_resolved": 15.0,
+          "mesh_refinement_radius": null,
+          "mesh_refinement_radius_resolved": 30.0,
+          "mesh_spacing_mode": "boundary_fitted",
+          "mesh_spacing_mode_requested": "boundary_fitted",
+          "mesh_target_size": 30.0,
+          "mu_r": [
+            1.0,
+            0.0
+          ],
+          "n_air": [
+            1.0,
+            0.0
+          ],
+          "n_grating": [
+            0.999002304859,
+            0.00182649365
+          ],
+          "n_substrate": [
+            0.999002304859,
+            0.00182649365
+          ],
+          "nedelec_degree": 6,
+          "nedelec_fixed_trace_contract": "uniform_n1curl",
+          "nedelec_fixed_trace_enabled": false,
+          "nedelec_interior_degree": null,
+          "nedelec_interior_degree_resolved": 6,
+          "nedelec_trace_degree": null,
+          "nedelec_trace_degree_resolved": 6,
+          "omega": 1.3952974572658171e+17,
+          "period_x": 50.0,
+          "period_y": 50.0,
+          "petsc_direct_solver_profile": "default",
+          "petsc_extra_options": {
+            "pc_factor_mat_solver_type": "mumps"
+          },
+          "petsc_ksp_view": false,
+          "petsc_log_view": false,
+          "physical_z_max": 130.0,
+          "physical_z_min": -10.0,
+          "pml_alpha": 5.0,
+          "pml_bottom_thickness": 0.0,
+          "pml_top_thickness": 0.0,
+          "polarization": [
+            [
+              -1.0,
+              0.0
+            ],
+            [
+              6.123233995736766e-17,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ],
+          "polarization_kind": "s",
+          "propagation_direction": [
+            6.122301397540666e-17,
+            0.9998476951563913,
+            -0.017452406437283376
+          ],
+          "reporting_diffraction_order_max_m": null,
+          "reporting_diffraction_order_max_n": null,
+          "scattering_background": "layered",
+          "stage4_assembly_time_cell_static_condensation": true,
+          "stage4_boundary_model": "dtn_port",
+          "stage4_cell_static_condensation": true,
+          "stage4_dtn_assembly": "auxiliary",
+          "stage4_dtn_order_policy": "explicit_rectangle",
+          "stage4_floquet_slave_elimination": true,
+          "stage4_full3d_assembly_backend": "assembly_time_variable_p_condensed",
+          "stage4_local_h_refinement_plan": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/candidate_plan.json",
+          "stage4_pml_outer_bc": "natural",
+          "stage4_preserve_structured_input_partition": false,
+          "stage4_variable_p_active_fe_dof_gate_policy": "task43_hp_adaptivity_192gib_v1",
+          "stage4_variable_p_cell_degree_plan": null,
+          "stage4_variable_p_geometry_identity_policy": "raw_unrounded",
+          "stage_case": "stage4_block_grating",
+          "substrate_material_label": "Si / silicon",
+          "substrate_thickness": 10.0,
+          "tags": {
+            "air": 1,
+            "bottom_pml": 5,
+            "grating": 3,
+            "substrate": 2,
+            "top_pml": 4,
+            "x_max": 12,
+            "x_min": 11,
+            "y_max": 14,
+            "y_min": 13,
+            "z_max": 16,
+            "z_min": 15
+          },
+          "unique_output": false,
+          "use_floquet_xy": true,
+          "use_pml": false,
+          "validation_role": "numerical_sanity_only",
+          "visualization_degree": 6,
+          "wavevector": [
+            [
+              2.849448458307597e-17,
+              0.0
+            ],
+            [
+              0.465350247972149,
+              0.0
+            ],
+            [
+              -0.008122718792715951,
+              0.0
+            ]
+          ],
+          "x_max": 50.0,
+          "x_min": 0.0,
+          "y_max": 50.0,
+          "y_min": 0.0,
+          "z_max": 130.0,
+          "z_min": -10.0
+        },
+        "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+        "numerical_controls": {
+          "A_volume_resolved_rule": {
+            "degree": 19,
+            "form_metadata_sources": [
+              "src/solvers/common_3d_forms.py",
+              "src/postprocessing/rta_3d.py"
+            ],
+            "quadrature_rule": "default"
+          },
+          "active_degree_plan_sha256": "1569ae0ab35904467ad95c61168e25db52173273594312880d5625d6edb0697c",
+          "assembly_backend": "assembly_time_variable_p_condensed",
+          "candidate_plan_sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+          "extra_correction_count": 0,
+          "factor_solver": "mumps",
+          "independent_active_fe_dofs": 118800,
+          "modal_selection": {
+            "count": 612,
+            "max_abs_m": 4,
+            "max_abs_n": 8,
+            "mode_inventory_sha256": "f17dda1c16d135cf1f4cf00da20fe68cf2d3a5531524f185ec9c1356b7aa779b",
+            "ordered_keys_sha256": "854e0302db798e534f4cb7698a2dd3a6b28f3d247002a5c0c033319ea1a50eb2",
+            "policy": "explicit_rectangle"
+          },
+          "normal_correction_count": 1,
+          "phase": "A1_q3",
+          "quadrature_degree": {
+            "incident": 32,
+            "ports": 32,
+            "volume": 19
+          }
+        },
+        "numerical_controls_sha256": "93e78110c083594d6ef6f6abf3a242ee4438d6dd8967b96091979b91ca41bdc7",
+        "physical_configuration": {
+          "discretization_identity": {
+            "payload": {
+              "active_degree_plan_sha256": "1569ae0ab35904467ad95c61168e25db52173273594312880d5625d6edb0697c",
+              "actual_axis_values_nm": {
+                "x": [
+                  0.0,
+                  16.5,
+                  33.5,
+                  50.0
+                ],
+                "y": [
+                  0.0,
+                  5.0,
+                  10.0,
+                  15.0,
+                  20.0,
+                  25.0,
+                  30.0,
+                  35.0,
+                  40.0,
+                  45.0,
+                  50.0
+                ],
+                "z": [
+                  -10.0,
+                  0.0,
+                  30.0,
+                  60.0,
+                  90.0,
+                  120.0,
+                  130.0
+                ]
+              },
+              "candidate_plan_sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+              "schema": "task43.v2.discretization_identity.v1"
+            },
+            "schema": "task43.v2.discretization_identity.v1",
+            "sha256": "8315bc7a5ed116919201ec2de65b6785723b9909cb4bff4ac6a1024b0dd44c88"
+          },
+          "excluded_numerical_controls": [
+            "volume/incident/port quadrature degrees",
+            "DtN rectangle and derived outgoing mode inventory",
+            "direct solver and preconditioner controls",
+            "case name and output paths"
+          ],
+          "payload": {
+            "resolved_physics": {
+              "air_height": 130.0,
+              "domain_z_max": 130.0,
+              "domain_z_min": -10.0,
+              "electric_field_unit": "V/m",
+              "eps_air": [
+                1.0,
+                0.0
+              ],
+              "eps_grating": [
+                0.9980022690345409,
+                0.0036493427323206554
+              ],
+              "eps_r": [
+                1.0,
+                0.0
+              ],
+              "eps_substrate": [
+                0.9980022690345409,
+                0.0036493427323206554
+              ],
+              "floquet_phase_x": [
+                1.0,
+                1.4247242291537984e-15
+              ],
+              "floquet_phase_y": [
+                -0.29019682129303004,
+                -0.9569669821427598
+              ],
+              "geometry_kind": "rectangular_block_grating",
+              "grating_background_eps": [
+                1.0,
+                0.0
+              ],
+              "grating_bounds": {
+                "x_max": 33.5,
+                "x_min": 16.5,
+                "y_max": 35.0,
+                "y_min": 15.0,
+                "z_max": 120.0,
+                "z_min": 0.0
+              },
+              "grating_height": 120.0,
+              "grating_index": [
+                0.999002304859,
+                0.00182649365
+              ],
+              "grating_width_x": 17.0,
+              "grating_width_y": 20.0,
+              "incident_amplitude": [
+                1.0,
+                0.0
+              ],
+              "incident_e0_v_per_m": 1.0,
+              "incident_phi_deg": 90.0,
+              "incident_theta_deg": 89.0,
+              "interface_z": 0.0,
+              "k0": 0.46542113386515455,
+              "lambda0": 13.5,
+              "magnetic_field_scale_A_per_m": 0.002654418727984993,
+              "magnetic_field_unit": "A/m",
+              "mesh_cell_type_resolved": "hexahedron",
+              "mu_r": [
+                1.0,
+                0.0
+              ],
+              "n_air": [
+                1.0,
+                0.0
+              ],
+              "n_grating": [
+                0.999002304859,
+                0.00182649365
+              ],
+              "n_substrate": [
+                0.999002304859,
+                0.00182649365
+              ],
+              "period_x": 50.0,
+              "period_y": 50.0,
+              "physical_z_max": 130.0,
+              "physical_z_min": -10.0,
+              "pml_alpha": 5.0,
+              "pml_bottom_thickness": 0.0,
+              "pml_top_thickness": 0.0,
+              "polarization": [
+                [
+                  -1.0,
+                  0.0
+                ],
+                [
+                  6.123233995736766e-17,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0
+                ]
+              ],
+              "polarization_kind": "s",
+              "propagation_direction": [
+                6.122301397540666e-17,
+                0.9998476951563913,
+                -0.017452406437283376
+              ],
+              "scattering_background": "layered",
+              "stage4_boundary_model": "dtn_port",
+              "stage4_pml_outer_bc": "natural",
+              "substrate_thickness": 10.0,
+              "use_floquet_xy": true,
+              "use_pml": false,
+              "wavevector": [
+                [
+                  2.849448458307597e-17,
+                  0.0
+                ],
+                [
+                  0.465350247972149,
+                  0.0
+                ],
+                [
+                  -0.008122718792715951,
+                  0.0
+                ]
+              ]
+            },
+            "schema": "task43.v2.shared_physical_configuration.v1"
+          },
+          "schema": "task43.v2.shared_physical_configuration.v1",
+          "sha256": "2c8ea31ad16fa4ce3bf6ca91da5f2f8dd6c1f215c3fc7f41deba06fad08a1b1f"
+        },
+        "schema": "task43.v11.primary_endpoint_identity.v1"
+      },
+      "extra_correction_count": 0,
+      "extra_correction_status": "NOT_REQUESTED_BY_V11_PROTOCOL",
+      "independent_A6_raw_vector_scope": {
+        "active_interior_rows": 81000,
+        "method": "same-pass original volume/incident/port action after actual entity/Floquet projection, with active interiors and raw plus solver-gauge modal lower rows retained",
+        "modal_lower_rows": 612,
+        "norm_definition": "Euclidean norm of the independently assembled trace residual, active-interior residual, and normalized modal-gauge rows; the original unnormalized modal rows are also retained separately",
+        "trace_rows": 37800
+      },
+      "independent_active_fe_dofs": 118800,
+      "normal_correction_audit": {
+        "corrected_condensed_relative_to_rhs": 5.275175272012158e-13,
+        "corrected_condensed_residual_norm": 5.570757145104603e-13,
+        "correction_ksp": {
+          "converged_reason": 4,
+          "iterations": 1,
+          "residual_norm": 0.0
+        },
+        "correction_norm": 8.616246181894759e-10,
+        "correction_relative_to_solution": 1.6557425035612652e-12,
+        "elapsed_seconds": 2.059009678196162,
+        "initial_condensed_relative_to_rhs": 5.5046830229695596e-11,
+        "initial_condensed_residual_norm": 5.8131248158597685e-11,
+        "ksp_operator_replaced": false,
+        "matrix_or_rhs_reassembled": false,
+        "method": "same_ksp_single_residual_correction",
+        "original_primal_ksp": {
+          "converged_reason": 4,
+          "iterations": 1,
+          "ksp_type": "preonly",
+          "pc_type": "lu",
+          "residual_norm": 0.0
+        },
+        "requested": true,
+        "rhs_norm": 1.0560326165200002,
+        "solution_updated": true,
+        "source_identity": {
+          "implementation": "src.solvers.petsc_residual_correction.single_petsc_residual_correction_in_place"
+        },
+        "status": "passed"
+      },
+      "normal_correction_count": 1,
+      "official_result": false,
+      "ordered_mode_count": 612,
+      "ordered_mode_keys": [
+        [
+          "top",
+          -4,
+          -8,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          -8,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          -7,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          -7,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          -6,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          -6,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          -5,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          -5,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          -4,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          -4,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          -3,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          -3,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          -2,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          -2,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          -1,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          -1,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          0,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          0,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          1,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          1,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          2,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          2,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          3,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          3,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          4,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          4,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          5,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          5,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          6,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          6,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          7,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          7,
+          "p"
+        ],
+        [
+          "top",
+          -4,
+          8,
+          "s"
+        ],
+        [
+          "top",
+          -4,
+          8,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          -8,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          -8,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          -7,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          -7,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          -6,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          -6,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          -5,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          -5,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          -4,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          -4,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          -3,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          -3,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          -2,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          -2,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          -1,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          -1,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          0,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          0,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          1,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          1,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          2,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          2,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          3,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          3,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          4,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          4,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          5,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          5,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          6,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          6,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          7,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          7,
+          "p"
+        ],
+        [
+          "top",
+          -3,
+          8,
+          "s"
+        ],
+        [
+          "top",
+          -3,
+          8,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          -8,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          -8,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          -7,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          -7,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          -6,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          -6,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          -5,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          -5,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          -4,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          -4,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          -3,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          -3,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          -2,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          -2,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          -1,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          -1,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          0,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          0,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          1,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          1,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          2,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          2,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          3,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          3,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          4,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          4,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          5,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          5,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          6,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          6,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          7,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          7,
+          "p"
+        ],
+        [
+          "top",
+          -2,
+          8,
+          "s"
+        ],
+        [
+          "top",
+          -2,
+          8,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          -8,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          -8,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          -7,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          -7,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          -6,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          -6,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          -5,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          -5,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          -4,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          -4,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          -3,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          -3,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          -2,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          -2,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          -1,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          -1,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          0,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          0,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          1,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          1,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          2,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          2,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          3,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          3,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          4,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          4,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          5,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          5,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          6,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          6,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          7,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          7,
+          "p"
+        ],
+        [
+          "top",
+          -1,
+          8,
+          "s"
+        ],
+        [
+          "top",
+          -1,
+          8,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          -8,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          -8,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          -7,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          -7,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          -6,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          -6,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          -5,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          -5,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          -4,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          -4,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          -3,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          -3,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          -2,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          -2,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          -1,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          -1,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          0,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          0,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          1,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          1,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          2,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          2,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          3,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          3,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          4,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          4,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          5,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          5,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          6,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          6,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          7,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          7,
+          "p"
+        ],
+        [
+          "top",
+          0,
+          8,
+          "s"
+        ],
+        [
+          "top",
+          0,
+          8,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          -8,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          -8,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          -7,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          -7,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          -6,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          -6,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          -5,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          -5,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          -4,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          -4,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          -3,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          -3,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          -2,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          -2,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          -1,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          -1,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          0,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          0,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          1,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          1,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          2,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          2,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          3,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          3,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          4,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          4,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          5,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          5,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          6,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          6,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          7,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          7,
+          "p"
+        ],
+        [
+          "top",
+          1,
+          8,
+          "s"
+        ],
+        [
+          "top",
+          1,
+          8,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          -8,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          -8,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          -7,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          -7,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          -6,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          -6,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          -5,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          -5,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          -4,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          -4,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          -3,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          -3,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          -2,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          -2,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          -1,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          -1,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          0,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          0,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          1,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          1,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          2,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          2,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          3,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          3,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          4,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          4,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          5,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          5,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          6,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          6,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          7,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          7,
+          "p"
+        ],
+        [
+          "top",
+          2,
+          8,
+          "s"
+        ],
+        [
+          "top",
+          2,
+          8,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          -8,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          -8,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          -7,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          -7,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          -6,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          -6,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          -5,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          -5,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          -4,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          -4,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          -3,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          -3,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          -2,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          -2,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          -1,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          -1,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          0,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          0,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          1,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          1,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          2,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          2,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          3,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          3,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          4,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          4,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          5,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          5,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          6,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          6,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          7,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          7,
+          "p"
+        ],
+        [
+          "top",
+          3,
+          8,
+          "s"
+        ],
+        [
+          "top",
+          3,
+          8,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          -8,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          -8,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          -7,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          -7,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          -6,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          -6,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          -5,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          -5,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          -4,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          -4,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          -3,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          -3,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          -2,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          -2,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          -1,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          -1,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          0,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          0,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          1,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          1,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          2,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          2,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          3,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          3,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          4,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          4,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          5,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          5,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          6,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          6,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          7,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          7,
+          "p"
+        ],
+        [
+          "top",
+          4,
+          8,
+          "s"
+        ],
+        [
+          "top",
+          4,
+          8,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          -8,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          -8,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          -7,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          -7,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          -6,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          -6,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          -5,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          -5,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          -4,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          -4,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          -3,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          -3,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          -2,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          -2,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          -1,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          -1,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          0,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          0,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          1,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          1,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          2,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          2,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          3,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          3,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          4,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          4,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          5,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          5,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          6,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          6,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          7,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          7,
+          "p"
+        ],
+        [
+          "bottom",
+          -4,
+          8,
+          "s"
+        ],
+        [
+          "bottom",
+          -4,
+          8,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          -8,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          -8,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          -7,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          -7,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          -6,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          -6,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          -5,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          -5,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          -4,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          -4,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          -3,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          -3,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          -2,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          -2,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          -1,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          -1,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          0,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          0,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          1,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          1,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          2,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          2,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          3,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          3,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          4,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          4,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          5,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          5,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          6,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          6,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          7,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          7,
+          "p"
+        ],
+        [
+          "bottom",
+          -3,
+          8,
+          "s"
+        ],
+        [
+          "bottom",
+          -3,
+          8,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          -8,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          -8,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          -7,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          -7,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          -6,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          -6,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          -5,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          -5,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          -4,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          -4,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          -3,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          -3,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          -2,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          -2,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          -1,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          -1,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          0,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          0,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          1,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          1,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          2,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          2,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          3,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          3,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          4,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          4,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          5,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          5,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          6,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          6,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          7,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          7,
+          "p"
+        ],
+        [
+          "bottom",
+          -2,
+          8,
+          "s"
+        ],
+        [
+          "bottom",
+          -2,
+          8,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          -8,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          -8,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          -7,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          -7,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          -6,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          -6,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          -5,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          -5,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          -4,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          -4,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          -3,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          -3,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          -2,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          -2,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          -1,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          -1,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          0,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          0,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          1,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          1,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          2,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          2,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          3,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          3,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          4,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          4,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          5,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          5,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          6,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          6,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          7,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          7,
+          "p"
+        ],
+        [
+          "bottom",
+          -1,
+          8,
+          "s"
+        ],
+        [
+          "bottom",
+          -1,
+          8,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          -8,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          -8,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          -7,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          -7,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          -6,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          -6,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          -5,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          -5,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          -4,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          -4,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          -3,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          -3,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          -2,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          -2,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          -1,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          -1,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          0,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          0,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          1,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          1,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          2,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          2,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          3,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          3,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          4,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          4,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          5,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          5,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          6,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          6,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          7,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          7,
+          "p"
+        ],
+        [
+          "bottom",
+          0,
+          8,
+          "s"
+        ],
+        [
+          "bottom",
+          0,
+          8,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          -8,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          -8,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          -7,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          -7,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          -6,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          -6,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          -5,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          -5,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          -4,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          -4,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          -3,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          -3,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          -2,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          -2,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          -1,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          -1,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          0,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          0,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          1,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          1,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          2,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          2,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          3,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          3,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          4,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          4,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          5,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          5,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          6,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          6,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          7,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          7,
+          "p"
+        ],
+        [
+          "bottom",
+          1,
+          8,
+          "s"
+        ],
+        [
+          "bottom",
+          1,
+          8,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          -8,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          -8,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          -7,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          -7,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          -6,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          -6,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          -5,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          -5,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          -4,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          -4,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          -3,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          -3,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          -2,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          -2,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          -1,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          -1,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          0,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          0,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          1,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          1,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          2,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          2,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          3,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          3,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          4,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          4,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          5,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          5,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          6,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          6,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          7,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          7,
+          "p"
+        ],
+        [
+          "bottom",
+          2,
+          8,
+          "s"
+        ],
+        [
+          "bottom",
+          2,
+          8,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          -8,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          -8,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          -7,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          -7,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          -6,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          -6,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          -5,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          -5,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          -4,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          -4,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          -3,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          -3,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          -2,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          -2,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          -1,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          -1,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          0,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          0,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          1,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          1,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          2,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          2,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          3,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          3,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          4,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          4,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          5,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          5,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          6,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          6,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          7,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          7,
+          "p"
+        ],
+        [
+          "bottom",
+          3,
+          8,
+          "s"
+        ],
+        [
+          "bottom",
+          3,
+          8,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          -8,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          -8,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          -7,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          -7,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          -6,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          -6,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          -5,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          -5,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          -4,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          -4,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          -3,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          -3,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          -2,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          -2,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          -1,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          -1,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          0,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          0,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          1,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          1,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          2,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          2,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          3,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          3,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          4,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          4,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          5,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          5,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          6,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          6,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          7,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          7,
+          "p"
+        ],
+        [
+          "bottom",
+          4,
+          8,
+          "s"
+        ],
+        [
+          "bottom",
+          4,
+          8,
+          "p"
+        ]
+      ],
+      "passed": false,
+      "phase": "A1_q3",
+      "pre_validation_checkpoint": {
+        "arrays": {
+          "active_full_rhs_owned": {
+            "dtype": "<c16",
+            "sha256": "54a6e6fd920ef60ead42fa985f05eec1f1d11e0a7ab94c19471ed340d6abf8dc",
+            "shape": [
+              124530
+            ]
+          },
+          "active_full_solution_owned": {
+            "dtype": "<c16",
+            "sha256": "9beb146ee87827804a6c087b1bedb5222f297f0b174a1a801316fd05a0759d8e",
+            "shape": [
+              124530
+            ]
+          },
+          "mesh_cell_vertex_dofmap": {
+            "dtype": "<i4",
+            "sha256": "d4201beb24de1d89e2a7fd6bd266697fc84c9f7bc400ce1a7b84d742f8eec9b9",
+            "shape": [
+              1440
+            ]
+          },
+          "mesh_geometry_coordinates_nm": {
+            "dtype": "<f8",
+            "sha256": "957c09813c619b05d6c7a1392465f857fa5e1c228be020eb4a1b4ded7cc71598",
+            "shape": [
+              308,
+              3
+            ]
+          },
+          "mesh_geometry_dofmap": {
+            "dtype": "<i4",
+            "sha256": "b1e32e81beead7e01b564405a63e458353b19912ea4eca11cfbcce64d1e5b2e6",
+            "shape": [
+              180,
+              8
+            ]
+          },
+          "mesh_owned_cell_global_ids": {
+            "dtype": "<i8",
+            "sha256": "9422c248a5c23afc46d87ce8339a644d938174401a67403c2799c48b6f8ba508",
+            "shape": [
+              180
+            ]
+          },
+          "p6_function_space_dofmap": {
+            "dtype": "<i4",
+            "sha256": "3709991448da37ed047e51c0d37a32fe5ac2ca05d7e1824bd3421444711b11ef",
+            "shape": [
+              180,
+              882
+            ]
+          },
+          "p6_ghost_global_dof_block_ids": {
+            "dtype": "<i8",
+            "sha256": "c19bf8aaa184a847cceed6722ac8c6086f916b027a4a9e9378ad0b3dfb219777",
+            "shape": [
+              0
+            ]
+          },
+          "p6_owned_global_dof_block_ids": {
+            "dtype": "<i8",
+            "sha256": "104ad379f862300d545bdea1e20f43a8a1eeebf9c305affbf10eaf383ed3fefb",
+            "shape": [
+              124530
+            ]
+          },
+          "recovered_p6_local_coefficients": {
+            "dtype": "<c16",
+            "sha256": "d838d2fdc9abac0d6472fd3dd8b163df54d974cfdc014178fd6730ddd6f2d7b9",
+            "shape": [
+              124530
+            ]
+          },
+          "recovered_p6_owned_coefficients": {
+            "dtype": "<c16",
+            "sha256": "d838d2fdc9abac0d6472fd3dd8b163df54d974cfdc014178fd6730ddd6f2d7b9",
+            "shape": [
+              124530
+            ]
+          }
+        },
+        "classification": "pre_validation_diagnostic_not_official",
+        "field_capture": "not_run_at_checkpoint_time",
+        "identity": {
+          "accepted_parent_selection_sha256": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9",
+          "active_degree_plan_sha256": "1569ae0ab35904467ad95c61168e25db52173273594312880d5625d6edb0697c",
+          "candidate_action": "p_up",
+          "candidate_id": "round10_p_up",
+          "candidate_plan_sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+          "case_id": "round1_candidate_mpi1",
+          "local_h_plan_identity": {
+            "action": "p_up",
+            "allow_no_refinement": true,
+            "candidate_id": "round10_p_up",
+            "cell_interior_degree": 6,
+            "cell_interior_degree_counts": {
+              "p4": 0,
+              "p5": 0,
+              "p6": 180
+            },
+            "closure_split_counts": {
+              "balance": 0,
+              "material": 0,
+              "periodic": 0,
+              "user": 0
+            },
+            "hanging_patch_count": 0,
+            "leaf_catalog_sha256": "53a1e36b24a676ceb5554c9bdddafe89a426d38f6a1d268515cb44b9586b5590",
+            "leaf_cell_count": 180,
+            "marked_root_count": 0,
+            "plan_sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+            "root_catalog_sha256": "8b49201ee7f3f24fb1594a255f7477ce9653ffe4322e6de0ef9af57285f9d5f2",
+            "root_cell_count": 180,
+            "trace_degree": 3,
+            "variable_trace_from_cell_degrees": true
+          },
+          "mesh_and_dof_order_sha256": "41a64f84015a90f16d96bd1d0bac91ed95a32bc139317c18fed40e5559d6d48d",
+          "mpi_size": 1,
+          "ordered_mode_count": 612,
+          "ordered_mode_keys_sha256": "854e0302db798e534f4cb7698a2dd3a6b28f3d247002a5c0c033319ea1a50eb2",
+          "resolved_axes_nm": {
+            "x": [
+              0.0,
+              16.5,
+              33.5,
+              50.0
+            ],
+            "y": [
+              0.0,
+              5.0,
+              10.0,
+              15.0,
+              20.0,
+              25.0,
+              30.0,
+              35.0,
+              40.0,
+              45.0,
+              50.0
+            ],
+            "z": [
+              -10.0,
+              0.0,
+              30.0,
+              60.0,
+              90.0,
+              120.0,
+              130.0
+            ]
+          },
+          "resolved_profile_identity": null,
+          "source_identity": {
+            "file_sha256": {
+              "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+              "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+              "benchmarks/task43_hp_adaptivity/candidate_records.py": "7f98eacb0aee5e8f3cc98c61620613d02e66c909844c2ab8e171008e1cee73aa",
+              "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py": "4c16377b491a83424f8b21cb54c9e60f64dcd5bf6f6895f45fee6f11a083ce0c",
+              "benchmarks/task43_hp_adaptivity/h100_anchor.py": "003f6fe7bdcdfdd53e6a09e53ae21ade310824f06d01845f1b90d403fa489732",
+              "benchmarks/task43_hp_adaptivity/profile.py": "ddd315bcbe897be4856c42dc68ecbf7897dcf8fa836ef91985863bb6ae8afc2e",
+              "benchmarks/task43_hp_adaptivity/round1_candidates.py": "6da8f277cf7c1bb8809d04290dfe5418c1ca61955a378eca11447ce9ec90efe2",
+              "benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py": "d1ad0a22a8e60147a0ccf3856a2c847b9ff3b74c34ec4bc04dc76c258a8d8ae9",
+              "src/adaptivity/exact_sequence_variable_p.py": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+              "src/adaptivity/hcurl_broken_cell_trace.py": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+              "src/adaptivity/hcurl_broken_trace_graph.py": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+              "src/adaptivity/physical_g_error.py": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+              "src/adaptivity/stage4_local_h.py": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+              "src/adaptivity/variable_p_degree_plan.py": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+              "src/adaptivity/variable_p_entity_map.py": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+              "src/adaptivity/variable_p_transfer.py": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+              "src/common/analytic_fields_3d.py": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+              "src/common/config_3d.py": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+              "src/common/modes_3d.py": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+              "src/constraints/floquet_3d.py": "cfa0953ba1b6fa60b1943be2f0f977413221857290df7ceee0747df811bca309",
+              "src/geometry/mesh_builder_3d.py": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+              "src/geometry/task43_hp_adaptivity_axis_plan.py": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+              "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+              "src/postprocessing/diffraction_3d.py": "42d65299ce1cc8c2762dc1d3972ea04063b155bd8a58d4553c9ac9732213ce66",
+              "src/postprocessing/flat_layer_reference_3d.py": "ed6493bd2f13dccbcd85a8ef2edb6f6b07726ec6c41b82651525b386d44ec04a",
+              "src/postprocessing/physical_field_comparison.py": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+              "src/postprocessing/physical_field_sampling.py": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+              "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+              "src/postprocessing/rta_3d.py": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+              "src/solvers/common_3d_case_flow.py": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+              "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+              "src/solvers/common_3d_forms.py": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+              "src/solvers/common_3d_postprocess.py": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+              "src/solvers/common_3d_solve.py": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+              "src/solvers/common_3d_utils.py": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+              "src/solvers/dtn_port_3d.py": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+              "src/solvers/hcurl_blocked_gram_tensor.py": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+              "src/solvers/hcurl_variable_p_assembly.py": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+              "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+              "src/solvers/hcurl_variable_p_reduction.py": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+              "src/solvers/independent_active_action.py": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+              "src/solvers/petsc_residual_correction.py": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+              "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb"
+            },
+            "git_head": "d4e2be77a90e39d49fc56b4214f3bcc24843ddf4",
+            "v11_primary_contract": {
+              "contract_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+              "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+              "phase": "A1_q3"
+            },
+            "v11_watchdog_worker_identity": {
+              "direct_watchdog_parent_verified": true,
+              "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/watchdog/workflow_phase.json",
+              "tracer_descends_from_watchdog": true,
+              "tracer_parent_pid": 3258141,
+              "tracer_pid": 3258171,
+              "tracer_proc_status_verified": true,
+              "tracer_start_ticks": 299263323,
+              "watchdog_parent_pid_environment": 3258141,
+              "watchdog_pid": 3258141,
+              "watchdog_start_ticks": 299263245,
+              "worker_parent_pid": 3258141,
+              "worker_pid": 3258156,
+              "worker_start_ticks": 299263307,
+              "worker_tid_affinities": [
+                {
+                  "cpu_list": [
+                    1
+                  ],
+                  "tid": 3258156
+                },
+                {
+                  "cpu_list": [
+                    1
+                  ],
+                  "tid": 3258251
+                },
+                {
+                  "cpu_list": [
+                    1
+                  ],
+                  "tid": 3258252
+                }
+              ]
+            },
+            "v12_recovery_binding": {
+              "audit_path": null,
+              "bundle_path": null,
+              "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+              "manifest_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+              "manifest_sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+              "output_root": null,
+              "p2_source_id": null,
+              "plan_output_path": null,
+              "support_root": null
+            }
+          },
+          "v11_endpoint_identity": {
+            "actual_cfg": {
+              "air_height": 130.0,
+              "case_name": "task43_round10_p_up",
+              "cell_notch": null,
+              "custom_polarization": null,
+              "diffraction_bottom_probe_z": null,
+              "diffraction_compute_modal_diagnostic": false,
+              "diffraction_order_max_m": null,
+              "diffraction_order_max_n": null,
+              "diffraction_probe_fraction": 0.75,
+              "diffraction_rayleigh_tol": 1e-06,
+              "diffraction_sample_count_x": 32,
+              "diffraction_sample_count_y": 32,
+              "diffraction_top_probe_z": null,
+              "diffraction_zero_order_only": false,
+              "direct_release_base_after_augmentation": false,
+              "direct_release_solver_before_postprocess": false,
+              "divergence_penalty": 0.0,
+              "domain_z_max": 130.0,
+              "domain_z_min": -10.0,
+              "dtn_auxiliary_direct_projection_audit": false,
+              "dtn_auxiliary_direct_projection_tolerance": 1e-10,
+              "dtn_trace_alias_overlap_tolerance": 1e-08,
+              "dtn_y_invariant_n0_alias_preflight": false,
+              "electric_field_unit": "V/m",
+              "eps_air": [
+                1.0,
+                0.0
+              ],
+              "eps_grating": [
+                0.9980022690345409,
+                0.0036493427323206554
+              ],
+              "eps_r": [
+                1.0,
+                0.0
+              ],
+              "eps_substrate": [
+                0.9980022690345409,
+                0.0036493427323206554
+              ],
+              "floquet_constraint_mode": "auto",
+              "floquet_constraint_mode_requested": "auto",
+              "floquet_phase_x": [
+                1.0,
+                1.4247242291537984e-15
+              ],
+              "floquet_phase_y": [
+                -0.29019682129303004,
+                -0.9569669821427598
+              ],
+              "full3d_reference_export": false,
+              "full3d_reference_plane_z": [],
+              "full3d_reference_sample_count_x": 40,
+              "full3d_reference_sample_count_y": 20,
+              "geometry_kind": "rectangular_block_grating",
+              "grating_background_eps": [
+                1.0,
+                0.0
+              ],
+              "grating_bounds": {
+                "x_max": 33.5,
+                "x_min": 16.5,
+                "y_max": 35.0,
+                "y_min": 15.0,
+                "z_max": 120.0,
+                "z_min": 0.0
+              },
+              "grating_height": 120.0,
+              "grating_index": [
+                0.999002304859,
+                0.00182649365
+              ],
+              "grating_material_label": "Si / silicon",
+              "grating_width_x": 17.0,
+              "grating_width_y": 20.0,
+              "incident_amplitude": [
+                1.0,
+                0.0
+              ],
+              "incident_e0_v_per_m": 1.0,
+              "incident_phi_deg": 90.0,
+              "incident_theta_deg": 89.0,
+              "interface_z": 0.0,
+              "k0": 0.46542113386515455,
+              "lambda0": 13.5,
+              "length_unit": "nm",
+              "magnetic_field_scale_A_per_m": 0.002654418727984993,
+              "magnetic_field_unit": "A/m",
+              "matrix_diagnostics_assemble_only": false,
+              "matrix_diagnostics_assemble_unconstrained": false,
+              "matrix_diagnostics_factorization_only": false,
+              "mesh_axis_cell_counts": [
+                3,
+                10,
+                6
+              ],
+              "mesh_axis_cell_counts_requested": [
+                3,
+                10,
+                6
+              ],
+              "mesh_axis_x_values": [
+                0.0,
+                16.5,
+                33.5,
+                50.0
+              ],
+              "mesh_axis_x_values_requested": [
+                0.0,
+                16.5,
+                33.5,
+                50.0
+              ],
+              "mesh_axis_y_values": [
+                0.0,
+                5.0,
+                10.0,
+                15.0,
+                20.0,
+                25.0,
+                30.0,
+                35.0,
+                40.0,
+                45.0,
+                50.0
+              ],
+              "mesh_axis_y_values_requested": [
+                0.0,
+                5.0,
+                10.0,
+                15.0,
+                20.0,
+                25.0,
+                30.0,
+                35.0,
+                40.0,
+                45.0,
+                50.0
+              ],
+              "mesh_axis_z_profile": null,
+              "mesh_axis_z_profile_requested": null,
+              "mesh_axis_z_values": [
+                -10.0,
+                0.0,
+                30.0,
+                60.0,
+                90.0,
+                120.0,
+                130.0
+              ],
+              "mesh_axis_z_values_requested": [
+                -10.0,
+                0.0,
+                30.0,
+                60.0,
+                90.0,
+                120.0,
+                130.0
+              ],
+              "mesh_cell_type": "hexahedron",
+              "mesh_cell_type_resolved": "hexahedron",
+              "mesh_cells": [
+                2,
+                2,
+                5
+              ],
+              "mesh_plan_id": "task43_hp_adaptivity_3x10x6_axes_v1",
+              "mesh_plan_sha256": "08c78cd927c6cd1dc268b9003a151178a5670f53a1940734f5761f3553eccdd0",
+              "mesh_refined_size": null,
+              "mesh_refined_size_resolved": 15.0,
+              "mesh_refinement_radius": null,
+              "mesh_refinement_radius_resolved": 30.0,
+              "mesh_spacing_mode": "boundary_fitted",
+              "mesh_spacing_mode_requested": "boundary_fitted",
+              "mesh_target_size": 30.0,
+              "mu_r": [
+                1.0,
+                0.0
+              ],
+              "n_air": [
+                1.0,
+                0.0
+              ],
+              "n_grating": [
+                0.999002304859,
+                0.00182649365
+              ],
+              "n_substrate": [
+                0.999002304859,
+                0.00182649365
+              ],
+              "nedelec_degree": 6,
+              "nedelec_fixed_trace_contract": "uniform_n1curl",
+              "nedelec_fixed_trace_enabled": false,
+              "nedelec_interior_degree": null,
+              "nedelec_interior_degree_resolved": 6,
+              "nedelec_trace_degree": null,
+              "nedelec_trace_degree_resolved": 6,
+              "omega": 1.3952974572658171e+17,
+              "period_x": 50.0,
+              "period_y": 50.0,
+              "petsc_direct_solver_profile": "default",
+              "petsc_extra_options": {
+                "pc_factor_mat_solver_type": "mumps"
+              },
+              "petsc_ksp_view": false,
+              "petsc_log_view": false,
+              "physical_z_max": 130.0,
+              "physical_z_min": -10.0,
+              "pml_alpha": 5.0,
+              "pml_bottom_thickness": 0.0,
+              "pml_top_thickness": 0.0,
+              "polarization": [
+                [
+                  -1.0,
+                  0.0
+                ],
+                [
+                  6.123233995736766e-17,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0
+                ]
+              ],
+              "polarization_kind": "s",
+              "propagation_direction": [
+                6.122301397540666e-17,
+                0.9998476951563913,
+                -0.017452406437283376
+              ],
+              "reporting_diffraction_order_max_m": null,
+              "reporting_diffraction_order_max_n": null,
+              "scattering_background": "layered",
+              "stage4_assembly_time_cell_static_condensation": true,
+              "stage4_boundary_model": "dtn_port",
+              "stage4_cell_static_condensation": true,
+              "stage4_dtn_assembly": "auxiliary",
+              "stage4_dtn_order_policy": "explicit_rectangle",
+              "stage4_floquet_slave_elimination": true,
+              "stage4_full3d_assembly_backend": "assembly_time_variable_p_condensed",
+              "stage4_local_h_refinement_plan": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/candidate_plan.json",
+              "stage4_pml_outer_bc": "natural",
+              "stage4_preserve_structured_input_partition": false,
+              "stage4_variable_p_active_fe_dof_gate_policy": "task43_hp_adaptivity_192gib_v1",
+              "stage4_variable_p_cell_degree_plan": null,
+              "stage4_variable_p_geometry_identity_policy": "raw_unrounded",
+              "stage_case": "stage4_block_grating",
+              "substrate_material_label": "Si / silicon",
+              "substrate_thickness": 10.0,
+              "tags": {
+                "air": 1,
+                "bottom_pml": 5,
+                "grating": 3,
+                "substrate": 2,
+                "top_pml": 4,
+                "x_max": 12,
+                "x_min": 11,
+                "y_max": 14,
+                "y_min": 13,
+                "z_max": 16,
+                "z_min": 15
+              },
+              "unique_output": false,
+              "use_floquet_xy": true,
+              "use_pml": false,
+              "validation_role": "numerical_sanity_only",
+              "visualization_degree": 6,
+              "wavevector": [
+                [
+                  2.849448458307597e-17,
+                  0.0
+                ],
+                [
+                  0.465350247972149,
+                  0.0
+                ],
+                [
+                  -0.008122718792715951,
+                  0.0
+                ]
+              ],
+              "x_max": 50.0,
+              "x_min": 0.0,
+              "y_max": 50.0,
+              "y_min": 0.0,
+              "z_max": 130.0,
+              "z_min": -10.0
+            },
+            "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+            "numerical_controls": {
+              "A_volume_resolved_rule": {
+                "degree": 19,
+                "form_metadata_sources": [
+                  "src/solvers/common_3d_forms.py",
+                  "src/postprocessing/rta_3d.py"
+                ],
+                "quadrature_rule": "default"
+              },
+              "active_degree_plan_sha256": "1569ae0ab35904467ad95c61168e25db52173273594312880d5625d6edb0697c",
+              "assembly_backend": "assembly_time_variable_p_condensed",
+              "candidate_plan_sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+              "extra_correction_count": 0,
+              "factor_solver": "mumps",
+              "independent_active_fe_dofs": 118800,
+              "modal_selection": {
+                "count": 612,
+                "max_abs_m": 4,
+                "max_abs_n": 8,
+                "mode_inventory_sha256": "f17dda1c16d135cf1f4cf00da20fe68cf2d3a5531524f185ec9c1356b7aa779b",
+                "ordered_keys_sha256": "854e0302db798e534f4cb7698a2dd3a6b28f3d247002a5c0c033319ea1a50eb2",
+                "policy": "explicit_rectangle"
+              },
+              "normal_correction_count": 1,
+              "phase": "A1_q3",
+              "quadrature_degree": {
+                "incident": 32,
+                "ports": 32,
+                "volume": 19
+              }
+            },
+            "numerical_controls_sha256": "93e78110c083594d6ef6f6abf3a242ee4438d6dd8967b96091979b91ca41bdc7",
+            "physical_configuration": {
+              "discretization_identity": {
+                "payload": {
+                  "active_degree_plan_sha256": "1569ae0ab35904467ad95c61168e25db52173273594312880d5625d6edb0697c",
+                  "actual_axis_values_nm": {
+                    "x": [
+                      0.0,
+                      16.5,
+                      33.5,
+                      50.0
+                    ],
+                    "y": [
+                      0.0,
+                      5.0,
+                      10.0,
+                      15.0,
+                      20.0,
+                      25.0,
+                      30.0,
+                      35.0,
+                      40.0,
+                      45.0,
+                      50.0
+                    ],
+                    "z": [
+                      -10.0,
+                      0.0,
+                      30.0,
+                      60.0,
+                      90.0,
+                      120.0,
+                      130.0
+                    ]
+                  },
+                  "candidate_plan_sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+                  "schema": "task43.v2.discretization_identity.v1"
+                },
+                "schema": "task43.v2.discretization_identity.v1",
+                "sha256": "8315bc7a5ed116919201ec2de65b6785723b9909cb4bff4ac6a1024b0dd44c88"
+              },
+              "excluded_numerical_controls": [
+                "volume/incident/port quadrature degrees",
+                "DtN rectangle and derived outgoing mode inventory",
+                "direct solver and preconditioner controls",
+                "case name and output paths"
+              ],
+              "payload": {
+                "resolved_physics": {
+                  "air_height": 130.0,
+                  "domain_z_max": 130.0,
+                  "domain_z_min": -10.0,
+                  "electric_field_unit": "V/m",
+                  "eps_air": [
+                    1.0,
+                    0.0
+                  ],
+                  "eps_grating": [
+                    0.9980022690345409,
+                    0.0036493427323206554
+                  ],
+                  "eps_r": [
+                    1.0,
+                    0.0
+                  ],
+                  "eps_substrate": [
+                    0.9980022690345409,
+                    0.0036493427323206554
+                  ],
+                  "floquet_phase_x": [
+                    1.0,
+                    1.4247242291537984e-15
+                  ],
+                  "floquet_phase_y": [
+                    -0.29019682129303004,
+                    -0.9569669821427598
+                  ],
+                  "geometry_kind": "rectangular_block_grating",
+                  "grating_background_eps": [
+                    1.0,
+                    0.0
+                  ],
+                  "grating_bounds": {
+                    "x_max": 33.5,
+                    "x_min": 16.5,
+                    "y_max": 35.0,
+                    "y_min": 15.0,
+                    "z_max": 120.0,
+                    "z_min": 0.0
+                  },
+                  "grating_height": 120.0,
+                  "grating_index": [
+                    0.999002304859,
+                    0.00182649365
+                  ],
+                  "grating_width_x": 17.0,
+                  "grating_width_y": 20.0,
+                  "incident_amplitude": [
+                    1.0,
+                    0.0
+                  ],
+                  "incident_e0_v_per_m": 1.0,
+                  "incident_phi_deg": 90.0,
+                  "incident_theta_deg": 89.0,
+                  "interface_z": 0.0,
+                  "k0": 0.46542113386515455,
+                  "lambda0": 13.5,
+                  "magnetic_field_scale_A_per_m": 0.002654418727984993,
+                  "magnetic_field_unit": "A/m",
+                  "mesh_cell_type_resolved": "hexahedron",
+                  "mu_r": [
+                    1.0,
+                    0.0
+                  ],
+                  "n_air": [
+                    1.0,
+                    0.0
+                  ],
+                  "n_grating": [
+                    0.999002304859,
+                    0.00182649365
+                  ],
+                  "n_substrate": [
+                    0.999002304859,
+                    0.00182649365
+                  ],
+                  "period_x": 50.0,
+                  "period_y": 50.0,
+                  "physical_z_max": 130.0,
+                  "physical_z_min": -10.0,
+                  "pml_alpha": 5.0,
+                  "pml_bottom_thickness": 0.0,
+                  "pml_top_thickness": 0.0,
+                  "polarization": [
+                    [
+                      -1.0,
+                      0.0
+                    ],
+                    [
+                      6.123233995736766e-17,
+                      0.0
+                    ],
+                    [
+                      0.0,
+                      0.0
+                    ]
+                  ],
+                  "polarization_kind": "s",
+                  "propagation_direction": [
+                    6.122301397540666e-17,
+                    0.9998476951563913,
+                    -0.017452406437283376
+                  ],
+                  "scattering_background": "layered",
+                  "stage4_boundary_model": "dtn_port",
+                  "stage4_pml_outer_bc": "natural",
+                  "substrate_thickness": 10.0,
+                  "use_floquet_xy": true,
+                  "use_pml": false,
+                  "wavevector": [
+                    [
+                      2.849448458307597e-17,
+                      0.0
+                    ],
+                    [
+                      0.465350247972149,
+                      0.0
+                    ],
+                    [
+                      -0.008122718792715951,
+                      0.0
+                    ]
+                  ]
+                },
+                "schema": "task43.v2.shared_physical_configuration.v1"
+              },
+              "schema": "task43.v2.shared_physical_configuration.v1",
+              "sha256": "2c8ea31ad16fa4ce3bf6ca91da5f2f8dd6c1f215c3fc7f41deba06fad08a1b1f"
+            },
+            "schema": "task43.v11.primary_endpoint_identity.v1"
+          },
+          "v2_endpoint_identity": null
+        },
+        "independent_A6": "not_run_at_checkpoint_time",
+        "mpi_size": 1,
+        "npz_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/pre_validation_checkpoint.npz",
+        "npz_sha256": "0e3553686a87afa639a09009ff8b244c530f5ccc7baacbcf055696ffa41f286d",
+        "official_result": false,
+        "schema": "task43.pre-validation-field-checkpoint.v1",
+        "sidecar_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/pre_validation_checkpoint.json",
+        "sidecar_sha256": "a568fec6979d095439a53a84c5b9b9fafb257a5215b846635217d2dee5dcfe59",
+        "status": "written_before_field_capture_and_independent_A6"
+      },
+      "raw_full_active_scope": {
+        "active_full_rows": 124530,
+        "active_interior_rows": 81000,
+        "full_operator_norm_definition": "sqrt(constraint-dual reduced-trace norm^2 + eliminated-interior Euclidean norm^2); do not take a plain concatenated Euclidean norm",
+        "independent_active_fe_dofs": 118800,
+        "independent_reduced_trace_rows": 37800,
+        "method": "same-pass exact block-Gaussian transformed residual; reduced trace/DtN residual is retained in its constraint-induced dual coordinates, while eliminated active-interior rows are retained in active-cell coordinates",
+        "mpi_size": 1,
+        "raw_trace_rows": 43530,
+        "reduced_trace_dtn_owned_range": [
+          0,
+          38412
+        ],
+        "reduced_trace_dtn_rows": 38412,
+        "trace_metric_action_definition": "same-pass Gram inverse action for dual residual/RHS and Gram action for primal solution; vdot(trace, action) plus auxiliary Euclidean contribution reproduces each reduced norm squared"
+      },
+      "raw_vector_gate_status": "pending_independent_recomputation",
+      "returned_trace_dtn_matrix_shape": [
+        38412,
+        38412
+      ],
+      "returned_trace_dtn_system_scope": "returned independent-trace/DtN reduced system; full-active residual is separately retained",
+      "source_identity": {
+        "file_sha256": {
+          "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+          "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+          "benchmarks/task43_hp_adaptivity/candidate_records.py": "7f98eacb0aee5e8f3cc98c61620613d02e66c909844c2ab8e171008e1cee73aa",
+          "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py": "4c16377b491a83424f8b21cb54c9e60f64dcd5bf6f6895f45fee6f11a083ce0c",
+          "benchmarks/task43_hp_adaptivity/h100_anchor.py": "003f6fe7bdcdfdd53e6a09e53ae21ade310824f06d01845f1b90d403fa489732",
+          "benchmarks/task43_hp_adaptivity/profile.py": "ddd315bcbe897be4856c42dc68ecbf7897dcf8fa836ef91985863bb6ae8afc2e",
+          "benchmarks/task43_hp_adaptivity/round1_candidates.py": "6da8f277cf7c1bb8809d04290dfe5418c1ca61955a378eca11447ce9ec90efe2",
+          "benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py": "d1ad0a22a8e60147a0ccf3856a2c847b9ff3b74c34ec4bc04dc76c258a8d8ae9",
+          "src/adaptivity/exact_sequence_variable_p.py": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+          "src/adaptivity/hcurl_broken_cell_trace.py": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+          "src/adaptivity/hcurl_broken_trace_graph.py": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+          "src/adaptivity/physical_g_error.py": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+          "src/adaptivity/stage4_local_h.py": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+          "src/adaptivity/variable_p_degree_plan.py": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+          "src/adaptivity/variable_p_entity_map.py": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+          "src/adaptivity/variable_p_transfer.py": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+          "src/common/analytic_fields_3d.py": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+          "src/common/config_3d.py": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+          "src/common/modes_3d.py": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+          "src/constraints/floquet_3d.py": "cfa0953ba1b6fa60b1943be2f0f977413221857290df7ceee0747df811bca309",
+          "src/geometry/mesh_builder_3d.py": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+          "src/geometry/task43_hp_adaptivity_axis_plan.py": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+          "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+          "src/postprocessing/diffraction_3d.py": "42d65299ce1cc8c2762dc1d3972ea04063b155bd8a58d4553c9ac9732213ce66",
+          "src/postprocessing/flat_layer_reference_3d.py": "ed6493bd2f13dccbcd85a8ef2edb6f6b07726ec6c41b82651525b386d44ec04a",
+          "src/postprocessing/physical_field_comparison.py": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+          "src/postprocessing/physical_field_sampling.py": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+          "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+          "src/postprocessing/rta_3d.py": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+          "src/solvers/common_3d_case_flow.py": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+          "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+          "src/solvers/common_3d_forms.py": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+          "src/solvers/common_3d_postprocess.py": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+          "src/solvers/common_3d_solve.py": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+          "src/solvers/common_3d_utils.py": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+          "src/solvers/dtn_port_3d.py": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+          "src/solvers/hcurl_blocked_gram_tensor.py": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+          "src/solvers/hcurl_variable_p_assembly.py": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+          "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+          "src/solvers/hcurl_variable_p_reduction.py": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+          "src/solvers/independent_active_action.py": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+          "src/solvers/petsc_residual_correction.py": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+          "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb"
+        },
+        "git_head": "d4e2be77a90e39d49fc56b4214f3bcc24843ddf4",
+        "v11_primary_contract": {
+          "contract_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+          "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+          "phase": "A1_q3"
+        },
+        "v11_watchdog_worker_identity": {
+          "direct_watchdog_parent_verified": true,
+          "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/watchdog/workflow_phase.json",
+          "tracer_descends_from_watchdog": true,
+          "tracer_parent_pid": 3258141,
+          "tracer_pid": 3258171,
+          "tracer_proc_status_verified": true,
+          "tracer_start_ticks": 299263323,
+          "watchdog_parent_pid_environment": 3258141,
+          "watchdog_pid": 3258141,
+          "watchdog_start_ticks": 299263245,
+          "worker_parent_pid": 3258141,
+          "worker_pid": 3258156,
+          "worker_start_ticks": 299263307,
+          "worker_tid_affinities": [
+            {
+              "cpu_list": [
+                1
+              ],
+              "tid": 3258156
+            },
+            {
+              "cpu_list": [
+                1
+              ],
+              "tid": 3258251
+            },
+            {
+              "cpu_list": [
+                1
+              ],
+              "tid": 3258252
+            }
+          ]
+        },
+        "v12_recovery_binding": {
+          "audit_path": null,
+          "bundle_path": null,
+          "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+          "manifest_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+          "manifest_sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+          "output_root": null,
+          "p2_source_id": null,
+          "plan_output_path": null,
+          "support_root": null
+        }
+      },
+      "v12_recovery_binding": {
+        "audit_path": null,
+        "bundle_path": null,
+        "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+        "manifest_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+        "manifest_sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+        "output_root": null,
+        "p2_source_id": null,
+        "plan_output_path": null,
+        "support_root": null
+      }
+    },
+    "npz_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/primary_state.npz",
+    "npz_sha256": "27c75edf12de4f3be93f025e985dcd2a2bde42f3a083c3110afc5e6289c24830",
+    "official_result": false,
+    "passed": false,
+    "schema": "task43.v11.primary_state.v1",
+    "selection_candidate": false,
+    "selection_eligible": false
+  },
+  "primary_raw_vector_audit_checkpoint": null,
+  "primary_samples": {},
+  "schema": "task43.v11.partial-terminal.v1",
+  "selection_candidate": false,
+  "selection_eligible": false,
+  "source_identity": {
+    "file_sha256": {
+      "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+      "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+      "benchmarks/task43_hp_adaptivity/candidate_records.py": "7f98eacb0aee5e8f3cc98c61620613d02e66c909844c2ab8e171008e1cee73aa",
+      "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py": "4c16377b491a83424f8b21cb54c9e60f64dcd5bf6f6895f45fee6f11a083ce0c",
+      "benchmarks/task43_hp_adaptivity/h100_anchor.py": "003f6fe7bdcdfdd53e6a09e53ae21ade310824f06d01845f1b90d403fa489732",
+      "benchmarks/task43_hp_adaptivity/profile.py": "ddd315bcbe897be4856c42dc68ecbf7897dcf8fa836ef91985863bb6ae8afc2e",
+      "benchmarks/task43_hp_adaptivity/round1_candidates.py": "6da8f277cf7c1bb8809d04290dfe5418c1ca61955a378eca11447ce9ec90efe2",
+      "benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py": "d1ad0a22a8e60147a0ccf3856a2c847b9ff3b74c34ec4bc04dc76c258a8d8ae9",
+      "src/adaptivity/exact_sequence_variable_p.py": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+      "src/adaptivity/hcurl_broken_cell_trace.py": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+      "src/adaptivity/hcurl_broken_trace_graph.py": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+      "src/adaptivity/physical_g_error.py": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+      "src/adaptivity/stage4_local_h.py": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+      "src/adaptivity/variable_p_degree_plan.py": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+      "src/adaptivity/variable_p_entity_map.py": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+      "src/adaptivity/variable_p_transfer.py": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+      "src/common/analytic_fields_3d.py": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "src/common/config_3d.py": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+      "src/common/modes_3d.py": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+      "src/constraints/floquet_3d.py": "cfa0953ba1b6fa60b1943be2f0f977413221857290df7ceee0747df811bca309",
+      "src/geometry/mesh_builder_3d.py": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+      "src/geometry/task43_hp_adaptivity_axis_plan.py": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+      "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+      "src/postprocessing/diffraction_3d.py": "42d65299ce1cc8c2762dc1d3972ea04063b155bd8a58d4553c9ac9732213ce66",
+      "src/postprocessing/flat_layer_reference_3d.py": "ed6493bd2f13dccbcd85a8ef2edb6f6b07726ec6c41b82651525b386d44ec04a",
+      "src/postprocessing/physical_field_comparison.py": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+      "src/postprocessing/physical_field_sampling.py": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+      "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+      "src/postprocessing/rta_3d.py": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+      "src/solvers/common_3d_case_flow.py": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+      "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "src/solvers/common_3d_forms.py": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+      "src/solvers/common_3d_postprocess.py": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+      "src/solvers/common_3d_solve.py": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+      "src/solvers/common_3d_utils.py": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+      "src/solvers/dtn_port_3d.py": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+      "src/solvers/hcurl_blocked_gram_tensor.py": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+      "src/solvers/hcurl_variable_p_assembly.py": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+      "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "src/solvers/hcurl_variable_p_reduction.py": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+      "src/solvers/independent_active_action.py": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+      "src/solvers/petsc_residual_correction.py": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+      "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb"
+    },
+    "git_head": "d4e2be77a90e39d49fc56b4214f3bcc24843ddf4",
+    "v11_primary_contract": {
+      "contract_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+      "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+      "phase": "A1_q3"
+    },
+    "v11_watchdog_worker_identity": {
+      "direct_watchdog_parent_verified": true,
+      "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/watchdog/workflow_phase.json",
+      "tracer_descends_from_watchdog": true,
+      "tracer_parent_pid": 3258141,
+      "tracer_pid": 3258171,
+      "tracer_proc_status_verified": true,
+      "tracer_start_ticks": 299263323,
+      "watchdog_parent_pid_environment": 3258141,
+      "watchdog_pid": 3258141,
+      "watchdog_start_ticks": 299263245,
+      "worker_parent_pid": 3258141,
+      "worker_pid": 3258156,
+      "worker_start_ticks": 299263307,
+      "worker_tid_affinities": [
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3258156
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3258251
+        },
+        {
+          "cpu_list": [
+            1
+          ],
+          "tid": 3258252
+        }
+      ]
+    },
+    "v12_recovery_binding": {
+      "audit_path": null,
+      "bundle_path": null,
+      "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+      "manifest_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+      "manifest_sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+      "output_root": null,
+      "p2_source_id": null,
+      "plan_output_path": null,
+      "support_root": null
+    }
+  },
+  "status": "FAILED",
+  "v12_recovery_binding": {
+    "audit_path": null,
+    "bundle_path": null,
+    "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+    "manifest_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+    "manifest_sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+    "output_root": null,
+    "p2_source_id": null,
+    "plan_output_path": null,
+    "support_root": null
+  }
+}

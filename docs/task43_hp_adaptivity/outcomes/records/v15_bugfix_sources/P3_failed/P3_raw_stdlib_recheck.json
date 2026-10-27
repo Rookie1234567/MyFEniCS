@@ -1,0 +1,404 @@
+{
+  "schema": "task43.v15.root-primary-stdlib-recheck.v1",
+  "created_utc": "2026-10-27T03:13:29.075506+00:00",
+  "source_primary": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/primary_state.npz",
+    "sha256": "27c75edf12de4f3be93f025e985dcd2a2bde42f3a083c3110afc5e6289c24830"
+  },
+  "source_terminal": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/task43_v11_partial_terminal.json",
+    "sha256": "a37435a309511365fa32214ca702bd02b70f77dffdf692189d88b32899e6356e"
+  },
+  "array_identity_checks": [
+    {
+      "array": "recovered_recovered_p6_local_coefficients",
+      "sha256": "d838d2fdc9abac0d6472fd3dd8b163df54d974cfdc014178fd6730ddd6f2d7b9",
+      "shape": [
+        124530
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "recovered_recovered_p6_owned_coefficients",
+      "sha256": "d838d2fdc9abac0d6472fd3dd8b163df54d974cfdc014178fd6730ddd6f2d7b9",
+      "shape": [
+        124530
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "recovered_mesh_geometry_coordinates_nm",
+      "sha256": "957c09813c619b05d6c7a1392465f857fa5e1c228be020eb4a1b4ded7cc71598",
+      "shape": [
+        308,
+        3
+      ],
+      "dtype": "<f8"
+    },
+    {
+      "array": "recovered_mesh_geometry_dofmap",
+      "sha256": "b1e32e81beead7e01b564405a63e458353b19912ea4eca11cfbcce64d1e5b2e6",
+      "shape": [
+        180,
+        8
+      ],
+      "dtype": "<i4"
+    },
+    {
+      "array": "recovered_mesh_owned_cell_global_ids",
+      "sha256": "9422c248a5c23afc46d87ce8339a644d938174401a67403c2799c48b6f8ba508",
+      "shape": [
+        180
+      ],
+      "dtype": "<i8"
+    },
+    {
+      "array": "recovered_mesh_cell_vertex_dofmap",
+      "sha256": "d4201beb24de1d89e2a7fd6bd266697fc84c9f7bc400ce1a7b84d742f8eec9b9",
+      "shape": [
+        1440
+      ],
+      "dtype": "<i4"
+    },
+    {
+      "array": "recovered_p6_function_space_dofmap",
+      "sha256": "3709991448da37ed047e51c0d37a32fe5ac2ca05d7e1824bd3421444711b11ef",
+      "shape": [
+        180,
+        882
+      ],
+      "dtype": "<i4"
+    },
+    {
+      "array": "recovered_p6_owned_global_dof_block_ids",
+      "sha256": "104ad379f862300d545bdea1e20f43a8a1eeebf9c305affbf10eaf383ed3fefb",
+      "shape": [
+        124530
+      ],
+      "dtype": "<i8"
+    },
+    {
+      "array": "recovered_p6_ghost_global_dof_block_ids",
+      "sha256": "c19bf8aaa184a847cceed6722ac8c6086f916b027a4a9e9378ad0b3dfb219777",
+      "shape": [
+        0
+      ],
+      "dtype": "<i8"
+    },
+    {
+      "array": "recovered_active_full_solution_owned",
+      "sha256": "9beb146ee87827804a6c087b1bedb5222f297f0b174a1a801316fd05a0759d8e",
+      "shape": [
+        124530
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "recovered_active_full_rhs_owned",
+      "sha256": "54a6e6fd920ef60ead42fa985f05eec1f1d11e0a7ab94c19471ed340d6abf8dc",
+      "shape": [
+        124530
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "returned_trace_dtn_rhs",
+      "sha256": "c7769a3db2551d3bece2397b0e3f025425afa28d53679aa64b24b7dab073d4ff",
+      "shape": [
+        38412
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "returned_trace_dtn_solution",
+      "sha256": "8f0b9373fb301f0ed054d737b0db54cc4c9f285bbf5aea2c7d5cd29dccb280ac",
+      "shape": [
+        38412
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "returned_trace_dtn_b_minus_Ax",
+      "sha256": "0548a6c7ab9a643346a6924c3f1079b513451f09af180400a8febe3a21c83fad",
+      "shape": [
+        38412
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_reduced_trace_dtn_rhs_owned",
+      "sha256": "c7769a3db2551d3bece2397b0e3f025425afa28d53679aa64b24b7dab073d4ff",
+      "shape": [
+        38412
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_reduced_trace_dtn_solution_owned",
+      "sha256": "8f0b9373fb301f0ed054d737b0db54cc4c9f285bbf5aea2c7d5cd29dccb280ac",
+      "shape": [
+        38412
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_reduced_trace_dtn_residual_Ax_minus_b_owned",
+      "sha256": "b65040daa4b55bb81fca8b9cc63c2a150ec49340ca0164ea65b60d3302a6a1da",
+      "shape": [
+        38412
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_reduced_trace_dtn_residual_trace_metric_action",
+      "sha256": "394ca686f855ab9f1ab199338ad348185a55bb4e77a37a510ab7b4ae9e5fdb8e",
+      "shape": [
+        37800
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_reduced_trace_dtn_rhs_trace_metric_action",
+      "sha256": "1cb2cd41ab4a81061b53870d49c1edc8c7c4a8a8da2fa104b1ea8e6006917fd3",
+      "shape": [
+        37800
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_reduced_trace_dtn_solution_trace_metric_action",
+      "sha256": "450c6670a3b6f67e3266cf5d5e615f711ab6eea4a1c1fdbe8392aa338051aceb",
+      "shape": [
+        37800
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_active_full_rhs",
+      "sha256": "54a6e6fd920ef60ead42fa985f05eec1f1d11e0a7ab94c19471ed340d6abf8dc",
+      "shape": [
+        124530
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_active_full_solution",
+      "sha256": "9beb146ee87827804a6c087b1bedb5222f297f0b174a1a801316fd05a0759d8e",
+      "shape": [
+        124530
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "full_active_eliminated_active_interior_residual",
+      "sha256": "816299cdf94199dadb14d86c03271d04f4ba555e497bcf64d304c37eefe843f3",
+      "shape": [
+        124530
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_residual_trace",
+      "sha256": "caaa30c8cbe9cb45da3817e2fb06f8908a471dcc20b40b2f64a7a3edf4b4bc32",
+      "shape": [
+        37800
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_residual_cell_interior",
+      "sha256": "8968bf2a1d70a5d67809105a161e361a79a9c3ee976ded1f449c929db9fd5c66",
+      "shape": [
+        81000
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_rhs_trace",
+      "sha256": "e2c4bcb294bbc5e78083e2f812511ce913ba0d7b1c959ec5b5e890c079b85e41",
+      "shape": [
+        37800
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_rhs_cell_interior",
+      "sha256": "bdd213004131e66697ee95861601a6a656a8ee427738b36d75b0a9a8b85984ef",
+      "shape": [
+        81000
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_volume_action_minus_rhs_trace",
+      "sha256": "1ece48e06876959f070401ae30a1d1545ef011a768b45b3fcd62e123d90aabbb",
+      "shape": [
+        37800
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_volume_action_minus_rhs_cell_interior",
+      "sha256": "8968bf2a1d70a5d67809105a161e361a79a9c3ee976ded1f449c929db9fd5c66",
+      "shape": [
+        81000
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_incident_traction_trace",
+      "sha256": "cf2cd7250288d2fa73a495dcf5441d7040b6a7708161df897bbce0e23005f6d1",
+      "shape": [
+        37800
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_incident_traction_cell_interior",
+      "sha256": "bdd213004131e66697ee95861601a6a656a8ee427738b36d75b0a9a8b85984ef",
+      "shape": [
+        81000
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_port_upper_alpha_trace",
+      "sha256": "267730d6d5ed391049ccbb7105874d6844449a82a8f9e57387d8b58f84f4f61c",
+      "shape": [
+        37800
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_port_upper_incident_trace",
+      "sha256": "fb0d20f68abe96ae5c613899b3bf9143ea3b57bd85b75131dc8fe52dcafdf791",
+      "shape": [
+        37800
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_modal_lower_raw_original_equation",
+      "sha256": "72040ce841fcc9e8fdfd9b3d12e35d6b8355c8e53f896db60d077be7abad6608",
+      "shape": [
+        612
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_modal_lower_solver_gauge",
+      "sha256": "9cfa288f52d4012b00518f97ed7254389b947adff579c10aa582d38289ae264a",
+      "shape": [
+        612
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "independent_A6_independent_active_modal_lower_solver_gauge_rhs",
+      "sha256": "ef5e0459c806ae6bde658aef1192ef54d50368f4a0c63085c3937c6aa00860a5",
+      "shape": [
+        612
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "normal_before_normal_correction_rhs",
+      "sha256": "c7769a3db2551d3bece2397b0e3f025425afa28d53679aa64b24b7dab073d4ff",
+      "shape": [
+        38412
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "normal_before_normal_correction_solution",
+      "sha256": "5a08aa5fc425c1816b0cfe4e1b85610e72c09800c293d30394921bd143565d27",
+      "shape": [
+        38412
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "normal_before_normal_correction_residual_b_minus_Ax",
+      "sha256": "db4a0c44f0d5d88329c45db61623ff2c2c52995c4fea62be88ceac2d47716d40",
+      "shape": [
+        38412
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "normal_after_normal_correction_rhs",
+      "sha256": "c7769a3db2551d3bece2397b0e3f025425afa28d53679aa64b24b7dab073d4ff",
+      "shape": [
+        38412
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "normal_after_normal_correction_solution",
+      "sha256": "8f0b9373fb301f0ed054d737b0db54cc4c9f285bbf5aea2c7d5cd29dccb280ac",
+      "shape": [
+        38412
+      ],
+      "dtype": "<c16"
+    },
+    {
+      "array": "normal_after_normal_correction_residual_b_minus_Ax",
+      "sha256": "0548a6c7ab9a643346a6924c3f1079b513451f09af180400a8febe3a21c83fad",
+      "shape": [
+        38412
+      ],
+      "dtype": "<c16"
+    }
+  ],
+  "embedded_identity_equal": true,
+  "full_scope": {
+    "active_full_rows": 124530,
+    "active_interior_rows": 81000,
+    "full_operator_norm_definition": "sqrt(constraint-dual reduced-trace norm^2 + eliminated-interior Euclidean norm^2); do not take a plain concatenated Euclidean norm",
+    "independent_active_fe_dofs": 118800,
+    "independent_reduced_trace_rows": 37800,
+    "method": "same-pass exact block-Gaussian transformed residual; reduced trace/DtN residual is retained in its constraint-induced dual coordinates, while eliminated active-interior rows are retained in active-cell coordinates",
+    "mpi_size": 1,
+    "raw_trace_rows": 43530,
+    "reduced_trace_dtn_owned_range": [
+      0,
+      38412
+    ],
+    "reduced_trace_dtn_rows": 38412,
+    "trace_metric_action_definition": "same-pass Gram inverse action for dual residual/RHS and Gram action for primal solution; vdot(trace, action) plus auxiliary Euclidean contribution reproduces each reduced norm squared"
+  },
+  "raw_equalities_checked": true,
+  "values": {
+    "independent_A6": {
+      "actual": 8.162860542115928e-09,
+      "limit": 1e-08
+    },
+    "full_active_Gram": {
+      "actual": 5.177423112815622e-13,
+      "limit": 1e-08
+    },
+    "returned_condensed": {
+      "actual": 5.275175272012167e-13,
+      "limit": 1e-09
+    },
+    "normal_before": 5.5046830229695776e-11,
+    "normal_after": 5.275175272012167e-13,
+    "normal_count": 1,
+    "extra_count": 0,
+    "normal_reason": 4
+  },
+  "gates": {
+    "independent_A6": true,
+    "full_active_Gram": true,
+    "returned_condensed": true,
+    "normal_once": true,
+    "extra_zero": true,
+    "normal_decreased": true,
+    "normal_reason_positive": true
+  },
+  "numerical_gates_pass": true,
+  "original_endpoint_remains": "FAILED",
+  "q8_q10": "NOT_RUN",
+  "scope": "stdlib offline arithmetic only; no operator action, native import, PDE or fresh sampling",
+  "elapsed_seconds": 0.976321270223707
+}

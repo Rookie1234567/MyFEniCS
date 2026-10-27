@@ -74,7 +74,7 @@ from src.common.config_3d import (
     STANDARD_FULL_ASSEMBLY_BACKEND,
     resolve_stage4_full3d_assembly_backend,
 )
-from src.common.modes_3d import incident_power_3d
+from src.common.modes_3d import incident_power_3d, outgoing_port_modes_3d
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
 from src.geometry.task43_hp_adaptivity_axis_plan import (
     TASK43_AXES_NM,
@@ -92,7 +92,7 @@ from src.postprocessing.physical_field_sampling import (
 )
 from src.postprocessing.rta_3d import compute_volume_absorption_3d
 from src.runners.physical_intermediate import WorkflowLedger
-from src.solvers.common_3d_solve import _has_petsc_package
+from src.solvers.common_3d_solve import _create_nedelec_space, _has_petsc_package
 from src.solvers.dtn_port_3d import (
     Stage4VariablePLiveView,
     _deep_readonly_copy,
@@ -134,6 +134,15 @@ _V12_RECOVERY_MANIFEST_REL = Path(
 )
 _V15_USER_AUTHORIZATION_REL = Path(
     "docs/task43_hp_adaptivity/outcomes/records/v15_user_bugfix_recovery_authorization.json"
+)
+_V15_SAVED_PRIMARY_BINDING_REL = Path(
+    "docs/task43_hp_adaptivity/outcomes/records/v15_A1_saved_primary_recovery_binding.json"
+)
+_V15_SAVED_PRIMARY_BINDING_SHA256 = (
+    "7702c92e8b11cf5a202018528c93432e7057aa99c178266651c1dbcfb7192730"
+)
+_V15_SAVED_PRIMARY_SOURCE_ROOT = Path(
+    "benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run"
 )
 _V15_USER_AUTHORIZATION_SHA256 = (
     "2b39ca0a1b86e08dfee2f88ea12e85f0b0ec55d8be6c1540ce7e5dc13ddf40cc"
@@ -2526,6 +2535,666 @@ def _load_v15_bugfix_authorization() -> dict[str, Any]:
     }
 
 
+def _load_v15_saved_primary_recovery_binding() -> dict[str, Any]:
+    """Load the fixed user-authorized binding for the saved A1 primary."""
+
+    repository_root = _REPOSITORY_ROOT.resolve()
+    binding_path = (repository_root / _V15_SAVED_PRIMARY_BINDING_REL).resolve()
+    if repository_root not in binding_path.parents or not binding_path.is_file():
+        raise ValueError("saved-primary recovery requires its fixed binding record")
+    if _sha256_file(binding_path) != _V15_SAVED_PRIMARY_BINDING_SHA256:
+        raise ValueError("saved-primary recovery binding hash differs from its fixed identity")
+    binding = json.loads(binding_path.read_text(encoding="utf-8"))
+    if not isinstance(binding, dict):
+        raise ValueError("saved-primary recovery binding must be a JSON object")
+    authorization = _load_v15_bugfix_authorization()
+    if binding.get("prior_user_authorization") != {
+        "path": authorization["path"],
+        "sha256": authorization["sha256"],
+    }:
+        raise ValueError("saved-primary recovery is not bound to the fixed user authorization")
+    for field in ("original_contract", "original_recovery_manifest"):
+        item = binding[field]
+        path = Path(item["path"])
+        if not path.is_file() or _sha256_file(path) != item["sha256"]:
+            raise ValueError(f"saved-primary recovery {field} bytes differ from the binding")
+    for field in ("failed_attempt_closeout", "root_raw_recheck"):
+        item = binding[field]
+        path = Path(item["path"])
+        if not path.is_file() or _sha256_file(path) != item["sha256"]:
+            raise ValueError(f"saved-primary recovery {field} bytes differ from the binding")
+    closeout = json.loads(
+        Path(binding["failed_attempt_closeout"]["path"]).read_text(encoding="utf-8")
+    )
+    recheck = json.loads(
+        Path(binding["root_raw_recheck"]["path"]).read_text(encoding="utf-8")
+    )
+    if (
+        closeout.get("status") != "FAILED_RESEARCH_SCOPE_CONTAINER_MISMATCH"
+        or closeout.get("source_head") != binding["source_run_head"]
+        or recheck.get("schema") != "task43.v15.root-primary-stdlib-recheck.v1"
+        or recheck.get("numerical_gates_pass") is not True
+        or recheck.get("q8_q10") != "NOT_RUN"
+    ):
+        raise ValueError("saved-primary recovery no longer matches its failed-attempt evidence")
+    return binding
+
+
+def _v15_saved_input_snapshot(binding: Mapping[str, Any]) -> dict[str, dict[str, str]]:
+    fixed = binding.get("fixed_inputs")
+    expected = {
+        "run/task43_v11_partial_terminal.json",
+        "run/primary_state.npz",
+        "run/pre_validation_checkpoint.npz",
+        "run/pre_validation_checkpoint.json",
+        "run/candidate_plan.json",
+        "run/solve/dtn_port_diffraction_orders_3d.json",
+        "run/solve/dtn_port_power_metrics_3d.json",
+        "snapshots/launch_manifest.json",
+        "snapshots/launch.sh",
+        "watchdog/summary.json",
+        "launcher_exit_code.txt",
+        "watchdog_exit_code.txt",
+    }
+    if not isinstance(fixed, Mapping) or set(fixed) != expected:
+        raise ValueError("saved-primary binding does not name the complete fixed input set")
+    snapshot: dict[str, dict[str, str]] = {}
+    for name in sorted(expected):
+        item = fixed[name]
+        if not isinstance(item, Mapping):
+            raise ValueError(f"saved-primary binding input {name} is malformed")
+        path = Path(str(item.get("path", "")))
+        digest = str(item.get("sha256", ""))
+        if (
+            not path.is_absolute()
+            or path.is_symlink()
+            or path.resolve() != path
+            or len(digest) != 64
+            or any(character not in "0123456789abcdef" for character in digest)
+            or not path.is_file()
+        ):
+            raise ValueError(f"saved-primary binding input {name} is missing or malformed")
+        actual = _sha256_file(path)
+        if actual != digest:
+            raise ValueError(f"saved-primary input bytes differ from the binding: {name}")
+        snapshot[name] = {"path": str(path.resolve()), "sha256": actual}
+    return snapshot
+
+
+def _v15_integral_metadata(integral) -> dict[str, Any]:
+    metadata = integral.metadata()
+    return {
+        "integral_type": str(integral.integral_type()),
+        "subdomain_id": integral.subdomain_id(),
+        "metadata": dict(metadata or {}),
+    }
+
+
+def _v15_compute_saved_primary_absorption(
+    mesh_data,
+    cfg,
+    field,
+    out_dir: Path,
+    *,
+    incident_power: float,
+    port_metrics: Mapping[str, Any],
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Run the existing Av postprocessor while observing its actual UFL rules."""
+
+    from src.postprocessing import rta_3d
+
+    original_form = rta_3d.fem.form
+    observations: list[dict[str, Any]] = []
+
+    def observe_form(ufl_form, *args, **kwargs):
+        integrals = ufl_form.integrals()
+        observations.extend(_v15_integral_metadata(item) for item in integrals)
+        return original_form(ufl_form, *args, **kwargs)
+
+    rta_3d.fem.form = observe_form
+    try:
+        payload = compute_volume_absorption_3d(
+            mesh_data,
+            cfg,
+            field,
+            out_dir,
+            incident_power=incident_power,
+            port_metrics=dict(port_metrics),
+        )
+    finally:
+        rta_3d.fem.form = original_form
+    degree = int(cfg.stage4_volume_quadrature_degree)
+    rule = str(getattr(cfg, "stage4_volume_quadrature_rule", "default"))
+    material = [
+        item
+        for item in observations
+        if item["metadata"].get("quadrature_degree") == degree
+        and item["metadata"].get("quadrature_rule") == rule
+    ]
+    automatic = [item for item in observations if not item["metadata"]]
+    if not material or not automatic:
+        raise ValueError(
+            "saved-primary Av did not expose both actual material q19 and automatic region-volume forms"
+        )
+    return payload, observations
+
+
+def _run_v15_saved_primary_postprocess(
+    run_root: Path,
+    source_run_root: Path,
+    *,
+    comm=None,
+) -> dict[str, Any]:
+    """Continue only the already-saved A1 primary; never assemble or solve."""
+
+    comm = MPI.COMM_WORLD if comm is None else comm
+    binding = _load_v15_saved_primary_recovery_binding()
+    source_root = Path(source_run_root).resolve()
+    expected_source_root = Path(str(binding["source_run_root"])).resolve()
+    output_root = Path(str(binding["postprocess"]["root"])).resolve()
+    requested_run_root = Path(run_root).resolve()
+    if source_root != expected_source_root:
+        raise ValueError("saved-primary recovery source root differs from the immutable binding")
+    if requested_run_root != (output_root / "run").resolve():
+        raise ValueError("saved-primary recovery output must use its one bound new run root")
+    before_inputs = _v15_saved_input_snapshot(binding)
+    runtime = _check_v11_runtime_envelope(comm)
+    worker_identity = runtime["v11_watchdog_worker_identity"]
+    _acquire_empty_run_root(requested_run_root, comm)
+    ledger = None
+
+    completed: list[str] = []
+    sample_records: dict[str, Any] = {}
+    raw_checkpoint = None
+    endpoint_identity = None
+    absorption_record = None
+    q_response = None
+    failure_stage = "workflow_ledger_setup"
+    try:
+        if comm.rank == 0:
+            ledger = WorkflowLedger(
+                requested_run_root, Path(worker_identity["phase_path"])
+            )
+            ledger.set_phase("saved_primary_raw_validation")
+            ledger.marker("v15_saved_primary_runtime_identity", runtime)
+            write_atomic_json(requested_run_root / "runtime_identity.json", runtime)
+        failure_stage = "source_validation"
+        contract_path = Path(binding["original_contract"]["path"]).resolve()
+        contract, contract_sha256 = _load_v11_primary_contract(contract_path)
+        if contract_sha256 != binding["original_contract"]["sha256"]:
+            raise ValueError("saved-primary recovery contract SHA differs")
+        terminal_path = Path(before_inputs["run/task43_v11_partial_terminal.json"]["path"])
+        primary_path = Path(before_inputs["run/primary_state.npz"]["path"])
+        checkpoint_npz = Path(before_inputs["run/pre_validation_checkpoint.npz"]["path"])
+        checkpoint_json_path = Path(before_inputs["run/pre_validation_checkpoint.json"]["path"])
+        terminal = json.loads(terminal_path.read_text(encoding="utf-8"))
+        checkpoint_json = json.loads(checkpoint_json_path.read_text(encoding="utf-8"))
+        if (
+            terminal.get("schema") != "task43.v11.partial-terminal.v1"
+            or terminal.get("status") != "FAILED"
+            or terminal.get("phase") != "A1_q3"
+            or terminal.get("source_identity", {}).get("git_head")
+            != binding["source_run_head"]
+            or terminal.get("candidate_identity", {}).get("candidate_id")
+            != "round10_p_up"
+            or _sha256_file(checkpoint_npz) != checkpoint_json.get("npz_sha256")
+            or checkpoint_json.get("classification")
+            != "pre_validation_diagnostic_not_official"
+        ):
+            raise ValueError("saved-primary source terminal or pre-validation checkpoint identity differs")
+        with np.load(primary_path, allow_pickle=False) as archive:
+            packet_record = json.loads(
+                archive["__task43_record_json__"].tobytes().decode("utf-8")
+            )
+            packet_arrays = {
+                name: np.asarray(archive[name]).copy()
+                for name in archive.files
+                if name != "__task43_record_json__"
+            }
+        identity = packet_record.get("identity")
+        if (
+            packet_record.get("schema") != "task43.v11.primary_state.v1"
+            or packet_record.get("official_result") is not False
+            or packet_record.get("passed") is not False
+            or not isinstance(identity, Mapping)
+            or identity.get("phase") != "A1_q3"
+            or identity.get("contract_sha256") != contract_sha256
+            or identity.get("candidate_identity") != terminal.get("candidate_identity")
+            or identity.get("source_identity") != terminal.get("source_identity")
+            or identity.get("v12_recovery_binding") != terminal.get("v12_recovery_binding")
+            or terminal.get("primary_packet", {}).get("npz_sha256")
+            != before_inputs["run/primary_state.npz"]["sha256"]
+            or terminal.get("primary_packet", {}).get("arrays")
+            != packet_record.get("arrays")
+            or terminal.get("primary_packet", {}).get("identity") != identity
+        ):
+            raise ValueError("saved-primary packet does not match its FAILED terminal identity")
+        for name, values in packet_arrays.items():
+            if _array_identity(values) != packet_record.get("arrays", {}).get(name):
+                raise ValueError(f"saved-primary array identity differs: {name}")
+        candidate_identity = identity["candidate_identity"]
+        if (
+            candidate_identity.get("candidate_id") != "round10_p_up"
+            or candidate_identity.get("v11_phase") != "A1_q3"
+            or candidate_identity.get("plan_sha256")
+            != identity.get("candidate_plan_sha256")
+            or identity["candidate_plan_sha256"]
+            != before_inputs["run/candidate_plan.json"]["sha256"]
+            or identity.get("endpoint_identity", {}).get("contract_sha256")
+            != contract_sha256
+            or identity.get("normal_correction_count") != 1
+            or identity.get("extra_correction_count") != 0
+        ):
+            raise ValueError("saved-primary candidate or endpoint identity differs from A1_q3")
+        checkpoint_arrays_expected = checkpoint_json.get("arrays")
+        with np.load(checkpoint_npz, allow_pickle=False) as checkpoint_archive:
+            if set(checkpoint_arrays_expected or {}) != {
+                name for name in checkpoint_archive.files
+            }:
+                raise ValueError("saved-primary pre-validation array inventory differs")
+            for name in sorted(checkpoint_arrays_expected):
+                primary_name = "recovered_" + name
+                if primary_name not in packet_arrays:
+                    raise ValueError(f"saved-primary packet lacks restored state {primary_name}")
+                stored = np.asarray(checkpoint_archive[name]).copy()
+                primary = packet_arrays[primary_name]
+                if (
+                    not np.array_equal(stored, primary)
+                    or _array_identity(stored) != checkpoint_arrays_expected[name]
+                    or _array_identity(primary) != packet_record["arrays"][primary_name]
+                ):
+                    raise ValueError(f"saved-primary checkpoint differs from packet: {name}")
+        completed.append("source_packet_and_checkpoint_identity")
+        if ledger is not None:
+            ledger.marker(
+                "v15_saved_primary_source_packet_bound",
+                {"primary_sha256": before_inputs["run/primary_state.npz"]["sha256"]},
+            )
+
+        failure_stage = "raw_vector_gate"
+        raw_scope = identity["raw_full_active_scope"]
+        a6_scope = identity["independent_A6_raw_vector_scope"]
+        raw_audit = _v11_raw_vector_gates(
+            packet_arrays,
+            active_trace_rows=int(raw_scope["independent_reduced_trace_rows"]),
+            active_interior_rows=int(raw_scope["active_interior_rows"]),
+            independent_fe_dofs=int(identity["independent_active_fe_dofs"]),
+            active_full_rows=int(raw_scope["active_full_rows"]),
+            full_active_scope=raw_scope,
+            independent_a6_scope=a6_scope,
+            normal_correction_count=int(identity["normal_correction_count"]),
+            normal_converged_reason=int(
+                identity["normal_correction_audit"]["correction_ksp"]["converged_reason"]
+            ),
+            normal_correction_status=str(identity["normal_correction_audit"]["status"]),
+            extra_correction_count=int(identity["extra_correction_count"]),
+        )
+        raw_checkpoint = write_atomic_json(
+            requested_run_root / "primary_raw_vector_audit.json",
+            {
+                "schema": "task43.v15.saved-primary-raw-audit.v1",
+                "status": "PASS" if raw_audit["pass"] else "FAILED",
+                "source_packet_sha256": before_inputs["run/primary_state.npz"]["sha256"],
+                "audit": raw_audit,
+                "official_result": False,
+            },
+        )
+        if raw_audit.get("pass") is not True:
+            raise ValueError("saved-primary raw residual gates failed")
+        completed.append("raw_vector_gate")
+        if ledger is not None:
+            ledger.set_phase("saved_primary_space_restore")
+            ledger.marker("v15_saved_primary_raw_gate_pass", raw_audit)
+
+        failure_stage = "mesh_and_space_restore"
+        plan_path = Path(before_inputs["run/candidate_plan.json"]["path"])
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        cfg = _h100_config(
+            kind="empty_h_active_p3",
+            case_name=str(identity["endpoint_identity"]["actual_cfg"]["case_name"]),
+            geometry_profile="initial_180",
+        )
+        cfg.stage4_local_h_refinement_plan = str(plan_path)
+        _configure_direct_factor_backend(cfg, "mumps")
+        _configure_v11_primary_endpoint(cfg, "A1_q3", contract)
+        mesh_data = build_stage4_local_h_mesh_data(cfg, plan_path, comm=comm)
+        axes = _mesh_axes(mesh_data.mesh, comm)
+        plan_sha256 = _sha256_file(plan_path)
+        mesh_identity = _assert_mesh_profile(
+            mesh_data,
+            axes,
+            "candidate_initial180",
+            candidate_plan=plan,
+            candidate_plan_sha256=plan_sha256,
+        )
+        saved_controls = identity["endpoint_identity"]["numerical_controls"]
+        active_degree_sha256 = str(saved_controls["active_degree_plan_sha256"])
+        active_fe_dofs = int(identity["independent_active_fe_dofs"])
+        if active_fe_dofs != int(saved_controls["independent_active_fe_dofs"]):
+            raise ValueError("saved primary FE-DoF identity fields disagree")
+        from benchmarks.task43_hp_adaptivity import compare_initial_to_references as base
+        from dolfinx import fem
+        space = _create_nedelec_space(mesh_data.mesh, cfg)
+        actual_arrays = base._actual_mesh_identity(mesh_data.mesh, space)
+        storage_key_by_mesh_key = {
+            "mesh_geometry_coordinates_nm": "mesh_geometry_coordinates_nm",
+            "mesh_geometry_dofmap": "mesh_geometry_dofmap",
+            "mesh_owned_cell_global_ids": "mesh_owned_cell_global_ids",
+            "mesh_cell_vertex_dofmap": "mesh_cell_vertex_dofmap",
+            "p6_function_space_cell_dofmap": "p6_function_space_dofmap",
+            "p6_owned_global_dof_block_ids": "p6_owned_global_dof_block_ids",
+            "p6_ghost_global_dof_block_ids": "p6_ghost_global_dof_block_ids",
+        }
+        restored_identities = {}
+        for mesh_key, storage_key in storage_key_by_mesh_key.items():
+            primary_key = "recovered_" + storage_key
+            actual = np.asarray(actual_arrays[mesh_key])
+            expected = packet_arrays.get(primary_key)
+            if (
+                expected is None
+                or actual.dtype != expected.dtype
+                or actual.shape != expected.shape
+                or not np.array_equal(actual, expected)
+                or _array_identity(actual) != packet_record["arrays"].get(primary_key)
+            ):
+                raise ValueError(f"restored primary mesh/DOF identity differs: {mesh_key}")
+            restored_identities[storage_key] = _array_identity(actual)
+        coefficients = np.asarray(
+            packet_arrays["recovered_recovered_p6_local_coefficients"]
+        )
+        if coefficients.dtype != np.dtype(np.complex128) or not np.isfinite(coefficients).all():
+            raise ValueError("saved-primary recovered P6 coefficient array is invalid")
+        field = fem.Function(space, name="round10_p_up_saved_primary_E")
+        if field.x.array.shape != coefficients.shape:
+            raise ValueError("saved-primary P6 coefficients differ from restored function space")
+        field.x.array[:] = coefficients
+        field.x.scatter_forward()
+        axes_record = {
+            name: np.asarray(axis, dtype=np.float64).tolist()
+            for name, axis in zip(("x", "y", "z"), axes, strict=True)
+        }
+        endpoint_identity = _v11_endpoint_identity(
+            cfg,
+            outgoing_port_modes_3d(cfg),
+            axes_nm=axes_record,
+            candidate_plan_sha256=plan_sha256,
+            active_degree_plan_sha256=active_degree_sha256,
+            independent_active_fe_dofs=active_fe_dofs,
+            phase="A1_q3",
+            contract_sha256=contract_sha256,
+        )
+        saved_endpoint = identity["endpoint_identity"]
+        endpoint_controls = endpoint_identity["numerical_controls"]
+        saved_endpoint_controls = saved_endpoint["numerical_controls"]
+        core_controls = (
+            "phase",
+            "quadrature_degree",
+            "A_volume_resolved_rule",
+            "modal_selection",
+            "candidate_plan_sha256",
+            "active_degree_plan_sha256",
+            "independent_active_fe_dofs",
+            "assembly_backend",
+            "factor_solver",
+            "normal_correction_count",
+            "extra_correction_count",
+        )
+        if (
+            endpoint_identity.get("contract_sha256") != contract_sha256
+            or endpoint_identity.get("physical_configuration")
+            != saved_endpoint.get("physical_configuration")
+            or any(
+                endpoint_controls.get(key) != saved_endpoint_controls.get(key)
+                for key in core_controls
+            )
+        ):
+            raise ValueError(
+                "restored physical configuration or fixed modal/q controls "
+                "differ from saved primary"
+            )
+        completed.append("mesh_space_and_coefficients_restored")
+        if ledger is not None:
+            ledger.marker(
+                "v15_saved_primary_space_restored",
+                {
+                    "mesh_identity": mesh_identity,
+                    "restored_array_identities": restored_identities,
+                    "endpoint_identity_sha256": _sha256_json(endpoint_identity),
+                    "PDE_matrix_allocated": False,
+                    "PDE_solve_performed": False,
+                },
+            )
+
+        failure_stage = "q8_q10_and_volume_postprocess"
+        if ledger is not None:
+            ledger.set_phase("saved_primary_q8_q10")
+        captured = {"fields": {}}
+
+        def persist_sample(order: int, sample: dict[str, np.ndarray]) -> None:
+            record = write_v11_primary_field_sample(
+                requested_run_root / f"primary_field_sample_q{int(order)}.npz",
+                order,
+                sample,
+                identity={
+                    "phase": "A1_q3",
+                    "source_run_head": binding["source_run_head"],
+                    "source_primary_sha256": before_inputs["run/primary_state.npz"]["sha256"],
+                    "contract_sha256": contract_sha256,
+                    "candidate_identity": candidate_identity,
+                    "candidate_plan_sha256": plan_sha256,
+                    "endpoint_identity_sha256": _sha256_json(endpoint_identity),
+                },
+                sample_records=sample_records,
+            )
+            completed.append(f"q{int(order)}_field_sample")
+            if ledger is not None:
+                ledger.marker(f"v15_saved_primary_q{int(order)}_sample_saved", record)
+
+        fields = _field_capture(
+            field,
+            mesh_data,
+            cfg,
+            comm,
+            reference_axes=None,
+            geometry_profile="candidate_initial180",
+            candidate_plan=plan,
+            candidate_plan_sha256=plan_sha256,
+            sample_fields=True,
+            on_sample=persist_sample,
+        )
+        captured["fields"] = fields
+        after_samples = _v15_saved_input_snapshot(binding)
+        if after_samples != before_inputs:
+            raise ValueError("saved-primary source input bytes changed during postprocessing")
+        port_path = Path(before_inputs["run/solve/dtn_port_diffraction_orders_3d.json"]["path"])
+        power_path = Path(before_inputs["run/solve/dtn_port_power_metrics_3d.json"]["path"])
+        port_payload = json.loads(port_path.read_text(encoding="utf-8"))
+        port_metrics = json.loads(power_path.read_text(encoding="utf-8"))
+        if (
+            len(port_payload.get("orders", [])) != 612
+            or int(port_metrics.get("dtn_port_mode_count", -1)) != 612
+            or any(
+                port_payload.get("metrics", {}).get(name) != port_metrics.get(name)
+                for name in ("R_total", "T_total", "R00_s", "R00_p", "R00_total")
+            )
+        ):
+            raise ValueError("saved-primary modal rows and power metrics are not one bound 612-mode state")
+        volume_payload, form_observations = _v15_compute_saved_primary_absorption(
+            mesh_data,
+            cfg,
+            field,
+            requested_run_root / "volume_absorption",
+            incident_power=incident_power_3d(cfg),
+            port_metrics=port_metrics,
+        )
+        A_volume_total = float(volume_payload["A_volume_total"])
+        R_total = float(port_metrics["R_total"])
+        T_total = float(port_metrics["T_total"])
+        closure_residual = R_total + T_total + A_volume_total - 1.0
+        closure_pass = bool(
+            np.isfinite(A_volume_total)
+            and np.isfinite(closure_residual)
+            and abs(closure_residual) <= 1.0e-5
+        )
+        absorption_record = write_atomic_json(
+            requested_run_root / "saved_primary_volume_absorption.json",
+            {
+                "schema": "task43.v15.saved-primary-volume-absorption.v1",
+                "payload": volume_payload,
+                "R_total": R_total,
+                "T_total": T_total,
+                "A_volume_total": A_volume_total,
+                "energy_closure_residual": closure_residual,
+                "energy_closure_tolerance": 1.0e-5,
+                "energy_closure_pass": closure_pass,
+                "actual_fem_form_integrals": form_observations,
+                "material_absorption_form_rule": {
+                    "quadrature_degree": int(cfg.stage4_volume_quadrature_degree),
+                    "quadrature_rule": str(
+                        getattr(cfg, "stage4_volume_quadrature_rule", "default")
+                    ),
+                    "observed_integral_count": sum(
+                        item["metadata"].get("quadrature_degree")
+                        == int(cfg.stage4_volume_quadrature_degree)
+                        and item["metadata"].get("quadrature_rule")
+                        == str(getattr(cfg, "stage4_volume_quadrature_rule", "default"))
+                        for item in form_observations
+                    ),
+                },
+                "region_volume_forms_use_automatic_rule": True,
+                "official_result": False,
+            },
+        )
+        completed.append("volume_absorption_and_actual_form_metadata")
+        if not closure_pass:
+            raise RuntimeError("saved-primary R+T+Av energy-closure gate failed")
+        q_response = _v11_primary_q_response(
+            phase="A1_q3",
+            cfg=cfg,
+            candidate_identity=candidate_identity,
+            endpoint_identity=endpoint_identity,
+            captured=captured,
+            port_payload=port_payload,
+            A_volume_total=A_volume_total,
+        )
+        if not isinstance(q_response, Mapping):
+            raise ValueError("saved-primary A1 q8/q10 response gate did not return a record")
+        q_response_ref = write_atomic_json(
+            requested_run_root / "saved_primary_q_response.json",
+            {
+                **dict(q_response),
+                "source_run_head": binding["source_run_head"],
+                "source_primary_sha256": before_inputs["run/primary_state.npz"]["sha256"],
+                "endpoint_identity_sha256": _sha256_json(endpoint_identity),
+                "A_volume_total": A_volume_total,
+                "official_result": False,
+            },
+        )
+        completed.append("a1_q8_q10_response_gate")
+        if ledger is not None:
+            ledger.marker("v15_saved_primary_q_response_recorded", q_response_ref)
+        if q_response.get("pass") is not True:
+            raise RuntimeError("saved-primary A1 q8/q10 numerical gates failed")
+        after_inputs = _v15_saved_input_snapshot(binding)
+        if after_inputs != before_inputs:
+            raise ValueError("saved-primary source inputs changed before recovery closeout")
+        record = {
+            "schema": "task43.v15.saved-primary-postprocess-terminal.v1",
+            "status": "POSTPROCESS_COMPLETE_DIAGNOSTIC_NOT_OFFICIAL",
+            "classification": "saved_primary_recovery_not_a_new_formal_endpoint",
+            "source_run_root": str(source_root),
+            "source_run_head": binding["source_run_head"],
+            "source_input_snapshot_before": before_inputs,
+            "source_input_snapshot_after": after_inputs,
+            "binding_path": str((_REPOSITORY_ROOT / _V15_SAVED_PRIMARY_BINDING_REL).resolve()),
+            "binding_sha256": _V15_SAVED_PRIMARY_BINDING_SHA256,
+            "failed_attempt_closeout": binding["failed_attempt_closeout"],
+            "source_primary_packet_sha256": before_inputs["run/primary_state.npz"]["sha256"],
+            "primary_raw_vector_audit": raw_checkpoint,
+            "restored_endpoint_identity_sha256": _sha256_json(endpoint_identity),
+            "restored_mesh_identity": mesh_identity,
+            "restored_storage_array_identities": restored_identities,
+            "primary_samples": sample_records,
+            "volume_absorption": absorption_record,
+            "q_response": q_response_ref,
+            "q_response_pass": True,
+            "completed_stages": completed,
+            "PDE_matrix_allocated": False,
+            "PDE_solve_performed": False,
+            "residual_correction_performed": False,
+            "official_result": False,
+            "passed": False,
+            "pass": False,
+            "selection_eligible": False,
+            "candidate_selected": False,
+            "continuation_all_false": True,
+        }
+        if ledger is not None:
+            ledger.set_phase("saved_primary_complete")
+            ledger.marker(
+                "v15_saved_primary_postprocess_terminal_prepared",
+                {"q_response_pass": True, "official_result": False},
+            )
+        terminal_ref = write_atomic_json(
+            requested_run_root / "saved_primary_postprocess_terminal.json", record
+        )
+        record["terminal"] = terminal_ref
+        return record
+    except BaseException as error:
+        error_text = f"{type(error).__name__}: {error}"
+        failure_snapshot = None
+        try:
+            failure_snapshot = _v15_saved_input_snapshot(binding)
+        except BaseException as snapshot_error:  # noqa: BLE001 - preserve the original failure
+            error.add_note(
+                "saved-primary source after-snapshot could not be verified: "
+                f"{type(snapshot_error).__name__}: {snapshot_error}"
+            )
+        failure = {
+            "schema": "task43.v15.saved-primary-postprocess-terminal.v1",
+            "status": "POSTPROCESS_FAILED_OR_INCOMPLETE",
+            "classification": "saved_primary_recovery_failed_not_a_new_formal_endpoint",
+            "failure_stage": failure_stage,
+            "error": error_text,
+            "source_run_root": str(source_root),
+            "source_run_head": binding["source_run_head"],
+            "source_input_snapshot_before": before_inputs,
+            "source_input_snapshot_after": failure_snapshot,
+            "source_primary_packet_sha256": before_inputs["run/primary_state.npz"]["sha256"],
+            "primary_raw_vector_audit": raw_checkpoint,
+            "primary_samples": sample_records,
+            "volume_absorption": absorption_record,
+            "q_response": q_response,
+            "completed_stages": completed,
+            "PDE_matrix_allocated": False,
+            "PDE_solve_performed": False,
+            "residual_correction_performed": False,
+            "official_result": False,
+            "passed": False,
+            "pass": False,
+            "selection_eligible": False,
+            "candidate_selected": False,
+            "continuation_all_false": True,
+        }
+        try:
+            write_atomic_json(
+                requested_run_root / "saved_primary_postprocess_terminal.json",
+                failure,
+            )
+            if ledger is not None:
+                ledger.marker(
+                    "v15_saved_primary_postprocess_failed",
+                    {"failure_stage": failure_stage, "error": error_text},
+                    allow_stop=True,
+                )
+        except BaseException as persist_error:
+            error.add_note(
+                "saved-primary recovery failure record could not be completed: "
+                f"{type(persist_error).__name__}: {persist_error}"
+            )
+        raise
+
+
 def _resolve_v12_p2_source(
     recovery: Mapping[str, Any],
     *,
@@ -3204,7 +3873,12 @@ def _v11_raw_vector_gates(
     if int(full_active_scope.get("mpi_size", -1)) != 1:
         raise ValueError("V11 full-active raw scope must be captured on MPI1")
     reduced_owned_range = full_active_scope.get("reduced_trace_dtn_owned_range")
-    if reduced_owned_range != [0, reduced_trace_dtn_rows]:
+    if (
+        not isinstance(reduced_owned_range, (list, tuple))
+        or len(reduced_owned_range) != 2
+        or any(type(value) is not int for value in reduced_owned_range)
+        or tuple(reduced_owned_range) != (0, reduced_trace_dtn_rows)
+    ):
         raise ValueError("V11 reduced trace/DtN raw scope is not the complete serial vector")
     if (
         reduced_trace_dtn_rows < active_trace_rows
@@ -7599,6 +8273,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", choices=tuple(_CASES), required=True)
     parser.add_argument("--run-root", type=Path, required=True)
+    parser.add_argument("--v11-primary-postprocess-source-root", type=Path)
     parser.add_argument("--reference-run-root", type=Path)
     parser.add_argument("--parallel-reference-run-root", type=Path)
     parser.add_argument("--candidate-plan", type=Path)
@@ -7646,6 +8321,55 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     comm = MPI.COMM_WORLD
+    if args.v11_primary_postprocess_source_root is not None:
+        if (
+            args.case != _ROUND1_CANDIDATE_CASE
+            or any(
+                value is not None
+                for value in (
+                    args.reference_run_root,
+                    args.parallel_reference_run_root,
+                    args.candidate_plan,
+                    args.candidate_id,
+                    args.candidate_parent_run_root,
+                    args.candidate_tightening_run_root,
+                    args.candidate_marking_record,
+                    args.candidate_acceptance_contract,
+                    args.candidate_parent_selection_record,
+                    args.v2_diagnostic_phase,
+                    args.v2_contract,
+                    args.v2_contract_sha256,
+                    args.v2_reference_run_root,
+                    args.primary_diagnostic_phase,
+                    args.primary_diagnostic_contract,
+                    args.execution_recovery_manifest,
+                    args.v3_contract,
+                    args.v3_plan,
+                )
+            )
+            or args.v3_failure_evidence
+            or args.same_lu_tightening
+            or args.same_lu_solve_residual_correction
+            or args.direct_factor_backend != "default"
+        ):
+            parser.error(
+                "saved-primary postprocessing only accepts the fixed candidate case, "
+                "run root, and source root"
+            )
+        try:
+            _run_v15_saved_primary_postprocess(
+                args.run_root,
+                args.v11_primary_postprocess_source_root,
+                comm=comm,
+            )
+        except Exception as exc:  # noqa: BLE001 - the helper already records failures
+            print(
+                f"saved-primary postprocessing failed: {type(exc).__name__}: {exc}",
+                file=sys.stderr,
+                flush=True,
+            )
+            return 1
+        return 0
     expected_size, kind = _CASES[args.case]
     is_current = args.case == _CURRENT_CASE
     is_candidate = args.case == _ROUND1_CANDIDATE_CASE

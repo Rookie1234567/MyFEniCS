@@ -1,0 +1,128 @@
+{
+  "schema": "task43.v15.failed-p3-root-closeout.v1",
+  "status": "FAILED_RESEARCH_SCOPE_CONTAINER_MISMATCH",
+  "source_head": "d4e2be77a90e39d49fc56b4214f3bcc24843ddf4",
+  "worker_watchdog_launcher_exit_codes": [
+    1,
+    2,
+    2
+  ],
+  "whole_seconds": 3036.0769646498375,
+  "shell_timestamp_envelope_seconds": 3043.525603,
+  "RSS_sampled_peak_bytes": 6592139264,
+  "task_swap_sampled_peak_bytes": 0,
+  "resource_samples": 4162,
+  "source_checks": 51,
+  "input_checks": 54,
+  "root_observations": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/A1_q_attempt3_root_terminal_observations.json",
+    "sha256": "75a8dc97ea2f0c70c5027be0b0c622f932ebaf4aa21b5327f854c8b0816c4e7e",
+    "bytes": 25763859
+  },
+  "original_partial_terminal": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3/run/task43_v11_partial_terminal.json",
+    "sha256": "a37435a309511365fa32214ca702bd02b70f77dffdf692189d88b32899e6356e",
+    "bytes": 131305
+  },
+  "raw_array_recheck": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/P3_raw_stdlib_recheck.json",
+    "sha256": "dda4c004251a7dd9e344bb2e12234ca92570b33c9655533cde04b4371e6eb9c7",
+    "bytes": 11964
+  },
+  "root_read_scope": "All final raw trace syscall records, distinct stack frames and exit tails read; resource rows programmatically checked; host PID/start_ticks read after exits; existing array hashes and scalar residual arithmetic independently recomputed with stdlib.",
+  "trace": {
+    "files": 8,
+    "lines": 1719,
+    "getters": 80,
+    "successful_CPU1_setters": 3,
+    "setter_explanation": "SCOTCH mesh partitioning sets its task/thread to CPU1; all three succeeded with mask [1], no widened or failed setter.",
+    "signals": "One SIGCHLD with exit0 for bound child3258482; remaining tails include worker exit1 from Python exception.",
+    "parse_anomalies": []
+  },
+  "empty_cmdline_classification": "Three observations at sample4158 were known Z-state worker/tracer/orted, all zero RSS/swap; no live unexplained empty cmdline.",
+  "cleanup_host_checks": [
+    {
+      "pid": 3258141,
+      "start_ticks": 299263245,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3258156,
+      "start_ticks": 299263307,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3258171,
+      "start_ticks": 299263323,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3258221,
+      "start_ticks": 299263446,
+      "same_process_still_present": false,
+      "proc_stat": null
+    }
+  ],
+  "error": "Stage4VariablePLiveObserverError: variable-p live observer failed collectively after all ranks left the callback: [{\"exception_type\": \"ValueError\", \"message\": \"V11 reduced trace/DtN raw scope is not the complete serial vector\", \"phase\": \"callback\", \"rank\": 0}]",
+  "raw_numeric_gates": {
+    "independent_A6": true,
+    "full_active_Gram": true,
+    "returned_condensed": true,
+    "normal_once": true,
+    "extra_zero": true,
+    "normal_decreased": true,
+    "normal_reason_positive": true
+  },
+  "raw_values": {
+    "independent_A6": {
+      "actual": 8.162860542115928e-09,
+      "limit": 1e-08
+    },
+    "full_active_Gram": {
+      "actual": 5.177423112815622e-13,
+      "limit": 1e-08
+    },
+    "returned_condensed": {
+      "actual": 5.275175272012167e-13,
+      "limit": 1e-09
+    },
+    "normal_before": 5.5046830229695776e-11,
+    "normal_after": 5.275175272012167e-13,
+    "normal_count": 1,
+    "extra_count": 0,
+    "normal_reason": 4
+  },
+  "q8_q10": "NOT_RUN",
+  "Av_closure": "NOT_RUN",
+  "formal_consumed": 1,
+  "formal_cumulative": 6,
+  "formal_envelope": 8,
+  "old_sealed_slot_unchanged": true,
+  "P4_P5": "NOT_RUN_P3_COMPLETE_Q_GATE_PENDING",
+  "continuation_qualified": false,
+  "next": "User-authorized local bug repair and saved-primary-only postprocessing; this failed attempt and count remain immutable.",
+  "global_swap_activity": {
+    "scope": "WSL-global diagnostic, not dedicated job",
+    "baseline": {
+      "pswpin_pages": 4250691,
+      "pswpout_pages": 7183007
+    },
+    "end": {
+      "pswpin_pages": 4250691,
+      "pswpout_pages": 7183007
+    },
+    "delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    }
+  },
+  "caveats": [
+    "No auto-qualification: root must classify signals, failed calls, transient observations and phase/test/numerical results.",
+    "No --cache-path: cache_metadata_stable does not audit shared JIT/global caches.",
+    "Read from real host /proc; sampled RSS/swap, not continuous high-water marks."
+  ],
+  "closeout_seconds": 0.2702071648091078
+}
