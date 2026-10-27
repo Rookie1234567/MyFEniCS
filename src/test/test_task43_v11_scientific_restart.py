@@ -505,9 +505,33 @@ def test_run_impl_real_v11_observer_preserves_primary_before_postprocessing(
         and outcome == "success"
         and os.environ.get("TASK43_V11_ATTEMPT_ROOT")
     ):
-        runtime_identity = h100_anchor._check_v11_runtime_envelope(
-            h100_anchor.MPI.COMM_WORLD
+        require_worker_identity = (
+            h100_anchor._require_v11_watchdog_worker_identity
         )
+
+        def accept_existing_worker_phase(**kwargs):
+            kwargs["require_unused_phase_file"] = False
+            return require_worker_identity(**kwargs)
+
+        # The preceding real-main sentinel already created this worker's
+        # watchdog phase file. Recheck the live worker/tracer/affinity against
+        # that same phase, using the existing identity helper's explicit
+        # allow-existing option; restore the strict default before _run_impl.
+        monkeypatch.setattr(
+            h100_anchor,
+            "_require_v11_watchdog_worker_identity",
+            accept_existing_worker_phase,
+        )
+        try:
+            runtime_identity = h100_anchor._check_v11_runtime_envelope(
+                h100_anchor.MPI.COMM_WORLD
+            )
+        finally:
+            monkeypatch.setattr(
+                h100_anchor,
+                "_require_v11_watchdog_worker_identity",
+                require_worker_identity,
+            )
         (tmp_path / "recovery_runtime_identity.json").write_text(
             json.dumps(runtime_identity, sort_keys=True) + "\n",
             encoding="utf-8",

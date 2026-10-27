@@ -1,0 +1,249 @@
+{
+  "schema": "task43.v15.localized-validation-failure.v1",
+  "status": "FAILED_FIXTURE_PHASE_REUSE",
+  "source_head": "bac6da786efd945f32725229e133ed0b66a9b7bf",
+  "tests": {
+    "passed": 2,
+    "failed": 1,
+    "not_run": 12,
+    "failure": "observer fixture requested fresh phase after main fixture created phase in same worker",
+    "production_runtime_gate_changed": false
+  },
+  "original_observations": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/A1_primary_scope_validation_attempt1_root_terminal_observations.json",
+    "sha256": "a1eb28ac04df27ca2f2a297abf193f011a001d69bd20c2a4076180d78f4f5a13"
+  },
+  "summary": {
+    "workflow_deadline_seconds": 270.0,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 8589934592,
+    "rss_warning_bytes": 7301444403,
+    "minimum_available_bytes": null,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "native_capacity_profile_identity": "task43_hp_adaptivity_resource_v1",
+    "native_capacity_profile_facts_sha256": "c9ef6d173968fd1c78d86eb66b78dd9720bde901f866f58281a4668f83c4b2e6",
+    "native_capacity_resource_facts": {
+      "resource_stop_policy": "legacy",
+      "absolute_cap_bytes": 206158430208,
+      "planning_cap_bytes": 206158430208,
+      "reserve_min_bytes": 68719476736,
+      "reserve_fraction": 0.15,
+      "effective_reserve_policy": "max(64GiB, 15% of effective total memory)",
+      "launch_cap_policy": "min(192GiB, 80% of effective total, effective available minus effective reserve)",
+      "planning_cap_policy": "min(192GiB, 75% of effective total, launch cap)",
+      "memavailable_runtime_policy": "stop_below_effective_reserve",
+      "rss_runtime_policy": "stop_at_launch_cap",
+      "require_zero_swap": true,
+      "swap_policy": "stop_on_nonzero_task_tree_VmSwap",
+      "global_swap_delta_policy": "observe_only",
+      "stop_on_global_swap": false,
+      "pss_sampling_policy": "disabled_by_profile",
+      "concurrent_neighbor_authorized": false,
+      "research_scope": "Task43 only; no Task39/40/41 profile alias"
+    },
+    "launch_memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 2088077398016,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 2088077398016,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "sampled_process_tree_pss_peak_bytes": null,
+    "cache_metadata_stable": true,
+    "classification": "WORKER_FAILED",
+    "leader_exit_code": 1,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      3334547,
+      3334559,
+      3334570
+    ],
+    "sampled_process_tree_rss_peak_bytes": 293478400,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 4250695,
+        "pswpout_pages": 7183007
+      },
+      "end": {
+        "pswpin_pages": 4250695,
+        "pswpout_pages": 7183007
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 2088077398016,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 2088077398016,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "samples": 29,
+    "elapsed_seconds": 17.657307378947735,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": "development_worktree; not formal PDE provenance"
+  },
+  "trace": {
+    "files": [
+      {
+        "file": "sched.3334547",
+        "sha256": "91c18a3ed9d07ba206f78848019732a4af620fe077f823122c95300d1cfbb5e1",
+        "bytes": 190864,
+        "lines": 2956,
+        "tail": "1793072434.047313 +++ exited with 1 +++"
+      },
+      {
+        "file": "sched.3334570",
+        "sha256": "6c2f3305c2fb6e939160a9024751f7a8448eae9fc460d2ab4cea1c16b623311d",
+        "bytes": 3717,
+        "lines": 47,
+        "tail": "1793072434.122378 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3334571",
+        "sha256": "a90aabeba671771f12d6dd9fe4ee3b03876282b67fbc9efaf4bf379a8a44e949",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793072434.034351 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3334572",
+        "sha256": "86000e0ecf0436fd5e072583299a1695ba72835a70a4a2ce0cac109edaa236e6",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793072434.056702 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3334573",
+        "sha256": "e3c2b8c7294114aa5cb14d1c05db4ee2c666104e3563551340537e2c4dfb397e",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793072433.902730 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3334574",
+        "sha256": "41e605ca21037e86b2f5532586b5542ba35edc6b544ab619fddaf4c58a60d77a",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793072433.884228 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3334577",
+        "sha256": "b477246bb244ff761302be5487792295a51e392d5aef4d49551f2a15de4b0f3a",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793072425.791282 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3334596",
+        "sha256": "5093f2633e86fa7dbd0e44fd2c76bd5f61df615f3929e5a84345190d8d26a9c3",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793072426.431858 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3334605",
+        "sha256": "917d625632468ae8d59b9ff288c4b6f8568c03475a4306dc86f9e322bf3d8306",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793072429.884198 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3334606",
+        "sha256": "f9fa5bd71401d6dd5d2b0ec95fbb3582f76a2f8ad652052fdb868212fbc88a5f",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793072430.158887 +++ exited with 7 +++"
+      }
+    ],
+    "setters": [],
+    "signals": [
+      {
+        "file": "sched.3334547",
+        "line": 1517,
+        "raw": "1793072425.791879 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3334577, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+      },
+      {
+        "file": "sched.3334547",
+        "line": 2114,
+        "raw": "1793072426.432258 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3334596, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+      },
+      {
+        "file": "sched.3334547",
+        "line": 2849,
+        "raw": "1793072429.884413 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3334605, si_uid=1000, si_status=0, si_utime=1 /* 0.01 s */, si_stime=1 /* 0.01 s */} ---"
+      },
+      {
+        "file": "sched.3334547",
+        "line": 2884,
+        "raw": "1793072430.159073 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3334606, si_uid=1000, si_status=7, si_utime=2 /* 0.02 s */, si_stime=1 /* 0.01 s */} ---"
+      }
+    ],
+    "classification": "all getters CPU1; four SIGCHLD normal child termination, exit7 PID3334606 is intentional controlled-fault fixture; no identity/resource/cleanup veto",
+    "unique_stack_frames_read": 95
+  },
+  "cleanup": [
+    {
+      "pid": 3334546,
+      "start_ticks": 299741248,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3334547,
+      "start_ticks": 299741305,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3334559,
+      "start_ticks": 299741318,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3334570,
+      "start_ticks": 299741624,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3334606,
+      "start_ticks": 299742478,
+      "same_process_still_present": false,
+      "proc_stat": null
+    }
+  ],
+  "authority": "latest direct user instruction: ordinary bugs fix and continue; failures charged, no PDE rerun",
+  "new_support_continuation": {
+    "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/A1_primary_scope_validation_attempt2",
+    "launch": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/launch/A1_primary_scope_validation_attempt2.sh",
+    "work_seconds": 270,
+    "whole_seconds": 300,
+    "rss_bytes": 8589934592,
+    "scope": "affected observer plus not-run saved-primary recovery tests; main sentinel verifies new worker; prior raw test reused by exact h100 bytes"
+  },
+  "formal_count": "6/8, unchanged"
+}

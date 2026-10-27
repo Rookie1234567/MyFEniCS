@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="3" time="11.647" timestamp="2026-10-27T11:40:19.579914" hostname="fenics-ws01"><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_main_reaches_v11_mesh_sentinel_with_watchdog_identity" time="4.600" /><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_raw_vector_residual_recomputation_uses_saved_gram_action" time="0.005" /><testcase classname="src.test.test_task43_v11_scientific_restart" name="test_run_impl_real_v11_observer_preserves_primary_before_postprocessing[A1_q3-success-True-sample_keys0]" time="0.014"><failure message="RuntimeError: V11 watchdog phase file already exists">src/test/test_task43_v11_scientific_restart.py:508: in test_run_impl_real_v11_observer_preserves_primary_before_postprocessing
+    runtime_identity = h100_anchor._check_v11_runtime_envelope(
+benchmarks/task43_hp_adaptivity/h100_anchor.py:2069: in _check_v11_runtime_envelope
+    identity = _require_v11_watchdog_worker_identity(
+benchmarks/task43_hp_adaptivity/h100_anchor.py:4966: in _require_v11_watchdog_worker_identity
+    raise RuntimeError("V11 watchdog phase file already exists")
+E   RuntimeError: V11 watchdog phase file already exists</failure></testcase></testsuite></testsuites>
