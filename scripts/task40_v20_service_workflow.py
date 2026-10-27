@@ -9822,6 +9822,9 @@ def _run_task41_p0_saved_output_service(
     b0_v9_saved_star_screen_mode: bool = False,
     b0_v9_failed_terminal_audit_mode: bool = False,
     b0_saved_y_g_comparison_mode: bool = False,
+    b0_v16_saved_vector_analysis_mode: bool = False,
+    v16_manifest_path: Path | None = None,
+    v16_manifest_sha256: str | None = None,
     b0_v14_saved_rhs_candidate_mode: bool = False,
     b0_v14_decimal_residual_recheck_only_mode: bool = False,
     b0_v14_saved_star_extension_mode: bool = False,
@@ -9916,11 +9919,16 @@ def _run_task41_p0_saved_output_service(
     saved_route_markers = (
         "TASK41_P0_B0_V9_FAILED_TERMINAL_AUDIT",
         "TASK41_P0_B0_SAVED_Y_G_COMPARISON",
+        "TASK41_P0_B0_V16_SAVED_VECTOR_ANALYSIS",
         "TASK41_P0_SAVED_B0_EVIDENCE_AUDIT",
         "TASK41_P0_B0_V9_SAVED_STAR_SCREEN",
         "TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY",
     )
-    if b0_v9_failed_terminal_audit_mode or b0_saved_y_g_comparison_mode:
+    if (
+        b0_v9_failed_terminal_audit_mode
+        or b0_saved_y_g_comparison_mode
+        or b0_v16_saved_vector_analysis_mode
+    ):
         if environment.get("TASK41_P0_CHECKER_SOURCE_SHA") != consumer_source_sha:
             raise ValueError("saved-diagnostics checker source differs from the current consumer")
         for marker in saved_route_markers:
@@ -9955,7 +9963,7 @@ def _run_task41_p0_saved_output_service(
                     (output_root / "task41_p0_b0_v9_failed_terminal_audit.json").resolve()
                 ),
             })
-        else:
+        elif b0_saved_y_g_comparison_mode:
             environment.update({
                 "TASK41_P0_B0_SAVED_Y_G_COMPARISON": "1",
                 "TASK41_P0_SAVED_Y_G_RUN_ROOT": str(run_root.resolve()),
@@ -9979,6 +9987,18 @@ def _run_task41_p0_saved_output_service(
                 ),
                 "TASK41_P0_SAVED_Y_G_RESULT_PATH": str(
                     (output_root / "task41_p0_b0_saved_y_g_comparison.json").resolve()
+                ),
+            })
+        else:
+            if v16_manifest_path is None or v16_manifest_sha256 is None:
+                raise ValueError("V16 saved-vector service requires its bound manifest")
+            environment.update({
+                "TASK41_P0_B0_V16_SAVED_VECTOR_ANALYSIS": "1",
+                "TASK41_P0_V16_MANIFEST_PATH": str(v16_manifest_path.resolve()),
+                "TASK41_P0_V16_MANIFEST_SHA256": v16_manifest_sha256,
+                "TASK41_P0_V16_RESULT_PATH": str(
+                    output_root.with_name(output_root.name + ".service")
+                    / "task41_p0_checker_result.json"
                 ),
             })
 
@@ -10141,6 +10161,163 @@ def _run_task41_p0_saved_output_service(
             raise ValueError("V9 compact report omits cumulative raw-evidence accounting")
         return list(dict.fromkeys(authorized)), source_sha, shared_donor_identity, existing_raw + prior_raw
 
+    def collect_v16_saved_vector_inputs() -> tuple[list[Path], int]:
+        import numpy as np
+
+        if v16_manifest_path is None or v16_manifest_sha256 is None:
+            raise ValueError("V16 saved-vector service omits its manifest binding")
+        allowed_root = (repo_root / "results" / str(contract["case"]["model_id"])).resolve(strict=True)
+        if v16_manifest_path.is_symlink():
+            raise ValueError("V16 saved-vector manifest cannot be a symlink")
+        manifest_file = v16_manifest_path.resolve(strict=True)
+        if (
+            not manifest_file.is_relative_to(allowed_root)
+            or manifest_file.stat().st_size > 8 * 1024**2
+            or sha256_file(manifest_file) != v16_manifest_sha256
+        ):
+            raise ValueError("V16 saved-vector manifest path or SHA-256 differs")
+        manifest = read_json_object(manifest_file, "V16 saved-vector manifest")
+        reports = manifest.get("producer_reports")
+        required = {
+            "v9_audit", "v15_audit", "v15_checkpoint", "v15_checker",
+            "v9_run_manifest", "v15_run_manifest", "v15_candidate_summary",
+        }
+        if (
+            manifest.get("schema") != "task41.p0.b0.v16.saved_vector_manifest.v1"
+            or manifest.get("rows") != 5_752_120
+            or manifest.get("trace_rows") != 5_688_000
+            or manifest.get("columns") != [0, 1]
+            or not isinstance(reports, Mapping)
+            or set(reports) != required
+        ):
+            raise ValueError("V16 manifest schema or hash-bound producer-report inventory differs")
+        authorized = [
+            manifest_file,
+            contract_path.resolve(strict=True),
+            input_path.resolve(strict=True),
+            Path(window.path).resolve(strict=True),
+        ]
+
+        def bind_record(record: Any, label: str, *, report: bool = False) -> Path:
+            if (
+                not isinstance(record, Mapping)
+                or not isinstance(record.get("path"), str)
+                or type(record.get("bytes")) is not int
+                or record["bytes"] <= 0
+                or (report and record["bytes"] > 32 * 1024**2)
+                or not isinstance(record.get("sha256"), str)
+                or re.fullmatch(r"[0-9a-f]{64}", record["sha256"]) is None
+            ):
+                raise ValueError(f"V16 {label} binding is malformed")
+            raw = Path(record["path"])
+            candidate = raw if raw.is_absolute() else allowed_root / raw
+            if candidate.is_symlink():
+                raise ValueError(f"V16 {label} cannot be a symlink")
+            path = candidate.resolve(strict=True)
+            accepted_checker = (
+                repo_root / "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0"
+                / "service_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad"
+                / "task41_p0_checker_result_recheck_c14dcdb4f3df5e1f488de6747008edf6d58c0c3f.json"
+            ).resolve()
+            accepted_checker_exception = (
+                report and label == "v15_checker report"
+                and path == accepted_checker
+                and record["sha256"] == "927d05cfcb568bebda30fc69b712a8ab30e18db0eda1bdbe43f412de58536540"
+            )
+            if (
+                not path.is_file()
+                or not (path.is_relative_to(allowed_root) or accepted_checker_exception)
+                or path.stat().st_size != record["bytes"]
+            ):
+                raise ValueError(f"V16 {label} path or byte count differs")
+            if report and sha256_file(path) != record["sha256"]:
+                raise ValueError(f"V16 {label} JSON SHA-256 differs")
+            return path
+
+        v15_audit_path = bind_record(reports["v15_audit"], "V15 audit report", report=True)
+        v15_audit = read_json_object(v15_audit_path, "V15 audit report")
+        cumulative_parts = (
+            v15_audit.get("existing_evidence_bytes"),
+            v15_audit.get("prior_new_evidence_bytes"),
+            v15_audit.get("new_evidence_bytes"),
+        )
+        if any(type(value) is not int or value < 0 for value in cumulative_parts):
+            raise ValueError("V15 audit omits complete cumulative raw-evidence accounting")
+        for name, record in reports.items():
+            authorized.append(bind_record(record, f"{name} report", report=True))
+        arrays = manifest.get("arrays")
+        row_group_codes = manifest.get("row_group_codes")
+        row_group_definitions = manifest.get("row_group_definitions")
+        row_provenance = manifest.get("row_incidence_provenance")
+        max_row_probe = manifest.get("max_row_probe_metadata")
+        metadata_source = manifest.get("metadata_source")
+        if manifest.get("metadata_pending") is True:
+            # This only admits the already-authorized supervised metadata callback.
+            # No mesh, NPY payload, or analysis is opened in this service preflight.
+            if any(manifest.get(name) is not None for name in (
+                "row_group_codes", "row_group_definitions", "row_incidence_provenance",
+                "max_row_probe_metadata",
+            )) or not isinstance(metadata_source, Mapping) or not isinstance(arrays, Mapping):
+                raise ValueError("V16 pending metadata must not claim completed metadata products")
+            for name in ("y9", "g9", "y15", "g15"):
+                records = arrays.get(name)
+                if not isinstance(records, list) or len(records) != 2:
+                    raise ValueError(f"V16 {name} inventory must bind both columns")
+                authorized.extend(bind_record(record, f"{name}/column{column}")
+                                  for column, record in enumerate(records))
+            active_map = metadata_source.get("active_original_rows")
+            if (not isinstance(active_map, Mapping)
+                or active_map.get("shape") != [5_688_000]
+                or active_map.get("dtype") != np.dtype(np.int64).str
+                or metadata_source.get("active_original_rows_file_sha256") != active_map.get("sha256")
+                or re.fullmatch(r"[0-9a-f]{64}", str(metadata_source.get("active_original_rows_values_sha256", ""))) is None):
+                raise ValueError("V16 pending metadata source map identity or layout differs")
+            authorized.append(bind_record(active_map, "source active-original-row map"))
+            return list(dict.fromkeys(authorized)), sum(cumulative_parts)
+        if (
+            not isinstance(arrays, Mapping)
+            or not isinstance(row_group_codes, Mapping)
+            or not isinstance(row_group_definitions, list)
+            or not isinstance(row_provenance, Mapping)
+            or not isinstance(max_row_probe, Mapping)
+            or not isinstance(metadata_source, Mapping)
+            or row_provenance.get("schema")
+            != "task41.p0.b0.v16.row_incidence_metadata.v1"
+            or row_provenance.get("row_count") != 5_688_000
+            or row_provenance.get("trace_rows") != 5_688_000
+            or row_provenance.get("total_rows_including_port") != 5_752_120
+            or row_provenance.get("covered_trace_rows") != 5_688_000
+            or row_provenance.get("port_rows_excluded_from_incidence") != 64_120
+            or row_provenance.get("periodic_slave_e_expanded") is not True
+            or row_provenance.get("one_mutually_exclusive_code_per_trace_row") is not True
+            or row_provenance.get("metadata_only_no_fe_operator_or_factor") is not True
+            or row_provenance.get("row_group_codes_sha256") != row_group_codes.get("sha256")
+            or row_provenance.get("max_row_probe_metadata_sha256") != max_row_probe.get("sha256")
+            or row_provenance.get("active_original_rows_sha256")
+            != metadata_source.get("active_original_rows_values_sha256")
+        ):
+            raise ValueError("V16 compact streamed row-incidence metadata is missing or unbound")
+        for name in ("y9", "g9", "y15", "g15"):
+            records = arrays.get(name)
+            if not isinstance(records, list) or len(records) != 2:
+                raise ValueError(f"V16 {name} inventory must bind both columns")
+            authorized.extend(bind_record(record, f"{name}/column{column}") for column, record in enumerate(records))
+        if (
+            row_group_codes.get("dtype") != np.dtype(np.int32).str
+            or row_group_codes.get("shape") != [5_688_000]
+            or not row_group_definitions
+            or len(row_group_definitions) > 4096
+            or max_row_probe.get("path") is None
+        ):
+            raise ValueError("V16 row-group code/probe layout differs from the compact stream contract")
+        authorized.append(bind_record(row_group_codes, "stored row-group codes"))
+        authorized.append(bind_record(max_row_probe, "maximum-row metadata", report=True))
+        active_map = metadata_source.get("active_original_rows")
+        authorized.append(bind_record(active_map, "source active-original-row map"))
+        if metadata_source.get("active_original_rows_file_sha256") != active_map.get("sha256"):
+            raise ValueError("V16 source active-row map hash does not match streamed metadata provenance")
+        return list(dict.fromkeys(authorized)), sum(cumulative_parts)
+
     results_root = (repo_root / "results" / str(contract["case"]["model_id"])).resolve()
     output_root = output_root.resolve()
     if not output_root.is_relative_to(results_root) or not run_root.is_relative_to(results_root):
@@ -10167,6 +10344,17 @@ def _run_task41_p0_saved_output_service(
         ))
     ):
         raise ValueError("saved y/g comparison requires its isolated checker-only bindings")
+    if b0_v16_saved_vector_analysis_mode and (
+        not checker_only
+        or b0_evidence_audit_mode
+        or b0_v9_saved_star_screen_mode
+        or b0_v9_failed_terminal_audit_mode
+        or b0_saved_y_g_comparison_mode
+        or b0_v14_saved_rhs_candidate_mode
+        or v16_manifest_path is None
+        or v16_manifest_sha256 is None
+    ):
+        raise ValueError("V16 saved-vector analysis requires its isolated checker-only manifest route")
     if not b0_saved_y_g_comparison_mode and any(value is not None for value in (
         v6_y_g_report_path, v6_y_g_report_sha256,
         v9_y_g_report_path, v9_y_g_report_sha256,
@@ -10178,6 +10366,7 @@ def _run_task41_p0_saved_output_service(
     y_g_producer_source_sha: str | None = None
     y_g_shared_donor_identity: dict[str, Any] | None = None
     saved_recorded_raw_bytes: int | None = None
+    v16_authorized_input_paths: list[Path] | None = None
     if b0_saved_y_g_comparison_mode:
         (
             y_g_authorized_input_paths,
@@ -10185,6 +10374,10 @@ def _run_task41_p0_saved_output_service(
             y_g_shared_donor_identity,
             saved_recorded_raw_bytes,
         ) = collect_saved_y_g_inputs()
+    if b0_v16_saved_vector_analysis_mode:
+        v16_authorized_input_paths, saved_recorded_raw_bytes = collect_v16_saved_vector_inputs()
+    elif v16_manifest_path is not None or v16_manifest_sha256 is not None:
+        raise ValueError("V16 manifest bindings are only valid in the explicit V16 saved-vector route")
     if b0_v4_volume_only_mode and not b0_evidence_audit_mode:
         raise ValueError("Task41 V4 volume-only extraction requires the saved B0 audit service")
     if b0_v4_geometry_pair_mode and not b0_v4_volume_only_mode:
@@ -10718,6 +10911,7 @@ def _run_task41_p0_saved_output_service(
         and not b0_v9_saved_star_screen_mode
         and not b0_v9_failed_terminal_audit_mode
         and not b0_saved_y_g_comparison_mode
+        and not b0_v16_saved_vector_analysis_mode
     ):
         if checker_snapshot_path is None or checker_snapshot_sha256 is None:
             raise ValueError("checker-only service requires an explicitly hash-bound saved-output snapshot")
@@ -10764,6 +10958,21 @@ def _run_task41_p0_saved_output_service(
             raise ValueError("saved y/g comparison cannot accept a saved-output snapshot")
         if y_g_authorized_input_paths is None:
             raise ValueError("saved y/g comparison input bindings were not prepared")
+        output_root.mkdir(parents=True, exist_ok=False)
+    elif b0_v16_saved_vector_analysis_mode:
+        if (
+            checker_snapshot_path is not None
+            or checker_snapshot_sha256 is not None
+            or v16_authorized_input_paths is None
+            or continuation_run_root is None
+            or continuation_output_root is None
+            or v16_manifest_path is None
+            or continuation_run_root != v16_manifest_path.parent.resolve()
+            or continuation_output_root == continuation_run_root
+            or continuation_output_root.is_relative_to(continuation_run_root)
+            or continuation_run_root.is_relative_to(continuation_output_root)
+        ):
+            raise ValueError("V16 saved-vector route must use a disjoint manifest parent and new output attempt")
         output_root.mkdir(parents=True, exist_ok=False)
     elif checker_snapshot_path is not None or checker_snapshot_sha256 is not None:
         raise ValueError("continuation service cannot accept a checker-only snapshot override")
@@ -10863,6 +11072,7 @@ def _run_task41_p0_saved_output_service(
             TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
             TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
             TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
+            TASK41_B0_V16_SAVED_VECTOR_SCOPE,
             task41_raw_artifact_limit_bytes,
         )
 
@@ -10871,6 +11081,7 @@ def _run_task41_p0_saved_output_service(
             TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
             TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
             TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
+            TASK41_B0_V16_SAVED_VECTOR_SCOPE,
         ):
             raise ValueError("saved-diagnostics disk gate received a different execution scope")
         if saved_scope == TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE and not (
@@ -10880,11 +11091,14 @@ def _run_task41_p0_saved_output_service(
             raise ValueError("V12 two-cell scope only admits its selected candidate replay")
         if saved_scope == TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE and not b0_v14_saved_rhs_candidate_mode:
             raise ValueError("V14 initial-screen scope only admits its supervised saved-RHS candidate route")
+        if saved_scope == TASK41_B0_V16_SAVED_VECTOR_SCOPE and not b0_v16_saved_vector_analysis_mode:
+            raise ValueError("V16 saved-vector scope only admits its isolated distribution diagnostic")
         window_sha = str(contract.get("window", {}).get("sha256", ""))
         window_output_root = results_root / "task41_p0_saved_diagnostics_6h" / window_sha
         expected_name = (
             "v9_failed_terminal_audit" if b0_v9_failed_terminal_audit_mode
             else "saved_y_g_comparison" if b0_saved_y_g_comparison_mode
+            else "saved_vector_distribution" if b0_v16_saved_vector_analysis_mode
             else "selected_incident_replay"
             if b0_v8_selected_trace_star_metadata_only_mode
             or b0_v8_selected_trace_star_candidate_replay_mode
@@ -10905,7 +11119,9 @@ def _run_task41_p0_saved_output_service(
         current_window_output_bytes = stat_output_tree(window_output_root)
         current_invocation_bytes = stat_output_tree(output_root) + stat_output_tree(service_directory)
         if current_window_output_bytes > new_cap:
-            raise ValueError("saved-diagnostics outputs exceed the 512 MiB window-wide cap")
+            raise ValueError(
+                f"saved-diagnostics outputs exceed the {new_cap}-byte window-wide cap"
+            )
         stat_raw_bytes = stat_bound_raw_bytes(saved_bound_raw_paths)
         donor_raw_bytes = 0
         if b0_saved_y_g_comparison_mode and y_g_shared_donor_identity is not None:
@@ -10980,6 +11196,8 @@ def _run_task41_p0_saved_output_service(
         "mode": (
             "saved_b0_y_g_comparison"
             if b0_saved_y_g_comparison_mode
+            else "saved_b0_v16_saved_vector_analysis"
+            if b0_v16_saved_vector_analysis_mode
             else "saved_b0_v9_failed_terminal_audit"
             if b0_v9_failed_terminal_audit_mode
             else "saved_b0_v14_saved_star_extension"
@@ -11083,11 +11301,19 @@ def _run_task41_p0_saved_output_service(
         and not b0_v9_saved_star_screen_mode
         and not b0_v9_failed_terminal_audit_mode
         and not b0_saved_y_g_comparison_mode
+        and not b0_v16_saved_vector_analysis_mode
     ):
         record.update(
             checker_input_snapshot_path=str(checker_snapshot_path),
             checker_input_snapshot_sha256=checker_snapshot_sha256,
             checker_source_sha=environment.get("TASK41_P0_CHECKER_SOURCE_SHA"),
+        )
+    elif b0_v16_saved_vector_analysis_mode:
+        assert v16_manifest_path is not None and v16_manifest_sha256 is not None
+        record.update(
+            checker_source_sha=environment.get("TASK41_P0_CHECKER_SOURCE_SHA"),
+            v16_manifest_path=str(v16_manifest_path),
+            v16_manifest_sha256=v16_manifest_sha256,
         )
     elif b0_v9_saved_star_screen_mode:
         assert candidate_report_path is not None
@@ -13538,6 +13764,7 @@ def _run_task41_p0_saved_output_service(
             or b0_v9_saved_star_screen_mode
             or b0_v9_failed_terminal_audit_mode
             or b0_saved_y_g_comparison_mode
+            or b0_v16_saved_vector_analysis_mode
             or (checker_snapshot is not None and checker_snapshot.is_file())
         ):
             if b0_saved_y_g_comparison_mode:
@@ -13575,6 +13802,29 @@ def _run_task41_p0_saved_output_service(
                     str(v9_y_g_service_receipt_path),
                     "--v9-service-receipt-sha256",
                     v9_y_g_service_receipt_sha256,
+                    "--output",
+                    str(checker_result_path),
+                ]
+            elif b0_v16_saved_vector_analysis_mode:
+                assert v16_manifest_path is not None
+                assert v16_manifest_sha256 is not None
+                checker_result_path = service_directory / "task41_p0_checker_result.json"
+                environment["TASK41_P0_V16_RESULT_PATH"] = str(
+                    checker_result_path.resolve()
+                )
+                checker_command = [
+                    python,
+                    "-m",
+                    "src.runners.task41_p0_checker",
+                    "--saved-b0-v16-vector-analysis",
+                    "--manifest",
+                    str(v16_manifest_path),
+                    "--manifest-sha256",
+                    v16_manifest_sha256,
+                    "--contract",
+                    str(contract_path.resolve()),
+                    "--contract-sha256",
+                    contract_sha,
                     "--output",
                     str(checker_result_path),
                 ]
@@ -13738,6 +13988,13 @@ def _run_task41_p0_saved_output_service(
                     or contract["source"]["sha"] != checker_source_sha
                 ):
                     raise ValueError("saved y/g comparison consumer and checker source identities changed")
+            elif b0_v16_saved_vector_analysis_mode:
+                if (
+                    checker_source_sha != environment.get("TASK41_P0_CHECKER_SOURCE_SHA")
+                    or consumer_source_sha != checker_source_sha
+                    or contract["source"]["sha"] != checker_source_sha
+                ):
+                    raise ValueError("V16 saved-vector consumer and checker source identities changed")
             elif checker_only and (
                 checker_source_sha != environment.get("TASK41_P0_CHECKER_SOURCE_SHA")
                 or consumer_source_sha == checker_source_sha
@@ -13748,6 +14005,11 @@ def _run_task41_p0_saved_output_service(
                     raise ValueError("saved y/g comparison input allowlist was not prepared")
                 authorized_inputs = y_g_authorized_input_paths
                 checker_kind = "task41_p0_b0_saved_y_g_comparison_checker"
+            elif b0_v16_saved_vector_analysis_mode:
+                if v16_authorized_input_paths is None:
+                    raise ValueError("V16 saved-vector input allowlist was not prepared")
+                authorized_inputs = v16_authorized_input_paths
+                checker_kind = "task41_p0_b0_v16_saved_vector_analysis_checker"
             elif b0_v9_failed_terminal_audit_mode:
                 assert v9_terminal_producer_contract_path is not None
                 assert v9_terminal_summary_path is not None
@@ -14040,7 +14302,12 @@ def _run_task41_p0_saved_output_service(
                     json.dumps(checker_command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
                 ).hexdigest(),
                 "input_paths": [str(path) for path in authorized_inputs],
-                "input_sha256s": [sha256_file(path) for path in authorized_inputs],
+                # V16 is a numeric-phase saved analysis, not a closeout re-audit.
+                # Its worker verifies declared NPY hashes once under the watchdog.
+                "input_sha256s": (
+                    None if b0_v16_saved_vector_analysis_mode
+                    else [sha256_file(path) for path in authorized_inputs]
+                ),
                 "expected_channel_count": None,
                 "campaign_window_sha256": window.sha256,
                 "task41_contract_sha256": contract_sha,
@@ -14054,10 +14321,12 @@ def _run_task41_p0_saved_output_service(
             checker_watchdog = supervise(
                 checker_command,
                 service_directory / "required_checker_watchdog",
-                wall_seconds=window.closeout_seconds,
+                wall_seconds=(window.cutoff_seconds if b0_v16_saved_vector_analysis_mode
+                              else window.closeout_seconds),
                 phase_path=service_directory / "required_checker_phase.json",
-                campaign_phase="closeout",
-                campaign_phase_authorization=checker_authorization,
+                campaign_phase=("numeric" if b0_v16_saved_vector_analysis_mode else "closeout"),
+                campaign_phase_authorization=(None if b0_v16_saved_vector_analysis_mode
+                                              else checker_authorization),
                 **common_watchdog,
             )
             checker_payload = (
@@ -14092,6 +14361,35 @@ def _run_task41_p0_saved_output_service(
                     "result_sha256": sha256_file(checker_result_path)
                     if checker_result_path.is_file()
                     else None,
+                }
+            elif b0_v16_saved_vector_analysis_mode:
+                checker_ok = bool(
+                    checker_watchdog.get("classification") == "COMPLETED"
+                    and checker_watchdog.get("leader_exit_code") == 0
+                    and isinstance(checker_payload, Mapping)
+                    and checker_payload.get("schema")
+                    == "task41.p0.b0.v16.saved_vector_distribution.v1"
+                    and checker_payload.get("status") == "COMPLETED_DIAGNOSTIC_ONLY"
+                    and checker_payload.get("classification")
+                    == "SAVED_VECTOR_DISTRIBUTION_DIAGNOSTIC_ONLY"
+                    and checker_payload.get("data_integrity") is True
+                    and checker_payload.get("official_result") is False
+                    and checker_payload.get("errors") == []
+                )
+                record["continuation_status"] = (
+                    "v16_saved_vector_distribution_completed_diagnostic_only"
+                    if checker_ok
+                    else "v16_saved_vector_distribution_incomplete"
+                )
+                record["official_result"] = False
+                record["saved_vector_distribution"] = {
+                    "status": "COMPLETED_DIAGNOSTIC_ONLY" if checker_ok else "INCOMPLETE",
+                    "result_path": str(checker_result_path),
+                    "result_sha256": sha256_file(checker_result_path)
+                    if checker_result_path.is_file()
+                    else None,
+                    "manifest_path": str(v16_manifest_path),
+                    "manifest_sha256": v16_manifest_sha256,
                 }
             elif b0_v9_failed_terminal_audit_mode:
                 checker_ok = bool(
@@ -14215,7 +14513,10 @@ def _run_task41_p0_saved_output_service(
             record.update(
                 required_checker_status=(
                     "diagnostic_completed"
-                    if checker_ok and b0_saved_y_g_comparison_mode
+                    if checker_ok and (
+                        b0_saved_y_g_comparison_mode
+                        or b0_v16_saved_vector_analysis_mode
+                    )
                     else "audit_completed"
                     if checker_ok
                     and (
@@ -14309,6 +14610,13 @@ def _run_task41_p0_saved_output_service(
                 else "SAVED_VECTOR_COMPARISON_INCOMPLETE"
             )
             record["official_result"] = False
+        elif b0_v16_saved_vector_analysis_mode:
+            record["result_classification"] = (
+                "SAVED_VECTOR_DISTRIBUTION_DIAGNOSTIC_ONLY"
+                if result_code == 0
+                else "SAVED_VECTOR_DISTRIBUTION_INCOMPLETE"
+            )
+            record["official_result"] = False
         if b0_v9_failed_terminal_audit_mode:
             record["result_classification"] = (
                 "SUPERVISED_NEGATIVE_RESULT_AUDIT_COMPLETED"
@@ -14337,6 +14645,9 @@ def _run_task41_p0_saved_output_service(
                     record["required_checker_status"] = "failed"
                 if b0_saved_y_g_comparison_mode:
                     record["result_classification"] = "SAVED_VECTOR_COMPARISON_INCOMPLETE"
+                elif b0_v16_saved_vector_analysis_mode:
+                    record["result_classification"] = "SAVED_VECTOR_DISTRIBUTION_INCOMPLETE"
+                    record["official_result"] = False
                 elif b0_v9_failed_terminal_audit_mode:
                     record["result_classification"] = "SUPERVISED_TERMINAL_AUDIT_INCOMPLETE"
                 elif b0_v8_selected_trace_star_metadata_only_mode:
@@ -14477,6 +14788,9 @@ def _run_task41_p0_service(
         TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
         TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE,
         TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
+        TASK41_B0_V16_SAVED_VECTOR_INSTANCE,
+        TASK41_B0_V16_SAVED_VECTOR_SCOPE,
+        TASK41_B0_V16_SAVED_VECTOR_WINDOW_RELATIVE,
         TASK41_P0_AUTH_SCHEMA,
         load_task41_p0_fixed_window,
         require_task41_p0_contract,
@@ -14554,6 +14868,11 @@ def _run_task41_p0_service(
     b0_saved_y_g_comparison_mode = bool(
         case_args and case_args[0] == "--task41-p0-saved-b0-y-g-comparison"
     )
+    b0_v16_saved_vector_analysis_mode = bool(
+        case_args and case_args[0] == "--task41-p0-saved-b0-v16-vector-analysis"
+    )
+    v16_manifest_path: Path | None = None
+    v16_manifest_sha256: str | None = None
     b0_v4_geometry_pair_mode = False
     b0_v5_mesh_actual_exact_mode = False
     b0_v6_actual_qmetric_mode = False
@@ -14588,6 +14907,7 @@ def _run_task41_p0_service(
         or b0_v9_saved_star_screen_mode
         or b0_v9_failed_terminal_audit_mode
         or b0_saved_y_g_comparison_mode
+        or b0_v16_saved_vector_analysis_mode
     )
     continuation_run_root: Path | None = None
     continuation_output_root: Path | None = None
@@ -14740,6 +15060,26 @@ def _run_task41_p0_service(
         continuation_run_root = Path(
             str(v9_summary_value.get("output_directory", ""))
         ).resolve(strict=True)
+    if b0_v16_saved_vector_analysis_mode:
+        expected = [
+            "--task41-p0-saved-b0-v16-vector-analysis",
+            "--manifest", None,
+            "--manifest-sha256", None,
+            "--output-dir", None,
+        ]
+        if len(case_args) != len(expected) or any(
+            wanted is not None and got != wanted
+            for got, wanted in zip(case_args, expected)
+        ):
+            raise ValueError(
+                "V16 saved-vector analysis requires a hash-bound manifest and a new output directory"
+            )
+        v16_manifest_path = Path(case_args[2]).resolve(strict=True)
+        v16_manifest_sha256 = case_args[4]
+        if re.fullmatch(r"[0-9a-f]{64}", v16_manifest_sha256) is None:
+            raise ValueError("V16 saved-vector manifest SHA-256 is malformed")
+        continuation_run_root = v16_manifest_path.parent.resolve(strict=True)
+        continuation_output_root = Path(case_args[6]).resolve()
     candidate_geometry_reference_path: Path | None = None
     if b0_evidence_audit_mode:
         if (
@@ -15078,10 +15418,22 @@ def _run_task41_p0_service(
         raise ValueError(
             "Task41 V15 full acceptance requires both its exact contract and explicit service selector"
         )
+    is_v16_saved_vector_analysis = bool(
+        case_id == "B0"
+        and contract.get("execution_scope") == TASK41_B0_V16_SAVED_VECTOR_SCOPE
+        and contract_window.resolve()
+        == (repo_root / TASK41_B0_V16_SAVED_VECTOR_WINDOW_RELATIVE).resolve()
+        and strategy == expected_strategy
+    )
+    if b0_v16_saved_vector_analysis_mode != is_v16_saved_vector_analysis:
+        raise ValueError(
+            "Task41 V16 saved-vector analysis requires both its exact fixed contract and explicit service route"
+        )
     saved_scope = contract.get("execution_scope")
     if saved_scope is not None and not (
         b0_v9_failed_terminal_audit_mode
         or b0_saved_y_g_comparison_mode
+        or b0_v16_saved_vector_analysis_mode
         or b0_v14_saved_rhs_candidate_mode
         or v15_full_acceptance_selector
         or b0_v8_selected_trace_star_metadata_only_mode
@@ -15092,9 +15444,9 @@ def _run_task41_p0_service(
             "saved-diagnostics contract is restricted to the V9 failed-terminal audit "
             "or saved y/g comparison route"
         )
-    if b0_saved_y_g_comparison_mode and saved_scope is None:
+    if (b0_saved_y_g_comparison_mode or b0_v16_saved_vector_analysis_mode) and saved_scope is None:
         raise ValueError(
-            "saved y/g comparison requires the explicitly prepared saved-diagnostics contract"
+            "saved-vector analysis requires the explicitly prepared saved-diagnostics contract"
         )
     if (
         b0_v8_selected_trace_star_metadata_only_mode
@@ -15147,7 +15499,7 @@ def _run_task41_p0_service(
         continuation_branch = subprocess.check_output(
             ["git", "branch", "--show-current"], cwd=repo_root, text=True
         ).strip()
-        if b0_evidence_audit_mode or b0_saved_y_g_comparison_mode:
+        if b0_evidence_audit_mode or b0_saved_y_g_comparison_mode or b0_v16_saved_vector_analysis_mode:
             if (
                 continuation_branch != contract["branch"]
                 or checker_source_sha != contract["source"]["sha"]
@@ -15784,6 +16136,13 @@ def _run_task41_p0_service(
             "TASK41_P0_CONSUMER_SOURCE_SHA": str(continuation_source_sha),
             "TASK41_P0_CHECKER_SOURCE_SHA": str(checker_source_sha),
         })
+    elif b0_v16_saved_vector_analysis_mode:
+        environment.update({
+            "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
+            "TASK41_P0_B0_V16_SAVED_VECTOR_ANALYSIS": "1",
+            "TASK41_P0_CONSUMER_SOURCE_SHA": str(continuation_source_sha),
+            "TASK41_P0_CHECKER_SOURCE_SHA": str(checker_source_sha),
+        })
     elif b0_v9_failed_terminal_audit_mode:
         assert v9_terminal_producer_contract_path is not None
         assert v9_terminal_producer_contract_sha256 is not None
@@ -15960,6 +16319,7 @@ def _run_task41_p0_service(
                 or b0_v9_saved_star_screen_mode
                 or b0_v9_failed_terminal_audit_mode
                 or b0_saved_y_g_comparison_mode
+                or b0_v16_saved_vector_analysis_mode
             ),
             checker_snapshot_path=checker_input_path,
             checker_snapshot_sha256=checker_input_sha256,
@@ -15967,6 +16327,9 @@ def _run_task41_p0_service(
             b0_v9_saved_star_screen_mode=b0_v9_saved_star_screen_mode,
             b0_v9_failed_terminal_audit_mode=b0_v9_failed_terminal_audit_mode,
             b0_saved_y_g_comparison_mode=b0_saved_y_g_comparison_mode,
+            b0_v16_saved_vector_analysis_mode=b0_v16_saved_vector_analysis_mode,
+            v16_manifest_path=v16_manifest_path,
+            v16_manifest_sha256=v16_manifest_sha256,
             b0_v14_saved_rhs_candidate_mode=b0_v14_saved_rhs_candidate_mode,
             b0_v14_decimal_residual_recheck_only_mode=(
                 b0_v14_decimal_residual_recheck_only_mode
@@ -16410,6 +16773,7 @@ def run_service(
             "--task41-p0-saved-b0-v9-star-screen",
             "--task41-p0-saved-b0-v9-failed-terminal-audit",
             "--task41-p0-saved-b0-y-g-comparison",
+            "--task41-p0-saved-b0-v16-vector-analysis",
             "--v14-saved-rhs-candidate",
         }
         if any(argument in saved_routes for argument in case_args):

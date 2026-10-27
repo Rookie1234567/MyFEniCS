@@ -1664,6 +1664,7 @@ def build_selected_volume_trace_star_metadata(
     expected_active_original_rows: np.ndarray,
     witness_cell_indices: Iterable[int] = (),
     progress_callback: Callable[[Mapping[str, Any]], Any] | None = None,
+    incidence_callback: Callable[[Mapping[str, Any]], Any] | None = None,
 ) -> dict[str, Any]:
     """Build only the exact MPI1 metadata star for one saved active trace row.
 
@@ -1760,6 +1761,41 @@ def build_selected_volume_trace_star_metadata(
     geometry_coordinates = np.asarray(mesh.geometry.x, dtype=np.float64)
     if permutations.shape[0] < owned_cells or geometry_dofmap.shape[0] < owned_cells:
         raise ValueError("mesh permutation or geometry map omits owned cells")
+    mpc_slave_original_mask = None
+    if incidence_callback is not None:
+        tag_codebook = np.unique(tags)
+        direction_codebook = np.unique(permutations[:owned_cells])
+        if tag_codebook.size == 0 or direction_codebook.size == 0:
+            raise ValueError("selected trace-star mesh has an empty tag/permutation codebook")
+        if tag_codebook.size > 64 or direction_codebook.size > 64:
+            raise ValueError(
+                "selected trace-star dense tag/permutation codebook exceeds the 64-category mask limit"
+            )
+        mpc_slave_original_mask = np.zeros(full_rows, dtype=np.bool_)
+        if mpc is not None:
+            local_slaves = np.unique(np.asarray(mpc.slaves, dtype=np.int64).reshape(-1))
+            local_slaves = local_slaves[
+                (local_slaves >= 0) & (local_slaves < int(index_map.size_local))
+            ].astype(np.int32, copy=False)
+            slave_original_rows = np.asarray(
+                index_map.local_to_global(local_slaves), dtype=np.int64
+            ).reshape(-1)
+            if (
+                slave_original_rows.size != int(constraints.slave_rows)
+                or (slave_original_rows.size and (
+                    int(slave_original_rows.min()) < 0
+                    or int(slave_original_rows.max()) >= full_rows
+                ))
+                or np.unique(slave_original_rows).size != slave_original_rows.size
+            ):
+                raise ValueError("selected trace-star MPC slave map differs from its trace constraint map")
+            mpc_slave_original_mask[slave_original_rows] = True
+        incidence_callback({
+            "phase": "codebook",
+            "tag_raw_values": [int(value) for value in tag_codebook],
+            "direction_raw_values": [int(value) for value in direction_codebook],
+            "codebook_values_are_dense_ids_not_raw_bit_positions": True,
+        })
 
     witness_indices = frozenset(int(value) for value in witness_cell_indices)
     if any(value < 0 or value >= owned_cells for value in witness_indices):
@@ -1775,6 +1811,18 @@ def build_selected_volume_trace_star_metadata(
         active_ids, expansion, _identity = _cell_trace_expansion(
             trace_original_rows, constraints
         )
+        if incidence_callback is not None:
+            assert mpc_slave_original_mask is not None
+            incidence_callback({
+                "phase": "cell",
+                "cell_index": int(cell_index),
+                "cell_tag": int(tags[cell_index]),
+                "cell_permutation": int(permutations[cell_index]),
+                "trace_original_rows": trace_original_rows,
+                "active_ids": active_ids,
+                "trace_expansion": expansion,
+                "mpc_slave_trace_mask": mpc_slave_original_mask[trace_original_rows],
+            })
         support = _selected_trace_column_support(
             active_ids, expansion, selected_active_row
         )

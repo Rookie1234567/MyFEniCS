@@ -56,8 +56,10 @@ task41_saved_b0_v9_star_screen=0
 task41_saved_b0_v9_failed_terminal_audit=0
 task41_saved_b0_y_g_comparison=0
 task41_saved_b0_v14_candidate=0
+task41_saved_b0_v16_analysis=0
 task41_v15_full_acceptance=0
 task41_v15_full_acceptance_count=0
+task41_saved_b0_v16_analysis_count=0
 for ((index = 0; index < ${#args[@]}; index++)); do
     arg="${args[index]}"
     case "$arg" in
@@ -148,6 +150,10 @@ for ((index = 0; index < ${#args[@]}; index++)); do
             ;;
         --task41-p0-saved-b0-y-g-comparison)
             task41_saved_b0_y_g_comparison=1
+            ;;
+        --task41-p0-saved-b0-v16-vector-analysis)
+            task41_saved_b0_v16_analysis=1
+            ((task41_saved_b0_v16_analysis_count += 1))
             ;;
         --v14-saved-rhs-candidate)
             task41_saved_b0_v14_candidate=1
@@ -247,15 +253,23 @@ if (( task41_saved_b0_y_g_comparison && (task41_saved_output_continuation || tas
     echo "Task41 saved y/g comparison cannot be combined with another Task41 saved mode" >&2
     exit 2
 fi
+if (( task41_saved_b0_v16_analysis_count > 1 )); then
+    echo "Task41 V16 saved analysis selector may appear only once" >&2
+    exit 2
+fi
+if (( task41_saved_b0_v16_analysis && (task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit || task41_saved_b0_v9_star_screen || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_v15_full_acceptance) )); then
+    echo "Task41 V16 saved analysis cannot be combined with another Task41 execution route" >&2
+    exit 2
+fi
 if (( task41_v15_full_acceptance_count > 1 )); then
     echo "Task41 V15 full-acceptance selector may appear only once" >&2
     exit 2
 fi
-if (( task41_v15_full_acceptance && (task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit || task41_saved_b0_v9_star_screen || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate) )); then
+if (( task41_v15_full_acceptance && (task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit || task41_saved_b0_v9_star_screen || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis) )); then
     echo "Task41 V15 full acceptance cannot be combined with saved-output routes" >&2
     exit 2
 fi
-if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit || task41_saved_b0_v9_star_screen || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_v15_full_acceptance )) && (( task41_contract_count != 1 )); then
+if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit || task41_saved_b0_v9_star_screen || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis || task41_v15_full_acceptance )) && (( task41_contract_count != 1 )); then
     echo "Task41 saved audit/output modes require exactly one Task41 P0 execution contract" >&2
     exit 2
 fi
@@ -269,7 +283,7 @@ if (( task41_contract_count != 0 )); then
         exit 2
     fi
     [[ "$task41_contract" == /* ]] || task41_contract="$repo_root/$task41_contract"
-    if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_v15_full_acceptance )); then
+    if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis || task41_v15_full_acceptance )); then
         if ! task41_values_text="$(cd -- "$repo_root" && python3 -m src.runners.task41_p0_contract \
             --launcher-values --contract "$task41_contract" --saved-output-continuation)"; then
             exit 2
@@ -355,6 +369,7 @@ task41_saved_output_checker_only=0
 task41_saved_b0_v9_failed_terminal_audit=0
 task41_saved_b0_y_g_comparison=0
 task41_saved_b0_v14_candidate=0
+task41_saved_b0_v16_analysis=0
 task41_v15_full_acceptance=0
 for arg in "${args[@]}"; do
     if [[ "$arg" == --task41-p0-saved-output-continuation ]]; then
@@ -365,18 +380,20 @@ for arg in "${args[@]}"; do
         task41_saved_b0_v9_failed_terminal_audit=1
     elif [[ "$arg" == --task41-p0-saved-b0-y-g-comparison ]]; then
         task41_saved_b0_y_g_comparison=1
+    elif [[ "$arg" == --task41-p0-saved-b0-v16-vector-analysis ]]; then
+        task41_saved_b0_v16_analysis=1
     elif [[ "$arg" == --v14-saved-rhs-candidate ]]; then
         task41_saved_b0_v14_candidate=1
     elif [[ "$arg" == --task41-p0-b0-v15-full-acceptance ]]; then
         task41_v15_full_acceptance=1
     fi
 done
-if (( task41_v15_full_acceptance && (task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate) )); then
+if (( task41_v15_full_acceptance && (task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis) )); then
     echo "Task41 V15 full acceptance cannot be combined with saved-output routes" >&2
     exit 2
 fi
 unset TASK41_P0_V15_FULL_ACCEPTANCE TASK41_P0_V15_OUTPUT_DIRECTORY
-if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_v15_full_acceptance )); then
+if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis || task41_v15_full_acceptance )); then
     mapfile -t values < <(python3 -m src.runners.task41_p0_contract \
         --launcher-values --contract "$task41_contract" --saved-output-continuation)
 else

@@ -337,6 +337,38 @@ TASK41_B0_V15_FULL_ACCEPTANCE_SCOPE = {
     "carrier_replay": False,
     "full_q_scan": False,
 }
+TASK41_B0_V16_SAVED_VECTOR_INSTANCE = "v16_saved_vector_distribution_6h"
+TASK41_B0_V16_SAVED_VECTOR_WINDOW_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE / "execution_window_v16_saved_vector_distribution_6h.json"
+)
+TASK41_B0_V16_SAVED_VECTOR_AUTH_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE / "saved_diagnostics_v16_saved_vector_distribution_authorization.json"
+)
+TASK41_B0_V16_SAVED_VECTOR_ACCOUNTING_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v16_saved_vector_distribution_6h.jsonl"
+)
+TASK41_B0_V16_SAVED_VECTOR_NEW_EVIDENCE_BYTES = 128 * 1024**2
+TASK41_B0_V16_SAVED_VECTOR_SCOPE = {
+    "kind": "saved_vector_diagnostics_only",
+    "actions": [
+        "saved_vector_distribution",
+        "saved_star_terminal_binding",
+        "max_row_metadata_inventory",
+    ],
+    "columns": [0, 1],
+    "max_new_incident_cells": 0,
+    "max_ffcx_reference_cells": 0,
+    "new_evidence_limit_bytes": TASK41_B0_V16_SAVED_VECTOR_NEW_EVIDENCE_BYTES,
+    "cumulative_raw_artifact_limit_bytes": 16 * 1024**3,
+    "free_space_floor_bytes": 2 * 1024**3,
+    "full_owner": False,
+    "factor_or_lu": False,
+    "getrs": 0,
+    "native_fe_action": False,
+    "carrier_replay": False,
+    "full_q_scan": False,
+    "official_result": False,
+}
 
 TASK41_COMPARISON_GROUP = "task41extra_phi90_p50x50_g17x20_g13_a1a2"
 TASK41_TOTAL_SECONDS = 172_800.0
@@ -415,6 +447,21 @@ def _task41_saved_diagnostics_instance(instance: str | None = None) -> dict[str,
             "total_seconds": TASK41_B0_V15_FULL_ACCEPTANCE_TOTAL_SECONDS,
             "numerical_seconds": TASK41_B0_V15_FULL_ACCEPTANCE_NUMERICAL_SECONDS,
         }
+    if instance == TASK41_B0_V16_SAVED_VECTOR_INSTANCE:
+        return {
+            "instance": instance,
+            "window_relative": TASK41_B0_V16_SAVED_VECTOR_WINDOW_RELATIVE,
+            "authorization_relative": TASK41_B0_V16_SAVED_VECTOR_AUTH_RELATIVE,
+            "accounting_relative": TASK41_B0_V16_SAVED_VECTOR_ACCOUNTING_RELATIVE,
+            "scope": TASK41_B0_V16_SAVED_VECTOR_SCOPE,
+            "authorization": "user_explicit_v16_saved_vector_distribution_6h",
+            "prior_window_relative": TASK41_B0_V15_FULL_ACCEPTANCE_WINDOW_RELATIVE,
+            "prior_ledger_relative": TASK41_B0_V15_FULL_ACCEPTANCE_ACCOUNTING_RELATIVE,
+            "t0_basis": "user_approved_v16_saved_vector_distribution_6h",
+            "requires_preexisting_user_authorization": True,
+            "total_seconds": 21_600.0,
+            "numerical_seconds": 20_400.0,
+        }
     raise Task41ContractError(f"unknown saved-diagnostics instance: {instance!r}")
 
 
@@ -427,6 +474,7 @@ def _task41_saved_diagnostics_instance_for_path(
         TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
         TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE,
         TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE,
+        TASK41_B0_V16_SAVED_VECTOR_INSTANCE,
     ):
         config = _task41_saved_diagnostics_instance(instance)
         if resolved == (root / config["window_relative"]).resolve():
@@ -1299,6 +1347,7 @@ def contract_relative_path(
         TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE: f"_{TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE}",
         TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE: f"_{TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE}",
         TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE: f"_{TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE}",
+        TASK41_B0_V16_SAVED_VECTOR_INSTANCE: f"_{TASK41_B0_V16_SAVED_VECTOR_INSTANCE}",
     }
     if saved_diagnostics_instance not in suffix_by_instance:
         raise Task41ContractError("unknown saved-diagnostics contract filename instance")
@@ -1418,7 +1467,7 @@ def require_task41_p0_contract(
             raise Task41ContractError("Task41 contract is outside a registered P0 controller directory")
     case_spec = _task41_case(case_id)
     if relative.parent != case_spec["controller_relative"] or not re.fullmatch(
-        r"execution_contract_source_[0-9a-f]{40}(?:_v12_two_cell_candidate_replay|_v14_same_lu_rhs_candidate_6h|_v15_full_two_column_acceptance_36h)?\.json",
+        r"execution_contract_source_[0-9a-f]{40}(?:_v12_two_cell_candidate_replay|_v14_same_lu_rhs_candidate_6h|_v15_full_two_column_acceptance_36h|_v16_saved_vector_distribution_6h)?\.json",
         relative.name,
     ):
         raise Task41ContractError("Task41 contract is not in the registered P0 controller directory")
@@ -2366,7 +2415,9 @@ def task41_raw_artifact_limit_bytes(contract: Mapping[str, Any]) -> int:
         "authorization": "user_20261019_16gib_evidence_only",
     }
     execution_scope = contract.get("execution_scope")
-    if execution_scope in (
+    if execution_scope == TASK41_B0_V16_SAVED_VECTOR_SCOPE:
+        expected["new_evidence_limit_bytes"] = TASK41_B0_V16_SAVED_VECTOR_NEW_EVIDENCE_BYTES
+    elif execution_scope in (
         TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
         TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
         TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
@@ -2508,6 +2559,8 @@ def prepare_task41_p0(
                 route_name = (
                     "V15 full-acceptance"
                     if saved_diagnostics_instance == TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE
+                    else "V16 saved-vector diagnostics"
+                    if saved_diagnostics_instance == TASK41_B0_V16_SAVED_VECTOR_INSTANCE
                     else "V14 saved-candidate"
                 )
                 raise Task41ContractError(
@@ -3363,6 +3416,7 @@ def main(argv: list[str] | None = None) -> int:
             TASK41_B0_V12_CANDIDATE_REPLAY_INSTANCE,
             TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE,
             TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE,
+            TASK41_B0_V16_SAVED_VECTOR_INSTANCE,
         ),
     )
     parser.add_argument("--case", choices=("A1", "A2", "B0"), default="A1")
