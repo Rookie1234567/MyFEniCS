@@ -1,3 +1,7 @@
+## Task41extra V15：全域验收完成但数值门失败（2026-10-27）
+
+0.7nm、50×50×140nm、居中Si矩形、phi90、p6/28,000 cells、64,120 modes。原LU加最多两次补偿残差校正后，两列完整差5.762574483600798e-11 / 1.212368464357194e-10，均超过1e-11；较V9约改善4.64/4.63倍，但没有科学资格。owner39,972.508249秒；正式service60,758.813495秒（含错误carrier下游及清场，保留成本）；tree峰555,498,606,592 B、cgroup峰556,689,793,024 B、task swap0。保存只读审核完整，恢复/200q/factor/FGMRES/官方RTA未运行。旧WORKER_FAILED和原checker失败不改写。下一步用保存y/g分解RHS余差，不自动重复28,000键构建。完整身份、分项和原始文件/hash见[response_v15](task41extra_phi90_p50x50_g17x20/response_v15.md)、[compact](task41extra_phi90_p50x50_g17x20/outcomes/v15_closeout/operator_resource_compact.json)、[证据索引](task41extra_phi90_p50x50_g17x20/outcomes/v15_closeout/evidence_index.json)。没有完整场、最终精度或2TB/48h PASS。
+
 ## Task41extra Review V8：目标行局部复核完成，全域candidate门仍失败（2026-10-21）
 
 本轮先由selected-star producer扫描28,000个单元metadata并为目标行仅重建cell 23352、23493缺失的candidate/reference局部张量和R/T/S；随后checker attempts 1–4只读保存数据。active trace row 4,766,937映射到original full-storage row 15,440,235。saved-only checker在冻结source `3ce1a158e3e0b6556a2e094755adf9b5bd18ae08`下完成304个保存向量复算、16个ordered P3 summary rows及目标行局部误差诊断。

@@ -1,0 +1,1229 @@
+{
+  "original_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task41_b0_07nm_p6_y_orbit_reference_events.jsonl",
+  "bytes": 10938729,
+  "sha256": "ae772abb3725a872a1f9563cbd941bdeaabe6779a4e3b5b0a109a477f90399de",
+  "selection": "phase-bearing events; see source for full timeline",
+  "events": [
+    {
+      "event": "task41_b0_target_physical_action_stage",
+      "facts": {
+        "phase": "surface_form_jit_all_sides",
+        "status": "STARTED"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793002358576046877
+    },
+    {
+      "event": "task41_b0_target_physical_action_stage",
+      "facts": {
+        "completed": 0,
+        "component": 0,
+        "phase": "surface_form_jit",
+        "quadrature_degree": 160,
+        "side": "top",
+        "status": "STARTED",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793002358577377489
+    },
+    {
+      "event": "task41_b0_target_physical_action_stage",
+      "facts": {
+        "completed": 1,
+        "component": 0,
+        "elapsed_seconds": 29.51743780914694,
+        "phase": "surface_form_jit",
+        "process_cpu_seconds": 29.512513811999995,
+        "quadrature_degree": 160,
+        "side": "top",
+        "status": "COMPLETE",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793002388094837361
+    },
+    {
+      "event": "task41_b0_target_physical_action_stage",
+      "facts": {
+        "completed": 1,
+        "component": 1,
+        "phase": "surface_form_jit",
+        "quadrature_degree": 160,
+        "side": "top",
+        "status": "STARTED",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793002388096162927
+    },
+    {
+      "event": "task41_b0_target_physical_action_stage",
+      "facts": {
+        "completed": 2,
+        "component": 1,
+        "elapsed_seconds": 29.72977061290294,
+        "phase": "surface_form_jit",
+        "process_cpu_seconds": 29.721450008999994,
+        "quadrature_degree": 160,
+        "side": "top",
+        "status": "COMPLETE",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793002417825970956
+    },
+    {
+      "event": "task41_b0_target_physical_action_stage",
+      "facts": {
+        "completed": 2,
+        "component": 0,
+        "phase": "surface_form_jit",
+        "quadrature_degree": 160,
+        "side": "bottom",
+        "status": "STARTED",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793002417827835770
+    },
+    {
+      "event": "task41_b0_target_physical_action_stage",
+      "facts": {
+        "completed": 3,
+        "component": 0,
+        "elapsed_seconds": 31.37632940337062,
+        "phase": "surface_form_jit",
+        "process_cpu_seconds": 31.35887282499999,
+        "quadrature_degree": 160,
+        "side": "bottom",
+        "status": "COMPLETE",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793002449204180938
+    },
+    {
+      "event": "task41_b0_target_physical_action_stage",
+      "facts": {
+        "completed": 3,
+        "component": 1,
+        "phase": "surface_form_jit",
+        "quadrature_degree": 160,
+        "side": "bottom",
+        "status": "STARTED",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793002449205404961
+    },
+    {
+      "event": "task41_b0_target_physical_action_stage",
+      "facts": {
+        "completed": 4,
+        "component": 1,
+        "elapsed_seconds": 32.60161413112655,
+        "phase": "surface_form_jit",
+        "process_cpu_seconds": 32.58587892100002,
+        "quadrature_degree": 160,
+        "side": "bottom",
+        "status": "COMPLETE",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793002481807043611
+    },
+    {
+      "event": "task41_b0_target_physical_action_stage",
+      "facts": {
+        "elapsed_seconds": 123.23199830763042,
+        "phase": "surface_form_jit_all_sides",
+        "process_cpu_seconds": 123.18195627600002,
+        "status": "COMPLETE",
+        "surface_assembler_count": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793002481808022210
+    },
+    {
+      "event": "task41_b0_v9_volume_owner",
+      "facts": {
+        "appended_rows": 64120,
+        "matrix_materialized": false,
+        "phase": "fresh_volume_owner",
+        "status": "STARTED"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793002533681829217
+    },
+    {
+      "event": "task41_b0_v9_volume_owner",
+      "facts": {
+        "active_rows": 5688000,
+        "class_count": 28000,
+        "phase": "fresh_volume_owner",
+        "retained_cache_bytes": null,
+        "slave_rows": 213024,
+        "status": "COMPLETED"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793042506190077737
+    },
+    {
+      "event": "task41_b0_v9_compact_volume_audit_progress",
+      "facts": {
+        "action_artifacts_saved_before_recovery": true,
+        "columns": [
+          {
+            "column": 0,
+            "difference": {
+              "absolute_l2": 1.2824501485040357e-07,
+              "max_abs": 8.314219327161011e-10,
+              "max_row": 1622464,
+              "reference_l2": 2225.481253480797
+            },
+            "dynamic_denominator": 2225.4812534807966,
+            "dynamic_denominator_relative": 5.762574483600798e-11,
+            "dynamic_gate_passed": false,
+            "frozen_denominator": 2225.481253487629,
+            "frozen_denominator_relative": 5.762574483583106e-11,
+            "frozen_gate_passed": false,
+            "same_s_saved_output_comparison": {
+              "absolute_l2": 0.0,
+              "array_equal": true,
+              "interpretation": "same frozen S/input output comparison; any difference is not attributed to RHS correction",
+              "max_abs": 0.0,
+              "max_row": null,
+              "reference_l2": 2225.4812534807893
+            }
+          },
+          {
+            "column": 1,
+            "difference": {
+              "absolute_l2": 2.6981026336315675e-07,
+              "max_abs": 1.674771706629432e-09,
+              "max_row": 1622464,
+              "reference_l2": 2225.4807123030223
+            },
+            "dynamic_denominator": 2225.4807123031856,
+            "dynamic_denominator_relative": 1.2123684643571942e-10,
+            "dynamic_gate_passed": false,
+            "frozen_denominator": 2225.4807123031883,
+            "frozen_denominator_relative": 1.2123684643571926e-10,
+            "frozen_gate_passed": false,
+            "same_s_saved_output_comparison": {
+              "absolute_l2": 0.0,
+              "array_equal": true,
+              "interpretation": "same frozen S/input output comparison; any difference is not attributed to RHS correction",
+              "max_abs": 0.0,
+              "max_row": null,
+              "reference_l2": 2225.480712303186
+            }
+          }
+        ],
+        "phase": "task41_v9_full_action_gate",
+        "status": "GATE_FAILED"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793051428900647745
+    },
+    {
+      "event": "task41_b0_v15_acceptance_only_exit",
+      "facts": {
+        "action_gate_status": "GATE_FAILED",
+        "downstream_200q_started": false,
+        "official_result": false,
+        "recovery_gate_status": "NOT_RUN_ACTION_GATE_FAILED",
+        "result_classification": "FULL_ACTION_GATE_FAILED",
+        "status": "TERMINAL_AUDIT_PENDING"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793051429976221629
+    },
+    {
+      "event": "task40_v33_global_physical_phase",
+      "facts": {
+        "phase": "surface_form_jit_all_sides",
+        "status": "STARTED"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793051478051408988
+    },
+    {
+      "event": "task40_v33_global_physical_phase",
+      "facts": {
+        "completed": 0,
+        "component": 0,
+        "phase": "surface_form_jit",
+        "quadrature_degree": 160,
+        "side": "top",
+        "status": "STARTED",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793051478052671839
+    },
+    {
+      "event": "task40_v33_global_physical_phase",
+      "facts": {
+        "completed": 1,
+        "component": 0,
+        "elapsed_seconds": 31.98930923314765,
+        "phase": "surface_form_jit",
+        "process_cpu_seconds": 31.96867846600071,
+        "quadrature_degree": 160,
+        "resource_sample": {
+          "all_status_readable": true,
+          "cap_policy": "min(v30_fixed_process_tree_cap,current_tree_rss+host/cgroup_headroom_after_reserves)",
+          "compiler_descendant_count": 0,
+          "dynamic_launch_cap_bytes": 1648886562816,
+          "exit_code": null,
+          "fixed_process_tree_cap_bytes": 1649267441664,
+          "identity_complete": true,
+          "identity_count": 4,
+          "inventory_memory_cap_bytes": null,
+          "inventory_peak_bytes": 0,
+          "inventory_policy": "record_only_under_physical_memory_pressure",
+          "inventory_used_bytes": 0,
+          "label": "v33_surface_form_jit_1",
+          "launch_cap_bytes": 1648886562816,
+          "members": [
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python scripts/run_case.py /home/fenics/Projects/laptop_share/input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat --task41-p0-execution-contract /home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad_v15_full_two_column_acceptance_36h.json",
+              "comm": "python",
+              "exit_code": null,
+              "pid": 1645943,
+              "ppid": 1641627,
+              "pss_bytes": null,
+              "rss_bytes": 49889280,
+              "stage": "assembly",
+              "start_ticks": 292728867,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793051510120030770
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/mpiexec -n 1 /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python -m src.runners.task038_input_worker --resolved-config /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/resolved_config.json --manifest /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/run_manifest.json --expected-input-sha256 a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1 --expected-physical-model-sha256 0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d --expected-source-sha 3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad --expected-mpi-size 1 --expected-method full3d_iterative --expected-adapter task038.full3d_iterative --expected-output-directory /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z --resolved-config-sha256 9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08",
+              "comm": "mpiexec",
+              "exit_code": null,
+              "pid": 1646002,
+              "ppid": 1645943,
+              "pss_bytes": null,
+              "rss_bytes": 6344704,
+              "stage": "assembly",
+              "start_ticks": 292728967,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793051510120333185
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/hydra_pmi_proxy --control-port fenics-ws01:41847 --rmk user --launcher ssh --demux poll --pgid 0 --retries 10 --usize -2 --pmi-port 0 --gpus-per-proc -2 --gpu-subdevs-per-proc -2 --proxy-id 0",
+              "comm": "hydra_pmi_proxy",
+              "exit_code": null,
+              "pid": 1646003,
+              "ppid": 1646002,
+              "pss_bytes": null,
+              "rss_bytes": 8822784,
+              "stage": "assembly",
+              "start_ticks": 292728967,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793051510120593225
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python -m src.runners.task038_input_worker --resolved-config /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/resolved_config.json --manifest /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/run_manifest.json --expected-input-sha256 a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1 --expected-physical-model-sha256 0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d --expected-source-sha 3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad --expected-mpi-size 1 --expected-method full3d_iterative --expected-adapter task038.full3d_iterative --expected-output-directory /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z --resolved-config-sha256 9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08",
+              "comm": "python",
+              "exit_code": null,
+              "pid": 1646004,
+              "ppid": 1646003,
+              "pss_bytes": null,
+              "rss_bytes": 541405044736,
+              "stage": "assembly",
+              "start_ticks": 292728968,
+              "state": "R",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793051510120880180
+            }
+          ],
+          "memory_envelope": {
+            "cgroup_limits": [
+              {
+                "anon_bytes": 538845941760,
+                "current_bytes": 541850980352,
+                "file_bytes": 1889992704,
+                "file_dirty_bytes": 753664,
+                "limit_bytes": 1649267441664,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261026T080905-1641533.service"
+              }
+            ],
+            "cgroup_memory_stats": [
+              {
+                "anon_bytes": 538845941760,
+                "current_bytes": 541850980352,
+                "file_bytes": 1889992704,
+                "file_dirty_bytes": 753664,
+                "limit_bytes": 1649267441664,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261026T080905-1641533.service"
+              },
+              {
+                "anon_bytes": 539234897920,
+                "current_bytes": 736955420672,
+                "file_bytes": 191200669696,
+                "file_dirty_bytes": 757760,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice"
+              },
+              {
+                "anon_bytes": 540593139712,
+                "current_bytes": 739745701888,
+                "file_bytes": 192488452096,
+                "file_dirty_bytes": 950272,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service"
+              },
+              {
+                "anon_bytes": 616264523776,
+                "current_bytes": 1382602162176,
+                "file_bytes": 745309167616,
+                "file_dirty_bytes": 2207744,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice"
+              },
+              {
+                "anon_bytes": 616262774784,
+                "current_bytes": 1382722457600,
+                "file_bytes": 745431977984,
+                "file_dirty_bytes": 2207744,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice"
+              }
+            ],
+            "effective_available_after_reserves_bytes": 1107416461312,
+            "effective_available_bytes": 1107416461312,
+            "effective_total_bytes": 1649267441664,
+            "host_launch_available_bytes": 1433357787136,
+            "host_mem_available_bytes": 1502077263872,
+            "launch_cap_bytes": 1107416461312,
+            "mem_available_bytes": 1502077263872,
+            "mem_total_bytes": 2163100385280,
+            "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+            "reserve_bytes": 68719476736,
+            "reserve_domains_separated": true,
+            "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+            "static_tree_cap_bytes": null,
+            "task_cgroup_available_bytes": 1107416461312,
+            "task_cgroup_launch_available_bytes": 1107416461312,
+            "task_cgroup_reserve_bytes": 0
+          },
+          "parent_tree_cap_bytes": null,
+          "pss_all_readable": null,
+          "pss_bytes": null,
+          "pss_sampling_policy": "disabled_by_profile",
+          "pss_status": "DISABLED_BY_PROFILE",
+          "readability_retry_count": 0,
+          "require_zero_swap": true,
+          "root_pid": 1645943,
+          "rss_bytes": 541470101504,
+          "schema": "task038.v14.j3.process-sample.v1",
+          "stage": "assembly",
+          "swap_bytes": 0,
+          "swap_policy": "require_zero_swap",
+          "time_gate_action": "enforce",
+          "time_gate_evaluated": true,
+          "time_policy": "enforce",
+          "timestamp_ns": 1793051510120931808,
+          "unreadable_pids": [],
+          "v30_cgroup_limit_matches_fixed_cap": true,
+          "v30_cgroup_memory_details_complete": true,
+          "vanished_pids": [],
+          "workspace_live_bytes": 0,
+          "workspace_peak_bytes": 0
+        },
+        "side": "top",
+        "status": "COMPLETE",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793051510129720516
+    },
+    {
+      "event": "task40_v33_global_physical_phase",
+      "facts": {
+        "completed": 1,
+        "component": 1,
+        "phase": "surface_form_jit",
+        "quadrature_degree": 160,
+        "side": "top",
+        "status": "STARTED",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793051510132939244
+    },
+    {
+      "event": "task40_v33_global_physical_phase",
+      "facts": {
+        "completed": 2,
+        "component": 1,
+        "elapsed_seconds": 36.31340313097462,
+        "phase": "surface_form_jit",
+        "process_cpu_seconds": 36.2866298700028,
+        "quadrature_degree": 160,
+        "resource_sample": {
+          "all_status_readable": true,
+          "cap_policy": "min(v30_fixed_process_tree_cap,current_tree_rss+host/cgroup_headroom_after_reserves)",
+          "compiler_descendant_count": 0,
+          "dynamic_launch_cap_bytes": 1648885338112,
+          "exit_code": null,
+          "fixed_process_tree_cap_bytes": 1649267441664,
+          "identity_complete": true,
+          "identity_count": 4,
+          "inventory_memory_cap_bytes": null,
+          "inventory_peak_bytes": 0,
+          "inventory_policy": "record_only_under_physical_memory_pressure",
+          "inventory_used_bytes": 0,
+          "label": "v33_surface_form_jit_2",
+          "launch_cap_bytes": 1648885338112,
+          "members": [
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python scripts/run_case.py /home/fenics/Projects/laptop_share/input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat --task41-p0-execution-contract /home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad_v15_full_two_column_acceptance_36h.json",
+              "comm": "python",
+              "exit_code": null,
+              "pid": 1645943,
+              "ppid": 1641627,
+              "pss_bytes": null,
+              "rss_bytes": 49889280,
+              "stage": "assembly",
+              "start_ticks": 292728867,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793051546502503017
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/mpiexec -n 1 /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python -m src.runners.task038_input_worker --resolved-config /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/resolved_config.json --manifest /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/run_manifest.json --expected-input-sha256 a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1 --expected-physical-model-sha256 0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d --expected-source-sha 3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad --expected-mpi-size 1 --expected-method full3d_iterative --expected-adapter task038.full3d_iterative --expected-output-directory /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z --resolved-config-sha256 9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08",
+              "comm": "mpiexec",
+              "exit_code": null,
+              "pid": 1646002,
+              "ppid": 1645943,
+              "pss_bytes": null,
+              "rss_bytes": 6344704,
+              "stage": "assembly",
+              "start_ticks": 292728967,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793051546502741867
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/hydra_pmi_proxy --control-port fenics-ws01:41847 --rmk user --launcher ssh --demux poll --pgid 0 --retries 10 --usize -2 --pmi-port 0 --gpus-per-proc -2 --gpu-subdevs-per-proc -2 --proxy-id 0",
+              "comm": "hydra_pmi_proxy",
+              "exit_code": null,
+              "pid": 1646003,
+              "ppid": 1646002,
+              "pss_bytes": null,
+              "rss_bytes": 8822784,
+              "stage": "assembly",
+              "start_ticks": 292728967,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793051546502939163
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python -m src.runners.task038_input_worker --resolved-config /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/resolved_config.json --manifest /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/run_manifest.json --expected-input-sha256 a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1 --expected-physical-model-sha256 0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d --expected-source-sha 3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad --expected-mpi-size 1 --expected-method full3d_iterative --expected-adapter task038.full3d_iterative --expected-output-directory /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z --resolved-config-sha256 9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08",
+              "comm": "python",
+              "exit_code": null,
+              "pid": 1646004,
+              "ppid": 1646003,
+              "pss_bytes": null,
+              "rss_bytes": 541405044736,
+              "stage": "assembly",
+              "start_ticks": 292728968,
+              "state": "R",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793051546503146524
+            }
+          ],
+          "memory_envelope": {
+            "cgroup_limits": [
+              {
+                "anon_bytes": 538845941760,
+                "current_bytes": 541852205056,
+                "file_bytes": 1891319808,
+                "file_dirty_bytes": 73728,
+                "limit_bytes": 1649267441664,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261026T080905-1641533.service"
+              }
+            ],
+            "cgroup_memory_stats": [
+              {
+                "anon_bytes": 538845941760,
+                "current_bytes": 541852205056,
+                "file_bytes": 1891319808,
+                "file_dirty_bytes": 73728,
+                "limit_bytes": 1649267441664,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261026T080905-1641533.service"
+              },
+              {
+                "anon_bytes": 539234897920,
+                "current_bytes": 736956645376,
+                "file_bytes": 191201996800,
+                "file_dirty_bytes": 77824,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice"
+              },
+              {
+                "anon_bytes": 540593156096,
+                "current_bytes": 739745935360,
+                "file_bytes": 192489934848,
+                "file_dirty_bytes": 229376,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service"
+              },
+              {
+                "anon_bytes": 614748233728,
+                "current_bytes": 1381018914816,
+                "file_bytes": 745310711808,
+                "file_dirty_bytes": 1843200,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice"
+              },
+              {
+                "anon_bytes": 614754201600,
+                "current_bytes": 1381155282944,
+                "file_bytes": 745433522176,
+                "file_dirty_bytes": 1843200,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice"
+              }
+            ],
+            "effective_available_after_reserves_bytes": 1107415236608,
+            "effective_available_bytes": 1107415236608,
+            "effective_total_bytes": 1649267441664,
+            "host_launch_available_bytes": 1433674510336,
+            "host_mem_available_bytes": 1502393987072,
+            "launch_cap_bytes": 1107415236608,
+            "mem_available_bytes": 1502393987072,
+            "mem_total_bytes": 2163100385280,
+            "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+            "reserve_bytes": 68719476736,
+            "reserve_domains_separated": true,
+            "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+            "static_tree_cap_bytes": null,
+            "task_cgroup_available_bytes": 1107415236608,
+            "task_cgroup_launch_available_bytes": 1107415236608,
+            "task_cgroup_reserve_bytes": 0
+          },
+          "parent_tree_cap_bytes": null,
+          "pss_all_readable": null,
+          "pss_bytes": null,
+          "pss_sampling_policy": "disabled_by_profile",
+          "pss_status": "DISABLED_BY_PROFILE",
+          "readability_retry_count": 0,
+          "require_zero_swap": true,
+          "root_pid": 1645943,
+          "rss_bytes": 541470101504,
+          "schema": "task038.v14.j3.process-sample.v1",
+          "stage": "assembly",
+          "swap_bytes": 0,
+          "swap_policy": "require_zero_swap",
+          "time_gate_action": "enforce",
+          "time_gate_evaluated": true,
+          "time_policy": "enforce",
+          "timestamp_ns": 1793051546503186547,
+          "unreadable_pids": [],
+          "v30_cgroup_limit_matches_fixed_cap": true,
+          "v30_cgroup_memory_details_complete": true,
+          "vanished_pids": [],
+          "workspace_live_bytes": 0,
+          "workspace_peak_bytes": 0
+        },
+        "side": "top",
+        "status": "COMPLETE",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793051546508225710
+    },
+    {
+      "event": "task40_v33_global_physical_phase",
+      "facts": {
+        "completed": 2,
+        "component": 0,
+        "phase": "surface_form_jit",
+        "quadrature_degree": 160,
+        "side": "bottom",
+        "status": "STARTED",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793051546509791337
+    },
+    {
+      "event": "task40_v33_global_physical_phase",
+      "facts": {
+        "completed": 3,
+        "component": 0,
+        "elapsed_seconds": 32.74333378719166,
+        "phase": "surface_form_jit",
+        "process_cpu_seconds": 32.658578835995286,
+        "quadrature_degree": 160,
+        "resource_sample": {
+          "all_status_readable": true,
+          "cap_policy": "min(v30_fixed_process_tree_cap,current_tree_rss+host/cgroup_headroom_after_reserves)",
+          "compiler_descendant_count": 0,
+          "dynamic_launch_cap_bytes": 1648883748864,
+          "exit_code": null,
+          "fixed_process_tree_cap_bytes": 1649267441664,
+          "identity_complete": true,
+          "identity_count": 4,
+          "inventory_memory_cap_bytes": null,
+          "inventory_peak_bytes": 0,
+          "inventory_policy": "record_only_under_physical_memory_pressure",
+          "inventory_used_bytes": 0,
+          "label": "v33_surface_form_jit_3",
+          "launch_cap_bytes": 1648883748864,
+          "members": [
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python scripts/run_case.py /home/fenics/Projects/laptop_share/input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat --task41-p0-execution-contract /home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad_v15_full_two_column_acceptance_36h.json",
+              "comm": "python",
+              "exit_code": null,
+              "pid": 1645943,
+              "ppid": 1641627,
+              "pss_bytes": null,
+              "rss_bytes": 49889280,
+              "stage": "assembly",
+              "start_ticks": 292728867,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793051579313324517
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/mpiexec -n 1 /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python -m src.runners.task038_input_worker --resolved-config /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/resolved_config.json --manifest /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/run_manifest.json --expected-input-sha256 a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1 --expected-physical-model-sha256 0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d --expected-source-sha 3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad --expected-mpi-size 1 --expected-method full3d_iterative --expected-adapter task038.full3d_iterative --expected-output-directory /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z --resolved-config-sha256 9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08",
+              "comm": "mpiexec",
+              "exit_code": null,
+              "pid": 1646002,
+              "ppid": 1645943,
+              "pss_bytes": null,
+              "rss_bytes": 6344704,
+              "stage": "assembly",
+              "start_ticks": 292728967,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793051579313577979
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/hydra_pmi_proxy --control-port fenics-ws01:41847 --rmk user --launcher ssh --demux poll --pgid 0 --retries 10 --usize -2 --pmi-port 0 --gpus-per-proc -2 --gpu-subdevs-per-proc -2 --proxy-id 0",
+              "comm": "hydra_pmi_proxy",
+              "exit_code": null,
+              "pid": 1646003,
+              "ppid": 1646002,
+              "pss_bytes": null,
+              "rss_bytes": 8822784,
+              "stage": "assembly",
+              "start_ticks": 292728967,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793051579313800453
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python -m src.runners.task038_input_worker --resolved-config /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/resolved_config.json --manifest /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/run_manifest.json --expected-input-sha256 a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1 --expected-physical-model-sha256 0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d --expected-source-sha 3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad --expected-mpi-size 1 --expected-method full3d_iterative --expected-adapter task038.full3d_iterative --expected-output-directory /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z --resolved-config-sha256 9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08",
+              "comm": "python",
+              "exit_code": null,
+              "pid": 1646004,
+              "ppid": 1646003,
+              "pss_bytes": null,
+              "rss_bytes": 541405044736,
+              "stage": "assembly",
+              "start_ticks": 292728968,
+              "state": "R",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793051579314064571
+            }
+          ],
+          "memory_envelope": {
+            "cgroup_limits": [
+              {
+                "anon_bytes": 538845941760,
+                "current_bytes": 541853794304,
+                "file_bytes": 1892290560,
+                "file_dirty_bytes": 114688,
+                "limit_bytes": 1649267441664,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261026T080905-1641533.service"
+              }
+            ],
+            "cgroup_memory_stats": [
+              {
+                "anon_bytes": 538845941760,
+                "current_bytes": 541853794304,
+                "file_bytes": 1892290560,
+                "file_dirty_bytes": 114688,
+                "limit_bytes": 1649267441664,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261026T080905-1641533.service"
+              },
+              {
+                "anon_bytes": 539234897920,
+                "current_bytes": 736958234624,
+                "file_bytes": 191202967552,
+                "file_dirty_bytes": 118784,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice"
+              },
+              {
+                "anon_bytes": 540593168384,
+                "current_bytes": 739747262464,
+                "file_bytes": 192491077632,
+                "file_dirty_bytes": 315392,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service"
+              },
+              {
+                "anon_bytes": 606508728320,
+                "current_bytes": 1372736020480,
+                "file_bytes": 745311952896,
+                "file_dirty_bytes": 1265664,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice"
+              },
+              {
+                "anon_bytes": 606508986368,
+                "current_bytes": 1372867756032,
+                "file_bytes": 745434763264,
+                "file_dirty_bytes": 1265664,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice"
+              }
+            ],
+            "effective_available_after_reserves_bytes": 1107413647360,
+            "effective_available_bytes": 1107413647360,
+            "effective_total_bytes": 1649267441664,
+            "host_launch_available_bytes": 1444471664640,
+            "host_mem_available_bytes": 1513191141376,
+            "launch_cap_bytes": 1107413647360,
+            "mem_available_bytes": 1513191141376,
+            "mem_total_bytes": 2163100385280,
+            "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+            "reserve_bytes": 68719476736,
+            "reserve_domains_separated": true,
+            "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+            "static_tree_cap_bytes": null,
+            "task_cgroup_available_bytes": 1107413647360,
+            "task_cgroup_launch_available_bytes": 1107413647360,
+            "task_cgroup_reserve_bytes": 0
+          },
+          "parent_tree_cap_bytes": null,
+          "pss_all_readable": null,
+          "pss_bytes": null,
+          "pss_sampling_policy": "disabled_by_profile",
+          "pss_status": "DISABLED_BY_PROFILE",
+          "readability_retry_count": 0,
+          "require_zero_swap": true,
+          "root_pid": 1645943,
+          "rss_bytes": 541470101504,
+          "schema": "task038.v14.j3.process-sample.v1",
+          "stage": "assembly",
+          "swap_bytes": 0,
+          "swap_policy": "require_zero_swap",
+          "time_gate_action": "enforce",
+          "time_gate_evaluated": true,
+          "time_policy": "enforce",
+          "timestamp_ns": 1793051579314105629,
+          "unreadable_pids": [],
+          "v30_cgroup_limit_matches_fixed_cap": true,
+          "v30_cgroup_memory_details_complete": true,
+          "vanished_pids": [],
+          "workspace_live_bytes": 0,
+          "workspace_peak_bytes": 0
+        },
+        "side": "bottom",
+        "status": "COMPLETE",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793051579319467926
+    },
+    {
+      "event": "task40_v33_global_physical_phase",
+      "facts": {
+        "completed": 3,
+        "component": 1,
+        "phase": "surface_form_jit",
+        "quadrature_degree": 160,
+        "side": "bottom",
+        "status": "STARTED",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793051579321162433
+    },
+    {
+      "event": "task40_v33_global_physical_phase",
+      "facts": {
+        "completed": 4,
+        "component": 1,
+        "elapsed_seconds": 569.6383043238893,
+        "phase": "surface_form_jit",
+        "process_cpu_seconds": 148.11264708600356,
+        "quadrature_degree": 160,
+        "resource_sample": {
+          "all_status_readable": true,
+          "cap_policy": "min(v30_fixed_process_tree_cap,current_tree_rss+host/cgroup_headroom_after_reserves)",
+          "compiler_descendant_count": 0,
+          "dynamic_launch_cap_bytes": 1646334316544,
+          "exit_code": null,
+          "fixed_process_tree_cap_bytes": 1649267441664,
+          "identity_complete": true,
+          "identity_count": 4,
+          "inventory_memory_cap_bytes": null,
+          "inventory_peak_bytes": 0,
+          "inventory_policy": "record_only_under_physical_memory_pressure",
+          "inventory_used_bytes": 0,
+          "label": "v33_surface_form_jit_4",
+          "launch_cap_bytes": 1646334316544,
+          "members": [
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python scripts/run_case.py /home/fenics/Projects/laptop_share/input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat --task41-p0-execution-contract /home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad_v15_full_two_column_acceptance_36h.json",
+              "comm": "python",
+              "exit_code": null,
+              "pid": 1645943,
+              "ppid": 1641627,
+              "pss_bytes": null,
+              "rss_bytes": 49909760,
+              "stage": "assembly",
+              "start_ticks": 292728867,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793052149038705583
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/mpiexec -n 1 /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python -m src.runners.task038_input_worker --resolved-config /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/resolved_config.json --manifest /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/run_manifest.json --expected-input-sha256 a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1 --expected-physical-model-sha256 0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d --expected-source-sha 3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad --expected-mpi-size 1 --expected-method full3d_iterative --expected-adapter task038.full3d_iterative --expected-output-directory /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z --resolved-config-sha256 9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08",
+              "comm": "mpiexec",
+              "exit_code": null,
+              "pid": 1646002,
+              "ppid": 1645943,
+              "pss_bytes": null,
+              "rss_bytes": 6344704,
+              "stage": "assembly",
+              "start_ticks": 292728967,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793052149039150722
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/hydra_pmi_proxy --control-port fenics-ws01:41847 --rmk user --launcher ssh --demux poll --pgid 0 --retries 10 --usize -2 --pmi-port 0 --gpus-per-proc -2 --gpu-subdevs-per-proc -2 --proxy-id 0",
+              "comm": "hydra_pmi_proxy",
+              "exit_code": null,
+              "pid": 1646003,
+              "ppid": 1646002,
+              "pss_bytes": null,
+              "rss_bytes": 8822784,
+              "stage": "assembly",
+              "start_ticks": 292728967,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793052149039416813
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python -m src.runners.task038_input_worker --resolved-config /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/resolved_config.json --manifest /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/run_manifest.json --expected-input-sha256 a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1 --expected-physical-model-sha256 0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d --expected-source-sha 3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad --expected-mpi-size 1 --expected-method full3d_iterative --expected-adapter task038.full3d_iterative --expected-output-directory /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z --resolved-config-sha256 9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08",
+              "comm": "python",
+              "exit_code": null,
+              "pid": 1646004,
+              "ppid": 1646003,
+              "pss_bytes": null,
+              "rss_bytes": 542130315264,
+              "stage": "assembly",
+              "start_ticks": 292728968,
+              "state": "R",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793052149039720821
+            }
+          ],
+          "memory_envelope": {
+            "cgroup_limits": [
+              {
+                "anon_bytes": 539570851840,
+                "current_bytes": 545128517632,
+                "file_bytes": 4368556032,
+                "file_dirty_bytes": 385024,
+                "limit_bytes": 1649267441664,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261026T080905-1641533.service"
+              }
+            ],
+            "cgroup_memory_stats": [
+              {
+                "anon_bytes": 539570851840,
+                "current_bytes": 545128517632,
+                "file_bytes": 4368556032,
+                "file_dirty_bytes": 385024,
+                "limit_bytes": 1649267441664,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261026T080905-1641533.service"
+              },
+              {
+                "anon_bytes": 539959808000,
+                "current_bytes": 740232966144,
+                "file_bytes": 193679233024,
+                "file_dirty_bytes": 389120,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice"
+              },
+              {
+                "anon_bytes": 541318205440,
+                "current_bytes": 743024787456,
+                "file_bytes": 194969829376,
+                "file_dirty_bytes": 520192,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service"
+              },
+              {
+                "anon_bytes": 621997740032,
+                "current_bytes": 1390798540800,
+                "file_bytes": 747794104320,
+                "file_dirty_bytes": 1675264,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice"
+              },
+              {
+                "anon_bytes": 621999513600,
+                "current_bytes": 1390932635648,
+                "file_bytes": 747916914688,
+                "file_dirty_bytes": 1675264,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice"
+              }
+            ],
+            "effective_available_after_reserves_bytes": 1104138924032,
+            "effective_available_bytes": 1104138924032,
+            "effective_total_bytes": 1649267441664,
+            "host_launch_available_bytes": 1432553398272,
+            "host_mem_available_bytes": 1501272875008,
+            "launch_cap_bytes": 1104138924032,
+            "mem_available_bytes": 1501272875008,
+            "mem_total_bytes": 2163100385280,
+            "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+            "reserve_bytes": 68719476736,
+            "reserve_domains_separated": true,
+            "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+            "static_tree_cap_bytes": null,
+            "task_cgroup_available_bytes": 1104138924032,
+            "task_cgroup_launch_available_bytes": 1104138924032,
+            "task_cgroup_reserve_bytes": 0
+          },
+          "parent_tree_cap_bytes": null,
+          "pss_all_readable": null,
+          "pss_bytes": null,
+          "pss_sampling_policy": "disabled_by_profile",
+          "pss_status": "DISABLED_BY_PROFILE",
+          "readability_retry_count": 0,
+          "require_zero_swap": true,
+          "root_pid": 1645943,
+          "rss_bytes": 542195392512,
+          "schema": "task038.v14.j3.process-sample.v1",
+          "stage": "assembly",
+          "swap_bytes": 0,
+          "swap_policy": "require_zero_swap",
+          "time_gate_action": "enforce",
+          "time_gate_evaluated": true,
+          "time_policy": "enforce",
+          "timestamp_ns": 1793052149039798271,
+          "unreadable_pids": [],
+          "v30_cgroup_limit_matches_fixed_cap": true,
+          "v30_cgroup_memory_details_complete": true,
+          "vanished_pids": [],
+          "workspace_live_bytes": 0,
+          "workspace_peak_bytes": 0
+        },
+        "side": "bottom",
+        "status": "COMPLETE",
+        "total": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793052149047115303
+    },
+    {
+      "event": "task40_v33_global_physical_phase",
+      "facts": {
+        "elapsed_seconds": 670.9985916079022,
+        "phase": "surface_form_jit_all_sides",
+        "process_cpu_seconds": 249.33129398500023,
+        "resource_sample": {
+          "all_status_readable": true,
+          "cap_policy": "min(v30_fixed_process_tree_cap,current_tree_rss+host/cgroup_headroom_after_reserves)",
+          "compiler_descendant_count": 0,
+          "dynamic_launch_cap_bytes": 1646334361600,
+          "exit_code": null,
+          "fixed_process_tree_cap_bytes": 1649267441664,
+          "identity_complete": true,
+          "identity_count": 4,
+          "inventory_memory_cap_bytes": null,
+          "inventory_peak_bytes": 0,
+          "inventory_policy": "record_only_under_physical_memory_pressure",
+          "inventory_used_bytes": 0,
+          "label": "v33_surface_form_jit_all_sides_COMPLETE",
+          "launch_cap_bytes": 1646334361600,
+          "members": [
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python scripts/run_case.py /home/fenics/Projects/laptop_share/input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat --task41-p0-execution-contract /home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad_v15_full_two_column_acceptance_36h.json",
+              "comm": "python",
+              "exit_code": null,
+              "pid": 1645943,
+              "ppid": 1641627,
+              "pss_bytes": null,
+              "rss_bytes": 49909760,
+              "stage": "assembly",
+              "start_ticks": 292728867,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793052149128469941
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/mpiexec -n 1 /home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python -m src.runners.task038_input_worker --resolved-config /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/resolved_config.json --manifest /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/run_manifest.json --expected-input-sha256 a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1 --expected-physical-model-sha256 0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d --expected-source-sha 3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad --expected-mpi-size 1 --expected-method full3d_iterative --expected-adapter task038.full3d_iterative --expected-output-directory /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z --resolved-config-sha256 9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08",
+              "comm": "mpiexec",
+              "exit_code": null,
+              "pid": 1646002,
+              "ppid": 1645943,
+              "pss_bytes": null,
+              "rss_bytes": 6344704,
+              "stage": "assembly",
+              "start_ticks": 292728967,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793052149128850603
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/hydra_pmi_proxy --control-port fenics-ws01:41847 --rmk user --launcher ssh --demux poll --pgid 0 --retries 10 --usize -2 --pmi-port 0 --gpus-per-proc -2 --gpu-subdevs-per-proc -2 --proxy-id 0",
+              "comm": "hydra_pmi_proxy",
+              "exit_code": null,
+              "pid": 1646003,
+              "ppid": 1646002,
+              "pss_bytes": null,
+              "rss_bytes": 8822784,
+              "stage": "assembly",
+              "start_ticks": 292728967,
+              "state": "S",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793052149129114837
+            },
+            {
+              "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python -m src.runners.task038_input_worker --resolved-config /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/resolved_config.json --manifest /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/run_manifest.json --expected-input-sha256 a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1 --expected-physical-model-sha256 0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d --expected-source-sha 3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad --expected-mpi-size 1 --expected-method full3d_iterative --expected-adapter task038.full3d_iterative --expected-output-directory /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z --resolved-config-sha256 9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08",
+              "comm": "python",
+              "exit_code": null,
+              "pid": 1646004,
+              "ppid": 1646003,
+              "pss_bytes": null,
+              "rss_bytes": 542130315264,
+              "stage": "assembly",
+              "start_ticks": 292728968,
+              "state": "R",
+              "swap_bytes": 0,
+              "timestamp_ns": 1793052149129397478
+            }
+          ],
+          "memory_envelope": {
+            "cgroup_limits": [
+              {
+                "anon_bytes": 539570851840,
+                "current_bytes": 545128472576,
+                "file_bytes": 4368572416,
+                "file_dirty_bytes": 385024,
+                "limit_bytes": 1649267441664,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261026T080905-1641533.service"
+              }
+            ],
+            "cgroup_memory_stats": [
+              {
+                "anon_bytes": 539570851840,
+                "current_bytes": 545128472576,
+                "file_bytes": 4368572416,
+                "file_dirty_bytes": 385024,
+                "limit_bytes": 1649267441664,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/myfenics-case-20261026T080905-1641533.service"
+              },
+              {
+                "anon_bytes": 539959808000,
+                "current_bytes": 740232921088,
+                "file_bytes": 193679249408,
+                "file_dirty_bytes": 389120,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice"
+              },
+              {
+                "anon_bytes": 541318205440,
+                "current_bytes": 743024480256,
+                "file_bytes": 194969845760,
+                "file_dirty_bytes": 520192,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service"
+              },
+              {
+                "anon_bytes": 622159486976,
+                "current_bytes": 1390960906240,
+                "file_bytes": 747794120704,
+                "file_dirty_bytes": 1679360,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice"
+              },
+              {
+                "anon_bytes": 622161121280,
+                "current_bytes": 1391094476800,
+                "file_bytes": 747916931072,
+                "file_dirty_bytes": 1679360,
+                "limit_bytes": null,
+                "path": "/sys/fs/cgroup/user.slice"
+              }
+            ],
+            "effective_available_after_reserves_bytes": 1104138969088,
+            "effective_available_bytes": 1104138969088,
+            "effective_total_bytes": 1649267441664,
+            "host_launch_available_bytes": 1432463028224,
+            "host_mem_available_bytes": 1501182504960,
+            "launch_cap_bytes": 1104138969088,
+            "mem_available_bytes": 1501182504960,
+            "mem_total_bytes": 2163100385280,
+            "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+            "reserve_bytes": 68719476736,
+            "reserve_domains_separated": true,
+            "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+            "static_tree_cap_bytes": null,
+            "task_cgroup_available_bytes": 1104138969088,
+            "task_cgroup_launch_available_bytes": 1104138969088,
+            "task_cgroup_reserve_bytes": 0
+          },
+          "parent_tree_cap_bytes": null,
+          "pss_all_readable": null,
+          "pss_bytes": null,
+          "pss_sampling_policy": "disabled_by_profile",
+          "pss_status": "DISABLED_BY_PROFILE",
+          "readability_retry_count": 0,
+          "require_zero_swap": true,
+          "root_pid": 1645943,
+          "rss_bytes": 542195392512,
+          "schema": "task038.v14.j3.process-sample.v1",
+          "stage": "assembly",
+          "swap_bytes": 0,
+          "swap_policy": "require_zero_swap",
+          "time_gate_action": "enforce",
+          "time_gate_evaluated": true,
+          "time_policy": "enforce",
+          "timestamp_ns": 1793052149129475404,
+          "unreadable_pids": [],
+          "v30_cgroup_limit_matches_fixed_cap": true,
+          "v30_cgroup_memory_details_complete": true,
+          "vanished_pids": [],
+          "workspace_live_bytes": 0,
+          "workspace_peak_bytes": 0
+        },
+        "status": "COMPLETE",
+        "surface_assembler_count": 4
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793052149136097951
+    },
+    {
+      "event": "task40_v33_global_physical_phase",
+      "facts": {
+        "phase": "dtn_carrier_build",
+        "status": "STARTED"
+      },
+      "stage": "TASK41_B0",
+      "timestamp_ns": 1793052150626334828
+    }
+  ]
+}

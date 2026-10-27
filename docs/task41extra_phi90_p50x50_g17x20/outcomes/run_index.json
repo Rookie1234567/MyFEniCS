@@ -1838,6 +1838,24 @@
       "evidence": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/4f5d35994e2034c7128a87528303b87892c5563beddc2363e511d1c26dd2d47c/selected_incident_replay/attempt06.service/task41_p0_service_receipt.json",
       "decimal_report_sha256": "b07b27f8e45b011b0e64354185d1a4c25ecbf8dc76dbe9e9ae1b222f984be3a9",
       "window_sha256": "4f5d35994e2034c7128a87528303b87892c5563beddc2363e511d1c26dd2d47c"
+    },
+    {
+      "review": "V15",
+      "attempt": "20261026T081134.584306Z",
+      "source_sha": "3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad",
+      "checker_source_sha": "c14dcdb4f3df5e1f488de6747008edf6d58c0c3f",
+      "status": "NUMERICAL_FAIL",
+      "classification": "FULL_ACTION_GATE_FAILED",
+      "audit_completed": true,
+      "data_integrity": true,
+      "recovery": "NOT_RUN_ACTION_GATE_FAILED",
+      "official_result": false,
+      "raw_root": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z",
+      "compact": "v15_closeout/operator_resource_compact.json",
+      "evidence_index": "v15_closeout/evidence_index.json",
+      "original_runtime_classification": "WORKER_FAILED",
+      "original_exit_status": -9,
+      "note": "Action FAIL followed by erroneous carrier fall-through; controlled process cleanup. Saved-only repaired checker confirms numerical failure without reconstruction."
     }
   ],
   "not_run": [

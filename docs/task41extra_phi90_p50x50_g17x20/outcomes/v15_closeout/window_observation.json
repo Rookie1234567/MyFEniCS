@@ -1,0 +1,51 @@
+{
+  "observed_at_utc": "2026-10-27T01:42:41.297024+00:00",
+  "ledger_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v15_full_two_column_acceptance_36h.jsonl",
+  "last_record": {
+    "adjacent_interval": {
+      "budget_seconds": 0.13175149215385318,
+      "discrepancy_seconds": 5.824491381645203e-06,
+      "elapsed_seconds": {
+        "boottime": 0.13174566766247153,
+        "monotonic": 0.13175149215385318,
+        "utc": 0.131747155
+      },
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "tolerance_seconds": 5.0,
+      "utc_minus_monotonic_seconds": -4.337153853173348e-06
+    },
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "bootstrap_charged_seconds": 1.485286558,
+    "campaign_window_sha256": "db4674af35db8595f022f6ad909783c61f6c717c12b8f8f0990ecb047161609e",
+    "cumulative_charged_seconds": 125460.96465213975,
+    "cutoff_seconds": 128400.0,
+    "deadline_utc_ns": 1793068761578055399,
+    "label": "watchdog_end",
+    "phase": "closeout",
+    "previous_sample": {
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "boottime": 2989617.187770218,
+      "monotonic": 2989617.187761042,
+      "utc_ns": 1793064622326904615
+    },
+    "sample": {
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "boottime": 2989617.319515886,
+      "monotonic": 2989617.319512534,
+      "utc_ns": 1793064622458651770
+    },
+    "schema": "task40extra.review_v10_campaign_accounting.v1",
+    "sequence": 143982,
+    "t0_utc_ns": 1792939161578055399,
+    "time_namespace_identity": {
+      "time": "time:[4026531834]",
+      "time_for_children": "time:[4026531834]"
+    }
+  },
+  "unrecorded_after_last_sample": "UNKNOWN_NOT_MEASURED; do not claim ledger sample is final window total",
+  "units": {
+    "myfenics-case-20261026T080905-1641533.service": "MainPID=0\nExecMainStatus=3\nActiveState=failed\nSubState=failed\n",
+    "task41-v15-terminal-recheck-c14dcdb4-attempt03.service": "MainPID=0\nExecMainStatus=0\nActiveState=inactive\nSubState=dead\n"
+  }
+}

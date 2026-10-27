@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-27T00:56:06.407618+00:00",
+  "run_root": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z",
+  "pid": 1646004,
+  "cmdline": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python -m src.runners.task038_input_worker --resolved-config /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/resolved_config.json --manifest /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/run_manifest.json --expected-input-sha256 a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1 --expected-physical-model-sha256 0e272beec0cbbd946d62220f1947f60e11e61411b1fec32e62a9979ec922145d --expected-source-sha 3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad --expected-mpi-size 1 --expected-method full3d_iterative --expected-adapter task038.full3d_iterative --expected-output-directory /home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z --resolved-config-sha256 9cd9a370c42a606689183cde741220ad0ba8f8172b1ef2170811bab0a9090f08 ",
+  "reason": "accepted numerical gate failure already persisted; erroneous downstream carrier generation violates acceptance-only scope",
+  "signal": "SIGTERM",
+  "action_status": "GATE_FAILED",
+  "checkpoint_preserved": true
+}

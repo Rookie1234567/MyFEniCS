@@ -1,0 +1,9 @@
+{
+  "utc": "2026-10-27T01:03:07.686371+00:00",
+  "reason": "worker terminated; MPI proxy failed to reap; terminate identified failed-run MPI processes only, keep run_case and service for checker",
+  "pids": [
+    1646003,
+    1646002
+  ],
+  "signal": "SIGKILL"
+}

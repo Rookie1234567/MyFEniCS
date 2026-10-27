@@ -1,3 +1,11 @@
+## V15最终收口定向测试（2026-10-27）
+
+- 科学source：3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad；终态审核修复source：c14dcdb4f3df5e1f488de6747008edf6d58c0c3f。
+- qualified WSL complex128/int32，11 passed, 95 deselected in 1.54s。仅终态调用链、artifact摘要/污染拒绝和新回执CLI/保存路径相关测试。
+- 命令：`python -m pytest -q src/test/test_task41_p0_contract.py src/test/test_task41_v4_volume_only_audit.py -k 'prepared_contract_authorizes_actual_terminal_watchdog or outer_worker_propagates or v15_terminal_sufficient_producer or v15_prepared_contract_compact_terminal_run_chain or v15_terminal_rejects_corrupt or v15_cli_and_persistence_accept_registered_recheck'`。
+- 工作站实际只读checker完成：数据完整、两列action FAIL、recovery NOT_RUN。测试通过不替代数值门。
+- 原hash口径错误、两次recheck入口失败及旧测试fixture错误保留；未运行全仓pytest或新增PDE。
+
 # Task41 P0 定向验证
 
 ## V14 最终冻结源码定向回归

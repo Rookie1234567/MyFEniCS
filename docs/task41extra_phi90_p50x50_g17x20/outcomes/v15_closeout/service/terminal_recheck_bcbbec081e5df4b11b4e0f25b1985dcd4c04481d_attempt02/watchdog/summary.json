@@ -1,0 +1,349 @@
+{
+  "clock_info": {
+    "monotonic": {
+      "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+      "monotonic": true,
+      "adjustable": false,
+      "resolution": 1e-09
+    },
+    "utc": {
+      "implementation": "clock_gettime(CLOCK_REALTIME)",
+      "monotonic": false,
+      "adjustable": true,
+      "resolution": 1e-09
+    },
+    "boottime": {
+      "available": true,
+      "implementation": "clock_gettime(CLOCK_BOOTTIME)",
+      "resolution": 1e-09
+    }
+  },
+  "clock_start": {
+    "monotonic": 2989340.239750038,
+    "boottime": 2989340.239765402,
+    "utc_ns": 1793064345378899047
+  },
+  "timebase_policy": "conservative_realtime",
+  "timebase_policy_version": 1,
+  "task40_v10_campaign": {
+    "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v15_full_two_column_acceptance_36h.json",
+    "window_sha256": "db4674af35db8595f022f6ad909783c61f6c717c12b8f8f0990ecb047161609e",
+    "accounting_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v15_full_two_column_acceptance_36h.jsonl",
+    "t0_utc_ns": 1792939161578055399,
+    "deadline_utc_ns": 1793068761578055399,
+    "campaign_seconds": 129600.0,
+    "numerical_cutoff_seconds": 128400.0,
+    "closeout_reserve_seconds": 1200.0,
+    "phase": "closeout",
+    "phase_sub_budget_seconds": 1140.0,
+    "phase_termination_reserve_seconds": 60.0,
+    "closeout_parent_flush_reserve_seconds": 30.0,
+    "phase_authorization": {
+      "campaign_window_sha256": "db4674af35db8595f022f6ad909783c61f6c717c12b8f8f0990ecb047161609e",
+      "checker_kind": "task41_p0_b0_v15_terminal_checker",
+      "command_sha256": "557ee850b9fadfd54b2e3be44725005d8fe4d472d2ac9acf271c96d27f6f922b",
+      "expected_channel_count": null,
+      "input_paths": [
+        "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task40_v10_p6_candidate_summary.json",
+        "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/run_manifest.json",
+        "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task41_p0_b0_v9_compact_volume_audit.json"
+      ],
+      "input_sha256s": [
+        "d818360d2ef7db9a5159a9d6c545a2baa78696e9458d1842c2687ccd7326227c",
+        "a92847d69ba5e3020bc98aef6a95c80d02329d9ee4f2734abe808779fcbdde4a",
+        "61519006838a03bef6a60e36adcfa84345d7a4e902caa61f865185f7f2743f5f"
+      ],
+      "phase": "closeout",
+      "purpose": "registered_read_only_required_checker",
+      "schema": "task41.p0.closeout_checker_authorization.v1",
+      "source_branch": "task41extra_phi90_p50x50_g17x20",
+      "source_clean": true,
+      "source_sha": "bcbbec081e5df4b11b4e0f25b1985dcd4c04481d",
+      "task41_contract_sha256": "bf76bdabe78f2d0f44f19ad4368eb481508054811f756504a4751d43c63f4f34"
+    },
+    "watchdog_start_accounting": {
+      "schema": "task40extra.review_v10_campaign_accounting.v1",
+      "sequence": 143921,
+      "label": "watchdog_start_closeout",
+      "phase": "closeout",
+      "campaign_window_sha256": "db4674af35db8595f022f6ad909783c61f6c717c12b8f8f0990ecb047161609e",
+      "t0_utc_ns": 1792939161578055399,
+      "deadline_utc_ns": 1793068761578055399,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "time_namespace_identity": {
+        "time": "time:[4026531834]",
+        "time_for_children": "time:[4026531834]"
+      },
+      "previous_sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2988045.362718285,
+        "monotonic": 2988045.362715783,
+        "utc_ns": 1793063050501851923
+      },
+      "sample": {
+        "monotonic": 2989340.014931066,
+        "boottime": 2989340.014967227,
+        "utc_ns": 1793064345154103814,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+      },
+      "adjacent_interval": {
+        "elapsed_seconds": {
+          "monotonic": 1294.6522152828984,
+          "boottime": 1294.6522489418276,
+          "utc": 1294.652251891
+        },
+        "budget_seconds": 1294.652251891,
+        "discrepancy_seconds": 3.6608101709134644e-05,
+        "tolerance_seconds": 12.946522489418276,
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": 3.6608101709134644e-05
+      },
+      "bootstrap_charged_seconds": 1.485286558,
+      "cumulative_charged_seconds": 125183.65986083477,
+      "cutoff_seconds": 128400.0
+    },
+    "first_exact_monotonic_at_t0": "NOT_CAPTURED",
+    "watchdog_end_accounting": {
+      "schema": "task40extra.review_v10_campaign_accounting.v1",
+      "sequence": 143927,
+      "label": "watchdog_end",
+      "phase": "closeout",
+      "campaign_window_sha256": "db4674af35db8595f022f6ad909783c61f6c717c12b8f8f0990ecb047161609e",
+      "t0_utc_ns": 1792939161578055399,
+      "deadline_utc_ns": 1793068761578055399,
+      "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+      "time_namespace_identity": {
+        "time": "time:[4026531834]",
+        "time_for_children": "time:[4026531834]"
+      },
+      "previous_sample": {
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+        "boottime": 2989346.233536609,
+        "monotonic": 2989346.233528847,
+        "utc_ns": 1793064351372670268
+      },
+      "sample": {
+        "monotonic": 2989346.371974819,
+        "boottime": 2989346.371979483,
+        "utc_ns": 1793064351511113077,
+        "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+      },
+      "adjacent_interval": {
+        "elapsed_seconds": {
+          "monotonic": 0.1384459719993174,
+          "boottime": 0.13844287395477295,
+          "utc": 0.138442809
+        },
+        "budget_seconds": 0.1384459719993174,
+        "discrepancy_seconds": 3.1629993174076e-06,
+        "tolerance_seconds": 5.0,
+        "policy": "conservative_realtime",
+        "policy_version": 1,
+        "utc_minus_monotonic_seconds": -3.1629993174076e-06
+      },
+      "bootstrap_charged_seconds": 1.485286558,
+      "cumulative_charged_seconds": 125190.0169197999,
+      "cutoff_seconds": 128400.0
+    }
+  },
+  "time_policy": "enforce",
+  "time_gate_evaluated": true,
+  "time_gate_action": "enforce",
+  "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+  "swap_policy": "worker_defined",
+  "process_tree_swap_gate_enforced": true,
+  "global_swap_gate_enforced": false,
+  "job_cgroup_swap_gate_enforced": true,
+  "job_cgroup_swap_start_bytes": 0,
+  "time_reference_seconds": {
+    "workflow": 1140.0,
+    "solve": null,
+    "active_pc": null
+  },
+  "pss_sampling_policy": "disabled_by_profile",
+  "pss_status": "DISABLED_BY_PROFILE",
+  "sampled_process_tree_pss_peak_bytes": null,
+  "cache_metadata_stable": true,
+  "classification": "WORKER_FAILED",
+  "leader_exit_code": 2,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "observed_child_pids": [
+    3189578
+  ],
+  "observed_child_identities": [
+    {
+      "pid": 3189578,
+      "start_ticks": 298934024
+    }
+  ],
+  "sampled_process_tree_rss_peak_bytes": 113369088,
+  "sampled_process_tree_swap_peak_bytes": 0,
+  "process_tree_samples": 5,
+  "process_tree_all_status_readable": true,
+  "process_tree_all_identity_complete": true,
+  "process_tree_identity_coverage": "complete",
+  "process_tree_identity_sample_count": 7,
+  "observed_child_identity_coverage": "complete",
+  "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+  "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+  "global_swap_activity": {
+    "scope": "WSL-global diagnostic, not dedicated job",
+    "baseline": {
+      "pswpin_pages": 4250691,
+      "pswpout_pages": 7183007
+    },
+    "end": {
+      "pswpin_pages": 4250691,
+      "pswpout_pages": 7183007
+    },
+    "delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    }
+  },
+  "job_swap_activity": "zero_supported_by_zero_global_activity",
+  "launch_envelope": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 2054743396352,
+    "effective_total_bytes": 1649267441664,
+    "effective_available_bytes": 1649245155328,
+    "host_mem_available_bytes": 2054743396352,
+    "task_cgroup_available_bytes": 1649245155328,
+    "host_launch_available_bytes": 1986023919616,
+    "task_cgroup_reserve_bytes": 0,
+    "task_cgroup_launch_available_bytes": 1649245155328,
+    "reserve_domains_separated": true,
+    "effective_available_after_reserves_bytes": 1649245155328,
+    "reserve_bytes": 68719476736,
+    "launch_cap_bytes": 1649267441664,
+    "memory_policy": "PHYSICAL_MEMORY_PRESSURE_LOCAL_MUMPS_V23",
+    "reserve_reason": "V29 separate domains: host MemAvailable minus host reserve; task/ancestor cgroup remaining minus task-cgroup reserve",
+    "static_tree_cap_bytes": null,
+    "cgroup_limits": [
+      {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/task41-v15-terminal-recheck-bcbbec08-attempt02.service",
+        "limit_bytes": 1649267441664,
+        "current_bytes": 22286336,
+        "anon_bytes": 19144704,
+        "file_bytes": 8192,
+        "file_dirty_bytes": 4096
+      }
+    ],
+    "cgroup_memory_stats": [
+      {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/task41-v15-terminal-recheck-bcbbec08-attempt02.service",
+        "limit_bytes": 1649267441664,
+        "current_bytes": 22286336,
+        "anon_bytes": 19144704,
+        "file_bytes": 8192,
+        "file_dirty_bytes": 4096
+      },
+      {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice",
+        "limit_bytes": null,
+        "current_bytes": 201229447168,
+        "anon_bytes": 1080037376,
+        "file_bytes": 194583097344,
+        "file_dirty_bytes": 77824
+      },
+      {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service",
+        "limit_bytes": null,
+        "current_bytes": 202979708928,
+        "anon_bytes": 1375281152,
+        "file_bytes": 195903389696,
+        "file_dirty_bytes": 90112
+      },
+      {
+        "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+        "limit_bytes": null,
+        "current_bytes": 848281161728,
+        "anon_bytes": 79190917120,
+        "file_bytes": 749106991104,
+        "file_dirty_bytes": 2015232
+      },
+      {
+        "path": "/sys/fs/cgroup/user.slice",
+        "limit_bytes": null,
+        "current_bytes": 848412635136,
+        "anon_bytes": 79190917120,
+        "file_bytes": 749229801472,
+        "file_dirty_bytes": 2015232
+      }
+    ],
+    "dynamic_launch_cap_bytes": 1649267441664,
+    "tree_cap_bytes": 1649267441664,
+    "cap_policy": "min(split_domain_dynamic_process_tree_cap, explicit_tree_cap)"
+  },
+  "samples": 5,
+  "elapsed_seconds": 6.131169438362122,
+  "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "source_state": "development_worktree; not formal PDE provenance",
+  "time_exceeded": {
+    "workflow": false,
+    "solve": false,
+    "active_pc": false
+  },
+  "job_cgroup_swap": {
+    "gate_enforced": true,
+    "start_swap_current_bytes": 0,
+    "peak_swap_current_bytes": 0,
+    "sample_count": 5,
+    "end": {
+      "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/task41-v15-terminal-recheck-bcbbec08-attempt02.service",
+      "readable": true,
+      "dedicated_job_cgroup": true,
+      "member_count": 2,
+      "memory_current_bytes": 22847488,
+      "memory_peak_bytes": 73326592,
+      "memory_limit_bytes": 1649267441664,
+      "swap_current_bytes": 0
+    },
+    "passed": true
+  },
+  "clock_end": {
+    "monotonic": 2989346.371662649,
+    "boottime": 2989346.371675878,
+    "utc_ns": 1793064351510810102,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+  },
+  "workflow_clock_interval": {
+    "elapsed_seconds": {
+      "monotonic": 6.131912610959262,
+      "boottime": 6.131910475902259,
+      "utc": 6.131911055
+    },
+    "budget_seconds": 6.131988174804738,
+    "discrepancy_seconds": 2.1350570023059845e-06,
+    "tolerance_seconds": 5.0,
+    "policy": "conservative_realtime",
+    "policy_version": 1,
+    "utc_minus_monotonic_seconds": -1.55595926187857e-06,
+    "step": {
+      "elapsed_seconds": {
+        "monotonic": 0.13845102908089757,
+        "boottime": 0.13844670169055462,
+        "utc": 0.138446207
+      },
+      "budget_seconds": 0.13845102908089757,
+      "discrepancy_seconds": 4.8220808975818485e-06,
+      "tolerance_seconds": 5.0,
+      "policy": "conservative_realtime",
+      "policy_version": 1,
+      "utc_minus_monotonic_seconds": -4.8220808975818485e-06
+    },
+    "utc_positive_excess_seconds": 3.434723361328551e-05
+  },
+  "time_end_observation": {
+    "time_policy": "enforce",
+    "time_gate_evaluated": true,
+    "time_gate_action": "enforce",
+    "observed_seconds": 6.131988174804738,
+    "limit_seconds": 1140.0,
+    "inclusive": true,
+    "exceeded": false,
+    "passed": true
+  }
+}

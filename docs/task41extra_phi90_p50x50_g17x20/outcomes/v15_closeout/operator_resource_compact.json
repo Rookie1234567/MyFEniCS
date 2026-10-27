@@ -1,0 +1,251 @@
+{
+  "schema": "task41.v15.closeout.v1",
+  "review_sha": "611f3497c4b977b10e783444bcd9c9a8aea9a9c5",
+  "result_base": "de2353b9ce46fbbb2c6fd4498ea24139b39d162f",
+  "scientific_source": "3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad",
+  "checker_source": "c14dcdb4f3df5e1f488de6747008edf6d58c0c3f",
+  "run_root": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z",
+  "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v15_full_two_column_acceptance_36h.json",
+  "window_sha256": "db4674af35db8595f022f6ad909783c61f6c717c12b8f8f0990ecb047161609e",
+  "status": "NUMERICAL_FAIL",
+  "classification": "FULL_ACTION_GATE_FAILED",
+  "audit_completed": true,
+  "data_integrity": true,
+  "action_columns": [
+    {
+      "absolute_l2": 1.2824501485040357e-07,
+      "column": 0,
+      "dynamic_denominator": 2225.4812534807966,
+      "dynamic_denominator_relative": 5.762574483600798e-11,
+      "dynamic_gate_passed": false,
+      "frozen_denominator": 2225.481253487629,
+      "frozen_denominator_relative": 5.762574483583106e-11,
+      "frozen_gate_passed": false,
+      "passed": false,
+      "same_s_saved_output_comparison": {
+        "absolute_l2": 0.0,
+        "array_equal": true,
+        "interpretation": "same frozen S/input output comparison; any difference is not attributed to RHS correction",
+        "max_abs": 0.0,
+        "max_row": null,
+        "reference_l2": 2225.4812534807893
+      },
+      "saved_port_rows_unchanged": true
+    },
+    {
+      "absolute_l2": 2.6981026336315675e-07,
+      "column": 1,
+      "dynamic_denominator": 2225.480712303186,
+      "dynamic_denominator_relative": 1.212368464357194e-10,
+      "dynamic_gate_passed": false,
+      "frozen_denominator": 2225.4807123031883,
+      "frozen_denominator_relative": 1.2123684643571926e-10,
+      "frozen_gate_passed": false,
+      "passed": false,
+      "same_s_saved_output_comparison": {
+        "absolute_l2": 0.0,
+        "array_equal": true,
+        "interpretation": "same frozen S/input output comparison; any difference is not attributed to RHS correction",
+        "max_abs": 0.0,
+        "max_row": null,
+        "reference_l2": 2225.480712303186
+      },
+      "saved_port_rows_unchanged": true
+    }
+  ],
+  "recovery_status": "NOT_RUN_ACTION_GATE_FAILED",
+  "official_result": false,
+  "operator_unchanged_S": true,
+  "v9_to_v15_error_ratio_derived": [
+    4.641982626572165,
+    4.630273951421472
+  ],
+  "owner_class_count": 28000,
+  "actual_k_lu_identity": {
+    "actual_k_and_lu_share_generation_token_for_every_class": true,
+    "class_count": 28000,
+    "class_key_set_sha256": "3af283b99a95ab6fd5a8767ff3a3b8aac9c37bd6d7027826d2fb151d12b16db7",
+    "identity_source": "AssemblyTimeCondensedSystem retained actual K/LU identity maps",
+    "schema": "task41.p0.b0.v15_actual_k_lu_generation_identity.v1"
+  },
+  "operation_counts": {
+    "actual_rhs_core_seconds": 7480.50998440478,
+    "actual_rhs_correction_getrs_count": 112000,
+    "actual_rhs_correction_getrs_seconds": 365.39842731226236,
+    "actual_rhs_getrs_count": 168000,
+    "actual_rhs_getrs_seconds": 533.6777841993608,
+    "actual_rhs_initial_getrs_count": 56000,
+    "actual_rhs_initial_getrs_seconds": 168.2793568870984,
+    "actual_rhs_j_matvec_seconds": 66.88055623974651,
+    "actual_rhs_recovery_core_seconds": 0.0,
+    "actual_rhs_recovery_correction_getrs_count": 0,
+    "actual_rhs_recovery_correction_getrs_seconds": 0.0,
+    "actual_rhs_recovery_getrs_count": 0,
+    "actual_rhs_recovery_getrs_seconds": 0.0,
+    "actual_rhs_recovery_initial_getrs_count": 0,
+    "actual_rhs_recovery_initial_getrs_seconds": 0.0,
+    "actual_rhs_recovery_j_matvec_seconds": 0.0,
+    "actual_rhs_recovery_refinement_steps": 0,
+    "actual_rhs_recovery_residual_evaluation_count": 0,
+    "actual_rhs_recovery_residual_seconds": 0.0,
+    "actual_rhs_recovery_update_seconds": 0.0,
+    "actual_rhs_refinement_steps": 112000,
+    "actual_rhs_residual_evaluation_count": 112000,
+    "actual_rhs_residual_seconds": 6422.241584491916,
+    "actual_rhs_update_seconds": 4.0185846337117255,
+    "full_action_columns_completed": 2,
+    "native_recovery_correction_getrs_count": 0,
+    "native_recovery_correction_getrs_seconds": 0.0,
+    "native_volume_action_calls": 0,
+    "p6_apply_calls": 2,
+    "p6_reduce_rhs_calls": 2,
+    "streamed_action_lu_solve_count": 0,
+    "streamed_recovery_lu_solve_count": 0
+  },
+  "new_action_evidence_bytes": 368136192,
+  "artifacts": [
+    {
+      "array_sha256": "2cda253fbd62f75c8ee9fc3ffa4642519cc01abab969c43fe50b86af8621231f",
+      "bytes": 92034048,
+      "dtype": "complex128",
+      "name": "task41_p0_b0_v9_compact_candidate_full_action_col0",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task41_p0_b0_v9_compact_candidate_full_action_col0.npy",
+      "sha256": "68560aa0f52c47055a7d9cffb0029eb52ac4e99fb6f5f538611de28db4c36e53",
+      "shape": [
+        5752120
+      ]
+    },
+    {
+      "array_sha256": "70167185301e112ae27161024d16c94c9553af5bbea6834b23cda38fa6b90488",
+      "bytes": 92034048,
+      "dtype": "complex128",
+      "name": "task41_p0_b0_v9_compact_candidate_full_reduced_rhs_col0",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task41_p0_b0_v9_compact_candidate_full_reduced_rhs_col0.npy",
+      "sha256": "eae3507223865f7b9bcc78b73b81ff78d61558ceab06a4b8563396685e671e09",
+      "shape": [
+        5752120
+      ]
+    },
+    {
+      "array_sha256": "37e65474e20679bd905be796f52a72ad722bfed86dd2946e047ebe004910eb3f",
+      "bytes": 92034048,
+      "dtype": "complex128",
+      "name": "task41_p0_b0_v9_compact_candidate_full_action_col1",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task41_p0_b0_v9_compact_candidate_full_action_col1.npy",
+      "sha256": "9f12a11a5532fe88e28eba0804c7790bdaa712e2546899c3695747bdea7b8865",
+      "shape": [
+        5752120
+      ]
+    },
+    {
+      "array_sha256": "c6b40af6fd823ae0398ce375568d63f541bec2fcfc8216e99ca987bded152300",
+      "bytes": 92034048,
+      "dtype": "complex128",
+      "name": "task41_p0_b0_v9_compact_candidate_full_reduced_rhs_col1",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task41_p0_b0_v9_compact_candidate_full_reduced_rhs_col1.npy",
+      "sha256": "1faa0f18bdf8b76abfa7a1deffc0c3b3ca023a42cc0b97f21071ae49d5cbc4df",
+      "shape": [
+        5752120
+      ]
+    }
+  ],
+  "resource": {
+    "process_tree_rss_peak_bytes": 555498606592,
+    "cgroup_memory_peak_bytes": 556689793024,
+    "task_swap_peak_bytes": 0,
+    "host_global_swap_activity": {
+      "baseline": {
+        "pswpin_pages": 4250686,
+        "pswpout_pages": 7183007
+      },
+      "delta": {
+        "pswpin_pages": 5,
+        "pswpout_pages": 0
+      },
+      "end": {
+        "pswpin_pages": 4250691,
+        "pswpout_pages": 7183007
+      },
+      "scope": "WSL-global diagnostic, not dedicated job"
+    },
+    "descendants_cleared": true,
+    "producer_cleanup_passed": false,
+    "producer_runtime_classification": "WORKER_FAILED",
+    "pss_bytes": null
+  },
+  "timing": {
+    "service_parent_seconds": 60758.813494966,
+    "run_case_parent_seconds": 60704.25656143995,
+    "owner_stage_seconds": 39972.50824852,
+    "action_column_parent_seconds": [
+      3930.572351382,
+      3847.608278819
+    ],
+    "rhs_core_seconds": 7480.50998440478,
+    "fsum_residual_seconds": 6422.241584491916,
+    "getrs_seconds": 533.6777841993608,
+    "readonly_recheck_service_seconds": 67.92165639903396,
+    "readonly_recheck_watchdog_seconds": 66.78828524472192,
+    "owner_full_kernel_lu_schur_breakdown": "UNKNOWN_NOT_RECORDED",
+    "erroneous_carrier_to_last_checkpoint_seconds": 8163.528219312895,
+    "erroneous_surface_jit_seconds": 670.9985916079022,
+    "engineering_total_seconds": "UNKNOWN_NOT_MEASURED",
+    "accounting_note": "Nested phases are not additive to their service parent; original service includes original failed checker; subsequent rechecks are separate."
+  },
+  "remaining_boundary": {
+    "full_action": "FAILED",
+    "candidate_recovery": "NOT_RUN",
+    "q200": "NOT_RUN",
+    "factor": "NOT_RUN",
+    "FGMRES": "NOT_RUN",
+    "official_field": "NOT_RUN",
+    "final_accuracy": "NOT_QUALIFIED",
+    "2TB_48h": "NOT_QUALIFIED",
+    "dominant_cell_raw": "NOT_SAVED_OR_NOT_VERIFIED; no surviving owner is claimed"
+  },
+  "known_nonoverlapping_service_parents": [
+    {
+      "evidence": "../v15_preparation/approved_window_first_attempt.json",
+      "seconds": 10.6086857910268,
+      "scope": "service parent; children not added"
+    },
+    {
+      "evidence": "../v15_preparation/compiled_identity_failure.json",
+      "seconds": 834.5192237100564,
+      "scope": "service parent; children not added"
+    },
+    {
+      "evidence": "../v15_preparation/retry_time_admission_failure.json",
+      "seconds": 751.769998218,
+      "scope": "service parent; children not added"
+    },
+    {
+      "evidence": "service/task41_p0_service_receipt.json",
+      "seconds": 60758.813494966,
+      "scope": "main service parent including original checker"
+    },
+    {
+      "evidence": "service/terminal_recheck_bcbbec081e5df4b11b4e0f25b1985dcd4c04481d/recheck_service_receipt.json",
+      "seconds": 5.061229143757373,
+      "scope": "separate read-only recheck wrapper parent",
+      "wrapper_status": "ENGINEERING_ERROR",
+      "watchdog_classification": null
+    },
+    {
+      "evidence": "service/terminal_recheck_bcbbec081e5df4b11b4e0f25b1985dcd4c04481d_attempt02/recheck_service_receipt.json",
+      "seconds": 7.421695569995791,
+      "scope": "separate read-only recheck wrapper parent",
+      "wrapper_status": "COMPLETED",
+      "watchdog_classification": "WORKER_FAILED"
+    },
+    {
+      "evidence": "service/terminal_recheck_c14dcdb4f3df5e1f488de6747008edf6d58c0c3f_attempt03/recheck_service_receipt.json",
+      "seconds": 67.92165639903396,
+      "scope": "separate read-only recheck wrapper parent",
+      "wrapper_status": "COMPLETED",
+      "watchdog_classification": "COMPLETED"
+    }
+  ],
+  "known_nonoverlapping_service_sum_seconds": 62436.11598379787,
+  "service_sum_is_campaign_total": false
+}

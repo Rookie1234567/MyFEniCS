@@ -1,0 +1,63 @@
+{
+  "acceptance_qualified": false,
+  "action_columns": [],
+  "action_passed": null,
+  "audit_completed": false,
+  "checks": {
+    "checkpoint_algorithm_identity": true,
+    "checkpoint_artifact_inventory": true,
+    "checkpoint_evaluator_identity": true,
+    "checkpoint_identity": true,
+    "checkpoint_identity_audit_hash": true,
+    "checkpoint_identity_audit_ref": true,
+    "checkpoint_source_contract_window": true,
+    "checkpoint_terminal_status": true,
+    "compact_donor_identity": true,
+    "compact_evaluator_identity": true,
+    "compact_k_lu_identity": true,
+    "compact_report_identity": true,
+    "donor_action_arrays": true,
+    "donor_two_column_layout": true,
+    "frozen_layout_constants": true,
+    "run_root": true,
+    "same_s_array_binding": true,
+    "same_s_array_integrity": false,
+    "same_s_reference_binding": true,
+    "same_s_report_binding": true,
+    "same_s_report_identity": true
+  },
+  "classification": "TERMINAL_EVIDENCE_INVALID",
+  "data_integrity": false,
+  "errors": [
+    "ValueError: V15 same-S baseline array bytes are invalid"
+  ],
+  "official_result": false,
+  "producer_cleanup_errors": [],
+  "producer_cleanup_passed": false,
+  "producer_runtime_classification": "WORKER_FAILED",
+  "producer_runtime_passed": false,
+  "recovery_columns": [],
+  "recovery_passed": null,
+  "run_binding": {
+    "actual_k_lu_identity": {
+      "actual_k_and_lu_share_generation_token_for_every_class": true,
+      "class_count": 28000,
+      "class_key_set_sha256": "3af283b99a95ab6fd5a8767ff3a3b8aac9c37bd6d7027826d2fb151d12b16db7",
+      "identity_source": "AssemblyTimeCondensedSystem retained actual K/LU identity maps",
+      "schema": "task41.p0.b0.v15_actual_k_lu_generation_identity.v1"
+    },
+    "checkpoint_sha256": "5684826543cc870c72f8e45014365a7830f3b4abd209f4540f58cf33bf47f286",
+    "contract_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad_v15_full_two_column_acceptance_36h.json",
+    "contract_sha256": "bf76bdabe78f2d0f44f19ad4368eb481508054811f756504a4751d43c63f4f34",
+    "manifest_sha256": "a92847d69ba5e3020bc98aef6a95c80d02329d9ee4f2734abe808779fcbdde4a",
+    "refinement_max_steps": 2,
+    "refinement_strategy": "same_lu_binary64_products_real_imag_fsum",
+    "source_sha": "3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad",
+    "summary_sha256": "d818360d2ef7db9a5159a9d6c545a2baa78696e9458d1842c2687ccd7326227c",
+    "window_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v15_full_two_column_acceptance_36h.json",
+    "window_sha256": "db4674af35db8595f022f6ad909783c61f6c717c12b8f8f0990ecb047161609e"
+  },
+  "schema": "task41.p0.b0.v15.terminal_sufficient_independent_check.v1",
+  "scientific_qualified": false,
+  "status": "INCOMPLETE"
+}

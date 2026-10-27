@@ -1,0 +1,206 @@
+{
+  "files": [
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/run_manifest.json",
+      "relative_copy": "run/run_manifest.json",
+      "bytes": 9522,
+      "sha256": "a92847d69ba5e3020bc98aef6a95c80d02329d9ee4f2734abe808779fcbdde4a"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/run_summary.json",
+      "relative_copy": "run/run_summary.json",
+      "bytes": 13902,
+      "sha256": "ba562f8a932d1aadb4eb60a645508deb0491613ffd10d8a70ec0a29585bc1bed"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task40_v10_p6_candidate_summary.json",
+      "relative_copy": "run/task40_v10_p6_candidate_summary.json",
+      "bytes": 103878,
+      "sha256": "d818360d2ef7db9a5159a9d6c545a2baa78696e9458d1842c2687ccd7326227c"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task41_p0_b0_v9_compact_volume_audit.json",
+      "relative_copy": "run/task41_p0_b0_v9_compact_volume_audit.json",
+      "bytes": 13745,
+      "sha256": "61519006838a03bef6a60e36adcfa84345d7a4e902caa61f865185f7f2743f5f"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task41_p0_b0_v15_terminal_sufficient_checkpoint.json",
+      "relative_copy": "run/task41_p0_b0_v15_terminal_sufficient_checkpoint.json",
+      "bytes": 19831,
+      "sha256": "5684826543cc870c72f8e45014365a7830f3b4abd209f4540f58cf33bf47f286"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task41_p0_b0_v15_terminal_audit_pending.json",
+      "relative_copy": "run/task41_p0_b0_v15_terminal_audit_pending.json",
+      "bytes": 306,
+      "sha256": "dac1785d117eb345142e7cc170aaa734bd8b009a763c4136e6ac904e7d8963f8"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad/task41_p0_service_receipt.json",
+      "relative_copy": "service/task41_p0_service_receipt.json",
+      "bytes": 28209,
+      "sha256": "06194043b9e5d5ef67b113fa021940c40814b5beca4a4d088681ec270fd97796"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad/task41_p0_checker_result.json",
+      "relative_copy": "service/task41_p0_checker_result.json",
+      "bytes": 2908,
+      "sha256": "0f69f34622a94755d721c3acae4db82efa8d87d89647d9dd93ea3c1c87182565"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad/task41_p0_checker_result_recheck_c14dcdb4f3df5e1f488de6747008edf6d58c0c3f.json",
+      "relative_copy": "service/task41_p0_checker_result_recheck_c14dcdb4f3df5e1f488de6747008edf6d58c0c3f.json",
+      "bytes": 5529,
+      "sha256": "927d05cfcb568bebda30fc69b712a8ab30e18db0eda1bdbe43f412de58536540"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad/terminal_recheck_bcbbec081e5df4b11b4e0f25b1985dcd4c04481d/recheck_service_receipt.json",
+      "relative_copy": "service/terminal_recheck_bcbbec081e5df4b11b4e0f25b1985dcd4c04481d/recheck_service_receipt.json",
+      "bytes": 3927,
+      "sha256": "4a653c10d0bc96e023f2347e4d201b905848abf911f285677773d89d942b4c4d"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad/terminal_recheck_bcbbec081e5df4b11b4e0f25b1985dcd4c04481d_attempt02/recheck_service_receipt.json",
+      "relative_copy": "service/terminal_recheck_bcbbec081e5df4b11b4e0f25b1985dcd4c04481d_attempt02/recheck_service_receipt.json",
+      "bytes": 18030,
+      "sha256": "706d053451fca8d0c24777004f82a585ec1ac9f1764845184da8224311b20741"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad/terminal_recheck_bcbbec081e5df4b11b4e0f25b1985dcd4c04481d_attempt02/watchdog/summary.json",
+      "relative_copy": "service/terminal_recheck_bcbbec081e5df4b11b4e0f25b1985dcd4c04481d_attempt02/watchdog/summary.json",
+      "bytes": 13201,
+      "sha256": "394adab5858a4e277b351387948c8cbff7a5283a8e5817c0211a96c7cbe3cdf4"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad/terminal_recheck_bcbbec081e5df4b11b4e0f25b1985dcd4c04481d_attempt02/watchdog/worker.log",
+      "relative_copy": "service/terminal_recheck_bcbbec081e5df4b11b4e0f25b1985dcd4c04481d_attempt02/watchdog/worker.log",
+      "bytes": 454,
+      "sha256": "ffe76c012a631104fa07f0122ac901646c8375d6705aa705d6ed3b5fe7993921"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad/terminal_recheck_c14dcdb4f3df5e1f488de6747008edf6d58c0c3f_attempt03/recheck_service_receipt.json",
+      "relative_copy": "service/terminal_recheck_c14dcdb4f3df5e1f488de6747008edf6d58c0c3f_attempt03/recheck_service_receipt.json",
+      "bytes": 23882,
+      "sha256": "835f965720334a7e1a57d92ea62c88eb82aa82055abd3f479d06f8af36881f56"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad/terminal_recheck_c14dcdb4f3df5e1f488de6747008edf6d58c0c3f_attempt03/watchdog/summary.json",
+      "relative_copy": "service/terminal_recheck_c14dcdb4f3df5e1f488de6747008edf6d58c0c3f_attempt03/watchdog/summary.json",
+      "bytes": 13193,
+      "sha256": "eb2225dc62ba7f4677873fa90c3c5ad647dc184feb3f59c3aea148ff60568415"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0/service_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad/terminal_recheck_c14dcdb4f3df5e1f488de6747008edf6d58c0c3f_attempt03/watchdog/worker.log",
+      "relative_copy": "service/terminal_recheck_c14dcdb4f3df5e1f488de6747008edf6d58c0c3f_attempt03/watchdog/worker.log",
+      "bytes": 5172,
+      "sha256": "42277853d26a20f191a39558934ffaf842076e3b994646d61bdb5fb4830b1f2f"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v15_failed_action_mpi_controlled_stop.json",
+      "relative_copy": "control/v15_failed_action_mpi_controlled_stop.json",
+      "bytes": 1548,
+      "sha256": "26c06a8e4e0dc62574ed438b2de8b3e918d30b520007c8e0d181212c663439ec"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v15_failed_action_unexpected_carrier_controlled_stop.json",
+      "relative_copy": "control/v15_failed_action_unexpected_carrier_controlled_stop.json",
+      "bytes": 1691,
+      "sha256": "461268c693da4d56035cef9bd1d1c4511b52e19cda07d9dd5441b728b53755d9"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v15_failed_action_sigkill_escalation.json",
+      "relative_copy": "control/v15_failed_action_sigkill_escalation.json",
+      "bytes": 1521,
+      "sha256": "ce30b484eef98702e3936f366f0e6f9bd72b040156138492b9e84c334abd2f87"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v15_failed_action_mpi_reap_escalation.json",
+      "relative_copy": "control/v15_failed_action_mpi_reap_escalation.json",
+      "bytes": 262,
+      "sha256": "a57fb3991e20a48364d0b9da07b4d921e080379d7eb65fbb516bb1794514d8d7"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v15_full_two_column_acceptance_36h.json",
+      "relative_copy": "control/execution_window_v15_full_two_column_acceptance_36h.json",
+      "bytes": 2760,
+      "sha256": "db4674af35db8595f022f6ad909783c61f6c717c12b8f8f0990ecb047161609e"
+    },
+    {
+      "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad_v15_full_two_column_acceptance_36h.json",
+      "relative_copy": "control/execution_contract_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad_v15_full_two_column_acceptance_36h.json",
+      "bytes": 10237,
+      "sha256": "bf76bdabe78f2d0f44f19ad4368eb481508054811f756504a4751d43c63f4f34"
+    }
+  ],
+  "scientific_arrays": [
+    {
+      "array_sha256": "2cda253fbd62f75c8ee9fc3ffa4642519cc01abab969c43fe50b86af8621231f",
+      "bytes": 92034048,
+      "dtype": "complex128",
+      "name": "task41_p0_b0_v9_compact_candidate_full_action_col0",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task41_p0_b0_v9_compact_candidate_full_action_col0.npy",
+      "sha256": "68560aa0f52c47055a7d9cffb0029eb52ac4e99fb6f5f538611de28db4c36e53",
+      "shape": [
+        5752120
+      ]
+    },
+    {
+      "array_sha256": "70167185301e112ae27161024d16c94c9553af5bbea6834b23cda38fa6b90488",
+      "bytes": 92034048,
+      "dtype": "complex128",
+      "name": "task41_p0_b0_v9_compact_candidate_full_reduced_rhs_col0",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task41_p0_b0_v9_compact_candidate_full_reduced_rhs_col0.npy",
+      "sha256": "eae3507223865f7b9bcc78b73b81ff78d61558ceab06a4b8563396685e671e09",
+      "shape": [
+        5752120
+      ]
+    },
+    {
+      "array_sha256": "37e65474e20679bd905be796f52a72ad722bfed86dd2946e047ebe004910eb3f",
+      "bytes": 92034048,
+      "dtype": "complex128",
+      "name": "task41_p0_b0_v9_compact_candidate_full_action_col1",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task41_p0_b0_v9_compact_candidate_full_action_col1.npy",
+      "sha256": "9f12a11a5532fe88e28eba0804c7790bdaa712e2546899c3695747bdea7b8865",
+      "shape": [
+        5752120
+      ]
+    },
+    {
+      "array_sha256": "c6b40af6fd823ae0398ce375568d63f541bec2fcfc8216e99ca987bded152300",
+      "bytes": 92034048,
+      "dtype": "complex128",
+      "name": "task41_p0_b0_v9_compact_candidate_full_reduced_rhs_col1",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task41_p0_b0_v9_compact_candidate_full_reduced_rhs_col1.npy",
+      "sha256": "1faa0f18bdf8b76abfa7a1deffc0c3b3ca023a42cc0b97f21071ae49d5cbc4df",
+      "shape": [
+        5752120
+      ]
+    }
+  ],
+  "selected_event_source": {
+    "original_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41extra_b0_p6_phi90_07nm_iterative__full3d_iterative__mpi1__Mna/20261026T081134.584306Z/task41_b0_07nm_p6_y_orbit_reference_events.jsonl",
+    "bytes": 10938729,
+    "sha256": "ae772abb3725a872a1f9563cbd941bdeaabe6779a4e3b5b0a109a477f90399de",
+    "selection": "phase-bearing events; see source for full timeline"
+  },
+  "note": "Copies retain original bytes; scientific arrays remain ignored on fenics-ws. Old failed receipts are immutable. Derived compact is separate.",
+  "closeout_generated_files": [
+    {
+      "path": "operator_resource_compact.json",
+      "bytes": 10717,
+      "sha256": "dd9dcc023df0aadaa54a20498a9714105f39d7e771fc9e53242e4591f0f1f88e"
+    },
+    {
+      "path": "selected_events.json",
+      "bytes": 61515,
+      "sha256": "9f9b9ab8233479f28513e91c05a30af965f262365073afde85be6dbf360c0084"
+    },
+    {
+      "path": "window_observation.json",
+      "bytes": 2106,
+      "sha256": "635becdda5e2bde97a3cb5f36426ad92658b83bd84388ff54301c39708230f18"
+    }
+  ]
+}

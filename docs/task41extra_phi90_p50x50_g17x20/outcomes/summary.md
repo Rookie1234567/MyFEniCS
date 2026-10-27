@@ -1,5 +1,19 @@
 # Task41 阶段结果
 
+## V15最新收口：全域两列改善但仍失败（2026-10-27）
+
+| 项目 | 真实结果 | 边界 |
+|---|---|---|
+| owner | 全部28,000 actual键，39,972.508249秒 | 完成构建，当前已释放 |
+| 两列完整action | 5.762574483600798e-11 / 1.212368464357194e-10 | 均超1e-11；较V9改善约4.64/4.63倍但不合格 |
+| 独立审核 | audit_completed=true、data_integrity=true、NUMERICAL_FAIL | 原审核失败保留；新只读审核不重算 |
+| 资源 | tree555,498,606,592 B；cgroup556,689,793,024 B；task swap0 | 同时峰值，不是载荷或最终驻留 |
+| 成本 | service60,758.813495秒；RHS core7,480.509984秒，其中fsum6,422.241584秒 | 父子不相加；包含错误下游成本 |
+| 后续 | recovery/200q/factor/FGMRES/官方场未运行 | 数值门失败，不能由局部PASS转授 |
+
+同LU两步残差校正减少局部求解误差，但尚不能使完整向量过门。终态返回被外层忽略导致错误carrier前缀，已修复并清场；旧WORKER_FAILED/exit-9不改写。下一步先使用新旧保存y/g定位RHS侧余差，不原样重建owner。详见[response_v15](../response_v15.md)、[compact](v15_closeout/operator_resource_compact.json)、[证据索引](v15_closeout/evidence_index.json)。
+
+
 > **V14最新范围结果：四个已保存单元上的八个 RHS 局部残差校正，经 Decimal 补充复核为 `LOCAL_CANDIDATE_PASS`；没有形成全域资格。** 初始 wide-arithmetic checker 对两组候选均为 `INCONCLUSIVE`，Decimal 补充只确认这些保存残差下降。V9全域 full-action 仍`GATE_FAILED`，两个相对误差为`2.674977063720297e-10`和`5.613598120037966e-10`，门限`1e-11`；V14未重算此门，所有 V14 receipt 均 `official_result=false`、`scientific_qualified=false`、`full_owner_unlocked=false`。详见[response_v14](../response_v14.md)、[V14 ledger](v14_closeout/timing_and_adjoint_ledgers.json)、[V14 evidence index](v14_closeout/evidence_index.json)。
 
 | V14项目 | 当前结果 | 解释及边界 |
