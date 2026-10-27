@@ -594,6 +594,134 @@ def test_v16_attempt01_selected_trace_row_maps_to_nonmatching_active_id_column()
         )
 
 
+def test_v16_attempt01_legacy_basename_sources_bind_only_to_pinned_v3_donor_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    results_root = tmp_path / "results" / TASK41_MODEL_ID
+    donor_root = results_root / v16_checker.TASK41_P0_B0_V16_V3_DONOR_RUN_NAME
+    donor_root.mkdir(parents=True)
+    sources = {
+        "native_rhs": (
+            "native_rhs.npy", np.asarray([1 + 2j, 3 + 4j], dtype=np.complex128)
+        ),
+        "b_alpha_rows": ("b_alpha_rows.npy", np.asarray([1], dtype=np.int64)),
+        "b_alpha_values": (
+            "b_alpha_values.npy", np.asarray([0.25 + 0.5j], dtype=np.complex128)
+        ),
+    }
+    expected: dict[str, tuple[str, str, int, str, list[int]]] = {}
+    vector_records: list[dict[str, object]] = []
+    row_references: dict[str, dict[str, object]] = {}
+    loaded_values: dict[str, np.ndarray] = {}
+    for role, (filename, values) in sources.items():
+        donor_path = donor_root / filename
+        np.save(donor_path, values, allow_pickle=False)
+        reference = {
+            "path": filename,
+            "sha256": _sha(donor_path),
+            "bytes": donor_path.stat().st_size,
+            "dtype": str(values.dtype),
+            "shape": list(values.shape),
+            "array_sha256": hashlib.sha256(
+                memoryview(np.ascontiguousarray(values)).cast("B")
+            ).hexdigest(),
+        }
+        row_references[role] = dict(reference)
+        vector_records.append(dict(reference))
+        expected[role] = (
+            filename, reference["sha256"], reference["bytes"],
+            reference["dtype"], reference["shape"],
+        )
+        loaded_values[role] = values
+        # A same-name artifact in the model root must never win over the pinned donor.
+        np.save(results_root / filename, np.zeros_like(values), allow_pickle=False)
+
+    monkeypatch.setattr(
+        v16_checker,
+        "TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS",
+        {0: expected},
+    )
+    bound: dict[str, dict[str, object]] = {}
+    for role in sources:
+        bound[role] = v16_checker._task41_p0_v16_v3_donor_source_ref(
+            row_references[role],
+            vector_records=vector_records,
+            donor_run_root=donor_root,
+            column=0,
+            role=role,
+            label=f"fixture {role}",
+        )
+        assert bound[role]["path"] == str(donor_root / sources[role][0])
+        assert bound[role]["sha256"] == row_references[role]["sha256"]
+
+    assert np.array_equal(
+        v16_checker._task41_p0_v16_bound_complex_vector(
+            bound["native_rhs"], results_root=results_root, label="fixture native RHS"
+        ),
+        loaded_values["native_rhs"],
+    )
+    assert np.array_equal(
+        v16_checker._task41_p0_v16_bound_metadata_npy(
+            bound["b_alpha_rows"], results_root=results_root, label="fixture B-alpha rows"
+        ),
+        loaded_values["b_alpha_rows"],
+    )
+    assert np.array_equal(
+        v16_checker._task41_p0_v16_bound_complex_vector(
+            bound["b_alpha_values"], results_root=results_root, label="fixture B-alpha values"
+        ),
+        loaded_values["b_alpha_values"],
+    )
+
+    minimal_reference = {
+        "path": row_references["native_rhs"]["path"],
+        "sha256": row_references["native_rhs"]["sha256"],
+    }
+    minimal_bound = v16_checker._task41_p0_v16_v3_donor_source_ref(
+        minimal_reference,
+        vector_records=vector_records,
+        donor_run_root=donor_root,
+        column=0,
+        role="native_rhs",
+        label="fixture path/hash-only legacy reference",
+    )
+    assert minimal_bound == bound["native_rhs"]
+
+    mismatched_hash = {**row_references["native_rhs"], "sha256": "0" * 64}
+    with pytest.raises(ValueError, match="saved source hash differs"):
+        v16_checker._task41_p0_v16_v3_donor_source_ref(
+            mismatched_hash,
+            vector_records=vector_records,
+            donor_run_root=donor_root,
+            column=0,
+            role="native_rhs",
+            label="fixture mismatched hash",
+        )
+    traversing_path = {**row_references["native_rhs"], "path": "../native_rhs.npy"}
+    with pytest.raises(ValueError, match="relative source must be the pinned donor basename"):
+        v16_checker._task41_p0_v16_v3_donor_source_ref(
+            traversing_path,
+            vector_records=vector_records,
+            donor_run_root=donor_root,
+            column=0,
+            role="native_rhs",
+            label="fixture traversal",
+        )
+    wrong_absolute_path = {
+        **row_references["native_rhs"],
+        "path": str(results_root / "native_rhs.npy"),
+    }
+    with pytest.raises(ValueError, match="absolute source path differs from the pinned donor"):
+        v16_checker._task41_p0_v16_v3_donor_source_ref(
+            wrong_absolute_path,
+            vector_records=vector_records,
+            donor_run_root=donor_root,
+            column=0,
+            role="native_rhs",
+            label="fixture wrong absolute path",
+        )
+
+
 def test_v16_v14_attempt04_preserves_j0_j3_terminal_bindings():
     spec = {
         "active_row": 1,

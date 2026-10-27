@@ -168,6 +168,54 @@ TASK41_P0_B0_V16_V3_VOLUME_RHS_BINDINGS = {
         296_016_512,
     ),
 }
+TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS = {
+    0: {
+        "native_rhs": (
+            "task41_b0_recovery_mode_16030_native_rhs.npy",
+            "6769555c63dd204745572909605870aa04a1a9256d92b0d5c232d3d1d6289920",
+            296_016_512,
+            "complex128",
+            [18_501_024],
+        ),
+        "b_alpha_rows": (
+            "task41_b0_recovery_mode_16030_b_alpha_rows.npy",
+            "b1c2c770f27af24dcdf7a2257c4153af30d9fdbe6dd7262401d3896c5b5d9234",
+            464_128,
+            "int64",
+            [58_000],
+        ),
+        "b_alpha_values": (
+            "task41_b0_recovery_mode_16030_b_alpha_values.npy",
+            "2999e67baf6247d789052e6e7be8c541e7e16b0bd2c8ead5ed71d11b1315d3e0",
+            928_128,
+            "complex128",
+            [58_000],
+        ),
+    },
+    1: {
+        "native_rhs": (
+            "task41_b0_recovery_mode_48090_native_rhs.npy",
+            "22c2f4637472b310f114929a5bcd601c3a1433d8337eac58de8e2bbc6dc7c48d",
+            296_016_512,
+            "complex128",
+            [18_501_024],
+        ),
+        "b_alpha_rows": (
+            "task41_b0_recovery_mode_48090_b_alpha_rows.npy",
+            "01b4c4cfdad85c370081109b885a3d7cb437f52f0860a0e671f8b7509ec1500d",
+            464_128,
+            "int64",
+            [58_000],
+        ),
+        "b_alpha_values": (
+            "task41_b0_recovery_mode_48090_b_alpha_values.npy",
+            "7dd368770238c19fc46bd4df5c961c2251b4c3d0d2b859fbc2453d8470794d5c",
+            928_128,
+            "complex128",
+            [58_000],
+        ),
+    },
+}
 TASK41_P0_B0_V13_WINDOW_SHA256 = (
     "4fc153c4e0526a21eb01aa3d6e5c774af7c74a849a3461b676e7ffdf214debc6"
 )
@@ -1431,6 +1479,120 @@ def _task41_p0_v16_bound_complex_vector(
     return array
 
 
+def _task41_p0_v16_v3_donor_index(
+    *, repo_root: Path, results_root: Path
+) -> tuple[dict[str, Any], Path, Path, Path, list[Mapping[str, Any]]]:
+    """Load the pinned V3 index and prove its one permitted donor run root."""
+    raw_index_path = repo_root / TASK41_P0_B0_V3_VECTOR_INDEX_RELATIVE
+    if raw_index_path.is_symlink():
+        raise ValueError("V16 pinned V3 saved-vector index cannot be a symlink")
+    index_path = raw_index_path.resolve(strict=True)
+    if (
+        not index_path.is_relative_to(repo_root)
+        or not index_path.is_file()
+        or index_path.stat().st_size > 8 * 1024**2
+        or _task41_p0_v16_stream_sha256(index_path)
+        != TASK41_P0_B0_V3_VECTOR_INDEX_SHA256
+    ):
+        raise ValueError("V16 pinned V3 saved-vector index path or SHA-256 differs")
+    try:
+        index = json.loads(index_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("V16 pinned V3 saved-vector index is unreadable") from exc
+    if not isinstance(index, dict):
+        raise ValueError("V16 pinned V3 saved-vector index must be an object")
+    donor = index.get("recovery_manifest")
+    postrun = index.get("postrun_sha256_verification")
+    if (
+        index.get("schema") != "task41.p0.b0.saved_vector_hash_index.v1"
+        or index.get("run_id") != "task41extra_b0_p6_phi90_07nm_iterative"
+        or index.get("source_sha") != "afbe91e5947ed18fb74d7105097e129c1b8b4cc7"
+        or not isinstance(postrun, Mapping)
+        or postrun.get("all_file_sizes_match") is not True
+        or postrun.get("all_manifest_file_hashes_match") is not True
+        or postrun.get("manifest_paths_equal_root_npy_inventory") is not True
+        or postrun.get("verified_files") != 141
+        or not isinstance(donor, Mapping)
+        or donor.get("sha256") != TASK41_P0_B0_V3_DONOR_MANIFEST_SHA256
+        or donor.get("status") != "FAIL"
+        or donor.get("stage") != "FULL_ACTION_GATE_FAILED"
+    ):
+        raise ValueError("V16 pinned V3 donor index or failed-action identity differs")
+    raw_donor_root = Path(str(index.get("run_directory_remote", "")))
+    if raw_donor_root.is_symlink():
+        raise ValueError("V16 pinned V3 donor run directory cannot be a symlink")
+    donor_run_root = raw_donor_root.resolve(strict=True)
+    if (
+        not donor_run_root.is_relative_to(results_root)
+        or not donor_run_root.is_dir()
+        or donor_run_root.name != TASK41_P0_B0_V16_V3_DONOR_RUN_NAME
+    ):
+        raise ValueError("V16 pinned V3 donor run directory differs")
+    manifest_path = _task41_p0_v16_results_path(
+        str(donor.get("path", "")), results_root, "pinned V3 donor manifest"
+    )
+    if (
+        manifest_path != donor_run_root / "task41_b0_recovery_manifest.json"
+        or _task41_p0_v16_stream_sha256(manifest_path)
+        != TASK41_P0_B0_V3_DONOR_MANIFEST_SHA256
+    ):
+        raise ValueError("V16 pinned V3 donor manifest path or SHA-256 differs")
+    vector_records = index.get("vectors")
+    if not isinstance(vector_records, list) or not all(
+        isinstance(item, Mapping) for item in vector_records
+    ):
+        raise ValueError("V16 pinned V3 donor index omits vector records")
+    return index, index_path, donor_run_root, manifest_path, vector_records
+
+
+def _task41_p0_v16_v3_donor_source_ref(
+    source_record: Any,
+    *,
+    vector_records: Sequence[Mapping[str, Any]],
+    donor_run_root: Path,
+    column: int,
+    role: str,
+    label: str,
+) -> dict[str, Any]:
+    """Bind one legacy basename to its exact indexed file in the V3 donor run."""
+    expected = TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS.get(column, {}).get(role)
+    if expected is None:
+        raise ValueError(f"V16 {label} donor source role or column is not pinned")
+    filename, digest, file_bytes, dtype, shape = expected
+    matches = [item for item in vector_records if item.get("path") == filename]
+    if len(matches) != 1:
+        raise ValueError(f"V16 {label} donor index does not uniquely bind {filename}")
+    indexed = matches[0]
+    expected_metadata = {
+        "sha256": digest,
+        "bytes": file_bytes,
+        "dtype": dtype,
+        "shape": shape,
+    }
+    if any(indexed.get(key) != value for key, value in expected_metadata.items()):
+        raise ValueError(f"V16 {label} donor index metadata differs for {filename}")
+    if not isinstance(source_record, Mapping):
+        raise ValueError(f"V16 {label} saved source reference is malformed")
+    if source_record.get("sha256") != digest:
+        raise ValueError(f"V16 {label} saved source hash differs from the pinned V3 index")
+    if any(
+        key in source_record and source_record[key] != indexed.get(key)
+        for key in ("bytes", "dtype", "shape", "array_sha256")
+    ):
+        raise ValueError(f"V16 {label} saved source metadata differs from the pinned V3 index")
+    raw_path = source_record.get("path")
+    if not isinstance(raw_path, str):
+        raise ValueError(f"V16 {label} saved source path is malformed")
+    source_path = Path(raw_path)
+    donor_path = donor_run_root / filename
+    if source_path.is_absolute():
+        if source_path.is_symlink() or source_path != donor_path:
+            raise ValueError(f"V16 {label} absolute source path differs from the pinned donor")
+    elif source_path.parts != (filename,):
+        raise ValueError(f"V16 {label} relative source must be the pinned donor basename")
+    return {**indexed, "path": str(donor_path)}
+
+
 def _task41_p0_v16_active_map_binding(
     *, repo_root: Path, results_root: Path
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -2140,17 +2302,34 @@ def _task41_p0_v16_attempt01_replay_inputs(
     native_rhs_by_column: dict[int, np.ndarray] = {}
     b_alpha_by_column: dict[int, complex] = {}
     b_alpha_bindings: dict[str, Any] = {}
+    (
+        volume_index,
+        volume_index_path,
+        donor_run_root,
+        manifest_path,
+        volume_records,
+    ) = _task41_p0_v16_v3_donor_index(
+        repo_root=repo_root, results_root=results_root
+    )
+    full_rhs_bindings: dict[str, dict[str, Any]] = {}
     if len(rows) != 2:
         raise ValueError("V16 attempt01 V14 production rows must retain their two unlabelled columns")
     for column_index, row in enumerate(rows):
         if row.get("column") != column_index or "state" in row:
             raise ValueError("V16 attempt01 V14 production row identity differs")
-        full_rhs_ref = row.get("base_b_t_source")
+        full_rhs_ref = _task41_p0_v16_v3_donor_source_ref(
+            row.get("base_b_t_source"),
+            vector_records=volume_records,
+            donor_run_root=donor_run_root,
+            column=column_index,
+            role="native_rhs",
+            label=f"attempt01 column{column_index} saved full RHS",
+        )
         full_rhs = _task41_p0_v16_bound_complex_vector(
             full_rhs_ref, results_root=results_root,
             label=f"attempt01 column{column_index} saved full RHS",
         )
-        if full_rhs.shape != (18_501_024,):
+        if full_rhs.shape != (TASK41_P0_B0_V16_STORAGE_ROWS,):
             raise ValueError(f"V16 attempt01 column{column_index} full RHS row count differs")
         full_at_row = complex(full_rhs[int(spec["original_row"])])
         if [full_at_row.real, full_at_row.imag] != row.get("base_b_t"):
@@ -2162,12 +2341,28 @@ def _task41_p0_v16_attempt01_replay_inputs(
         alpha_sources = row.get("b_alpha_sources")
         if not isinstance(alpha_sources, Mapping):
             raise ValueError(f"V16 attempt01 column{column_index} B-alpha source refs are missing")
+        alpha_rows_ref = _task41_p0_v16_v3_donor_source_ref(
+            alpha_sources.get("rows"),
+            vector_records=volume_records,
+            donor_run_root=donor_run_root,
+            column=column_index,
+            role="b_alpha_rows",
+            label=f"attempt01 column{column_index} B-alpha row map",
+        )
+        alpha_values_ref = _task41_p0_v16_v3_donor_source_ref(
+            alpha_sources.get("values"),
+            vector_records=volume_records,
+            donor_run_root=donor_run_root,
+            column=column_index,
+            role="b_alpha_values",
+            label=f"attempt01 column{column_index} B-alpha values",
+        )
         alpha_rows = _task41_p0_v16_bound_metadata_npy(
-            alpha_sources.get("rows"), results_root=results_root,
+            alpha_rows_ref, results_root=results_root,
             label=f"attempt01 column{column_index} B-alpha row map",
         )
         alpha_values = _task41_p0_v16_bound_complex_vector(
-            alpha_sources.get("values"), results_root=results_root,
+            alpha_values_ref, results_root=results_root,
             label=f"attempt01 column{column_index} B-alpha values",
         )
         if (
@@ -2179,63 +2374,19 @@ def _task41_p0_v16_attempt01_replay_inputs(
         alpha_at_row = complex(alpha_values[int(matches[0])]) if matches.size else 0.0 + 0.0j
         if matches.size > 1 or alpha_at_row != b_alpha_by_column[column_index]:
             raise ValueError(f"V16 attempt01 column{column_index} B-alpha selected row differs")
+        full_rhs_bindings[f"column{column_index}"] = {
+            "path": full_rhs_ref["path"], "sha256": full_rhs_ref["sha256"],
+            "bytes": full_rhs_ref["bytes"], "shape": full_rhs_ref["shape"],
+        }
         b_alpha_bindings[f"column{column_index}"] = {
-            name: {"path": str(_task41_p0_v16_results_path(
-                str(alpha_sources[name]["path"]), results_root,
-                f"attempt01 column{column_index} B-alpha {name}",
-            )), "sha256": alpha_sources[name]["sha256"]}
-            for name in ("rows", "values")
+            "rows": {
+                "path": alpha_rows_ref["path"], "sha256": alpha_rows_ref["sha256"],
+            },
+            "values": {
+                "path": alpha_values_ref["path"], "sha256": alpha_values_ref["sha256"],
+            },
         }
 
-    volume_index_path = repo_root / TASK41_P0_B0_V3_VECTOR_INDEX_RELATIVE
-    if (
-        volume_index_path.is_symlink()
-        or not volume_index_path.is_file()
-        or _task41_p0_v16_stream_sha256(volume_index_path)
-        != TASK41_P0_B0_V3_VECTOR_INDEX_SHA256
-    ):
-        raise ValueError("V16 pinned V3 saved-vector index path or hash differs")
-    volume_index = json.loads(volume_index_path.read_text(encoding="utf-8"))
-    donor = volume_index.get("recovery_manifest") if isinstance(volume_index, Mapping) else None
-    postrun_verification = (
-        volume_index.get("postrun_sha256_verification")
-        if isinstance(volume_index, Mapping) else None
-    )
-    if (
-        volume_index.get("schema") != "task41.p0.b0.saved_vector_hash_index.v1"
-        or volume_index.get("run_id") != "task41extra_b0_p6_phi90_07nm_iterative"
-        or volume_index.get("source_sha") != "afbe91e5947ed18fb74d7105097e129c1b8b4cc7"
-        or not isinstance(postrun_verification, Mapping)
-        or postrun_verification.get("all_file_sizes_match") is not True
-        or postrun_verification.get("all_manifest_file_hashes_match") is not True
-        or postrun_verification.get("manifest_paths_equal_root_npy_inventory") is not True
-        or postrun_verification.get("verified_files") != 141
-        or not isinstance(donor, Mapping)
-        or donor.get("sha256") != TASK41_P0_B0_V3_DONOR_MANIFEST_SHA256
-        or donor.get("status") != "FAIL"
-        or donor.get("stage") != "FULL_ACTION_GATE_FAILED"
-    ):
-        raise ValueError("V16 pinned V3 donor index or failed-attempt identity differs")
-    raw_donor_root = Path(str(volume_index.get("run_directory_remote", "")))
-    if raw_donor_root.is_symlink():
-        raise ValueError("V16 pinned V3 donor run directory cannot be a symlink")
-    donor_run_root = raw_donor_root.resolve(strict=True)
-    if not donor_run_root.is_relative_to(results_root) or not donor_run_root.is_dir():
-        raise ValueError("V16 pinned V3 donor run directory escapes model results")
-    if donor_run_root.name != "20261019T053402.514018Z":
-        raise ValueError("V16 pinned V3 donor run directory differs")
-    manifest_path = _task41_p0_v16_results_path(
-        str(donor.get("path", "")), results_root, "pinned V3 donor manifest"
-    )
-    if (
-        manifest_path != donor_run_root / "task41_b0_recovery_manifest.json"
-        or _task41_p0_v16_stream_sha256(manifest_path)
-        != TASK41_P0_B0_V3_DONOR_MANIFEST_SHA256
-    ):
-        raise ValueError("V16 pinned V3 donor manifest path or hash differs")
-    volume_records = volume_index.get("vectors")
-    if not isinstance(volume_records, list):
-        raise ValueError("V16 pinned V3 donor index omits saved vectors")
     volume_rhs_by_column: dict[int, np.ndarray] = {}
     volume_bindings: dict[str, Any] = {}
     expected_volume = {
@@ -2288,13 +2439,7 @@ def _task41_p0_v16_attempt01_replay_inputs(
                 "manifest_sha256": TASK41_P0_B0_V3_DONOR_MANIFEST_SHA256,
             },
             "volume_rhs": volume_bindings,
-            "full_rhs": {
-                f"column{column}": {
-                    "path": str(row["base_b_t_source"]["path"]),
-                    "sha256": row["base_b_t_source"]["sha256"],
-                }
-                for column, row in enumerate(rows)
-            },
+            "full_rhs": full_rhs_bindings,
             "b_alpha": b_alpha_bindings,
             "cell_star_bindings": binding_cells,
             "state_input_bindings": state_bindings,
@@ -2314,63 +2459,11 @@ def _task41_p0_v16_v3_volume_rhs_scalars(
     original_row: int,
 ) -> tuple[dict[int, complex], dict[str, Any]]:
     """Read only the pinned V3 volume-RHS rows needed by a saved-star replay."""
-    raw_index_path = repo_root / TASK41_P0_B0_V3_VECTOR_INDEX_RELATIVE
-    if raw_index_path.is_symlink():
-        raise ValueError("V16 pinned V3 saved-vector index cannot be a symlink")
-    index_path = raw_index_path.resolve(strict=True)
-    if (
-        not index_path.is_relative_to(repo_root)
-        or not index_path.is_file()
-        or index_path.stat().st_size > 8 * 1024**2
-        or _task41_p0_v16_stream_sha256(index_path)
-        != TASK41_P0_B0_V3_VECTOR_INDEX_SHA256
-    ):
-        raise ValueError("V16 pinned V3 saved-vector index path or SHA-256 differs")
-    try:
-        index = json.loads(index_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ValueError("V16 pinned V3 saved-vector index is unreadable") from exc
-    if not isinstance(index, Mapping):
-        raise ValueError("V16 pinned V3 saved-vector index must be an object")
-    donor = index.get("recovery_manifest") if isinstance(index, Mapping) else None
-    postrun = index.get("postrun_sha256_verification") if isinstance(index, Mapping) else None
-    if (
-        index.get("schema") != "task41.p0.b0.saved_vector_hash_index.v1"
-        or index.get("run_id") != "task41extra_b0_p6_phi90_07nm_iterative"
-        or index.get("source_sha") != "afbe91e5947ed18fb74d7105097e129c1b8b4cc7"
-        or not isinstance(postrun, Mapping)
-        or postrun.get("all_file_sizes_match") is not True
-        or postrun.get("all_manifest_file_hashes_match") is not True
-        or postrun.get("manifest_paths_equal_root_npy_inventory") is not True
-        or postrun.get("verified_files") != 141
-        or not isinstance(donor, Mapping)
-        or donor.get("sha256") != TASK41_P0_B0_V3_DONOR_MANIFEST_SHA256
-        or donor.get("status") != "FAIL"
-        or donor.get("stage") != "FULL_ACTION_GATE_FAILED"
-    ):
-        raise ValueError("V16 pinned V3 donor index or failed-action identity differs")
-    raw_donor_root = Path(str(index.get("run_directory_remote", "")))
-    if raw_donor_root.is_symlink():
-        raise ValueError("V16 pinned V3 donor run directory cannot be a symlink")
-    donor_root = raw_donor_root.resolve(strict=True)
-    if (
-        not donor_root.is_relative_to(results_root)
-        or not donor_root.is_dir()
-        or donor_root.name != TASK41_P0_B0_V16_V3_DONOR_RUN_NAME
-    ):
-        raise ValueError("V16 pinned V3 donor run directory differs")
-    manifest_path = _task41_p0_v16_results_path(
-        str(donor.get("path", "")), results_root, "pinned V3 donor manifest"
+    _, index_path, donor_root, manifest_path, vector_records = (
+        _task41_p0_v16_v3_donor_index(
+            repo_root=repo_root, results_root=results_root
+        )
     )
-    if (
-        manifest_path != donor_root / "task41_b0_recovery_manifest.json"
-        or _task41_p0_v16_stream_sha256(manifest_path)
-        != TASK41_P0_B0_V3_DONOR_MANIFEST_SHA256
-    ):
-        raise ValueError("V16 pinned V3 donor manifest path or SHA-256 differs")
-    vector_records = index.get("vectors")
-    if not isinstance(vector_records, list):
-        raise ValueError("V16 pinned V3 donor index omits vector records")
     scalars: dict[int, complex] = {}
     bindings: dict[str, Any] = {
         "index": {
@@ -2380,6 +2473,8 @@ def _task41_p0_v16_v3_volume_rhs_scalars(
             "path": str(manifest_path), "sha256": TASK41_P0_B0_V3_DONOR_MANIFEST_SHA256,
         },
     }
+    if not 0 <= original_row < TASK41_P0_B0_V16_STORAGE_ROWS:
+        raise ValueError("V16 pinned V3 volume RHS original row is out of range")
     for column, (filename, digest, file_bytes) in TASK41_P0_B0_V16_V3_VOLUME_RHS_BINDINGS.items():
         matches = [
             item for item in vector_records

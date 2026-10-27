@@ -122,3 +122,7 @@ V14 reader 现在可在收到按 attempt 绑定的 replay inputs 时调用 `_tas
 沿同窗与05保存A接续，source `2de17690039cc856d0e5f00df3eaf657c7d3886f`，unit `myfenics-case-20261027T101821-3411233.service`。A/meta未重算，B因`cell446 selected active position differs`退出；旧负回执保留。原始V8 metadata小数组逐一hash核验后，cell446的局部trace行75经保存E映射到active_ids列111，后者值87567；原守卫错误要求75等于111。修复只取消这项错误的编号等同，仍要求active row唯一、E canonical、该E行唯一且系数1、实际列精确对应active row。错误E和重复active id仍拒绝。
 
 service父段22.2098349459秒、监督child13.3214382641秒、systemd wall25.949551秒，嵌套不相加；tree采样峰537612288 B、cgroup内核峰444903424 B、task swap0、后代清空。全部attempt01–07真实成本已保存在ignored `v16_main_handoff/costs_attempt01_07.json`。其中05 cgroup内核peak为2521493504 B，采样current峰与之区分，不以较低采样值替代内核峰。新接续继续复用05 A manifest，不重复metadata或统计。
+
+### attempt08：旧donor basename路径接线
+
+source `1d1a83894359942e4bcaea7845de10bd86bf8db2`，unit `myfenics-case-20261027T102656-3413245.service`。复用05 A后，B读取V14旧`base_b_t_source`时把basename拼到task结果根，实际文件位于原V3 donor `20261019T053402.514018Z`。原文件未丢失，失败不代表科学数据损坏。修复按已固定SHA的V3索引与manifest先核唯一donor根，再分别绑定两列full RHS与Balpha rows/values；volume RHS仍独立使用原native保存数据。旧路径/hash/source不改；短path/hash引用由索引补全形状字节，已有元数据不一致仍拒绝。fixture覆盖根目录同名诱饵、错误hash、目录穿越和错误绝对路径。未重算A/meta、无新积分/分解/GETRS。
