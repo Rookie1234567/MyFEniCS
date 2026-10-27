@@ -2032,6 +2032,14 @@ def main(argv: list[str] | None = None) -> int:
             "audit_path": v12_source["audit_path"],
             "bundle_path": v12_source["bundle_path"],
         }
+        for key in (
+            "user_recovery_authorization_path",
+            "user_recovery_authorization_sha256",
+            "superseded_failure_closeout_path",
+            "superseded_failure_closeout_sha256",
+        ):
+            if key in v12_source:
+                v12_recovery_binding[key] = v12_source[key]
         expected_selection = next(
             item["path"]
             for item in v11_contract["inputs"]

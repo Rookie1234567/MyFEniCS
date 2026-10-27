@@ -1,0 +1,63 @@
+{
+  "schema": "task43.v15.user-bugfix-recovery-authorization.v1",
+  "created_utc": "2026-10-27T01:46:07.849190+00:00",
+  "user_instruction_verbatim": "如果是一些bug，你修复了再继续，不要卡在这里停下来，除非遇到数值gate再停下等待审阅",
+  "authority": "direct human user instruction; prospective override of prior stop-on-engineering-bug/no-support-retry restrictions for the existing V11 science chain only",
+  "base_delivery_sha": "12c7d4b2d35d033defead807e3e4c5d3407dc85f",
+  "review_sha": "37f3376be410657fbaec86b0412086745419c506",
+  "old_contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+  "old_recovery_manifest_path": "docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+  "old_recovery_manifest_sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+  "previous_failure": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/root_closeout.json",
+    "sha256": "f710082b6ac4f6be0eeb8fcefd15e1c3005ef1676c057eef24ba7162c58ef948",
+    "status": "FAILED_RESEARCH_AUDIT_KEY_MISMATCH",
+    "consumed_P2R_preserved": "1/1"
+  },
+  "p2_source_id": "P2_BUGFIX",
+  "p2_source": {
+    "support_root": "benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1",
+    "output_root": "benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1/plan_output",
+    "plan_output_path": "benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1/plan_output/plans/v11_r9_h8.json",
+    "audit_path": "benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1/plan_output/plans/v11_r9_h8.audit.json",
+    "bundle_path": "benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1/plan_output/plan_audit.json"
+  },
+  "support_validation_root": "benchmarks/artifacts/task43/v11_science/recovery_v15/support/field_key_binding_attempt1",
+  "launches": {
+    "support": "benchmarks/artifacts/task43/v11_science/recovery_v15/launch/field_key_binding_attempt1.sh",
+    "P2": "benchmarks/artifacts/task43/v11_science/recovery_v15/launch/space_and_saved_primary_attempt1.sh"
+  },
+  "resources": {
+    "support_validation_work_seconds": 270,
+    "support_validation_whole_seconds": 300,
+    "P2_work_seconds": 5400,
+    "P2_whole_seconds": 5580,
+    "support_RSS_cap_bytes": 8589934592,
+    "P3_P4_work_seconds": 6900,
+    "P3_P4_whole_seconds": 7200,
+    "P3_P4_RSS_cap_bytes": 34359738368,
+    "P5_work_seconds": 1740,
+    "P5_whole_seconds": 1800,
+    "CPU": [
+      1
+    ],
+    "MPI": 1,
+    "six_math_threads": 1,
+    "task_swap_bytes": 0,
+    "stricter_dynamic_cap_and_reserve": true
+  },
+  "continuation_policy": "Repair localized implementation/fixture/wiring bugs, freeze actual changed bytes, validate affected paths and continue the same science chain. Keep every failed attempt and cost. Do not treat a numerical gate failure as an engineering bug or relax any numerical threshold. Resource limits and process cleanup remain mandatory. Additional bug recoveries, if required, receive separate immutable launch/input bindings; no overwrite or refund.",
+  "P3_P4_P5": "Existing conditional models/roots/slots and numerical gates unchanged; P2 complete then A1_q3, then R9_H8, then common q8/q10 postprocess. No stage-success review pause.",
+  "forbidden": [
+    "change physics/seed/p/q/R/numerical tolerances",
+    "change numerical core/cache algorithm/shared activation/ABI",
+    "new model or parameter scan",
+    "fresh baseline",
+    "cost campaign",
+    "iteration",
+    "0.7nm",
+    "NN/FTT",
+    "merge",
+    "rewrite historic failures/contracts/reviews"
+  ]
+}

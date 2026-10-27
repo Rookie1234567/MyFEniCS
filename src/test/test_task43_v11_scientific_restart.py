@@ -2026,6 +2026,292 @@ def test_v12_p2_joined_source_binding_rejects_root_terminal_failure(
         )
 
 
+def test_v15_bugfix_source_uses_pinned_authorization_and_old_failure_bytes(
+    tmp_path, monkeypatch
+):
+    source_root = Path(__file__).resolve().parents[2]
+    repository = tmp_path / "isolated_v15_authorization_repo"
+    authorization_rel = h100_anchor._V15_USER_AUTHORIZATION_REL
+    authorization_source = source_root / authorization_rel
+    authorization = json.loads(authorization_source.read_text(encoding="utf-8"))
+    previous_failure_rel = Path(authorization["previous_failure"]["path"])
+    old_manifest_rel = h100_anchor._V12_RECOVERY_MANIFEST_REL
+    for relative in (authorization_rel, previous_failure_rel, old_manifest_rel):
+        destination = repository / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes((source_root / relative).read_bytes())
+    monkeypatch.setattr(h100_anchor, "_REPOSITORY_ROOT", repository)
+
+    loaded = h100_anchor._load_v15_bugfix_authorization()
+    assert loaded["sha256"] == h100_anchor._V15_USER_AUTHORIZATION_SHA256
+    assert loaded["previous_failure_sha256"] == authorization["previous_failure"]["sha256"]
+    assert Path(loaded["previous_failure_path"]).is_file()
+    assert hashlib.sha256(
+        (repository / old_manifest_rel).read_bytes()
+    ).hexdigest() == h100_anchor._V15_OLD_MANIFEST_SHA256
+
+    recovery = {"manifest": {"p2_sources": h100_anchor._V12_P2_SOURCE_PATHS}}
+    selected_root = repository / authorization["p2_source"]["support_root"]
+    source = h100_anchor._resolve_v12_p2_source(recovery, attempt_root=selected_root)
+    assert source["p2_source_id"] == "P2_BUGFIX"
+    assert source["support_root"] == str(selected_root.resolve())
+    assert source["user_recovery_authorization_sha256"] == loaded["sha256"]
+    assert source["superseded_failure_closeout_sha256"] == loaded[
+        "previous_failure_sha256"
+    ]
+    plan_source = h100_anchor._resolve_v12_p2_source(
+        recovery,
+        candidate_plan_path=repository / authorization["p2_source"]["plan_output_path"],
+    )
+    assert plan_source == source
+    with pytest.raises(ValueError, match="exact D1/P2R or explicitly authorized"):
+        h100_anchor._resolve_v12_p2_source(
+            recovery, attempt_root=selected_root.parent / "unlisted_attempt"
+        )
+
+    binding = {
+        "p2_source_id": "P2_BUGFIX",
+        **source,
+        "manifest_path": str((repository / old_manifest_rel).resolve()),
+        "manifest_sha256": h100_anchor._V15_OLD_MANIFEST_SHA256,
+        "contract_sha256": h100_anchor._V12_OLD_CONTRACT_SHA256,
+    }
+    binding["user_recovery_authorization_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="changes its authorized user_recovery_authorization_sha256"):
+        h100_anchor._verify_v12_p2_source_binding(
+            binding,
+            contract_sha256=h100_anchor._V12_OLD_CONTRACT_SHA256,
+            p4_launch_manifest_path=repository / "not_reached_p4_manifest.json",
+        )
+
+    authorization_path = repository / authorization_rel
+    authorization_bytes = authorization_path.read_bytes()
+    authorization_path.write_bytes(authorization_bytes + b" ")
+    with pytest.raises(ValueError, match="authorization hash differs"):
+        h100_anchor._load_v15_bugfix_authorization()
+    authorization_path.write_bytes(authorization_bytes)
+
+    previous_failure_path = repository / previous_failure_rel
+    previous_failure_bytes = previous_failure_path.read_bytes()
+    previous_failure_path.write_bytes(previous_failure_bytes + b" ")
+    with pytest.raises(ValueError, match="prior failed closeout path or hash differs"):
+        h100_anchor._load_v15_bugfix_authorization()
+    previous_failure_path.write_bytes(previous_failure_bytes)
+
+    old_manifest_path = repository / old_manifest_rel
+    old_manifest_bytes = old_manifest_path.read_bytes()
+    old_manifest_path.write_bytes(old_manifest_bytes + b" ")
+    with pytest.raises(ValueError, match="another old V12 manifest"):
+        h100_anchor._load_v15_bugfix_authorization()
+
+
+def test_v15_bugfix_joined_source_binding_accepts_bound_inputs_and_rejects_drift(
+    tmp_path, monkeypatch
+):
+    repository = tmp_path / "v15_joined_source"
+    old_source_paths = copy.deepcopy(h100_anchor._V12_P2_SOURCE_PATHS)
+    source_manifest_rel = Path(
+        "docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json"
+    )
+    fixture = _prepare_v12_compare_fixture(repository, monkeypatch)
+    source_root = Path(__file__).resolve().parents[2]
+    manifest_path = fixture["manifest_path"]
+    manifest_rel = manifest_path.relative_to(repository)
+    assert manifest_rel == source_manifest_rel
+    manifest_path.write_bytes((source_root / source_manifest_rel).read_bytes())
+    manifest_sha256 = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+
+    authorization_rel = h100_anchor._V15_USER_AUTHORIZATION_REL
+    authorization_path = repository / authorization_rel
+    authorization_path.parent.mkdir(parents=True, exist_ok=True)
+    authorization = json.loads(
+        (source_root / authorization_rel).read_text(encoding="utf-8")
+    )
+    binding = fixture["binding"]
+    source_relative = {
+        name: str(Path(binding[name]).resolve().relative_to(repository.resolve()))
+        for name in (
+            "support_root",
+            "output_root",
+            "plan_output_path",
+            "audit_path",
+            "bundle_path",
+        )
+    }
+    authorization["p2_source"] = source_relative
+    authorization_bytes = (json.dumps(authorization, sort_keys=True) + "\n").encode()
+    authorization_path.write_bytes(authorization_bytes)
+    authorization_sha256 = hashlib.sha256(authorization_bytes).hexdigest()
+    monkeypatch.setattr(
+        h100_anchor, "_V15_USER_AUTHORIZATION_SHA256", authorization_sha256
+    )
+    monkeypatch.setattr(h100_anchor, "_V12_P2_SOURCE_PATHS", old_source_paths)
+    previous_failure_rel = Path(authorization["previous_failure"]["path"])
+    previous_failure_path = repository / previous_failure_rel
+    previous_failure_path.parent.mkdir(parents=True, exist_ok=True)
+    previous_failure_path.write_bytes((source_root / previous_failure_rel).read_bytes())
+
+    recovery = {"manifest": {"p2_sources": old_source_paths}}
+    source = h100_anchor._resolve_v12_p2_source(
+        recovery,
+        attempt_root=repository / source_relative["support_root"],
+    )
+    assert source["p2_source_id"] == "P2_BUGFIX"
+    recovery_binding = {
+        "manifest_path": str(manifest_path.resolve()),
+        "manifest_sha256": manifest_sha256,
+        "contract_sha256": fixture["contract_sha256"],
+        **source,
+    }
+
+    def bind(value):
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if key == "v12_recovery_binding" and isinstance(child, dict):
+                    child.clear()
+                    child.update(recovery_binding)
+                else:
+                    bind(child)
+        elif isinstance(value, list):
+            for child in value:
+                bind(child)
+
+    product_paths = {
+        "plan": Path(source["plan_output_path"]),
+        "audit": Path(source["audit_path"]),
+        "a2_response": Path(source["output_root"]) / "A2_saved_primary_q_response.json",
+        "bundle": Path(source["bundle_path"]),
+    }
+    for product_path in product_paths.values():
+        product = json.loads(product_path.read_text(encoding="utf-8"))
+        bind(product)
+        product_path.write_text(
+            json.dumps(product, sort_keys=True) + "\n", encoding="utf-8"
+        )
+
+    p2_support = Path(source["support_root"])
+    p2_launch_manifest_path = p2_support / "snapshots/launch_manifest.json"
+    p2_launch_manifest = json.loads(
+        p2_launch_manifest_path.read_text(encoding="utf-8")
+    )
+    p2_launch_manifest["p2_source_id"] = "P2_BUGFIX"
+    p2_launch_manifest["recovery_manifest_sha256"] = manifest_sha256
+    for item in p2_launch_manifest["source"]:
+        if item["path"] == manifest_rel.as_posix():
+            item["sha256"] = manifest_sha256
+    p2_auth_inputs = [
+        {"path": str(authorization_path.resolve()), "sha256": authorization_sha256},
+        {
+            "path": str(previous_failure_path.resolve()),
+            "sha256": authorization["previous_failure"]["sha256"],
+        },
+    ]
+    p2_launch_manifest["inputs"] = p2_auth_inputs
+    p2_launch_manifest_path.write_text(
+        json.dumps(p2_launch_manifest, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+    p2_joined_path = fixture["p2_joined_path"]
+    p2_joined = json.loads(p2_joined_path.read_text(encoding="utf-8"))
+    p2_joined["p2_source_id"] = "P2_BUGFIX"
+    p2_joined["recovery_manifest_sha256"] = manifest_sha256
+    p2_joined["products"] = {
+        name: {
+            "path": str(path.resolve()),
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        }
+        for name, path in product_paths.items()
+    }
+    p2_joined["user_recovery_authorization"] = {
+        "path": str(authorization_path.resolve()),
+        "sha256": authorization_sha256,
+    }
+    p2_joined["superseded_failure_closeout"] = {
+        "path": str(previous_failure_path.resolve()),
+        "sha256": authorization["previous_failure"]["sha256"],
+    }
+    p2_joined_path.write_text(
+        json.dumps(p2_joined, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+    p4_manifest_path = fixture["p4_manifest_path"]
+    p4_manifest = json.loads(p4_manifest_path.read_text(encoding="utf-8"))
+    p4_manifest["p2_source_id"] = "P2_BUGFIX"
+    p4_manifest["recovery_manifest_sha256"] = manifest_sha256
+    for item in p4_manifest["source"]:
+        if item["path"] == manifest_rel.as_posix():
+            item["sha256"] = manifest_sha256
+    p4_input_paths = {
+        Path(item["path"]).resolve() for item in p4_manifest["inputs"]
+    }
+    p4_input_paths.update(
+        {authorization_path.resolve(), previous_failure_path.resolve()}
+    )
+    p4_manifest["inputs"] = [
+        {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+        for path in sorted(p4_input_paths, key=str)
+    ]
+    p4_manifest_path.write_text(
+        json.dumps(p4_manifest, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+    snapshot = h100_anchor._verify_v12_p2_source_binding(
+        recovery_binding,
+        contract_sha256=fixture["contract_sha256"],
+        p4_launch_manifest_path=p4_manifest_path,
+    )
+    assert str(authorization_path.resolve()) in snapshot
+    assert str(previous_failure_path.resolve()) in snapshot
+    assert str(p2_joined_path.resolve()) in snapshot
+
+    joined_bytes = p2_joined_path.read_bytes()
+    p2_joined["user_recovery_authorization"]["sha256"] = "0" * 64
+    p2_joined_path.write_text(
+        json.dumps(p2_joined, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    with pytest.raises(ValueError, match="changes its authorization or superseded failure"):
+        h100_anchor._verify_v12_p2_source_binding(
+            recovery_binding,
+            contract_sha256=fixture["contract_sha256"],
+            p4_launch_manifest_path=p4_manifest_path,
+        )
+    p2_joined_path.write_bytes(joined_bytes)
+
+    p2_manifest_bytes = p2_launch_manifest_path.read_bytes()
+    p2_launch_manifest["inputs"] = [
+        item
+        for item in p2_auth_inputs
+        if item["path"] != str(authorization_path.resolve())
+    ]
+    p2_launch_manifest_path.write_text(
+        json.dumps(p2_launch_manifest, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    with pytest.raises(ValueError, match="omits or changes user_recovery_authorization_path"):
+        h100_anchor._verify_v12_p2_source_binding(
+            recovery_binding,
+            contract_sha256=fixture["contract_sha256"],
+            p4_launch_manifest_path=p4_manifest_path,
+        )
+    p2_launch_manifest_path.write_bytes(p2_manifest_bytes)
+
+    p4_manifest_bytes = p4_manifest_path.read_bytes()
+    p4_manifest["inputs"] = [
+        item
+        for item in p4_manifest["inputs"]
+        if item["path"] != str(authorization_path.resolve())
+    ]
+    p4_manifest_path.write_text(
+        json.dumps(p4_manifest, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    with pytest.raises(ValueError, match="launch snapshot omits or changes P2 input"):
+        h100_anchor._verify_v12_p2_source_binding(
+            recovery_binding,
+            contract_sha256=fixture["contract_sha256"],
+            p4_launch_manifest_path=p4_manifest_path,
+        )
+    p4_manifest_path.write_bytes(p4_manifest_bytes)
+
+
 def test_v12_execution_manifest_rejects_changed_fixed_identity(tmp_path, monkeypatch):
     manifest_path = Path(
         "docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json"

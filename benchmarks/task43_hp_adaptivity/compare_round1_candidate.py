@@ -1685,6 +1685,14 @@ def compare_v11_union(
         "audit_path": p2_source["audit_path"],
         "bundle_path": p2_source["bundle_path"],
     }
+    for key in (
+        "user_recovery_authorization_path",
+        "user_recovery_authorization_sha256",
+        "superseded_failure_closeout_path",
+        "superseded_failure_closeout_sha256",
+    ):
+        if key in p2_source:
+            recovery_binding[key] = p2_source[key]
     if terminal_binding != recovery_binding:
         raise ValueError("V12 P5 terminal source id/path differs from its recovery manifest")
     v12_inputs_before = _v12_p5_input_snapshot(

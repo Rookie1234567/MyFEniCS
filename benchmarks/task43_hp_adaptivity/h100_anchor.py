@@ -132,6 +132,16 @@ _V11_CONTRACT_REL = Path(
 _V12_RECOVERY_MANIFEST_REL = Path(
     "docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json"
 )
+_V15_USER_AUTHORIZATION_REL = Path(
+    "docs/task43_hp_adaptivity/outcomes/records/v15_user_bugfix_recovery_authorization.json"
+)
+_V15_USER_AUTHORIZATION_SHA256 = (
+    "2b39ca0a1b86e08dfee2f88ea12e85f0b0ec55d8be6c1540ce7e5dc13ddf40cc"
+)
+_V15_BASE_DELIVERY_SHA = "12c7d4b2d35d033defead807e3e4c5d3407dc85f"
+_V15_REVIEW_SHA = "37f3376be410657fbaec86b0412086745419c506"
+_V15_OLD_MANIFEST_SHA256 = "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734"
+_V15_P2_SOURCE_ID = "P2_BUGFIX"
 _V12_REVIEW_COMMIT_SHA256 = "cd4112a0079aba28e9ce1513b58a1b9a51fd6938"
 _V12_OLD_CONTRACT_SHA256 = "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1"
 _V12_SOURCE_PATHS = (
@@ -2445,13 +2455,84 @@ def _load_v12_execution_recovery_manifest(
     }
 
 
+def _load_v15_bugfix_authorization() -> dict[str, Any]:
+    """Load the one pinned user authorization for the localized P2 bug recovery."""
+
+    repository_root = _REPOSITORY_ROOT.resolve()
+    authorization_path = (repository_root / _V15_USER_AUTHORIZATION_REL).resolve()
+    if repository_root not in authorization_path.parents or not authorization_path.is_file():
+        raise ValueError("V15 bugfix recovery requires the fixed user authorization record")
+    authorization_sha256 = _sha256_file(authorization_path)
+    if authorization_sha256 != _V15_USER_AUTHORIZATION_SHA256:
+        raise ValueError("V15 user recovery authorization hash differs from its fixed identity")
+    authorization = json.loads(authorization_path.read_text(encoding="utf-8"))
+    if not isinstance(authorization, dict):
+        raise ValueError("V15 user recovery authorization must be a JSON object")
+    previous_failure = authorization.get("previous_failure")
+    source = authorization.get("p2_source")
+    if (
+        authorization.get("schema") != "task43.v15.user-bugfix-recovery-authorization.v1"
+        or authorization.get("base_delivery_sha") != _V15_BASE_DELIVERY_SHA
+        or authorization.get("review_sha") != _V15_REVIEW_SHA
+        or authorization.get("old_contract_sha256") != _V12_OLD_CONTRACT_SHA256
+        or authorization.get("old_recovery_manifest_path")
+        != _V12_RECOVERY_MANIFEST_REL.as_posix()
+        or authorization.get("old_recovery_manifest_sha256")
+        != _V15_OLD_MANIFEST_SHA256
+        or authorization.get("p2_source_id") != _V15_P2_SOURCE_ID
+        or not isinstance(source, Mapping)
+        or set(source)
+        != {"support_root", "output_root", "plan_output_path", "audit_path", "bundle_path"}
+        or not isinstance(previous_failure, Mapping)
+        or previous_failure.get("status") != "FAILED_RESEARCH_AUDIT_KEY_MISMATCH"
+    ):
+        raise ValueError("V15 user recovery authorization changes its fixed scope or identities")
+    resolved_source: dict[str, Path] = {}
+    for name, relative in source.items():
+        if not isinstance(relative, str) or Path(relative).is_absolute():
+            raise ValueError(f"V15 authorized P2 {name} must be a repository-relative path")
+        resolved = (_REPOSITORY_ROOT / relative).resolve()
+        if _REPOSITORY_ROOT.resolve() not in resolved.parents:
+            raise ValueError(f"V15 authorized P2 {name} escaped the canonical repository")
+        resolved_source[str(name)] = resolved
+    failure_relative = previous_failure.get("path")
+    failure_sha256 = previous_failure.get("sha256")
+    if not isinstance(failure_relative, str) or Path(failure_relative).is_absolute():
+        raise ValueError("V15 prior failed closeout must use a repository-relative path")
+    failure_path = (_REPOSITORY_ROOT / failure_relative).resolve()
+    if (
+        _REPOSITORY_ROOT.resolve() not in failure_path.parents
+        or not failure_path.is_file()
+        or not isinstance(failure_sha256, str)
+        or _sha256_file(failure_path) != failure_sha256
+    ):
+        raise ValueError("V15 prior failed closeout path or hash differs from the authorization")
+    failure_record = json.loads(failure_path.read_text(encoding="utf-8"))
+    if failure_record.get("status") != previous_failure.get("status"):
+        raise ValueError("V15 prior closeout no longer has its authorized failure status")
+    old_manifest_path = (_REPOSITORY_ROOT / _V12_RECOVERY_MANIFEST_REL).resolve()
+    if (
+        not old_manifest_path.is_file()
+        or _sha256_file(old_manifest_path) != authorization["old_recovery_manifest_sha256"]
+    ):
+        raise ValueError("V15 user recovery authorization binds another old V12 manifest")
+    return {
+        "path": str(authorization_path),
+        "sha256": authorization_sha256,
+        "document": authorization,
+        "p2_source": {name: str(path) for name, path in resolved_source.items()},
+        "previous_failure_path": str(failure_path),
+        "previous_failure_sha256": str(failure_sha256),
+    }
+
+
 def _resolve_v12_p2_source(
     recovery: Mapping[str, Any],
     *,
     attempt_root: Path | None = None,
     candidate_plan_path: Path | None = None,
 ) -> dict[str, Any]:
-    """Resolve D1/P2R only from an explicit whitelisted root or candidate plan."""
+    """Resolve one fixed P2 source from an explicit root or candidate plan."""
 
     if (attempt_root is None) == (candidate_plan_path is None):
         raise ValueError("V12 P2 source resolution needs exactly one explicit selector")
@@ -2469,20 +2550,35 @@ def _resolve_v12_p2_source(
         for source_id, source in paths.items()
         if (_REPOSITORY_ROOT / source[role]).resolve() == selector
     ]
-    if len(matches) != 1:
+    if len(matches) == 1:
+        source_id = matches[0]
+        source = {
+            name: (_REPOSITORY_ROOT / value).resolve()
+            for name, value in paths[source_id].items()
+        }
+        if any(_REPOSITORY_ROOT.resolve() not in value.parents for value in source.values()):
+            raise ValueError("V12 P2 source path escaped the canonical repository")
+        return {
+            "p2_source_id": source_id,
+            **{name: str(path) for name, path in source.items()},
+        }
+    if matches:
         raise ValueError(
-            "V12 P2 source must be the exact D1/P2R root or manifest-bound candidate plan"
+            "V12 P2 source selector is ambiguous across the fixed historical sources"
         )
-    source_id = matches[0]
-    source = {
-        name: (_REPOSITORY_ROOT / value).resolve()
-        for name, value in paths[source_id].items()
-    }
-    if any(_REPOSITORY_ROOT not in value.parents for value in source.values()):
-        raise ValueError("V12 P2 source path escaped the canonical repository")
+    authorization = _load_v15_bugfix_authorization()
+    authorized_source = authorization["p2_source"]
+    if Path(authorized_source[role]).resolve() != selector:
+        raise ValueError(
+            "V12 P2 source must be the exact D1/P2R or explicitly authorized P2_BUGFIX path"
+        )
     return {
-        "p2_source_id": source_id,
-        **{name: str(path) for name, path in source.items()},
+        "p2_source_id": _V15_P2_SOURCE_ID,
+        **authorized_source,
+        "user_recovery_authorization_path": authorization["path"],
+        "user_recovery_authorization_sha256": authorization["sha256"],
+        "superseded_failure_closeout_path": authorization["previous_failure_path"],
+        "superseded_failure_closeout_sha256": authorization["previous_failure_sha256"],
     }
 
 
@@ -2495,14 +2591,30 @@ def _verify_v12_p2_source_binding(
     """Verify the explicitly selected, root-joined P2 bytes before their use."""
 
     source_id = recovery_binding.get("p2_source_id")
-    if source_id not in _V12_P2_SOURCE_PATHS:
-        raise ValueError("V12 P4/P5 requires an explicit D1 or P2R source")
-    expected_source = _resolve_v12_p2_source(
-        {
-            "manifest": {"p2_sources": _V12_P2_SOURCE_PATHS},
-        },
-        attempt_root=(_REPOSITORY_ROOT / _V12_P2_SOURCE_PATHS[source_id]["support_root"]),
-    )
+    if source_id == _V15_P2_SOURCE_ID:
+        authorization = _load_v15_bugfix_authorization()
+        expected_source = {
+            "p2_source_id": _V15_P2_SOURCE_ID,
+            **authorization["p2_source"],
+            "user_recovery_authorization_path": authorization["path"],
+            "user_recovery_authorization_sha256": authorization["sha256"],
+            "superseded_failure_closeout_path": authorization[
+                "previous_failure_path"
+            ],
+            "superseded_failure_closeout_sha256": authorization[
+                "previous_failure_sha256"
+            ],
+        }
+    elif source_id in _V12_P2_SOURCE_PATHS:
+        expected_source = _resolve_v12_p2_source(
+            {
+                "manifest": {"p2_sources": _V12_P2_SOURCE_PATHS},
+            },
+            attempt_root=(_REPOSITORY_ROOT / _V12_P2_SOURCE_PATHS[source_id]["support_root"]),
+        )
+        authorization = None
+    else:
+        raise ValueError("V12 P4/P5 requires an explicit D1, P2R, or authorized P2_BUGFIX source")
     for name in (
         "support_root",
         "output_root",
@@ -2520,6 +2632,17 @@ def _verify_v12_p2_source_binding(
         != _sha256_file((_REPOSITORY_ROOT / _V12_RECOVERY_MANIFEST_REL).resolve())
     ):
         raise ValueError("V12 P2 recovery binding differs from the contract or manifest")
+    if authorization is not None:
+        for binding_key, authorization_key in (
+            ("user_recovery_authorization_path", "path"),
+            ("user_recovery_authorization_sha256", "sha256"),
+            ("superseded_failure_closeout_path", "previous_failure_path"),
+            ("superseded_failure_closeout_sha256", "previous_failure_sha256"),
+        ):
+            if recovery_binding.get(binding_key) != authorization[authorization_key]:
+                raise ValueError(
+                    f"V15 P2 recovery binding changes its authorized {binding_key}"
+                )
 
     support_root = Path(expected_source["support_root"]).resolve()
     output_root = Path(expected_source["output_root"]).resolve()
@@ -2555,6 +2678,19 @@ def _verify_v12_p2_source_binding(
         or joined.get("remaining_child_pids") != []
     ):
         raise ValueError("V12 P2 joined terminal is not a root-verified successful attempt")
+    if authorization is not None and (
+        joined.get("user_recovery_authorization")
+        != {
+            "path": authorization["path"],
+            "sha256": authorization["sha256"],
+        }
+        or joined.get("superseded_failure_closeout")
+        != {
+            "path": authorization["previous_failure_path"],
+            "sha256": authorization["previous_failure_sha256"],
+        }
+    ):
+        raise ValueError("V15 P2 joined terminal changes its authorization or superseded failure")
     source_head = joined.get("source_head")
     if (
         not isinstance(source_head, str)
@@ -2654,6 +2790,20 @@ def _verify_v12_p2_source_binding(
         or source_head_file.read_text(encoding="ascii").strip() != p2_head
     ):
         raise ValueError("V12 P2 launch manifest differs from its root-joined identity")
+    if authorization is not None:
+        p2_inputs = {
+            str(Path(str(item.get("path", ""))).resolve()): str(item.get("sha256", ""))
+            for item in p2_manifest.get("inputs", [])
+            if isinstance(item, Mapping)
+        }
+        for path_key, hash_key in (
+            ("user_recovery_authorization_path", "user_recovery_authorization_sha256"),
+            ("superseded_failure_closeout_path", "superseded_failure_closeout_sha256"),
+        ):
+            input_path = recovery_binding[path_key]
+            expected_hash = recovery_binding[hash_key]
+            if p2_inputs.get(input_path) != expected_hash:
+                raise ValueError(f"V15 P2 launch snapshot omits or changes {path_key}")
     p2_source_entries = p2_manifest.get("source", [])
     p2_source_names: set[str] = set()
     if not isinstance(p2_source_entries, list) or not p2_source_entries:
@@ -2722,6 +2872,15 @@ def _verify_v12_p2_source_binding(
         str(attempt_paths["p2_watchdog_exit"]): _sha256_file(attempt_paths["p2_watchdog_exit"]),
         str(joined_path): joined_sha256_before,
     }
+    if authorization is not None:
+        required_inputs.update(
+            {
+                authorization["path"]: authorization["sha256"],
+                authorization["previous_failure_path"]: authorization[
+                    "previous_failure_sha256"
+                ],
+            }
+        )
     if (
         _sha256_file(joined_path) != joined_sha256_before
         or _sha256_file(attempt_paths["p2_watchdog_summary"])
@@ -2729,6 +2888,14 @@ def _verify_v12_p2_source_binding(
         or _sha256_file(attempt_paths["p2_launch_manifest"])
         != p2_manifest_sha256_before
         or _sha256_file(p4_manifest_path) != p4_manifest_sha256_before
+        or (
+            authorization is not None
+            and (
+                _sha256_file(Path(authorization["path"])) != authorization["sha256"]
+                or _sha256_file(Path(authorization["previous_failure_path"]))
+                != authorization["previous_failure_sha256"]
+            )
+        )
     ):
         raise RuntimeError("V12 P2/P4 terminal input changed during first-read validation")
     for input_path, expected_hash in required_inputs.items():
@@ -7538,6 +7705,15 @@ def main(argv: list[str] | None = None) -> int:
                 "audit_path": p2_source["audit_path"] if p2_source is not None else None,
                 "bundle_path": p2_source["bundle_path"] if p2_source is not None else None,
             }
+            if p2_source is not None:
+                for key in (
+                    "user_recovery_authorization_path",
+                    "user_recovery_authorization_sha256",
+                    "superseded_failure_closeout_path",
+                    "superseded_failure_closeout_sha256",
+                ):
+                    if key in p2_source:
+                        v12_recovery_binding[key] = p2_source[key]
             _validate_v11_primary_cli(
                 contract=v11_contract,
                 phase=args.primary_diagnostic_phase,
