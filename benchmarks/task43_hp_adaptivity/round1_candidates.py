@@ -1134,7 +1134,7 @@ def _audit_plan(
             if key.startswith("periodic_") and isinstance(value, (int, np.integer))
         },
         "hanging_or_floquet_slave_rows_globally_numbered": bool(
-            constraint_audit.get("hanging_or_periodic_slave_rows_globally_numbered", True)
+            constraint_audit.get("hanging_or_floquet_slave_rows_globally_numbered", True)
         ),
         "p6_carrier": {
             "container_degree": int(plan["cell_interior_degree"]),

@@ -1,0 +1,59 @@
+{
+  "scope": "offline review of saved values and frozen code; not project gate execution, not a successful P2 bundle",
+  "observed_gate_predicates": {
+    "one_requested_seed": true,
+    "requested_matches_seed_root": true,
+    "requested_box": true,
+    "seed_box": true,
+    "global_seed8": true,
+    "requested_global_ids8": true,
+    "namespace": true,
+    "requested_forced_disjoint": true,
+    "actual_roots_union": true,
+    "all_leaf_inheritance": true,
+    "seed_p5": true,
+    "seed_children_p5": true,
+    "seed_inheritance": true,
+    "returned_trace_plus612": true,
+    "no_slave_global_numbering_as_recorded": false
+  },
+  "dofs": {
+    "active_cell_interior_rows": 79950,
+    "active_fe_dof_gate_limit": null,
+    "active_fe_dof_gate_pass": true,
+    "active_fe_dof_gate_policy": "task43_hp_adaptivity_192gib_v1",
+    "added_independent_fe_dofs": 6268,
+    "independent_active_fe_dofs": 116740,
+    "independent_trace_rows": 36790,
+    "parent_independent_fe_dofs": 110472,
+    "raw_broken_active_fe_dofs_before_hanging_floquet_constraints": 124012
+  },
+  "forest": {
+    "actual_leaf_cell_count": 194,
+    "actual_one_level_root_splits": 2,
+    "axis_partition_interval_product_is_not_leaf_count": true,
+    "closure_split_counts": {
+      "balance": 0,
+      "material": 1,
+      "periodic": 0,
+      "user": 1
+    },
+    "forced_closure_h_splits": 1,
+    "hanging_patch_count": 9,
+    "leaf_catalog_sha256": "ff19f589ab2ae8a8feb85b8127567272453034a2c8114509d5068bd6d2e888cb",
+    "requested_h_root_splits": 1,
+    "root_cell_count": 180
+  },
+  "strict_FE_interval_numeric_only": true,
+  "raw_minus_slaves": {
+    "raw": 124012,
+    "hanging": 1820,
+    "periodic": 5452,
+    "independent": 116740
+  },
+  "recorded_bad_flag": true,
+  "consumer_wrong_key": "hanging_or_periodic_slave_rows_globally_numbered",
+  "producer_key": "hanging_or_floquet_slave_rows_globally_numbered",
+  "producer_false_evidence": "frozen source src/adaptivity/hcurl_broken_cell_trace.py:2310; raw producer audit map was not separately persisted",
+  "qualification": "FAILED; no corrected historical audit, successful bundle or continuation created"
+}

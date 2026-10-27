@@ -1,0 +1,1680 @@
+{
+  "scope": "read-only existing events; nested times do not sum to whole",
+  "event_count": 803,
+  "space_cold_reference_calls": [
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 19,
+      "wall_seconds": 29.483069800771773,
+      "worker_cpu_delta_seconds": 19.417802730999995,
+      "cache_before": {
+        "currsize": 0,
+        "hits": 0,
+        "maxsize": 128,
+        "misses": 0
+      },
+      "cache_after": {
+        "currsize": 1,
+        "hits": 0,
+        "maxsize": 128,
+        "misses": 1
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 5,
+            "edges": [
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              5,
+              5,
+              5,
+              5,
+              5,
+              5
+            ],
+            "signature": "e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[5]",
+            "uniform_degree": 5
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 32,
+      "wall_seconds": 91.91164121776819,
+      "worker_cpu_delta_seconds": 61.47450963299997,
+      "cache_before": {
+        "currsize": 1,
+        "hits": 2,
+        "maxsize": 128,
+        "misses": 1
+      },
+      "cache_after": {
+        "currsize": 2,
+        "hits": 2,
+        "maxsize": 128,
+        "misses": 2
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              5,
+              6,
+              5,
+              6,
+              5,
+              6,
+              5,
+              6,
+              6,
+              6,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              5,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "signature": "e[5,5,6,5,6,5,6,5,6,6,6,6]-f[5,6,6,6,6,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 46,
+      "wall_seconds": 81.65905607445166,
+      "worker_cpu_delta_seconds": 54.08076442500004,
+      "cache_before": {
+        "currsize": 2,
+        "hits": 2,
+        "maxsize": 128,
+        "misses": 2
+      },
+      "cache_after": {
+        "currsize": 3,
+        "hits": 2,
+        "maxsize": 128,
+        "misses": 3
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              5,
+              6,
+              5,
+              5,
+              5,
+              6,
+              5,
+              6,
+              6,
+              5,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              5,
+              6,
+              6,
+              5,
+              6,
+              6
+            ],
+            "signature": "e[5,5,6,5,5,5,6,5,6,6,5,6]-f[5,6,6,5,6,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 54,
+      "wall_seconds": 21.185685571748763,
+      "worker_cpu_delta_seconds": 14.922633131999987,
+      "cache_before": {
+        "currsize": 3,
+        "hits": 2,
+        "maxsize": 128,
+        "misses": 3
+      },
+      "cache_after": {
+        "currsize": 4,
+        "hits": 2,
+        "maxsize": 128,
+        "misses": 4
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              6,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              6,
+              5,
+              5
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              6,
+              5,
+              6,
+              5,
+              5,
+              6
+            ],
+            "signature": "e[5,6,5,5,5,5,5,5,5,6,5,5]-f[6,5,6,5,5,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 63,
+      "wall_seconds": 28.085377561859787,
+      "worker_cpu_delta_seconds": 20.11090143399997,
+      "cache_before": {
+        "currsize": 4,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 4
+      },
+      "cache_after": {
+        "currsize": 5,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 5
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              5,
+              6,
+              5,
+              6,
+              5,
+              5,
+              5,
+              6,
+              6,
+              6,
+              5
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              5,
+              6,
+              6,
+              6,
+              5,
+              6
+            ],
+            "signature": "e[5,5,6,5,6,5,5,5,6,6,6,5]-f[5,6,6,6,5,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 71,
+      "wall_seconds": 1.2197213717736304,
+      "worker_cpu_delta_seconds": 0.7424874100000238,
+      "cache_before": {
+        "currsize": 5,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 5
+      },
+      "cache_after": {
+        "currsize": 6,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 6
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "signature": "e[6,6,6,6,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]",
+            "uniform_degree": 6
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 79,
+      "wall_seconds": 27.807434413582087,
+      "worker_cpu_delta_seconds": 19.920384218000038,
+      "cache_before": {
+        "currsize": 6,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 6
+      },
+      "cache_after": {
+        "currsize": 7,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 7
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              6,
+              6,
+              6,
+              5,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "signature": "e[6,6,6,5,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 87,
+      "wall_seconds": 23.05489778984338,
+      "worker_cpu_delta_seconds": 16.60391349600002,
+      "cache_before": {
+        "currsize": 7,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 7
+      },
+      "cache_after": {
+        "currsize": 8,
+        "hits": 3,
+        "maxsize": 128,
+        "misses": 8
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              6,
+              6,
+              5,
+              5,
+              5,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "signature": "e[5,6,6,5,5,5,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 98,
+      "wall_seconds": 29.198945292271674,
+      "worker_cpu_delta_seconds": 20.539220607000004,
+      "cache_before": {
+        "currsize": 8,
+        "hits": 6,
+        "maxsize": 128,
+        "misses": 8
+      },
+      "cache_after": {
+        "currsize": 9,
+        "hits": 6,
+        "maxsize": 128,
+        "misses": 9
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              5,
+              6,
+              5,
+              6,
+              5,
+              5,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              5,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "signature": "e[5,5,6,5,6,5,5,6,6,6,6,6]-f[5,6,6,6,6,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 106,
+      "wall_seconds": 28.693324201740324,
+      "worker_cpu_delta_seconds": 20.487072730000023,
+      "cache_before": {
+        "currsize": 9,
+        "hits": 6,
+        "maxsize": 128,
+        "misses": 9
+      },
+      "cache_after": {
+        "currsize": 10,
+        "hits": 6,
+        "maxsize": 128,
+        "misses": 10
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              5,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "signature": "e[6,6,6,6,6,5,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 117,
+      "wall_seconds": 22.396354847121984,
+      "worker_cpu_delta_seconds": 15.935415595999984,
+      "cache_before": {
+        "currsize": 10,
+        "hits": 9,
+        "maxsize": 128,
+        "misses": 10
+      },
+      "cache_after": {
+        "currsize": 11,
+        "hits": 9,
+        "maxsize": 128,
+        "misses": 11
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              5,
+              6,
+              5,
+              6,
+              5,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              5,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "signature": "e[5,5,6,5,6,5,6,6,6,6,6,6]-f[5,6,6,6,6,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 126,
+      "wall_seconds": 24.73344753915444,
+      "worker_cpu_delta_seconds": 17.609854962999975,
+      "cache_before": {
+        "currsize": 11,
+        "hits": 10,
+        "maxsize": 128,
+        "misses": 11
+      },
+      "cache_after": {
+        "currsize": 12,
+        "hits": 10,
+        "maxsize": 128,
+        "misses": 12
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              6,
+              6,
+              5,
+              6,
+              6,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              5,
+              5,
+              6,
+              6,
+              6,
+              6
+            ],
+            "signature": "e[5,5,5,5,5,5,6,6,5,6,6,6]-f[5,5,6,6,6,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 136,
+      "wall_seconds": 14.612744943704456,
+      "worker_cpu_delta_seconds": 10.70038866699997,
+      "cache_before": {
+        "currsize": 12,
+        "hits": 12,
+        "maxsize": 128,
+        "misses": 12
+      },
+      "cache_after": {
+        "currsize": 13,
+        "hits": 12,
+        "maxsize": 128,
+        "misses": 13
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              5,
+              5,
+              6,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              6,
+              5
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              6,
+              5,
+              5,
+              6,
+              5,
+              6
+            ],
+            "signature": "e[5,5,5,6,5,5,5,5,5,5,6,5]-f[6,5,5,6,5,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 144,
+      "wall_seconds": 24.673028978984803,
+      "worker_cpu_delta_seconds": 17.774056507999944,
+      "cache_before": {
+        "currsize": 13,
+        "hits": 12,
+        "maxsize": 128,
+        "misses": 13
+      },
+      "cache_after": {
+        "currsize": 14,
+        "hits": 12,
+        "maxsize": 128,
+        "misses": 14
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              5,
+              5,
+              5,
+              6,
+              5,
+              5,
+              6,
+              6,
+              5,
+              6,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              5,
+              6,
+              5,
+              6,
+              6,
+              6
+            ],
+            "signature": "e[5,5,5,5,6,5,5,6,6,5,6,6]-f[5,6,5,6,6,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 159,
+      "wall_seconds": 27.03790938295424,
+      "worker_cpu_delta_seconds": 19.500325693000036,
+      "cache_before": {
+        "currsize": 14,
+        "hits": 19,
+        "maxsize": 128,
+        "misses": 14
+      },
+      "cache_after": {
+        "currsize": 15,
+        "hits": 19,
+        "maxsize": 128,
+        "misses": 15
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "signature": "e[5,6,6,6,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 167,
+      "wall_seconds": 26.688658535014838,
+      "worker_cpu_delta_seconds": 19.36931842699994,
+      "cache_before": {
+        "currsize": 15,
+        "hits": 19,
+        "maxsize": 128,
+        "misses": 15
+      },
+      "cache_after": {
+        "currsize": 16,
+        "hits": 19,
+        "maxsize": 128,
+        "misses": 16
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              6,
+              5,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "signature": "e[6,5,6,6,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 177,
+      "wall_seconds": 20.069450221024454,
+      "worker_cpu_delta_seconds": 14.490780642999994,
+      "cache_before": {
+        "currsize": 16,
+        "hits": 21,
+        "maxsize": 128,
+        "misses": 16
+      },
+      "cache_after": {
+        "currsize": 17,
+        "hits": 21,
+        "maxsize": 128,
+        "misses": 17
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              5,
+              5,
+              6,
+              6,
+              5,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "signature": "e[5,5,5,6,6,5,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 332,
+      "wall_seconds": 21.658254797104746,
+      "worker_cpu_delta_seconds": 15.52880858399999,
+      "cache_before": {
+        "currsize": 17,
+        "hits": 168,
+        "maxsize": 128,
+        "misses": 17
+      },
+      "cache_after": {
+        "currsize": 18,
+        "hits": 168,
+        "maxsize": 128,
+        "misses": 18
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              6,
+              5,
+              5,
+              6,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              5,
+              5,
+              5,
+              6,
+              6,
+              6
+            ],
+            "signature": "e[5,5,5,5,5,5,5,6,5,5,6,6]-f[5,5,5,6,6,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 341,
+      "wall_seconds": 26.449044754263014,
+      "worker_cpu_delta_seconds": 18.768357845000082,
+      "cache_before": {
+        "currsize": 18,
+        "hits": 169,
+        "maxsize": 128,
+        "misses": 18
+      },
+      "cache_after": {
+        "currsize": 19,
+        "hits": 169,
+        "maxsize": 128,
+        "misses": 19
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              5,
+              5,
+              5,
+              6,
+              5,
+              5,
+              5,
+              6,
+              5,
+              6,
+              5
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              5,
+              6,
+              5,
+              6,
+              5,
+              6
+            ],
+            "signature": "e[5,5,5,5,6,5,5,5,6,5,6,5]-f[5,6,5,6,5,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 349,
+      "wall_seconds": 63.97016217978671,
+      "worker_cpu_delta_seconds": 42.528500873999974,
+      "cache_before": {
+        "currsize": 19,
+        "hits": 169,
+        "maxsize": 128,
+        "misses": 19
+      },
+      "cache_after": {
+        "currsize": 20,
+        "hits": 169,
+        "maxsize": 128,
+        "misses": 20
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              6,
+              5,
+              5,
+              6,
+              5,
+              6
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              5,
+              5,
+              6,
+              5,
+              6,
+              6
+            ],
+            "signature": "e[5,5,5,5,5,5,6,5,5,6,5,6]-f[5,5,6,5,6,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 357,
+      "wall_seconds": 97.8672032430768,
+      "worker_cpu_delta_seconds": 64.593238176,
+      "cache_before": {
+        "currsize": 20,
+        "hits": 169,
+        "maxsize": 128,
+        "misses": 20
+      },
+      "cache_after": {
+        "currsize": 21,
+        "hits": 169,
+        "maxsize": 128,
+        "misses": 21
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              5,
+              5,
+              6,
+              5,
+              6,
+              5,
+              6,
+              5,
+              5,
+              5,
+              5
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              6,
+              5,
+              5,
+              6,
+              6,
+              5
+            ],
+            "signature": "e[5,5,5,6,5,6,5,6,5,5,5,5]-f[6,5,5,6,6,5]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 365,
+      "wall_seconds": 105.28568684402853,
+      "worker_cpu_delta_seconds": 68.75155704400004,
+      "cache_before": {
+        "currsize": 21,
+        "hits": 169,
+        "maxsize": 128,
+        "misses": 21
+      },
+      "cache_after": {
+        "currsize": 22,
+        "hits": 169,
+        "maxsize": 128,
+        "misses": 22
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              5,
+              6,
+              5,
+              5,
+              5,
+              5,
+              5,
+              6,
+              6,
+              5,
+              5
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              5,
+              6,
+              6,
+              5,
+              5,
+              6
+            ],
+            "signature": "e[5,5,6,5,5,5,5,5,6,6,5,5]-f[5,6,6,5,5,6]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 373,
+      "wall_seconds": 98.41723068896681,
+      "worker_cpu_delta_seconds": 64.66479659900006,
+      "cache_before": {
+        "currsize": 22,
+        "hits": 169,
+        "maxsize": 128,
+        "misses": 22
+      },
+      "cache_after": {
+        "currsize": 23,
+        "hits": 169,
+        "maxsize": 128,
+        "misses": 23
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              6,
+              5,
+              5,
+              6,
+              6,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              6,
+              6,
+              5,
+              6,
+              5,
+              5
+            ],
+            "signature": "e[6,5,5,6,6,5,5,5,5,5,5,5]-f[6,6,5,6,5,5]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 381,
+      "wall_seconds": 109.60009779594839,
+      "worker_cpu_delta_seconds": 70.86608531899992,
+      "cache_before": {
+        "currsize": 23,
+        "hits": 169,
+        "maxsize": 128,
+        "misses": 23
+      },
+      "cache_after": {
+        "currsize": 24,
+        "hits": 169,
+        "maxsize": 128,
+        "misses": 24
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              5,
+              6,
+              5,
+              5,
+              5,
+              6,
+              6,
+              5,
+              5,
+              5,
+              5,
+              5
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              6,
+              5,
+              6,
+              5,
+              6,
+              5
+            ],
+            "signature": "e[5,6,5,5,5,6,6,5,5,5,5,5]-f[6,5,6,5,6,5]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.exact_sequence_variable_p.build_variable_p_reference_space",
+      "call_id": 389,
+      "wall_seconds": 119.15166464587674,
+      "worker_cpu_delta_seconds": 77.02843085699999,
+      "cache_before": {
+        "currsize": 24,
+        "hits": 169,
+        "maxsize": 128,
+        "misses": 24
+      },
+      "cache_after": {
+        "currsize": 25,
+        "hits": 169,
+        "maxsize": 128,
+        "misses": 25
+      },
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "cell": 6,
+            "edges": [
+              6,
+              6,
+              6,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5,
+              5
+            ],
+            "exact_sequence_monotone": true,
+            "faces": [
+              6,
+              6,
+              6,
+              5,
+              5,
+              5
+            ],
+            "signature": "e[6,6,6,5,5,5,5,5,5,5,5,5]-f[6,6,6,5,5,5]-c[6]",
+            "uniform_degree": null
+          }
+        ],
+        "kwargs": {}
+      }
+    }
+  ],
+  "major_completed_calls": [
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.hcurl_broken_cell_trace.build_broken_hexa_cell_trace_constraint_map",
+      "call_id": 18,
+      "wall_seconds": 1420.1027609831654,
+      "worker_cpu_delta_seconds": 954.742395186,
+      "cache_before": null,
+      "cache_after": null,
+      "completed_work": {
+        "degree_map_count": 194,
+        "degree_map_multiplicity": {
+          "{\"cell\": 5, \"edges\": [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5], \"exact_sequence_monotone\": true, \"faces\": [5, 5, 5, 5, 5, 5], \"signature\": \"e[5,5,5,5,5,5,5,5,5,5,5,5]-f[5,5,5,5,5,5]-c[5]\", \"uniform_degree\": 5}": 35,
+          "{\"cell\": 6, \"edges\": [5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 5, 5, 6, 6, 6], \"signature\": \"e[5,5,5,5,5,5,5,6,5,5,6,6]-f[5,5,5,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 5, 5, 5, 5, 5, 6, 5, 5, 6, 5, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 5, 6, 5, 6, 6], \"signature\": \"e[5,5,5,5,5,5,6,5,5,6,5,6]-f[5,5,6,5,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 5, 5, 5, 5, 5, 6, 6, 5, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 5, 6, 6, 6, 6], \"signature\": \"e[5,5,5,5,5,5,6,6,5,6,6,6]-f[5,5,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 5, 5, 5, 6, 5, 5, 5, 6, 5, 6, 5], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 5, 6, 5, 6], \"signature\": \"e[5,5,5,5,6,5,5,5,6,5,6,5]-f[5,6,5,6,5,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 5, 5, 5, 6, 5, 5, 6, 6, 5, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 5, 6, 6, 6], \"signature\": \"e[5,5,5,5,6,5,5,6,6,5,6,6]-f[5,6,5,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 6, 5], \"exact_sequence_monotone\": true, \"faces\": [6, 5, 5, 6, 5, 6], \"signature\": \"e[5,5,5,6,5,5,5,5,5,5,6,5]-f[6,5,5,6,5,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 5, 5, 6, 5, 6, 5, 6, 5, 5, 5, 5], \"exact_sequence_monotone\": true, \"faces\": [6, 5, 5, 6, 6, 5], \"signature\": \"e[5,5,5,6,5,6,5,6,5,5,5,5]-f[6,5,5,6,6,5]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 5, 5, 6, 6, 5, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 6, 6, 6], \"signature\": \"e[5,5,5,6,6,5,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 5, 6, 5, 5, 5, 5, 5, 6, 6, 5, 5], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 6, 5, 5, 6], \"signature\": \"e[5,5,6,5,5,5,5,5,6,6,5,5]-f[5,6,6,5,5,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 5, 6, 5, 5, 5, 6, 5, 6, 6, 5, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 6, 5, 6, 6], \"signature\": \"e[5,5,6,5,5,5,6,5,6,6,5,6]-f[5,6,6,5,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 5, 6, 5, 6, 5, 5, 5, 6, 6, 6, 5], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 6, 6, 5, 6], \"signature\": \"e[5,5,6,5,6,5,5,5,6,6,6,5]-f[5,6,6,6,5,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 5, 6, 5, 6, 5, 5, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 6, 6, 6, 6], \"signature\": \"e[5,5,6,5,6,5,5,6,6,6,6,6]-f[5,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 5, 6, 5, 6, 5, 6, 5, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 6, 6, 6, 6], \"signature\": \"e[5,5,6,5,6,5,6,5,6,6,6,6]-f[5,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 5, 6, 5, 6, 5, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [5, 6, 6, 6, 6, 6], \"signature\": \"e[5,5,6,5,6,5,6,6,6,6,6,6]-f[5,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 22,
+          "{\"cell\": 6, \"edges\": [5, 6, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5], \"exact_sequence_monotone\": true, \"faces\": [6, 5, 6, 5, 5, 6], \"signature\": \"e[5,6,5,5,5,5,5,5,5,6,5,5]-f[6,5,6,5,5,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 6, 5, 5, 5, 6, 6, 5, 5, 5, 5, 5], \"exact_sequence_monotone\": true, \"faces\": [6, 5, 6, 5, 6, 5], \"signature\": \"e[5,6,5,5,5,6,6,5,5,5,5,5]-f[6,5,6,5,6,5]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 6, 6, 5, 5, 5, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 6, 6, 6], \"signature\": \"e[5,6,6,5,5,5,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 6, 6, 6], \"signature\": \"e[5,6,6,6,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [6, 5, 5, 6, 6, 5, 5, 5, 5, 5, 5, 5], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 5, 6, 5, 5], \"signature\": \"e[6,5,5,6,6,5,5,5,5,5,5,5]-f[6,6,5,6,5,5]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 6, 6, 6], \"signature\": \"e[6,5,6,6,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 5, 5, 5], \"signature\": \"e[6,6,6,5,5,5,5,5,5,5,5,5]-f[6,6,6,5,5,5]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [6, 6, 6, 5, 6, 6, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 6, 6, 6], \"signature\": \"e[6,6,6,5,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [6, 6, 6, 6, 6, 5, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 6, 6, 6], \"signature\": \"e[6,6,6,6,6,5,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]\", \"uniform_degree\": null}": 1,
+          "{\"cell\": 6, \"edges\": [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6], \"exact_sequence_monotone\": true, \"faces\": [6, 6, 6, 6, 6, 6], \"signature\": \"e[6,6,6,6,6,6,6,6,6,6,6,6]-f[6,6,6,6,6,6]-c[6]\", \"uniform_degree\": 6}": 115
+        },
+        "degree_map_source": "result.entity_map.owned_cells",
+        "result_kind": "cell_trace_constraint_map",
+        "result_owned_cell_count": 194,
+        "result_owned_cell_type": "src.adaptivity.hcurl_broken_cell_trace.BrokenHexCellTraceMap"
+      },
+      "arguments": {
+        "args": [
+          {
+            "leaf_count": 194,
+            "root_count": 180,
+            "type": "src.adaptivity.dyadic_hexa_refinement.BalancedDyadicHexForest"
+          },
+          {
+            "type": "src.adaptivity.dyadic_hexa_broken_mesh.BrokenDyadicHexCarrier"
+          },
+          {
+            "type": "src.adaptivity.variable_p_entity_map.VariablePGlobalEntityMap"
+          },
+          {
+            "degree": 6,
+            "type": "src.adaptivity.hcurl_broken_trace_graph.BrokenHexTraceConstraintAuthority"
+          }
+        ],
+        "kwargs": {}
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "src.adaptivity.stage4_local_h.build_stage4_local_h_reduction_authority",
+      "call_id": 4,
+      "wall_seconds": 1503.7361288298853,
+      "worker_cpu_delta_seconds": 1007.931208374,
+      "cache_before": null,
+      "cache_after": null,
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "type": "src.adaptivity.stage4_local_h.Stage4LocalHContext"
+          }
+        ],
+        "kwargs": {
+          "active_fe_dof_gate_policy": "task43_hp_adaptivity_192gib_v1",
+          "phase_x": {
+            "complex": [
+              1.0,
+              1.4247242291537984e-15
+            ]
+          },
+          "phase_y": {
+            "complex": [
+              -0.29019682129303004,
+              -0.9569669821427598
+            ]
+          }
+        }
+      }
+    },
+    {
+      "stage": "space_authority",
+      "function": "space_authority",
+      "call_id": 1,
+      "wall_seconds": 1504.7938988739625,
+      "worker_cpu_delta_seconds": 1008.57743691,
+      "cache_before": null,
+      "cache_after": null,
+      "completed_work": {},
+      "arguments": {
+        "args": [
+          {
+            "floquet_phase_x": {
+              "complex": [
+                1.0,
+                1.4247242291537984e-15
+              ]
+            },
+            "floquet_phase_y": {
+              "complex": [
+                -0.29019682129303004,
+                -0.9569669821427598
+              ]
+            },
+            "stage4_local_h_refinement_plan": null,
+            "type": "src.common.config_3d.SimulationConfig3D"
+          }
+        ],
+        "kwargs": {
+          "candidate_id": "v11_r9_h8",
+          "comm": {
+            "type": "mpi4py.MPI.Intracomm"
+          },
+          "parent_independent_fe_dofs": 110472,
+          "parent_root_degree_by_box": {
+            "(0.0, 0.0, -10.0, 16.5, 5.0, 0.0)": 5,
+            "(0.0, 0.0, 0.0, 16.5, 5.0, 30.0)": 6,
+            "(0.0, 0.0, 120.0, 16.5, 5.0, 130.0)": 6,
+            "(0.0, 0.0, 30.0, 16.5, 5.0, 60.0)": 6,
+            "(0.0, 0.0, 60.0, 16.5, 5.0, 90.0)": 6,
+            "(0.0, 0.0, 90.0, 16.5, 5.0, 120.0)": 6,
+            "(0.0, 10.0, -10.0, 16.5, 15.0, 0.0)": 6,
+            "(0.0, 10.0, 0.0, 16.5, 15.0, 30.0)": 6,
+            "(0.0, 10.0, 120.0, 16.5, 15.0, 130.0)": 6,
+            "(0.0, 10.0, 30.0, 16.5, 15.0, 60.0)": 6,
+            "(0.0, 10.0, 60.0, 16.5, 15.0, 90.0)": 6,
+            "(0.0, 10.0, 90.0, 16.5, 15.0, 120.0)": 6,
+            "(0.0, 15.0, -10.0, 16.5, 20.0, 0.0)": 5,
+            "(0.0, 15.0, 0.0, 16.5, 20.0, 30.0)": 6,
+            "(0.0, 15.0, 120.0, 16.5, 20.0, 130.0)": 6,
+            "(0.0, 15.0, 30.0, 16.5, 20.0, 60.0)": 6,
+            "(0.0, 15.0, 60.0, 16.5, 20.0, 90.0)": 6,
+            "(0.0, 15.0, 90.0, 16.5, 20.0, 120.0)": 6,
+            "(0.0, 20.0, -10.0, 16.5, 25.0, 0.0)": 5,
+            "(0.0, 20.0, 0.0, 16.5, 25.0, 30.0)": 6,
+            "(0.0, 20.0, 120.0, 16.5, 25.0, 130.0)": 6,
+            "(0.0, 20.0, 30.0, 16.5, 25.0, 60.0)": 6,
+            "(0.0, 20.0, 60.0, 16.5, 25.0, 90.0)": 6,
+            "(0.0, 20.0, 90.0, 16.5, 25.0, 120.0)": 6,
+            "(0.0, 25.0, -10.0, 16.5, 30.0, 0.0)": 5,
+            "(0.0, 25.0, 0.0, 16.5, 30.0, 30.0)": 6,
+            "(0.0, 25.0, 120.0, 16.5, 30.0, 130.0)": 6,
+            "(0.0, 25.0, 30.0, 16.5, 30.0, 60.0)": 6,
+            "(0.0, 25.0, 60.0, 16.5, 30.0, 90.0)": 6,
+            "(0.0, 25.0, 90.0, 16.5, 30.0, 120.0)": 6,
+            "(0.0, 30.0, -10.0, 16.5, 35.0, 0.0)": 5,
+            "(0.0, 30.0, 0.0, 16.5, 35.0, 30.0)": 6,
+            "(0.0, 30.0, 120.0, 16.5, 35.0, 130.0)": 6,
+            "(0.0, 30.0, 30.0, 16.5, 35.0, 60.0)": 6,
+            "(0.0, 30.0, 60.0, 16.5, 35.0, 90.0)": 6,
+            "(0.0, 30.0, 90.0, 16.5, 35.0, 120.0)": 6,
+            "(0.0, 35.0, -10.0, 16.5, 40.0, 0.0)": 5,
+            "(0.0, 35.0, 0.0, 16.5, 40.0, 30.0)": 6,
+            "(0.0, 35.0, 120.0, 16.5, 40.0, 130.0)": 6,
+            "(0.0, 35.0, 30.0, 16.5, 40.0, 60.0)": 6,
+            "(0.0, 35.0, 60.0, 16.5, 40.0, 90.0)": 6,
+            "(0.0, 35.0, 90.0, 16.5, 40.0, 120.0)": 6,
+            "(0.0, 40.0, -10.0, 16.5, 45.0, 0.0)": 5,
+            "(0.0, 40.0, 0.0, 16.5, 45.0, 30.0)": 6,
+            "(0.0, 40.0, 120.0, 16.5, 45.0, 130.0)": 6,
+            "(0.0, 40.0, 30.0, 16.5, 45.0, 60.0)": 6,
+            "(0.0, 40.0, 60.0, 16.5, 45.0, 90.0)": 6,
+            "(0.0, 40.0, 90.0, 16.5, 45.0, 120.0)": 6,
+            "(0.0, 45.0, -10.0, 16.5, 50.0, 0.0)": 5,
+            "(0.0, 45.0, 0.0, 16.5, 50.0, 30.0)": 6,
+            "(0.0, 45.0, 120.0, 16.5, 50.0, 130.0)": 6,
+            "(0.0, 45.0, 30.0, 16.5, 50.0, 60.0)": 6,
+            "(0.0, 45.0, 60.0, 16.5, 50.0, 90.0)": 6,
+            "(0.0, 45.0, 90.0, 16.5, 50.0, 120.0)": 6,
+            "(0.0, 5.0, -10.0, 16.5, 10.0, 0.0)": 5,
+            "(0.0, 5.0, 0.0, 16.5, 10.0, 30.0)": 6,
+            "(0.0, 5.0, 120.0, 16.5, 10.0, 130.0)": 6,
+            "(0.0, 5.0, 30.0, 16.5, 10.0, 60.0)": 6,
+            "(0.0, 5.0, 60.0, 16.5, 10.0, 90.0)": 6,
+            "(0.0, 5.0, 90.0, 16.5, 10.0, 120.0)": 6,
+            "(16.5, 0.0, -10.0, 33.5, 5.0, 0.0)": 5,
+            "(16.5, 0.0, 0.0, 33.5, 5.0, 30.0)": 6,
+            "(16.5, 0.0, 120.0, 33.5, 5.0, 130.0)": 6,
+            "(16.5, 0.0, 30.0, 33.5, 5.0, 60.0)": 6,
+            "(16.5, 0.0, 60.0, 33.5, 5.0, 90.0)": 6,
+            "(16.5, 0.0, 90.0, 33.5, 5.0, 120.0)": 6,
+            "(16.5, 10.0, -10.0, 33.5, 15.0, 0.0)": 5,
+            "(16.5, 10.0, 0.0, 33.5, 15.0, 30.0)": 6,
+            "(16.5, 10.0, 120.0, 33.5, 15.0, 130.0)": 6,
+            "(16.5, 10.0, 30.0, 33.5, 15.0, 60.0)": 6,
+            "(16.5, 10.0, 60.0, 33.5, 15.0, 90.0)": 6,
+            "(16.5, 10.0, 90.0, 33.5, 15.0, 120.0)": 6,
+            "(16.5, 15.0, -10.0, 33.5, 20.0, 0.0)": 5,
+            "(16.5, 15.0, 0.0, 33.5, 20.0, 30.0)": 6,
+            "(16.5, 15.0, 120.0, 33.5, 20.0, 130.0)": 6,
+            "(16.5, 15.0, 30.0, 33.5, 20.0, 60.0)": 6,
+            "(16.5, 15.0, 60.0, 33.5, 20.0, 90.0)": 6,
+            "(16.5, 15.0, 90.0, 33.5, 20.0, 120.0)": 6,
+            "(16.5, 20.0, -10.0, 33.5, 25.0, 0.0)": 5,
+            "(16.5, 20.0, 0.0, 33.5, 25.0, 30.0)": 6,
+            "(16.5, 20.0, 120.0, 33.5, 25.0, 130.0)": 6,
+            "(16.5, 20.0, 30.0, 33.5, 25.0, 60.0)": 6,
+            "(16.5, 20.0, 60.0, 33.5, 25.0, 90.0)": 6,
+            "(16.5, 20.0, 90.0, 33.5, 25.0, 120.0)": 6,
+            "(16.5, 25.0, -10.0, 33.5, 30.0, 0.0)": 5,
+            "(16.5, 25.0, 0.0, 33.5, 30.0, 30.0)": 6,
+            "(16.5, 25.0, 120.0, 33.5, 30.0, 130.0)": 6,
+            "(16.5, 25.0, 30.0, 33.5, 30.0, 60.0)": 6,
+            "(16.5, 25.0, 60.0, 33.5, 30.0, 90.0)": 6,
+            "(16.5, 25.0, 90.0, 33.5, 30.0, 120.0)": 6,
+            "(16.5, 30.0, -10.0, 33.5, 35.0, 0.0)": 5,
+            "(16.5, 30.0, 0.0, 33.5, 35.0, 30.0)": 6,
+            "(16.5, 30.0, 120.0, 33.5, 35.0, 130.0)": 6,
+            "(16.5, 30.0, 30.0, 33.5, 35.0, 60.0)": 6,
+            "(16.5, 30.0, 60.0, 33.5, 35.0, 90.0)": 6,
+            "(16.5, 30.0, 90.0, 33.5, 35.0, 120.0)": 6,
+            "(16.5, 35.0, -10.0, 33.5, 40.0, 0.0)": 5,
+            "(16.5, 35.0, 0.0, 33.5, 40.0, 30.0)": 6,
+            "(16.5, 35.0, 120.0, 33.5, 40.0, 130.0)": 6,
+            "(16.5, 35.0, 30.0, 33.5, 40.0, 60.0)": 6,
+            "(16.5, 35.0, 60.0, 33.5, 40.0, 90.0)": 6,
+            "(16.5, 35.0, 90.0, 33.5, 40.0, 120.0)": 6,
+            "(16.5, 40.0, -10.0, 33.5, 45.0, 0.0)": 5,
+            "(16.5, 40.0, 0.0, 33.5, 45.0, 30.0)": 6,
+            "(16.5, 40.0, 120.0, 33.5, 45.0, 130.0)": 6,
+            "(16.5, 40.0, 30.0, 33.5, 45.0, 60.0)": 6,
+            "(16.5, 40.0, 60.0, 33.5, 45.0, 90.0)": 6,
+            "(16.5, 40.0, 90.0, 33.5, 45.0, 120.0)": 6,
+            "(16.5, 45.0, -10.0, 33.5, 50.0, 0.0)": 5,
+            "(16.5, 45.0, 0.0, 33.5, 50.0, 30.0)": 6,
+            "(16.5, 45.0, 120.0, 33.5, 50.0, 130.0)": 6,
+            "(16.5, 45.0, 30.0, 33.5, 50.0, 60.0)": 6,
+            "(16.5, 45.0, 60.0, 33.5, 50.0, 90.0)": 6,
+            "(16.5, 45.0, 90.0, 33.5, 50.0, 120.0)": 6,
+            "(16.5, 5.0, -10.0, 33.5, 10.0, 0.0)": 5,
+            "(16.5, 5.0, 0.0, 33.5, 10.0, 30.0)": 6,
+            "(16.5, 5.0, 120.0, 33.5, 10.0, 130.0)": 6,
+            "(16.5, 5.0, 30.0, 33.5, 10.0, 60.0)": 6,
+            "(16.5, 5.0, 60.0, 33.5, 10.0, 90.0)": 6,
+            "(16.5, 5.0, 90.0, 33.5, 10.0, 120.0)": 6,
+            "(33.5, 0.0, -10.0, 50.0, 5.0, 0.0)": 5,
+            "(33.5, 0.0, 0.0, 50.0, 5.0, 30.0)": 6,
+            "(33.5, 0.0, 120.0, 50.0, 5.0, 130.0)": 6,
+            "(33.5, 0.0, 30.0, 50.0, 5.0, 60.0)": 6,
+            "(33.5, 0.0, 60.0, 50.0, 5.0, 90.0)": 6,
+            "(33.5, 0.0, 90.0, 50.0, 5.0, 120.0)": 6,
+            "(33.5, 10.0, -10.0, 50.0, 15.0, 0.0)": 6,
+            "(33.5, 10.0, 0.0, 50.0, 15.0, 30.0)": 6,
+            "(33.5, 10.0, 120.0, 50.0, 15.0, 130.0)": 6,
+            "(33.5, 10.0, 30.0, 50.0, 15.0, 60.0)": 6,
+            "(33.5, 10.0, 60.0, 50.0, 15.0, 90.0)": 6,
+            "(33.5, 10.0, 90.0, 50.0, 15.0, 120.0)": 6,
+            "(33.5, 15.0, -10.0, 50.0, 20.0, 0.0)": 5,
+            "(33.5, 15.0, 0.0, 50.0, 20.0, 30.0)": 6,
+            "(33.5, 15.0, 120.0, 50.0, 20.0, 130.0)": 6,
+            "(33.5, 15.0, 30.0, 50.0, 20.0, 60.0)": 6,
+            "(33.5, 15.0, 60.0, 50.0, 20.0, 90.0)": 6,
+            "(33.5, 15.0, 90.0, 50.0, 20.0, 120.0)": 6,
+            "(33.5, 20.0, -10.0, 50.0, 25.0, 0.0)": 5,
+            "(33.5, 20.0, 0.0, 50.0, 25.0, 30.0)": 6,
+            "(33.5, 20.0, 120.0, 50.0, 25.0, 130.0)": 6,
+            "(33.5, 20.0, 30.0, 50.0, 25.0, 60.0)": 6,
+            "(33.5, 20.0, 60.0, 50.0, 25.0, 90.0)": 6,
+            "(33.5, 20.0, 90.0, 50.0, 25.0, 120.0)": 6,
+            "(33.5, 25.0, -10.0, 50.0, 30.0, 0.0)": 5,
+            "(33.5, 25.0, 0.0, 50.0, 30.0, 30.0)": 6,
+            "(33.5, 25.0, 120.0, 50.0, 30.0, 130.0)": 6,
+            "(33.5, 25.0, 30.0, 50.0, 30.0, 60.0)": 6,
+            "(33.5, 25.0, 60.0, 50.0, 30.0, 90.0)": 6,
+            "(33.5, 25.0, 90.0, 50.0, 30.0, 120.0)": 6,
+            "(33.5, 30.0, -10.0, 50.0, 35.0, 0.0)": 5,
+            "(33.5, 30.0, 0.0, 50.0, 35.0, 30.0)": 6,
+            "(33.5, 30.0, 120.0, 50.0, 35.0, 130.0)": 6,
+            "(33.5, 30.0, 30.0, 50.0, 35.0, 60.0)": 6,
+            "(33.5, 30.0, 60.0, 50.0, 35.0, 90.0)": 6,
+            "(33.5, 30.0, 90.0, 50.0, 35.0, 120.0)": 6,
+            "(33.5, 35.0, -10.0, 50.0, 40.0, 0.0)": 5,
+            "(33.5, 35.0, 0.0, 50.0, 40.0, 30.0)": 6,
+            "(33.5, 35.0, 120.0, 50.0, 40.0, 130.0)": 6,
+            "(33.5, 35.0, 30.0, 50.0, 40.0, 60.0)": 6,
+            "(33.5, 35.0, 60.0, 50.0, 40.0, 90.0)": 6,
+            "(33.5, 35.0, 90.0, 50.0, 40.0, 120.0)": 6,
+            "(33.5, 40.0, -10.0, 50.0, 45.0, 0.0)": 5,
+            "(33.5, 40.0, 0.0, 50.0, 45.0, 30.0)": 6,
+            "(33.5, 40.0, 120.0, 50.0, 45.0, 130.0)": 6,
+            "(33.5, 40.0, 30.0, 50.0, 45.0, 60.0)": 6,
+            "(33.5, 40.0, 60.0, 50.0, 45.0, 90.0)": 6,
+            "(33.5, 40.0, 90.0, 50.0, 45.0, 120.0)": 6,
+            "(33.5, 45.0, -10.0, 50.0, 50.0, 0.0)": 5,
+            "(33.5, 45.0, 0.0, 50.0, 50.0, 30.0)": 6,
+            "(33.5, 45.0, 120.0, 50.0, 50.0, 130.0)": 6,
+            "(33.5, 45.0, 30.0, 50.0, 50.0, 60.0)": 6,
+            "(33.5, 45.0, 60.0, 50.0, 50.0, 90.0)": 6,
+            "(33.5, 45.0, 90.0, 50.0, 50.0, 120.0)": 6,
+            "(33.5, 5.0, -10.0, 50.0, 10.0, 0.0)": 5,
+            "(33.5, 5.0, 0.0, 50.0, 10.0, 30.0)": 6,
+            "(33.5, 5.0, 120.0, 50.0, 10.0, 130.0)": 6,
+            "(33.5, 5.0, 30.0, 50.0, 10.0, 60.0)": 6,
+            "(33.5, 5.0, 60.0, 50.0, 10.0, 90.0)": 6,
+            "(33.5, 5.0, 90.0, 50.0, 10.0, 120.0)": 6
+          },
+          "plan_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plans/v11_r9_h8.json"
+        }
+      }
+    }
+  ],
+  "tail": [
+    {
+      "cache_after": null,
+      "call_id": 4,
+      "completed_work": {},
+      "event": "END",
+      "function": "src.adaptivity.stage4_local_h.build_stage4_local_h_reduction_authority",
+      "monotonic": 2989323.066696184,
+      "stage": "space_authority",
+      "wall_seconds": 1503.7361288298853,
+      "worker_cpu_seconds": 1061.64778624,
+      "worker_pid": 3147350
+    },
+    {
+      "cache_after": null,
+      "call_id": 1,
+      "completed_work": {},
+      "event": "END",
+      "function": "space_authority",
+      "monotonic": 2989323.312388838,
+      "stage": "space_authority",
+      "wall_seconds": 1504.7938988739625,
+      "worker_cpu_seconds": 1061.768482039,
+      "worker_pid": 3147350
+    },
+    {
+      "event": "BEGIN",
+      "stage": "FE_verification",
+      "monotonic": 2989323.375493234,
+      "unreturned_status": "IN_PROGRESS_AT_STOP"
+    }
+  ]
+}

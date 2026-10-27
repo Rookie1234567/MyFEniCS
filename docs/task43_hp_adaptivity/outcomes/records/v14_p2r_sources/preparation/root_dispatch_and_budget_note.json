@@ -1,0 +1,16 @@
+{
+  "recorded_utc": "2026-10-27T00:59:23.349835+00:00",
+  "session_id": 50635,
+  "command": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/launch/space_and_saved_primary_attempt2.sh",
+  "calls": 1,
+  "head": "187631108208e34940d65c3e70557e11026de31c",
+  "scope": "user-authorized one original P2R slot, work5400 whole5580; prospective extension also covers the corresponding old support aggregate cap, no new slots",
+  "nominal_recovery_whole_cap_seconds": 7080,
+  "previous_recovery_whole_spent_seconds": 618.6039171176963,
+  "max_after_this_attempt_with_previous_actual_seconds": 6198.603917117696,
+  "whole_enforcement": "inner watchdog work5400; outer root monitoring and final acceptance from launch to full cleanup <=5580, shell variable alone not an enforcing timer",
+  "agent_static_review": "no worker deadline comparison against historical manifest; retain old manifest contract bytes",
+  "no_live_task43_before_launch": true,
+  "measured_preparation_seconds": 0.07047322392463684,
+  "manual_review_git_operations": "not_measured"
+}

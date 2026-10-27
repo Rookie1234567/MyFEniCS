@@ -1,0 +1,59 @@
+{
+  "status": "FAILED_RESEARCH_AUDIT_KEY_MISMATCH",
+  "source_head": "187631108208e34940d65c3e70557e11026de31c",
+  "source_checks": 51,
+  "input_checks": 38,
+  "source_and_input_unchanged_before_static_fix": true,
+  "worker_exit": 1,
+  "watchdog_exit": 2,
+  "launcher_exit": 2,
+  "whole_watchdog_seconds": 1596.6148925269954,
+  "launcher_timestamp_interval_seconds": 1606.313743,
+  "resource_samples": 2187,
+  "rss_sampled_peak_bytes": 2210361344,
+  "swap_sampled_peak_bytes": 0,
+  "trace_files": 6,
+  "trace_lines": 764,
+  "setters": [],
+  "signals": [],
+  "resource_issues": [],
+  "cleanup_host_pid_ticks": [
+    {
+      "pid": 3147343,
+      "start_ticks": 298773270,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3147350,
+      "start_ticks": 298773340,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3147363,
+      "start_ticks": 298773359,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3147397,
+      "start_ticks": 298773501,
+      "same_process_still_present": false,
+      "proc_stat": null
+    }
+  ],
+  "formal_new_dispatches": 0,
+  "P3_P4_P5": "NOT_RUN",
+  "P2_continuation": false,
+  "P2R_used": 1,
+  "P2R_limit": 1,
+  "recovery_support_used": 5,
+  "recovery_support_limit": 5,
+  "recovery_whole_seconds": 2215.2188096446916,
+  "caveats": [
+    "No auto-qualification: root must classify signals, failed calls, transient observations and phase/test/numerical results.",
+    "No --cache-path: cache_metadata_stable does not audit shared JIT/global caches.",
+    "Read from real host /proc; sampled RSS/swap, not continuous high-water marks."
+  ]
+}

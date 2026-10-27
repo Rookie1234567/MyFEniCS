@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-27T01:07:14.235378+00:00",
+  "command": "python3 /tmp/task43_v14_monitor.py",
+  "exit_code": 1,
+  "exception": "KeyError: cache_before",
+  "cause": "root read-only progress helper incorrectly expected BEGIN cache_before on END record",
+  "fix": "join END to BEGIN by call_id; original workflow and logs untouched",
+  "new_launch_or_test": 0,
+  "time": "not_measured"
+}

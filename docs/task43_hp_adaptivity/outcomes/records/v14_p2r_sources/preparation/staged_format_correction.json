@@ -1,0 +1,13 @@
+{
+  "initial_staged_diff_check_exit": 2,
+  "initial_diagnostic_lines": 4378,
+  "raw_stdout": "benchmarks/artifacts/task43/v11_science/recovery_v12/preparation/v14/staged_whitespace_check.stdout",
+  "raw_stdout_sha256": "b906f6d1d80fb03eea04b589f45df6af49aa786853530418c1e637fca43c3bbc",
+  "derived_csv_initial_sha256": "82bf7fc9508b73e0ea9cd4d94b6f41427e8c01d32878df89c9533a5b08ca509a",
+  "derived_csv_final_sha256": "8da155828d96a077d000011801638d29663d55c1b61429527399120e9fe71ce5",
+  "resolution": "Only newly derived CSV CRLF normalized to LF; no value changed. Original launch_context line9 trailing space preserved byte-for-byte and excluded from format-only acceptance. Original copied historical bytes were not trimmed.",
+  "timing": "not_measured",
+  "final_full_check_exit": 2,
+  "final_full_check_only_raw_exception": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/launch_context.txt:9: trailing whitespace.",
+  "final_check_excluding_exact_raw_copy_exit": 0
+}

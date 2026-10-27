@@ -1,0 +1,152 @@
+[
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/launch_context.txt",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/launch_context.txt",
+    "sha256": "4d27f74af6cfd70e317f50714fc53f7e468b38a20545750f02592700dbb040e9",
+    "bytes": 805
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/launch_command.txt",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/launch_command.txt",
+    "sha256": "5216d7626f3e53e02fa7da05d4b1468efdeb6038644ad47ec27c4e14106864f9",
+    "bytes": 133
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/launcher_started_utc.txt",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/launcher_started_utc.txt",
+    "sha256": "d47a2ad552ca776d2b2c1f38d45e7a3104fa61a8fa98aa0efb6e2c05b642a502",
+    "bytes": 31
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/launcher_finished_utc.txt",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/launcher_finished_utc.txt",
+    "sha256": "b8b1c62d98ec055ee305c90b23b848c05878812bcfbcd52469bc84575c651751",
+    "bytes": 31
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/launcher_exit_code.txt",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/launcher_exit_code.txt",
+    "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+    "bytes": 2
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/watchdog_exit_code.txt",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/watchdog_exit_code.txt",
+    "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+    "bytes": 2
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/source_head.txt",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/source_head.txt",
+    "sha256": "dbf221256eb54d05f98f6b4ac929e299c1cb432d1cd9f3b041ea0198ba4ab481",
+    "bytes": 41
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/source_status.txt",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/source_status.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/source_diff.patch",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/source_diff.patch",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/watchdog/summary.json",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/watchdog/summary.json",
+    "sha256": "767c7cf5b23826ea06250ff3a24ee60b04dca0f7a64042b9171a5565e487387d",
+    "bytes": 3548
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/watchdog/worker.log",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/watchdog/worker.log",
+    "sha256": "df020ca62cecbe98372ab878172445ca83f5ff9a2716ce205419dd2937552827",
+    "bytes": 811
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/watchdog/workflow_phase.json",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/watchdog/workflow_phase.json",
+    "sha256": "72d28883de60e773a788f12d91af683a020f753670f48995a8a3aa867eed1073",
+    "bytes": 280
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/launch_manifest.json",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/snapshots/launch_manifest.json",
+    "sha256": "a38cbe4fed2057cbf142659e9b23aa51367a3483ee7202d5ec2fb61bcea2dc7f",
+    "bytes": 30313
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/launch.sh",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/snapshots/launch.sh",
+    "sha256": "858b36634584aa10e68dc916ad496708b12480231ad6dd7874330508b686b97a",
+    "bytes": 6843
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/actual_authority_before_fe_gate.json",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/plan_output/actual_authority_before_fe_gate.json",
+    "sha256": "19983e3b86f4204040d366ca0dfaaf93e7f00a50c6fba798f93f736fa0170f45",
+    "bytes": 40496
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/A2_saved_primary_q_response.json",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/plan_output/A2_saved_primary_q_response.json",
+    "sha256": "291ac1670e049727f65ef423c06feed49408827538fc37a6ea934760b68e5e9b",
+    "bytes": 147791
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/space_authority_observation_complete.json",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/plan_output/space_authority_observation_complete.json",
+    "sha256": "7b3278b4cd52668383d9c0dc355e68e885c567fa704df453597b382f7110ddb3",
+    "bytes": 487
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plans/v11_r9_h8.json",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/plan_output/plans/v11_r9_h8.json",
+    "sha256": "024437fef2bfe1b4c5c66b186629d77885400b9bb751f57c71a5882e165be2f2",
+    "bytes": 39865
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/A2_saved_primary_q_response_substages/modal.json",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/plan_output/A2_saved_primary_q_response_substages/modal.json",
+    "sha256": "70855e0d358fe280d078a7b25e40833985d3b7bfa9d57de635f9e7d5342209ed",
+    "bytes": 94240
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/A2_saved_primary_q_response_substages/q10.json",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/plan_output/A2_saved_primary_q_response_substages/q10.json",
+    "sha256": "058db902bf5be8865065b8a9eb52bd267270ae9229747e7c53dabb708a180662",
+    "bytes": 16662
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/A2_saved_primary_q_response_substages/q8.json",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/plan_output/A2_saved_primary_q_response_substages/q8.json",
+    "sha256": "8c6497fda74d3ce1c018dc6e189b0176a04a2ab1d1ce4eae3cbd549f6d20a23c",
+    "bytes": 16664
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/A2_saved_primary_q_response_substages/raw.json",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/plan_output/A2_saved_primary_q_response_substages/raw.json",
+    "sha256": "fe27359384c29d77e3665eb02c567b9659363e1875834d04c1d3044701f971e8",
+    "bytes": 32530
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/preparation/v14/monitor_static_failure.json",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/preparation/monitor_static_failure.json",
+    "sha256": "ba454e4b5d5d03a28006c81e712677143a327b69453fa4f103bf0bcf88870ab1",
+    "bytes": 389
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/preparation/v14/subagent_cache_statement_correction.json",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/preparation/subagent_cache_statement_correction.json",
+    "sha256": "b707ae4f02819c584c2708c34e27025ff56847abbf0798429af61a4251604c7f",
+    "bytes": 639
+  },
+  {
+    "original": "benchmarks/artifacts/task43/v11_science/recovery_v12/preparation/v14/root_dispatch_and_budget_note.json",
+    "copy": "docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/preparation/root_dispatch_and_budget_note.json",
+    "sha256": "e668bbd79b964c1c358a7953d5c999f1d19b4e0358b943e2dbe83704a8299dd3",
+    "bytes": 1087
+  }
+]

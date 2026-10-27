@@ -1,0 +1,11 @@
+{
+  "cache_policy_changed": false,
+  "cost_scope": "Nested call times overlap; do not sum as workflow wall time.",
+  "journal_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/authority_observations.jsonl",
+  "numerical_results_changed": false,
+  "observed_calls": 396,
+  "repeated_calls": 230,
+  "stage": "space_authority",
+  "status": "COMPLETED",
+  "unique_function_argument_keys": 166
+}

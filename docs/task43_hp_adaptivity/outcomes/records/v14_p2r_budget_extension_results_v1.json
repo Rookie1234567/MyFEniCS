@@ -1,0 +1,227 @@
+{
+  "schema": "task43.v14.user-budget-p2r-results.v1",
+  "created_utc": "2026-10-27T01:36:37.291350+00:00",
+  "authority": {
+    "review_sha": "37f3376be410657fbaec86b0412086745419c506",
+    "user_budget": "一次90分钟工作、含清理93分钟；取消1740秒事先证明；不自动重试",
+    "authorization_record": "v14_p2r_user_budget_authorization.json",
+    "authorization_sha256": "2997cc77bce47e744ad21a6219134abfd7eb9ce1aebb4ee47c6db14e51af1b47"
+  },
+  "run_HEAD": "187631108208e34940d65c3e70557e11026de31c",
+  "base_sha": "405e3aff42ac421a4c99315df1ed9b96941ecbe4",
+  "closeout": {
+    "status": "FAILED_RESEARCH_AUDIT_KEY_MISMATCH",
+    "source_head": "187631108208e34940d65c3e70557e11026de31c",
+    "source_checks": 51,
+    "input_checks": 38,
+    "source_and_input_unchanged_before_static_fix": true,
+    "worker_exit": 1,
+    "watchdog_exit": 2,
+    "launcher_exit": 2,
+    "whole_watchdog_seconds": 1596.6148925269954,
+    "launcher_timestamp_interval_seconds": 1606.313743,
+    "resource_samples": 2187,
+    "rss_sampled_peak_bytes": 2210361344,
+    "swap_sampled_peak_bytes": 0,
+    "trace_files": 6,
+    "trace_lines": 764,
+    "setters": [],
+    "signals": [],
+    "resource_issues": [],
+    "cleanup_host_pid_ticks": [
+      {
+        "pid": 3147343,
+        "start_ticks": 298773270,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 3147350,
+        "start_ticks": 298773340,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 3147363,
+        "start_ticks": 298773359,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 3147397,
+        "start_ticks": 298773501,
+        "same_process_still_present": false,
+        "proc_stat": null
+      }
+    ],
+    "formal_new_dispatches": 0,
+    "P3_P4_P5": "NOT_RUN",
+    "P2_continuation": false,
+    "P2R_used": 1,
+    "P2R_limit": 1,
+    "recovery_support_used": 5,
+    "recovery_support_limit": 5,
+    "recovery_whole_seconds": 2215.2188096446916,
+    "caveats": [
+      "No auto-qualification: root must classify signals, failed calls, transient observations and phase/test/numerical results.",
+      "No --cache-path: cache_metadata_stable does not audit shared JIT/global caches.",
+      "Read from real host /proc; sampled RSS/swap, not continuous high-water marks."
+    ]
+  },
+  "actual_space": {
+    "dofs": {
+      "active_cell_interior_rows": 79950,
+      "active_fe_dof_gate_limit": null,
+      "active_fe_dof_gate_pass": true,
+      "active_fe_dof_gate_policy": "task43_hp_adaptivity_192gib_v1",
+      "added_independent_fe_dofs": 6268,
+      "independent_active_fe_dofs": 116740,
+      "independent_trace_rows": 36790,
+      "parent_independent_fe_dofs": 110472,
+      "raw_broken_active_fe_dofs_before_hanging_floquet_constraints": 124012
+    },
+    "forest": {
+      "actual_leaf_cell_count": 194,
+      "actual_one_level_root_splits": 2,
+      "axis_partition_interval_product_is_not_leaf_count": true,
+      "closure_split_counts": {
+        "balance": 0,
+        "material": 1,
+        "periodic": 0,
+        "user": 1
+      },
+      "forced_closure_h_splits": 1,
+      "hanging_patch_count": 9,
+      "leaf_catalog_sha256": "ff19f589ab2ae8a8feb85b8127567272453034a2c8114509d5068bd6d2e888cb",
+      "requested_h_root_splits": 1,
+      "root_cell_count": 180
+    },
+    "degrees": {
+      "actual_p4_cell_count": 0,
+      "cell_interior_histogram": {
+        "p5": 35,
+        "p6": 159
+      },
+      "degree_plan_pass": true,
+      "distinct_physical_trace_degrees": [
+        5,
+        6
+      ],
+      "entity_constraints_pass": true,
+      "entity_degree_plan_sha256": "9fc83e291349bcae05cfdb77829547f9afb39c192a79c2c5b93ed194620fa671",
+      "entity_map_sha256": "54fc2ab715f1146cb2230e39b3d14c50bc3914fab901bf1db9031aefa6032f50",
+      "maximum_trace_degree": 6,
+      "minimum_trace_degree": 5
+    },
+    "numeric_interval_only": {
+      "lower": 110472,
+      "actual": 116740,
+      "upper": 237600,
+      "pass": true
+    },
+    "whole_P2_qualification": "FAILED",
+    "original_bad_metadata_preserved": true,
+    "actual_matrix_rows": null,
+    "actual_matrix_NNZ": null,
+    "predicted_trace_DtN_rows": 37402,
+    "J": null,
+    "h_G": null,
+    "benefit_per_added_FE": null
+  },
+  "minimal_fix": {
+    "checks": [
+      "ast.parse only"
+    ],
+    "command": "python3 -I - (stdlib ast.parse for the two listed source files)",
+    "driver": "NOT_RUN",
+    "elapsed_seconds": 0.136261862,
+    "files": [
+      {
+        "path": "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+        "sha256": "22d0c4b9be0bd4ad898990ea65a8402e5fe5ec0f1ccda38f4544288b5b14008d"
+      },
+      {
+        "path": "src/test/test_task43_v11_scientific_restart.py",
+        "sha256": "c458a1edd16272e957c211baaa630df34987ffa0a814fff40409cee7ad2e2782"
+      }
+    ],
+    "finished_utc": "2026-10-27T01:31:48.457526+00:00",
+    "interpreter": "/usr/bin/python3",
+    "native": "NOT_RUN",
+    "pytest": "NOT_RUN",
+    "python_version": "3.12.3",
+    "schema": "task43.v14.local-static-fix-validation.v1",
+    "started_utc": "2026-10-27T01:31:48.321185+00:00",
+    "status": "PASS"
+  },
+  "verification": {
+    "source_before_edit": 51,
+    "inputs_before_edit": 38,
+    "all_match": true,
+    "post_fix_pytest": "NOT_RUN",
+    "previous_S1": "12/12 on old source/test bytes only; fixture had same wrong key",
+    "project_function_replay_after_failure": 0
+  },
+  "stages": {
+    "P2R": "WORKER_FAILED_AFTER_ACTUAL_AUTHORITY",
+    "P3": "NOT_RUN_P2_GATE_FAILED",
+    "P4": "NOT_RUN_P2_GATE_FAILED",
+    "P5": "NOT_RUN_P2_GATE_FAILED"
+  },
+  "counts": {
+    "P2R_new": 1,
+    "P2R_cumulative": "1/1",
+    "recovery_support": "5/5",
+    "new_formal_dispatch": 0,
+    "expanded_formal": "5/8",
+    "historical_formal": "5/6 last slot sealed",
+    "A1": "2/2 historical; third remains conditional and unused",
+    "A2": "3/3",
+    "P3": 0,
+    "P4": 0,
+    "P5": 0,
+    "new_pytest": 0,
+    "new_READY": 0,
+    "P2R_native_import_and_ABI": "performed inside the one support workflow; no separate probe"
+  },
+  "fees": {
+    "P2R_work_limit_seconds": 5400,
+    "P2R_whole_limit_seconds": 5580,
+    "P2R_actual_whole_seconds": 1596.6148925269954,
+    "launcher_timestamp_interval_seconds": 1606.313743,
+    "launcher_interval_overlaps_whole_do_not_add": true,
+    "recovery_previous_whole_seconds": 618.6039171176963,
+    "recovery_total_whole_seconds": 2215.2188096446916,
+    "earlier_V11_separate_seconds": 853.8004706790671,
+    "measured_static_preparation_seconds": 0.07047322392463684,
+    "measured_fix_AST_seconds": 0.136261862,
+    "measured_evidence_archive_seconds": 1.2776839560829103,
+    "other_read_edit_monitor_git_drafts": "not_measured; no invented complete wall",
+    "measured_final_delivery_static_seconds": 0.3350628148764372,
+    "measured_new_static_subtotal_seconds": 1.8194818568839843
+  },
+  "failures_and_corrections": [
+    "P2R worker exit1: wrong periodic key defaulted True; fixture duplicated wrong schema; root prior static review missed this mismatch",
+    "root read-only monitor END/cache_before KeyError exit1; fixed BEGIN/END join; no worker intervention",
+    "agent cache eviction claim withdrawn after raw currsize18/max128 inspection; actual final25/128, no cache strategy change",
+    "agent downstream draft filenames incremented attempts and introduced unnecessary 27KB helper; root rejected before adoption/run; archived ignored",
+    "root cat wrong note subdirectory exit1; existing original located without rerun",
+    "staged diff-check: derived CSV CRLF normalized; raw launch_context trailing space preserved, format-only exception; original bytes retained"
+  ],
+  "evidence_gaps": [
+    "producer raw trace_constraints map itself not separately persisted; exact false producer key determined from frozen code and completed return, not relabelled measured raw false",
+    "new source/test bytes only AST checked; runtime regression NOT_RUN",
+    "P2 successful audit bundle and zero-exit terminal absent; no posthoc conversion to pass",
+    "h solution, common-partition output benefit, A1 q3 response and independent accuracy not measured",
+    "no continuous memory peak/PSS/full shared JIT cache audit"
+  ],
+  "abilities": {
+    "space": "PARTIAL",
+    "selection": "PARTIAL",
+    "accuracy": "NOT_PASSED",
+    "same_accuracy_whole_cost": "NOT_ESTABLISHED",
+    "iteration": "NOT_RUN / NOT_QUALIFIED"
+  },
+  "merge_approval": false,
+  "next_technical_scope": "Validate the corrected real main/audit fixture and authorize an explicit immutable recovery of P2 before original P3/P4/P5. No automatic retry or rewriting failed root. No numerical/core/cache change needed for identified key defect."
+}

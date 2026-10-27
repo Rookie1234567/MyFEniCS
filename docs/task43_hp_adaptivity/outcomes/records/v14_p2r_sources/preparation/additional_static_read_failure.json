@@ -1,0 +1,7 @@
+{
+  "command": "cat .../preparation/v14/rejected_downstream_drafts/rejected_downstream_draft_note.json",
+  "exit_code": 1,
+  "reason": "note was in preparation/v14, not its drafts subdirectory",
+  "recovery": "rg --files located original note; copied existing bytes without rerunning drafts",
+  "time": "not_measured"
+}

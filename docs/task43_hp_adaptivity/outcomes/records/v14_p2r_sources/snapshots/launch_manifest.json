@@ -1,0 +1,480 @@
+{
+  "p2_source_id": "P2R",
+  "recovery_manifest_sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+  "schema": "task43.v11.launch-input-manifest.v1",
+  "created_utc": "2026-10-27T00:58:57.491262+00:00",
+  "head": "187631108208e34940d65c3e70557e11026de31c",
+  "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+  "launch_shell_sha256": "858b36634584aa10e68dc916ad496708b12480231ad6dd7874330508b686b97a",
+  "worker_argv": [
+    "python",
+    "-u",
+    "-m",
+    "benchmarks.task43_hp_adaptivity.round1_candidates",
+    "--primary-diagnostic-contract",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+    "--execution-recovery-manifest",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+    "--accepted-parent-selection-record",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json"
+  ],
+  "source": [
+    {
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/benchmarks/subreaper_watchdog.py"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py",
+      "sha256": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/benchmarks/task43_hp_adaptivity/candidate_checkpoints.py"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/candidate_records.py",
+      "sha256": "7f98eacb0aee5e8f3cc98c61620613d02e66c909844c2ab8e171008e1cee73aa",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/benchmarks/task43_hp_adaptivity/candidate_records.py"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/compare_initial_to_references.py",
+      "sha256": "c39d5577719ddf4a5bc22acba47d49028717a171fcbcbf2cb667341067d78a8e",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/benchmarks/task43_hp_adaptivity/compare_initial_to_references.py"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+      "sha256": "22c35c356c9c12cb30ee01347b2348be22b55301cd35d18d057b5fb82c888a1c",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/benchmarks/task43_hp_adaptivity/compare_round1_candidate.py"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py",
+      "sha256": "4c16377b491a83424f8b21cb54c9e60f64dcd5bf6f6895f45fee6f11a083ce0c",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+      "sha256": "086bdf560e3836a19009e86c74ad818870b534ec8b891b818a87fbf9137a1323",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/benchmarks/task43_hp_adaptivity/h100_anchor.py"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/profile.py",
+      "sha256": "ddd315bcbe897be4856c42dc68ecbf7897dcf8fa836ef91985863bb6ae8afc2e",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/benchmarks/task43_hp_adaptivity/profile.py"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/reference_restore.py",
+      "sha256": "93a7170d92cacae9c9fd491637a22c676fb559d3f5a306812105888a6c0b4505",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/benchmarks/task43_hp_adaptivity/reference_restore.py"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+      "sha256": "72716b9f7219a9f6ae78f4b7b736796d072ef4ffa46505ff9b3aac4d8523c71e",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/benchmarks/task43_hp_adaptivity/round1_candidates.py"
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py",
+      "sha256": "d1ad0a22a8e60147a0ccf3856a2c847b9ff3b74c34ec4bc04dc76c258a8d8ae9",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json",
+      "sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json"
+    },
+    {
+      "path": "scripts/activate_task40_phi90_pord64.sh",
+      "sha256": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/scripts/activate_task40_phi90_pord64.sh"
+    },
+    {
+      "path": "src/adaptivity/exact_sequence_variable_p.py",
+      "sha256": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/adaptivity/exact_sequence_variable_p.py"
+    },
+    {
+      "path": "src/adaptivity/hcurl_broken_cell_trace.py",
+      "sha256": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/adaptivity/hcurl_broken_cell_trace.py"
+    },
+    {
+      "path": "src/adaptivity/hcurl_broken_trace_graph.py",
+      "sha256": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/adaptivity/hcurl_broken_trace_graph.py"
+    },
+    {
+      "path": "src/adaptivity/physical_g_error.py",
+      "sha256": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/adaptivity/physical_g_error.py"
+    },
+    {
+      "path": "src/adaptivity/stage4_local_h.py",
+      "sha256": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/adaptivity/stage4_local_h.py"
+    },
+    {
+      "path": "src/adaptivity/variable_p_degree_plan.py",
+      "sha256": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/adaptivity/variable_p_degree_plan.py"
+    },
+    {
+      "path": "src/adaptivity/variable_p_entity_map.py",
+      "sha256": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/adaptivity/variable_p_entity_map.py"
+    },
+    {
+      "path": "src/adaptivity/variable_p_transfer.py",
+      "sha256": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/adaptivity/variable_p_transfer.py"
+    },
+    {
+      "path": "src/common/analytic_fields_3d.py",
+      "sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/common/analytic_fields_3d.py"
+    },
+    {
+      "path": "src/common/config_3d.py",
+      "sha256": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/common/config_3d.py"
+    },
+    {
+      "path": "src/common/modes_3d.py",
+      "sha256": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/common/modes_3d.py"
+    },
+    {
+      "path": "src/constraints/floquet_3d.py",
+      "sha256": "cfa0953ba1b6fa60b1943be2f0f977413221857290df7ceee0747df811bca309",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/constraints/floquet_3d.py"
+    },
+    {
+      "path": "src/geometry/mesh_builder_3d.py",
+      "sha256": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/geometry/mesh_builder_3d.py"
+    },
+    {
+      "path": "src/geometry/task43_hp_adaptivity_axis_plan.py",
+      "sha256": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/geometry/task43_hp_adaptivity_axis_plan.py"
+    },
+    {
+      "path": "src/io/native_capacity_profile.py",
+      "sha256": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/io/native_capacity_profile.py"
+    },
+    {
+      "path": "src/postprocessing/diffraction_3d.py",
+      "sha256": "42d65299ce1cc8c2762dc1d3972ea04063b155bd8a58d4553c9ac9732213ce66",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/postprocessing/diffraction_3d.py"
+    },
+    {
+      "path": "src/postprocessing/flat_layer_reference_3d.py",
+      "sha256": "ed6493bd2f13dccbcd85a8ef2edb6f6b07726ec6c41b82651525b386d44ec04a",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/postprocessing/flat_layer_reference_3d.py"
+    },
+    {
+      "path": "src/postprocessing/physical_field_comparison.py",
+      "sha256": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/postprocessing/physical_field_comparison.py"
+    },
+    {
+      "path": "src/postprocessing/physical_field_sampling.py",
+      "sha256": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/postprocessing/physical_field_sampling.py"
+    },
+    {
+      "path": "src/postprocessing/postprocess_3d.py",
+      "sha256": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/postprocessing/postprocess_3d.py"
+    },
+    {
+      "path": "src/postprocessing/rta_3d.py",
+      "sha256": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/postprocessing/rta_3d.py"
+    },
+    {
+      "path": "src/runners/physical_intermediate.py",
+      "sha256": "f7c1cd79353911079fb17e9780afd588a5afc6d0efeccd81b4aed3b9c3c902a4",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/runners/physical_intermediate.py"
+    },
+    {
+      "path": "src/solvers/common_3d_case_flow.py",
+      "sha256": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/solvers/common_3d_case_flow.py"
+    },
+    {
+      "path": "src/solvers/common_3d_fields.py",
+      "sha256": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/solvers/common_3d_fields.py"
+    },
+    {
+      "path": "src/solvers/common_3d_forms.py",
+      "sha256": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/solvers/common_3d_forms.py"
+    },
+    {
+      "path": "src/solvers/common_3d_postprocess.py",
+      "sha256": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/solvers/common_3d_postprocess.py"
+    },
+    {
+      "path": "src/solvers/common_3d_solve.py",
+      "sha256": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/solvers/common_3d_solve.py"
+    },
+    {
+      "path": "src/solvers/common_3d_utils.py",
+      "sha256": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/solvers/common_3d_utils.py"
+    },
+    {
+      "path": "src/solvers/dtn_port_3d.py",
+      "sha256": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/solvers/dtn_port_3d.py"
+    },
+    {
+      "path": "src/solvers/hcurl_blocked_gram_tensor.py",
+      "sha256": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/solvers/hcurl_blocked_gram_tensor.py"
+    },
+    {
+      "path": "src/solvers/hcurl_variable_p_assembly.py",
+      "sha256": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/solvers/hcurl_variable_p_assembly.py"
+    },
+    {
+      "path": "src/solvers/hcurl_variable_p_local.py",
+      "sha256": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/solvers/hcurl_variable_p_local.py"
+    },
+    {
+      "path": "src/solvers/hcurl_variable_p_reduction.py",
+      "sha256": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/solvers/hcurl_variable_p_reduction.py"
+    },
+    {
+      "path": "src/solvers/independent_active_action.py",
+      "sha256": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/solvers/independent_active_action.py"
+    },
+    {
+      "path": "src/solvers/petsc_residual_correction.py",
+      "sha256": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/solvers/petsc_residual_correction.py"
+    },
+    {
+      "path": "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py",
+      "sha256": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/solvers/solve_maxwell_3d_stage_4b_block_grating.py"
+    },
+    {
+      "path": "src/test/test_task43_v11_scientific_restart.py",
+      "sha256": "8516a90dd558e6c2ec4d9329da26fa2aba5bdb0b253e5ac3c6838dbbda5f38ba",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/src/test/test_task43_v11_scientific_restart.py"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+      "sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+      "snapshot": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/snapshots/source/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json"
+    }
+  ],
+  "inputs": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/dtn_auxiliary_amplitudes_3d.json",
+      "sha256": "ba628da18c0e107625c393b7ab33a5e1ec19861892d596ac67156cb65c9fdae8",
+      "size_bytes": 492153
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/dtn_port_diffraction_orders_3d.json",
+      "sha256": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463",
+      "size_bytes": 840324
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/full3d_reference_samples.json",
+      "sha256": "dc6df754f565d3af41c8d561904c75dfd3667299a405b1c57d2a2804c9786fe3",
+      "size_bytes": 1969
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/full3d_reference_samples.npz",
+      "sha256": "2735c75f4a2fa559ae2ba79022e0af6b5b27b892f0d8f8df2fef20127c9bce04",
+      "size_bytes": 1325421
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/p6_condensed_direct_summary.json",
+      "sha256": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc",
+      "size_bytes": 88808
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/recovered_p6_storage_coefficients.npy",
+      "sha256": "a4d38aa88da897e4274160d7f23944e5870d253b0a3e4033e28332bbf430570c",
+      "size_bytes": 6237440
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/recovered_reference_bundle.npz",
+      "sha256": "6c244fae7e246c171cef1f66ae3f1d607622c89da1f9cd4474e55908bfd6b6d4",
+      "size_bytes": 16595861
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/resolved_config.json",
+      "sha256": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc",
+      "size_bytes": 12897
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/restore_identity_record.json",
+      "sha256": "ef77da1e68136e08b48dc0e352690f9c9fdcd132dcc2b765dcb12413b7cf3300",
+      "size_bytes": 17180
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/existing_validation_fields_v1.json",
+      "sha256": "8493acfd4485ef7c9b4c662708d7bac8df9934bf90dae550d8d392f59f630df0",
+      "size_bytes": 21454
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_only_authority_attempt1/plan_output/plans/round10_p_up.json",
+      "sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+      "size_bytes": 44878
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/run/candidate_plan.json",
+      "sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+      "size_bytes": 44878
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+      "sha256": "e1296a9b55ff6d29fde55bf545e44be737c4f5d534b12b69f1ded5f05a0a7eaf",
+      "size_bytes": 6232189
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/run/solve/dtn_port_diffraction_orders_3d.json",
+      "sha256": "f7048a9ecad65db39faa688d9d4f0041099f2719e64e5ea2898e3dc793003450",
+      "size_bytes": 905250
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/run/solve/run_summary.json",
+      "sha256": "be445b030b8e39169fc800e4c53aae0f85fcf8800312d7538518df67891d6376",
+      "size_bytes": 961754
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/run/task43_round1_candidate_record.json",
+      "sha256": "66d56c0644b5c8eb66d075a7898cdfa28024e3cc30834a08cd3d8b76e453968d",
+      "size_bytes": 3312081
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/watchdog/summary.json",
+      "sha256": "ad4675ae06ae2a1122c94812837a539da647d2062e8b88c257930e7c57286b4a",
+      "size_bytes": 3564
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/post_selection_joint_attempt1/post_selection_comparison.json",
+      "sha256": "347195b3e29e23a2907e16264385346e208a2a7d2d48fb8b2d8c0b00ede3b6aa",
+      "size_bytes": 459138
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/post_selection_joint_attempt1/post_selection_shared_q10.npz",
+      "sha256": "895b65ffbf63176ac20008e6488c1c1318141f877eb5814496fcc945c049514d",
+      "size_bytes": 612867566
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/post_selection_joint_attempt1/post_selection_shared_q8.npz",
+      "sha256": "ce3707052419ada5a8e55574a826772bcb1e37cf1f764fc115eb8bf8a52306e5",
+      "size_bytes": 313789934
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_only_authority_attempt1/plan_output/plans/round9_p_up.json",
+      "sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+      "size_bytes": 47658
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+      "sha256": "7a71623b15afea662956ecd6af89b1d08701631174d1a048d5320e7a3217b893",
+      "size_bytes": 6066934
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_up_attempt1/run/task43_round1_candidate_record.json",
+      "sha256": "5b6454d4234cf254536f1c1d4263c3e804ed508cdc644614649b592e818027ea",
+      "size_bytes": 3312110
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/fields/legacy_r10_field_resampling.json",
+      "sha256": "29b6a568956de31482688a8433021f779b616ab90a01660f63d53e4a5be2300d",
+      "size_bytes": 23639
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_legacy_r10_field_resampling_attempt3/fields/r10_q8_q10_field_samples.npz",
+      "sha256": "d21d9977f518050ac53c675539df5010d12b6126687ac84b01c0f71b2f9b0a71",
+      "size_bytes": 85387889
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v2_root_audit/seed_geometry_audit.json",
+      "sha256": "3fc78f7d728f357fc33b26decd0e6aaa5d3981197cdef4dc49f83633c169a524",
+      "size_bytes": 2215
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/dtn_port_diffraction_orders_3d.json",
+      "sha256": "6540f0b3cb58d69af74f76a482fde6846f6450caeb6503fbb71a6f31189e8427",
+      "size_bytes": 840353
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/task43_v3_primary_before_extra.npz",
+      "sha256": "cc368ed3d9baa391d70b8c368ab2868e5e78c60df464184fbbfa6536c5077feb",
+      "size_bytes": 17451495
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/task43_v3_primary_q10_field_sample.npz",
+      "sha256": "228fb211efa7da2b56fc7fec3ad38a89f89faba904bf5f6e54c400ad4d82e695",
+      "size_bytes": 143672562
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/task43_v3_primary_q8_field_sample.npz",
+      "sha256": "89a50aa029cd0c9f06748bbed679fede142063826e85815886a4e1e10ea4c16c",
+      "size_bytes": 73515428
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v3_diagnostics/A2_q_attempt3/run/numerical_output/volume_absorption.json",
+      "sha256": "1457a23e966f773cc767e0351e2c27e65e45a40606f530bb4740d0e69237aa7b",
+      "size_bytes": 2324
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round1_acceptance_contract_v1.json",
+      "sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+      "size_bytes": 5319
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+      "sha256": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9",
+      "size_bytes": 10704
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_up_attempt1/run/candidate_plan.json",
+      "sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+      "size_bytes": 47658
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round1_candidates/comparisons/round9_p_up_attempt1/candidate_comparison_v2.json",
+      "sha256": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30",
+      "size_bytes": 77297
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round8_selection_transition8_v1.json",
+      "sha256": "cf737d0fd8fd1da643d263b28770358d82e96c77ce82692bc1f08d27b15dccc2",
+      "size_bytes": 22617
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/comparison_contract_v1.json",
+      "sha256": "fa480f922e676d5fada7689653db259e6d3c76bbbe930a8eef6f65dcdee733b1",
+      "size_bytes": 6271
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/reference_comparison/attempt2/reference_calibration_v1.json",
+      "sha256": "d3b0d0660f419357bf05ad74282fadfb853027a54ecdb4b9f3586547c8c1e61b",
+      "size_bytes": 121781
+    }
+  ],
+  "cache_scope": "No --cache-path; no claim to audit or clean shared JIT/global caches",
+  "trace_boundary": "after taskset, worker plus descendants only",
+  "current_review_sha": "37f3376be410657fbaec86b0412086745419c506",
+  "user_budget_authorization": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v14_p2r_user_budget_authorization.json",
+    "sha256": "2997cc77bce47e744ad21a6219134abfd7eb9ce1aebb4ee47c6db14e51af1b47",
+    "work_seconds": 5400,
+    "whole_seconds": 5580,
+    "old_contract_unchanged": true
+  }
+}

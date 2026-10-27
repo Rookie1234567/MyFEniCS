@@ -1,0 +1,26 @@
+{
+  "checks": [
+    "ast.parse only"
+  ],
+  "command": "python3 -I - (stdlib ast.parse for the two listed source files)",
+  "driver": "NOT_RUN",
+  "elapsed_seconds": 0.136261862,
+  "files": [
+    {
+      "path": "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+      "sha256": "22d0c4b9be0bd4ad898990ea65a8402e5fe5ec0f1ccda38f4544288b5b14008d"
+    },
+    {
+      "path": "src/test/test_task43_v11_scientific_restart.py",
+      "sha256": "c458a1edd16272e957c211baaa630df34987ffa0a814fff40409cee7ad2e2782"
+    }
+  ],
+  "finished_utc": "2026-10-27T01:31:48.457526+00:00",
+  "interpreter": "/usr/bin/python3",
+  "native": "NOT_RUN",
+  "pytest": "NOT_RUN",
+  "python_version": "3.12.3",
+  "schema": "task43.v14.local-static-fix-validation.v1",
+  "started_utc": "2026-10-27T01:31:48.321185+00:00",
+  "status": "PASS"
+}

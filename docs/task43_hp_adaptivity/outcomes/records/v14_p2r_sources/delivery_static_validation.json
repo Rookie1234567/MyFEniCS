@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "checks": {
+    "json_files": 28,
+    "copied_originals": 25,
+    "raw_index_files": 88,
+    "final_fix_hashes_match_prior_AST": true,
+    "A2_substage_hashes": 4,
+    "actual_parent_inheritance": {
+      "roots": 180,
+      "leaves": 194,
+      "bad_roots": []
+    },
+    "downstream_roots_absent": {
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/A1_q_attempt3": true,
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1": true,
+      "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1": true
+    },
+    "failed_P2_success_products_absent": {
+      "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plans/v11_r9_h8.audit.json": true,
+      "benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/plan_output/plan_audit.json": true
+    },
+    "local_links": 101,
+    "git_diff_check_exit": 0
+  },
+  "failures": [],
+  "elapsed_seconds": 0.3350628148764372,
+  "scope": "stdlib JSON/hash/link/format and saved-record arithmetic; no project/native call or fixture execution"
+}

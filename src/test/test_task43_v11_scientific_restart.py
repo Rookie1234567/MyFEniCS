@@ -3660,7 +3660,7 @@ def test_main_reaches_v11_mesh_sentinel_with_watchdog_identity(tmp_path, monkeyp
                     },
                     "trace_constraints": {
                         "hanging_slave_rows": len(forest.hanging_faces),
-                        "hanging_or_periodic_slave_rows_globally_numbered": False,
+                        "hanging_or_floquet_slave_rows_globally_numbered": False,
                     },
                 },
                 degree_plan=degree_plan,
@@ -3843,6 +3843,12 @@ def test_main_reaches_v11_mesh_sentinel_with_watchdog_identity(tmp_path, monkeyp
     )
     assert actual_plan["task43_candidate"]["provenance"]["v11_seed"]["global_cell_id"] == 8
     assert actual_audit["space_authority_detail"]["all_actual_leaves_inherit_parent_degree"] is True
+    assert (
+        actual_audit["space_authority_detail"][
+            "hanging_or_floquet_slave_rows_globally_numbered"
+        ]
+        is False
+    )
     assert actual_audit["space_authority_detail"]["forced_closure_root_ids"]
     assert set(actual_audit["space_authority_detail"]["actual_refined_root_ids"]) == {
         *actual_audit["space_authority_detail"]["requested_root_ids"],

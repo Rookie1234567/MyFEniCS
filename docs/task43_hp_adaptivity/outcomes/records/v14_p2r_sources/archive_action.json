@@ -1,0 +1,6 @@
+{
+  "measured_seconds": 1.2776839560829103,
+  "command": "python3 /tmp/task43_v14_archive.py",
+  "exit_code": 0,
+  "classification": "offline stdlib extraction; no project/native execution"
+}

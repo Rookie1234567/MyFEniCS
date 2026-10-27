@@ -1,0 +1,38 @@
+{
+  "utc": "2026-10-27T01:13:09.698469+00:00",
+  "classification": "UNADOPTED_STATIC_DRAFT",
+  "cause": [
+    "misleading filename attempt4/attempt2 although body used original roots",
+    "27KB standalone runtime snapshot helper duplicated existing checking instead of minimal inline extension"
+  ],
+  "root_action": "stopped subagent extension; drafts not adopted, executed, renamed or copied to canonical launch; no source/core/contract change",
+  "static_checks_reported_by_agent": {
+    "command": "bash -n on three draft files; stdlib AST parse of helper; sha256sum and git status",
+    "exit_code": 0,
+    "time": "not_measured",
+    "root_has_not_replayed": true
+  },
+  "new_launch_or_formal_root": 0,
+  "files": [
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/preparation/v14/rejected_downstream_drafts/P3_A1_q_attempt4.sh",
+      "sha256": "3109fc5dd583389598e7d63a51026bc241f38971cdd5c9b2c9398438494358bd",
+      "bytes": 4045
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/preparation/v14/rejected_downstream_drafts/P4_R9_H8_attempt2.sh",
+      "sha256": "7b50a3db938f441036c3658109184c2168134c8c2f9de41984e083e3c38feac2",
+      "bytes": 4135
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/preparation/v14/rejected_downstream_drafts/P5_union_comparison_attempt2.sh",
+      "sha256": "4fa86cacaf5a63d385ddac3745cfd6a97bf0a8a7dbaa35b2f4cb4e4492643a65",
+      "bytes": 3984
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v12/preparation/v14/rejected_downstream_drafts/prepare_downstream_snapshot.py",
+      "sha256": "cc75a1a09880ad9e41fad6beb88bafea9424c8b15fbae8600aaec93dc408972a",
+      "bytes": 26974
+    }
+  ]
+}

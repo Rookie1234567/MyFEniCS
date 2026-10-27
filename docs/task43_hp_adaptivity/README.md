@@ -5,7 +5,7 @@
 | 执行分支 | `task43_hp_adaptivity` |
 | 建立日期 | 2026-10-22 |
 | 源码基线 | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` |
-| 当前状态 | `PARTIAL / CONTROLLED_NEGATIVE`；V13 S1 有限支持验证 12/12 通过，D1 在 540 s 工作门受控停止，实际 space authority/FE audit 未返回；P2R 因 1740 s 工作预算缺少保守上界而 `NOT_RUN`，P3/P4/P5 也未运行。旧正式5/6及封存末槽、扩展正式5/8、五项科学状态不变，新正式dispatch为0；无READY、生产资格或合并许可。详见[Response V13](response_v13.md)与[V13机器收口](outcomes/records/v13_minimal_completion_and_scientific_results_v1.json) |
+| 当前状态 | V14：唯一P2R已执行，实际FE116740（+6268）；字段名检查错误导致失败。最小静态修复完成，动态未验；P3/P4/P5未运行。正式5/8、新正式0，无自动重试或合并许可。见[Response V14](response_v14.md)与[V14结果](outcomes/records/v14_p2r_budget_extension_results_v1.json) |
 | 第一目标 | 在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环 |
 | 第一验证波长 | 13.5 nm；小规模 direct 作数值核验 |
 | 后续方向 | 自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot |
@@ -14,7 +14,7 @@
 
 ## 阅读入口
 
-**当前研究范围沿用[V11正式补充任务书](supplement_v11_scientific_restart.md)，本轮执行权威为[V12正式review第9节](review_report_v12.md)，V13完成状态按[Response V13](response_v13.md)记录。**S1 的12个定向节点通过有限工程验证；D1 在真实 space-authority 路径上受控停止，P2R 未获放行，因为剩余冷构造及 authority 尾段没有1740秒内可审的保守费用界。后续阶段和正式计算均未运行。历史合同、初始 manifest、V12 失败和全部旧科学状态均保留；本状态不授予后续运行或合并许可。
+**当前研究范围沿用[V11科学任务书](supplement_v11_scientific_restart.md)、[V12 review第9节](review_report_v12.md)及[用户一次P2R时间授权](outcomes/records/v14_p2r_user_budget_authorization.json)。最新交付为[Response V14](response_v14.md)。** 实际空间自由度已取得，P2后置字段门失败；最小修复仅静态验证。旧V13记录保留其当时状态；本次预算不授予重试或合并。
 
 上一轮[V10正式review](review_report_v10.md)已验收有限静态整改；原执行依据为[正式V9 review第9节](review_report_v9.md)，V10当轮未新增运行。其交付见[Response V10](response_v10.md)、[静态纠正记录](outcomes/records/v10_static_evidence_correction_v1.json)及[纠正版依赖表](outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json)。原V9派生表保留原字节；三个边界的12个字段更正在新文件中。V11/V12/V13有限工程证据与受控停止见[Response V11](response_v11.md)、[Response V12](response_v12.md)和[Response V13](response_v13.md)；没有新增正式 PDE 结果或合并许可。
 

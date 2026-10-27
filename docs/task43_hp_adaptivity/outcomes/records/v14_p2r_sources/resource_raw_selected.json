@@ -1,0 +1,431 @@
+{
+  "first": {
+    "schema": "task038.v14.j3.process-sample.v1",
+    "root_pid": 3147343,
+    "stage": "workflow",
+    "timestamp_ns": 1793062739250690350,
+    "exit_code": null,
+    "members": [
+      {
+        "pid": 3147343,
+        "start_ticks": 298773270,
+        "ppid": 3147118,
+        "comm": "python",
+        "state": "R",
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/watchdog --wall-seconds 5400 --interval 0.25 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/watchdog/workflow_phase.json -- bash -c \n   set -euo pipefail\n   cd /home/fenics/Projects/NN-Lab-V2\n   export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1\n   source scripts/activate_task40_phi90_pord64.sh\n   export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1\n   export BLIS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1\n   exec taskset -c 1 strace -D -ff -ttt -k \\\n     -e trace=sched_setaffinity,sched_getaffinity \\\n     -o \"$TASK43_V11_TRACE_PREFIX\" \"$@\"\n  task43-v11-worker python -u -m benchmarks.task43_hp_adaptivity.round1_candidates --primary-diagnostic-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json --execution-recovery-manifest /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json --accepted-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+        "stage": "workflow",
+        "rss_bytes": 37994496,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793062739249933259,
+        "exit_code": null,
+        "cpu_seconds": 1.0,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 7055622,
+          "wchar": 0,
+          "syscr": 6935,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0,
+          "cancelled_write_bytes": 0
+        }
+      },
+      {
+        "pid": 3147350,
+        "start_ticks": 298773340,
+        "ppid": 3147343,
+        "comm": "python",
+        "state": "R",
+        "cmdline": "python -u -m benchmarks.task43_hp_adaptivity.round1_candidates --primary-diagnostic-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json --execution-recovery-manifest /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json --accepted-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+        "stage": "workflow",
+        "rss_bytes": 17399808,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793062739250324610,
+        "exit_code": null,
+        "cpu_seconds": 0.28,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 1284765,
+          "wchar": 246,
+          "syscr": 235,
+          "syscw": 8,
+          "read_bytes": 0,
+          "write_bytes": 0,
+          "cancelled_write_bytes": 0
+        }
+      },
+      {
+        "pid": 3147363,
+        "start_ticks": 298773359,
+        "ppid": 3147343,
+        "comm": "strace",
+        "state": "S",
+        "cmdline": "strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/strace/sched python -u -m benchmarks.task43_hp_adaptivity.round1_candidates --primary-diagnostic-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json --execution-recovery-manifest /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json --accepted-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+        "stage": "workflow",
+        "rss_bytes": 2494464,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793062739250670570,
+        "exit_code": null,
+        "cpu_seconds": 0.01,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 0,
+          "wchar": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0,
+          "cancelled_write_bytes": 0
+        }
+      }
+    ],
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "all_status_readable": true,
+    "readability_retry_count": 0,
+    "compiler_descendant_count": 0,
+    "rss_bytes": 57888768,
+    "swap_bytes": 0,
+    "pss_sampled": false,
+    "pss_all_readable": null,
+    "pss_bytes": null,
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "resource_sample_cost": {
+      "wall_seconds": 0.2645050622522831,
+      "cpu_seconds": 0.1279811740000001
+    },
+    "node_memory_observation": {
+      "node0": {
+        "MemTotal_bytes": 1080832073728,
+        "MemFree_bytes": 481622708224
+      },
+      "node1": {
+        "MemTotal_bytes": 1082268311552,
+        "MemFree_bytes": 268867403776
+      },
+      "sampled_monotonic": 2987734.119676567,
+      "wall_seconds": 0.00592590868473053,
+      "policy": "observe_only"
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1509895069696,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "elapsed_seconds": 0.7225949289277196,
+    "memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 1509895069696,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 1509895069696,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "worker_phase": {},
+    "launch_cap_bytes": 8589934592,
+    "rss_warning_bytes": 7301444403,
+    "warning": false,
+    "live_or_unreaped_children": [
+      3147350,
+      3147363
+    ]
+  },
+  "peak": {
+    "schema": "task038.v14.j3.process-sample.v1",
+    "root_pid": 3147343,
+    "stage": "workflow",
+    "timestamp_ns": 1793064329345821616,
+    "exit_code": null,
+    "members": [
+      {
+        "pid": 3147343,
+        "start_ticks": 298773270,
+        "ppid": 3147118,
+        "comm": "python",
+        "state": "R",
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/watchdog --wall-seconds 5400 --interval 0.25 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/watchdog/workflow_phase.json -- bash -c \n   set -euo pipefail\n   cd /home/fenics/Projects/NN-Lab-V2\n   export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1\n   source scripts/activate_task40_phi90_pord64.sh\n   export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1\n   export BLIS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1\n   exec taskset -c 1 strace -D -ff -ttt -k \\\n     -e trace=sched_setaffinity,sched_getaffinity \\\n     -o \"$TASK43_V11_TRACE_PREFIX\" \"$@\"\n  task43-v11-worker python -u -m benchmarks.task43_hp_adaptivity.round1_candidates --primary-diagnostic-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json --execution-recovery-manifest /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json --accepted-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+        "stage": "workflow",
+        "rss_bytes": 38227968,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793064329344861541,
+        "exit_code": null,
+        "cpu_seconds": 523.38,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 2988615340,
+          "wchar": 14794517,
+          "syscr": 10716703,
+          "syscw": 2178,
+          "read_bytes": 0,
+          "write_bytes": 15003648,
+          "cancelled_write_bytes": 0
+        }
+      },
+      {
+        "pid": 3147350,
+        "start_ticks": 298773340,
+        "ppid": 3147343,
+        "comm": "python",
+        "state": "R",
+        "cmdline": "python -u -m benchmarks.task43_hp_adaptivity.round1_candidates --primary-diagnostic-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json --execution-recovery-manifest /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json --accepted-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+        "stage": "workflow",
+        "rss_bytes": 2142470144,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793064329345241934,
+        "exit_code": null,
+        "cpu_seconds": 1062.32,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 3788562006,
+          "wchar": 889740,
+          "syscr": 14472,
+          "syscw": 984,
+          "read_bytes": 0,
+          "write_bytes": 1032192,
+          "cancelled_write_bytes": 4096
+        }
+      },
+      {
+        "pid": 3147363,
+        "start_ticks": 298773359,
+        "ppid": 3147343,
+        "comm": "strace",
+        "state": "S",
+        "cmdline": "strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/strace/sched python -u -m benchmarks.task43_hp_adaptivity.round1_candidates --primary-diagnostic-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json --execution-recovery-manifest /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json --accepted-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+        "stage": "workflow",
+        "rss_bytes": 3723264,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793064329345538537,
+        "exit_code": null,
+        "cpu_seconds": 1.37,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 10969255,
+          "wchar": 55475,
+          "syscr": 3008,
+          "syscw": 777,
+          "read_bytes": 0,
+          "write_bytes": 57344,
+          "cancelled_write_bytes": 0
+        }
+      },
+      {
+        "pid": 3147397,
+        "start_ticks": 298773501,
+        "ppid": 3147350,
+        "comm": "orted",
+        "state": "S",
+        "cmdline": "orted --hnp --set-sid --report-uri 8 --singleton-died-pipe 9 -mca state_novm_select 1 -mca ess hnp -mca pmix ^s1,s2,cray,isolated",
+        "stage": "workflow",
+        "rss_bytes": 25939968,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793064329345813048,
+        "exit_code": null,
+        "cpu_seconds": 0.4,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 6404666,
+          "wchar": 1869,
+          "syscr": 5279,
+          "syscw": 35,
+          "read_bytes": 0,
+          "write_bytes": 184320,
+          "cancelled_write_bytes": 0
+        }
+      }
+    ],
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "all_status_readable": true,
+    "readability_retry_count": 0,
+    "compiler_descendant_count": 0,
+    "rss_bytes": 2210361344,
+    "swap_bytes": 0,
+    "pss_sampled": false,
+    "pss_all_readable": null,
+    "pss_bytes": null,
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "resource_sample_cost": {
+      "wall_seconds": 0.23276874795556068,
+      "cpu_seconds": 0.1151219260000289
+    },
+    "node_memory_observation": {
+      "node0": {
+        "MemTotal_bytes": 1080832073728,
+        "MemFree_bytes": 483179134976
+      },
+      "node1": {
+        "MemTotal_bytes": 1082268311552,
+        "MemFree_bytes": 809515737088
+      },
+      "sampled_monotonic": 2989320.825228778,
+      "wall_seconds": 0.0009435359388589859,
+      "policy": "observe_only"
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 2052853669888,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "elapsed_seconds": 1590.816941170022,
+    "memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 2052853669888,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 2052853669888,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "worker_phase": {
+      "facts": {
+        "candidate_id": "v11_r9_h8",
+        "plan_sha256": "024437fef2bfe1b4c5c66b186629d77885400b9bb751f57c71a5882e165be2f2"
+      },
+      "phase": "mesh_setup",
+      "phase_started_monotonic": 2987818.511140476,
+      "stage": "task43_v11_p2_mesh_authority_begin",
+      "updated_monotonic": 2987818.513793277
+    },
+    "launch_cap_bytes": 8589934592,
+    "rss_warning_bytes": 7301444403,
+    "warning": false,
+    "live_or_unreaped_children": [
+      3147350,
+      3147363,
+      3147397
+    ]
+  },
+  "last": {
+    "schema": "task038.v14.j3.process-sample.v1",
+    "root_pid": 3147343,
+    "stage": "workflow",
+    "timestamp_ns": 1793064334996598374,
+    "exit_code": 1,
+    "members": [
+      {
+        "pid": 3147343,
+        "start_ticks": 298773270,
+        "ppid": 3147118,
+        "comm": "python",
+        "state": "R",
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/watchdog --wall-seconds 5400 --interval 0.25 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/space_and_saved_primary_attempt2/watchdog/workflow_phase.json -- bash -c \n   set -euo pipefail\n   cd /home/fenics/Projects/NN-Lab-V2\n   export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1\n   source scripts/activate_task40_phi90_pord64.sh\n   export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1\n   export BLIS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1\n   exec taskset -c 1 strace -D -ff -ttt -k \\\n     -e trace=sched_setaffinity,sched_getaffinity \\\n     -o \"$TASK43_V11_TRACE_PREFIX\" \"$@\"\n  task43-v11-worker python -u -m benchmarks.task43_hp_adaptivity.round1_candidates --primary-diagnostic-contract /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json --execution-recovery-manifest /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json --accepted-parent-selection-record /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+        "stage": "workflow",
+        "rss_bytes": 38227968,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793064334996575098,
+        "exit_code": null,
+        "cpu_seconds": 525.49,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 6805648041,
+          "wchar": 15786409,
+          "syscr": 10779393,
+          "syscw": 4009,
+          "read_bytes": 0,
+          "write_bytes": 16355328,
+          "cancelled_write_bytes": 12288
+        }
+      }
+    ],
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "all_status_readable": true,
+    "readability_retry_count": 0,
+    "compiler_descendant_count": 0,
+    "rss_bytes": 38227968,
+    "swap_bytes": 0,
+    "pss_sampled": false,
+    "pss_all_readable": null,
+    "pss_bytes": null,
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "resource_sample_cost": {
+      "wall_seconds": 0.08827833598479629,
+      "cpu_seconds": 0.08826706500008186
+    },
+    "node_memory_observation": {
+      "node0": {
+        "MemTotal_bytes": 1080832073728,
+        "MemFree_bytes": 482544648192
+      },
+      "node1": {
+        "MemTotal_bytes": 1082268311552,
+        "MemFree_bytes": 810478485504
+      },
+      "sampled_monotonic": 2989325.974624337,
+      "wall_seconds": 0.0011733300052583218,
+      "policy": "observe_only"
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 2054178775040,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "elapsed_seconds": 1596.460181595292,
+    "memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 2054178775040,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 2054178775040,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "worker_phase": {
+      "facts": {
+        "candidate_id": "v11_r9_h8",
+        "plan_sha256": "024437fef2bfe1b4c5c66b186629d77885400b9bb751f57c71a5882e165be2f2"
+      },
+      "phase": "mesh_setup",
+      "phase_started_monotonic": 2987818.511140476,
+      "stage": "task43_v11_p2_mesh_authority_begin",
+      "updated_monotonic": 2987818.513793277
+    },
+    "launch_cap_bytes": 8589934592,
+    "rss_warning_bytes": 7301444403,
+    "warning": false,
+    "live_or_unreaped_children": []
+  },
+  "sample_interval_min": 0.47027260018512607,
+  "sample_interval_max": 1.0550098470412195
+}

@@ -1,6 +1,14 @@
 # Task43：accepted9/R9冻结，最终空间精度未达
 
-## Task43 V13当前状态：S1有限工程通过；D1性能停止；P2R未运行
+## V14 当前状态：P2R一次已执行；实际FE取得，字段门失败
+
+用户授权原P2R工作90分钟/含清理93分钟后，实际执行一次，whole **1596.6148925269954 s**；树RSS采样峰 **2210361344 B**、task swap0、CPU1/MPI1/单线程及清理符合记录。实际seed8及必要材料闭包得到194叶、**FE 116740，较R9增加6268**，满足110472与237600之间的数值区间；但研究入口误读periodic/floquet字段后抛错，worker/watchdog/launcher退出1/2/2，P2整体失败。已作键名和现有fixture的最小静态修复，AST通过、修复后pytest未运行。旧S1 12/12仅对应旧字节与覆盖范围。
+
+旧A2保存数组raw/modal/q8/q10复算完整保存，q8/q10 G为6.043732933300416e-11 / 6.04373290835214e-11（限1e-5），无新A2求解。P3/P4/P5均未运行，h的J/G及输出收益未取得。P2R 1/1、recovery支持5/5用尽，支持whole累计2215.2188096446916 s；新正式0，正式5/8、历史封存槽及五项科学状态不变。无自动重试、READY或合并许可。
+
+详见 [Response V14](task43_hp_adaptivity/response_v14.md) 和 [V14机器记录](task43_hp_adaptivity/outcomes/records/v14_p2r_budget_extension_results_v1.json)；原失败与旧字节保留，不把静态修正解释为P2成功。
+
+## Task43 V13历史状态：S1有限工程通过；D1性能停止；P2R未运行
 
 V13在review §9的限定范围修正两个opt-in研究入口及其现有测试。S1指定selector 12/12通过（`PASS_LIMITED_SUPPORT_ENGINEERING`）；D1随后在真实space-authority构造中达到540 s工作停止门，whole为541.9988412610255 s，未返回最终cell-map及独立FE审计；本支持阶段不装配PDE矩阵，rows/NNZ未测。停止为性能受控停止，不能解释为数值或数学失败。P2R要求1740 s工作预算/1800 s whole上限，但25种degree-map配置中18种冷构造未完成，cell-map及audit尾段也无上界，因此P2R `NOT_RUN_CONSERVATIVE_BUDGET_UNPROVEN`；P3/P4/P5未运行。旧保存A2数组有限诊断通过，不改变其`INCOMPLETE_NOT_QUALIFIED`端点身份。
 

@@ -1,0 +1,17 @@
+{
+  "recorded_utc": "2026-10-27T01:18:35.898249+00:00",
+  "incorrect_statement": "reference-space cache near capacity and evicting",
+  "root_raw_evidence": {
+    "call_id": 340,
+    "cache_after": {
+      "currsize": 18,
+      "maxsize": 128,
+      "hits": 169,
+      "misses": 18
+    },
+    "call341": "new degree key BEGIN, no eviction evidence"
+  },
+  "subagent_acknowledged": "confused inner _create_active_element maxsize32 with reference-space maxsize128; withdrew ungrounded eviction inference",
+  "effect": "no source, cache, parameters, runtime or gate change; root progress stated only observed hits",
+  "time": "not_measured"
+}
