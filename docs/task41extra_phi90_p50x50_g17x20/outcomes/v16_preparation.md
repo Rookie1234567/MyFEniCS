@@ -138,3 +138,7 @@ source `b387bd75eee6cbd3ee3282ca0ae424d2634fa5c4`，unit `myfenics-case-20261027
 主控同时发现原B仅比较binary64 matmul/fsum，还缺Review第4节固定最终z的独立较宽残差诊断。新增clongdouble的`b-Kz`及已有lambda点积，明确记录significand位数、与两种binary64残差的差，以及公式中的负号`-lambda^H r_f`。只读同一保存K/b/z/lambda，不驱动任何校正，不新增GETRS，也不把longdouble当精确算术证明。无已资格lambda的第二组保持缺项，不新求伴随。
 
 attempt10 service父段30.5616758601秒、child21.8409579317秒、systemd34.708396秒；tree峰619081728 B、cgroup内核峰491835392 B、task swap0、后代清空。上述嵌套时间不相加，原窗口仍不刷新。
+
+## 最终只读接续（attempt11/12）
+
+11已完成两star正确重放，但complete字段缺失导致顶层失败；原receipt不改。三行修复经20项定向测试，主控冻结086c884121575c8a9662cd0f500a5287a36a79b8。12在原V16窗口使用05的A/metadata resume，服务完成，未重算A或元数据、未新GETRS。逐attempt/source/错误/费用见v16_closeout/attempt_index.json；本轮科学出口为诊断完成、原action FAIL不变。

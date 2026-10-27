@@ -1,3 +1,9 @@
+## Task41extra V16：完整余差分布与旧star终态绑定（2026-10-27）
+
+在0.7nm、50×50×140nm、phi90、p6/28,000-cell/64,120-mode既有保存数据上：两列Δy=0，变化只在g的trace；原action仍5.7625744836e-11 / 1.21236846436e-10，对1e-11失败。57个互斥MPC incident类别中，tag1/perm0/两incident类别占约71.07%/71.11%剩余能量；两旧star类别仅1.85%/1.83%。其y/g各自精确绑定V15，无新GETRS。最大行1622464→original5218672，cells7873/8014数值块缺失，下一步仅提出完整两cell补证，尚未授权重建。
+
+有记录9次service父段合计511.668287s，最后28.938895s；3次preworker service计时未知，不填0；两次metadata-only扫描（首次hash口径失败、第二次持久化）均计费，没有全域数值owner/矩阵/LU。已采样tree最大2,593,652,736B、cgroup最大2,521,493,504B（不同attempt），task swap0。固定6h窗口保留，序404快照累计5919.788905s包括等待/修复；不能与service父子相加。原始负结果和旧窗口UNKNOWN不清零。恢复/200q/完整参考/FGMRES/官方场及2TB/48h仍未资格化。见[response_v16](task41extra_phi90_p50x50_g17x20/response_v16.md)、[compact](task41extra_phi90_p50x50_g17x20/outcomes/v16_closeout/operator_resource_compact.json)。
+
 ## Task41extra V15：全域验收完成但数值门失败（2026-10-27）
 
 0.7nm、50×50×140nm、居中Si矩形、phi90、p6/28,000 cells、64,120 modes。原LU加最多两次补偿残差校正后，两列完整差5.762574483600798e-11 / 1.212368464357194e-10，均超过1e-11；较V9约改善4.64/4.63倍，但没有科学资格。owner39,972.508249秒；正式service60,758.813495秒（含错误carrier下游及清场，保留成本）；tree峰555,498,606,592 B、cgroup峰556,689,793,024 B、task swap0。保存只读审核完整，恢复/200q/factor/FGMRES/官方RTA未运行。旧WORKER_FAILED和原checker失败不改写。下一步用保存y/g分解RHS余差，不自动重复28,000键构建。完整身份、分项和原始文件/hash见[response_v15](task41extra_phi90_p50x50_g17x20/response_v15.md)、[compact](task41extra_phi90_p50x50_g17x20/outcomes/v15_closeout/operator_resource_compact.json)、[证据索引](task41extra_phi90_p50x50_g17x20/outcomes/v15_closeout/evidence_index.json)。没有完整场、最终精度或2TB/48h PASS。

@@ -1,0 +1,489 @@
+{
+  "collected_utc": "2026-10-27T11:04:14.048931+00:00",
+  "attempts": [
+    {
+      "attempt": "attempt01",
+      "unit": "myfenics-case-20261027T092655-3402492.service",
+      "systemd": {
+        "MainPID": "0",
+        "ExecMainStartTimestampMonotonic": "3018212875316",
+        "ExecMainExitTimestampMonotonic": "3018219095710",
+        "ExecMainStatus": "1",
+        "ControlGroup": "",
+        "MemoryPeak": "[not set]",
+        "CPUUsageNSec": "8440974000",
+        "ActiveState": "failed",
+        "SubState": "failed"
+      },
+      "systemd_wall_seconds": 6.220394,
+      "cgroup_still_exists": null,
+      "timing_scopes_nested_not_additive": true
+    },
+    {
+      "attempt": "attempt02",
+      "unit": "myfenics-case-20261027T093146-3403305.service",
+      "systemd": {
+        "MainPID": "0",
+        "ExecMainStartTimestampMonotonic": "3018503896204",
+        "ExecMainExitTimestampMonotonic": "3018512952834",
+        "ExecMainStatus": "1",
+        "ControlGroup": "",
+        "MemoryPeak": "[not set]",
+        "CPUUsageNSec": "11420015000",
+        "ActiveState": "failed",
+        "SubState": "failed"
+      },
+      "systemd_wall_seconds": 9.05663,
+      "cgroup_still_exists": null,
+      "timing_scopes_nested_not_additive": true
+    },
+    {
+      "attempt": "attempt03",
+      "unit": "myfenics-case-20261027T094007-3404085.service",
+      "systemd": {
+        "MainPID": "0",
+        "ExecMainStartTimestampMonotonic": "3019004999189",
+        "ExecMainExitTimestampMonotonic": "3019019682068",
+        "ExecMainStatus": "3",
+        "ControlGroup": "",
+        "MemoryPeak": "[not set]",
+        "CPUUsageNSec": "14387209000",
+        "ActiveState": "failed",
+        "SubState": "failed"
+      },
+      "systemd_wall_seconds": 14.682879,
+      "cgroup_still_exists": null,
+      "receipt_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d22e02f713c4a68c79759b2c5cb7cbcec693b7b3277ad98b529838008e38beb/saved_vector_distribution/attempt03.service/task41_p0_service_receipt.json",
+      "receipt_sha256": "92761f34cf5fd8fd0106cb802911ccacce5756514fc9fc05b4bd99cee672235f",
+      "source": "b3ad9ee67f73d7017b7d90e29bdaea4192c59a3e",
+      "service_parent_seconds": 11.501060371287167,
+      "classification": "SAVED_VECTOR_DISTRIBUTION_INCOMPLETE",
+      "child_seconds": 4.668528423644602,
+      "tree_sampled_peak_bytes": 298184704,
+      "cgroup_kernel_peak_bytes": 251199488,
+      "task_swap_peak_bytes": 0,
+      "tree_swap_peak_bytes": 0,
+      "host_swap_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "descendants_cleared": true,
+      "disk": {
+        "bound_raw_artifact_bytes_stat_deduplicated": 781776256,
+        "cumulative_raw_artifact_limit_bytes": 17179869184,
+        "current_invocation_bytes": 82292,
+        "free_space_bytes": 1980317360128,
+        "free_space_floor_bytes": 2147483648,
+        "recorded_cumulative_raw_artifact_bytes": 15603033504,
+        "reserved_remaining_new_evidence_bytes": 0,
+        "status": "POST_WRITE_CHECKED",
+        "window_output_tree_bytes": 98380,
+        "window_wide_new_evidence_limit_bytes": 134217728
+      },
+      "errors": [
+        "ValueError: V16 V15 same-S reference report does not bind producer report v9_audit"
+      ],
+      "timing_scopes_nested_not_additive": true
+    },
+    {
+      "attempt": "attempt04",
+      "unit": "myfenics-case-20261027T094906-3405945.service",
+      "systemd": {
+        "MainPID": "0",
+        "ExecMainStartTimestampMonotonic": "3019544008219",
+        "ExecMainExitTimestampMonotonic": "3019712326404",
+        "ExecMainStatus": "3",
+        "ControlGroup": "",
+        "MemoryPeak": "2477625344",
+        "CPUUsageNSec": "193104076000",
+        "ActiveState": "failed",
+        "SubState": "failed"
+      },
+      "systemd_wall_seconds": 168.318185,
+      "cgroup_still_exists": null,
+      "receipt_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d22e02f713c4a68c79759b2c5cb7cbcec693b7b3277ad98b529838008e38beb/saved_vector_distribution/attempt04.service/task41_p0_service_receipt.json",
+      "receipt_sha256": "04c78c04ebea1fd36037700df21662e04bbb33498300bdc70c6375e319420be9",
+      "source": "abea35dfbd7ea17b30ec00eaf1a9bc85d827b3ee",
+      "service_parent_seconds": 164.06059463927522,
+      "classification": "SAVED_VECTOR_DISTRIBUTION_INCOMPLETE",
+      "child_seconds": 156.03649093583226,
+      "tree_sampled_peak_bytes": 2593652736,
+      "cgroup_kernel_peak_bytes": 2477625344,
+      "task_swap_peak_bytes": 0,
+      "tree_swap_peak_bytes": 0,
+      "host_swap_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "descendants_cleared": true,
+      "disk": {
+        "bound_raw_artifact_bytes_stat_deduplicated": 781776256,
+        "cumulative_raw_artifact_limit_bytes": 17179869184,
+        "current_invocation_bytes": 1227644,
+        "free_space_bytes": 1980299575296,
+        "free_space_floor_bytes": 2147483648,
+        "recorded_cumulative_raw_artifact_bytes": 15603033504,
+        "reserved_remaining_new_evidence_bytes": 0,
+        "status": "POST_WRITE_CHECKED",
+        "window_output_tree_bytes": 1326024,
+        "window_wide_new_evidence_limit_bytes": 134217728
+      },
+      "errors": [
+        "ValueError: V16 streamed provenance does not bind the pinned active-row values"
+      ],
+      "timing_scopes_nested_not_additive": true
+    },
+    {
+      "attempt": "attempt05",
+      "unit": "myfenics-case-20261027T100613-3407976.service",
+      "systemd": {
+        "MainPID": "0",
+        "ExecMainStartTimestampMonotonic": "3020572042263",
+        "ExecMainExitTimestampMonotonic": "3020747516334",
+        "ExecMainStatus": "3",
+        "ControlGroup": "",
+        "MemoryPeak": "2326876160",
+        "CPUUsageNSec": "200577924000",
+        "ActiveState": "failed",
+        "SubState": "failed"
+      },
+      "systemd_wall_seconds": 175.474071,
+      "cgroup_still_exists": null,
+      "receipt_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d22e02f713c4a68c79759b2c5cb7cbcec693b7b3277ad98b529838008e38beb/saved_vector_distribution/attempt05.service/task41_p0_service_receipt.json",
+      "receipt_sha256": "2da363e68cf6741ef7cdc383b7f0355e6f57b380afef25bbcd1c56e5b179dbc7",
+      "source": "6c404618ed0f0dcb4573a303a2fa2ac30144c8ef",
+      "service_parent_seconds": 171.27146060019732,
+      "classification": "SAVED_VECTOR_DISTRIBUTION_INCOMPLETE",
+      "child_seconds": 162.55909864790738,
+      "tree_sampled_peak_bytes": 2486276096,
+      "cgroup_kernel_peak_bytes": 2521493504,
+      "task_swap_peak_bytes": 0,
+      "tree_swap_peak_bytes": 0,
+      "host_swap_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "descendants_cleared": true,
+      "disk": {
+        "bound_raw_artifact_bytes_stat_deduplicated": 781776256,
+        "cumulative_raw_artifact_limit_bytes": 17179869184,
+        "current_invocation_bytes": 25804066,
+        "free_space_bytes": 1980258762752,
+        "free_space_floor_bytes": 2147483648,
+        "recorded_cumulative_raw_artifact_bytes": 15603033504,
+        "reserved_remaining_new_evidence_bytes": 0,
+        "status": "POST_WRITE_CHECKED",
+        "window_output_tree_bytes": 27130090,
+        "window_wide_new_evidence_limit_bytes": 134217728
+      },
+      "errors": [
+        "ValueError: V16 V14 attempt01 candidate report identity or negative scope differs"
+      ],
+      "timing_scopes_nested_not_additive": true
+    },
+    {
+      "attempt": "attempt06",
+      "unit": "myfenics-case-20261027T101520-3410209.service",
+      "systemd": {
+        "MainPID": "0",
+        "ExecMainStartTimestampMonotonic": "3021119289255",
+        "ExecMainExitTimestampMonotonic": "3021128864998",
+        "ExecMainStatus": "1",
+        "ControlGroup": "",
+        "MemoryPeak": "[not set]",
+        "CPUUsageNSec": "11774589000",
+        "ActiveState": "failed",
+        "SubState": "failed"
+      },
+      "systemd_wall_seconds": 9.575743,
+      "cgroup_still_exists": null,
+      "timing_scopes_nested_not_additive": true
+    },
+    {
+      "attempt": "attempt07",
+      "unit": "myfenics-case-20261027T101821-3411233.service",
+      "systemd": {
+        "MainPID": "0",
+        "ExecMainStartTimestampMonotonic": "3021298962392",
+        "ExecMainExitTimestampMonotonic": "3021324911943",
+        "ExecMainStatus": "3",
+        "ControlGroup": "",
+        "MemoryPeak": "[not set]",
+        "CPUUsageNSec": "27626832000",
+        "ActiveState": "failed",
+        "SubState": "failed"
+      },
+      "systemd_wall_seconds": 25.949551,
+      "cgroup_still_exists": null,
+      "receipt_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d22e02f713c4a68c79759b2c5cb7cbcec693b7b3277ad98b529838008e38beb/saved_vector_distribution/attempt07.service/task41_p0_service_receipt.json",
+      "receipt_sha256": "f343a7fdb049c3290dce99804d79ca11fe92eafa05dfba5c047ecbd495d5a0f4",
+      "source": "2de17690039cc856d0e5f00df3eaf657c7d3886f",
+      "service_parent_seconds": 22.2098349458538,
+      "classification": "SAVED_VECTOR_DISTRIBUTION_INCOMPLETE",
+      "child_seconds": 13.321438264101744,
+      "tree_sampled_peak_bytes": 537612288,
+      "cgroup_kernel_peak_bytes": 444903424,
+      "task_swap_peak_bytes": 0,
+      "tree_swap_peak_bytes": 0,
+      "host_swap_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "descendants_cleared": true,
+      "disk": {
+        "bound_raw_artifact_bytes_stat_deduplicated": 804528384,
+        "cumulative_raw_artifact_limit_bytes": 17179869184,
+        "current_invocation_bytes": 1335305,
+        "free_space_bytes": 1980232736768,
+        "free_space_floor_bytes": 2147483648,
+        "recorded_cumulative_raw_artifact_bytes": 15603033504,
+        "reserved_remaining_new_evidence_bytes": 0,
+        "status": "POST_WRITE_CHECKED",
+        "window_output_tree_bytes": 28465395,
+        "window_wide_new_evidence_limit_bytes": 134217728
+      },
+      "errors": [
+        "ValueError: V16 attempt01 V8 cell446 selected active position differs"
+      ],
+      "timing_scopes_nested_not_additive": true
+    },
+    {
+      "attempt": "attempt08",
+      "unit": "myfenics-case-20261027T102656-3413245.service",
+      "systemd": {
+        "MainPID": "0",
+        "ExecMainStartTimestampMonotonic": "3021814110269",
+        "ExecMainExitTimestampMonotonic": "3021841055288",
+        "ExecMainStatus": "3",
+        "ControlGroup": "",
+        "MemoryPeak": "[not set]",
+        "CPUUsageNSec": "28133636000",
+        "ActiveState": "failed",
+        "SubState": "failed"
+      },
+      "systemd_wall_seconds": 26.945019,
+      "cgroup_still_exists": null,
+      "receipt_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d22e02f713c4a68c79759b2c5cb7cbcec693b7b3277ad98b529838008e38beb/saved_vector_distribution/attempt08.service/task41_p0_service_receipt.json",
+      "receipt_sha256": "3c5aedfc87dafb264e8d0051521d83ecf118bff34455e8054f2fc9f3dc3c61f1",
+      "source": "1d1a83894359942e4bcaea7845de10bd86bf8db2",
+      "service_parent_seconds": 23.24307210603729,
+      "classification": "SAVED_VECTOR_DISTRIBUTION_INCOMPLETE",
+      "child_seconds": 14.503318771719933,
+      "tree_sampled_peak_bytes": 577015808,
+      "cgroup_kernel_peak_bytes": 492589056,
+      "task_swap_peak_bytes": 0,
+      "tree_swap_peak_bytes": 0,
+      "host_swap_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "descendants_cleared": true,
+      "disk": {
+        "bound_raw_artifact_bytes_stat_deduplicated": 804528384,
+        "cumulative_raw_artifact_limit_bytes": 17179869184,
+        "current_invocation_bytes": 1345004,
+        "free_space_bytes": 1980212240384,
+        "free_space_floor_bytes": 2147483648,
+        "recorded_cumulative_raw_artifact_bytes": 15603033504,
+        "reserved_remaining_new_evidence_bytes": 0,
+        "status": "POST_WRITE_CHECKED",
+        "window_output_tree_bytes": 29810400,
+        "window_wide_new_evidence_limit_bytes": 134217728
+      },
+      "errors": [
+        "FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_recovery_mode_16030_native_rhs.npy'"
+      ],
+      "timing_scopes_nested_not_additive": true
+    },
+    {
+      "attempt": "attempt09",
+      "unit": "myfenics-case-20261027T103912-3414939.service",
+      "systemd": {
+        "MainPID": "0",
+        "ExecMainStartTimestampMonotonic": "3022550622345",
+        "ExecMainExitTimestampMonotonic": "3022581437725",
+        "ExecMainStatus": "3",
+        "ControlGroup": "",
+        "MemoryPeak": "299696128",
+        "CPUUsageNSec": "32062015000",
+        "ActiveState": "failed",
+        "SubState": "failed"
+      },
+      "systemd_wall_seconds": 30.81538,
+      "cgroup_still_exists": null,
+      "receipt_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d22e02f713c4a68c79759b2c5cb7cbcec693b7b3277ad98b529838008e38beb/saved_vector_distribution/attempt09.service/task41_p0_service_receipt.json",
+      "receipt_sha256": "08a9b3ddbb8a0e569aaa18f152dc07ae321acfc9d256cfc8430161b12c27c7ed",
+      "source": "694808e5e63bfb7cf0d1170508b0df8bd094d73c",
+      "service_parent_seconds": 27.107730984,
+      "classification": "SAVED_VECTOR_DISTRIBUTION_INCOMPLETE",
+      "child_seconds": 18.440517702139914,
+      "tree_sampled_peak_bytes": 576708608,
+      "cgroup_kernel_peak_bytes": 491819008,
+      "task_swap_peak_bytes": 0,
+      "tree_swap_peak_bytes": 0,
+      "host_swap_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "descendants_cleared": true,
+      "disk": {
+        "bound_raw_artifact_bytes_stat_deduplicated": 804528384,
+        "cumulative_raw_artifact_limit_bytes": 17179869184,
+        "current_invocation_bytes": 1381319,
+        "free_space_bytes": 1980189908992,
+        "free_space_floor_bytes": 2147483648,
+        "recorded_cumulative_raw_artifact_bytes": 15603033504,
+        "reserved_remaining_new_evidence_bytes": 0,
+        "status": "POST_WRITE_CHECKED",
+        "window_output_tree_bytes": 31191720,
+        "window_wide_new_evidence_limit_bytes": 134217728
+      },
+      "errors": [
+        "ValueError: V16 attempt04 V8 report does not cover the exact two-cell star"
+      ],
+      "timing_scopes_nested_not_additive": true
+    },
+    {
+      "attempt": "attempt10",
+      "unit": "myfenics-case-20261027T104653-3416266.service",
+      "systemd": {
+        "MainPID": "0",
+        "ExecMainStartTimestampMonotonic": "3023011580333",
+        "ExecMainExitTimestampMonotonic": "3023046288729",
+        "ExecMainStatus": "3",
+        "ControlGroup": "",
+        "MemoryPeak": "491835392",
+        "CPUUsageNSec": "36543347000",
+        "ActiveState": "failed",
+        "SubState": "failed"
+      },
+      "systemd_wall_seconds": 34.708396,
+      "cgroup_still_exists": null,
+      "receipt_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d22e02f713c4a68c79759b2c5cb7cbcec693b7b3277ad98b529838008e38beb/saved_vector_distribution/attempt10.service/task41_p0_service_receipt.json",
+      "receipt_sha256": "a8b0406f9c122d42acc89de0a682d8412f4b717ed6cbe8a5e8505f872d8e171b",
+      "source": "b387bd75eee6cbd3ee3282ca0ae424d2634fa5c4",
+      "service_parent_seconds": 30.561675860080868,
+      "classification": "SAVED_VECTOR_DISTRIBUTION_INCOMPLETE",
+      "child_seconds": 21.840957931708544,
+      "tree_sampled_peak_bytes": 619081728,
+      "cgroup_kernel_peak_bytes": 491835392,
+      "task_swap_peak_bytes": 0,
+      "tree_swap_peak_bytes": 0,
+      "host_swap_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "descendants_cleared": true,
+      "disk": {
+        "bound_raw_artifact_bytes_stat_deduplicated": 804528384,
+        "cumulative_raw_artifact_limit_bytes": 17179869184,
+        "current_invocation_bytes": 1398878,
+        "free_space_bytes": 1980175634432,
+        "free_space_floor_bytes": 2147483648,
+        "recorded_cumulative_raw_artifact_bytes": 15603033504,
+        "reserved_remaining_new_evidence_bytes": 0,
+        "status": "POST_WRITE_CHECKED",
+        "window_output_tree_bytes": 32590599,
+        "window_wide_new_evidence_limit_bytes": 134217728
+      },
+      "errors": [
+        "FileNotFoundError: [Errno 2] No such file or directory: '/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_b0_recovery_mode_16030_native_rhs.npy'"
+      ],
+      "timing_scopes_nested_not_additive": true
+    },
+    {
+      "attempt": "attempt11",
+      "unit": "myfenics-case-20261027T105621-3417621.service",
+      "systemd": {
+        "MainPID": "0",
+        "ExecMainStartTimestampMonotonic": "3023579156290",
+        "ExecMainExitTimestampMonotonic": "3023616148238",
+        "ExecMainStatus": "3",
+        "ControlGroup": "",
+        "MemoryPeak": "[not set]",
+        "CPUUsageNSec": "40561241000",
+        "ActiveState": "failed",
+        "SubState": "failed"
+      },
+      "systemd_wall_seconds": 36.991948,
+      "cgroup_still_exists": null,
+      "receipt_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d22e02f713c4a68c79759b2c5cb7cbcec693b7b3277ad98b529838008e38beb/saved_vector_distribution/attempt11.service/task41_p0_service_receipt.json",
+      "receipt_sha256": "9897965de71f4a120d0fd89b1109c31971106bd7e42f4463af811725373b629a",
+      "source": "d19d3e8c0e74cc33004fa0a688532485448f6fea",
+      "service_parent_seconds": 32.77396258013323,
+      "classification": "SAVED_VECTOR_DISTRIBUTION_INCOMPLETE",
+      "child_seconds": 24.05380526697263,
+      "tree_sampled_peak_bytes": 622268416,
+      "cgroup_kernel_peak_bytes": 493146112,
+      "task_swap_peak_bytes": 0,
+      "tree_swap_peak_bytes": 0,
+      "host_swap_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "descendants_cleared": true,
+      "disk": {
+        "bound_raw_artifact_bytes_stat_deduplicated": 804528384,
+        "cumulative_raw_artifact_limit_bytes": 17179869184,
+        "current_invocation_bytes": 2293119,
+        "free_space_bytes": 1980161290240,
+        "free_space_floor_bytes": 2147483648,
+        "recorded_cumulative_raw_artifact_bytes": 15603033504,
+        "reserved_remaining_new_evidence_bytes": 0,
+        "status": "POST_WRITE_CHECKED",
+        "window_output_tree_bytes": 34883719,
+        "window_wide_new_evidence_limit_bytes": 134217728
+      },
+      "errors": [
+        "both V14 saved-star array replays must complete before V16 closeout"
+      ],
+      "timing_scopes_nested_not_additive": true
+    },
+    {
+      "attempt": "attempt12",
+      "unit": "myfenics-case-20261027T110225-3418844.service",
+      "systemd": {
+        "MainPID": "0",
+        "ExecMainStartTimestampMonotonic": "0",
+        "ExecMainExitTimestampMonotonic": "0",
+        "ExecMainStatus": "0",
+        "ControlGroup": "",
+        "MemoryPeak": "[not set]",
+        "CPUUsageNSec": "[not set]",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "systemd_wall_seconds": null,
+      "cgroup_still_exists": null,
+      "receipt_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d22e02f713c4a68c79759b2c5cb7cbcec693b7b3277ad98b529838008e38beb/saved_vector_distribution/attempt12.service/task41_p0_service_receipt.json",
+      "receipt_sha256": "00f74433b91d7b841256f80307c17a0a91fe1ee8819f9116b734ae33e4cfc9b7",
+      "source": "086c884121575c8a9662cd0f500a5287a36a79b8",
+      "service_parent_seconds": 28.938894897233695,
+      "classification": "SAVED_VECTOR_DISTRIBUTION_DIAGNOSTIC_ONLY",
+      "child_seconds": 21.660920071881264,
+      "tree_sampled_peak_bytes": 621309952,
+      "cgroup_kernel_peak_bytes": 492494848,
+      "task_swap_peak_bytes": 0,
+      "tree_swap_peak_bytes": 0,
+      "host_swap_pages": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      },
+      "descendants_cleared": true,
+      "disk": {
+        "bound_raw_artifact_bytes_stat_deduplicated": 804528384,
+        "cumulative_raw_artifact_limit_bytes": 17179869184,
+        "current_invocation_bytes": 2283977,
+        "free_space_bytes": 1980148346880,
+        "free_space_floor_bytes": 2147483648,
+        "recorded_cumulative_raw_artifact_bytes": 15603033504,
+        "reserved_remaining_new_evidence_bytes": 0,
+        "status": "POST_WRITE_CHECKED",
+        "window_output_tree_bytes": 37167696,
+        "window_wide_new_evidence_limit_bytes": 134217728
+      },
+      "errors": [],
+      "timing_scopes_nested_not_additive": true
+    }
+  ]
+}

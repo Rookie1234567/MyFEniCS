@@ -1,0 +1,42 @@
+{
+  "schema": "task40extra.review_v10_campaign_accounting.v1",
+  "sequence": 404,
+  "label": "V16_MAIN_CLOSEOUT_SAVED_ANALYSIS_COMPLETE",
+  "phase": "closeout",
+  "campaign_window_sha256": "3d22e02f713c4a68c79759b2c5cb7cbcec693b7b3277ad98b529838008e38beb",
+  "t0_utc_ns": 1793093185501825940,
+  "deadline_utc_ns": 1793114785501825940,
+  "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "time_namespace_identity": {
+    "time": "time:[4026531834]",
+    "time_for_children": "time:[4026531834]"
+  },
+  "previous_sample": {
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "boottime": 3023974.569849472,
+    "monotonic": 3023974.569848968,
+    "utc_ns": 1793098979708983050
+  },
+  "sample": {
+    "monotonic": 3024100.151518875,
+    "boottime": 3024100.151521172,
+    "utc_ns": 1793099105290655059,
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3"
+  },
+  "adjacent_interval": {
+    "elapsed_seconds": {
+      "monotonic": 125.58166990661994,
+      "boottime": 125.58167169988155,
+      "utc": 125.581672009
+    },
+    "budget_seconds": 125.581672009,
+    "discrepancy_seconds": 2.102380065593934e-06,
+    "tolerance_seconds": 5.0,
+    "policy": "conservative_realtime",
+    "policy_version": 1,
+    "utc_minus_monotonic_seconds": 2.102380065593934e-06
+  },
+  "bootstrap_charged_seconds": 2.294966208,
+  "cumulative_charged_seconds": 5919.7889050909025,
+  "cutoff_seconds": 20400.0
+}

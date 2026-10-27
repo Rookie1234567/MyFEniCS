@@ -1,5 +1,26 @@
 # Task41 阶段结果
 
+## V16最新收口：保存向量分析完成，原全域action仍失败（2026-10-27）
+
+本轮比较同一输入下的完整作用输出 y 和缩减右端 g，找出旧校正究竟改变了哪一侧；同时把旧局部终态与新全域保存结果逐项对应。只做保存数据分析及必要编号/MPC元数据补建，没有新积分、局部LU、GETRS、原生作用或全域数值owner。
+
+| 项目 | 实际结果 | 解释与边界 |
+|---|---|---|
+| V9→V15逐侧变化 | 两列 Δy=0；port不变；只有 g 的trace变化 | 不证明S/native正确，也不把全部剩余误差归因GETRS |
+| 原完整action | 动态相对误差5.7625744836007965e-11 / 1.212368464357194e-10，门1e-11，仍FAIL | 保存向量分块统计末位与原回执略异，不改旧结果 |
+| 剩余误差分布 | 50%能量需127,368 / 134,817行；90%需597,554 / 613,098行；99%需1,352,104 / 1,369,719行 | 最大单行不是全域代表；理想过门覆盖需982,938 / 1,503,210行，前提是被选行误差全消除，非实施建议 |
+| 互斥分组 | 57组覆盖5,688,000 trace行；tag1/perm0/两个incident/非周期slave组占71.0718% / 71.1085% | 所有MPC incident只归一个签名组；统计关联不是因果分摊 |
+| 两旧star | 87567及4766937的y、g分别精确绑定V15，最终correction=-Jz也复核 | 两star所在完整类别仅占1.8547% / 1.8279%能量，不能外推主导类别 |
+| 固定最终z诊断 | binary64/fsum与64-bit-significand较宽求值有可测差；只复用360/446旧lambda，其伴随残差保留 | 无新solve，不用诊断精度驱动生产；没有支持新的全域修复结论 |
+| 新最大行 | active1622464→original5218672；cells7873/8014，tag1/perm0 | metadata已保存；其candidate数值块缺失，只交最小补证方案 |
+| 成本与资源 | 有记录的9次service父段合计511.668287s；末次28.938895s；已采样tree最大2,593,652,736B，cgroup最大2,521,493,504B | 峰来自不同attempt，不相加；3次preworker父计时/峰未知；task swap0，完整失败历史保留 |
+| 后续 | 恢复、200q、factor、完整参考、FGMRES、官方场仍未运行 | 分析完成不解锁后续；没有live数值owner |
+
+attempt04元数据生成后因摘要口径错误未落盘，修复后attempt05重做并保存；这是两次metadata-only构建，费用均保留。此后A/metadata只读复用，后续入口、路径、范围及complete字段故障只重做B。末次独立服务正常完成，data_integrity=true、official_result=false，后代已清场。新增证据37,167,696B、累计15,603,033,504B为末次磁盘快照；未复制全长差向量。
+
+详见[response_v16](../response_v16.md)、[operator/resource compact](v16_closeout/operator_resource_compact.json)、[分组表](v16_closeout/group_summary.json)、[原始hash索引](v16_closeout/evidence_index.json)。V15负结果、所有失败attempt和UNKNOWN保留；不合并master。
+
+
 ## V15最新收口：全域两列改善但仍失败（2026-10-27）
 
 | 项目 | 真实结果 | 边界 |

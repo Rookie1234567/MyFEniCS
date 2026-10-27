@@ -1,3 +1,11 @@
+## V16定向验证与真实保存服务（2026-10-27）
+
+- 最终分析源码：`086c884121575c8a9662cd0f500a5287a36a79b8`。执行者在对应未提交补丁上运行资格化WSL测试：`source scripts/activate_myfenics_wsl.sh; PYTHONDONTWRITEBYTECODE=1 python -m pytest -q --tb=short -p no:cacheprovider src/test/test_task41_p0_v16_saved_vectors.py`，**20 passed in 1.10s**；随后主控审核三行diff并冻结，没有再改源码。原独立测试输出未归档为文件，日志hash为UNKNOWN，结果依据执行者工具记录。
+- 直接范围：V9二维/V15一维layout与hash污染拒绝；互斥MPC能量；旧producer/新consumer窗口；V3 basename的两条真实caller；完整10-cell库存中精确2-cell incident；保存correction污染拒绝；j0/j3绑定、固定最终z宽算术诊断；replay complete字段。
+- service-selector最终改动在`2de17690039cc856d0e5f00df3eaf657c7d3886f`前后定向7项通过（3.75s）；后续仅checker/fixture变化。没有运行全仓pytest、MPI2/4、旧完整审核或PDE；未声称CI通过。
+- 实际工作站attempt12的现有service→watchdog→saved checker全链完成；源码`086c884…`，ABI收据SHA`1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d`，complex128/int32、MPI1/math1。data_integrity=true、errors=[]、COMPLETED_DIAGNOSTIC_ONLY、official_result=false。
+- attempts01–11全部原始错误和费用保留在[attempt_index](v16_closeout/attempt_index.json)；第11次已正确重放但缺complete字段，第12次仅重读已保存B产品，A/meta复用。Ruff未安装（NOT_AVAILABLE），未为此安装工具；最终diff/JSON/hash/link检查单列收口结果。
+
 ## V15最终收口定向测试（2026-10-27）
 
 - 科学source：3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad；终态审核修复source：c14dcdb4f3df5e1f488de6747008edf6d58c0c3f。
