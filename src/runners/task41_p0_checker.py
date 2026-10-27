@@ -277,6 +277,21 @@ TASK41_P0_B0_V16_V14_EXPECTED_EVIDENCE_ENTRIES = {
 }
 
 
+def _task41_p0_v16_active_rows_hashes(values: np.ndarray) -> tuple[str, str]:
+    """Return raw-value and V3 shape/dtype-framed hashes for an int64 row map."""
+    array = np.asarray(values)
+    if array.ndim != 1 or array.dtype != np.dtype("<i8"):
+        raise ValueError("V16 active-row hashes require a one-dimensional little-endian int64 map")
+    if not array.flags.c_contiguous:
+        array = np.ascontiguousarray(array, dtype=np.dtype("<i8"))
+    payload = memoryview(array).cast("B")
+    raw_bytes_sha256 = hashlib.sha256(payload).hexdigest()
+    array_digest = hashlib.sha256()
+    array_digest.update(repr((array.shape, str(array.dtype))).encode("ascii"))
+    array_digest.update(payload)
+    return raw_bytes_sha256, array_digest.hexdigest()
+
+
 class Task41P0B0V16RowIncidenceAccumulator:
     """Stream one compact incidence signature per active trace row.
 
@@ -427,6 +442,9 @@ class Task41P0B0V16RowIncidenceAccumulator:
             raise ValueError("V16 streamed incidence does not cover every trace row")
         if not self.probe_incident_cell_ids:
             raise ValueError("V16 maximum-row probe has no complete incident-cell metadata")
+        active_rows_raw_sha256, active_rows_array_sha256 = (
+            _task41_p0_v16_active_rows_hashes(originals)
+        )
         signature_dtype = np.dtype([
             ("tags", "<u8"), ("directions", "<u8"), ("incidents", "<u4"),
             ("periodic_slave_incidents", "<u4"), ("nontrivial_mpc", "?")
@@ -462,7 +480,7 @@ class Task41P0B0V16RowIncidenceAccumulator:
                 "has_nontrivial_mpc": bool(signature["nontrivial_mpc"]),
             })
         provenance = {
-            "schema": "task41.p0.b0.v16.row_incidence_metadata.v1",
+            "schema": "task41.p0.b0.v16.row_incidence_metadata.v2",
             "row_count": self.trace_rows,
             "total_rows_including_port": self.row_count,
             "trace_rows": self.trace_rows,
@@ -471,9 +489,8 @@ class Task41P0B0V16RowIncidenceAccumulator:
             "covered_trace_rows": int(np.count_nonzero(self.incident_counts)),
             "incidence_records": self.incidence_records,
             "unique_active_row_cell_pairs": self.incidence_records,
-            "active_original_rows_sha256": hashlib.sha256(
-                memoryview(np.ascontiguousarray(originals, dtype="<i8")).cast("B")
-            ).hexdigest(),
+            "active_original_rows_raw_bytes_sha256": active_rows_raw_sha256,
+            "active_original_rows_array_sha256": active_rows_array_sha256,
             "active_original_rows_dtype": np.dtype("<i8").str,
             "periodic_slave_e_expanded": True,
             "one_mutually_exclusive_code_per_trace_row": True,
@@ -782,8 +799,10 @@ def summarize_task41_p0_b0_v16_saved_vectors(
             raise ValueError("V16 group definitions must carry complete incidence signatures")
         if (
             not isinstance(row_incidence_provenance, Mapping)
-            or row_incidence_provenance.get("schema")
-            != "task41.p0.b0.v16.row_incidence_metadata.v1"
+            or row_incidence_provenance.get("schema") not in {
+                "task41.p0.b0.v16.row_incidence_metadata.v1",
+                "task41.p0.b0.v16.row_incidence_metadata.v2",
+            }
             or row_incidence_provenance.get("row_count") != trace_rows
             or row_incidence_provenance.get("covered_active_rows") != trace_rows
             or row_incidence_provenance.get("periodic_slave_e_expanded") is not True
@@ -1524,6 +1543,14 @@ def _task41_p0_v16_scan_same_mesh_row_metadata(
     active_rows = _task41_p0_v16_bound_metadata_npy(
         source_record, results_root=results_root, label="pinned V3 active-original-row map"
     )
+    active_rows_raw_sha256, active_rows_array_sha256 = (
+        _task41_p0_v16_active_rows_hashes(active_rows)
+    )
+    if active_rows_array_sha256 != source_record.get("array_sha256"):
+        raise ValueError(
+            "V16 decoded active-row shape/dtype/value hash differs from the pinned V3 index"
+        )
+    source_record = {**source_record, "raw_bytes_sha256": active_rows_raw_sha256}
     if (
         active_rows.dtype != np.dtype(np.int64)
         or active_rows.shape != (TASK41_P0_B0_V16_TRACE_ROWS,)
@@ -1564,6 +1591,11 @@ def _task41_p0_v16_scan_same_mesh_row_metadata(
     if not np.array_equal(np.asarray(selected["active_original_rows"]), active_rows):
         raise ValueError("V16 fresh p6/MPC active numbering differs from the pinned V3 row map")
     codes, definitions, provenance = collector.finish(active_rows)
+    if (
+        provenance.get("active_original_rows_raw_bytes_sha256") != active_rows_raw_sha256
+        or provenance.get("active_original_rows_array_sha256") != active_rows_array_sha256
+    ):
+        raise ValueError("V16 streamed provenance does not bind both pinned active-row hashes")
     if codes.shape != (TASK41_P0_B0_V16_TRACE_ROWS,) or codes.dtype != np.dtype(np.int32):
         raise ValueError("V16 metadata scan did not produce one trace-only int32 code per row")
     probe_original_row = int(active_rows[TASK41_P0_B0_V16_MAX_PROBE_ROW])
@@ -1742,8 +1774,15 @@ def _task41_p0_v16_persist_metadata_bundle(
         or len(definitions) > TASK41_P0_B0_V16_GROUP_LIMIT
     ):
         raise ValueError("V16 streamed metadata package has an invalid compact layout")
-    if provenance.get("active_original_rows_sha256") != active_record.get("array_sha256"):
-        raise ValueError("V16 streamed provenance does not bind the pinned active-row values")
+    if (
+        provenance.get("active_original_rows_raw_bytes_sha256")
+        != active_record.get("raw_bytes_sha256")
+        or provenance.get("active_original_rows_array_sha256")
+        != active_record.get("array_sha256")
+    ):
+        raise ValueError(
+            "V16 streamed provenance does not bind the pinned raw and framed active-row hashes"
+        )
     probe = _task41_p0_v16_probe_payload_from_scan(scan)
     codes_path = output / "task41_p0_v16_row_group_codes.npy"
     probe_path = output / "task41_p0_v16_max_row_probe_metadata.json"
@@ -1765,9 +1804,8 @@ def _task41_p0_v16_persist_metadata_bundle(
     metadata_source = {
         "active_original_rows": dict(active_record),
         "active_original_rows_file_sha256": active_record["sha256"],
-        "active_original_rows_values_sha256": provenance.get(
-            "active_original_rows_sha256"
-        ),
+        "active_original_rows_values_sha256": active_record["array_sha256"],
+        "active_original_rows_raw_bytes_sha256": active_record["raw_bytes_sha256"],
         "source_index_path": active_record.get("source_index_path"),
         "source_index_sha256": active_record.get("source_index_sha256"),
         "resolved_config_sha256": mesh_metadata.get("resolved_config_sha256"),
@@ -4455,16 +4493,27 @@ def load_task41_p0_b0_v16_saved_vector_manifest(
     active_original_rows = _task41_p0_v16_bound_metadata_npy(
         active_map_record, results_root=results_root, label="active_original_rows"
     )
+    active_rows_raw_sha256, active_rows_array_sha256 = (
+        _task41_p0_v16_active_rows_hashes(active_original_rows)
+    )
     if (
         active_original_rows.dtype != np.dtype(np.int64)
         or active_original_rows.shape != (expected_trace_rows,)
         or np.any(active_original_rows < 0)
         or np.unique(active_original_rows).size != expected_trace_rows
         or active_map_record.get("dtype") != np.dtype("<i8").str
+        or active_map_record.get("array_sha256") != active_rows_array_sha256
+        or active_map_record.get("raw_bytes_sha256") != active_rows_raw_sha256
         or metadata_source.get("active_original_rows_file_sha256")
         != active_map_record.get("sha256")
         or metadata_source.get("active_original_rows_values_sha256")
-        != row_provenance.get("active_original_rows_sha256")
+        != active_rows_array_sha256
+        or metadata_source.get("active_original_rows_raw_bytes_sha256")
+        != active_rows_raw_sha256
+        or row_provenance.get("active_original_rows_raw_bytes_sha256")
+        != active_rows_raw_sha256
+        or row_provenance.get("active_original_rows_array_sha256")
+        != active_rows_array_sha256
     ):
         raise ValueError("V16 active-original-row source map differs from its streamed provenance")
     group_codes = _task41_p0_v16_bound_metadata_npy(
@@ -4473,7 +4522,7 @@ def load_task41_p0_b0_v16_saved_vector_manifest(
     if group_codes.dtype != np.dtype(np.int32) or group_codes.shape != (expected_trace_rows,):
         raise ValueError("V16 compact row group codes must cover trace rows only")
     if (
-        row_provenance.get("schema") != "task41.p0.b0.v16.row_incidence_metadata.v1"
+        row_provenance.get("schema") != "task41.p0.b0.v16.row_incidence_metadata.v2"
         or row_provenance.get("row_count") != expected_trace_rows
         or row_provenance.get("trace_rows") != expected_trace_rows
         or row_provenance.get("total_rows_including_port") != expected_rows
@@ -4529,9 +4578,8 @@ def load_task41_p0_b0_v16_saved_vector_manifest(
     manifest["verified_metadata_source"] = {
         "active_original_rows": active_map_record,
         "active_original_rows_file_sha256": active_map_record["sha256"],
-        "active_original_rows_values_sha256": row_provenance[
-            "active_original_rows_sha256"
-        ],
+        "active_original_rows_values_sha256": active_rows_array_sha256,
+        "active_original_rows_raw_bytes_sha256": active_rows_raw_sha256,
     }
     return manifest, vectors, group_codes
 
@@ -4919,9 +4967,12 @@ def analyze_task41_p0_b0_v16_saved_vector_distribution(
             "verified_metadata_source": {
                 "active_original_rows": metadata_bundle["active_original_rows"],
                 "active_original_rows_file_sha256": metadata_bundle["active_original_rows"]["sha256"],
-                "active_original_rows_values_sha256": metadata_bundle[
-                    "row_incidence_provenance"
-                ]["active_original_rows_sha256"],
+                "active_original_rows_values_sha256": metadata_bundle["active_original_rows"][
+                    "array_sha256"
+                ],
+                "active_original_rows_raw_bytes_sha256": metadata_bundle[
+                    "active_original_rows"
+                ]["raw_bytes_sha256"],
             },
         })
         manifest["verified_max_row_probe_metadata"] = _task41_p0_v16_bound_json(

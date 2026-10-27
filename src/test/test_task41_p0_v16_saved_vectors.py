@@ -313,8 +313,19 @@ def _complete_v16_fixture(
             np.ascontiguousarray(active_original_rows, dtype=np.dtype("<i8"))
         ).cast("B")
     ).hexdigest()
+    active_map_array_sha_digest = hashlib.sha256()
+    active_map_array_sha_digest.update(
+        repr((active_original_rows.shape, str(active_original_rows.dtype))).encode("ascii")
+    )
+    active_map_array_sha_digest.update(
+        memoryview(
+            np.ascontiguousarray(active_original_rows, dtype=np.dtype("<i8"))
+        ).cast("B")
+    )
+    active_map_array_sha256 = active_map_array_sha_digest.hexdigest()
     active_map_record["dtype"] = np.dtype("<i8").str
-    active_map_record["array_sha256"] = active_map_values_sha256
+    active_map_record["array_sha256"] = active_map_array_sha256
+    active_map_record["raw_bytes_sha256"] = active_map_values_sha256
     probe_binding = _write_json(results / "metadata" / "v16_max_row_probe.json", {
         "schema": "task41.p0.b0.v16.max_row_probe_metadata.v1",
         "row": 1,
@@ -349,7 +360,8 @@ def _complete_v16_fixture(
         "metadata_source": {
             "active_original_rows": active_map_record,
             "active_original_rows_file_sha256": active_map_record["sha256"],
-            "active_original_rows_values_sha256": active_map_values_sha256,
+            "active_original_rows_values_sha256": active_map_array_sha256,
+            "active_original_rows_raw_bytes_sha256": active_map_values_sha256,
         },
     }
     manifest_path = results / "v16_saved_vector_manifest.json"
@@ -1390,6 +1402,98 @@ def test_v16_manifest_binds_real_matrix_and_per_column_producer_layouts(
     assert manifest["producer_identities"]["v9"]["source_sha"] != manifest["producer_identities"]["v15"]["source_sha"]
     assert manifest["verified_row_incidence_provenance"]["port_rows_kept_separate"] is True
     assert manifest["verified_max_row_probe_metadata"]["original_row"] == 101
+
+
+def test_v16_metadata_persist_and_loader_recompute_active_row_hashes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    manifest_path, _ = _complete_v16_fixture(tmp_path, monkeypatch=monkeypatch)
+    manifest = json.loads(manifest_path.read_text())
+    results = manifest_path.parent
+    active_record = manifest["metadata_source"]["active_original_rows"]
+    active_rows = np.load(results / active_record["path"], mmap_mode="r", allow_pickle=False)
+    raw_sha256, array_sha256 = v16_checker._task41_p0_v16_active_rows_hashes(active_rows)
+    assert raw_sha256 != array_sha256
+    assert raw_sha256 == active_record["raw_bytes_sha256"]
+    assert array_sha256 == active_record["array_sha256"]
+    assert manifest["metadata_source"]["active_original_rows_values_sha256"] == array_sha256
+    assert manifest["metadata_source"]["active_original_rows_raw_bytes_sha256"] == raw_sha256
+
+    provenance = manifest["row_incidence_provenance"]
+    assert provenance["schema"] == "task41.p0.b0.v16.row_incidence_metadata.v2"
+    assert provenance["active_original_rows_raw_bytes_sha256"] == raw_sha256
+    assert provenance["active_original_rows_array_sha256"] == array_sha256
+    codes_record = manifest["row_group_codes"]
+    codes = np.load(results / codes_record["path"], mmap_mode="r", allow_pickle=False)
+    stage_dir = results / "attempt04" / "stage_a"
+    stage_dir.mkdir(parents=True)
+    coordinates0 = np.arange(24, dtype=np.float64).reshape(8, 3) + 10.0
+    coordinates1 = np.arange(24, dtype=np.float64).reshape(8, 3) + 11.0
+
+    def probe_cell(
+        cell_id: int,
+        tag: int,
+        permutation: int,
+        original: list[int],
+        ids: list[int],
+        coordinates: np.ndarray,
+    ) -> dict[str, object]:
+        return {
+            "cell_index": cell_id,
+            "cell_tag": tag,
+            "cell_permutation": permutation,
+            "active_ids": np.asarray(ids, dtype=np.int64),
+            "trace_original_rows": np.asarray(original, dtype=np.int64),
+            "trace_positions": np.asarray([0, 1], dtype=np.int64),
+            "trace_expansion_data": np.asarray([1 + 0j, 1 + 0j], dtype=np.complex128),
+            "trace_expansion_indices": np.asarray([0, 1], dtype=np.int32),
+            "trace_expansion_indptr": np.asarray([0, 1, 2], dtype=np.int32),
+            "actual_geometry_coordinates": coordinates,
+            "actual_coordinate_sha256": hashlib.sha256(
+                memoryview(np.ascontiguousarray(coordinates, dtype=np.float64)).cast("B")
+            ).hexdigest(),
+        }
+
+    monkeypatch.setattr(v16_checker, "TASK41_P0_B0_V16_MAX_PROBE_ROW", 1)
+    monkeypatch.setattr(v16_checker, "TASK41_P0_B0_V16_TRACE_ROWS", 3)
+    scan = {
+        "active_original_rows_record": active_record,
+        "row_group_codes": np.asarray(codes, dtype=np.int32),
+        "row_group_definitions": manifest["row_group_definitions"],
+        "row_incidence_provenance": provenance,
+        "mesh_metadata": {"resolved_config_sha256": "d" * 64},
+        "probe_original_row": 101,
+        "selected_probe_star": [
+            probe_cell(10, 1, 0, [100, 101], [0, 1], coordinates0),
+            probe_cell(11, 2, 4680, [101, 102], [1, 2], coordinates1),
+        ],
+    }
+    derived_path, derived_sha, _ = v16_checker._task41_p0_v16_persist_metadata_bundle(
+        manifest=manifest,
+        scan=scan,
+        stage_output_dir=stage_dir,
+        results_root=results,
+    )
+    loaded, _, _ = load_task41_p0_b0_v16_saved_vector_manifest(
+        derived_path, derived_sha, repo_root=tmp_path, expected_rows=4, expected_trace_rows=3
+    )
+    verified = loaded["verified_metadata_source"]
+    assert verified["active_original_rows_values_sha256"] == array_sha256
+    assert verified["active_original_rows_raw_bytes_sha256"] == raw_sha256
+
+    derived = json.loads(derived_path.read_text())
+    derived["metadata_source"]["active_original_rows"]["raw_bytes_sha256"] = "0" * 64
+    derived["metadata_source"]["active_original_rows_raw_bytes_sha256"] = "0" * 64
+    derived["row_incidence_provenance"]["active_original_rows_raw_bytes_sha256"] = "0" * 64
+    derived_path.write_text(json.dumps(derived, sort_keys=True, separators=(",", ":")) + chr(10))
+    with pytest.raises(ValueError, match="active-original-row source map differs"):
+        load_task41_p0_b0_v16_saved_vector_manifest(
+            derived_path,
+            _refresh_manifest_sha(derived_path),
+            repo_root=tmp_path,
+            expected_rows=4,
+            expected_trace_rows=3,
+        )
 
 
 def test_v16_manifest_rejects_bad_hash_column_swap_and_producer_metadata_mismatch(

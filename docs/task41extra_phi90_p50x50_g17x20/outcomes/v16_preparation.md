@@ -95,3 +95,11 @@ V14 reader 现在可在收到按 attempt 绑定的 replay inputs 时调用 `_tas
 - service父段11.5010603713秒，watchdog child4.6685284236秒，systemd wall14.682879秒；这些是嵌套口径，不相加。tree RSS峰298184704 B，cgroup峰251199488 B，任务swap0，后代清空。
 - 真实schema相关fixture与既有V16入口文件共22项通过（1.62秒），py_compile/diff-check通过。数学门不变，V15数值FAIL保持。
 - attempt04沿原window继续，先完整验证实际producer身份链到metadata前，不重置T0。
+
+### attempt04：元数据摘要定义混用修复
+
+- source `abea35dfbd7ea17b30ec00eaf1a9bc85d827b3ee`；服务 `myfenics-case-20261027T094906-3405945.service`。完成metadata扫描后、写出前被摘要定义错误拒绝，未保存可复用metadata。没有新积分、LU、GETRS或原生作用。
+- 原45,504,128 B int64 active-row NPY文件SHA仍为`c30144335e92bc0b66246408793c2e17465f8085aeb599b6bf6eecda431b75b6`；实际raw bytes SHA是`ca3fbdc168f3abb4a52d777dc7a4d4f07e738193f0ec27b98f3e6c8398072f41`，shape/dtype+bytes SHA是原`81774953cf2726b3a63c8c7a2a7649c41089f1c6bd15c4afea34b0d910d3675f`。旧文件/索引保持原样；新provenance明确两种数组摘要，读取器实际重算，两者不再误比。
+- service父段164.0605946393秒，watchdog child156.0364909358秒，不相加；tree RSS峰2,593,652,736 B，cgroup峰2,477,625,344 B，任务swap0，后代清空。
+- 16项相关checker回归通过（1.94秒）；原环境无ruff模块，记录NOT_AVAILABLE，不安装或重装环境。数学/资源门不变。
+- 修复后只补未保存metadata并连续分析；既有V9/V15向量不重算，V16窗口不刷新。
