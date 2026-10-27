@@ -11,7 +11,7 @@ import sys
 import time
 from functools import wraps
 from pathlib import Path
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import Any
 
 import numpy as np
@@ -730,6 +730,64 @@ def _v12_observed_call(output_root: Path, stage: str, function, *args, **kwargs)
         with journal.open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(event, sort_keys=True, allow_nan=False) + "\n")
 
+    def summarize_owned_cells(result):
+        if not hasattr(result, "owned_cells"):
+            return {}
+        returned_cells = tuple(result.owned_cells)
+        entity_map = getattr(result, "entity_map", None)
+        if entity_map is not None and hasattr(entity_map, "owned_cells"):
+            degree_cells = tuple(entity_map.owned_cells)
+            result_kind = "cell_trace_constraint_map"
+            degree_source = "result.entity_map.owned_cells"
+        elif all(hasattr(cell, "degree_map") for cell in returned_cells):
+            degree_cells = returned_cells
+            result_kind = "entity_map"
+            degree_source = "result.owned_cells"
+        else:
+            degree_cells = ()
+            result_kind = "owned_cell_result_without_entity_degree_maps"
+            degree_source = None
+        degree_maps = [
+            json.dumps(cell.degree_map.to_dict(), sort_keys=True)
+            for cell in degree_cells
+        ]
+        return {
+            "result_kind": result_kind,
+            "result_owned_cell_count": len(returned_cells),
+            "result_owned_cell_type": (
+                type(returned_cells[0]).__module__
+                + "."
+                + type(returned_cells[0]).__qualname__
+                if returned_cells
+                else None
+            ),
+            "degree_map_source": degree_source,
+            "degree_map_count": len(degree_maps),
+            "degree_map_multiplicity": {
+                key: degree_maps.count(key) for key in sorted(set(degree_maps))
+            },
+        }
+
+    def emit_observer_error(call_id, name, started, error, classification):
+        try:
+            emit(
+                {
+                    "event": "OBSERVER_ERROR",
+                    "call_id": call_id,
+                    "function": name,
+                    "wall_seconds": time.monotonic() - started,
+                    "classification": classification,
+                    "exception": type(error).__name__ + ": " + str(error),
+                }
+            )
+        except BaseException as journal_error:
+            error.add_note(
+                "Task43 observer could not persist its error classification: "
+                + type(journal_error).__name__
+                + ": "
+                + str(journal_error)
+            )
+
     def wrap(original, name):
         @wraps(original)
         def observed(*positional, **keywords):
@@ -748,18 +806,42 @@ def _v12_observed_call(output_root: Path, stage: str, function, *args, **kwargs)
             try:
                 result = original(*positional, **keywords)
             except BaseException as error:
-                emit({"event": "ERROR", "call_id": call_id, "function": name,
-                      "wall_seconds": time.monotonic() - started,
-                      "exception": type(error).__name__ + ": " + str(error)})
+                try:
+                    emit({"event": "ERROR", "call_id": call_id, "function": name,
+                          "wall_seconds": time.monotonic() - started,
+                          "exception": type(error).__name__ + ": " + str(error)})
+                except BaseException as journal_error:
+                    error.add_note(
+                        "Task43 observer could not persist the original function error: "
+                        + type(journal_error).__name__
+                        + ": "
+                        + str(journal_error)
+                    )
                 raise
-            detail = {}
-            if hasattr(result, "owned_cells"):
-                maps = [json.dumps(cell.degree_map.to_dict(), sort_keys=True) for cell in result.owned_cells]
-                detail = {"owned_cell_count": len(maps), "degree_map_multiplicity":
-                          {key: maps.count(key) for key in sorted(set(maps))}}
-            emit({"event": "END", "call_id": call_id, "function": name,
-                  "wall_seconds": time.monotonic() - started,
-                  "cache_after": dict(cache()._asdict()) if cache else None, "completed_work": detail})
+            try:
+                detail = summarize_owned_cells(result)
+            except BaseException as error:
+                emit_observer_error(
+                    call_id,
+                    name,
+                    started,
+                    error,
+                    "observer_return_summary_failed",
+                )
+                raise
+            try:
+                emit({"event": "END", "call_id": call_id, "function": name,
+                      "wall_seconds": time.monotonic() - started,
+                      "cache_after": dict(cache()._asdict()) if cache else None, "completed_work": detail})
+            except BaseException as error:
+                emit_observer_error(
+                    call_id,
+                    name,
+                    started,
+                    error,
+                    "observer_journal_persistence_failed",
+                )
+                raise
             return result
         if hasattr(original, "cache_info"):
             observed.cache_info = original.cache_info
@@ -1274,10 +1356,69 @@ def _audit_plan(
     }
 
 
+_V11_A2_CHECKPOINT_STAGES = ("raw", "modal", "q8", "q10")
+
+
+def _v11_saved_a2_failure_response(
+    error: BaseException,
+    checkpoint_refs: Mapping[str, Mapping[str, Any]],
+    *,
+    failure_stage: str | None = None,
+    failure_origin: str = "saved_data_recomputation",
+) -> dict[str, Any]:
+    completed = set(checkpoint_refs)
+    if failure_stage is None:
+        failure_stage = next(
+            (stage for stage in _V11_A2_CHECKPOINT_STAGES if stage not in completed),
+            "response_assembly",
+        )
+    statuses = {
+        stage: (
+            "CHECKPOINTED"
+            if stage in completed
+            else "FAILED"
+            if stage == failure_stage
+            else "NOT_REACHED"
+        )
+        for stage in _V11_A2_CHECKPOINT_STAGES
+    }
+    return {
+        "schema": "task43.v11.saved_a2_primary_q_response.v1",
+        "status": "failed_saved_primary_read_or_recomputation",
+        "pass": False,
+        "error": f"{type(error).__name__}: {error}",
+        "failure_stage": failure_stage,
+        "failure_origin": failure_origin,
+        "substage_statuses": statuses,
+        "substage_checkpoint_refs": dict(checkpoint_refs),
+        "historical_endpoint_status": "INCOMPLETE_NOT_QUALIFIED",
+        "official_result": False,
+        "passed": False,
+        "extra_correction_status": "historical_failure_preserved_not_replayed",
+        "selection_or_transition_authority": False,
+        "continuation": False,
+    }
+
+
 def _v11_saved_a2_primary_q_response(
     contract: dict[str, Any],
+    *,
+    checkpoint_callback: Callable[[str, Mapping[str, Any]], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Recompute only the hash-bound A2 primary vectors and saved q8/q10 fields."""
+
+    checkpoint_refs: dict[str, dict[str, Any]] = {}
+
+    def checkpoint(stage: str, values: Mapping[str, Any]) -> None:
+        if checkpoint_callback is None:
+            return
+        reference = checkpoint_callback(stage, values)
+        if not isinstance(reference, Mapping) or not all(
+            isinstance(reference.get(key), str) and reference[key]
+            for key in ("path", "sha256")
+        ):
+            raise TypeError(f"V13 A2 {stage} checkpoint callback returned no path/hash")
+        checkpoint_refs[stage] = dict(reference)
 
     def input_path(role: str) -> Path:
         matches = [item for item in contract["inputs"] if item["role"] == role]
@@ -1451,6 +1592,31 @@ def _v11_saved_a2_primary_q_response(
         scalar_identity_differences[name] = abs(stored - value)
         if not np.isclose(stored, value, rtol=1.0e-12, atol=1.0e-24):
             raise ValueError(f"historical A2 recomputed {name} differs from its packet identity")
+    raw_recomputation = {
+        "packet_npz_sha256": _sha256_file(packet_path),
+        "packet_embedded_identity": identity,
+        "raw_vector_arrays": {
+            name: array_identity(values) for name, values in raw.items()
+        },
+        "A6_relative_to_native_effective_rhs": a6_relative,
+        "full_active_zero_slave_carrier_l2": norm(
+            vectors["primary_zero_slave_carrier_residual"]
+        ),
+        "full_active_modal_port_l2": norm(vectors["primary_augmented_port_residual"]),
+        "full_active_zero_slave_carrier_plus_modal_port_euclidean_relative_to_native_effective_rhs": full_active_relative,
+        "returned_condensed_relative_to_returned_rhs": condensed_relative,
+        "normal_correction_relative_history": [before_relative, after_relative],
+        "stored_scalar_identity_absolute_differences": scalar_identity_differences,
+        "scope": "native explicit full-active residual: zero-slave carrier and modal-port Euclidean components, normalized by native effective RHS; not a variable-p Gram metric norm; no operator application, resampling, material integration, or PDE solve",
+        "historical_scalar_alias": {
+            "packet_key": "full_active_space_transformed_relative",
+            "recomputed_scope": "full_active_zero_slave_carrier_plus_modal_port_euclidean_relative",
+        },
+        "normal_raw_state_limitation": "legacy packet lacks separate normal RHS/solution vectors; verifies the returned RHS/solution/residual and two b-Ax snapshots only",
+        "gates": raw_gates,
+        "pass": all(raw_gates.values()),
+    }
+    checkpoint("raw", raw_recomputation)
 
     modal_path = input_path("A2_saved_modal_orders")
     mode_payload = json.loads(modal_path.read_text(encoding="utf-8"))
@@ -1549,6 +1715,30 @@ def _v11_saved_a2_primary_q_response(
             for item in modal_comparison["boundary_amplitude_groups"].values()
         )
     )
+    modal_validation = {
+        "row_physics": mode_physics,
+        "physical_mode_power_reconstruction": physical_rows,
+        "ordered_rows_checked": len(modal_rows),
+        "actual_basis_gauge": "historical_unscaled_Task40_direct_route",
+        "resolved_config_path": str(resolved_config_path),
+        "resolved_config_sha256": resolved_config_item["sha256"],
+        "A2_actual_quadrature_identity": {
+            "volume_degree": a2_operator_q,
+            "incident_and_port_degree": a2_incident_port_q,
+            "source": "primary NPZ identity overrides the hash-bound original Y6 resolved config",
+        },
+        "modal_comparison_metrics": modal_comparison,
+        "gates": modal_gates,
+        "pass": all(modal_gates.values()),
+        "A_volume": {
+            "saved_value": a_volume,
+            "material_region_sum": region_total,
+            "reintegrated": False,
+            "inferred_from_one_minus_R_minus_T": False,
+            "historical_automatic_rule_reinterpreted_as_q19": False,
+        },
+    }
+    checkpoint("modal", modal_validation)
     q_comparisons: dict[str, Any] = {}
     q_gates: dict[str, bool] = {}
     comparison_record = json.loads(input_path("historical_joint_comparison").read_text())
@@ -1651,13 +1841,32 @@ def _v11_saved_a2_primary_q_response(
             "pass": all(field_gate.values()),
         }
         q_gates.update({f"{key}_{name}": value for name, value in field_gate.items()})
+        checkpoint(
+            key,
+            {
+                "status": q_comparisons[key]["status"],
+                "sample_count": q_comparisons[key]["sample_count"],
+                "points_sha256": q_comparisons[key]["points_sha256"],
+                "weights_sha256": q_comparisons[key]["weights_sha256"],
+                "integrated_domain_volume_nm3": q_comparisons[key][
+                    "integrated_domain_volume_nm3"
+                ],
+                "A2_sample_npz_sha256": q_comparisons[key]["A2_sample_npz_sha256"],
+                "Y6_sample_bundle_sha256": q_comparisons[key][
+                    "Y6_sample_bundle_sha256"
+                ],
+                "field_metrics": field_metrics,
+                "gates": field_gate,
+                "pass": q_comparisons[key]["pass"],
+            },
+        )
 
     all_gates = {
         **raw_gates,
         **modal_gates,
         **q_gates,
     }
-    return {
+    response = {
         "schema": "task43.v11.saved_a2_primary_q_response.v1",
         "status": "measured_limited_saved_primary_diagnostic",
         "historical_endpoint_status": "INCOMPLETE_NOT_QUALIFIED",
@@ -1669,40 +1878,8 @@ def _v11_saved_a2_primary_q_response(
         "raw_vector_arrays": {
             name: array_identity(values) for name, values in raw.items()
         },
-        "raw_vector_recomputation": {
-            "A6_relative_to_native_effective_rhs": a6_relative,
-            "full_active_zero_slave_carrier_l2": norm(
-                vectors["primary_zero_slave_carrier_residual"]
-            ),
-            "full_active_modal_port_l2": norm(
-                vectors["primary_augmented_port_residual"]
-            ),
-            "full_active_zero_slave_carrier_plus_modal_port_euclidean_relative_to_native_effective_rhs": full_active_relative,
-            "returned_condensed_relative_to_returned_rhs": condensed_relative,
-            "normal_correction_relative_history": [before_relative, after_relative],
-            "stored_scalar_identity_absolute_differences": scalar_identity_differences,
-            "scope": "native explicit full-active residual: zero-slave carrier and modal-port Euclidean components, normalized by native effective RHS; not a variable-p Gram metric norm; no operator application, resampling, material integration, or PDE solve",
-            "historical_scalar_alias": {
-                "packet_key": "full_active_space_transformed_relative",
-                "recomputed_scope": "full_active_zero_slave_carrier_plus_modal_port_euclidean_relative",
-            },
-            "normal_raw_state_limitation": "legacy packet lacks separate normal RHS/solution vectors; verifies the returned RHS/solution/residual and two b-Ax snapshots only",
-            "gates": raw_gates,
-            "pass": all(raw_gates.values()),
-        },
-        "modal_physics_validation": {
-            "row_physics": mode_physics,
-            "physical_mode_power_reconstruction": physical_rows,
-            "ordered_rows_checked": len(modal_rows),
-            "actual_basis_gauge": "historical_unscaled_Task40_direct_route",
-            "resolved_config_path": str(resolved_config_path),
-            "resolved_config_sha256": resolved_config_item["sha256"],
-            "A2_actual_quadrature_identity": {
-                "volume_degree": a2_operator_q,
-                "incident_and_port_degree": a2_incident_port_q,
-                "source": "primary NPZ identity overrides the hash-bound original Y6 resolved config",
-            },
-        },
+        "raw_vector_recomputation": raw_recomputation,
+        "modal_physics_validation": modal_validation,
         "modal_comparison_vs_Y6_1": {
             "metrics": modal_comparison,
             "gates": modal_gates,
@@ -1712,14 +1889,14 @@ def _v11_saved_a2_primary_q_response(
         "all_gates": all_gates,
         "pass": all(value is True for value in all_gates.values()),
         "selection_or_transition_authority": False,
-        "A_volume": {
-            "saved_value": a_volume,
-            "material_region_sum": region_total,
-            "reintegrated": False,
-            "inferred_from_one_minus_R_minus_T": False,
-            "historical_automatic_rule_reinterpreted_as_q19": False,
-        },
+        "A_volume": modal_validation["A_volume"],
     }
+    if checkpoint_callback is not None:
+        response["substage_checkpoint_refs"] = dict(checkpoint_refs)
+        response["substage_statuses"] = {
+            stage: "CHECKPOINTED" for stage in _V11_A2_CHECKPOINT_STAGES
+        }
+    return response
 
 
 def _v11_actual_space_gate(
@@ -1922,18 +2099,70 @@ def main(argv: list[str] | None = None) -> int:
                 "v12_recovery_binding": v12_recovery_binding,
             },
         )
-        try:
-            v11_a2_response = _v11_saved_a2_primary_q_response(v11_contract)
-        except (OSError, KeyError, TypeError, ValueError, RuntimeError) as exc:
-            v11_a2_response = {
-                "schema": "task43.v11.saved_a2_primary_q_response.v1",
-                "status": "failed_saved_primary_read_or_recomputation",
-                "pass": False,
-                "error": f"{type(exc).__name__}: {exc}",
-                "historical_endpoint_status": "INCOMPLETE_NOT_QUALIFIED",
+        a2_substage_root = output_root / "A2_saved_primary_q_response_substages"
+        a2_substage_root.mkdir()
+        a2_substage_refs: dict[str, dict[str, Any]] = {}
+        a2_checkpoint_state: dict[str, str | None] = {"stage": None}
+
+        def persist_a2_substage(stage: str, values: Mapping[str, Any]):
+            if stage not in _V11_A2_CHECKPOINT_STAGES:
+                raise ValueError(f"unexpected V13 A2 checkpoint stage {stage!r}")
+            a2_checkpoint_state["stage"] = stage
+            checkpoint_record = {
+                "schema": "task43.v13.saved_a2_primary_substage.v1",
+                "status": "COMPLETED_SUBSTAGE",
+                "classification": "measured_saved_array_diagnostic_substage_nonofficial",
+                "stage": stage,
+                "identity": {
+                    "contract_sha256": v11_contract_sha256,
+                    "recovery_manifest_sha256": v12_recovery_binding[
+                        "manifest_sha256"
+                    ],
+                    "v12_recovery_binding": v12_recovery_binding,
+                    "input_sha256": v11_inputs_before,
+                    "source_sha256": v11_source_before,
+                },
+                "completed_substage_values": dict(values),
+                "overall_pass": False,
                 "official_result": False,
-                "passed": False,
-                "extra_correction_status": "historical_failure_preserved_not_replayed",
+                "selection_or_transition_authority": False,
+                "continuation": False,
+            }
+            reference = write_atomic_json(
+                a2_substage_root / f"{stage}.json", checkpoint_record
+            )
+            a2_substage_refs[stage] = reference
+            a2_checkpoint_state["stage"] = None
+            return reference
+
+        try:
+            v11_a2_response = _v11_saved_a2_primary_q_response(
+                v11_contract,
+                checkpoint_callback=persist_a2_substage,
+            )
+        except (OSError, KeyError, TypeError, ValueError, RuntimeError) as exc:
+            checkpoint_stage = a2_checkpoint_state["stage"]
+            v11_a2_response = _v11_saved_a2_failure_response(
+                exc,
+                a2_substage_refs,
+                failure_stage=checkpoint_stage,
+                failure_origin=(
+                    "atomic_substage_checkpoint_persistence"
+                    if checkpoint_stage is not None
+                    else "saved_data_recomputation"
+                ),
+            )
+        if "substage_checkpoint_refs" not in v11_a2_response:
+            v11_a2_response["substage_checkpoint_refs"] = dict(a2_substage_refs)
+        if "substage_statuses" not in v11_a2_response:
+            completed_stages = set(a2_substage_refs)
+            v11_a2_response["substage_statuses"] = {
+                stage: (
+                    "CHECKPOINTED"
+                    if stage in completed_stages
+                    else "NOT_REACHED"
+                )
+                for stage in _V11_A2_CHECKPOINT_STAGES
             }
         v11_a2_response["persisted_before_space_authority"] = True
         v11_a2_response["contract_sha256"] = v11_contract_sha256

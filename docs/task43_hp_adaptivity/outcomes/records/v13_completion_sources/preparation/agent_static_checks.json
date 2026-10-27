@@ -1,0 +1,37 @@
+{
+  "schema": "task43.v13.agent_static_checks.v1",
+  "classification": "static_only_no_test_or_native_execution",
+  "checks": [
+    {
+      "name": "ast_parse",
+      "command": "python3 -I -c 'import ast, pathlib; paths=[\"benchmarks/task43_hp_adaptivity/round1_candidates.py\",\"benchmarks/task43_hp_adaptivity/h100_anchor.py\",\"src/test/test_task43_v11_scientific_restart.py\"]; [ast.parse(pathlib.Path(p).read_text(encoding=\"utf-8\"), filename=p) for p in paths]; print(\"AST OK:\", *paths, sep=\"\\n\")'",
+      "exit_code": 0,
+      "wall_seconds": 0.380379382,
+      "stdout": "AST OK:\nbenchmarks/task43_hp_adaptivity/round1_candidates.py\nbenchmarks/task43_hp_adaptivity/h100_anchor.py\nsrc/test/test_task43_v11_scientific_restart.py\n",
+      "stderr": ""
+    },
+    {
+      "name": "ruff_undefined_names",
+      "command": ".venv/bin/ruff check --select F821,F822,F823 benchmarks/task43_hp_adaptivity/round1_candidates.py benchmarks/task43_hp_adaptivity/h100_anchor.py src/test/test_task43_v11_scientific_restart.py",
+      "exit_code": 0,
+      "wall_seconds": 0.226780151,
+      "stdout": "All checks passed!\n",
+      "stderr": ""
+    },
+    {
+      "name": "git_diff_check",
+      "command": "git diff --check",
+      "exit_code": 0,
+      "wall_seconds": 0.160411897,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "source_sha256": {
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py": "72716b9f7219a9f6ae78f4b7b736796d072ef4ffa46505ff9b3aac4d8523c71e",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "086bdf560e3836a19009e86c74ad818870b534ec8b891b818a87fbf9137a1323",
+    "src/test/test_task43_v11_scientific_restart.py": "8516a90dd558e6c2ec4d9329da26fa2aba5bdb0b253e5ac3c6838dbbda5f38ba"
+  },
+  "tests_run": false,
+  "native_or_pde_execution": false
+}

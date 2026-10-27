@@ -2982,6 +2982,10 @@ def _v11_raw_vector_gates(
         or a6_b_modal.size != 612
     ):
         raise ValueError("V11 independent A6 residual row counts differ from active space")
+    if np.any(a6_b_modal != 0):
+        raise ValueError(
+            "V11 independent A6 modal lower solver gauge RHS must be exactly zero"
+        )
     if a6_b_trace.shape != a6_r_trace.shape or a6_b_interior.shape != a6_r_interior.shape:
         raise ValueError("V11 independent A6 RHS and residual layouts differ")
     a6_residual_norm = float(

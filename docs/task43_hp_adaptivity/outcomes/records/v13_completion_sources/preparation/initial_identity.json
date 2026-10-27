@@ -1,0 +1,16 @@
+{
+  "review": "37f3376be410657fbaec86b0412086745419c506",
+  "time_utc": "2026-10-26T23:48:09.297662+00:00",
+  "head": "37f3376be410657fbaec86b0412086745419c506",
+  "status": "",
+  "new_driver_calls": 0,
+  "local_static_failures": [
+    {
+      "command": "sed -n 1,135p src/adaptivity/hcurl_broken_trace.py",
+      "exit_code": 2,
+      "reason": "nonexistent path; real types read in hcurl_broken_cell_trace.py and variable_p_entity_map.py",
+      "timing": "not_measured"
+    }
+  ],
+  "manual_read_and_edit_time": "not_measured"
+}

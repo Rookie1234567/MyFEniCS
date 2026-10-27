@@ -580,6 +580,139 @@ def test_raw_vector_residual_recomputation_uses_saved_gram_action():
         h100_anchor._v11_raw_vector_gates(malformed, **_raw_gate_arguments())
 
 
+@pytest.mark.parametrize(
+    ("failure", "error_match"),
+    (
+        (None, None),
+        ("rhs", "full-active reduced RHS/solution/residual do not match"),
+        ("solution", "full-active reduced RHS/solution/residual do not match"),
+        ("residual_sign", "full-active reduced RHS/solution/residual do not match"),
+        ("missing_solution", "missing full_active_reduced_trace_dtn_solution_owned"),
+        ("zero_rhs", "RHS norm must be finite and strictly positive"),
+        ("modal_rhs", "modal lower solver gauge RHS must be exactly zero"),
+    ),
+    ids=("valid", "rhs", "solution", "residual_sign", "missing_solution", "zero_rhs", "modal_rhs"),
+)
+def test_v13_raw_packet_same_state_and_zero_modal_rhs(
+    tmp_path, monkeypatch, failure, error_match
+):
+    root = tmp_path / ("valid" if failure is None else failure)
+    candidate_root, record, contract, contract_sha = _pending_fixture(root)
+    monkeypatch.setattr(comparison, "ROOT", root)
+    monkeypatch.setattr(
+        comparison,
+        "_v11_source_snapshot",
+        lambda: {"benchmarks/fake_source.py": "source-sha"},
+    )
+    monkeypatch.setattr(
+        comparison, "_verify_v12_p2_source_binding", lambda *args, **kwargs: {}
+    )
+
+    residual = 1.0e-20
+    arrays = _raw_vectors()
+    arrays["full_active_reduced_trace_dtn_residual_Ax_minus_b_owned"][0] = -residual
+    arrays["full_active_reduced_trace_dtn_residual_trace_metric_action"][0] = (
+        -4.0 * residual
+    )
+    arrays["full_active_reduced_trace_dtn_rhs_trace_metric_action"][0] = 4.0
+    arrays["returned_trace_dtn_b_minus_Ax"][0] = residual
+    arrays["normal_before_normal_correction_residual_b_minus_Ax"][...] = 0.0
+    arrays["normal_before_normal_correction_residual_b_minus_Ax"][0] = 2.0 * residual
+    arrays["normal_after_normal_correction_residual_b_minus_Ax"][0] = residual
+    raw_audit = h100_anchor._v11_raw_vector_gates(
+        arrays, **_raw_gate_arguments()
+    )
+    assert raw_audit["pass"] is True
+    assert raw_audit["independent_A6"]["rhs_norm"] == pytest.approx(np.sqrt(2.0))
+
+    if failure == "rhs":
+        arrays["returned_trace_dtn_rhs"][0] = 2.0
+    elif failure == "solution":
+        arrays["returned_trace_dtn_solution"][0] = 2.0
+    elif failure == "residual_sign":
+        arrays["returned_trace_dtn_b_minus_Ax"][0] = -residual
+        arrays["normal_after_normal_correction_residual_b_minus_Ax"][0] = -residual
+    elif failure == "missing_solution":
+        arrays.pop("full_active_reduced_trace_dtn_solution_owned")
+    elif failure == "zero_rhs":
+        for name in (
+            "independent_A6_independent_active_rhs_trace",
+            "independent_A6_independent_active_rhs_cell_interior",
+            "full_active_reduced_trace_dtn_rhs_owned",
+            "full_active_reduced_trace_dtn_rhs_trace_metric_action",
+            "full_active_active_full_rhs",
+            "recovered_active_full_rhs_owned",
+            "returned_trace_dtn_rhs",
+            "normal_before_normal_correction_rhs",
+            "normal_after_normal_correction_rhs",
+        ):
+            arrays[name][...] = 0.0
+    elif failure == "modal_rhs":
+        arrays[
+            "independent_A6_independent_active_modal_lower_solver_gauge_rhs"
+        ][0] = 0.125
+
+    if failure is not None:
+        with pytest.raises(ValueError, match=error_match):
+            h100_anchor._v11_raw_vector_gates(arrays, **_raw_gate_arguments())
+
+    packet_path = candidate_root / "primary_state.npz"
+    packet_path.unlink()
+    packet = write_v11_primary_packet(
+        packet_path,
+        arrays,
+        phase="R9_H8",
+        identity=record["primary_packet"]["identity"],
+    )
+    record["primary_packet"] = packet
+    terminal_path = candidate_root / "task43_v11_primary_terminal.json"
+    terminal = json.loads(terminal_path.read_text(encoding="utf-8"))
+    terminal["primary_packet"] = packet
+    record["primary_raw_vector_audit"] = raw_audit
+    raw_checkpoint_ref = record["primary_raw_vector_audit_checkpoint"]
+    raw_checkpoint_path = Path(raw_checkpoint_ref["path"])
+    raw_checkpoint_record = json.loads(
+        raw_checkpoint_path.read_text(encoding="utf-8")
+    )
+    raw_checkpoint_record.update(
+        {
+            "audit": raw_audit,
+            "gates": raw_audit["gates"],
+            "pass": raw_audit["pass"],
+        }
+    )
+    raw_checkpoint_ref = candidate_checkpoints.write_atomic_json(
+        raw_checkpoint_path,
+        raw_checkpoint_record,
+        refuse_overwrite=False,
+    )
+    record["primary_raw_vector_audit_checkpoint"] = raw_checkpoint_ref
+    terminal["primary_raw_vector_audit_checkpoint"] = raw_checkpoint_ref
+    terminal_path.write_text(
+        json.dumps(terminal, sort_keys=True), encoding="utf-8"
+    )
+
+    if failure is None:
+        restored = comparison._validate_v11_pending_candidate(
+            candidate_root,
+            record=record,
+            contract=contract,
+            contract_sha256=contract_sha,
+            recovery_binding=record["candidate_identity"]["v12_recovery_binding"],
+        )
+        assert restored[0] == candidate_root / "candidate_plan.json"
+        return
+
+    with pytest.raises(ValueError, match=error_match):
+        comparison._validate_v11_pending_candidate(
+            candidate_root,
+            record=record,
+            contract=contract,
+            contract_sha256=contract_sha,
+            recovery_binding=record["candidate_identity"]["v12_recovery_binding"],
+        )
+
+
 def _pending_fixture(root: Path, *, failed_condensed: bool = False) -> tuple[Path, dict, dict, str]:
     artifact_prefix = root / "artifacts"
     p4 = {
@@ -889,6 +1022,331 @@ def _pending_fixture(root: Path, *, failed_condensed: bool = False) -> tuple[Pat
         json.dumps(terminal, sort_keys=True), encoding="utf-8"
     )
     return candidate_root, record, contract, contract_sha
+
+
+def _v13_saved_a2_input_fixture(root: Path) -> dict:
+    inputs = []
+    data_root = root / "saved_a2_inputs"
+    data_root.mkdir(parents=True)
+
+    def add_input(role: str, path: Path) -> None:
+        inputs.append(
+            {
+                "role": role,
+                "path": path.relative_to(root).as_posix(),
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            }
+        )
+
+    resolved_config_path = data_root / "y6_config.json"
+    resolved_config_path.write_text('{"fixture":"Y6_1"}\n', encoding="utf-8")
+    add_input("Y6_1_resolved_config", resolved_config_path)
+    returned_rhs = np.ones(121572, dtype=np.complex128)
+    residual = np.zeros(121572, dtype=np.complex128)
+    residual[0] = 1.0e-22
+    raw_arrays = {
+        "primary_native_A6_effective_rhs": np.ones(389832, dtype=np.complex128),
+        "primary_independent_A6_residual": np.zeros(389832, dtype=np.complex128),
+        "primary_zero_slave_carrier_residual": np.zeros(389832, dtype=np.complex128),
+        "primary_augmented_port_residual": np.zeros(612, dtype=np.complex128),
+        "primary_returned_trace_dtn_rhs": returned_rhs,
+        "primary_returned_trace_dtn_solution": np.zeros(121572, dtype=np.complex128),
+        "primary_returned_trace_dtn_b_minus_Ax": residual,
+        "normal_correction_b_minus_Ax_snapshot_0": np.pad(
+            np.asarray([2.0e-22], dtype=np.complex128), (0, 121571)
+        ),
+        "normal_correction_b_minus_Ax_snapshot_1": residual.copy(),
+        "primary_full_physical_rhs": np.ones(389832, dtype=np.complex128),
+        "primary_recovered_p6_storage": np.zeros(389832, dtype=np.complex128),
+    }
+    returned_rhs_norm = float(np.linalg.norm(returned_rhs))
+    condensed_relative = float(np.linalg.norm(residual)) / returned_rhs_norm
+    packet_identity = {
+        "resolved_config_path": str(resolved_config_path.resolve()),
+        "resolved_config_sha256": hashlib.sha256(
+            resolved_config_path.read_bytes()
+        ).hexdigest(),
+        "operator_q": 19,
+        "incident_port_q": 32,
+        "mode_basis_scale_policy": None,
+        "primary_solver_residual_metrics_before_extra": {
+            "condensed_b_minus_Ax_relative": condensed_relative,
+            "independent_A6_relative": 0.0,
+            "full_active_space_transformed_relative": 0.0,
+        },
+    }
+    packet_path = data_root / "primary_state.npz"
+    packet = candidate_checkpoints.write_atomic_npz(
+        packet_path,
+        raw_arrays,
+        schema="task43.v3.a2_primary_before_extra.v1",
+        classification="measured_primary_state_before_extra_not_official",
+        identity=packet_identity,
+    )
+    add_input("A2_primary_packet", packet_path)
+
+    modal_path = data_root / "a2_modal_orders.json"
+    modal_path.write_text(
+        json.dumps(
+            {
+                "metrics": {
+                    "R_total": 0.0,
+                    "T_total": 1.0,
+                    "R00_s": 0.0,
+                    "R00_p": 0.0,
+                    "R00_total": 0.0,
+                },
+                "rows": [{"fixture": "one validated modal row"}],
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    add_input("A2_saved_modal_orders", modal_path)
+    absorption_path = data_root / "a2_absorption.json"
+    absorption_path.write_text(
+        json.dumps({"A_volume_total": 0.0, "regions": {}}, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    add_input("A2_saved_absorption", absorption_path)
+
+    points = np.zeros((1, 3), dtype=np.float64)
+    weights = np.asarray([350000.0], dtype=np.float64)
+    comparison_quadrature = {}
+    for order in (8, 10):
+        key = f"q{order}"
+        reference_path = data_root / f"y6_{key}.npz"
+        with reference_path.open("wb") as stream:
+            np.savez_compressed(
+                stream,
+                points_nm=points,
+                weights_nm3=weights,
+                Y6_1_E=np.zeros((1, 3), dtype=np.complex128),
+                Y6_1_curl_E=np.zeros((1, 3), dtype=np.complex128),
+            )
+        reference_sha = hashlib.sha256(reference_path.read_bytes()).hexdigest()
+        add_input(f"historical_joint_{key}", reference_path)
+        comparison_quadrature[key] = {
+            "sample_bundle": str(reference_path.resolve()),
+            "sample_bundle_sha256": reference_sha,
+        }
+        sample_path = data_root / f"a2_{key}.npz"
+        candidate_checkpoints.write_atomic_npz(
+            sample_path,
+            {
+                "points_nm": points,
+                "weights_nm3": weights,
+                "E_total_code": np.zeros((1, 3), dtype=np.complex128),
+                "curl_E_total_code": np.zeros((1, 3), dtype=np.complex128),
+                "H_total_A_per_m": np.zeros((1, 3), dtype=np.complex128),
+            },
+            schema="task43.v3.a2_saved_field_sample.v1",
+            classification="measured_saved_primary_field_sample_nonofficial",
+            identity={"primary_before_extra_npz_sha256": packet["npz_sha256"]},
+        )
+        add_input(f"A2_{key}_saved_sample", sample_path)
+    comparison_path = data_root / "historical_joint_comparison.json"
+    comparison_path.write_text(
+        json.dumps({"quadrature": comparison_quadrature}, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    add_input("historical_joint_comparison", comparison_path)
+    return {
+        "inputs": inputs,
+        "quadrature_response_thresholds": {
+            "aggregate_absolute_max": 1.0e-6,
+            "zero_order_s_p_and_each_channel_power_absolute_max": 1.0e-7,
+            "four_boundary_amplitude_and_total_scattered_E_H_G_floor_normalized_max": 1.0e-5,
+        },
+    }
+
+
+def test_v13_saved_a2_partial_checkpoint(tmp_path, monkeypatch):
+    base = round1_candidates.base
+    comparator = round1_candidates.candidate_comparator
+    comparison_metrics = {
+        "power_absolute_differences": {
+            "R00_s": 0.0,
+            "R00_p": 0.0,
+            "R00_total": 0.0,
+            "R_total": 0.0,
+            "T_total": 0.0,
+        },
+        "maximum_individual_channel_power_ratio_absolute_difference": 0.0,
+        "boundary_amplitude_groups": {
+            f"group_{index}": {"relative_with_unit_incident_modal_floor": 0.0}
+            for index in range(4)
+        },
+    }
+    field_metrics = {
+        name: {"relative_to_reference_or_floor": 0.0}
+        for name in (
+            "E_total_code",
+            "H_total_A_per_m",
+            "E_scattered_code",
+            "H_scattered_A_per_m",
+        )
+    }
+    field_metrics["G"] = {"relative_with_incident_floor": 0.0}
+    historical_cfg = SimpleNamespace(
+        magnetic_field_scale_A_per_m=1.0,
+        k0=1.0,
+        mu_r=1.0 + 0.0j,
+    )
+
+    for outcome in ("success", "q10_failure"):
+        root = tmp_path / outcome
+        contract = _v13_saved_a2_input_fixture(root)
+        monkeypatch.setattr(round1_candidates, "ROOT", root)
+        with monkeypatch.context() as local:
+            local.setattr(round1_candidates, "_load_inventory_entry", lambda *_args: {})
+            local.setattr(
+                round1_candidates,
+                "_configure_historical_direct_route",
+                lambda *_args: historical_cfg,
+            )
+            local.setattr(
+                round1_candidates,
+                "_validated_rows",
+                lambda *_args, **_kwargs: [{"fixture": "R13"}],
+            )
+            local.setattr(
+                comparator,
+                "_load_modal_case",
+                lambda _label: {"label": "Y6_1", "record": {}},
+            )
+            local.setattr(base, "_validate_mode_physics", lambda *_args, **_kwargs: {"pass": True})
+            local.setattr(
+                comparator,
+                "_post_selection_full_mode_physics",
+                lambda case: {"label": case["label"], "pass": True},
+            )
+            local.setattr(
+                base,
+                "_modal_comparison",
+                lambda *_args, **_kwargs: comparison_metrics,
+            )
+            original_q10_error = ValueError("q10 fixture field comparison failed")
+            local.setattr(
+                base,
+                "_field_metrics",
+                lambda *_args, **_kwargs: field_metrics,
+            )
+
+            checkpoint_root = root / "a2_substage_checkpoints"
+            checkpoint_root.mkdir()
+            refs = {}
+            values_by_stage = {}
+
+            def persist_substage(stage, values):
+                values_by_stage[stage] = dict(values)
+                reference = candidate_checkpoints.write_atomic_json(
+                    checkpoint_root / f"{stage}.json",
+                    {
+                        "stage": stage,
+                        "completed_substage_values": dict(values),
+                        "overall_pass": False,
+                        "official_result": False,
+                        "selection_or_transition_authority": False,
+                        "continuation": False,
+                    },
+                )
+                refs[stage] = reference
+                return reference
+
+            if outcome == "success":
+                response = round1_candidates._v11_saved_a2_primary_q_response(
+                    contract,
+                    checkpoint_callback=persist_substage,
+                )
+                assert response["pass"] is True
+                assert response["substage_statuses"] == {
+                    "raw": "CHECKPOINTED",
+                    "modal": "CHECKPOINTED",
+                    "q8": "CHECKPOINTED",
+                    "q10": "CHECKPOINTED",
+                }
+                assert tuple(refs) == ("raw", "modal", "q8", "q10")
+                assert values_by_stage["raw"]["A6_relative_to_native_effective_rhs"] == 0.0
+                assert values_by_stage["raw"][
+                    "full_active_zero_slave_carrier_plus_modal_port_euclidean_relative_to_native_effective_rhs"
+                ] == 0.0
+                assert values_by_stage["raw"][
+                    "returned_condensed_relative_to_returned_rhs"
+                ] == pytest.approx(
+                    1.0e-22 / np.sqrt(121572), rel=1.0e-12, abs=0.0
+                )
+                assert values_by_stage["raw"]["normal_correction_relative_history"] == pytest.approx(
+                    [2.0e-22 / np.sqrt(121572), 1.0e-22 / np.sqrt(121572)],
+                    rel=1.0e-12,
+                    abs=0.0,
+                )
+                assert values_by_stage["modal"]["ordered_rows_checked"] == 1
+                assert values_by_stage["q8"]["sample_count"] == 1
+                assert values_by_stage["q10"]["sample_count"] == 1
+                for stage, reference in refs.items():
+                    checkpoint_path = Path(reference["path"])
+                    checkpoint_record = json.loads(
+                        checkpoint_path.read_text(encoding="utf-8")
+                    )
+                    assert hashlib.sha256(checkpoint_path.read_bytes()).hexdigest() == reference[
+                        "sha256"
+                    ]
+                    assert checkpoint_record["overall_pass"] is False
+                    assert checkpoint_record["official_result"] is False
+                    assert checkpoint_record["selection_or_transition_authority"] is False
+                    assert checkpoint_record["continuation"] is False
+                continue
+
+            bytes_before_q10_failure = {}
+
+            def fail_q10_after_q8(*_args, **_kwargs):
+                bytes_before_q10_failure.update(
+                    {
+                        stage: Path(reference["path"]).read_bytes()
+                        for stage, reference in refs.items()
+                    }
+                )
+                raise original_q10_error
+
+            field_call_count = {"count": 0}
+
+            def fail_second_field_call(*args, **kwargs):
+                field_call_count["count"] += 1
+                if field_call_count["count"] == 2:
+                    return fail_q10_after_q8(*args, **kwargs)
+                return field_metrics
+
+            local.setattr(base, "_field_metrics", fail_second_field_call)
+            with pytest.raises(ValueError, match="q10 fixture field comparison failed") as caught:
+                round1_candidates._v11_saved_a2_primary_q_response(
+                    contract,
+                    checkpoint_callback=persist_substage,
+                )
+            assert caught.value is original_q10_error
+            failure_record = round1_candidates._v11_saved_a2_failure_response(
+                caught.value, refs
+            )
+            assert failure_record["failure_stage"] == "q10"
+            assert failure_record["error"] == "ValueError: q10 fixture field comparison failed"
+            assert failure_record["substage_statuses"] == {
+                "raw": "CHECKPOINTED",
+                "modal": "CHECKPOINTED",
+                "q8": "CHECKPOINTED",
+                "q10": "FAILED",
+            }
+            assert failure_record["pass"] is False
+            assert failure_record["passed"] is False
+            assert failure_record["official_result"] is False
+            assert failure_record["selection_or_transition_authority"] is False
+            assert failure_record["continuation"] is False
+            assert set(refs) == {"raw", "modal", "q8"}
+            for stage, before in bytes_before_q10_failure.items():
+                reference = refs[stage]
+                checkpoint_path = Path(reference["path"])
+                assert checkpoint_path.read_bytes() == before
+                assert hashlib.sha256(before).hexdigest() == reference["sha256"]
 
 
 def _prepare_v12_compare_fixture(root: Path, monkeypatch, *, failure: str | None = None):
@@ -1921,6 +2379,15 @@ def test_fixed_seed8_plan_rejects_nonroot_and_alternate_seed(monkeypatch):
 def test_v12_observer_delegates_cache_and_restores_alias_after_errors(
     tmp_path, monkeypatch
 ):
+    from src.adaptivity.hcurl_broken_cell_trace import (
+        BrokenHexCellTraceConstraintMap,
+        BrokenHexCellTraceMap,
+    )
+    from src.adaptivity.variable_p_entity_map import (
+        VariablePCellDofMap,
+        VariablePGlobalEntityMap,
+    )
+
     def compute(value):
         return value * 3
 
@@ -1955,11 +2422,151 @@ def test_v12_observer_delegates_cache_and_restores_alias_after_errors(
     assert {event["event"] for event in success_events} == {"BEGIN", "END"}
     assert any(event.get("cache_after", {}).get("hits") == 1 for event in success_events)
 
+    degree_map = round1_candidates.HexaEntityDegreeMap(
+        edges=(5,) * 12,
+        faces=(5,) * 6,
+        cell=5,
+    )
+    entity_cell = VariablePCellDofMap(
+        local_cell=0,
+        global_cell=17,
+        degree_map=degree_map,
+        active_rows=np.asarray([0], dtype=np.int64),
+        trace_rows=np.asarray([0], dtype=np.int64),
+        interior_rows=np.asarray([], dtype=np.int64),
+        cell_info=0,
+        entity_ids={},
+    )
+    entity_result = VariablePGlobalEntityMap(
+        mesh=None,
+        global_degrees={},
+        global_entity_rows={},
+        local_entity_rows={},
+        owned_cells=(entity_cell,),
+        active_rows=1,
+        active_trace_rows=1,
+        active_cell_interior_rows=0,
+        uniform_p6_rows=1,
+        uniform_p6_trace_rows=1,
+        audit={},
+    )
+    entity_calls = []
+
+    @lru_cache(maxsize=2)
+    def build_entity_map():
+        entity_calls.append("built")
+        return entity_result
+
+    monkeypatch.setattr(
+        round1_candidates,
+        "build_variable_p_global_entity_map",
+        build_entity_map,
+        raising=False,
+    )
+
+    def call_entity_map():
+        first = round1_candidates.build_variable_p_global_entity_map()
+        second = round1_candidates.build_variable_p_global_entity_map()
+        assert first is second
+        return second
+
+    entity_root = tmp_path / "observer_entity_map"
+    entity_root.mkdir()
+    observed_entity = round1_candidates._v12_observed_call(
+        entity_root, "fixture_entity_map", call_entity_map
+    )
+    assert observed_entity is entity_result
+    assert entity_calls == ["built"]
+    assert build_entity_map.cache_info().misses == 1
+    assert build_entity_map.cache_info().hits == 1
+    assert round1_candidates.build_variable_p_global_entity_map is build_entity_map
+    entity_events = [
+        json.loads(line)
+        for line in (entity_root / "authority_observations.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    ]
+    entity_summary = next(
+        event["completed_work"]
+        for event in entity_events
+        if event["event"] == "END"
+        and event["function"].endswith("build_entity_map")
+    )
+    assert entity_summary["result_kind"] == "entity_map"
+    assert entity_summary["degree_map_source"] == "result.owned_cells"
+    assert entity_summary["degree_map_count"] == 1
+
+    trace_cell = BrokenHexCellTraceMap(
+        local_cell=0,
+        global_cell=17,
+        canonical_leaf=2,
+        independent_rows=np.asarray([0], dtype=np.int64),
+        full_trace_from_independent=np.eye(1, dtype=np.complex128),
+    )
+    trace_result = BrokenHexCellTraceConstraintMap(
+        entity_map=entity_result,
+        authority=None,
+        entity_blocks={},
+        work_owned_entity_blocks=(),
+        owned_cells=(trace_cell,),
+        independent_trace_rows=1,
+        component_gram=np.eye(1, dtype=np.complex128),
+        audit={},
+    )
+    trace_calls = []
+
+    @lru_cache(maxsize=2)
+    def build_cell_trace_map():
+        trace_calls.append("built")
+        return trace_result
+
+    monkeypatch.setattr(
+        round1_candidates,
+        "build_broken_hexa_cell_trace_constraint_map",
+        build_cell_trace_map,
+        raising=False,
+    )
+
+    def call_cell_trace_map():
+        first = round1_candidates.build_broken_hexa_cell_trace_constraint_map()
+        second = round1_candidates.build_broken_hexa_cell_trace_constraint_map()
+        assert first is second
+        return second
+
+    trace_root = tmp_path / "observer_cell_trace_map"
+    trace_root.mkdir()
+    observed_trace = round1_candidates._v12_observed_call(
+        trace_root, "fixture_cell_trace_map", call_cell_trace_map
+    )
+    assert observed_trace is trace_result
+    assert trace_calls == ["built"]
+    assert build_cell_trace_map.cache_info().misses == 1
+    assert build_cell_trace_map.cache_info().hits == 1
+    assert round1_candidates.build_broken_hexa_cell_trace_constraint_map is build_cell_trace_map
+    trace_events = [
+        json.loads(line)
+        for line in (trace_root / "authority_observations.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    ]
+    trace_summary = next(
+        event["completed_work"]
+        for event in trace_events
+        if event["event"] == "END"
+        and event["function"].endswith("build_cell_trace_map")
+    )
+    assert trace_summary["result_kind"] == "cell_trace_constraint_map"
+    assert trace_summary["result_owned_cell_type"].endswith("BrokenHexCellTraceMap")
+    assert trace_summary["degree_map_source"] == "result.entity_map.owned_cells"
+    assert trace_summary["degree_map_count"] == 1
+
     class ObservedFailure(RuntimeError):
         pass
 
+    original_failure = ObservedFailure("original worker failure")
+
     def fail(_value):
-        raise ObservedFailure("original worker failure")
+        raise original_failure
 
     cached_failure = lru_cache(maxsize=4)(fail)
     monkeypatch.setattr(
@@ -1975,10 +2582,11 @@ def test_v12_observer_delegates_cache_and_restores_alias_after_errors(
 
     error_root = tmp_path / "observer_error"
     error_root.mkdir()
-    with pytest.raises(ObservedFailure, match="original worker failure"):
+    with pytest.raises(ObservedFailure, match="original worker failure") as error_info:
         round1_candidates._v12_observed_call(
             error_root, "fixture_error", failing_call, 9
         )
+    assert error_info.value is original_failure
     assert failing_aliases and failing_aliases[0] is not cached_failure
     assert round1_candidates.build_variable_p_reference_space is cached_failure
     error_events = [
@@ -1994,6 +2602,34 @@ def test_v12_observer_delegates_cache_and_restores_alias_after_errors(
         for event in error_events
         if event["event"] == "BEGIN"
     )
+
+    summary_error = RuntimeError("observer summary failure")
+
+    class BrokenSummaryResult:
+        @property
+        def owned_cells(self):
+            raise summary_error
+
+    observer_error_root = tmp_path / "observer_summary_error"
+    observer_error_root.mkdir()
+    with pytest.raises(RuntimeError, match="observer summary failure") as observer_error:
+        round1_candidates._v12_observed_call(
+            observer_error_root,
+            "fixture_observer_summary_error",
+            lambda: BrokenSummaryResult(),
+        )
+    assert observer_error.value is summary_error
+    observer_error_events = [
+        json.loads(line)
+        for line in (observer_error_root / "authority_observations.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    ]
+    assert [event["event"] for event in observer_error_events] == [
+        "BEGIN",
+        "OBSERVER_ERROR",
+    ]
+    assert observer_error_events[-1]["classification"] == "observer_return_summary_failed"
 
 
 def test_v11_primary_cli_forbids_extra_and_binds_q10_output(tmp_path, monkeypatch):
@@ -3042,20 +3678,12 @@ def test_main_reaches_v11_mesh_sentinel_with_watchdog_identity(tmp_path, monkeyp
     monkeypatch.setattr(
         round1_candidates,
         "_load_accepted_parent_state",
-        lambda *_args, **_kwargs: parent,
-    )
-    monkeypatch.setattr(
-        round1_candidates,
-        "_v11_saved_a2_primary_q_response",
-        lambda _contract: {
-            "schema": "task43.v11.saved_a2_primary_q_response.v1",
-            "pass": True,
-            "classification": "synthetic arithmetic boundary for main sentinel",
-        },
+        lambda *_args, **_kwargs: parent_load_calls.append(True) or parent,
     )
     monkeypatch.setattr(round1_candidates, "DEFAULT_ACCEPTANCE", acceptance_path)
-    p2_status = round1_candidates.main(
-        [
+
+    def p2_arguments(selected_output_root):
+        return [
             "--accepted-parent-selection-record",
             str(selection_path),
             "--primary-diagnostic-contract",
@@ -3063,10 +3691,150 @@ def test_main_reaches_v11_mesh_sentinel_with_watchdog_identity(tmp_path, monkeyp
             "--execution-recovery-manifest",
             str(recovery_manifest_path),
             "--output-root",
-            str(output_root),
+            str(selected_output_root),
         ]
+
+    parent_load_calls = []
+    failure_support = repository / "benchmarks/artifacts/task43/v11_science/recovery_v12/support/a2_q10_failure"
+    failure_output_root = failure_support / "plan_output"
+    failure_plan_path = failure_output_root / "plans/v11_r9_h8.json"
+    failure_support.mkdir(parents=True, exist_ok=True)
+    failure_p2_source = {
+        "p2_source_id": "P2R",
+        "support_root": str(failure_support.resolve()),
+        "output_root": str(failure_output_root.resolve()),
+        "plan_output_path": str(failure_plan_path.resolve()),
+        "audit_path": str(
+            (failure_output_root / "plans/v11_r9_h8.audit.json").resolve()
+        ),
+        "bundle_path": str((failure_output_root / "plan_audit.json").resolve()),
+    }
+    q10_error = ValueError("synthetic q10 saved-data comparison failure")
+
+    def fail_after_q8_checkpoint(_contract, *, checkpoint_callback):
+        for stage in ("raw", "modal", "q8"):
+            checkpoint_callback(
+                stage,
+                {
+                    "fixture_substage_value": stage,
+                    "pass": True,
+                    "official_result": False,
+                },
+            )
+        raise q10_error
+
+    monkeypatch.setattr(
+        round1_candidates,
+        "_resolve_v12_p2_source",
+        lambda _recovery, *, attempt_root: failure_p2_source
+        if Path(attempt_root).resolve() == Path(failure_p2_source["support_root"]).resolve()
+        else (_ for _ in ()).throw(ValueError("unexpected failure P2 selector")),
+    )
+    monkeypatch.setenv("TASK43_V11_ATTEMPT_ROOT", failure_p2_source["support_root"])
+    monkeypatch.setattr(
+        round1_candidates,
+        "_v11_saved_a2_primary_q_response",
+        fail_after_q8_checkpoint,
+    )
+    with pytest.raises(
+        RuntimeError,
+        match="saved A2 primary raw/q response failed before space authority",
+    ):
+        round1_candidates.main(p2_arguments(failure_output_root))
+    failed_a2_path = failure_output_root / "A2_saved_primary_q_response.json"
+    failed_a2 = json.loads(failed_a2_path.read_text(encoding="utf-8"))
+    assert failed_a2["error"] == "ValueError: synthetic q10 saved-data comparison failure"
+    assert failed_a2["failure_stage"] == "q10"
+    assert failed_a2["failure_origin"] == "saved_data_recomputation"
+    assert failed_a2["pass"] is False
+    assert failed_a2["passed"] is False
+    assert failed_a2["official_result"] is False
+    assert failed_a2["selection_or_transition_authority"] is False
+    assert failed_a2["continuation"] is False
+    assert failed_a2["substage_statuses"] == {
+        "raw": "CHECKPOINTED",
+        "modal": "CHECKPOINTED",
+        "q8": "CHECKPOINTED",
+        "q10": "FAILED",
+    }
+    failed_substage_root = failure_output_root / "A2_saved_primary_q_response_substages"
+    for stage in ("raw", "modal", "q8"):
+        stage_ref = failed_a2["substage_checkpoint_refs"][stage]
+        stage_path = Path(stage_ref["path"])
+        stage_record = json.loads(stage_path.read_text(encoding="utf-8"))
+        assert hashlib.sha256(stage_path.read_bytes()).hexdigest() == stage_ref["sha256"]
+        assert stage_record["completed_substage_values"]["fixture_substage_value"] == stage
+        assert stage_record["identity"]["contract_sha256"] == contract_sha
+        assert stage_record["identity"]["recovery_manifest_sha256"] == recovery_context[
+            "manifest_sha256"
+        ]
+        assert stage_record["overall_pass"] is False
+        assert stage_record["official_result"] is False
+        assert stage_record["selection_or_transition_authority"] is False
+        assert stage_record["continuation"] is False
+    assert not (failed_substage_root / "q10.json").exists()
+    assert not (failure_output_root / "plans").exists()
+    assert parent_load_calls == []
+    archive_phase("A2_q10_failure", remove_live=True)
+
+    monkeypatch.setattr(
+        round1_candidates,
+        "_resolve_v12_p2_source",
+        lambda _recovery, *, attempt_root: p2_source
+        if Path(attempt_root).resolve() == Path(p2_source["support_root"]).resolve()
+        else (_ for _ in ()).throw(ValueError("unexpected P2 selector")),
+    )
+    monkeypatch.setenv("TASK43_V11_ATTEMPT_ROOT", p2_source["support_root"])
+
+    def complete_saved_a2(_contract, *, checkpoint_callback):
+        refs = {}
+        for stage in round1_candidates._V11_A2_CHECKPOINT_STAGES:
+            refs[stage] = checkpoint_callback(
+                stage,
+                {
+                    "fixture_substage_value": stage,
+                    "pass": True,
+                    "official_result": False,
+                },
+            )
+        return {
+            "schema": "task43.v11.saved_a2_primary_q_response.v1",
+            "pass": True,
+            "classification": "synthetic arithmetic boundary for main sentinel",
+            "substage_checkpoint_refs": refs,
+            "substage_statuses": {
+                stage: "CHECKPOINTED" for stage in round1_candidates._V11_A2_CHECKPOINT_STAGES
+            },
+        }
+
+    monkeypatch.setattr(
+        round1_candidates,
+        "_v11_saved_a2_primary_q_response",
+        complete_saved_a2,
+    )
+    p2_status = round1_candidates.main(
+        p2_arguments(output_root)
     )
     assert p2_status == 0
+    assert parent_load_calls == [True]
+    persisted_a2 = json.loads(
+        (output_root / "A2_saved_primary_q_response.json").read_text(encoding="utf-8")
+    )
+    assert persisted_a2["substage_statuses"] == {
+        stage: "CHECKPOINTED" for stage in round1_candidates._V11_A2_CHECKPOINT_STAGES
+    }
+    for stage in round1_candidates._V11_A2_CHECKPOINT_STAGES:
+        stage_ref = persisted_a2["substage_checkpoint_refs"][stage]
+        stage_path = Path(stage_ref["path"])
+        stage_record = json.loads(stage_path.read_text(encoding="utf-8"))
+        assert hashlib.sha256(stage_path.read_bytes()).hexdigest() == stage_ref["sha256"]
+        assert stage_record["completed_substage_values"]["fixture_substage_value"] == stage
+        assert stage_record["identity"]["input_sha256"]
+        assert stage_record["identity"]["source_sha256"]
+        assert stage_record["overall_pass"] is False
+        assert stage_record["official_result"] is False
+        assert stage_record["selection_or_transition_authority"] is False
+        assert stage_record["continuation"] is False
     p2_plan_path = output_root / "plans/v11_r9_h8.json"
     assert p2_plan_path.is_file()
     actual_plan = json.loads(p2_plan_path.read_text(encoding="utf-8"))
@@ -3183,7 +3951,7 @@ def test_main_reaches_v11_mesh_sentinel_with_watchdog_identity(tmp_path, monkeyp
     assert legacy_audit["space_authority_detail"]["all_actual_leaves_inherit_parent_degree"] is None
     archive_phase("P2", remove_live=False)
 
-    assert len(runtime_environments) == 3
+    assert len(runtime_environments) == 4
     for environment in runtime_environments:
         assert environment["petsc_scalar_type"]
         assert environment["petsc_int_type"]
@@ -3206,7 +3974,7 @@ def test_main_reaches_v11_mesh_sentinel_with_watchdog_identity(tmp_path, monkeyp
         "phase_path": str(live_phase_path),
         "phase_archives": {
             label: str(tmp_path / "watchdog_phase_archive" / f"{label}.json")
-            for label in ("A1_q3", "R9_H8", "P2")
+            for label in ("A1_q3", "R9_H8", "A2_q10_failure", "P2")
         },
         "claim_scope": "actual pytest worker and WorkflowLedger observations through each real main mesh-before-solve sentinel only; no solver or PDE stage was entered; extra-correction absence after solve is not established by this sentinel and must be established from saved raw-vector/formal run evidence",
     }

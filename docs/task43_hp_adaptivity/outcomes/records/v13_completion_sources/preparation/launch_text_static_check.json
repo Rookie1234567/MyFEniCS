@@ -1,0 +1,17 @@
+{
+  "kind": "static_shell_syntax_and_embedded_stdlib_ast_only",
+  "shell_sha256": "82342852758fcf61130ae2edc50fd728d37a0876b2a50ca34f53aa7e6de544ea",
+  "selectors": [
+    "src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity",
+    "src/test/test_task43_v11_scientific_restart.py::test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v12_p2_joined_source_binding_rejects_root_terminal_failure",
+    "src/test/test_task43_v11_scientific_restart.py::test_v12_observer_delegates_cache_and_restores_alias_after_errors",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_saved_a2_partial_checkpoint"
+  ],
+  "exit_code": 0,
+  "stdout": "",
+  "stderr": "",
+  "measured_seconds": 0.012659003026783466,
+  "invoked_launch": false
+}

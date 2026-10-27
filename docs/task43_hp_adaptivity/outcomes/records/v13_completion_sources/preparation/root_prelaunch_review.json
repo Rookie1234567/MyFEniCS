@@ -1,0 +1,71 @@
+{
+  "schema": "task43.v13.root-prelaunch-review.v1",
+  "review_sha": "37f3376be410657fbaec86b0412086745419c506",
+  "fixed_reviewed_head": "30333c5705d6a9ef64ba22d0d7030dd63a9c763d",
+  "precommit_head": "37f3376be410657fbaec86b0412086745419c506",
+  "reviewed_utc": "2026-10-27T00:02:03.604592+00:00",
+  "source_sha256": {
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py": "72716b9f7219a9f6ae78f4b7b736796d072ef4ffa46505ff9b3aac4d8523c71e",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "086bdf560e3836a19009e86c74ad818870b534ec8b891b818a87fbf9137a1323",
+    "src/test/test_task43_v11_scientific_restart.py": "8516a90dd558e6c2ec4d9329da26fa2aba5bdb0b253e5ac3c6838dbbda5f38ba"
+  },
+  "preserved_files": {
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+    "docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "22c35c356c9c12cb30ee01347b2348be22b55301cd35d18d057b5fb82c888a1c",
+    "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902"
+  },
+  "allowed_diff_sha256": "e553b6a1c3752e9c4d90d06babb2955cfb61147f74bd821d63d453f82947ac7a",
+  "command": [
+    "bash",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/launch/s1_completion_attempt1.sh"
+  ],
+  "shell_sha256": "82342852758fcf61130ae2edc50fd728d37a0876b2a50ca34f53aa7e6de544ea",
+  "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v12/support/s1_completion_attempt1",
+  "root_absent": true,
+  "expanded_nodes": [
+    "src/test/test_task43_v11_scientific_restart.py::test_main_reaches_v11_mesh_sentinel_with_watchdog_identity",
+    "src/test/test_task43_v11_scientific_restart.py::test_compare_v11_union_reads_bound_p2_p4_inputs_and_preserves_q8[None]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v12_p2_joined_source_binding_rejects_root_terminal_failure",
+    "src/test/test_task43_v11_scientific_restart.py::test_v12_observer_delegates_cache_and_restores_alias_after_errors",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[valid]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[rhs]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[solution]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[residual_sign]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[missing_solution]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[zero_rhs]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_raw_packet_same_state_and_zero_modal_rhs[modal_rhs]",
+    "src/test/test_task43_v11_scientific_restart.py::test_v13_saved_a2_partial_checkpoint"
+  ],
+  "node_count": 12,
+  "maxfail": 1,
+  "A2_checkpoint_scenarios_in_single_node": [
+    "success",
+    "q10_failure"
+  ],
+  "root_reviewed": [
+    "real VariablePGlobalEntityMap and BrokenHexCellTraceConstraintMap/CellTraceMap definitions and actual stage4 call sites",
+    "delegate/cache/alias restoration and original versus observer exception handling",
+    "raw/modal/q8/q10 atomic checkpoints, main failure references and closed continuation",
+    "homogeneous modal RHS exact-zero guard; producer and residual Gram formulas unchanged",
+    "raw valid packet plus six semantically targeted counterexamples with rebound array/NPZ/audit/terminal identities",
+    "real main helper keyword, separate failure output, phase archives and four actual runtime checks",
+    "actual pending reader and compare success trailing assertions; no model builder/solver invoked by support"
+  ],
+  "prelaunch_static_corrections": [
+    "observer fixture matched alias instead of actual original function name",
+    "missing solution case initially targeted returned rather than full-reduced vector",
+    "updated legitimate nonzero residual/Gram raw audit before mutation",
+    "pass keyword syntax typo and stale error regex corrected before AST",
+    "runtime expected count and phase archives synchronized with separate A2 failure main",
+    "tiny residual pytest.approx uses abs=0 to reject zero"
+  ],
+  "limitations": [
+    "static review is not dynamic qualification",
+    "A2 main uses synthetic arithmetic boundary; helper fixture uses synthetic saved arrays with modal/field dependencies replaced",
+    "old observer4/reader4/P5negative4 reused only in unchanged coverage, not whole final suite"
+  ],
+  "dynamic_calls_before_freeze": 0,
+  "measured_static_seconds": 0.3472657217644155,
+  "manual_review_time": "not_measured"
+}
