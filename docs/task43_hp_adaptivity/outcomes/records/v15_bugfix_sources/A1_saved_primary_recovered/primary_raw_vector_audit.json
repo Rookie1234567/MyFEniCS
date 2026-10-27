@@ -1,0 +1,47 @@
+{
+  "audit": {
+    "full_active_transformed": {
+      "active_interior_rows": 81000,
+      "independent_active_fe_dofs": 118800,
+      "independent_reduced_trace_rows": 37800,
+      "interior_metric": "Euclidean",
+      "raw_full_entity_map_rows": 124530,
+      "raw_trace_rows": 43530,
+      "reduced_trace_dtn_rows_including_auxiliary": 38412,
+      "relative_residual": 5.177423112815622e-13,
+      "residual_norm": 5.467527675942572e-13,
+      "rhs_norm": 1.0560326163818554,
+      "trace_metric": "saved same-pass Gram inverse action"
+    },
+    "gates": {
+      "extra_correction_count_zero": true,
+      "full_active_metric_raw_relative_le_1e-8": true,
+      "independent_A6_raw_relative_le_1e-8": true,
+      "normal_correction_exactly_once": true,
+      "normal_correction_positive_reason": true,
+      "normal_correction_raw_residual_strictly_decreased": true,
+      "returned_condensed_raw_relative_le_1e-9": true
+    },
+    "independent_A6": {
+      "relative_residual": 8.16286054211593e-09,
+      "residual_norm": 8.620246976578544e-09,
+      "rhs_norm": 1.0560326165199994
+    },
+    "normal_correction": {
+      "after_relative_residual": 5.275175272012166e-13,
+      "before_relative_residual": 5.504683022969577e-11,
+      "converged_reason": 4,
+      "rhs_identical": true
+    },
+    "pass": true,
+    "returned_condensed": {
+      "relative_residual": 5.275175272012166e-13,
+      "residual_norm": 5.570757145104607e-13,
+      "rhs_norm": 1.0560326165199994
+    }
+  },
+  "official_result": false,
+  "schema": "task43.v15.saved-primary-raw-audit.v1",
+  "source_packet_sha256": "27c75edf12de4f3be93f025e985dcd2a2bde42f3a083c3110afc5e6289c24830",
+  "status": "PASS"
+}

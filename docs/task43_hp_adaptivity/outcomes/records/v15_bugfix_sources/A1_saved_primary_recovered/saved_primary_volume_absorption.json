@@ -1,0 +1,108 @@
+{
+  "A_volume_total": 0.6915150591709378,
+  "R_total": 0.2513573038030871,
+  "T_total": 0.057127637030078865,
+  "actual_fem_form_integrals": [
+    {
+      "integral_type": "cell",
+      "metadata": {},
+      "subdomain_id": 3
+    },
+    {
+      "integral_type": "cell",
+      "metadata": {
+        "quadrature_degree": 19,
+        "quadrature_rule": "default"
+      },
+      "subdomain_id": 3
+    },
+    {
+      "integral_type": "cell",
+      "metadata": {},
+      "subdomain_id": 2
+    },
+    {
+      "integral_type": "cell",
+      "metadata": {
+        "quadrature_degree": 19,
+        "quadrature_rule": "default"
+      },
+      "subdomain_id": 2
+    }
+  ],
+  "energy_closure_pass": true,
+  "energy_closure_residual": 4.103828388224429e-12,
+  "energy_closure_tolerance": 1e-05,
+  "material_absorption_form_rule": {
+    "observed_integral_count": 2,
+    "quadrature_degree": 19,
+    "quadrature_rule": "default"
+  },
+  "official_result": false,
+  "payload": {
+    "A_flux_minus_A_volume_total": null,
+    "A_grating": 0.6547010168147807,
+    "A_port_balance_minus_A_volume_total": -4.103717365921966e-12,
+    "A_probe_balance_minus_A_volume_total": null,
+    "A_substrate": 0.03681404235615712,
+    "A_volume_grating": 0.6547010168147807,
+    "A_volume_substrate": 0.03681404235615712,
+    "A_volume_total": 0.6915150591709378,
+    "air_cells_excluded": true,
+    "energy_closure_error_port_volume": 4.103828388224429e-12,
+    "epsilon_definition": "epsilon_r = n^2; the absorption integrand uses Im(epsilon_r), not Im(n)",
+    "field_model_for_absorption": "total_field",
+    "formula_code_units": "P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV",
+    "incident_power_code_units": 21.815508046604222,
+    "method": "volume_absorption",
+    "normalization_note": "A_volume uses the current Stage-4 code-unit normalization: P_abs = integral 0.5*k0*Im(epsilon_r)*|E_total|^2 dV over physical material cells, divided by incident_power_code_units. PML cells and air cells are deliberately excluded from material volume absorption. The k0 factor follows from H_code=curl(E)/(i*k0*mu_r) and the corresponding Poynting balance.",
+    "pml_cells_excluded": true,
+    "power_source": "volume_integral_Im_epsilon_E2",
+    "regions": {
+      "grating": {
+        "A_volume": 0.6547010168147807,
+        "Im_epsilon_r": 0.0036493427323206554,
+        "absorbed_power_code_units": 14.282635300442813,
+        "cell_count": 16,
+        "epsilon_r_complex": [
+          0.9980022690345409,
+          0.0036493427323206554
+        ],
+        "material_label": "Si / silicon",
+        "n_complex": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "name": "grating",
+        "reason": null,
+        "status": "ok",
+        "tag": 3,
+        "volume_nm3": 40800.0
+      },
+      "substrate": {
+        "A_volume": 0.03681404235615712,
+        "Im_epsilon_r": 0.0036493427323206554,
+        "absorbed_power_code_units": 0.8031170372487744,
+        "cell_count": 30,
+        "epsilon_r_complex": [
+          0.9980022690345409,
+          0.0036493427323206554
+        ],
+        "material_label": "Si / silicon",
+        "n_complex": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "name": "substrate",
+        "reason": null,
+        "status": "ok",
+        "tag": 2,
+        "volume_nm3": 25000.0
+      }
+    },
+    "role": "absorption_check",
+    "status": "ok"
+  },
+  "region_volume_forms_use_automatic_rule": true,
+  "schema": "task43.v15.saved-primary-volume-absorption.v1"
+}
