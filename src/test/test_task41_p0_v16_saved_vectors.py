@@ -1308,21 +1308,50 @@ def test_v16_attempt04_default_context_binds_two_cell_v8_candidate_and_volume_rh
     rows = [dict(row, incident_cell_order=list(cells)) for row in fixtures[0]["rows"]]
     full_rhs_sources: dict[int, dict[str, object]] = {}
     alpha_sources: dict[int, dict[str, dict[str, object]]] = {}
+    donor_root = results / "task41extra_b0_p6_phi90_07nm_iterative"
+    donor_root.mkdir(parents=True)
+    donor_vector_records: list[dict[str, object]] = []
+    donor_source_bindings: dict[int, dict[str, tuple[object, ...]]] = {}
+
+    def register_donor_source(
+        column: int, role: str, filename: str, record: dict[str, object]
+    ) -> dict[str, object]:
+        indexed = {**record, "path": filename}
+        donor_vector_records.append(indexed)
+        donor_source_bindings.setdefault(column, {})[role] = (
+            filename,
+            record["sha256"],
+            record["bytes"],
+            record["dtype"],
+            record["shape"],
+        )
+        return {key: indexed[key] for key in (
+            "path", "sha256", "bytes", "dtype", "shape"
+        )}
+
     for column in (0, 1):
         source = np.asarray(fixtures[0]["native_rhs_by_column"][column], dtype=np.complex128)
-        full_rhs_path = results / f"full_rhs_column{column}.npy"
-        full_rhs_sources[column] = _write_array(full_rhs_path, source)
-        full_rhs_sources[column]["path"] = full_rhs_path.name
+        full_rhs_name = f"column{column}_native_rhs.npy"
+        full_rhs_path = donor_root / full_rhs_name
+        full_rhs_sources[column] = register_donor_source(
+            column, "native_rhs", full_rhs_name, _write_array(full_rhs_path, source)
+        )
         alpha_rows = np.asarray([original_row], dtype=np.int64)
         alpha_value = np.asarray([fixtures[0]["b_alpha_by_column"][column]], dtype=np.complex128)
-        alpha_rows_path = results / f"alpha_rows_column{column}.npy"
-        alpha_values_path = results / f"alpha_values_column{column}.npy"
+        alpha_rows_name = f"column{column}_b_alpha_rows.npy"
+        alpha_values_name = f"column{column}_b_alpha_values.npy"
+        alpha_rows_path = donor_root / alpha_rows_name
+        alpha_values_path = donor_root / alpha_values_name
         alpha_sources[column] = {
-            "rows": _write_array(alpha_rows_path, alpha_rows),
-            "values": _write_array(alpha_values_path, alpha_value),
+            "rows": register_donor_source(
+                column, "b_alpha_rows", alpha_rows_name,
+                _write_array(alpha_rows_path, alpha_rows),
+            ),
+            "values": register_donor_source(
+                column, "b_alpha_values", alpha_values_name,
+                _write_array(alpha_values_path, alpha_value),
+            ),
         }
-        alpha_sources[column]["rows"]["path"] = alpha_rows_path.name
-        alpha_sources[column]["values"]["path"] = alpha_values_path.name
         for row in rows:
             if row["column"] == column:
                 row.update({
@@ -1333,6 +1362,21 @@ def test_v16_attempt04_default_context_binds_two_cell_v8_candidate_and_volume_rh
                         float(alpha_value[0].real), float(alpha_value[0].imag)
                     ],
                 })
+
+    monkeypatch.setattr(
+        v16_checker,
+        "TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS",
+        donor_source_bindings,
+    )
+    donor_root = donor_root.resolve(strict=True)
+    monkeypatch.setattr(
+        v16_checker,
+        "_task41_p0_v16_v3_donor_index",
+        lambda **_: (
+            {}, donor_root / "vector_index.json", donor_root,
+            donor_root / "recovery_manifest.json", donor_vector_records,
+        ),
+    )
 
     candidate_rhs_rows = []
     for cell, fixture in zip(cells, fixtures, strict=True):
@@ -1378,6 +1422,71 @@ def test_v16_attempt04_default_context_binds_two_cell_v8_candidate_and_volume_rh
     assert replay_inputs["_binding_report"]["states_kept_separate"] == ["j0", "j3"]
     assert len(replay_inputs["_binding_report"]["state_input_bindings"]) == 8
     assert all(star["interior_lu_pivots"] is None for star in replay_inputs["star_cells"].values())
+    assert len(replay_inputs["_binding_report"]["full_rhs"]) == 2
+    assert len(replay_inputs["_binding_report"]["b_alpha"]) == 2
+    for column in (0, 1):
+        assert replay_inputs["_binding_report"]["full_rhs"][f"column{column}"]["path"] == str(
+            donor_root / f"column{column}_native_rhs.npy"
+        )
+        assert replay_inputs["_binding_report"]["b_alpha"][f"column{column}"]["rows"]["path"] == str(
+            donor_root / f"column{column}_b_alpha_rows.npy"
+        )
+        assert replay_inputs["_binding_report"]["b_alpha"][f"column{column}"]["values"]["path"] == str(
+            donor_root / f"column{column}_b_alpha_values.npy"
+        )
+        column_rows = [row for row in rows if row["column"] == column]
+        assert [row["state"] for row in column_rows] == ["j0", "j3"]
+        assert all(row["base_b_t_source"]["path"] == f"column{column}_native_rhs.npy" for row in column_rows)
+        assert all(row["b_alpha_sources"] == alpha_sources[column] for row in column_rows)
+
+
+def test_v16_saved_final_z_wide_residual_reports_signed_lambda_impact():
+    from src.solvers.hcurl_assembly_time_condensation import (
+        _same_lu_binary64_compensated_residual,
+    )
+
+    two_to_53 = float(2**53)
+    K = np.asarray([[two_to_53, 1.0], [0.0, 1.0]], dtype=np.complex128)
+    b_i = np.asarray([two_to_53, 1.0], dtype=np.complex128)
+    final_z = np.asarray([1.0, 1.0], dtype=np.complex128)
+    r_f_matmul = np.asarray(b_i - K @ final_z, dtype=np.complex128)
+    r_f_fsum = np.asarray(
+        _same_lu_binary64_compensated_residual(K, b_i, final_z),
+        dtype=np.complex128,
+    )
+    lambda_vector = np.asarray([1.0, 0.0], dtype=np.complex128)
+
+    diagnostic = v16_checker._task41_p0_v16_final_residual_wide_diagnostic(
+        K=K,
+        b_i=b_i,
+        final_z=final_z,
+        r_f_matmul=r_f_matmul,
+        r_f_fsum=r_f_fsum,
+        lambda_vector=lambda_vector,
+    )
+
+    if not diagnostic["precision"]["wider_than_float64"]:
+        pytest.skip("platform longdouble does not provide a wider mantissa")
+    assert diagnostic["status"] == "WIDER_CLONGDOUBLE_EVALUATED"
+    assert diagnostic["precision"]["float64_significand_bits"] == 53
+    assert diagnostic["wide_residual_b_minus_Kz"]["max_value"] == ["-1.0", "0.0"]
+    assert diagnostic["wide_minus_ordinary_binary64_matmul"]["l2"] == "1.0"
+    assert diagnostic["wide_minus_compensated_binary64_fsum"]["l2"] == "0.0"
+    projection = diagnostic["lambda_projection"]
+    assert projection["lambda_H_r_f"]["ordinary_binary64_matmul_residual"] == [0.0, 0.0]
+    assert projection["lambda_H_r_f"]["compensated_binary64_fsum_residual"] == [-1.0, 0.0]
+    assert projection["lambda_H_r_f"]["independent_clongdouble_residual_and_dot"] == [
+        "-1.0", "0.0"
+    ]
+    assert projection["wide_minus_binary64_fsum_projection"] == ["0.0", "0.0"]
+    assert projection["signed_contribution_minus_lambda_H_r_f"][
+        "compensated_binary64_fsum_residual"
+    ] == [1.0, -0.0]
+    assert projection["signed_contribution_minus_lambda_H_r_f"][
+        "independent_clongdouble_residual_and_dot"
+    ] == ["1.0", "-0.0"]
+    assert diagnostic["not_used_for_correction_or_production_answer"] is True
+    assert diagnostic["new_getrs_or_factorization_count"] == 0
 
 
 def test_v16_v14_reader_hash_binds_saved_reports_and_keeps_local_pass_non_global(

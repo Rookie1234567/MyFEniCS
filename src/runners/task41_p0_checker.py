@@ -1446,6 +1446,154 @@ def _task41_p0_v16_vector_summary(values: np.ndarray) -> dict[str, Any]:
     }
 
 
+def _task41_p0_v16_wide_vector_summary(values: np.ndarray) -> dict[str, Any]:
+    array = np.asarray(values, dtype=np.clongdouble)
+    if array.ndim != 1 or not np.isfinite(array).all():
+        raise ValueError("V16 wider residual diagnostic must be a finite vector")
+    squared_magnitudes = array.real * array.real + array.imag * array.imag
+    maximum = int(np.argmax(squared_magnitudes)) if array.size else None
+    norm = np.sqrt(np.sum(squared_magnitudes, dtype=np.longdouble))
+    if maximum is None:
+        max_abs = np.longdouble(0.0)
+        max_value = np.clongdouble(0.0 + 0.0j)
+    else:
+        max_abs = np.sqrt(squared_magnitudes[maximum])
+        max_value = array[maximum]
+    return {
+        "length": int(array.size),
+        "l2": str(norm),
+        "max_abs": str(max_abs),
+        "max_local_index": maximum,
+        "max_value": [str(max_value.real), str(max_value.imag)],
+    }
+
+
+def _task41_p0_v16_final_residual_wide_diagnostic(
+    *,
+    K: np.ndarray,
+    b_i: np.ndarray,
+    final_z: np.ndarray,
+    r_f_matmul: np.ndarray,
+    r_f_fsum: np.ndarray,
+    lambda_vector: np.ndarray | None,
+) -> dict[str, Any]:
+    """Measure saved-final-z residual evaluation in wider arithmetic only."""
+    K64 = np.asarray(K, dtype=np.complex128)
+    b64 = np.asarray(b_i, dtype=np.complex128)
+    z64 = np.asarray(final_z, dtype=np.complex128)
+    matmul64 = np.asarray(r_f_matmul, dtype=np.complex128)
+    fsum64 = np.asarray(r_f_fsum, dtype=np.complex128)
+    if (
+        K64.ndim != 2
+        or K64.shape[0] != K64.shape[1]
+        or b64.shape != (K64.shape[0],)
+        or z64.shape != b64.shape
+        or matmul64.shape != b64.shape
+        or fsum64.shape != b64.shape
+        or any(
+            not np.isfinite(array).all()
+            for array in (K64, b64, z64, matmul64, fsum64)
+        )
+    ):
+        raise ValueError("V16 wider residual diagnostic input layout or values differ")
+
+    float64_info = np.finfo(np.float64)
+    longdouble_info = np.finfo(np.longdouble)
+    float64_bits = int(float64_info.nmant) + 1
+    longdouble_bits = int(longdouble_info.nmant) + 1
+    precision = {
+        "wide_component_dtype": str(np.dtype(np.longdouble)),
+        "wide_component_mantissa_fraction_bits": int(longdouble_info.nmant),
+        "wide_component_significand_bits": longdouble_bits,
+        "float64_significand_bits": float64_bits,
+        "wider_than_float64": longdouble_bits > float64_bits,
+    }
+    try:
+        Kwide = np.asarray(K64, dtype=np.clongdouble)
+        bwide = np.asarray(b64, dtype=np.clongdouble)
+        zwide = np.asarray(z64, dtype=np.clongdouble)
+        wide_r_f = bwide - Kwide @ zwide
+    except (TypeError, ValueError, NotImplementedError) as exc:
+        return {
+            "schema": "task41.p0.b0.v16.saved_final_z_wide_residual_diagnostic.v1",
+            "status": "CLONGDOUBLE_MATMUL_UNAVAILABLE",
+            "precision": precision,
+            "unavailable_reason": type(exc).__name__,
+            "not_used_for_correction_or_production_answer": True,
+            "new_getrs_or_factorization_count": 0,
+        }
+    if not np.isfinite(wide_r_f).all():
+        raise ValueError("V16 wider residual diagnostic produced non-finite values")
+
+    lambda_projection: dict[str, Any]
+    if lambda_vector is None:
+        lambda_projection = {
+            "status": "NOT_AVAILABLE_NO_IDENTITY_BOUND_SAVED_LAMBDA",
+            "lambda_H_r_f": None,
+            "signed_contribution_minus_lambda_H_r_f": None,
+            "wide_minus_binary64_matmul_projection": None,
+            "wide_minus_binary64_fsum_projection": None,
+        }
+    else:
+        lambda64 = np.asarray(lambda_vector, dtype=np.complex128)
+        if lambda64.shape != b64.shape or not np.isfinite(lambda64).all():
+            raise ValueError("V16 wider residual diagnostic lambda identity or layout differs")
+        matmul_projection = complex(np.vdot(lambda64, matmul64))
+        fsum_projection = complex(np.vdot(lambda64, fsum64))
+        wide_projection = np.sum(
+            np.conjugate(np.asarray(lambda64, dtype=np.clongdouble)) * wide_r_f,
+            dtype=np.clongdouble,
+        )
+        wide_minus_matmul = wide_projection - np.clongdouble(matmul_projection)
+        wide_minus_fsum = wide_projection - np.clongdouble(fsum_projection)
+
+        def float_pair(value: complex) -> list[float]:
+            return [float(value.real), float(value.imag)]
+
+        def wide_pair(value: np.clongdouble) -> list[str]:
+            return [str(value.real), str(value.imag)]
+
+        lambda_projection = {
+            "status": "REUSED_IDENTITY_BOUND_SAVED_LAMBDA",
+            "lambda_H_r_f": {
+                "ordinary_binary64_matmul_residual": float_pair(matmul_projection),
+                "compensated_binary64_fsum_residual": float_pair(fsum_projection),
+                "independent_clongdouble_residual_and_dot": wide_pair(wide_projection),
+            },
+            "signed_contribution_minus_lambda_H_r_f": {
+                "ordinary_binary64_matmul_residual": float_pair(-matmul_projection),
+                "compensated_binary64_fsum_residual": float_pair(-fsum_projection),
+                "independent_clongdouble_residual_and_dot": wide_pair(-wide_projection),
+            },
+            "wide_minus_binary64_matmul_projection": wide_pair(wide_minus_matmul),
+            "wide_minus_binary64_fsum_projection": wide_pair(wide_minus_fsum),
+            "wide_minus_matmul_signed_impact": wide_pair(-wide_minus_matmul),
+            "wide_minus_fsum_signed_impact": wide_pair(-wide_minus_fsum),
+        }
+
+    return {
+        "schema": "task41.p0.b0.v16.saved_final_z_wide_residual_diagnostic.v1",
+        "status": (
+            "WIDER_CLONGDOUBLE_EVALUATED"
+            if precision["wider_than_float64"]
+            else "CLONGDOUBLE_NOT_WIDER_THAN_FLOAT64"
+        ),
+        "precision": precision,
+        "wide_residual_b_minus_Kz": _task41_p0_v16_wide_vector_summary(wide_r_f),
+        "wide_minus_ordinary_binary64_matmul": _task41_p0_v16_wide_vector_summary(
+            wide_r_f - np.asarray(matmul64, dtype=np.clongdouble)
+        ),
+        "wide_minus_compensated_binary64_fsum": _task41_p0_v16_wide_vector_summary(
+            wide_r_f - np.asarray(fsum64, dtype=np.clongdouble)
+        ),
+        "lambda_projection": lambda_projection,
+        "fixed_saved_final_z_only": True,
+        "not_used_for_correction_or_production_answer": True,
+        "not_a_strict_error_bound_or_exact_arithmetic_proof": True,
+        "new_getrs_or_factorization_count": 0,
+    }
+
+
 def _task41_p0_v16_read_bound_report(
     raw_path: str, expected_sha256: str, *, results_root: Path, label: str
 ) -> tuple[dict[str, Any], Path, str]:
@@ -2987,6 +3135,9 @@ def _task41_p0_v16_attempt04_replay_inputs(
         results_root=results_root,
         original_row=int(spec["original_row"]),
     )
+    _, _, donor_run_root, _, donor_vectors = _task41_p0_v16_v3_donor_index(
+        repo_root=repo_root, results_root=results_root
+    )
     full_rhs_bindings: dict[str, Any] = {}
     b_alpha_bindings: dict[str, Any] = {}
     for column in (0, 1):
@@ -3002,8 +3153,16 @@ def _task41_p0_v16_attempt04_replay_inputs(
             for row in column_rows[1:]
         ):
             raise ValueError(f"V16 attempt04 column{column} global RHS terms vary by state")
+        full_rhs_ref = _task41_p0_v16_v3_donor_source_ref(
+            base.get("base_b_t_source"),
+            vector_records=donor_vectors,
+            donor_run_root=donor_run_root,
+            column=column,
+            role="native_rhs",
+            label=f"attempt04 column{column} saved full RHS",
+        )
         full_rhs = _task41_p0_v16_bound_complex_vector(
-            base.get("base_b_t_source"), results_root=results_root,
+            full_rhs_ref, results_root=results_root,
             label=f"attempt04 column{column} saved full RHS",
         )
         if (
@@ -3017,12 +3176,28 @@ def _task41_p0_v16_attempt04_replay_inputs(
         b_alpha_source = base.get("b_alpha_sources")
         if not isinstance(b_alpha_source, Mapping):
             raise ValueError(f"V16 attempt04 column{column} B-alpha array refs are absent")
+        alpha_rows_ref = _task41_p0_v16_v3_donor_source_ref(
+            b_alpha_source.get("rows"),
+            vector_records=donor_vectors,
+            donor_run_root=donor_run_root,
+            column=column,
+            role="b_alpha_rows",
+            label=f"attempt04 column{column} B-alpha row map",
+        )
+        alpha_values_ref = _task41_p0_v16_v3_donor_source_ref(
+            b_alpha_source.get("values"),
+            vector_records=donor_vectors,
+            donor_run_root=donor_run_root,
+            column=column,
+            role="b_alpha_values",
+            label=f"attempt04 column{column} B-alpha values",
+        )
         alpha_rows = _task41_p0_v16_bound_metadata_npy(
-            b_alpha_source.get("rows"), results_root=results_root,
+            alpha_rows_ref, results_root=results_root,
             label=f"attempt04 column{column} B-alpha row map",
         )
         alpha_values = _task41_p0_v16_bound_complex_vector(
-            b_alpha_source.get("values"), results_root=results_root,
+            alpha_values_ref, results_root=results_root,
             label=f"attempt04 column{column} B-alpha values",
         )
         if (
@@ -3041,12 +3216,18 @@ def _task41_p0_v16_attempt04_replay_inputs(
             raise ValueError(f"V16 attempt04 column{column} B-alpha selected value differs")
         b_alpha_by_column[column] = beta
         full_rhs_bindings[f"column{column}"] = {
-            "path": base["base_b_t_source"]["path"],
-            "sha256": base["base_b_t_source"]["sha256"],
+            "path": full_rhs_ref["path"],
+            "sha256": full_rhs_ref["sha256"],
         }
         b_alpha_bindings[f"column{column}"] = {
-            name: {key: b_alpha_source[name][key] for key in ("path", "sha256", "bytes")}
-            for name in ("rows", "values")
+            "rows": {
+                key: alpha_rows_ref[key]
+                for key in ("path", "sha256", "bytes", "dtype", "shape")
+            },
+            "values": {
+                key: alpha_values_ref[key]
+                for key in ("path", "sha256", "bytes", "dtype", "shape")
+            },
         }
 
     return {
@@ -3332,6 +3513,14 @@ def _task41_p0_v16_replay_v14_star_saved_arrays(
                     pivots=pivots,
                     expected=lambda_record.get("expected"),
                 )
+            wide_residual_diagnostic = _task41_p0_v16_final_residual_wide_diagnostic(
+                K=K,
+                b_i=b_i,
+                final_z=final_z,
+                r_f_matmul=r_f_matmul,
+                r_f_fsum=r_f,
+                lambda_vector=lambda_vector,
+            )
             cell_result: dict[str, Any] = {
                 "cell_index": int(cell),
                 "column": column,
@@ -3349,6 +3538,7 @@ def _task41_p0_v16_replay_v14_star_saved_arrays(
                         r_f - r_f_matmul
                     ),
                     "evaluator": "_same_lu_binary64_compensated_residual(K,b_i,z_final)",
+                    "independent_wider_precision_diagnostic": wide_residual_diagnostic,
                 },
                 "E_R": {
                     "frobenius_norm": float(np.linalg.norm(E_R)),

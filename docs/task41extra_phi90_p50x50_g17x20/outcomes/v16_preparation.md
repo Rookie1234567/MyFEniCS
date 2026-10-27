@@ -130,3 +130,11 @@ source `1d1a83894359942e4bcaea7845de10bd86bf8db2`，unit `myfenics-case-20261027
 ### attempt09：旧V8代表键与目标star覆盖区分
 
 source `694808e5e63bfb7cf0d1170508b0df8bd094d73c`，unit `myfenics-case-20261027T103912-3414939.service`，仍复用05 A。旧donor路径已闭合，随后因attempt04的two-cell覆盖guard退出。主控原样回读V8报告SHA `1bdd07ac38bce95d58a153bacdca0de6cf5941d08d2706dc127e8b00d8e2764f`：numeric和metadata库存有10个cell，只有23352/23493的`is_target_row_incident=true`，其余8个是历史代表键；P3贡献清单恰为目标两cell。读取器原来要求完整numeric清单只含两项，错误拒绝完整旧证据。应选择被原报告标记的全部incident，同时拒绝重复/缺失/乱序或映射不一致，不读取无关八键数值、不重跑其资格。原08/09失败回执及成本保留；T0与05保存数据不变。
+
+### attempt10：将同一donor修复贯通第二组，并补终态宽算术诊断
+
+source `b387bd75eee6cbd3ee3282ca0ae424d2634fa5c4`，unit `myfenics-case-20261027T104653-3416266.service`。第二组读取到full RHS时仍直接使用basename，暴露08同根因在第二调用者未接通；本次修复将attempt04两列j0/j3的RHS/Balpha也接同一固定V3索引解析器，并做调用链fixture，不原样重跑。其余覆盖和数值身份检查保持，旧失败保留。
+
+主控同时发现原B仅比较binary64 matmul/fsum，还缺Review第4节固定最终z的独立较宽残差诊断。新增clongdouble的`b-Kz`及已有lambda点积，明确记录significand位数、与两种binary64残差的差，以及公式中的负号`-lambda^H r_f`。只读同一保存K/b/z/lambda，不驱动任何校正，不新增GETRS，也不把longdouble当精确算术证明。无已资格lambda的第二组保持缺项，不新求伴随。
+
+attempt10 service父段30.5616758601秒、child21.8409579317秒、systemd34.708396秒；tree峰619081728 B、cgroup内核峰491835392 B、task swap0、后代清空。上述嵌套时间不相加，原窗口仍不刷新。
