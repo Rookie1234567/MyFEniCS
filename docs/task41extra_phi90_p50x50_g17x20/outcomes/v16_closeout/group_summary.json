@@ -1,0 +1,1681 @@
+{
+  "schema": "task41.v16.group_report.v1",
+  "source_path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v16_closeout/stage_a_distribution.json",
+  "source_sha256": "a9ea40628d904187a15435877cd49582341ee06df5d3ad149f967f8544863007",
+  "row_group_codes_sha256": "1b0770c1d6d2005a3e4fae5542f98dca66e526e8d7037c39be046fe8c4719aec",
+  "diagnostic_only": true,
+  "statistical_association_not_causal_partition": true,
+  "mutually_exclusive_groups": [
+    {
+      "code": 0,
+      "raw_tags": [
+        1
+      ],
+      "raw_permutations": [
+        0
+      ],
+      "incident_count": 1,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 119460,
+          "energy": 2.4873112405804096e-16,
+          "energy_fraction": 0.01512338987177205,
+          "signed_cross": 9.892774565285667e-16
+        },
+        {
+          "column": 1,
+          "rows": 119460,
+          "energy": 1.0927029800364535e-15,
+          "energy_fraction": 0.015010155650958862,
+          "signed_cross": 4.459024355241105e-15
+        }
+      ]
+    },
+    {
+      "code": 1,
+      "raw_tags": [
+        1
+      ],
+      "raw_permutations": [
+        0
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 3646632,
+          "energy": 1.1689026940526492e-14,
+          "energy_fraction": 0.7107180989620672,
+          "signed_cross": 2.5626800264840834e-13
+        },
+        {
+          "column": 1,
+          "rows": 3646632,
+          "energy": 5.176523563717594e-14,
+          "energy_fraction": 0.7110845842084662,
+          "signed_cross": 1.1237919560185669e-12
+        }
+      ]
+    },
+    {
+      "code": 2,
+      "raw_tags": [
+        1
+      ],
+      "raw_permutations": [
+        0
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 1,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 157200,
+          "energy": 7.481871052635173e-16,
+          "energy_fraction": 0.04549139289577754,
+          "signed_cross": 9.524838034065855e-15
+        },
+        {
+          "column": 1,
+          "rows": 157200,
+          "energy": 3.3607868948502995e-15,
+          "energy_fraction": 0.04616619092566472,
+          "signed_cross": 4.231423345535658e-14
+        }
+      ]
+    },
+    {
+      "code": 3,
+      "raw_tags": [
+        1
+      ],
+      "raw_permutations": [
+        0
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 329292,
+          "energy": 2.5619547551626802e-18,
+          "energy_fraction": 0.00015577238571528484,
+          "signed_cross": 9.668723104924224e-16
+        },
+        {
+          "column": 1,
+          "rows": 329292,
+          "energy": 1.1411124786257267e-17,
+          "energy_fraction": 0.0001567514341257879,
+          "signed_cross": 4.2496932824809266e-15
+        }
+      ]
+    },
+    {
+      "code": 4,
+      "raw_tags": [
+        1
+      ],
+      "raw_permutations": [
+        0
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 2,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 29844,
+          "energy": 2.7908453359187497e-19,
+          "energy_fraction": 1.6968942767720114e-05,
+          "signed_cross": 1.3909269659139698e-16
+        },
+        {
+          "column": 1,
+          "rows": 29844,
+          "energy": 1.2599692884906046e-18,
+          "energy_fraction": 1.7307846213653534e-05,
+          "signed_cross": 6.02090538356149e-16
+        }
+      ]
+    },
+    {
+      "code": 5,
+      "raw_tags": [
+        1
+      ],
+      "raw_permutations": [
+        32769
+      ],
+      "incident_count": 1,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 540,
+          "energy": 9.393782649534137e-19,
+          "energy_fraction": 5.711622858522594e-05,
+          "signed_cross": 5.056168305914596e-18
+        },
+        {
+          "column": 1,
+          "rows": 540,
+          "energy": 5.436608640666013e-18,
+          "energy_fraction": 7.468117448258661e-05,
+          "signed_cross": 1.7103516919176684e-17
+        }
+      ]
+    },
+    {
+      "code": 6,
+      "raw_tags": [
+        1
+      ],
+      "raw_permutations": [
+        32769
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 12768,
+          "energy": 4.5348054395009585e-17,
+          "energy_fraction": 0.002757259708206127,
+          "signed_cross": 7.19971077291676e-16
+        },
+        {
+          "column": 1,
+          "rows": 12768,
+          "energy": 2.016844581222991e-16,
+          "energy_fraction": 0.0027704830718902314,
+          "signed_cross": 3.2807384075097697e-15
+        }
+      ]
+    },
+    {
+      "code": 7,
+      "raw_tags": [
+        1
+      ],
+      "raw_permutations": [
+        32769
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 576,
+          "energy": 1.1696927969056685e-20,
+          "energy_fraction": 7.111984985714954e-07,
+          "signed_cross": 5.501396965962551e-19
+        },
+        {
+          "column": 1,
+          "rows": 576,
+          "energy": 4.902253704120963e-20,
+          "energy_fraction": 6.734088996159824e-07,
+          "signed_cross": 2.5118708830205005e-18
+        }
+      ]
+    },
+    {
+      "code": 8,
+      "raw_tags": [
+        1
+      ],
+      "raw_permutations": [
+        0,
+        32769
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 7860,
+          "energy": 1.8908441058575653e-17,
+          "energy_fraction": 0.0011496740791053298,
+          "signed_cross": 6.356781305067146e-16
+        },
+        {
+          "column": 1,
+          "rows": 7860,
+          "energy": 8.155912093979198e-17,
+          "energy_fraction": 0.001120354865345764,
+          "signed_cross": 2.718580566026158e-15
+        }
+      ]
+    },
+    {
+      "code": 9,
+      "raw_tags": [
+        1
+      ],
+      "raw_permutations": [
+        0,
+        32769
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 1,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 7860,
+          "energy": 1.8237823640736376e-17,
+          "energy_fraction": 0.001108899090839616,
+          "signed_cross": 5.66875003419648e-16
+        },
+        {
+          "column": 1,
+          "rows": 7860,
+          "energy": 8.349214202546486e-17,
+          "energy_fraction": 0.0011469082361177257,
+          "signed_cross": 2.502302153589371e-15
+        }
+      ]
+    },
+    {
+      "code": 10,
+      "raw_tags": [
+        1
+      ],
+      "raw_permutations": [
+        0,
+        32769
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 1422,
+          "energy": 5.951837825738232e-21,
+          "energy_fraction": 3.6188460223094245e-07,
+          "signed_cross": 4.778454216635983e-18
+        },
+        {
+          "column": 1,
+          "rows": 1422,
+          "energy": 2.5753136647331983e-20,
+          "energy_fraction": 3.5376364541805316e-07,
+          "signed_cross": 2.0917234057962085e-17
+        }
+      ]
+    },
+    {
+      "code": 11,
+      "raw_tags": [
+        1
+      ],
+      "raw_permutations": [
+        0,
+        32769
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 2,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 1500,
+          "energy": 5.7319972271256726e-21,
+          "energy_fraction": 3.4851781874113014e-07,
+          "signed_cross": 5.000510017617283e-18
+        },
+        {
+          "column": 1,
+          "rows": 1500,
+          "energy": 2.552626770927585e-20,
+          "energy_fraction": 3.5064721017919556e-07,
+          "signed_cross": 2.3244693122993732e-17
+        }
+      ]
+    },
+    {
+      "code": 12,
+      "raw_tags": [
+        1
+      ],
+      "raw_permutations": [
+        0,
+        32769
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 3,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 78,
+          "energy": 2.662198634465579e-23,
+          "energy_fraction": 1.6186743021242156e-09,
+          "signed_cross": 4.4851249418223655e-19
+        },
+        {
+          "column": 1,
+          "rows": 78,
+          "energy": 1.0926480843780026e-22,
+          "energy_fraction": 1.5009401564630771e-09,
+          "signed_cross": 1.6226830458658372e-18
+        }
+      ]
+    },
+    {
+      "code": 13,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        0
+      ],
+      "incident_count": 1,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 60,
+          "energy": 3.028736944875764e-20,
+          "energy_fraction": 1.841537516057198e-06,
+          "signed_cross": 3.0446486851804308e-18
+        },
+        {
+          "column": 1,
+          "rows": 60,
+          "energy": 3.270997461209368e-19,
+          "energy_fraction": 4.493277855342348e-06,
+          "signed_cross": 1.4501025267337878e-17
+        }
+      ]
+    },
+    {
+      "code": 14,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        576
+      ],
+      "incident_count": 1,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 11940,
+          "energy": 1.7575480734072344e-17,
+          "energy_fraction": 0.001068627210735277,
+          "signed_cross": 8.286443101447257e-16
+        },
+        {
+          "column": 1,
+          "rows": 11940,
+          "energy": 8.091174278218131e-17,
+          "energy_fraction": 0.0011114620124037479,
+          "signed_cross": 4.113695699428489e-15
+        }
+      ]
+    },
+    {
+      "code": 15,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        576
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 13068,
+          "energy": 1.925175800274566e-17,
+          "energy_fraction": 0.0011705484912478844,
+          "signed_cross": 9.734226094253151e-16
+        },
+        {
+          "column": 1,
+          "rows": 13068,
+          "energy": 8.965215537460938e-17,
+          "energy_fraction": 0.0012315266190378118,
+          "signed_cross": 4.856317869526662e-15
+        }
+      ]
+    },
+    {
+      "code": 16,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        0,
+        576
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 66,
+          "energy": 6.243616749655099e-20,
+          "energy_fraction": 3.7962539136407563e-06,
+          "signed_cross": 2.9462598128126862e-18
+        },
+        {
+          "column": 1,
+          "rows": 66,
+          "energy": 5.228698316196832e-19,
+          "energy_fraction": 7.1825168423538744e-06,
+          "signed_cross": 1.5996009247362674e-17
+        }
+      ]
+    },
+    {
+      "code": 17,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        0,
+        576
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 1,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 66,
+          "energy": 9.4579446377352e-20,
+          "energy_fraction": 5.750634733943793e-06,
+          "signed_cross": 4.6551824936109814e-18
+        },
+        {
+          "column": 1,
+          "rows": 66,
+          "energy": 6.286847529976066e-19,
+          "energy_fraction": 8.636066863809492e-06,
+          "signed_cross": 2.039326565070068e-17
+        }
+      ]
+    },
+    {
+      "code": 18,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        4680
+      ],
+      "incident_count": 1,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 107460,
+          "energy": 1.3173986617320498e-16,
+          "energy_fraction": 0.008010068564348792,
+          "signed_cross": 7.238420152010538e-15
+        },
+        {
+          "column": 1,
+          "rows": 107460,
+          "energy": 5.872671173194208e-16,
+          "energy_fraction": 0.008067124370211154,
+          "signed_cross": 3.163538773983261e-14
+        }
+      ]
+    },
+    {
+      "code": 19,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        4680
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 222684,
+          "energy": 6.494659637180423e-16,
+          "energy_fraction": 0.03948893414505753,
+          "signed_cross": 1.3032735386210729e-14
+        },
+        {
+          "column": 1,
+          "rows": 222684,
+          "energy": 2.880855576325755e-15,
+          "energy_fraction": 0.039573508445213346,
+          "signed_cross": 5.863030491689686e-14
+        }
+      ]
+    },
+    {
+      "code": 20,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        4680
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 9504,
+          "energy": 2.786034020525171e-21,
+          "energy_fraction": 1.6939688930361114e-07,
+          "signed_cross": 5.862124367260414e-17
+        },
+        {
+          "column": 1,
+          "rows": 9504,
+          "energy": 1.2403093456137221e-20,
+          "energy_fraction": 1.7037783069265369e-07,
+          "signed_cross": 2.575016446495983e-16
+        }
+      ]
+    },
+    {
+      "code": 21,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        576,
+        4680
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 13134,
+          "energy": 5.900164104817035e-17,
+          "energy_fraction": 0.0035874272832764264,
+          "signed_cross": 6.98213311602845e-16
+        },
+        {
+          "column": 1,
+          "rows": 13134,
+          "energy": 2.6658357051491183e-16,
+          "energy_fraction": 0.0036619840528701606,
+          "signed_cross": 3.196072833994539e-15
+        }
+      ]
+    },
+    {
+      "code": 22,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        576,
+        4680
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 1,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 13134,
+          "energy": 6.142844622171638e-17,
+          "energy_fraction": 0.0037349822823597167,
+          "signed_cross": 6.786736554372356e-16
+        },
+        {
+          "column": 1,
+          "rows": 13134,
+          "energy": 2.655733104908302e-16,
+          "energy_fraction": 0.003648106393079298,
+          "signed_cross": 3.2589207460731494e-15
+        }
+      ]
+    },
+    {
+      "code": 23,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        576,
+        4680
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 1188,
+          "energy": 4.040255668401762e-22,
+          "energy_fraction": 2.4565627597380495e-08,
+          "signed_cross": 7.202631546153094e-18
+        },
+        {
+          "column": 1,
+          "rows": 1188,
+          "energy": 1.8961546798964418e-21,
+          "energy_fraction": 2.6046947252390733e-08,
+          "signed_cross": 3.8836612966551247e-17
+        }
+      ]
+    },
+    {
+      "code": 24,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        576,
+        4680
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 2,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 1188,
+          "energy": 4.0493233064977253e-22,
+          "energy_fraction": 2.4620760796597405e-08,
+          "signed_cross": 1.0308762175781905e-17
+        },
+        {
+          "column": 1,
+          "rows": 1188,
+          "energy": 1.9945282743414516e-21,
+          "energy_fraction": 2.739827784408971e-08,
+          "signed_cross": 4.078001352609124e-17
+        }
+      ]
+    },
+    {
+      "code": 25,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        36873
+      ],
+      "incident_count": 1,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 540,
+          "energy": 6.491918713336398e-19,
+          "energy_fraction": 3.9472268735748983e-05,
+          "signed_cross": 2.6287031731778105e-17
+        },
+        {
+          "column": 1,
+          "rows": 540,
+          "energy": 2.440365599287867e-18,
+          "energy_fraction": 3.3522620657019135e-05,
+          "signed_cross": 2.3225881100268626e-16
+        }
+      ]
+    },
+    {
+      "code": 26,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        36873
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 528,
+          "energy": 1.5508759630306278e-18,
+          "energy_fraction": 9.429661012668063e-05,
+          "signed_cross": 2.2644244509348592e-17
+        },
+        {
+          "column": 1,
+          "rows": 528,
+          "energy": 7.775113122310368e-18,
+          "energy_fraction": 0.00010680455741577457,
+          "signed_cross": 8.163435874417607e-17
+        }
+      ]
+    },
+    {
+      "code": 27,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        0,
+        36873
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 66,
+          "energy": 1.8219294719966687e-19,
+          "energy_fraction": 1.1077724924142505e-05,
+          "signed_cross": 7.890484315368355e-19
+        },
+        {
+          "column": 1,
+          "rows": 66,
+          "energy": 3.8856916136528826e-19,
+          "energy_fraction": 5.337666044491753e-06,
+          "signed_cross": 1.1471068562863911e-17
+        }
+      ]
+    },
+    {
+      "code": 28,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        0,
+        36873
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 1,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 66,
+          "energy": 3.4251843817281136e-19,
+          "energy_fraction": 2.0825861252285917e-05,
+          "signed_cross": 3.244414667777169e-18
+        },
+        {
+          "column": 1,
+          "rows": 66,
+          "energy": 6.683861725641183e-19,
+          "energy_fraction": 9.181434176011281e-06,
+          "signed_cross": 9.345493320078475e-18
+        }
+      ]
+    },
+    {
+      "code": 29,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        4680,
+        36873
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 594,
+          "energy": 1.5299939114131053e-18,
+          "energy_fraction": 9.302693626045161e-05,
+          "signed_cross": 4.5234990850437106e-17
+        },
+        {
+          "column": 1,
+          "rows": 594,
+          "energy": 3.726880345008381e-18,
+          "energy_fraction": 5.119511440264292e-05,
+          "signed_cross": 1.3863491034175496e-16
+        }
+      ]
+    },
+    {
+      "code": 30,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        4680,
+        36873
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 1,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 594,
+          "energy": 1.0114806857775065e-18,
+          "energy_fraction": 6.150021159077405e-05,
+          "signed_cross": 4.151641680883426e-17
+        },
+        {
+          "column": 1,
+          "rows": 594,
+          "energy": 4.881722412913872e-18,
+          "energy_fraction": 6.705885734856068e-05,
+          "signed_cross": 1.6608943745735059e-16
+        }
+      ]
+    },
+    {
+      "code": 31,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        4680,
+        36873
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 48,
+          "energy": 1.2463807453848397e-23,
+          "energy_fraction": 7.578264285384038e-10,
+          "signed_cross": 1.8627549566082046e-19
+        },
+        {
+          "column": 1,
+          "rows": 48,
+          "energy": 7.527396014817744e-23,
+          "energy_fraction": 1.0340173669614449e-09,
+          "signed_cross": 1.3395820118246476e-18
+        }
+      ]
+    },
+    {
+      "code": 32,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        4680,
+        36873
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 2,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 48,
+          "energy": 1.13051362476536e-23,
+          "energy_fraction": 6.873767152150671e-10,
+          "signed_cross": 2.701484260902367e-19
+        },
+        {
+          "column": 1,
+          "rows": 48,
+          "energy": 6.220030189122842e-23,
+          "energy_fraction": 8.544281748850201e-10,
+          "signed_cross": 1.7008687480533457e-18
+        }
+      ]
+    },
+    {
+      "code": 33,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        0,
+        576,
+        4680,
+        36873
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 6,
+          "energy": 1.5663044293455336e-24,
+          "energy_fraction": 9.523469422085042e-11,
+          "signed_cross": 1.385067638972353e-20
+        },
+        {
+          "column": 1,
+          "rows": 6,
+          "energy": 5.185211873577866e-24,
+          "energy_fraction": 7.122780730680106e-11,
+          "signed_cross": 1.5572884764153804e-19
+        }
+      ]
+    },
+    {
+      "code": 34,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        0,
+        576,
+        4680,
+        36873
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 2,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 12,
+          "energy": 6.2462897888222614e-24,
+          "energy_fraction": 3.7978791792210336e-10,
+          "signed_cross": 7.856839306593503e-20
+        },
+        {
+          "column": 1,
+          "rows": 12,
+          "energy": 1.6262893440588335e-23,
+          "energy_fraction": 2.2339882505861305e-10,
+          "signed_cross": 2.653782515403774e-19
+        }
+      ]
+    },
+    {
+      "code": 35,
+      "raw_tags": [
+        2
+      ],
+      "raw_permutations": [
+        0,
+        576,
+        4680,
+        36873
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 3,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 6,
+          "energy": 2.0747420460547117e-24,
+          "energy_fraction": 1.2614880009355664e-10,
+          "signed_cross": 7.413941095683559e-21
+        },
+        {
+          "column": 1,
+          "rows": 6,
+          "energy": 5.5032052563821045e-24,
+          "energy_fraction": 7.559599359261802e-11,
+          "signed_cross": 1.360673208241218e-19
+        }
+      ]
+    },
+    {
+      "code": 36,
+      "raw_tags": [
+        1,
+        2
+      ],
+      "raw_permutations": [
+        0
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 60,
+          "energy": 1.4500208913843517e-19,
+          "energy_fraction": 8.816440381422809e-06,
+          "signed_cross": 2.755377068491793e-18
+        },
+        {
+          "column": 1,
+          "rows": 60,
+          "energy": 4.821663506106764e-19,
+          "energy_fraction": 6.623384491986662e-06,
+          "signed_cross": 1.476742380984178e-17
+        }
+      ]
+    },
+    {
+      "code": 37,
+      "raw_tags": [
+        1,
+        2
+      ],
+      "raw_permutations": [
+        0,
+        576
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 11940,
+          "energy": 4.633479101276214e-17,
+          "energy_fraction": 0.002817255426986955,
+          "signed_cross": 9.990657881889436e-16
+        },
+        {
+          "column": 1,
+          "rows": 11940,
+          "energy": 2.0682290316728615e-16,
+          "energy_fraction": 0.002841068456334393,
+          "signed_cross": 4.293851546662282e-15
+        }
+      ]
+    },
+    {
+      "code": 38,
+      "raw_tags": [
+        1,
+        2
+      ],
+      "raw_permutations": [
+        0,
+        576
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 1194,
+          "energy": 6.1069929373159526e-21,
+          "energy_fraction": 3.7131836831821596e-07,
+          "signed_cross": 1.6472078617696854e-18
+        },
+        {
+          "column": 1,
+          "rows": 1194,
+          "energy": 2.8602285390886565e-20,
+          "energy_fraction": 3.9290160595702905e-07,
+          "signed_cross": 7.29445374879434e-18
+        }
+      ]
+    },
+    {
+      "code": 39,
+      "raw_tags": [
+        1,
+        2
+      ],
+      "raw_permutations": [
+        0,
+        576
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 2,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 6,
+          "energy": 1.0014741678593724e-22,
+          "energy_fraction": 6.089179367641806e-09,
+          "signed_cross": 5.1112554365007686e-21
+        },
+        {
+          "column": 1,
+          "rows": 6,
+          "energy": 1.4713583992724443e-22,
+          "energy_fraction": 2.0211639388672922e-09,
+          "signed_cross": 1.9319837451762936e-20
+        }
+      ]
+    },
+    {
+      "code": 40,
+      "raw_tags": [
+        1,
+        2
+      ],
+      "raw_permutations": [
+        0,
+        4680
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 88260,
+          "energy": 3.050318452117222e-16,
+          "energy_fraction": 0.018546595388546697,
+          "signed_cross": 7.0917336151316135e-15
+        },
+        {
+          "column": 1,
+          "rows": 88260,
+          "energy": 1.3306503004801147e-15,
+          "energy_fraction": 0.018278771534543978,
+          "signed_cross": 3.1147411288700294e-14
+        }
+      ]
+    },
+    {
+      "code": 41,
+      "raw_tags": [
+        1,
+        2
+      ],
+      "raw_permutations": [
+        0,
+        4680
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 15900,
+          "energy": 1.8310076878602858e-19,
+          "energy_fraction": 1.1132922438472699e-05,
+          "signed_cross": 1.950041713402134e-17
+        },
+        {
+          "column": 1,
+          "rows": 15900,
+          "energy": 8.081767431560602e-19,
+          "energy_fraction": 1.110169820151197e-05,
+          "signed_cross": 8.559669992567549e-17
+        }
+      ]
+    },
+    {
+      "code": 42,
+      "raw_tags": [
+        1,
+        2
+      ],
+      "raw_permutations": [
+        0,
+        576,
+        4680
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 1194,
+          "energy": 2.171343411468772e-20,
+          "energy_fraction": 1.320223718744707e-06,
+          "signed_cross": 1.5158553810787647e-18
+        },
+        {
+          "column": 1,
+          "rows": 1194,
+          "energy": 9.932745737336982e-20,
+          "energy_fraction": 1.3644335403373058e-06,
+          "signed_cross": 6.779576628577114e-18
+        }
+      ]
+    },
+    {
+      "code": 43,
+      "raw_tags": [
+        1,
+        2
+      ],
+      "raw_permutations": [
+        0,
+        576,
+        4680
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 2,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 1194,
+          "energy": 2.2613120037050447e-20,
+          "energy_fraction": 1.3749265671219025e-06,
+          "signed_cross": 1.819665950488801e-18
+        },
+        {
+          "column": 1,
+          "rows": 1194,
+          "energy": 9.991064850737817e-20,
+          "energy_fraction": 1.372444674063172e-06,
+          "signed_cross": 8.173154307449657e-18
+        }
+      ]
+    },
+    {
+      "code": 44,
+      "raw_tags": [
+        1,
+        2
+      ],
+      "raw_permutations": [
+        32769,
+        36873
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 540,
+          "energy": 1.4458614617027733e-18,
+          "energy_fraction": 8.791150150070799e-05,
+          "signed_cross": 3.177307547200783e-17
+        },
+        {
+          "column": 1,
+          "rows": 540,
+          "energy": 7.133276594048336e-18,
+          "energy_fraction": 9.798782828837461e-05,
+          "signed_cross": 1.7728277772614683e-16
+        }
+      ]
+    },
+    {
+      "code": 45,
+      "raw_tags": [
+        1,
+        2
+      ],
+      "raw_permutations": [
+        32769,
+        36873
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 48,
+          "energy": 7.980205965313851e-22,
+          "energy_fraction": 4.852137685926274e-08,
+          "signed_cross": 5.325013044010057e-20
+        },
+        {
+          "column": 1,
+          "rows": 48,
+          "energy": 4.387365948469437e-21,
+          "energy_fraction": 6.026802066746997e-08,
+          "signed_cross": 2.498269956874837e-19
+        }
+      ]
+    },
+    {
+      "code": 46,
+      "raw_tags": [
+        1,
+        2
+      ],
+      "raw_permutations": [
+        0,
+        32769,
+        36873
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 6,
+          "energy": 1.2673491459995e-22,
+          "energy_fraction": 7.705756692570287e-09,
+          "signed_cross": 6.895513080793904e-21
+        },
+        {
+          "column": 1,
+          "rows": 6,
+          "energy": 3.540123810070122e-22,
+          "energy_fraction": 4.862969204224678e-09,
+          "signed_cross": 3.3672365463579886e-20
+        }
+      ]
+    },
+    {
+      "code": 47,
+      "raw_tags": [
+        1,
+        2
+      ],
+      "raw_permutations": [
+        0,
+        32769,
+        36873
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 2,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 6,
+          "energy": 5.780309494336029e-23,
+          "energy_fraction": 3.514553089944245e-09,
+          "signed_cross": 1.7404799458169083e-21
+        },
+        {
+          "column": 1,
+          "rows": 6,
+          "energy": 4.3678967337390385e-22,
+          "energy_fraction": 6.000057750236076e-09,
+          "signed_cross": 1.0330671809560308e-20
+        }
+      ]
+    },
+    {
+      "code": 48,
+      "raw_tags": [
+        1,
+        2
+      ],
+      "raw_permutations": [
+        0,
+        4680,
+        32769,
+        36873
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 54,
+          "energy": 3.5447388734845283e-22,
+          "energy_fraction": 2.155277839890401e-08,
+          "signed_cross": 5.423663237221803e-20
+        },
+        {
+          "column": 1,
+          "rows": 54,
+          "energy": 1.2194113132578029e-21,
+          "energy_fraction": 1.6750712635495104e-08,
+          "signed_cross": 2.274335296921791e-19
+        }
+      ]
+    },
+    {
+      "code": 49,
+      "raw_tags": [
+        1,
+        2
+      ],
+      "raw_permutations": [
+        0,
+        4680,
+        32769,
+        36873
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": true,
+      "periodic_slave_e_incident_count": 2,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 54,
+          "energy": 2.733532378224826e-22,
+          "energy_fraction": 1.6620467599125077e-08,
+          "signed_cross": 4.6894647974999785e-20
+        },
+        {
+          "column": 1,
+          "rows": 54,
+          "energy": 1.4071627581279528e-21,
+          "energy_fraction": 1.932980179575287e-08,
+          "signed_cross": 5.005320468363587e-19
+        }
+      ]
+    },
+    {
+      "code": 50,
+      "raw_tags": [
+        3
+      ],
+      "raw_permutations": [
+        0
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 611520,
+          "energy": 1.7777832364714146e-15,
+          "energy_fraction": 0.1080930627177325,
+          "signed_cross": 3.0589001985787985e-14
+        },
+        {
+          "column": 1,
+          "rows": 611520,
+          "energy": 7.774877977299625e-15,
+          "energy_fraction": 0.10680132729443668,
+          "signed_cross": 1.3612071937536169e-13
+        }
+      ]
+    },
+    {
+      "code": 51,
+      "raw_tags": [
+        3
+      ],
+      "raw_permutations": [
+        0
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 53760,
+          "energy": 4.548454273243281e-19,
+          "energy_fraction": 2.765558494084326e-05,
+          "signed_cross": 1.0659839746589295e-16
+        },
+        {
+          "column": 1,
+          "rows": 53760,
+          "energy": 2.0075986852966874e-18,
+          "energy_fraction": 2.7577822428889453e-05,
+          "signed_cross": 4.825365197995859e-16
+        }
+      ]
+    },
+    {
+      "code": 52,
+      "raw_tags": [
+        1,
+        3
+      ],
+      "raw_permutations": [
+        0
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 140160,
+          "energy": 5.518756001248236e-16,
+          "energy_fraction": 0.03355522913754172,
+          "signed_cross": 6.954177668569697e-15
+        },
+        {
+          "column": 1,
+          "rows": 140160,
+          "energy": 2.4539126788298274e-15,
+          "energy_fraction": 0.033708713105063855,
+          "signed_cross": 3.082453502957912e-14
+        }
+      ]
+    },
+    {
+      "code": 53,
+      "raw_tags": [
+        1,
+        3
+      ],
+      "raw_permutations": [
+        0
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 27528,
+          "energy": 2.56839496450084e-19,
+          "energy_fraction": 1.5616396436088327e-05,
+          "signed_cross": 8.950526734429889e-17
+        },
+        {
+          "column": 1,
+          "rows": 27528,
+          "energy": 1.1289570309017633e-18,
+          "energy_fraction": 1.5508167422142947e-05,
+          "signed_cross": 4.041249100531308e-16
+        }
+      ]
+    },
+    {
+      "code": 54,
+      "raw_tags": [
+        2,
+        3
+      ],
+      "raw_permutations": [
+        0,
+        4680
+      ],
+      "incident_count": 2,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 19200,
+          "energy": 4.699864038666891e-17,
+          "energy_fraction": 0.002857618903555256,
+          "signed_cross": 1.0103391409358493e-15
+        },
+        {
+          "column": 1,
+          "rows": 19200,
+          "energy": 2.2336858349196954e-16,
+          "energy_fraction": 0.003068351845839032,
+          "signed_cross": 4.684874022781674e-15
+        }
+      ]
+    },
+    {
+      "code": 55,
+      "raw_tags": [
+        2,
+        3
+      ],
+      "raw_permutations": [
+        0,
+        4680
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 3336,
+          "energy": 4.13188631783236e-20,
+          "energy_fraction": 2.5122761748078596e-06,
+          "signed_cross": 2.6188213751794524e-18
+        },
+        {
+          "column": 1,
+          "rows": 3336,
+          "energy": 1.8031481646047197e-19,
+          "energy_fraction": 2.476934272802542e-06,
+          "signed_cross": 1.1809662635380816e-17
+        }
+      ]
+    },
+    {
+      "code": 56,
+      "raw_tags": [
+        1,
+        2,
+        3
+      ],
+      "raw_permutations": [
+        0,
+        4680
+      ],
+      "incident_count": 4,
+      "nontrivial_mpc": false,
+      "periodic_slave_e_incident_count": 0,
+      "columns": [
+        {
+          "column": 0,
+          "rows": 1008,
+          "energy": 1.6953358450077447e-20,
+          "energy_fraction": 1.0308008314093965e-06,
+          "signed_cross": 1.0379541798420605e-18
+        },
+        {
+          "column": 1,
+          "rows": 1008,
+          "energy": 8.052111136278304e-20,
+          "energy_fraction": 1.106096017696634e-06,
+          "signed_cross": 4.660319077552695e-18
+        }
+      ]
+    }
+  ],
+  "probe_group_membership": {
+    "87567": 40,
+    "4766937": 40,
+    "1622464": 1
+  }
+}
