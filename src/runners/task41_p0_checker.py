@@ -50,6 +50,27 @@ from src.runners.task41_p0_comparison import (
     evaluate_task41_metric_packet,
 )
 
+def _v15_terminal_output_allowed(output: Path, service_directory: Path, root: Path) -> bool:
+    """Allow a fresh original receipt or the registered clean-source recheck."""
+    if output.exists():
+        return False
+    original = service_directory / "task41_p0_checker_result.json"
+    if output == original:
+        return True
+    import subprocess
+    consumer_sha = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=root, text=True
+    ).strip()
+    return (
+        original.is_file()
+        and output == service_directory / f"task41_p0_checker_result_recheck_{consumer_sha}.json"
+        and not subprocess.check_output(
+            ["git", "status", "--porcelain", "--untracked-files=normal"],
+            cwd=root, text=True,
+        ).strip()
+    )
+
+
 CHECKER_SCHEMA = "task41.p0.direct_checker.v1"
 A2_CHECKER_SCHEMA = "task41.p0.a2_iterative_checker.v1"
 B0_CHECKER_SCHEMA = "task41.p0.b0_iterative_checker.v1"
@@ -15489,10 +15510,7 @@ def main(argv: list[str] | None = None) -> int:
             service_directory = (
                 root / str(contract["evidence"]["service_directory"])
             ).resolve()
-            if (
-                output != service_directory / "task41_p0_checker_result.json"
-                or output.exists()
-            ):
+            if not _v15_terminal_output_allowed(output, service_directory, root):
                 raise ValueError(
                     "V15 checker output must be a new task41_p0_checker_result.json in the contract service directory"
                 )
@@ -15533,10 +15551,7 @@ def main(argv: list[str] | None = None) -> int:
                 service_directory = (
                     root / str(contract["evidence"]["service_directory"])
                 ).resolve()
-                if (
-                    output == service_directory / "task41_p0_checker_result.json"
-                    and not output.exists()
-                ):
+                if _v15_terminal_output_allowed(output, service_directory, root):
                     output.parent.mkdir(parents=True, exist_ok=True)
                     with tempfile.NamedTemporaryFile(
                         mode="w",

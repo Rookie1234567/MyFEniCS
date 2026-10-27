@@ -2564,3 +2564,30 @@ def test_v15_terminal_rejects_corrupt_saved_artifact_payload(tmp_path, monkeypat
     assert result["audit_completed"] is False
     assert result["data_integrity"] is False
     assert result["errors"]
+
+
+def test_v15_cli_and_persistence_accept_registered_recheck(tmp_path, monkeypatch):
+    import inspect
+    import subprocess
+    from src.runners import task41_p0_checker as checker
+
+    sha = 'a' * 40
+    service = tmp_path / 'service'
+    service.mkdir()
+    original = service / 'task41_p0_checker_result.json'
+    original.write_text('{"status":"INCOMPLETE"}')
+    dirty = [False]
+    def git_output(command, **kwargs):
+        return sha + '\n' if command[1] == 'rev-parse' else (' M x' if dirty[0] else '')
+    monkeypatch.setattr(subprocess, 'check_output', git_output)
+    output = service / f'task41_p0_checker_result_recheck_{sha}.json'
+    assert checker._v15_terminal_output_allowed(output, service, tmp_path)
+    assert not checker._v15_terminal_output_allowed(original, service, tmp_path)
+    assert not checker._v15_terminal_output_allowed(service / 'arbitrary.json', service, tmp_path)
+    dirty[0] = True
+    assert not checker._v15_terminal_output_allowed(output, service, tmp_path)
+    dirty[0] = False
+    output.write_text('{}')
+    assert not checker._v15_terminal_output_allowed(output, service, tmp_path)
+    # Both the CLI precheck and the atomic persistence branch consume this guard.
+    assert inspect.getsource(checker.main).count('_v15_terminal_output_allowed(') == 2
