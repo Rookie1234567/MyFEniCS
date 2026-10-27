@@ -1,0 +1,198 @@
+{
+  "schema": "task43.v15.root-a2-json-value-recheck.v1",
+  "source_record": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1/plan_output/A2_saved_primary_q_response.json",
+  "source_sha256": "d22a047730d0a47318a2537c2e312ab25c7e9c597af43d080b8c1e93780bf732",
+  "scope": "independent root threshold/formula arithmetic from newly saved JSON metrics; P2 worker performed raw NPZ norm arithmetic, not repeated here; no field resampling/integration/solve",
+  "checks": [
+    {
+      "quantity": "A6_relative_to_native_effective_rhs",
+      "value": 3.078522812304335e-10,
+      "upper_limit": 1e-08,
+      "pass": true
+    },
+    {
+      "quantity": "full_active_zero_slave_carrier_plus_modal_port_euclidean_relative_to_native_effective_rhs",
+      "value": 1.1972486317982494e-11,
+      "upper_limit": 1e-08,
+      "pass": true
+    },
+    {
+      "quantity": "returned_condensed_relative_to_returned_rhs",
+      "value": 3.0440529386035694e-12,
+      "upper_limit": 1e-09,
+      "pass": true
+    },
+    {
+      "quantity": "normal correction raw residual",
+      "before": 2.2945939789534043e-09,
+      "after": 3.0440529386035694e-12,
+      "strictly_decreased": true
+    },
+    {
+      "quantity": "A_volume",
+      "value": 4.146905041579885e-11,
+      "upper_limit": 1e-06,
+      "pass": true
+    },
+    {
+      "quantity": "R00_p",
+      "value": 1.3919772668589033e-21,
+      "upper_limit": 1e-07,
+      "pass": true
+    },
+    {
+      "quantity": "R00_s",
+      "value": 4.5076775645469525e-11,
+      "upper_limit": 1e-07,
+      "pass": true
+    },
+    {
+      "quantity": "R00_total",
+      "value": 4.5076775645469525e-11,
+      "upper_limit": 1e-06,
+      "pass": true
+    },
+    {
+      "quantity": "R_total",
+      "value": 4.508154960447541e-11,
+      "upper_limit": 1e-06,
+      "pass": true
+    },
+    {
+      "quantity": "T_total",
+      "value": 1.8893220321558601e-13,
+      "upper_limit": 1e-06,
+      "pass": true
+    },
+    {
+      "quantity": "all 612 channel power absolute differences maximum",
+      "value": 4.5076775645469525e-11,
+      "upper_limit": 1e-07,
+      "pass": true
+    },
+    {
+      "quantity": "bottom_p",
+      "value": 1.534058493598624e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "bottom_s",
+      "value": 1.4668589996279054e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "top_p",
+      "value": 5.4374146700925e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "top_s",
+      "value": 6.139994079567577e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "q10 E_scattered_code",
+      "value": 6.04323217085294e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "q10 E_total_code",
+      "value": 6.04323217153589e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "q10 G",
+      "value": 6.04373290835214e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "q10 H_scattered_A_per_m",
+      "value": 6.044233605554845e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "q10 H_total_A_per_m",
+      "value": 6.044233604909563e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "q10 curl_E_over_k0_code",
+      "value": 6.044233606888348e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "q8 E_scattered_code",
+      "value": 6.043232207216038e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "q8 E_total_code",
+      "value": 6.043232206169635e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "q8 G",
+      "value": 6.043732933300416e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "q8 H_scattered_A_per_m",
+      "value": 6.044233623291549e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "q8 H_total_A_per_m",
+      "value": 6.044233623629242e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    },
+    {
+      "quantity": "q8 curl_E_over_k0_code",
+      "value": 6.04423362904022e-11,
+      "upper_limit": 1e-05,
+      "pass": true
+    }
+  ],
+  "field_relative_values": {
+    "q10": {
+      "E_scattered_code": 6.04323217085294e-11,
+      "E_total_code": 6.04323217153589e-11,
+      "G": 6.04373290835214e-11,
+      "H_scattered_A_per_m": 6.044233605554845e-11,
+      "H_total_A_per_m": 6.044233604909563e-11,
+      "curl_E_over_k0_code": 6.044233606888348e-11
+    },
+    "q8": {
+      "E_scattered_code": 6.043232207216038e-11,
+      "E_total_code": 6.043232206169635e-11,
+      "G": 6.043732933300416e-11,
+      "H_scattered_A_per_m": 6.044233623291549e-11,
+      "H_total_A_per_m": 6.044233623629242e-11,
+      "curl_E_over_k0_code": 6.04423362904022e-11
+    }
+  },
+  "A_volume": {
+    "historical_automatic_rule_reinterpreted_as_q19": false,
+    "inferred_from_one_minus_R_minus_T": false,
+    "material_region_sum": 0.6915175267406917,
+    "reintegrated": false,
+    "saved_value": 0.6915175267406917
+  },
+  "historical_endpoint_status": "INCOMPLETE_NOT_QUALIFIED",
+  "all_numeric_checks_pass": true,
+  "seconds": 0.004316689912229776
+}

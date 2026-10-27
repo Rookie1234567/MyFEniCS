@@ -1,0 +1,84 @@
+{
+  "schema": "task43.v12.p2-root-joined-terminal.v1",
+  "created_utc": "2026-10-27T02:19:07.523911+00:00",
+  "p2_source_id": "P2_BUGFIX",
+  "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+  "recovery_manifest_sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+  "status": "P2_COMPLETE_ROOT_VERIFIED",
+  "launcher_exit_code": 0,
+  "watchdog_exit_code": 0,
+  "worker_exit_code": 0,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "source_head": "ffe64470628b8c23e3419c9b6cc21146be927ea2",
+  "products": {
+    "plan": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1/plan_output/plans/v11_r9_h8.json",
+      "sha256": "f26dc8a9c4a0c6d4aed7d9767477e142e57dadb69db39a437bb05b9bed701688"
+    },
+    "audit": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1/plan_output/plans/v11_r9_h8.audit.json",
+      "sha256": "d44ccfc982dc3052b3761817f2fb973fe2e0c22f55d774b456bf0bc5eb55fdd9"
+    },
+    "a2_response": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1/plan_output/A2_saved_primary_q_response.json",
+      "sha256": "d22a047730d0a47318a2537c2e312ab25c7e9c597af43d080b8c1e93780bf732"
+    },
+    "bundle": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1/plan_output/plan_audit.json",
+      "sha256": "1390988bb57fd65f1ae75a0900fe8dbdcbff7bccfcde9c097f9aef5a20e74dc0"
+    }
+  },
+  "root_observation_record": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/space_and_saved_primary_attempt1_root_terminal_observations.json",
+    "sha256": "723b8dc6368e2231038ec1d60c5fde120a646142a4f0b76d811047a5f540a557"
+  },
+  "gates": {
+    "source": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/space_and_saved_primary_attempt1_root_terminal_observations.json",
+        "sha256": "723b8dc6368e2231038ec1d60c5fde120a646142a4f0b76d811047a5f540a557"
+      }
+    },
+    "input": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/space_and_saved_primary_attempt1_root_terminal_observations.json",
+        "sha256": "723b8dc6368e2231038ec1d60c5fde120a646142a4f0b76d811047a5f540a557"
+      }
+    },
+    "resource": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/space_and_saved_primary_attempt1_root_terminal_observations.json",
+        "sha256": "723b8dc6368e2231038ec1d60c5fde120a646142a4f0b76d811047a5f540a557"
+      }
+    },
+    "trace": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/space_and_saved_primary_attempt1_root_terminal_observations.json",
+        "sha256": "723b8dc6368e2231038ec1d60c5fde120a646142a4f0b76d811047a5f540a557"
+      }
+    }
+  },
+  "space_numeric_gate": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/root_P2_values_and_gates.json",
+    "sha256": "57729e5103ac08c7fe6a6efe295a2d92589d5b2dd69c0b6e16fd1fc4e7ba90b9"
+  },
+  "user_recovery_authorization": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v15_user_bugfix_recovery_authorization.json",
+    "sha256": "2b39ca0a1b86e08dfee2f88ea12e85f0b0ec55d8be6c1540ce7e5dc13ddf40cc"
+  },
+  "superseded_failure_closeout": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/root_closeout.json",
+    "sha256": "f710082b6ac4f6be0eeb8fcefd15e1c3005ef1676c057eef24ba7162c58ef948"
+  },
+  "caveats": [
+    "No auto-qualification: root must classify signals, failed calls, transient observations and phase/test/numerical results.",
+    "No --cache-path: cache_metadata_stable does not audit shared JIT/global caches.",
+    "Read from real host /proc; sampled RSS/swap, not continuous high-water marks."
+  ],
+  "next": "P3 conditionally authorized; does not qualify h PDE or scientific accuracy"
+}

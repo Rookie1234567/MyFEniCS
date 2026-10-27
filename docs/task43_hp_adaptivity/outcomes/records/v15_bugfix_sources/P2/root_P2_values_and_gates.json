@@ -1,0 +1,86 @@
+{
+  "schema": "task43.v15.root-p2-values.v1",
+  "status": "P2_COMPLETE_ROOT_VERIFIED",
+  "source_head": "ffe64470628b8c23e3419c9b6cc21146be927ea2",
+  "actual_FE": 116740,
+  "trace": 36790,
+  "interior": 79950,
+  "raw_before_constraints": 124012,
+  "hanging": 1820,
+  "periodic": 5452,
+  "delta_FE": 6268,
+  "predicted_trace_dtn_rows": 37402,
+  "assembled_rows_NNZ": "not_measured_no_PDE_assembly",
+  "root_count": 180,
+  "leaf_count": 194,
+  "p_histogram": {
+    "p5": 35,
+    "p6": 159
+  },
+  "requested_roots": [
+    4
+  ],
+  "forced_roots": [
+    34
+  ],
+  "global_seed": 8,
+  "all_180_root_inheritance_recomputed": true,
+  "hanging_or_floquet_slave_rows_globally_numbered": false,
+  "A2_root_check": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/root_A2_values.json",
+    "sha256": "21fa48545b98e335290223daad497acd50855db5ecfc4a0bcb24e37c39f32441"
+  },
+  "whole_seconds": 959.6084092017263,
+  "RSS_sampled_peak_bytes": 2211012608,
+  "swap_sampled_peak_bytes": 0,
+  "resource_samples": 1519,
+  "source_checks": 51,
+  "input_checks": 41,
+  "traces": [
+    {
+      "file": "sched.3234628",
+      "sha256": "6e7ec3636965a9d51e38435c121cf88b67ab15ff97f4db4835c77bb0fed3b5b2",
+      "bytes": 57298,
+      "lines": 803,
+      "tail": "1793067473.216357 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3234683",
+      "sha256": "0547433609e9cb04fe9009c622166b8be74a4f21bb0a195d30ccb70d76a736b1",
+      "bytes": 3717,
+      "lines": 47,
+      "tail": "1793067473.241310 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3234707",
+      "sha256": "cca75eef291b7b8ad4007022bb6731fa938c8f6526e4bd8bb78b3b7c08c1d96a",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793067473.220349 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3234713",
+      "sha256": "02fd23b2c04860ff5cca10ce17524ac293175f6ea3001e34d38a2306e3785f1d",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793067473.224539 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3234714",
+      "sha256": "71f33b929c475c1f5fddefb0d0b2aa93a293aec090768085fe0bda63aa5ad53a",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793067472.957471 +++ exited with 0 +++"
+    },
+    {
+      "file": "sched.3234716",
+      "sha256": "30d5bef48bc49f0270d8a22490701d83f3824c2e86764925d7e0fcec8fc4f1b1",
+      "bytes": 40,
+      "lines": 1,
+      "tail": "1793067472.953757 +++ exited with 0 +++"
+    }
+  ],
+  "resource_observations_classification": "Any recorded empty cmdline observations are known Z-state zero RSS/swap; no live empty cmdline. All bound processes gone.",
+  "PDE_runs": 0,
+  "seconds": 0.07643467513844371
+}

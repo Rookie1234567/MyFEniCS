@@ -1,0 +1,12 @@
+{
+  "scope": "root P2 closeout and P3 launch static preparation",
+  "seconds": 0.1905583031475544,
+  "P2_joined_sha256": "925cfbeb9517dd2f08d4ebf43f7ef9003bfe4af944241373c31f1668e547f29b",
+  "P3_shell_sha256": "d8c109603d03b6cd845599381cc20fefd8c449d65fa248dbbfa0e66c3633e5d3",
+  "formal_dispatches_so_far": 0,
+  "previous_unused_launch_preserved": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/A1_q_attempt3.unused_original.sh",
+    "sha256": "a4a5a6357e803755f3a84d2cef3e22c1bbf1f238d974961148799be6b5b03937",
+    "size_bytes": 5903
+  }
+}
