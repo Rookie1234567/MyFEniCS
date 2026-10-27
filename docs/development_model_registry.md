@@ -1,6 +1,25 @@
 # Task43：accepted9/R9冻结，最终空间精度未达
 
-## V14 当前状态：P2R一次已执行；实际FE取得，字段门失败
+## Task43 V15 当前科研状态：P5诊断完成未接受；P3/P4失败端点保留
+
+V15 按用户授权修复普通代码/接线错误并继续原P2→P5链。P2实际得到194叶、FE 116,740（较accepted9/R9的110,472增加6,268），joined空间审计通过。P3正式A1_q_attempt3因只读视图将scope转为tuple而保存JSON为list，raw-scope gate失败；固定primary离线raw重算过阈值，另有非official保存场续接通过q8/q10与Av闭合，但不改原失败终态。P4 R9_H8 solve raw数值门通过，worker在共享summary writer JSON序列化NumPy ndarray时失败，故P4最终仍FAILED。P5现已通过固定binding完成FAILED P4保存场的union诊断；状态为COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE，不改变P4 endpoint或accepted state。
+
+| 项目 | 当前登记 | 证据和边界 |
+|---|---|---|
+| formal次数 | 原5/6 + V15新增A1、R9_H8两次 = 7/8；历史封存槽保留 | P5不增加PDE次数；不会自动重试 |
+| 空间/选择 | PARTIAL / PARTIAL | P2有真实FE，accepted9/R9未改变 |
+| R9_H8 数值原件 | 194格、FE116740；rows37402，NNZ30072292 | R/T/Av=0.2513585633216903 / 0.057125759200644305 / 0.691515677476035；R00_s/p=0.2513262857473211 / 1.5574751172765498e-23；原FAILED、saved-primary诊断分列 |
+| 精度 | NOT_PASSED | h对固定Y6_1的R00_s差3.9745473239816143e-6>1e-6；J=3.9745>1；恢复诊断也未满足输出精度门 |
+| 同精度全过程成本 | NOT_ESTABLISHED | 没有完成同精度成本研究 |
+| 迭代 | NOT_RUN / NOT_QUALIFIED | 前置研究条件未满足 |
+| P5 | COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE；q8/q10均NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE | ΔJ=0.09051462124265441<εJ；h的R00_s差3.9745473239816143e-6>1e-6，accuracy仍NOT_PASSED；P4原terminal仍FAILED |
+| 合并/生产 | 无READY、production qualification或merge approval | 研究入口变更不应提升为production default；无master合并授权 |
+
+计费范围：V15已结束8次support whole累计2,240.4899401497096 s，formal whole 5,210.411748223938 s；V12/V14 recovery 2,215.2188096446916 s及更早V11 support 853.8004706790671 s分别留在历史账。P5 watchdog whole=1,134.8697960400023 s，采样进程树RSS峰1,621,196,800 B，task swap=0，worker/watchdog/launcher退出0/0/0且后代清理完成。原A1/P4 worker失败、summary/terminal及数组身份不改写。详细科学值见Task43 outcomes summary与V15 response；comparison与watchdog原件位于`benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/`；root joined closeout位于`docs/task43_hp_adaptivity/outcomes/records/v15_bugfix_sources/P5/P5_joined_root_closeout.json`。
+
+详见[Response V15](task43_hp_adaptivity/response_v15.md)与[V15机器结果](task43_hp_adaptivity/outcomes/records/v15_bugfix_and_scientific_results_v1.json)。
+
+## V14 历史状态：P2R一次已执行；实际FE取得，字段门失败
 
 用户授权原P2R工作90分钟/含清理93分钟后，实际执行一次，whole **1596.6148925269954 s**；树RSS采样峰 **2210361344 B**、task swap0、CPU1/MPI1/单线程及清理符合记录。实际seed8及必要材料闭包得到194叶、**FE 116740，较R9增加6268**，满足110472与237600之间的数值区间；但研究入口误读periodic/floquet字段后抛错，worker/watchdog/launcher退出1/2/2，P2整体失败。已作键名和现有fixture的最小静态修复，AST通过、修复后pytest未运行。旧S1 12/12仅对应旧字节与覆盖范围。
 

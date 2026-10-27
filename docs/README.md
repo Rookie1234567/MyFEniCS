@@ -1,6 +1,11 @@
 # 任务流转索引
 
-Task43当前收口见[Response V13](task43_hp_adaptivity/response_v13.md)：S1有限支持验证12/12节点通过；D1在540秒工作停止门受控停止，未返回space authority/FE审计。P2R需要1740秒工作界和1800秒whole上限，但25种degree-map冷构造中18种未完成，cell-map/audit尾段也没有保守费用上界，故P2R未运行；P3/P4/P5同样未运行，新formal为0。旧正式额度5/6、末槽封存，扩展正式5/8；accepted9/R9和五项科学状态不变，无READY、生产资格或merge approval。机器收口见[V13结果记录](task43_hp_adaptivity/outcomes/records/v13_minimal_completion_and_scientific_results_v1.json)、[S1 closeout](task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/root_closeout.json)、[D1 closeout](task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json)和[P2R预算裁决](task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json)。V12失败记录保留，见[Response V12](task43_hp_adaptivity/response_v12.md)。
+## Task43 V15 当前状态
+
+V15普通研究入口接线修复后，P2_BUGFIX实际空间审计为194叶、FE116,740（较R9 +6,268）。P3正式A1与P4 R9_H8原终态均FAILED；A1 saved-primary是单独非official后处理。P4保存raw数值门通过，但最终JSON summary writer因NumPy ndarray失败。P5原槽已完成显式绑定的saved-primary union diagnostic：q8/q10均NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE，ΔJ=0.09051462124265441<εJ；h对Y6_1的R00_s绝对差3.9745473239816143e-6>1e-6，accuracy仍NOT_PASSED。P5为COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE，P4 terminal仍FAILED。formal 7/8、新增2；本轮support 8次累计2,240.4899401497096 s；五项能力不变，无merge approval。P5原件位于`benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/`，joined closeout见[主控记录](task43_hp_adaptivity/outcomes/records/v15_bugfix_sources/P5/P5_joined_root_closeout.json)。详见[Task43 V15 Response](task43_hp_adaptivity/response_v15.md)、[outcomes summary](task43_hp_adaptivity/outcomes/summary.md)与[机器结果](task43_hp_adaptivity/outcomes/records/v15_bugfix_and_scientific_results_v1.json)。
+
+
+Task43历史V13收口见[Response V13](task43_hp_adaptivity/response_v13.md)：S1有限支持验证12/12节点通过；D1在540秒工作停止门受控停止，未返回space authority/FE审计。P2R需要1740秒工作界和1800秒whole上限，但25种degree-map冷构造中18种未完成，cell-map/audit尾段也没有保守费用上界，故P2R未运行；P3/P4/P5同样未运行，新formal为0。旧正式额度5/6、末槽封存，扩展正式5/8；accepted9/R9和五项科学状态不变，无READY、生产资格或merge approval。机器收口见[V13结果记录](task43_hp_adaptivity/outcomes/records/v13_minimal_completion_and_scientific_results_v1.json)、[S1 closeout](task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/s1_completion_attempt1/root_closeout.json)、[D1 closeout](task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/root_closeout.json)和[P2R预算裁决](task43_hp_adaptivity/outcomes/records/v13_completion_sources/support/authority_profile_attempt1/p2r_budget_decision.json)。V12失败记录保留，见[Response V12](task43_hp_adaptivity/response_v12.md)。
 
 `docs/taskXXX_*/` 保存 ChatGPT 任务书、Codex outcomes 和审查报告；`notes/` 只保存理论、学习和解释性文档。Task28 从干净 master 选择性归档 Task021-Task027 的核心闭环文件，不复制 raw runs。
 
@@ -50,7 +55,7 @@ Task43当前收口见[Response V13](task43_hp_adaptivity/response_v13.md)：S1�
 | [`task035c_hybrid_channel_memory_closure/README.md`](task035c_hybrid_channel_memory_closure/README.md) | Task035c：修复 Full3D–Hybrid 离散 phase/traction 合同；p6/h10 六路径 12/12+12/12；static Hybrid M120 峰值下降31.89%，50%目标未达 |
 | [`task037c_hybrid_iterative_robustness/response_v3.md`](task037c_hybrid_iterative_robustness/response_v3.md) | Task037c白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5 的授权 research extension；M_robust=120，preferred RSS未过，不是production-qualified |
 | [`task038_input_driven_configuration/response_v1.md`](task038_input_driven_configuration/response_v1.md) | Task038：单一 `.dat` input-driven configuration；11 migrated/6 retained，ordinary数值算法不变；source-branch full pytest 1119 passed/48 skipped，integration full 由用户授权 controlled stop |
-| [`task43_hp_adaptivity/outcomes/summary.md`](task43_hp_adaptivity/outcomes/summary.md) | Task43：V13 S1有限支持12/12通过；D1于540秒工作门受控停止，未取得authority/FE；P2R预算上界未证而未运行；R9仍为最后接受态、旧正式dispatch5/6、扩展正式5/8，最终精度未达 |
+| [`task43_hp_adaptivity/outcomes/summary.md`](task43_hp_adaptivity/outcomes/summary.md) | V15实际h FE116740；P5两阶无明确收益，R00_s仍超容差；原正式失败与恢复诊断分列，累计正式7/8，无合并资格 |
 | [`benchmark.md`](benchmark.md) | Benchmark 分层设计和当前结果；编号 cases 见 [`../benchmarks/cases/README.md`](../benchmarks/cases/README.md) |
 | [`../notes/theory/README.md`](../notes/theory/README.md) | 从 Maxwell 强/弱式到 DtN、RTA、凝聚、迭代 PC 和 Hybrid FEM–Modal 的规范理论 |
 | [`../notes/reference/code_walkthrough.md`](../notes/reference/code_walkthrough.md) | 逐模块/函数、对象生命周期与 equation-to-code 导读 |
@@ -81,7 +86,7 @@ Task43当前收口见[Response V13](task43_hp_adaptivity/response_v13.md)：S1�
 | Task037b | frozen Hybrid iterative M10 | 白名单能力已选择性进入 master；仍为 explicit-opt-in research capability，ordinary defaults不变，not production-qualified |
 | Task037c | Hybrid iterative robustness | 白名单能力已选择性进入 master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过，仍not production-qualified |
 | Task038 | 单一 `.dat` input-driven configuration | 已按 Review V1 白名单选择性进入 master；11 migrated/6 retained，ordinary defaults 不变；source-branch full pytest 1119 passed/48 skipped，integration full 为用户授权 controlled stop |
-| Task43 | 局部 h/p 自适应 Maxwell | V13 S1有限支持12/12通过；D1在540秒工作门受控停止，P2R因1740秒工作界无保守估计未运行；P3/P4/P5未运行，新formal0。accepted9/R9仍最后接受态，旧正式5/6、扩展正式5/8、最终精度未达；无生产或合并资格 |
+| Task43 | 局部 h/p 自适应 Maxwell | V15 P5诊断完成；FE116740，ΔJ低于冻结门；accepted9保留、精度NOT_PASSED、正式7/8、历史末槽封存，无合并资格 |
 
 ## 当前任务
 
@@ -104,7 +109,7 @@ Task43当前收口见[Response V13](task43_hp_adaptivity/response_v13.md)：S1�
 | Task037b | `task037b_hybrid_fem_modal_iterative/` | 白名单能力已选择性进入master；frozen M10仍为explicit-opt-in research capability，ordinary defaults不变；Case101 compact、runner/watchdog/checker与V7边界见下方 |
 | Task037c | `task037c_hybrid_iterative_robustness/` | 白名单能力已选择性进入master；S偏振、1°、phi=-5/0/+5、M_robust=120；preferred RSS未过；not production-qualified |
 | Task038 | `task038_input_driven_configuration/` | 单一 `.dat` 普通入口；11 migrated/6 retained；ordinary 数值算法不变；final full pytest 1119 passed/48 skipped |
-| Task43 | [`task43_hp_adaptivity/README.md`](task43_hp_adaptivity/README.md) | PARTIAL / CONTROLLED_NEGATIVE；V13 S1有限工程验证12/12通过；D1性能受控停止、authority/FE未返回；P2R因预算上界未证而未运行；accepted9/R9 frozen、R10 rejected；旧正式额度5/6、末槽封存，扩展正式5/8；无merge approval |
+| Task43 | [`task43_hp_adaptivity/README.md`](task43_hp_adaptivity/README.md) | PARTIAL；V15 P5完整诊断但无明确h收益；空间/选择PARTIAL，精度未通过、成本未建立、迭代未运行；无merge approval |
 
 ## Task28 审计入口
 
@@ -216,7 +221,7 @@ Task034 的最终证据见 [`task034_workstation_wsl_adaptive_scalability/outcom
 
 ## Task43 自适应 h/p 入口
 
-Task43现为`PARTIAL / CONTROLLED_NEGATIVE`，分支`task43_hp_adaptivity`、冻结base `405e3aff42ac421a4c99315df1ed9b96941ecbe4`。R1–R9九次p-up接受，R9仍为最后状态；R10因G改善未超过冻结参考噪声而拒绝。V13 S1 12/12有限支持节点通过；D1按540秒工作门受控停止，未返回cell-map authority/FE审计。P2R要求1740秒工作界和1800秒whole限值，但18个degree-map冷构造及cell-map/audit尾段没有可审上界，故未运行；P3/P4/P5同样未运行。两轮V12支持失败、两处最终断言静态修复、V8准备失败及V9有限工程证据均保留。V2/V3五次formal dispatch的A1/A2终态不变。最终精度、相近精度更少FE及同精度全过程成本均未建立；五项能力与下游锁定，无merge approval。
+V13历史说明（当前V15结果见文首）：Task43现为`PARTIAL / CONTROLLED_NEGATIVE`，分支`task43_hp_adaptivity`、冻结base `405e3aff42ac421a4c99315df1ed9b96941ecbe4`。R1–R9九次p-up接受，R9仍为最后状态；R10因G改善未超过冻结参考噪声而拒绝。V13 S1 12/12有限支持节点通过；D1按540秒工作门受控停止，未返回cell-map authority/FE审计。P2R要求1740秒工作界和1800秒whole限值，但18个degree-map冷构造及cell-map/audit尾段没有可审上界，故未运行；P3/P4/P5同样未运行。两轮V12支持失败、两处最终断言静态修复、V8准备失败及V9有限工程证据均保留。V2/V3五次formal dispatch的A1/A2终态不变。最终精度、相近精度更少FE及同精度全过程成本均未建立；五项能力与下游锁定，无merge approval。
 
 | 文件 | 内容与当前边界 |
 |---|---|

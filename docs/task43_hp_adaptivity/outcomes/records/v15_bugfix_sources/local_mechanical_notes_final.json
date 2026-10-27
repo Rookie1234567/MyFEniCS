@@ -1,0 +1,33 @@
+{
+  "schema": "task43.v15.final-local-mechanical-notes.v1",
+  "old_notes": [
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/local_mechanical_notes.json",
+      "sha256": "e304c59a0179059d589cbb9963663bcbc4ee4aa3a488c1fc6d234227e3b59319"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/local_mechanical_notes_v2.json",
+      "sha256": "2cdb817c62bda6a90cb079d934296e567237044c6744f80ea9df4209b5589a0a"
+    }
+  ],
+  "additional_read_only_events": [
+    {
+      "command": "rg --files /tmp | rg task43...",
+      "result": "permission-denied warnings for unrelated private /tmp directories; task files located; no access escalation or mutation",
+      "timing": "not_measured"
+    },
+    {
+      "command": "sed nonexistent P4_failed/root_review_static_findings.json",
+      "exit_code": 2,
+      "recovery": "rg listed actual h_recovery_prelaunch_static_review.json, then read it",
+      "timing": "not_measured"
+    },
+    {
+      "command": "root terminal helper output P5",
+      "result": "tool output truncated at long repeated SCOTCH stacks; then read all final syscall events/tails and all unique frames compared with already-read frames; no extra dynamic run",
+      "timing": "not_measured"
+    }
+  ],
+  "dynamic_failures": "all formal/support failures enumerated separately; none refunded",
+  "root_P5_data_reader": "one actual invocation, exit0, 49.98319954331964 seconds, 2654checks; no native/project import, no new samples/PDE/tests"
+}

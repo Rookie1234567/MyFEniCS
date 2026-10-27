@@ -1,0 +1,194 @@
+{
+  "active_fe_dofs": 116740,
+  "binding_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v15_h_saved_primary_recovery_binding.json",
+  "binding_sha256": "4e7e23d9fab8f46a34428d8cab76ad9d2a38bac3b99364b5e0deeb7615d6fc04",
+  "candidate_plan_sha256": "f26dc8a9c4a0c6d4aed7d9767477e142e57dadb69db39a437bb05b9bed701688",
+  "classification": "restored_failed_primary_for_nonofficial_union_comparison",
+  "mesh_profile": {
+    "axes_nm": [
+      [
+        0.0,
+        16.5,
+        25.0,
+        33.5,
+        50.0
+      ],
+      [
+        0.0,
+        5.0,
+        7.5,
+        10.0,
+        15.0,
+        20.0,
+        25.0,
+        30.0,
+        35.0,
+        40.0,
+        45.0,
+        50.0
+      ],
+      [
+        -10.0,
+        -5.0,
+        0.0,
+        15.0,
+        30.0,
+        60.0,
+        90.0,
+        120.0,
+        130.0
+      ]
+    ],
+    "axis_union_interval_counts_xyz": [
+      4,
+      11,
+      8
+    ],
+    "axis_union_interval_product_not_global_cell_count": true,
+    "axis_values_sha256": "282d74ce0297f78ce08418d74cff5e1d4807fc3a7a3ad599c6995d5371168cd7",
+    "base_axis_values_sha256": "4661c6018b835407c69aa639721a6e4c23305ce34deb5849a650c40b90a7aea8",
+    "closure_split_counts": {
+      "balance": 0,
+      "material": 1,
+      "periodic": 0,
+      "user": 1
+    },
+    "geometry_profile": "candidate_initial180",
+    "global_cells": 194,
+    "hanging_patch_count": 9,
+    "leaf_catalog_sha256": "ff19f589ab2ae8a8feb85b8127567272453034a2c8114509d5068bd6d2e888cb",
+    "leaf_cell_count": 194,
+    "material_plane_alignment": {
+      "all_aligned": true,
+      "checked": {
+        "x": [
+          {
+            "aligned": true,
+            "name": "grating_x_min",
+            "value": 16.5
+          },
+          {
+            "aligned": true,
+            "name": "grating_x_max",
+            "value": 33.5
+          }
+        ],
+        "y": [
+          {
+            "aligned": true,
+            "name": "grating_y_min",
+            "value": 15.0
+          },
+          {
+            "aligned": true,
+            "name": "grating_y_max",
+            "value": 35.0
+          }
+        ],
+        "z": [
+          {
+            "aligned": true,
+            "name": "interface_z",
+            "value": 0.0
+          },
+          {
+            "aligned": true,
+            "name": "grating_z_max",
+            "value": 120.0
+          },
+          {
+            "aligned": true,
+            "name": "grating_z_min",
+            "value": 0.0
+          }
+        ]
+      },
+      "missing": []
+    },
+    "mesh_cell_type_resolved": "hexahedron",
+    "plan_sha256": "f26dc8a9c4a0c6d4aed7d9767477e142e57dadb69db39a437bb05b9bed701688",
+    "root_catalog_sha256": "8b49201ee7f3f24fb1594a255f7477ce9653ffe4322e6de0ef9af57285f9d5f2",
+    "root_cell_count": 180,
+    "spacing_mode_resolved": "balanced_dyadic_local_h"
+  },
+  "official_result": false,
+  "ordered_mode_count": 612,
+  "original_partial_terminal_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/task43_v11_partial_terminal.json",
+  "original_partial_terminal_sha256": "613a455c2f4443aa1a711e3f1a82f050d48b8d6e8060969edfef7075e0fcb7aa",
+  "original_status": "FAILED",
+  "passed": false,
+  "prevalidation_identity_sha256": "82257989dcaaa23ebdb65aa7d4463d5ed903d9c9d54ad9b7f71597473af9f773",
+  "primary_packet_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/primary_state.npz",
+  "primary_packet_sha256": "a337b20719fe8e255acf0f6fe7ebd4c8a81f88856eb961f07c5dc962829526a0",
+  "restored_array_identities": {
+    "mesh_cell_vertex_dofmap": {
+      "dtype": "<i4",
+      "sha256": "6eaee9a9cc32f750322b204bc1dd9b224595ebd6875c317dc2e55c8ad8851007",
+      "shape": [
+        1552
+      ]
+    },
+    "mesh_geometry_coordinates_nm": {
+      "dtype": "<f8",
+      "sha256": "8250765fd9e7cf25d579467fbb494cdb1a43d20d4918406b92d6db6d574b4b53",
+      "shape": [
+        341,
+        3
+      ]
+    },
+    "mesh_geometry_dofmap": {
+      "dtype": "<i4",
+      "sha256": "aa381bb9ce9cc9e5e0e9e057a25e65f84aaa26d5bf4b35dbaaac8ef3d4d86ba9",
+      "shape": [
+        194,
+        8
+      ]
+    },
+    "mesh_owned_cell_global_ids": {
+      "dtype": "<i8",
+      "sha256": "540d8db0726e4e5c04a9303ff3bd9ac9f01b01bbb309c36ed895e4967a0e2dd5",
+      "shape": [
+        194
+      ]
+    },
+    "p6_function_space_dofmap": {
+      "dtype": "<i4",
+      "sha256": "b110793db1a9928a8ed155e04b0d8a3530ca08db80cb11ab74a3f9718462cb21",
+      "shape": [
+        194,
+        882
+      ]
+    },
+    "p6_ghost_global_dof_block_ids": {
+      "dtype": "<i8",
+      "sha256": "c19bf8aaa184a847cceed6722ac8c6086f916b027a4a9e9378ad0b3dfb219777",
+      "shape": [
+        0
+      ]
+    },
+    "p6_owned_global_dof_block_ids": {
+      "dtype": "<i8",
+      "sha256": "b782427e7b726051abe68bbecbf021964c4a2a5d0ff8db575b684a8d254a4dc0",
+      "shape": [
+        135366
+      ]
+    }
+  },
+  "schema": "task43.v15.saved-primary-p4-restoration.v1",
+  "selection_transition_written": false,
+  "v12_recovery_binding": {
+    "audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1/plan_output/plans/v11_r9_h8.audit.json",
+    "bundle_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1/plan_output/plan_audit.json",
+    "contract_sha256": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+    "manifest_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v12_execution_recovery_manifest.json",
+    "manifest_sha256": "fd42af62c989e9b8886c1fb1458a7aa904907d2c241da2f88f6888d1d7340734",
+    "output_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1/plan_output",
+    "p2_source_id": "P2_BUGFIX",
+    "plan_output_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1/plan_output/plans/v11_r9_h8.json",
+    "superseded_failure_closeout_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v14_p2r_sources/root_closeout.json",
+    "superseded_failure_closeout_sha256": "f710082b6ac4f6be0eeb8fcefd15e1c3005ef1676c057eef24ba7162c58ef948",
+    "support_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/support/space_and_saved_primary_attempt1",
+    "user_recovery_authorization_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v15_user_bugfix_recovery_authorization.json",
+    "user_recovery_authorization_sha256": "2b39ca0a1b86e08dfee2f88ea12e85f0b0ec55d8be6c1540ce7e5dc13ddf40cc"
+  }
+}

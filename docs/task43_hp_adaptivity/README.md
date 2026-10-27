@@ -1,11 +1,17 @@
 # Task43：面向三维 Maxwell 的自适应 h/p 网格
 
+## V15 当前执行状态（P5诊断已完成；不获接受）
+
+V15 在用户授权下修复普通研究入口bug并继续原链：P2_BUGFIX 已得到194叶、FE 116,740（较R9 +6,268）及root joined；P3原A1和P4 R9_H8 formal terminal均保持FAILED。A1固定primary的非official后处理通过q8/q10与能量闭合门；P4 raw数值门通过，但末尾summary writer序列化ndarray失败。原P5槽已完成saved-primary comparison：q8/q10均NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE，ΔJ=0.09051462124265441<εJ=0.12716416232413652；h对Y6_1的R00_s绝对差3.9745473239816143e-6>1e-6，accuracy仍NOT_PASSED。P5记录为COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE，P4原terminal仍FAILED。
+
+P5 whole=1,134.8697960400023 s、RSS采样峰1,621,196,800 B、swap0、退出0/0/0；V15 support累计8次2,240.4899401497096 s。formal次数7/8（V15新增2），历史封存槽不开放自动重试；五项能力仍为space/selection PARTIAL、accuracy NOT_PASSED、equal-accuracy cost NOT_ESTABLISHED、iteration NOT_RUN/NOT_QUALIFIED。无READY、生产资格或merge approval。P5原件见 `benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/`，root closeout见 `outcomes/records/v15_bugfix_sources/P5/P5_joined_root_closeout.json`。详见[Response V15](response_v15.md)、[V15机器结果](outcomes/records/v15_bugfix_and_scientific_results_v1.json)、[V15 sources目录](outcomes/records/v15_bugfix_sources/README.md)。
+
 | 项目 | 本轮权威 |
 |---|---|
 | 执行分支 | `task43_hp_adaptivity` |
 | 建立日期 | 2026-10-22 |
 | 源码基线 | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` |
-| 当前状态 | V14：唯一P2R已执行，实际FE116740（+6268）；字段名检查错误导致失败。最小静态修复完成，动态未验；P3/P4/P5未运行。正式5/8、新正式0，无自动重试或合并许可。见[Response V14](response_v14.md)与[V14结果](outcomes/records/v14_p2r_budget_extension_results_v1.json) |
+| 当前状态 | V15：实际h FE116740，恢复至P5；q8/q10均无明确收益，R00_s仍超容差。原A1/h正式FAILED保留，正式7/8、封存槽不开放。见[Response V15](response_v15.md)与[结果记录](outcomes/records/v15_bugfix_and_scientific_results_v1.json)。 |
 | 第一目标 | 在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环 |
 | 第一验证波长 | 13.5 nm；小规模 direct 作数值核验 |
 | 后续方向 | 自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot |

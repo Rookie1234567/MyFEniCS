@@ -1,0 +1,299 @@
+{
+  "schema": "task43.v15.p4-p5-joined-root-closeout.v1",
+  "status": "COMPLETE_SAVED_PRIMARY_DIAGNOSTIC_NOT_ACCEPTANCE",
+  "P4_original_status": "FAILED_SUMMARY_NUMPY_SERIALIZATION_AFTER_SOLVE",
+  "P4_original_source_head": "7beeb78b4d6110b6d0a46a64e1bd0bb91bd9877e",
+  "P4_failed_closeout": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/P4_failed_root_closeout.json",
+    "sha256": "d01d1f77969c302cfa51e7e0b05a8a3f1ffcf459cc05731ea57e98fa3d399ca0"
+  },
+  "P4_raw_recheck": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/P4_raw_stdlib_recheck.json",
+    "sha256": "762d307f705aed659a7c3be79ab444e1a1e32dda2bcc0096d72c26057e36249e"
+  },
+  "P4_primary_unchanged": {
+    "run/task43_v11_partial_terminal.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/task43_v11_partial_terminal.json",
+      "sha256": "613a455c2f4443aa1a711e3f1a82f050d48b8d6e8060969edfef7075e0fcb7aa"
+    },
+    "run/primary_state.npz": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/primary_state.npz",
+      "sha256": "a337b20719fe8e255acf0f6fe7ebd4c8a81f88856eb961f07c5dc962829526a0"
+    },
+    "run/primary_raw_vector_audit.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/primary_raw_vector_audit.json",
+      "sha256": "ba5f77b62952ab4e056f409993d44b4d414e69071a2054952f9eef783b8321fd"
+    },
+    "run/pre_validation_checkpoint.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/pre_validation_checkpoint.json",
+      "sha256": "344c0410e21cad82c1535bcb4a14848562f3f69aea83d545943914584241a9af"
+    },
+    "run/pre_validation_checkpoint.npz": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/pre_validation_checkpoint.npz",
+      "sha256": "4fd313f966cf3787cfe76e15d42eb0c52e9a91a425f4169f2ff5105b0172de62"
+    },
+    "run/candidate_plan.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/candidate_plan.json",
+      "sha256": "f26dc8a9c4a0c6d4aed7d9767477e142e57dadb69db39a437bb05b9bed701688"
+    },
+    "run/solve/dtn_port_diffraction_orders_3d.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json",
+      "sha256": "cd035508492b0f65798afc669db4e9f93516608d965612f6650ab327d83d8ed3"
+    },
+    "run/solve/dtn_port_power_metrics_3d.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/solve/dtn_port_power_metrics_3d.json",
+      "sha256": "df7fba16cd2addf8955252f03fb0f0ffde1b7c33bf1cf066349a82a9bcb78c81"
+    },
+    "run/solve/dtn_auxiliary_amplitudes_3d.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/solve/dtn_auxiliary_amplitudes_3d.json",
+      "sha256": "935b778c5b501f80122f99c1dc3be31cc314b8be9500430a09acedb438726084"
+    },
+    "run/solve/volume_absorption.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/run/solve/volume_absorption.json",
+      "sha256": "63fad5942ada7021ce18c4394ec557dc2133c4e19136da2741fb2bcfbe2657cb"
+    },
+    "snapshots/launch_manifest.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/snapshots/launch_manifest.json",
+      "sha256": "7a83ac558bce05f336c91eed0cefde7791f38641707aa5639bbe38f6c985911e"
+    },
+    "snapshots/launch.sh": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/snapshots/launch.sh",
+      "sha256": "15e7158e75ef98d70403bdddc1a4c4d309d8bcde417aeec80ac40ace1e5ec3ef"
+    },
+    "watchdog/summary.json": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/watchdog/summary.json",
+      "sha256": "357f7d5d55d023613afa49c01dea4c6b69b82b9129d6e819b209808d4c8bd6ad"
+    },
+    "launcher_exit_code.txt": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/launcher_exit_code.txt",
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    "watchdog_exit_code.txt": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/watchdog_exit_code.txt",
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    "source_head.txt": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/source_head.txt",
+      "sha256": "db3e2d35a938475c74d1532b45670206204e1ffe840557dc61a13b1c70afa54e"
+    }
+  },
+  "P5_source_head": "e1ca85df5e181daec7f0e4715e6d43038a1683a2",
+  "P5_status": "COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE",
+  "P5_comparison": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_comparison.json",
+    "sha256": "26c836ba9abab4ec2636c7c3467381a25b087e7b9c6e85cd655508589abe8097"
+  },
+  "P5_actual_FE": {
+    "Delta_FE": 6268,
+    "R9": 110472,
+    "R9_H8": 116740
+  },
+  "P5_q8": {
+    "Delta_FE": 6268,
+    "Delta_G": -5.516738489474555e-06,
+    "Delta_G_per_added_FE_dof": -8.801433454809436e-10,
+    "Delta_J": 0.09051462124265441,
+    "Delta_J_per_added_FE_dof": 1.4440750038713213e-05,
+    "classification": "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE",
+    "legacy_double_gate_pass": false,
+    "negative_or_tradeoff_condition_pass": false,
+    "positive_condition_pass": false,
+    "selection_transition_written": false
+  },
+  "P5_q10": {
+    "Delta_FE": 6268,
+    "Delta_G": -5.516738489476032e-06,
+    "Delta_G_per_added_FE_dof": -8.801433454811793e-10,
+    "Delta_J": 0.09051462124265441,
+    "Delta_J_per_added_FE_dof": 1.4440750038713213e-05,
+    "classification": "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE",
+    "legacy_double_gate_pass": false,
+    "negative_or_tradeoff_condition_pass": false,
+    "positive_condition_pass": false,
+    "selection_transition_written": false
+  },
+  "sampling_sensitivity": "q8_q10_diagnostic_classification_agrees",
+  "original_FAILED_not_rewritten": true,
+  "new_formal_PDE": 0,
+  "official_result": false,
+  "passed": false,
+  "selection_transition_written": false,
+  "continuation_all_false": true,
+  "scientific_scope": "fixed seed8 action and fixed Y6_1 discrete reference; improvement below frozen significance threshold; not overall accuracy/continuum convergence",
+  "P5_summary": {
+    "workflow_deadline_seconds": 1740.0,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 8589934592,
+    "rss_warning_bytes": 7301444403,
+    "minimum_available_bytes": null,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "native_capacity_profile_identity": "task43_hp_adaptivity_resource_v1",
+    "native_capacity_profile_facts_sha256": "c9ef6d173968fd1c78d86eb66b78dd9720bde901f866f58281a4668f83c4b2e6",
+    "native_capacity_resource_facts": {
+      "resource_stop_policy": "legacy",
+      "absolute_cap_bytes": 206158430208,
+      "planning_cap_bytes": 206158430208,
+      "reserve_min_bytes": 68719476736,
+      "reserve_fraction": 0.15,
+      "effective_reserve_policy": "max(64GiB, 15% of effective total memory)",
+      "launch_cap_policy": "min(192GiB, 80% of effective total, effective available minus effective reserve)",
+      "planning_cap_policy": "min(192GiB, 75% of effective total, launch cap)",
+      "memavailable_runtime_policy": "stop_below_effective_reserve",
+      "rss_runtime_policy": "stop_at_launch_cap",
+      "require_zero_swap": true,
+      "swap_policy": "stop_on_nonzero_task_tree_VmSwap",
+      "global_swap_delta_policy": "observe_only",
+      "stop_on_global_swap": false,
+      "pss_sampling_policy": "disabled_by_profile",
+      "concurrent_neighbor_authorized": false,
+      "research_scope": "Task43 only; no Task39/40/41 profile alias"
+    },
+    "launch_memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 2070084145152,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 2070084145152,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "sampled_process_tree_pss_peak_bytes": null,
+    "cache_metadata_stable": true,
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      3346456,
+      3346467,
+      3346468
+    ],
+    "sampled_process_tree_rss_peak_bytes": 1621196800,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 4250695,
+        "pswpout_pages": 7183007
+      },
+      "end": {
+        "pswpin_pages": 4250695,
+        "pswpout_pages": 7183007
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 2070084145152,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 2070084145152,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "samples": 1741,
+    "elapsed_seconds": 1134.8697960400023,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": "development_worktree; not formal PDE provenance"
+  },
+  "resources_sample_count": 1741,
+  "sampled_cpu_seconds_by_pid": {
+    "3346455": {
+      "comm": "python",
+      "last_sampled_cpu_seconds": 350.58,
+      "start_ticks": 300205104
+    },
+    "3346456": {
+      "comm": "python",
+      "last_sampled_cpu_seconds": 779.71,
+      "start_ticks": 300205158
+    },
+    "3346467": {
+      "comm": "strace",
+      "last_sampled_cpu_seconds": 1.47,
+      "start_ticks": 300205170
+    },
+    "3346468": {
+      "comm": "orted",
+      "last_sampled_cpu_seconds": 0.3,
+      "start_ticks": 300205228
+    }
+  },
+  "root_raw_data_recheck": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/P5_data_stdlib_recheck.json",
+    "sha256": "cba956950eb75f325ba2d2e5fe28446526f86e999c0c51df4d522786aa9ffc47"
+  },
+  "root_observations": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/union_comparison_attempt1_root_terminal_observations.json",
+    "sha256": "4ae4a2779fb22731e9e12ada92f0376ae7d3a47b14eea92783bb4964b0e23424"
+  },
+  "source_count": 51,
+  "input_count": 76,
+  "trace_summary": {
+    "files": 7,
+    "lines": 1506,
+    "syscalls": 62,
+    "setters": 3,
+    "setter_classification": "all three successful CPU1 SCOTCH calls, lines842/882/922; no failed, unfinished, unknown or nonCPU1 setter",
+    "signals": 0,
+    "unique_stack_frames": 104,
+    "new_stack_frames_compared_with_P4_and_h_validation_already_read": 0,
+    "all_final_syscall_lines_and_exit_tails_read": true
+  },
+  "empty_cmdline_classification": "row1737 known worker/tracer/orted identities are Z, zero RSS/swap; all final host PID/start_ticks absent; not an unexplained live process",
+  "cleanup": [
+    {
+      "pid": 3346455,
+      "start_ticks": 300205104,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3346456,
+      "start_ticks": 300205158,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3346467,
+      "start_ticks": 300205170,
+      "same_process_still_present": false,
+      "proc_stat": null
+    },
+    {
+      "pid": 3346468,
+      "start_ticks": 300205228,
+      "same_process_still_present": false,
+      "proc_stat": null
+    }
+  ],
+  "limits": {
+    "work_seconds": 1740,
+    "whole_seconds": 1800,
+    "rss_bytes": 8589934592,
+    "task_swap_bytes": 0
+  },
+  "unmeasured": [
+    "continuous RSS/PSS high-water",
+    "shared JIT/global cache audit",
+    "independent rerun of MPI/mode physics",
+    "new background sampler; scattered reference norms use worker scalar evidence"
+  ],
+  "root_closeout_static_seconds": 5.471648800186813
+}

@@ -1,0 +1,55 @@
+{
+  "schema": "task43.v15.local-mechanical-notes.v1",
+  "dynamic_test_failures_so_far": 0,
+  "notes": [
+    {
+      "kind": "read_only_monitor_path_error",
+      "command": "tail -10 <focused>/watchdog/process.log; cat <focused>/watchdog/workflow_phase.json",
+      "exit_code": 1,
+      "cause": "process.log is not the existing watchdog log name; phase file also had not appeared yet during launch snapshots",
+      "recovery": "enumerated existing files; read worker.log after watchdog started; no driver repeat",
+      "timing": "not_measured; original command output in tool history, not saved as separate raw log"
+    },
+    {
+      "kind": "read_only_search_no_match",
+      "command": "rg exit-7 literal patterns ... && cat runtime_identity.json",
+      "exit_code": 1,
+      "cause": "patterns missed dynamically constructed SystemExit(exit_code); conditional cat was skipped",
+      "recovery": "read actual traced_child helper and controlled_fault_exit.json; exit7 bound to intentional fixture child PID3230408",
+      "timing": "not_measured"
+    },
+    {
+      "kind": "read_only_wrong_sidecar_name",
+      "command": "read A1 run/primary_state.json",
+      "exit_code": 1,
+      "cause": "primary packet metadata is embedded in NPZ and partial terminal; there is no primary_state.json sidecar",
+      "recovery": "enumerated existing files, read partial terminal and NPZ embedded JSON directly; raw hash and arithmetic checks completed",
+      "timing": "not_measured",
+      "no_driver_repeat": true
+    },
+    {
+      "kind": "read_only_wrong_ledger_module_paths",
+      "commands": [
+        "rg class/constructor benchmarks/workflow_ledger.py",
+        "rg class/constructor src/io/workflow_ledger.py"
+      ],
+      "exit_codes": [
+        2,
+        2
+      ],
+      "cause": "guessed module paths were absent",
+      "recovery": "read h100 imported WorkflowLedger source src/runners/physical_intermediate.py; no dynamic code executed",
+      "timing": "not_measured"
+    }
+  ],
+  "agent_static_checks": {
+    "AST_four_files": "exit0 reported by executor",
+    "Ruff_F821_F822_F823": "exit0 reported by executor",
+    "diff_check": "exit0 also independently observed by root",
+    "raw_logs": "not_saved",
+    "timing": "not_measured"
+  },
+  "scope": "notes preserve mechanical read failures; no quota refund or reclassification of any dynamic launch",
+  "formal_failures_so_far": 1,
+  "formal_failure": "A1_q3 live tuple/list range mismatch; original terminal retained"
+}

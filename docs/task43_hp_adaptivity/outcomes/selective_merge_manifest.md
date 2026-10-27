@@ -1,6 +1,21 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V14 当前状态：P2R一次已执行；实际FE取得，字段门失败
+## V15 当前状态：P5诊断完成但不获接受，失败原件保留
+
+| 依赖组 | V15 文件/证据与验证 | 建议合入顺序与边界 |
+|---|---|---|
+| research-only | benchmarks/task43_hp_adaptivity/round1_candidates.py、h100_anchor.py 与 compare_round1_candidate.py 的V15固定P2来源绑定、P4 ndarray summary reference writer、saved-primary P5 opt-in adapter；src/test/test_task43_v11_scientific_restart.py 现有入口fixture。P2空间/绑定已实际运行；A1和P4旧正式状态仍FAILED；P5为COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE，q8/q10均NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE | 不进入生产默认或通用数值核心。先按P5 root closeout独立审阅source/输入/q数值/资源；任何进一步使用都需单独授权 |
+| compact evidence/docs | response_v15、机器结果JSON、P2 joined、A1 saved-primary joined gate、A1/P4失败closeout、测试XML/root closeout及summary/导航更新 | 先归档失败原件与root终态，再选择性合入必要文档；禁止把原FAILED端点覆盖成PASS |
+| production numerical/core | V15无共享src数值内核、方程/离散/约束、容差或材料模型修改 | 无fresh numerical-core qualification，本组无V15合并项 |
+| reusable runner/watchdog | 未改通用watchdog、资源采样、缓存或ABI策略 | V15执行证据不构成通用runner变更 |
+| checker/benchmark | 未将V15恢复逻辑提升为通用checker；定向测试仅验证固定研究路径 | 不据saved-primary fixture授予benchmark资格 |
+| do-not-merge | 原A1_q_attempt3 FAILED终态；原R9_H8_attempt1 FAILED终态；所有ignored raw artifacts及未资格化研究分支 | 不改写历史。P5诊断不改变accepted9/R9；accuracy NOT_PASSED、formal7/8与末槽封存不变；无READY/production/merge approval |
+
+费用分账：本轮8次support whole累计2,240.4899401497096 s、formal whole 5,210.411748223938 s；V12/V14 recovery历史2,215.2188096446916 s、V11 support 853.8004706790671 s另列。P5比较/watchdog原件位于`benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/`；root joined closeout位于`docs/task43_hp_adaptivity/outcomes/records/v15_bugfix_sources/P5/P5_joined_root_closeout.json`，SHA256为`5f2312d3bdf52a410a777e8e119ec8dbf6af992adb8bd575e12e0579e381165d`。后续动作及配额须由最新review明确；本manifest不授予新seed、计算、重试或合并。
+
+详见[Response V15](../response_v15.md)与[V15机器结果](records/v15_bugfix_and_scientific_results_v1.json)。
+
+## V14 历史状态：P2R一次已执行；实际FE取得，字段门失败
 
 用户授权原P2R工作90分钟/含清理93分钟后，实际执行一次，whole **1596.6148925269954 s**；树RSS采样峰 **2210361344 B**、task swap0、CPU1/MPI1/单线程及清理符合记录。实际seed8及必要材料闭包得到194叶、**FE 116740，较R9增加6268**，满足110472与237600之间的数值区间；但研究入口误读periodic/floquet字段后抛错，worker/watchdog/launcher退出1/2/2，P2整体失败。已作键名和现有fixture的最小静态修复，AST通过、修复后pytest未运行。旧S1 12/12仅对应旧字节与覆盖范围。
 

@@ -1,6 +1,33 @@
 # Task43 结果：部分完成，受控负结果
 
-## V14 当前状态：P2R一次已执行；实际FE取得，字段门失败
+## V15 当前状态：P5诊断完成但不获接受；A1/P4 FAILED 保留
+
+本轮把少量大网格单元切成小单元（局部 h 加密），只测试预先固定的 seed8，并保留相邻面需要的闭包。FE 是约束后独立未知量数；J 把各输出与固定 Y6_1 场的差除以各自容差，取其中最大值，因此 J>1 表示至少一项尚超容差。G（文中 η）衡量全域电场及其旋度的加权相对差，越小越接近这个离散参考，不代表已知连续真误差。ΔJ、ΔG均为R9减h；每新增FE收益再除以6,268。primary 指正常修正之后、额外诊断修正之前的固定场，本轮normal一次、extra零。A_volume表示体内吸收占入射功率的比例。
+
+
+V15 修复普通研究入口接线缺陷。P2_BUGFIX 固定绑定真实授权、旧失败原件与 joined 产品，实际闭包为194叶、FE 116,740（较R9 +6,268），空间审计 root-verified。P3原A1正式运行因只读视图将范围转为tuple、而保存JSON为list导致raw-scope表示错误而失败；保存 primary 的独立 raw 重算过阈值，并在独立、非official的 saved-primary continuation 中完成 q8/q10 与 Av/能量闭合门，但旧 A1 FAILED terminal 不改写。P4 R9_H8 实际求解的 raw 数值门通过，末尾 JSON summary 序列化 ndarray 失败，P4仍FAILED。新 P5 opt-in adapter 使用原FAILED P4 primary完成q8/q10公共积分诊断；状态为COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE，不改变P4 endpoint资格。
+
+| 对象 | 当前状态/实测 | 科学与文件身份边界 |
+|---|---|---|
+| P2_BUGFIX | 180根→194叶；p5/p6=35/159；FE=116,740；trace/interior=36,790/79,950；较R9增加6,268；whole=959.6084092017263 s | measured空间审计；不是PDE装配或新解；joined terminal见 records/v15_bugfix_sources/P2/ |
+| A1_q_attempt3 | FAILED_RESEARCH_SCOPE_CONTAINER_MISMATCH；formal whole=3036.0769646498375 s；raw A6=8.162860542115928e-9≤1e-8 | 原正式终态与primary字节不变；原入口q8/q10/Av未完成 |
+| A1 saved-primary continuation | 44.807101065758616 s；RSS采样树峰739,282,944 B、task swap 0；A_volume=.6915150591709378；闭合4.103828388224429e-12≤1e-5 | root joined；非official旧场后处理，不冒充正式A1通过 |
+| R9_H8_attempt1 | R/T/Av=.2513585633216903 / .057125759200644305 / .691515677476035；rows37402，NNZused/allocated=30072292/36616200；raw A6=7.77267194814766e-9≤1e-8；full Gram=5.203523992032973e-13≤1e-8；condensed=5.323075566556481e-13≤1e-9；R/T/Av保存 | whole=2174.3347835741006 s；因summary ndarray JSON编码失败最终FAILED；terminal不改写 |
+| P5 saved-primary union | COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE；q8/q10均NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE | 原P4 terminal仍FAILED；official_result=false、passed=false、无selection transition |
+| P5结果与阈值 | J_R9=4.065061945224269，J_h=3.9745473239816143，ΔJ=0.09051462124265441<εJ=0.12716416232413652；q8/q10 η分别为3.995683423458671e-5→4.547357272406127e-5、3.9956834234581814e-5→4.5473572724057846e-5 | 两档η增幅约5.51673849e-6<εG=9.088158796603444e-6；ΔJ不足以触发positive条件 |
+| 每新增FE收益 | ΔJ/6268=1.4440750038713213e-5；q10 ΔG/6268=−8.801433454811793e-10 | G未改善，J改善未越过冻结噪声尺度；不接受新状态 |
+| P5精度/资源 | h的R00_s差=3.9745473239816143e-6>1e-6，J_h>1；whole=1,134.8697960400023 s，RSS采样峰=1,621,196,800 B，swap=0，退出0/0/0 | accuracy仍NOT_PASSED；RSS为采样同时进程树峰，后代已清理 |
+| P5采样/参考 | 公共域350,000 nm³、612模态；q8=565,248点、q10=1,104,000点；R9/H FE=110,472/116,740（+6,268） | Y6_1参考为576格/FE=380,160；6×10×6控制FE=237,600，口径分开 |
+| formal账户 | V15新增2次，累计7/8；sealed历史槽仍封存 | P5不增加PDE dispatch；不得据P5诊断改变accepted9 |
+| 能力裁决 | space/selection PARTIAL；accuracy NOT_PASSED；equal-accuracy total cost NOT_ESTABLISHED；iteration NOT_RUN/NOT_QUALIFIED | accepted9/R9仍为末态，R10仍拒绝；无生产/merge资格 |
+
+定向测试记录：A1 scope首次验证17.657307378947735 s，2 passed/1 failed/12 not run；修正phase fixture后新root 14/14通过，22.31426020199433 s。P2 resolver/joined-binding focused 10/10 passed，29.47382813040167 s。P4/P5 saved-primary验证首轮13节点10 passed/1 failed/2 not run，whole 22.533459630794823 s、RSS采样峰276,164,608 B；失败原因是前置快照漏binding自身而后置快照包含。主控承认预审漏掉该不对称；worker已退出、root读取完成前的source复核仅compare与初始不同，其他源项和所有输入未变，非运行中漂移。修复后4个新节点（真实main、opt-in两参数、joined拒绝）4/4 passed，pytest 6.59 s、whole 9.225778500083834 s、RSS采样峰260,907,008 B、退出0/0/0；其余9个同字节/未改函数按历史成功结果复用，共13 unique。Root gate见v15_bugfix_sources/h_validation_recovered/h_saved_primary_validation_root_gate.json。
+
+V15已结束的8次support whole累计2,240.4899401497096 s；2次formal whole小计5,210.411748223938 s。历史V12/V14 recovery 2,215.2188096446916 s及V11 support 853.8004706790671 s另列，不并入本轮单次成本。P5 comparison/watchdog原件位于 `benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/`；root joined closeout SHA256为 `5f2312d3bdf52a410a777e8e119ec8dbf6af992adb8bd575e12e0579e381165d`。
+
+详见[Response V15](../response_v15.md)与[V15机器结果](records/v15_bugfix_and_scientific_results_v1.json)。
+
+## V14 历史状态：P2R一次已执行；实际FE取得，字段门失败
 
 用户授权原P2R工作90分钟/含清理93分钟后，实际执行一次，whole **1596.6148925269954 s**；树RSS采样峰 **2210361344 B**、task swap0、CPU1/MPI1/单线程及清理符合记录。实际seed8及必要材料闭包得到194叶、**FE 116740，较R9增加6268**，满足110472与237600之间的数值区间；但研究入口误读periodic/floquet字段后抛错，worker/watchdog/launcher退出1/2/2，P2整体失败。已作键名和现有fixture的最小静态修复，AST通过、修复后pytest未运行。旧S1 12/12仅对应旧字节与覆盖范围。
 

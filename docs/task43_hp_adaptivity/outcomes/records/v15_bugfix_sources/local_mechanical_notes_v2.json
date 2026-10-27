@@ -1,0 +1,42 @@
+{
+  "schema": "task43.v15.local-mechanical-notes-closeout.v1",
+  "prior_notes": {
+    "path": "benchmarks/artifacts/task43/v11_science/recovery_v15/preparation/local_mechanical_notes.json",
+    "sha256": "e304c59a0179059d589cbb9963663bcbc4ee4aa3a488c1fc6d234227e3b59319"
+  },
+  "additional_notes": [
+    {
+      "kind": "read_only_no_match",
+      "command": "ls run/*terminal* during unfinished P4",
+      "exit_code": 2,
+      "cause": "terminal not yet emitted; monitored existing worker.log/resources instead",
+      "driver_repeat": false,
+      "timing": "not_measured"
+    },
+    {
+      "kind": "overbroad_read_output",
+      "command": "print P4 primary packet metadata excluding arrays",
+      "cause": "nested metadata was much larger than expected; tool output truncated",
+      "recovery": "read only explicit field paths/keys; original raw numerical recheck was already separately saved",
+      "timing": "not_measured"
+    },
+    {
+      "kind": "prelaunch_review_corrections",
+      "items": [
+        "summary raw-vector aliases require structural copy, not in-place replacement",
+        "ndarray-containing dict comparison is not valid fixture equality",
+        "P4 controls modal count uses modal_selection/count",
+        "ordinary P5 snapshot monkeypatch signature must remain unchanged",
+        "historical shared numerical sources remain equal; only research h100/compare/test differences allowed"
+      ],
+      "status": "identified before new h support/P5 launch",
+      "timing": "not_measured"
+    }
+  ],
+  "dynamic_failures_are_in_separate_immutable_records": [
+    "A1_primary_scope_validation_attempt1",
+    "A1_q_attempt3",
+    "R9_H8_attempt1"
+  ],
+  "no_refunds": true
+}
