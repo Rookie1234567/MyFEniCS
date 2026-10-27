@@ -95,6 +95,14 @@ def _complete_v16_fixture(
     )
     y9_record = _write_array(arrays_dir / "v9_y.npy", y9)
     g9_record = _write_array(arrays_dir / "v9_g.npy", g9)
+    for name, record, values in (
+        ("task41_p0_b0_v9_compact_candidate_full_p6", y9_record, y9),
+        ("task41_p0_b0_v9_compact_candidate_reduced_rhs_p6", g9_record, g9),
+    ):
+        record["name"] = name
+        record["array_sha256"] = hashlib.sha256(
+            memoryview(np.ascontiguousarray(values, dtype=np.complex128)).cast("B")
+        ).hexdigest()
     y15_records = [_write_array(arrays_dir / f"v15_y{column}.npy", y15[:, column]) for column in range(2)]
     g15_records = [_write_array(arrays_dir / f"v15_g{column}.npy", g15[:, column]) for column in range(2)]
     for column, record in enumerate(y15_records):
@@ -131,6 +139,20 @@ def _complete_v16_fixture(
         }
 
     v15_columns = [v15_column(column) for column in range(2)]
+    actual_v9_audit_path = (
+        Path(__file__).resolve().parents[2]
+        / "docs/task41extra_phi90_p50x50_g17x20/outcomes/v15_closeout/run/"
+        "task41_p0_b0_v9_compact_volume_audit.json"
+    )
+    actual_v9_audit = json.loads(actual_v9_audit_path.read_text())
+    actual_same_s_binding = actual_v9_audit["candidate_full_action_gate"][
+        "same_s_action_reference_binding"
+    ]
+    same_s_artifact = {
+        **actual_same_s_binding["artifact"],
+        **y9_record,
+        "path": str((results / y9_record["path"]).resolve()),
+    }
     v15_audit = {
         "schema": "task41.p0.b0.v9.compact_volume_identity.v1",
         "status": "GATE_FAILED",
@@ -140,8 +162,10 @@ def _complete_v16_fixture(
             "status": "GATE_FAILED",
             "column_artifacts": v15_columns,
             "same_s_action_reference_binding": {
-                "path": v9_binding["path"],
-                "sha256": v9_binding["sha256"],
+                "artifact": same_s_artifact,
+                "report_path": str(report_paths["v9_audit"].resolve()),
+                "report_sha256": v9_binding["sha256"],
+                "source_reassigned": False,
             },
         },
         "persisted_artifacts": [*y15_records, *g15_records],
@@ -1395,6 +1419,7 @@ def test_v16_manifest_rejects_bad_hash_column_swap_and_producer_metadata_mismatc
             manifest_path, _refresh_manifest_sha(manifest_path), repo_root=tmp_path / "second",
             expected_rows=4, expected_trace_rows=3,
         )
+
 
 
 def test_v16_metadata_pending_analyzer_admits_resources_before_mesh_scan(

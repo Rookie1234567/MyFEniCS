@@ -4098,12 +4098,17 @@ def load_task41_p0_b0_v16_saved_vector_manifest(
         reports[name], report_paths[name], report_hashes[name] = bound
 
     def require_report_ref(
-        reference: Mapping[str, Any], report_name: str, label: str
+        reference: Mapping[str, Any], report_name: str, label: str,
+        *, path_field: str = "path", digest_field: str = "sha256",
     ) -> None:
-        if not isinstance(reference, Mapping) or not isinstance(reference.get("path"), str):
+        if (
+            not isinstance(reference, Mapping)
+            or not isinstance(reference.get(path_field), str)
+            or not isinstance(reference.get(digest_field), str)
+        ):
             raise ValueError(f"V16 {label} does not bind producer report {report_name}")
         try:
-            referenced_path = Path(reference["path"]).resolve(strict=True)
+            referenced_path = Path(reference[path_field]).resolve(strict=True)
         except OSError:
             referenced_path = None
         expected_path = report_paths.get(report_name)
@@ -4111,14 +4116,14 @@ def load_task41_p0_b0_v16_saved_vector_manifest(
             referenced_path == expected_path
             if report_name == "v15_checker"
             else (
-                isinstance(reference.get("path"), str)
+                isinstance(reference.get(path_field), str)
                 and _task41_p0_v16_results_path(
-                    reference["path"], results_root, f"{label} path"
+                    reference[path_field], results_root, f"{label} path"
                 ) == expected_path
             )
         )
         if (
-            reference.get("sha256") != report_hashes[report_name]
+            reference.get(digest_field) != report_hashes[report_name]
             or not path_matches
         ):
             raise ValueError(f"V16 {label} does not bind producer report {report_name}")
@@ -4164,7 +4169,32 @@ def load_task41_p0_b0_v16_saved_vector_manifest(
     )
     if not isinstance(v15_reference, Mapping):
         raise ValueError("V16 V15 audit lacks the saved V9 same-S reference")
-    require_report_ref(v15_reference, "v9_audit", "V15 same-S reference report")
+    require_report_ref(
+        v15_reference, "v9_audit", "V15 same-S reference report",
+        path_field="report_path", digest_field="report_sha256",
+    )
+    same_s_artifact = v15_reference.get("artifact")
+    v9_same_s_artifact = v9_full.get("full_action_artifact")
+    if (
+        v15_reference.get("source_reassigned") is not False
+        or not isinstance(same_s_artifact, Mapping)
+        or not isinstance(v9_same_s_artifact, Mapping)
+        or same_s_artifact.get("shape") != [expected_rows, 2]
+        or v9_same_s_artifact.get("shape") != [expected_rows, 2]
+        or any(
+            same_s_artifact.get(field) != v9_same_s_artifact.get(field)
+            for field in ("array_sha256", "bytes", "dtype", "name", "sha256", "shape")
+        )
+    ):
+        raise ValueError("V16 V15 same-S artifact does not bind the V9 saved y matrix")
+    same_s_path = _task41_p0_v16_results_path(
+        str(same_s_artifact.get("path", "")), results_root, "V15 same-S artifact"
+    )
+    v9_y_path = _task41_p0_v16_results_path(
+        str(v9_same_s_artifact.get("path", "")), results_root, "V9 saved y artifact"
+    )
+    if same_s_path != v9_y_path:
+        raise ValueError("V16 V15 same-S artifact path differs from the V9 saved y matrix")
 
     v15_manifest = reports["v15_run_manifest"]
     v15_summary = reports["v15_candidate_summary"]

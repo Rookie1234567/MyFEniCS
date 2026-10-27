@@ -87,3 +87,11 @@ V14 reader 现在可在收到按 attempt 绑定的 replay inputs 时调用 `_tas
 - systemd Start/Exit monotonic 为 3018503896204/3018512952834 微秒，服务 wall 为 9.056630 秒；CPU 11.420015 秒。退出码1，MainPID=0、ControlGroup为空；没有新科学数据或metadata构建。
 - 定向实际分支回归覆盖正确根、重叠根、错误donor根，7项通过（0.70秒）；不重复全量测试。
 - 下一 attempt 继续现有 V16 window，T0/deadline/hash 不变；两次失败与费用保留。
+
+### V16 attempt03：旧报告 schema 的只读接线修复
+
+- source `b3ad9ee67f73d7017b7d90e29bdaea4192c59a3e`，服务 `myfenics-case-20261027T094007-3404085.service`。已进入监督 worker，在任何metadata/向量统计前因错误读取旧引用字段退出。
+- 真实 V15 same-S 引用使用 `report_path/report_sha256`，内嵌 `artifact`另绑定V9 y矩阵；读取器原来错误要求顶层`path/sha256`。现在两类身份分开严格核验，旧报告与NPY不改。
+- service父段11.5010603713秒，watchdog child4.6685284236秒，systemd wall14.682879秒；这些是嵌套口径，不相加。tree RSS峰298184704 B，cgroup峰251199488 B，任务swap0，后代清空。
+- 真实schema相关fixture与既有V16入口文件共22项通过（1.62秒），py_compile/diff-check通过。数学门不变，V15数值FAIL保持。
+- attempt04沿原window继续，先完整验证实际producer身份链到metadata前，不重置T0。
