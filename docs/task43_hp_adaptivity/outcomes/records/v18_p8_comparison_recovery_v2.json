@@ -1,0 +1,272 @@
+{
+  "schema": "task43.v18.p8-comparison-recovery-index.v1",
+  "classification": "AUTHORIZED_C_ONLY_RECOVERY",
+  "execution_manifest": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_comparison_recovery_attempt2.json",
+    "sha256": "76330b6f03e060a3256f6c0db9a3b864e8c690a06708e940e44e03451095e520"
+  },
+  "authorization": {
+    "scope": "C_only_same_model_comparison_recovery",
+    "phase": "C",
+    "human_instruction": "没有到数值gate不允许停止",
+    "basis": "Continue the same P8 scientific chain after repairing the ordinary persisted H8 label alias and C_RECOVERY manifest field wiring; this does not retroactively expand V16 review authority.",
+    "authorized_work": [
+      "four targeted selectors (five expanded cases) in the supervised C worker",
+      "one paired q8/q10 comparison using the existing qualified F and S endpoints"
+    ],
+    "new_formal_endpoint_allowed": false,
+    "E_allowed": false,
+    "numerical_model_changed": false,
+    "numerical_and_resource_gates_unchanged": true,
+    "historical_failures_preserved": true,
+    "q8_policy": "Reuse the exact prior hash-bound P8 q8 sample; do not resample or duplicate the NPZ.",
+    "q10_policy": "Sample once under the unchanged comparison workflow.",
+    "prelaunch_attempt1": {
+      "classification": "INCOMPLETE",
+      "watchdog_started": false,
+      "whole_elapsed_seconds": 3.589317171,
+      "failure": "C-only binding omitted top-level targeted_fixture consumed by launch snapshot; no reader tests, resources, trace, or comparison started."
+    },
+    "current_attempt": "attempt2; the C workflow itself retains the prescribed 1740/1800-second limits."
+  },
+  "contract_sha256": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+  "historical_head": "196571795199dc0f48fd8ad3daaac258ab3390cb",
+  "phases": {
+    "C": {
+      "root": "support/v18_paired_comparison_recovery_attempt2",
+      "work_seconds": 1740,
+      "whole_seconds": 1800,
+      "rss_cap_bytes": 8589934592
+    }
+  },
+  "source_binding": {
+    "historical_source_sha256": {
+      "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+      "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+      "benchmarks/task43_hp_adaptivity/candidate_records.py": "7f98eacb0aee5e8f3cc98c61620613d02e66c909844c2ab8e171008e1cee73aa",
+      "benchmarks/task43_hp_adaptivity/compare_initial_to_references.py": "c39d5577719ddf4a5bc22acba47d49028717a171fcbcbf2cb667341067d78a8e",
+      "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "b52c7f0953be153b1cc33737d131b5cee7c61b2623586e74988f148f8c531274",
+      "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py": "4c16377b491a83424f8b21cb54c9e60f64dcd5bf6f6895f45fee6f11a083ce0c",
+      "benchmarks/task43_hp_adaptivity/h100_anchor.py": "ffb77328743a37456d4db9a636dcdf07ffc53f40c5c757ad3565deefda4487ec",
+      "benchmarks/task43_hp_adaptivity/profile.py": "ddd315bcbe897be4856c42dc68ecbf7897dcf8fa836ef91985863bb6ae8afc2e",
+      "benchmarks/task43_hp_adaptivity/reference_restore.py": "93a7170d92cacae9c9fd491637a22c676fb559d3f5a306812105888a6c0b4505",
+      "benchmarks/task43_hp_adaptivity/round1_candidates.py": "af104689eed21f37221c397240fb166acddec34256c312463a98b1d17a0f4146",
+      "benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py": "d1ad0a22a8e60147a0ccf3856a2c847b9ff3b74c34ec4bc04dc76c258a8d8ae9",
+      "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+      "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+      "scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+      "src/adaptivity/exact_sequence_variable_p.py": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+      "src/adaptivity/hcurl_broken_cell_trace.py": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+      "src/adaptivity/hcurl_broken_trace_graph.py": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+      "src/adaptivity/physical_g_error.py": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+      "src/adaptivity/stage4_local_h.py": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+      "src/adaptivity/variable_p_degree_plan.py": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+      "src/adaptivity/variable_p_entity_map.py": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+      "src/adaptivity/variable_p_transfer.py": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+      "src/common/analytic_fields_3d.py": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "src/common/config_3d.py": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+      "src/common/modes_3d.py": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+      "src/constraints/floquet_3d.py": "cfa0953ba1b6fa60b1943be2f0f977413221857290df7ceee0747df811bca309",
+      "src/geometry/mesh_builder_3d.py": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+      "src/geometry/task43_hp_adaptivity_axis_plan.py": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+      "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+      "src/postprocessing/diffraction_3d.py": "42d65299ce1cc8c2762dc1d3972ea04063b155bd8a58d4553c9ac9732213ce66",
+      "src/postprocessing/flat_layer_reference_3d.py": "ed6493bd2f13dccbcd85a8ef2edb6f6b07726ec6c41b82651525b386d44ec04a",
+      "src/postprocessing/physical_field_comparison.py": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+      "src/postprocessing/physical_field_sampling.py": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+      "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+      "src/postprocessing/rta_3d.py": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+      "src/runners/physical_intermediate.py": "f7c1cd79353911079fb17e9780afd588a5afc6d0efeccd81b4aed3b9c3c902a4",
+      "src/solvers/common_3d_case_flow.py": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+      "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "src/solvers/common_3d_forms.py": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+      "src/solvers/common_3d_postprocess.py": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+      "src/solvers/common_3d_solve.py": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+      "src/solvers/common_3d_utils.py": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+      "src/solvers/dtn_port_3d.py": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+      "src/solvers/hcurl_blocked_gram_tensor.py": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+      "src/solvers/hcurl_variable_p_assembly.py": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+      "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "src/solvers/hcurl_variable_p_reduction.py": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+      "src/solvers/independent_active_action.py": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+      "src/solvers/petsc_residual_correction.py": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+      "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb",
+      "src/test/test_task43_v11_scientific_restart.py": "c7ae026e40ac782652b17e87e7399eef541c139ff62900b20caf7ea59e34a236"
+    },
+    "current_source_sha256": {
+      "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+      "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+      "benchmarks/task43_hp_adaptivity/candidate_records.py": "7f98eacb0aee5e8f3cc98c61620613d02e66c909844c2ab8e171008e1cee73aa",
+      "benchmarks/task43_hp_adaptivity/compare_initial_to_references.py": "c39d5577719ddf4a5bc22acba47d49028717a171fcbcbf2cb667341067d78a8e",
+      "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "60c5ccdc41ba4eb2006d11346abd53b2cd826d79b3ae12ac1e762306c2de7fc4",
+      "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py": "4c16377b491a83424f8b21cb54c9e60f64dcd5bf6f6895f45fee6f11a083ce0c",
+      "benchmarks/task43_hp_adaptivity/h100_anchor.py": "1b3302c257711d0e783ddec778ea978dafd398930c9118df8d6ca4a9134ed29f",
+      "benchmarks/task43_hp_adaptivity/profile.py": "ddd315bcbe897be4856c42dc68ecbf7897dcf8fa836ef91985863bb6ae8afc2e",
+      "benchmarks/task43_hp_adaptivity/reference_restore.py": "93a7170d92cacae9c9fd491637a22c676fb559d3f5a306812105888a6c0b4505",
+      "benchmarks/task43_hp_adaptivity/round1_candidates.py": "ba56a17ed6b723733d127028b94bceee577e2c738e701275b0f302254d80a5d2",
+      "benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py": "d1ad0a22a8e60147a0ccf3856a2c847b9ff3b74c34ec4bc04dc76c258a8d8ae9",
+      "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+      "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+      "scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+      "src/adaptivity/exact_sequence_variable_p.py": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+      "src/adaptivity/hcurl_broken_cell_trace.py": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+      "src/adaptivity/hcurl_broken_trace_graph.py": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+      "src/adaptivity/physical_g_error.py": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+      "src/adaptivity/stage4_local_h.py": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+      "src/adaptivity/variable_p_degree_plan.py": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+      "src/adaptivity/variable_p_entity_map.py": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+      "src/adaptivity/variable_p_transfer.py": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+      "src/common/analytic_fields_3d.py": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "src/common/config_3d.py": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+      "src/common/modes_3d.py": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+      "src/constraints/floquet_3d.py": "cfa0953ba1b6fa60b1943be2f0f977413221857290df7ceee0747df811bca309",
+      "src/geometry/mesh_builder_3d.py": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+      "src/geometry/task43_hp_adaptivity_axis_plan.py": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+      "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+      "src/postprocessing/diffraction_3d.py": "42d65299ce1cc8c2762dc1d3972ea04063b155bd8a58d4553c9ac9732213ce66",
+      "src/postprocessing/flat_layer_reference_3d.py": "ed6493bd2f13dccbcd85a8ef2edb6f6b07726ec6c41b82651525b386d44ec04a",
+      "src/postprocessing/physical_field_comparison.py": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+      "src/postprocessing/physical_field_sampling.py": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+      "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+      "src/postprocessing/rta_3d.py": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+      "src/runners/physical_intermediate.py": "f7c1cd79353911079fb17e9780afd588a5afc6d0efeccd81b4aed3b9c3c902a4",
+      "src/solvers/common_3d_case_flow.py": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+      "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "src/solvers/common_3d_forms.py": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+      "src/solvers/common_3d_postprocess.py": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+      "src/solvers/common_3d_solve.py": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+      "src/solvers/common_3d_utils.py": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+      "src/solvers/dtn_port_3d.py": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+      "src/solvers/hcurl_blocked_gram_tensor.py": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+      "src/solvers/hcurl_variable_p_assembly.py": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+      "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "src/solvers/hcurl_variable_p_reduction.py": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+      "src/solvers/independent_active_action.py": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+      "src/solvers/petsc_residual_correction.py": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+      "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb",
+      "src/test/test_task43_v11_scientific_restart.py": "c7ae026e40ac782652b17e87e7399eef541c139ff62900b20caf7ea59e34a236"
+    },
+    "allowed_delta_paths": [
+      "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+      "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+      "benchmarks/task43_hp_adaptivity/round1_candidates.py"
+    ],
+    "launch_script": {
+      "path": "benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh",
+      "sha256": "91cec96026107e6ec63015225642688dfa133771303a603c6a9dbb8e8471bf0c"
+    },
+    "targeted_fixture": {
+      "path": "src/test/test_task43_p8_execution_recovery.py",
+      "sha256": "a2347a91910322444f479373ea2631d01ade43be6fc46449cd63e657430f7de6",
+      "selector": "src/test/test_task43_p8_execution_recovery.py"
+    }
+  },
+  "prior_evidence": {
+    "historical_F_joined": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_p8_endpoint_joined_terminal.json",
+      "sha256": "3af1cffd5f87e4bb6ef41f22464b622d68b2f9c36c5ee7cbbf46527f34eed7bc"
+    },
+    "historical_S_joined": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/v18_p8_space_joined_terminal.json",
+      "sha256": "ffe22c3febe7f0bb8a47d01e58a140d66adacb098285368aa2a864287c21f472"
+    },
+    "previous_C_failure": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_attempt1/comparison/v16_r9_p8_comparison_failure.json",
+      "sha256": "c5bd6d22eb7872a90fd50d297745c771f2bdd80e09ac9ef18bcc3d0366967930"
+    },
+    "previous_C_terminal": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_attempt1/stage_terminal.json",
+      "sha256": "bbd9ddbdd1c2dfa8041fbe9ee78243bc37a57df8810ad3a321577dcabcfddf39"
+    },
+    "previous_C_root_observation": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_C_root_terminal_observation.json",
+      "sha256": "254518cc9d4ceef26d6ebf7265c8643e8b236e771b41c33e08d01f3edc739a29"
+    },
+    "previous_C_launch_manifest": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_attempt1/snapshots/launch_manifest.json",
+      "sha256": "69fe3d67431e1729d2b2c5a3d18f414eb4b1b1ff75967a474b3410e5df5596a4"
+    },
+    "preserved_q8_root_observation": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_attempt1/v18_root_preserved_q8_observation.json",
+      "sha256": "7a863486d6e132dbda1ca26023dda0d7f79dd400ab2cfd023b944c5f31c08829"
+    },
+    "preserved_q8_sample": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_attempt1/comparison/v16_r9_p8_q8_samples.npz",
+      "sha256": "5475cffe826f45217cebd8df35239f4ba8a4a5813657cf2ca7696ce871af792f"
+    },
+    "previous_C_recovery_attempt1_manifest": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_comparison_recovery_attempt1.json",
+      "sha256": "4d188cf4c1a978411b4b9093d07c8c491ace62fa9b3b2fef155fda141d17cfb7"
+    },
+    "previous_C_recovery_attempt1_summary": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v18_p8_comparison_recovery_v1.json",
+      "sha256": "4ab6c1f5707fed8cbcd309b96a0b8e0bdb9b2affe1129bc40100a447d2e62b53"
+    },
+    "previous_C_recovery_attempt1_terminal": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt1/stage_terminal.json",
+      "sha256": "89517e70fe931501db3836049d216e533a4057664cbe236e28b921d4d03c335c"
+    },
+    "previous_C_recovery_attempt1_launcher_exit": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt1/launcher_exit.json",
+      "sha256": "3e0367807fc3d3e18c7813eefd51b98e522530d953aa7fa1074be0d67bda097a"
+    },
+    "previous_C_recovery_attempt1_supervisor_stdout": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt1/supervisor_stdout.log",
+      "sha256": "d761cdd38832dec7c88411580204f996ca6dfe69cdc74bb28082172b9cb972d1"
+    },
+    "previous_C_recovery_attempt1_source_head": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt1/source_head.txt",
+      "sha256": "981440b32bed92ed6b5d01c854feb4bfae04926f3e7a3c25a921a82ea083a0c2"
+    },
+    "previous_C_recovery_attempt1_source_status": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt1/source_status.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "previous_C_recovery_attempt1_launcher_snapshot": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt1/snapshots/launch.sh",
+      "sha256": "f71a929f712a6c39b8101ba01106a9b3332c9b6fe0c336da96dcdfe9b7597f8d"
+    }
+  },
+  "compatibility_repair": {
+    "saved_candidate": "R9_H8",
+    "only_normalized_historical_alias": "v11_r9_h8",
+    "normalization_scope": "persisted nested modal_metrics.candidate_label only",
+    "all_numeric_metrics_remain_exact": true,
+    "unknown_aliases_rejected": true
+  },
+  "launch_script": {
+    "path": "benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh",
+    "sha256": "91cec96026107e6ec63015225642688dfa133771303a603c6a9dbb8e8471bf0c"
+  },
+  "targeted_fixture": {
+    "path": "src/test/test_task43_p8_execution_recovery.py",
+    "sha256": "a2347a91910322444f479373ea2631d01ade43be6fc46449cd63e657430f7de6",
+    "selector": "src/test/test_task43_p8_execution_recovery.py"
+  },
+  "implementation_files": [
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+    "benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh",
+    "src/test/test_task43_p8_execution_recovery.py"
+  ],
+  "source_diff_base_head": "196571795199dc0f48fd8ad3daaac258ab3390cb",
+  "source_delta_paths": [
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py"
+  ],
+  "prelaunch_static_checks": {
+    "bash_n": "PASS",
+    "python_ast": "PASS for three modified readers, targeted fixture, and embedded C_RECOVERY worker",
+    "git_diff_check": "PASS",
+    "pytest": "NOT_RUN_BEFORE_FREEZE",
+    "formal_PDE": "NOT_RUN_BEFORE_FREEZE"
+  },
+  "prior_attempt1_cost": {
+    "whole_elapsed_seconds": 3.589317171,
+    "watchdog_worker_resources_trace": "not_started",
+    "classification": "INCOMPLETE"
+  },
+  "result": "NOT_RUN"
+}

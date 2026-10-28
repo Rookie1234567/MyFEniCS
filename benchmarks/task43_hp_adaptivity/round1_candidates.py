@@ -100,11 +100,11 @@ _V18_P8_EXECUTION_RECOVERY_SUMMARY_REL = Path(
 )
 _V18_P8_COMPARISON_RECOVERY_REL = Path(
     "benchmarks/artifacts/task43/v16_p8/preparation/"
-    "v18_p8_comparison_recovery_attempt1.json"
+    "v18_p8_comparison_recovery_attempt2.json"
 )
 _V18_P8_COMPARISON_RECOVERY_SUMMARY_REL = Path(
     "docs/task43_hp_adaptivity/outcomes/records/"
-    "v18_p8_comparison_recovery_v1.json"
+    "v18_p8_comparison_recovery_v2.json"
 )
 _V18_P8_STAGE_LAUNCHER_REL = Path(
     "benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh"
@@ -977,7 +977,7 @@ def _v18_p8_comparison_recovery_root(
 ) -> Path:
     phase = record.get("phases", {}).get("C")
     expected = {
-        "root": "support/v18_paired_comparison_recovery_attempt1",
+        "root": "support/v18_paired_comparison_recovery_attempt2",
         "work_seconds": 1740,
         "whole_seconds": 1800,
         "rss_cap_bytes": 8589934592,
@@ -1219,6 +1219,16 @@ def _load_v18_p8_comparison_recovery(
         / "v18_root_preserved_q8_observation.json",
         "preserved_q8_sample": old_c_root
         / "comparison/v16_r9_p8_q8_samples.npz",
+        "previous_C_recovery_attempt1_manifest": prefix
+        / "preparation/v18_p8_comparison_recovery_attempt1.json",
+        "previous_C_recovery_attempt1_summary": ROOT
+        / "docs/task43_hp_adaptivity/outcomes/records/v18_p8_comparison_recovery_v1.json",
+        "previous_C_recovery_attempt1_terminal": prefix
+        / "support/v18_paired_comparison_recovery_attempt1/stage_terminal.json",
+        "previous_C_recovery_attempt1_launcher_exit": prefix
+        / "support/v18_paired_comparison_recovery_attempt1/launcher_exit.json",
+        "previous_C_recovery_attempt1_supervisor_stdout": prefix
+        / "support/v18_paired_comparison_recovery_attempt1/supervisor_stdout.log",
     }
     bound_refs = recovery.get("prior_evidence", {})
     expected_refs = {
@@ -1242,6 +1252,29 @@ def _load_v18_p8_comparison_recovery(
     q8_observation = json.loads(
         Path(expected_refs["preserved_q8_root_observation"]["path"]).read_text()
     )
+    previous_recovery_terminal = json.loads(
+        Path(
+            expected_refs["previous_C_recovery_attempt1_terminal"]["path"]
+        ).read_text()
+    )
+    previous_recovery_launcher_exit = json.loads(
+        Path(
+            expected_refs["previous_C_recovery_attempt1_launcher_exit"]["path"]
+        ).read_text()
+    )
+    previous_recovery_stdout = Path(
+        expected_refs["previous_C_recovery_attempt1_supervisor_stdout"]["path"]
+    ).read_text(encoding="utf-8")
+    previous_recovery_manifest = json.loads(
+        Path(
+            expected_refs["previous_C_recovery_attempt1_manifest"]["path"]
+        ).read_text()
+    )
+    previous_recovery_summary = json.loads(
+        Path(
+            expected_refs["previous_C_recovery_attempt1_summary"]["path"]
+        ).read_text()
+    )
     q8_ref = expected_refs["preserved_q8_sample"]
     if (
         f_joined.get("status") != "F_COMPLETE_ROOT_VERIFIED"
@@ -1259,8 +1292,23 @@ def _load_v18_p8_comparison_recovery(
         or q8_observation.get("scientific_acceptance") is not False
         or q8_ref.get("sha256")
         != "5475cffe826f45217cebd8df35239f4ba8a4a5813657cf2ca7696ce871af792f"
+        or previous_recovery_terminal.get("classification") != "INCOMPLETE"
+        or previous_recovery_terminal.get("watchdog_pid") is not None
+        or previous_recovery_terminal.get("watchdog_summary") is not None
+        or previous_recovery_terminal.get("resource_samples") is not None
+        or previous_recovery_terminal.get("trace_files") != []
+        or previous_recovery_launcher_exit.get("launcher_exit_code") != 1
+        or previous_recovery_launcher_exit.get("watchdog_exit_code") is not None
+        or "KeyError: 'targeted_fixture'" not in previous_recovery_stdout
+        or previous_recovery_manifest.get("schema")
+        != "task43.v18.p8-comparison-recovery.v1"
+        or previous_recovery_summary.get("execution_manifest")
+        != {
+            "path": expected_refs["previous_C_recovery_attempt1_manifest"]["path"],
+            "sha256": expected_refs["previous_C_recovery_attempt1_manifest"]["sha256"],
+        }
     ):
-        raise ValueError("C-only recovery does not bind the preserved failed C/q8 evidence")
+        raise ValueError("C-only recovery does not bind the preserved failed C/q8/bootstrap evidence")
 
     fixture = recovery.get("targeted_fixture", {})
     fixture_path = Path(str(fixture.get("path", "")))
@@ -1283,6 +1331,7 @@ def _load_v18_p8_comparison_recovery(
         or not launcher_file.is_file()
         or _sha256_file(launcher_file) != launcher.get("sha256")
         or summary.get("launch_script") != dict(launcher)
+        or summary.get("targeted_fixture") != dict(fixture)
     ):
         raise ValueError("C-only recovery current fixture or launcher identity changed")
     historical_fixture = record["source_binding"]["targeted_fixture"]
