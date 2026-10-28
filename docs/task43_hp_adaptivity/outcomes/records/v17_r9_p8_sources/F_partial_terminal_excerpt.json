@@ -1,0 +1,257 @@
+{
+  "schema": "task43.v17.F-partial-terminal-excerpt.v1",
+  "partial_terminal": {
+    "path": "benchmarks/artifacts/task43/v16_p8/formal/R9_P8_attempt1/run/task43_v16_p8_partial_terminal.json",
+    "sha256": "d0c53c802f5bfd99d70d02821535f365cb08aae56da2b916b38ac2e89232df36",
+    "size_bytes": 89694
+  },
+  "root_observation": {
+    "path": "benchmarks/artifacts/task43/v16_p8/formal/R9_P8_attempt1/v17_root_F_incomplete_observation.json",
+    "sha256": "f4d410d1c739cd11ae3064de427438a8bdf9a3011351dd4005ab2f313eddab55",
+    "size_bytes": 1763991
+  },
+  "status": "INCOMPLETE",
+  "classification": "measured_or_partial_nonofficial_R9_P8",
+  "passed": false,
+  "official_result": false,
+  "candidate_selected": false,
+  "known_application_error": "RuntimeError: V11 application worker is not the watchdog's direct child",
+  "last_stages": [
+    {
+      "stage": "task43_mesh_build_end",
+      "phase": "mesh_setup",
+      "facts": {
+        "actual_mesh_profile": "candidate_local_h_from_initial180",
+        "axis_cell_counts_xyz": [
+          3,
+          10,
+          6
+        ],
+        "base_geometry_profile": "initial_180",
+        "global_cells": 180,
+        "local_h_allow_no_refinement": true
+      }
+    },
+    {
+      "stage": "task43_solve_and_observe_started",
+      "phase": "task43_solve_and_observe",
+      "facts": {}
+    },
+    {
+      "stage": "task43_solve_and_observe_begin",
+      "phase": "task43_solve_and_observe",
+      "facts": {}
+    },
+    {
+      "stage": "task43_v16_p8_failed",
+      "phase": "task43_solve_and_observe",
+      "facts": {
+        "exception_message": "V11 application worker is not the watchdog's direct child",
+        "exception_type": "RuntimeError",
+        "previous_stage": "task43_solve_and_observe_begin",
+        "terminal_reference": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/R9_P8_attempt1/run/task43_v16_p8_partial_terminal.json",
+          "sha256": "d0c53c802f5bfd99d70d02821535f365cb08aae56da2b916b38ac2e89232df36"
+        }
+      }
+    }
+  ],
+  "progress": [
+    {
+      "time_wall": "2026-10-28 14:21:58",
+      "stage": "process_start",
+      "status": "begin",
+      "elapsed_seconds": 0.0004641772247850895,
+      "dofs": null,
+      "floquet_constraints": null,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:58",
+      "stage": "after_config",
+      "status": "end",
+      "elapsed_seconds": 0.0015818551182746887,
+      "dofs": null,
+      "floquet_constraints": null,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:58",
+      "stage": "case_start",
+      "status": "begin",
+      "elapsed_seconds": 0.003252313006669283,
+      "dofs": null,
+      "floquet_constraints": null,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:58",
+      "stage": "mumps_ooc_runtime_setup",
+      "status": "end",
+      "elapsed_seconds": 0.00403201999142766,
+      "dofs": null,
+      "floquet_constraints": null,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:58",
+      "stage": "mesh_build",
+      "status": "begin",
+      "elapsed_seconds": 0.004803163930773735,
+      "dofs": null,
+      "floquet_constraints": null,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:58",
+      "stage": "mesh_build",
+      "status": "end",
+      "elapsed_seconds": 0.005654870066791773,
+      "dofs": null,
+      "floquet_constraints": null,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:58",
+      "stage": "after_mesh",
+      "status": "end",
+      "elapsed_seconds": 0.006378829013556242,
+      "dofs": null,
+      "floquet_constraints": null,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:58",
+      "stage": "function_space_setup",
+      "status": "begin",
+      "elapsed_seconds": 0.04145224532112479,
+      "dofs": null,
+      "floquet_constraints": null,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:58",
+      "stage": "function_space_setup",
+      "status": "end",
+      "elapsed_seconds": 0.3805689672008157,
+      "dofs": 124530,
+      "floquet_constraints": null,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:58",
+      "stage": "after_function_space",
+      "status": "end",
+      "elapsed_seconds": 0.38154094433411956,
+      "dofs": 124530,
+      "floquet_constraints": null,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:58",
+      "stage": "field_formulation_setup",
+      "status": "begin",
+      "elapsed_seconds": 0.38236222323030233,
+      "dofs": 124530,
+      "floquet_constraints": null,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:58",
+      "stage": "field_formulation_setup",
+      "status": "end",
+      "elapsed_seconds": 0.384526998270303,
+      "dofs": 124530,
+      "floquet_constraints": null,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:58",
+      "stage": "floquet_and_boundary_setup",
+      "status": "begin",
+      "elapsed_seconds": 0.3853063792921603,
+      "dofs": 124530,
+      "floquet_constraints": null,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:59",
+      "stage": "floquet_and_boundary_setup",
+      "status": "end",
+      "elapsed_seconds": 0.9117567762732506,
+      "dofs": 124530,
+      "floquet_constraints": 5730,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:59",
+      "stage": "after_floquet_mpc_finalize",
+      "status": "end",
+      "elapsed_seconds": 0.9128540670499206,
+      "dofs": 124530,
+      "floquet_constraints": 5730,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:59",
+      "stage": "variational_form_setup",
+      "status": "begin",
+      "elapsed_seconds": 0.9137180419638753,
+      "dofs": 124530,
+      "floquet_constraints": 5730,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:59",
+      "stage": "after_materials_and_forms",
+      "status": "end",
+      "elapsed_seconds": 0.9166097682900727,
+      "dofs": 124530,
+      "floquet_constraints": 5730,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    },
+    {
+      "time_wall": "2026-10-28 14:21:59",
+      "stage": "variational_form_setup",
+      "status": "end",
+      "elapsed_seconds": 1.0326054580509663,
+      "dofs": 124530,
+      "floquet_constraints": 5730,
+      "rank_peak_rss_mb": 1245.09765625,
+      "swap_used_mb": 911.25390625
+    }
+  ],
+  "F_local_rows": {
+    "carrier_global_rows": 124530,
+    "floquet_constraint_rows": 5730,
+    "independent_fe": null,
+    "classification": "F-local carrier/constraint counts, not independent FE"
+  },
+  "runtime_identity": {
+    "independent_runtime_identity_record": null,
+    "abi_failure_observed": false,
+    "scope": "source/control-flow only: _check_v11_runtime_envelope call precedes recorded preflight_end; complete F runtime values were not separately persisted"
+  },
+  "primary_endpoint": null,
+  "residuals": null,
+  "normal_extra_correction": null,
+  "R_T_Av": null,
+  "q8_q10_E_H_G_J": null
+}

@@ -1,0 +1,10 @@
+{
+  "stage": "post-S root stdlib preparation",
+  "command": "python3 -I /tmp/task43_v17_join_S.py",
+  "exit_code": 1,
+  "failed_check": "plan maximum_level == 0",
+  "reason": "Root checker incorrectly equated builder capability maximum_level with actual refinement depth; inherited plan capability=1, marked_root_boxes empty, actual splits=0 and leaves=roots=180. No geometry or FE gate relaxed.",
+  "original_script_sha256": "552fbdace85567ba78a5ff87469411b1566a8b5cd951aad4a0e3f19f0c8bb651",
+  "dynamic_retry": false,
+  "cost": "not_measured"
+}

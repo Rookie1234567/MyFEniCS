@@ -1,6 +1,10 @@
-# Task43：accepted9/R9冻结，最终空间精度未达
+# Task43：accepted9/R9冻结，最终空间精度未达（V17 当前收口）
 
-## V16 当前补验：单节点通过，未新增正式计算
+## V17 当前收口：空间审计完成，正式端点不完整
+
+V16 review授权链已运行S和F。S得到180叶、p5/p6=27/153、无h分裂、独立FE=110,722（较R9 +250）；对象为phi90、50×50×140 nm域、13.5 nm波长下forest root4/global cell8的p5→p6计划。F因 `V11 application worker is not the watchdog's direct child` 守卫不完整，没有official primary。外层session=143、launcher记录=0、watchdog终态缺失，原因及信号来源未知；F whole未测，末资源样本756.7104571810924秒仅为下界。合同配置normal correction=1、extra correction=0，但F未到达实际修正阶段。C未运行，P8的R/T/A_volume、残差、q8/q10和效率都未取得。accepted9/R9、R10拒绝和五项能力裁决保持；正式累计8/9，P8/F槽1/1，无READY或merge approval。详见[Response V17](task43_hp_adaptivity/response_v17.md)与[V17机器结果](task43_hp_adaptivity/outcomes/records/v17_r9_p8_scientific_results_v1.json)。
+
+## V16 历史补验：单节点通过，未新增正式计算
 
 用户在原T两槽耗尽后授权一次单节点非PDE补验。末fixture已消除对前序测试创建phase的依赖，保留真实首次启动、ledger和同worker身份检查；生产门和数值源码未改。
 

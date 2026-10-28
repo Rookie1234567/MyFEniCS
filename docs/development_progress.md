@@ -1,6 +1,10 @@
-# Task43 当前收口（2026-10-27）：PARTIAL / CONTROLLED_NEGATIVE
+# Task43 当前收口（2026-10-28）：PARTIAL / INCOMPLETE
 
-## V16 当前补验：单节点通过，未新增正式计算
+## V17 当前收口：S 完成，F 不完整，C 未运行
+
+V16 review授权的S→F→C链执行到F。S空间审计通过：180叶、p5/p6=27/153、无h分裂、独立FE=110,722，较R9增加250。F在worker/watchdog父链守卫处不完整，没有official primary；外层143、launcher退出文件0与watchdog终态缺失之间的原因和信号来源未知。F watchdog whole未测，末资源样本只给出756.7104571810924秒下界；C未运行。正式累计8/9，P8/F槽1/1；accepted9/R9保持，R10仍拒绝，五项能力不变，无READY或merge approval。参见[Response V17](task43_hp_adaptivity/response_v17.md)、[结果记录](task43_hp_adaptivity/outcomes/records/v17_r9_p8_scientific_results_v1.json)及[精简来源](task43_hp_adaptivity/outcomes/records/v17_r9_p8_sources/README.md)。
+
+## V16 历史补验：单节点通过，未新增正式计算
 
 用户在原T两槽耗尽后授权一次单节点非PDE补验。末fixture已消除对前序测试创建phase的依赖，保留真实首次启动、ledger和同worker身份检查；生产门和数值源码未改。
 

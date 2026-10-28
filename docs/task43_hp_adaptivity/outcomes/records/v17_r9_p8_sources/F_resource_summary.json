@@ -1,0 +1,25 @@
+{
+  "source": {
+    "path": "benchmarks/artifacts/task43/v16_p8/formal/R9_P8_attempt1/watchdog/resources.jsonl",
+    "sha256": "ddceeec1d25f78f8712c9b60f6555fb9ce08a7547f652f600d2de84bb1f09697",
+    "size_bytes": 8779349
+  },
+  "root_observation": {
+    "path": "benchmarks/artifacts/task43/v16_p8/formal/R9_P8_attempt1/v17_root_F_incomplete_observation.json",
+    "sha256": "f4d410d1c739cd11ae3064de427438a8bdf9a3011351dd4005ab2f313eddab55",
+    "size_bytes": 1763991
+  },
+  "sample_rows": 1114,
+  "process_tree_sampled_rss_peak_bytes": 1040801792,
+  "process_tree_sampled_task_swap_peak_bytes": 0,
+  "all_sampled_cpu1": true,
+  "all_status_readable": true,
+  "last_sample_elapsed_seconds": 756.7104571810924,
+  "max_sample_gap_seconds": 0.7740124776028097,
+  "coverage": "Incomplete: samples end before worker exit; no whole/resource/cleanup PASS",
+  "raw_boundary_lines": [
+    1,
+    1114
+  ],
+  "resource_gate": "NOT_QUALIFIED_TAIL_INCOMPLETE"
+}

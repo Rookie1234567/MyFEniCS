@@ -1,0 +1,446 @@
+{
+  "schema": "task43.v17.S-runtime-trace-excerpt.v1",
+  "source_observation": {
+    "path": "benchmarks/artifacts/task43/v16_p8/support/space_attempt1/v17_root_space_observation.json",
+    "sha256": "84e19ed17301fbf1cadf71adc529e2ef3264c9a15a17903a06204eb01ebc2f2c",
+    "size_bytes": 215308
+  },
+  "extracted_fields": {
+    "runtime": {
+      "math_threads": {
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      },
+      "mpi_size": 1,
+      "petsc_int_type": "<class 'numpy.int64'>",
+      "petsc_scalar_type": "<class 'numpy.complex128'>",
+      "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+      "python_version": "3.12.3",
+      "qualified_activation_marker": true,
+      "rank_affinity": [
+        [
+          1
+        ]
+      ],
+      "task43_watchdog_resource_gate": {
+        "effective_reserve_bytes": 324465057792,
+        "launch_cap_bytes": 8589934592,
+        "planning_cap_bytes": 8589934592,
+        "resource_profile_identity": "task43_hp_adaptivity_resource_v1",
+        "resource_stop_policy": "legacy",
+        "status": "verified",
+        "zero_task_tree_swap_required": true
+      },
+      "v11_math_threads": {
+        "BLIS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": "1"
+      },
+      "v11_mumps_available": true,
+      "v11_watchdog_worker_identity": {
+        "direct_watchdog_parent_verified": true,
+        "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/space_attempt1/watchdog/workflow_phase.json",
+        "tracer_descends_from_watchdog": true,
+        "tracer_parent_pid": 3520156,
+        "tracer_pid": 3520170,
+        "tracer_proc_status_verified": true,
+        "tracer_start_ticks": 309221460,
+        "watchdog_parent_pid_environment": 3520156,
+        "watchdog_pid": 3520156,
+        "watchdog_start_ticks": 309221429,
+        "worker_parent_pid": 3520156,
+        "worker_pid": 3520159,
+        "worker_start_ticks": 309221455,
+        "worker_tid_affinities": [
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3520159
+          },
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3520189
+          },
+          {
+            "cpu_list": [
+              1
+            ],
+            "tid": 3520190
+          }
+        ]
+      },
+      "v11_worker_local_environment": {
+        "HWLOC_COMPONENTS": "-x86",
+        "OMPI_MCA_pml": "ob1"
+      }
+    },
+    "resource_summary": {
+      "workflow_deadline_seconds": 1740.0,
+      "solve_deadline_seconds": null,
+      "time_limit_mode": "bounded",
+      "resource_stop_policy": "legacy",
+      "rss_hard_limit_bytes": 8589934592,
+      "rss_warning_bytes": 7301444403,
+      "minimum_available_bytes": null,
+      "startup_headroom_bytes": null,
+      "swap_policy": "legacy_stop",
+      "global_swap_delta_policy": "observe_only",
+      "native_capacity_profile_identity": "task43_hp_adaptivity_resource_v1",
+      "native_capacity_profile_facts_sha256": "c9ef6d173968fd1c78d86eb66b78dd9720bde901f866f58281a4668f83c4b2e6",
+      "native_capacity_resource_facts": {
+        "resource_stop_policy": "legacy",
+        "absolute_cap_bytes": 206158430208,
+        "planning_cap_bytes": 206158430208,
+        "reserve_min_bytes": 68719476736,
+        "reserve_fraction": 0.15,
+        "effective_reserve_policy": "max(64GiB, 15% of effective total memory)",
+        "launch_cap_policy": "min(192GiB, 80% of effective total, effective available minus effective reserve)",
+        "planning_cap_policy": "min(192GiB, 75% of effective total, launch cap)",
+        "memavailable_runtime_policy": "stop_below_effective_reserve",
+        "rss_runtime_policy": "stop_at_launch_cap",
+        "require_zero_swap": true,
+        "swap_policy": "stop_on_nonzero_task_tree_VmSwap",
+        "global_swap_delta_policy": "observe_only",
+        "stop_on_global_swap": false,
+        "pss_sampling_policy": "disabled_by_profile",
+        "concurrent_neighbor_authorized": false,
+        "research_scope": "Task43 only; no Task39/40/41 profile alias"
+      },
+      "launch_memory_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2095194972160,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2095194972160,
+        "reserve_bytes": 324465057792,
+        "launch_cap_bytes": 8589934592,
+        "planning_cap_bytes": 8589934592,
+        "cgroup_limits": [],
+        "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+      },
+      "pss_sampling_policy": "disabled_by_profile",
+      "pss_status": "DISABLED_BY_PROFILE",
+      "sampled_process_tree_pss_peak_bytes": null,
+      "cache_metadata_stable": true,
+      "classification": "COMPLETED",
+      "leader_exit_code": 0,
+      "descendants_cleared": true,
+      "remaining_child_pids": [],
+      "observed_child_pids": [
+        3520159,
+        3520170,
+        3520186
+      ],
+      "sampled_process_tree_rss_peak_bytes": 1369677824,
+      "sampled_process_tree_swap_peak_bytes": 0,
+      "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+      "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+      "global_swap_activity": {
+        "scope": "WSL-global diagnostic, not dedicated job",
+        "baseline": {
+          "pswpin_pages": 4250716,
+          "pswpout_pages": 7183007
+        },
+        "end": {
+          "pswpin_pages": 4250716,
+          "pswpout_pages": 7183007
+        },
+        "delta": {
+          "pswpin_pages": 0,
+          "pswpout_pages": 0
+        }
+      },
+      "job_swap_activity": "zero_supported_by_zero_global_activity",
+      "launch_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2095194972160,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2095194972160,
+        "reserve_bytes": 324465057792,
+        "launch_cap_bytes": 8589934592,
+        "planning_cap_bytes": 8589934592,
+        "cgroup_limits": [],
+        "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+      },
+      "samples": 559,
+      "elapsed_seconds": 310.5137330442667,
+      "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_state": "development_worktree; not formal PDE provenance"
+    },
+    "process_identities": [
+      {
+        "pid": 3520156,
+        "start_ticks": 309221429,
+        "ppids": [
+          3520041
+        ],
+        "states": [
+          "R"
+        ],
+        "affinities": [
+          [
+            1
+          ]
+        ],
+        "observations": 559
+      },
+      {
+        "pid": 3520159,
+        "start_ticks": 309221455,
+        "ppids": [
+          3520156
+        ],
+        "states": [
+          "R",
+          "S",
+          "t"
+        ],
+        "affinities": [
+          [
+            1
+          ]
+        ],
+        "observations": 554
+      },
+      {
+        "pid": 3520170,
+        "start_ticks": 309221460,
+        "ppids": [
+          3520156
+        ],
+        "states": [
+          "R",
+          "S"
+        ],
+        "affinities": [
+          [
+            1
+          ]
+        ],
+        "observations": 555
+      },
+      {
+        "pid": 3520186,
+        "start_ticks": 309221491,
+        "ppids": [
+          3520159
+        ],
+        "states": [
+          "R",
+          "S"
+        ],
+        "affinities": [
+          [
+            1
+          ]
+        ],
+        "observations": 554
+      }
+    ],
+    "post_exit_host_proc_checks": [
+      {
+        "pid": 3520156,
+        "start_ticks": 309221429,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 3520159,
+        "start_ticks": 309221455,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 3520170,
+        "start_ticks": 309221460,
+        "same_process_still_present": false,
+        "proc_stat": null
+      },
+      {
+        "pid": 3520186,
+        "start_ticks": 309221491,
+        "same_process_still_present": false,
+        "proc_stat": null
+      }
+    ],
+    "trace_affinity_events": [
+      {
+        "file": "sched.3520159",
+        "line": 1,
+        "raw": "1793167219.897992 sched_getaffinity(0, 128, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 95,
+        "raw": "1793167220.566271 sched_getaffinity(3520159, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 151,
+        "raw": "1793167220.818765 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 202,
+        "raw": "1793167220.843282 sched_getaffinity(3520159, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 253,
+        "raw": "1793167220.856012 sched_getaffinity(3520189, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 304,
+        "raw": "1793167220.868169 sched_getaffinity(3520190, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 355,
+        "raw": "1793167220.875453 sched_getaffinity(3520159, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 404,
+        "raw": "1793167220.880994 sched_getaffinity(3520189, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 453,
+        "raw": "1793167220.886944 sched_getaffinity(3520190, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 502,
+        "raw": "1793167220.892780 sched_getaffinity(3520159, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 551,
+        "raw": "1793167220.898354 sched_getaffinity(3520189, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 600,
+        "raw": "1793167220.904341 sched_getaffinity(3520190, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 649,
+        "raw": "1793167224.635545 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 666,
+        "raw": "1793167224.650837 sched_getaffinity(3520159, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 683,
+        "raw": "1793167224.655772 sched_getaffinity(3520189, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 698,
+        "raw": "1793167224.660259 sched_getaffinity(3520190, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 713,
+        "raw": "1793167224.677442 sched_getaffinity(3520159, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 728,
+        "raw": "1793167224.689230 sched_getaffinity(3520189, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 743,
+        "raw": "1793167224.696728 sched_getaffinity(3520190, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 758,
+        "raw": "1793167521.036502 sched_getaffinity(3520159, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 773,
+        "raw": "1793167521.056365 sched_getaffinity(3520189, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520159",
+        "line": 788,
+        "raw": "1793167521.063045 sched_getaffinity(3520190, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520186",
+        "line": 1,
+        "raw": "1793167220.181325 sched_getaffinity(3520186, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520186",
+        "line": 19,
+        "raw": "1793167220.287675 sched_getaffinity(0, 8, [1]) = 8"
+      },
+      {
+        "file": "sched.3520186",
+        "line": 33,
+        "raw": "1793167220.295664 sched_getaffinity(3520186, 8, [1]) = 8"
+      }
+    ],
+    "trace_files": [
+      {
+        "file": "sched.3520159",
+        "sha256": "e19a1e4169713d70fcb13dfd32e2583a0dc68603d3900d59644858af46bf1994",
+        "bytes": 57298,
+        "lines": 803,
+        "tail": "1793167528.626902 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3520186",
+        "sha256": "26677af6b084048faf2f751ec703a91dbaa44d88dbd89d3745a11e16cc22371d",
+        "bytes": 3717,
+        "lines": 47,
+        "tail": "1793167528.644838 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3520187",
+        "sha256": "a0f71c3bd7a1a7d961e75a42d3c64769bd827aaebbdad19a390263991f01ccbd",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793167528.626217 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3520188",
+        "sha256": "c2d77c12354289f02b2de7999a75703eee65e609ab1ab2221e225209b9e2d86e",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793167528.630340 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3520189",
+        "sha256": "d526e3622c0cb7cbc06d76992091340e9d6d8c271144fe3a07c2346f8d93e709",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793167528.066796 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3520190",
+        "sha256": "114783138d5c4df2f367c013f20dcbdc143cc7e2f80ed594a4dfa537601c9154",
+        "bytes": 40,
+        "lines": 1,
+        "tail": "1793167528.060296 +++ exited with 0 +++"
+      }
+    ]
+  },
+  "resource_rows_included": false
+}

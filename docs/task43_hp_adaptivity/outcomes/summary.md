@@ -1,6 +1,20 @@
-# Task43 结果：部分完成，受控负结果
+# Task43 结果：部分完成，求解端点未资格化
 
-## V16 当前补验：单节点通过，未新增正式计算
+## V17 当前收口：S 空间门通过，F 不完整，C 未运行
+
+V16 review 授权的 S→F→C 链已运行到 F。S 得到180叶、p5/p6=27/153、无 h 分裂、独立 FE 110,722（较 R9 增加250）；F 在 `V11 application worker is not the watchdog's direct child` 守卫处不完整，外层143与 launcher退出文件0、watchdog终态缺失的原因未知。没有合格 primary 或输出/精度结果，因此 C 未运行，不能比较 P8 的精度或效率。
+
+| 项目 | V17 当前结果 | 边界 |
+|---|---|---|
+| S 空间 | 180叶；FE 110,722=35,392 trace+75,330 interior；较R9 +250；实际h分裂0 | measured空间审计；36,004返回行是预测值，非矩阵实测 |
+| F 正式槽 | 已消耗1/1；worker 父链守卫失败，未形成official primary；watchdog whole未测 | 外层终态原因未知；末资源样本756.7104571810924秒只是下界；资源尾段不完整 |
+| C 与输出 | C未运行；R/T/A_volume、q8/q10及效率未取得 | F不完整，当前链不允许继续 |
+| 当前科学状态 | accepted9/R9；accuracy NOT_PASSED；space/selection PARTIAL；同精度成本NOT_ESTABLISHED；iteration NOT_RUN/NOT_QUALIFIED | 不改变R10拒绝；无READY、production qualification或merge approval |
+| 次数与费用 | formal 8/9、P8/F槽1/1；本轮support 3/5（T主验证、T恢复、S）；S whole310.5137330442667秒 | F whole `not_measured`；E冻结且禁止；用户单节点补验1/1单列 |
+
+F 的精简终态、资源与 trace 证据见[Response V17](../response_v17.md)、[V17机器结果](records/v17_r9_p8_scientific_results_v1.json)和[来源索引](records/v17_r9_p8_sources/README.md)。S、T 和 F 的独立来源身份与未通过边界均保留；F失败后的静态收口没有新增测试或动态运行。
+
+## V16 历史补验：单节点通过，未新增正式计算
 
 用户在原T两槽耗尽后授权一次单节点非PDE补验。末fixture已消除对前序测试创建phase的依赖，保留真实首次启动、ledger和同worker身份检查；生产门和数值源码未改。
 

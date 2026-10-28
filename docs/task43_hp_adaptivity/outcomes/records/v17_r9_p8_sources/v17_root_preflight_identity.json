@@ -1,0 +1,11 @@
+{
+  "reviewer": "/root",
+  "head": "ddbe92264d17f1111dcb551431b3b96d26b0d167",
+  "source_count": 51,
+  "input_count": 27,
+  "source_input_hash_check": "matched",
+  "launches": "same tracked bytes",
+  "roots": "all absent",
+  "cost_measured_seconds": 1.7144702672958374,
+  "qualification_field_correction_requested": "Add actual reviewer identity and user raw observation reference before launch; draft preserved."
+}

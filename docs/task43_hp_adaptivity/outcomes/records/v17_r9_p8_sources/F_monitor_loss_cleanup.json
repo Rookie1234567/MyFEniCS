@@ -1,0 +1,86 @@
+{
+  "schema": "task43.v17.F-watchdog-loss-cleanup.v1",
+  "controller": "/root",
+  "observed_utc": "2026-10-28T06:22:34.658495+00:00",
+  "reason": "Watchdog absent, worker/tracer still alive on actual host; monitor/parent-chain hard failure",
+  "before": [
+    {
+      "pid": 3522928,
+      "expected_start_ticks": 309271579,
+      "matches": false,
+      "absent": true
+    },
+    {
+      "pid": 3522929,
+      "expected_start_ticks": 309271633,
+      "matches": false,
+      "absent": true
+    },
+    {
+      "pid": 3522940,
+      "expected_start_ticks": 309271644,
+      "matches": false,
+      "absent": true
+    },
+    {
+      "pid": 3522941,
+      "expected_start_ticks": 309271753,
+      "matches": false,
+      "absent": true
+    }
+  ],
+  "actions": [],
+  "after_TERM": [
+    {
+      "pid": 3522928,
+      "expected_start_ticks": 309271579,
+      "matches": false,
+      "absent": true
+    },
+    {
+      "pid": 3522929,
+      "expected_start_ticks": 309271633,
+      "matches": false,
+      "absent": true
+    },
+    {
+      "pid": 3522940,
+      "expected_start_ticks": 309271644,
+      "matches": false,
+      "absent": true
+    },
+    {
+      "pid": 3522941,
+      "expected_start_ticks": 309271753,
+      "matches": false,
+      "absent": true
+    }
+  ],
+  "after_cleanup": [
+    {
+      "pid": 3522928,
+      "expected_start_ticks": 309271579,
+      "matches": false,
+      "absent": true
+    },
+    {
+      "pid": 3522929,
+      "expected_start_ticks": 309271633,
+      "matches": false,
+      "absent": true
+    },
+    {
+      "pid": 3522940,
+      "expected_start_ticks": 309271644,
+      "matches": false,
+      "absent": true
+    },
+    {
+      "pid": 3522941,
+      "expected_start_ticks": 309271753,
+      "matches": false,
+      "absent": true
+    }
+  ],
+  "completion_utc": "2026-10-28T06:22:38.660383+00:00"
+}

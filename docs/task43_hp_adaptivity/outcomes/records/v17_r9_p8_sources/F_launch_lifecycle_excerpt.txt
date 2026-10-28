@@ -1,0 +1,53 @@
+# benchmarks/artifacts/task43/v16_p8/formal/R9_P8_attempt1/snapshots/launch.sh sha256=16480572ab076757baa72ac2e9f552d9a3e3835216f8fbee5beb6822da0a9f32
+0044: mkdir -- "$root"
+0045: record_exit() {
+0046:   code=$?
+0047:   trap - EXIT
+0048:   printf '%s\n' "$code" > "$root/launcher_exit_code.txt" || true
+0049:   date -u +%Y-%m-%dT%H:%M:%S.%NZ > "$root/launcher_finished_utc.txt" || true
+0050:   exit "$code"
+0051: }
+0052: trap record_exit EXIT
+0053: date -u +%Y-%m-%dT%H:%M:%S.%NZ > "$root/launcher_started_utc.txt"
+0142: taskset -c 1 python -u -m benchmarks.subreaper_watchdog \
+0143:  --directory "$root/watchdog" --wall-seconds "$work_stop" --interval 0.25 \
+0144:  --phase-path "$root/watchdog/workflow_phase.json" \
+0145:  -- bash -c '
+0146:    set -euo pipefail
+0147:    cd /home/fenics/Projects/NN-Lab-V2
+0148:    export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1
+0149:    source scripts/activate_task40_phi90_pord64.sh
+0150:    export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
+0151:    export BLIS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1
+0152:    exec taskset -c 1 strace -D -ff -ttt -k \
+0153:      -e trace=sched_setaffinity,sched_getaffinity \
+0154:      -o "$TASK43_V11_TRACE_PREFIX" "$@"
+0155:  ' task43-v11-worker "${worker_argv[@]}" > "$root/watchdog_stdout.json" 2> "$root/watchdog_stderr.txt"
+0156: code=$?
+0157: set -e
+0158: printf '%s\n' "$code" > "$root/watchdog_exit_code.txt"
+0159: # Root independently checks whole/trace/resources/cleanup after all tracer exits.
+0160: exit "$code"
+
+# benchmarks/subreaper_watchdog.py sha256=a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801; TERM/INT registration and finally cleanup are present.
+0407:     requested_signal = []
+0408:     for signum in (signal.SIGTERM, signal.SIGINT):
+0409:         signal.signal(signum, lambda value, _frame: requested_signal.append(value))
+0410:     started = time.monotonic()
+0411:     stop_started = None
+0412:     classification = None
+0764:                         'exception_message': str(exc), 'cache_metadata_stable': False})
+0765:     finally:
+0766:         # Also close the tree if sampling, JSON writing, or the parent fails.
+0767:         deadline = time.monotonic() + grace_seconds + _STOP_CLEARANCE_EXTRA_SECONDS
+0768:         cleanup_clock = clock_sample() if timebase_guard else None
+0769:         while leader is not None and _children() and (budget_elapsed(cleanup_clock, clock_sample())
+0770:                 < grace_seconds + _STOP_CLEARANCE_EXTRA_SECONDS
+0771:                 if timebase_guard else time.monotonic() < deadline):
+0772:             _signal_children(signal.SIGKILL)
+0773:             leader.poll()
+0774:             _reap_adopted(leader.pid)
+0775:             time.sleep(.02)
+0776:         if leader is not None:
+0777:             leader.poll()
+0778:         remaining = _children()

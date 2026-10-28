@@ -1,6 +1,19 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V16 当前补验：单节点通过，未新增正式计算
+## V17 当前状态：F 未完成，无合并批准
+
+| 依赖组 | V17 文件/证据与验证 | 建议顺序与边界 |
+|---|---|---|
+| production numerical/core | 本轮未改共享数值核心、方程、离散、约束、容差或默认行为；S只完成空间审计，F没有合格primary | 无fresh PDE数值端点资格；没有production merge项 |
+| reusable runner/watchdog | 未修改原S/F/C launch或通用watchdog；F留下外层143/launcher文件0/watchdog终态缺失的矛盾 | 不据一次不完整链提升通用运行器资格；先查明外层信号/终态留证原因，再单独审查修复 |
+| checker/benchmark | 未新增测试或通用checker；保留S joined、F失败摘录、资源与trace compact来源 | 空间审计仅支持本次P8空间计数；F没有可用于benchmark的official输出 |
+| compact evidence/docs | `response_v17.md`、V17机器结果、来源索引及本manifest/summary/导航 | 供外审核查；无merge approval，不据此改accepted9/R9或五项能力 |
+| research-only | 固定P8研究模式仍有真实空间实值，但求解端点未资格化 | 保持 opt-in/research-only，不提升生产默认；动态重试/恢复须另行授权。可继续静态定位；本轮没有确定性修复 |
+| do-not-merge | ignored大型raw observation/resource streams、未资格化整分支以及不能证明的外层终止解释 | 保留失败与未知状态；不得将失败改写为通过或推断信号来源 |
+
+V17 的 formal 8/9、P8/F槽1/1；S通过、F不完整、C未运行。见[Response V17](../response_v17.md)、[机器结果](records/v17_r9_p8_scientific_results_v1.json)和[轻量来源](records/v17_r9_p8_sources/README.md)。
+
+## V16 历史补验：单节点通过，未新增正式计算
 
 用户在原T两槽耗尽后授权一次单节点非PDE补验。末fixture已消除对前序测试创建phase的依赖，保留真实首次启动、ledger和同worker身份检查；生产门和数值源码未改。
 

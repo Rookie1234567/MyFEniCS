@@ -1,0 +1,312 @@
+{
+  "schema": "task43.v17.r9-p8-scientific-results.v1",
+  "created_date": "2026-10-28",
+  "repository": "Rookie1234567/MyFEniCS",
+  "branch": "task43_hp_adaptivity",
+  "source_head": "ddbe92264d17f1111dcb551431b3b96d26b0d167",
+  "working_tree": "run_start_clean=true; delivery changes are documentation/evidence only, subject to commit-time cleanliness review; numerical source, tests, contract, activation, ABI and launch scripts unchanged",
+  "protocol": {
+    "review_commit": "f72e1c8d031de7acc374f0806ddac06099c461c4",
+    "authorization_review": {
+      "path": "docs/task43_hp_adaptivity/review_report_v16.md",
+      "commit": "ddbe92264d17f1111dcb551431b3b96d26b0d167",
+      "sha256": "6269be0ddf9308dc08e139563bf01bbf15385d56dff935cbce3976eb8568c4fb"
+    },
+    "contract_sha256": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+    "allowed_route": "S_MAIN_to_F_to_C",
+    "E_qualified": false,
+    "E_allowed": false
+  },
+  "model_identity": {
+    "case": "phi90",
+    "period_nm": [50, 50],
+    "domain_height_nm": 140,
+    "wavelength_nm": 13.5,
+    "fixed_box_nm": [16.5, 5, -10, 33.5, 10, 0],
+    "plan_target": "global cell 8 / forest root index 4 (two identifiers for the same target cell), p5 to p6 only, no h split",
+    "integration_orders": [15, 28],
+    "modal_order": 13,
+    "channels": 612,
+    "comparison_reference": "Y6_1",
+    "configured_normal_corrections": 1,
+    "configured_extra_corrections": 0,
+    "F_reached_actual_correction": false
+  },
+  "status": "INCOMPLETE_F_PARENT_CHAIN_GUARD_AND_EXTERNAL_TERMINAL_UNKNOWN",
+  "scientific_classification": "ACTION_ENDPOINT_NOT_QUALIFIED",
+  "official_result": false,
+  "passed": false,
+  "candidate_selected": false,
+  "transition10": false,
+  "stage_results": {
+    "S": {
+      "status": "S_COMPLETE_ROOT_VERIFIED",
+      "joined_terminal": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/space_attempt1/v16_p8_space_joined_terminal.json",
+        "sha256": "393d62eab20babd2a1c0ffa93d200256a052084d67220cbd2748219cfaabb284",
+        "size_bytes": 3533
+      },
+      "root_observation": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/space_attempt1/v17_root_space_observation.json",
+        "sha256": "84e19ed17301fbf1cadf71adc529e2ef3264c9a15a17903a06204eb01ebc2f2c",
+        "size_bytes": 215308
+      },
+      "space": {
+        "leaves": 180,
+        "actual_h_splits": 0,
+        "p5_cells": 27,
+        "p6_cells": 153,
+        "parent_r9_independent_fe": 110472,
+        "p8_independent_fe": 110722,
+        "delta_fe": 250,
+        "trace_rows": 35392,
+        "cell_interior_rows": 75330,
+        "periodic_slave_rows": 5452,
+        "p6_active_entity_rows": 116174,
+        "p6_inactive_carrier_rows": 8356,
+        "p6_carrier_global_rows": 124530,
+        "predicted_returned_trace_dtn_rows": 36004
+      },
+      "runtime": {
+        "whole_watchdog_seconds": 310.5137330442667,
+        "resource_rows": 559,
+        "sampled_tree_rss_peak_bytes": 1369677824,
+        "sampled_tree_swap_peak_bytes": 0,
+        "exit_codes": "launcher/watchdog/worker 0/0/0",
+        "descendants_cleared": true
+      },
+      "trace": {
+        "files": 6,
+        "lines": 854,
+        "getter_events": 25,
+        "successful_setters": 0,
+        "signals": 0,
+        "all_getters_cpu1": true
+      },
+      "limits": [
+        "space only; no PDE matrix, factorization, solve or measured NNZ",
+        "36004 returned rows are predicted"
+      ]
+    },
+    "F": {
+      "status": "INCOMPLETE",
+      "root_observation": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/R9_P8_attempt1/v17_root_F_incomplete_observation.json",
+        "sha256": "f4d410d1c739cd11ae3064de427438a8bdf9a3011351dd4005ab2f313eddab55",
+        "size_bytes": 1763991
+      },
+      "partial_terminal": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/R9_P8_attempt1/run/task43_v16_p8_partial_terminal.json",
+        "sha256": "d0c53c802f5bfd99d70d02821535f365cb08aae56da2b916b38ac2e89232df36",
+        "size_bytes": 89694
+      },
+      "source_checks_match": true,
+      "source_count": 51,
+      "input_checks_match": true,
+      "input_count": 90,
+      "known_worker_guard_error": "RuntimeError: V11 application worker is not the watchdog's direct child",
+      "worker_trace_exit_code": 1,
+      "last_worker_stages": [
+        "task43_mesh_build_end",
+        "task43_solve_and_observe_started",
+        "task43_solve_and_observe_begin",
+        "task43_v16_p8_failed"
+      ],
+      "local_rows": {
+        "carrier_global_rows": 124530,
+        "floquet_constraint_rows": 5730,
+        "independent_fe": null,
+        "note": "F-local carrier/constraint counts are not independent FE"
+      },
+      "runtime_identity": {
+        "independent_runtime_identity_record": null,
+        "abi_failure_observed": false,
+        "front_gate": "source/control-flow inference only; the source calls _check_v11_runtime_envelope before preflight_end, but complete F environment values were not separately persisted"
+      },
+      "outer_exit_and_terminal": {
+        "original_exec_session_id": 5630,
+        "observed_outer_exit_code": 143,
+        "launcher_exit_code_file": 0,
+        "watchdog_exit_code_file": null,
+        "watchdog_summary": null,
+        "cause_of_outer_143_and_missing_watchdog_terminal": "UNKNOWN",
+        "signal_sender": "UNKNOWN"
+      },
+      "time": {
+        "launcher_started_utc": "2026-10-28T06:08:38.463356942Z",
+        "launcher_finished_utc": "2026-10-28T06:21:18.741519489Z",
+        "derived_launcher_timestamp_interval_seconds": 760.278162547,
+        "derived_interval_is_watchdog_whole": false,
+        "watchdog_whole_seconds": null,
+        "watchdog_whole_status": "not_measured",
+        "last_resource_sample_lower_bound_seconds": 756.7104571810924
+      },
+      "resource": {
+        "rows": 1114,
+        "sampled_tree_rss_peak_bytes": 1040801792,
+        "sampled_process_tree_task_swap_peak_bytes": 0,
+        "all_observed_members_cpu1": true,
+        "all_status_readable": true,
+        "gate": "NOT_QUALIFIED_TAIL_INCOMPLETE"
+      },
+      "trace": {
+        "files": 8,
+        "raw_lines": 1043,
+        "getters": 35,
+        "successful_cpu1_setters": 3,
+        "setter_context": "SCOTCH mesh partition/thread-context initialization and exit stacks; all three succeeded on CPU1",
+        "normal_sigchld": 1,
+        "unknown_events": 0,
+        "worker_trace_exit": 1,
+        "orted_trace_exit": 0,
+        "all_trace_files_exited": true
+      },
+      "cleanup": {
+        "earlier_observation": "watchdog absent while worker/tracer/orted remained or were reparented",
+        "later_observation": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/R9_P8_attempt1/v17_monitor_loss_cleanup.json",
+          "sha256": "2a51f6480f9515062a979cf098ffb1ba3e31f8329e382bac3dace6899c9db978",
+          "size_bytes": 1833
+        },
+        "controller_actions": 0,
+        "all_four_pids_absent_in_later_saved_check": true,
+        "watchdog_cleanup_gate": "UNKNOWN_NOT_QUALIFIED"
+      },
+      "outputs": {
+        "qualified_primary": null,
+        "normal_extra_correction": null,
+        "residuals": null,
+        "R_T_A_volume_absorption": null,
+        "q8_q10_E_H_G_J": null
+      },
+      "limitations": [
+        "F has no independent runtime_identity.json",
+        "progress_3d swap_used_mb reads global /proc/meminfo and is not task swap; use root process-tree resource samples",
+        "no watchdog whole or resource/cleanup PASS"
+      ]
+    },
+    "C": {
+      "status": "NOT_RUN_F_NOT_QUALIFIED",
+      "unique_root_exists": false,
+      "reason": "F incomplete; current contract does not permit continuing to C"
+    }
+  },
+  "scientific_comparison": {
+    "p8_delta_fe": 250,
+    "historical_h8_delta_fe": 6268,
+    "h8_scope": "historical reused result",
+    "efficiency_comparison": "NOT_AVAILABLE_P8 primary field absent",
+    "accuracy": "NOT_PASSED",
+    "equal_accuracy_total_cost": "NOT_ESTABLISHED",
+    "space": "PARTIAL",
+    "selection": "PARTIAL",
+    "iteration": "NOT_RUN / NOT_QUALIFIED",
+    "accepted_state": "accepted9/R9",
+    "R10": "rejected; no transition10"
+  },
+  "runtime_counts": {
+    "V16_review_support_used": "3/5 (T main + T recovery + S)",
+    "T_original_slots": "2/2",
+    "user_single_node_completion": "1/1 separately accounted",
+    "formal_envelope_used": "8/9",
+    "P8_formal_slot_used": "1/1",
+    "F_formal_slot_used": "1/1",
+    "C_support_slot": "0/1",
+    "E": "0; frozen and forbidden",
+    "new_formal_dispatches_in_V17": 1,
+    "ready": 0
+  },
+  "costs_seconds": {
+    "T_main_plus_recovery_whole": 82.05409320862964,
+    "user_single_node_whole_separate": 12.767253825906664,
+    "S_watchdog_whole": 310.5137330442667,
+    "F_watchdog_whole": null,
+    "F_last_resource_sample_lower_bound": 756.7104571810924,
+    "F_launcher_timestamp_interval_derived_not_whole": 760.278162547,
+    "T_preflight_static": 1.7144702672958374,
+    "F_root_static_observation": 1.6008896040730178,
+    "S_first_static_join_assertion": "not_measured",
+    "manual_and_documentation": "not_measured"
+  },
+  "preparation_history": {
+    "T_qualification": {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/T_root_qualification.json",
+      "sha256": "1a7fd4aa5ceaec86d0730825791d8d9f9d7d2d5fc26c472fe591003ea79cc047",
+      "status": "PASS_LIMITED_V16_SUPPORT",
+      "test_evidence_boundary": {
+        "historical_same_byte_tests_reused": 17,
+        "separately_authorized_user_single_node_test": 1,
+        "final_18_test_batch": false,
+        "test_file_sha256": "c7ae026e40ac782652b17e87e7399eef541c139ff62900b20caf7ea59e34a236"
+      },
+      "draft_path": "benchmarks/artifacts/task43/v16_p8/preparation/T_root_qualification_draft.json",
+      "draft_sha256": "80101a553f0d69fc2be1f530eea1ebada4a13c9a5034555cfc8ebc56b3b1b02e",
+      "field_corrections": [
+        {
+          "field": "reviewer",
+          "change": "Added executor/controller identities and hash-bound controller preflight review record."
+        },
+        {
+          "field": "T_attempts[T_user_completion].raw_observation",
+          "change": "Bound the actual root terminal observation path and SHA256."
+        }
+      ],
+      "contract_unchanged": true,
+      "51_source_map_unchanged": true
+    },
+    "S_static_join_failure": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v17_S_join_static_failure.json",
+      "sha256": "8bedeeda8b44612ca32d23db0bf86cdabe4135dfb481f8355c354b279c2a1521",
+      "size_bytes": 547
+    },
+    "correction": "The plan maximum_level=1 is builder capability; actual splits=0, leaves=180. Static assertion corrected, with no source/launch/contract edit and no dynamic retry."
+  },
+  "evidence_index": {
+    "directory": "docs/task43_hp_adaptivity/outcomes/records/v17_r9_p8_sources",
+    "source_index_sha256": "313d2269633096b8d9167fbc5317613d3e1c88da3237d84b04793665f470ec9d",
+    "S_excerpt": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v17_r9_p8_sources/S_space_plan_audit_excerpt.json",
+      "sha256": "e682c32d7e0d85697cc098a5f0e9296dac73c53e8eb4ddf3627e15ff98532e6c",
+      "size_bytes": 3391
+    },
+    "S_runtime_trace_excerpt": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v17_r9_p8_sources/S_runtime_trace_excerpt.json",
+      "sha256": "67ba440c43938cd9dc3c36d5b60e10bf391ee2e96a117f9c55f8d4377ffb5fd7",
+      "size_bytes": 13558
+    },
+    "F_excerpt": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v17_r9_p8_sources/F_partial_terminal_excerpt.json",
+      "sha256": "4d77a1aa9aab520fe9aabb07d03ff0458e13455fea338dface641800178272fb",
+      "size_bytes": 7998
+    },
+    "F_trace_excerpt": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v17_r9_p8_sources/F_trace_nonstack_and_setter_stack.jsonl",
+      "sha256": "6bdd175ad53005d5c08f1d7d61eabaf17af4e962ffc2a7a2be4ee1e6abc042fe",
+      "size_bytes": 40398
+    },
+    "F_resource_summary": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v17_r9_p8_sources/F_resource_summary.json",
+      "sha256": "5bb59cdee421836b15d0132d5c18dc1c3d0d80235198ffa476b518ba75726b57",
+      "size_bytes": 951
+    },
+    "F_resource_first_last": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v17_r9_p8_sources/F_resource_first_last_raw.jsonl",
+      "sha256": "e07560bb298a1c87b24ef4e770d399b3b4d4d48cad593955f87a32681179fc0a",
+      "size_bytes": 14313
+    },
+    "F_lifecycle_excerpt": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v17_r9_p8_sources/F_launch_lifecycle_excerpt.txt",
+      "sha256": "c1e827e005cb42faf5bab50ac8799f173bde1069f02a8c7eccbeb2714001d5ba",
+      "size_bytes": 2859
+    },
+    "T_lineage": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v17_r9_p8_sources/T_qualification_lineage.json",
+      "sha256": "7d155594b2086c266510e161bda294b42a4f8512fec4488561b4facdbe181c5a",
+      "size_bytes": 2184
+    }
+  },
+  "next_diagnostic": "Locate the outer launch/tool-session termination and missing watchdog terminal evidence, preserving signal and parent/child lifecycle records. Cause remains UNKNOWN; no repair is claimed. C cannot run after F incomplete; no retry or E is authorized.",
+  "merge_approval": false,
+  "production_qualification": false,
+  "tests_run_after_F": 0
+}

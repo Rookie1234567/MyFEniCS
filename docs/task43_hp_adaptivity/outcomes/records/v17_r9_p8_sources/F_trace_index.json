@@ -1,0 +1,62 @@
+{
+  "source_files": [
+    {
+      "file": "sched.3522929",
+      "sha256": "338c2dc1073ac615ea472da1113da460fde11badd847f5d2e8c61270abbca246",
+      "size_bytes": 92211,
+      "lines": 990
+    },
+    {
+      "file": "sched.3522941",
+      "sha256": "432c4d7ff38ae3a52dad749282c739ec91dbb2aa06697dce328723e064d16826",
+      "size_bytes": 3717,
+      "lines": 47
+    },
+    {
+      "file": "sched.3522942",
+      "sha256": "30b95b731f9af46d38c59992e76dc562fd34123ada2ed36532db0fb9d475695a",
+      "size_bytes": 40,
+      "lines": 1
+    },
+    {
+      "file": "sched.3522943",
+      "sha256": "78b232ec40cc3fdf717b50e5f62709e1e4d4eb08b1a12b1be2b740b4a027d4c1",
+      "size_bytes": 40,
+      "lines": 1
+    },
+    {
+      "file": "sched.3522944",
+      "sha256": "5add31346579c4100278da30c3325cc8193d9912b6c26f548b86c5fc0f210782",
+      "size_bytes": 40,
+      "lines": 1
+    },
+    {
+      "file": "sched.3522945",
+      "sha256": "0e98bf1762b568793db171037b75bdf58ba490286f3439c2873ed49a1a6e53ce",
+      "size_bytes": 40,
+      "lines": 1
+    },
+    {
+      "file": "sched.3523055",
+      "sha256": "00ce7eb1e9ad9084567211149da078caed5a28bc8f57c205fa0f0db2ca2ae126",
+      "size_bytes": 40,
+      "lines": 1
+    },
+    {
+      "file": "sched.3523056",
+      "sha256": "868177b1ad44d1b632c15d3c48cb4dd25d67a4decc5c993ae229878d2cce1ab5",
+      "size_bytes": 40,
+      "lines": 1
+    }
+  ],
+  "source_lines": 1043,
+  "archived_records": 161,
+  "getters": 35,
+  "setters": 3,
+  "setter_stack_lines": 114,
+  "signals": 1,
+  "process_exit_lines": 8,
+  "other_raw_lines": 0,
+  "unknown_event_count_root_review": 0,
+  "scope": "All original non-stack trace lines; stack lines retained immediately after each setter only."
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "task43.v17.T-qualification-lineage.v1",
+  "draft": {
+    "path": "benchmarks/artifacts/task43/v16_p8/preparation/T_root_qualification_draft.json",
+    "sha256": "80101a553f0d69fc2be1f530eea1ebada4a13c9a5034555cfc8ebc56b3b1b02e",
+    "size_bytes": 20205
+  },
+  "final": {
+    "path": "benchmarks/artifacts/task43/v16_p8/preparation/T_root_qualification.json",
+    "sha256": "1a7fd4aa5ceaec86d0730825791d8d9f9d7d2d5fc26c472fe591003ea79cc047",
+    "size_bytes": 21398
+  },
+  "preflight_review": {
+    "path": "benchmarks/artifacts/task43/v16_p8/preparation/v17_root_preflight_identity.json",
+    "sha256": "555ee6f534f25bdf2e567574fbf3c27f47f7e425ed893131a68ea978ebf3b5e3",
+    "size_bytes": 416
+  },
+  "static_S_join_failure": {
+    "path": "benchmarks/artifacts/task43/v16_p8/preparation/v17_S_join_static_failure.json",
+    "sha256": "8bedeeda8b44612ca32d23db0bf86cdabe4135dfb481f8355c354b279c2a1521",
+    "size_bytes": 547
+  },
+  "status": "PASS_LIMITED_V16_SUPPORT",
+  "contract_sha256": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+  "allowed_route": "S_MAIN_to_F_to_C",
+  "E_qualified": false,
+  "E_allowed": false,
+  "source_map_entries": 51,
+  "test_sha256": "c7ae026e40ac782652b17e87e7399eef541c139ff62900b20caf7ea59e34a236",
+  "field_completion": {
+    "draft_path": "benchmarks/artifacts/task43/v16_p8/preparation/T_root_qualification_draft.json",
+    "draft_sha256": "80101a553f0d69fc2be1f530eea1ebada4a13c9a5034555cfc8ebc56b3b1b02e",
+    "changes": [
+      {
+        "field": "reviewer",
+        "change": "Added executor/controller identities and hash-bound controller preflight review record."
+      },
+      {
+        "field": "T_attempts[T_user_completion].raw_observation",
+        "change": "Bound the actual root terminal observation path and SHA256."
+      }
+    ],
+    "contract_sha256_unchanged": true,
+    "source_sha256_map_unchanged": true
+  },
+  "static_failure_reason": "Root checker incorrectly equated builder capability maximum_level with actual refinement depth; inherited plan capability=1, marked_root_boxes empty, actual splits=0 and leaves=roots=180. No geometry or FE gate relaxed.",
+  "dynamic_retry": false
+}
