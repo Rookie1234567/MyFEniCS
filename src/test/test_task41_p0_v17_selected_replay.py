@@ -413,3 +413,92 @@ def test_v17_signed_identity_uses_each_cells_own_selected_e_column() -> None:
         expected = np.zeros(16, dtype=np.complex128)
         expected[selected_trace_slot] = 1.0 + 0.0j
         np.testing.assert_array_equal(q, expected)
+
+
+def test_v17_allocation_gate_uses_live_resource_sampler_each_time(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import ast
+    import inspect
+
+    from benchmarks import subreaper_watchdog, task038_full3d_jit_staging
+    from src.runners.task41_p0_v4_volume_only_audit import _checked_allocation_gate
+    from src.solvers.task40_v22_operator_probe import _resource_admission
+
+    tree = ast.parse(inspect.getsource(v17_worker._run_v17_selected_two_cell_replay))
+    call = next(
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "_checked_allocation_gate"
+    )
+    sampler = next(
+        item.value for item in call.keywords if item.arg == "resource_snapshot"
+    )
+    assert isinstance(sampler, ast.Name) and sampler.id == "_resource_snapshot"
+
+    samples: list[dict[str, object]] = []
+
+    def resource_sample() -> dict[str, object]:
+        sample = {
+            "scope": f"fresh-{len(samples) + 1}",
+            "current_process_cgroup": {
+                "readable": True,
+                "dedicated_job_cgroup": True,
+                "memory_current_bytes": len(samples) + 1,
+                "memory_limit_bytes": 1 << 40,
+                "swap_current_bytes": 0,
+            },
+        }
+        samples.append(sample)
+        return sample
+
+    available = 1 << 50
+    monkeypatch.setattr(
+        task038_full3d_jit_staging,
+        "process_tree_snapshot",
+        lambda *_args, **_kwargs: {
+            "rss_bytes": 1024,
+            "all_status_readable": True,
+            "identity_complete": True,
+            "identity_count": 1,
+        },
+    )
+    monkeypatch.setattr(
+        subreaper_watchdog,
+        "memory_envelope",
+        lambda *_args, **_kwargs: {
+            "effective_available_bytes": available,
+            "host_mem_available_bytes": available,
+            "task_cgroup_available_bytes": available,
+            "reserve_bytes": 0,
+        },
+    )
+    monkeypatch.setattr(
+        subreaper_watchdog,
+        "runtime_tree_cap",
+        lambda cap, *_args, **_kwargs: cap,
+    )
+
+    progress: list[dict[str, object]] = []
+    for label in ("first", "second"):
+        _checked_allocation_gate(
+            f"v17_{label}",
+            {"additional_payload_bytes": 5, "workspace_bytes": 7},
+            resource_admission=_resource_admission,
+            resource_snapshot=resource_sample,
+            resources={
+                "task_memory_max_bytes": 1 << 40,
+                "host_reserve_bytes": 1 << 20,
+                "task_cgroup_reserve_bytes": 0,
+            },
+            progress=progress.append,
+        )
+
+    assert len(samples) == 2
+    admissions = [event["resource_admission"] for event in progress]
+    assert [item["sample_scope"] for item in admissions] == ["fresh-1", "fresh-2"]
+    assert [
+        item["current_process_cgroup"]["memory_current_bytes"]
+        for item in admissions
+    ] == [1, 2]

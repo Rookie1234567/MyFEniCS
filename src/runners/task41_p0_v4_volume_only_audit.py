@@ -3591,7 +3591,7 @@ def _run_v17_selected_two_cell_replay(args: argparse.Namespace) -> dict[str, Any
             label,
             facts,
             resource_admission=_resource_admission,
-            resource_snapshot=_resource_snapshot(),
+            resource_snapshot=_resource_snapshot,
             resources=resources,
             progress=progress,
         )
