@@ -106,6 +106,353 @@ def _validate_task41_consumer_source(contract: dict[str, Any], environment: dict
     return True
 
 
+def _validate_task41_p0_v17_selected_two_cell_checker_command(
+    *,
+    argv: list[str],
+    root: Path,
+    expected_python: Path,
+    contract: dict[str, Any],
+    contract_file: Path,
+    contract_sha: str,
+    campaign: Any,
+    authorization: dict[str, Any],
+    environment: dict[str, str],
+) -> list[str]:
+    """Validate V17 checker paths, hashes, scope, and producer provenance."""
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_CONTROLLER_RELATIVE,
+        TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE,
+        TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256,
+        TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
+        TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE,
+        require_task41_p0_contract,
+        task41_case_id_for_run_id,
+    )
+
+    prefix = ["-m", "src.runners.task41_p0_checker", "--v17-selected-two-cell-check"]
+    checker_flags = [
+        "--v17-report", "--v17-report-sha256", "--manifest", "--manifest-sha256",
+        "--contract", "--contract-sha256", "--v17-producer-contract",
+        "--v17-producer-contract-sha256", "--v17-progress", "--v17-progress-sha256",
+        "--output",
+    ]
+    resume_flags = [
+        "--v17-resume-contract", "--v17-resume-contract-sha256",
+        "--v17-resume-progress", "--v17-resume-progress-sha256",
+    ]
+    if (
+        len(argv) < 1 + len(prefix)
+        or Path(argv[0]).resolve() != expected_python
+        or argv[1 : 1 + len(prefix)] != prefix
+    ):
+        raise ValueError("V17 closeout command is not the registered qualified checker")
+    tokens = argv[1 + len(prefix) :]
+    if len(tokens) % 2:
+        raise ValueError("V17 checker arguments must be flag/value pairs")
+    flags = tokens[::2]
+    has_resume = any(flag in flags for flag in resume_flags)
+    if flags != checker_flags + (resume_flags if has_resume else []):
+        raise ValueError("V17 checker arguments do not match the closed command schema")
+    options = dict(zip(flags, tokens[1::2], strict=True))
+    if any(not value for value in options.values()) or authorization.get("expected_channel_count") is not None:
+        raise ValueError("V17 checker authorization contains an empty or unsupported argument")
+
+    if (
+        environment.get("TASK41_P0_V17_SELECTED_TWO_CELL_REPLAY") != "1"
+        or environment.get("TASK41_P0_SAVED_OUTPUT_CONTINUATION") != "1"
+        or any(
+            environment.get(name) is not None
+            for name in (
+                "TASK41_P0_B0_V16_SAVED_VECTOR_ANALYSIS",
+                "TASK41_P0_B0_SAVED_Y_G_COMPARISON",
+                "TASK41_P0_V9_FAILED_TERMINAL_AUDIT",
+                "TASK41_P0_SAVED_B0_EVIDENCE_AUDIT",
+                "TASK41_P0_B0_V9_SAVED_STAR_SCREEN",
+                "TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY",
+            )
+        )
+        or environment.get("TASK41_P0_CONSUMER_SOURCE_SHA") != authorization.get("source_sha")
+        or environment.get("TASK41_P0_CHECKER_SOURCE_SHA") != authorization.get("source_sha")
+        or contract.get("source", {}).get("sha") != authorization.get("source_sha")
+        or contract.get("branch") != authorization.get("source_branch")
+    ):
+        raise ValueError("V17 checker is not bound to its current-source B0 route")
+
+    case = contract.get("case")
+    scope = contract.get("execution_scope")
+    window = contract.get("window")
+    if (
+        not isinstance(case, dict)
+        or case.get("model_id") != "task41extra_phi90_p50x50_g17x20"
+        or task41_case_id_for_run_id(str(case.get("run_id", ""))) != "B0"
+        or scope != TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE
+        or not isinstance(window, dict)
+        or window.get("path") != TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE.as_posix()
+        or window.get("sha256") != campaign.sha256
+        or window.get("sha256") != authorization.get("campaign_window_sha256")
+        or contract.get("numerical_strategy", {}).get("internal_rhs_strategy") != "same_lu_rhs_solve"
+        or Path(str(window.get("path", ""))).is_absolute()
+        or (root / str(window.get("path"))).resolve(strict=True) != campaign.path.resolve(strict=True)
+    ):
+        raise ValueError("V17 consumer contract differs from the fixed B0 scope/window/math")
+    if (
+        options["--contract"] != str(contract_file)
+        or Path(options["--contract"]).is_symlink()
+        or Path(options["--contract"]).resolve(strict=True) != contract_file
+        or options["--contract-sha256"] != contract_sha
+        or Path(environment.get("TASK41_P0_CONTRACT_PATH", "")).resolve(strict=True) != contract_file
+        or environment.get("TASK41_P0_CONTRACT_SHA256") != contract_sha
+    ):
+        raise ValueError("V17 checker consumer contract path/hash differs from the service")
+
+    manifest_path = Path(options["--manifest"])
+    expected_manifest = (root / TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE).resolve(strict=True)
+    manifest_sha = options["--manifest-sha256"]
+    if (
+        manifest_path.is_symlink()
+        or not manifest_path.is_absolute()
+        or manifest_path.resolve(strict=True) != expected_manifest
+        or manifest_sha != TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256
+        or manifest_sha != environment.get("TASK41_P0_V17_V16_MANIFEST_SHA256")
+        or manifest_path != Path(environment.get("TASK41_P0_V17_V16_MANIFEST_PATH", "")).resolve(strict=True)
+    ):
+        raise ValueError("V17 checker V16 manifest is not bound to its fixed path/hash")
+
+    producer_path = Path(options["--v17-producer-contract"])
+    producer_sha = options["--v17-producer-contract-sha256"]
+    if (
+        producer_path.is_symlink()
+        or not producer_path.is_absolute()
+        or producer_path.resolve(strict=True) != producer_path
+        or producer_path.relative_to(root).parent != TASK41_B0_CONTROLLER_RELATIVE
+        or not re.fullmatch(r"[0-9a-f]{64}", producer_sha)
+    ):
+        raise ValueError("V17 producer contract path/hash is malformed")
+    producer_contract, actual_producer_sha = require_task41_p0_contract(
+        producer_path,
+        expected_sha256=producer_sha,
+        current_root=root,
+        require_clean_source=False,
+        check_current_source=False,
+        case_id="B0",
+    )
+    producer_window = producer_contract.get("window", {})
+    producer_window_path = Path(str(producer_window.get("path", "")))
+    if not producer_window_path.is_absolute():
+        producer_window_path = root / producer_window_path
+    if (
+        actual_producer_sha != producer_sha
+        or producer_contract.get("case") != case
+        or producer_contract.get("execution_scope") != scope
+        or producer_contract.get("numerical_strategy") != contract.get("numerical_strategy")
+        or producer_window.get("path") != window.get("path")
+        or producer_window.get("sha256") != campaign.sha256
+        or producer_window_path.resolve(strict=True) != campaign.path.resolve(strict=True)
+    ):
+        raise ValueError("V17 report producer contract differs from the same B0 scope/window/math")
+
+    results_root = (root / "results" / str(case["model_id"])).resolve(strict=True)
+    replay_root = (
+        results_root / "task41_p0_saved_diagnostics_6h" / campaign.sha256 / "selected_incident_replay"
+    ).resolve(strict=True)
+    output_root = Path(environment.get("TASK41_P0_V17_OUTPUT_DIRECTORY", ""))
+    if (
+        output_root.is_symlink()
+        or not output_root.is_absolute()
+        or output_root.resolve(strict=True) != output_root
+        or not output_root.is_dir()
+        or output_root.parent != replay_root
+        or re.fullmatch(r"attempt[0-9]{2,}", output_root.name) is None
+    ):
+        raise ValueError("V17 consumer output directory is outside its fixed attempt tree")
+    service_directory = output_root.with_name(output_root.name + ".service")
+    if service_directory.is_symlink() or not service_directory.is_dir():
+        raise ValueError("V17 checker service directory is not the consumer attempt sibling")
+    output_path = Path(options["--output"])
+    expected_output = service_directory / "task41_p0_v17_independent_check.json"
+    if (
+        not output_path.is_absolute()
+        or output_path.resolve() != expected_output.resolve()
+        or output_path.name != "task41_p0_v17_independent_check.json"
+        or output_path.exists()
+        or output_path.is_symlink()
+    ):
+        raise ValueError("V17 checker output is not the unused consumer service result path")
+
+    report_path = Path(options["--v17-report"])
+    progress_path = Path(options["--v17-progress"])
+    report_sha = options["--v17-report-sha256"]
+    progress_sha = options["--v17-progress-sha256"]
+    for label, path, digest in (("report", report_path, report_sha), ("progress", progress_path, progress_sha)):
+        if (
+            path.is_symlink()
+            or not path.is_absolute()
+            or path.resolve(strict=True) != path
+            or not path.is_file()
+            or not path.is_relative_to(results_root)
+            or path.stat().st_size > 16 * 1024**2
+            or not re.fullmatch(r"[0-9a-f]{64}", digest)
+            or _sha256_file(path) != digest
+        ):
+            raise ValueError(f"V17 checker {label} path/size/hash is not a canonical saved input")
+    if (
+        report_path.name != "task41_p0_v17_selected_two_cell_worker.json"
+        or progress_path.name != "task41_p0_v17_progress.json"
+        or report_path.parent != progress_path.parent
+        or report_path.parent.parent != replay_root
+        or re.fullmatch(r"attempt[0-9]{2,}", report_path.parent.name) is None
+    ):
+        raise ValueError("V17 report/progress are not an adjacent fixed-window attempt pair")
+    current_report = report_path.parent == output_root
+    if current_report and (producer_path != contract_file or producer_sha != contract_sha):
+        raise ValueError("V17 current report must be produced by the current consumer contract")
+    if not current_report and (
+        has_resume
+        or int(report_path.parent.name.removeprefix("attempt"))
+        >= int(output_root.name.removeprefix("attempt"))
+    ):
+        raise ValueError("V17 read-only report must come from an older completed attempt")
+
+    raw_paths = authorization.get("input_paths")
+    raw_hashes = authorization.get("input_sha256s")
+    if (
+        not isinstance(raw_paths, list)
+        or not raw_paths
+        or not all(isinstance(value, str) for value in raw_paths)
+        or len(set(raw_paths)) != len(raw_paths)
+        or not isinstance(raw_hashes, list)
+        or len(raw_hashes) != len(raw_paths)
+        or not all(re.fullmatch(r"[0-9a-f]{64}", str(value)) for value in raw_hashes)
+    ):
+        raise ValueError("V17 checker input authorization is malformed")
+    authorized_hashes = dict(zip(raw_paths, raw_hashes, strict=True))
+    for raw_path in raw_paths:
+        path = Path(raw_path)
+        if (
+            not path.is_absolute()
+            or path.resolve(strict=True) != path
+            or not path.is_file()
+            or not path.is_relative_to(root)
+        ):
+            raise ValueError("V17 checker authorized input escaped the registered repository")
+
+    required_hashes = {
+        str(contract_file): contract_sha,
+        str(campaign.path.resolve(strict=True)): campaign.sha256,
+        str(manifest_path): manifest_sha,
+        str(producer_path): producer_sha,
+        str(report_path): report_sha,
+        str(progress_path): progress_sha,
+    }
+    resume_contract_path: Path | None = None
+    resume_contract_sha: str | None = None
+    resume_progress_path: Path | None = None
+    resume_progress_sha: str | None = None
+    if has_resume:
+        if not current_report:
+            raise ValueError("V17 resume inputs are valid only for a current-consumer report")
+        resume_contract_path = Path(options["--v17-resume-contract"])
+        resume_contract_sha = options["--v17-resume-contract-sha256"]
+        resume_progress_path = Path(options["--v17-resume-progress"])
+        resume_progress_sha = options["--v17-resume-progress-sha256"]
+        if (
+            resume_contract_path.is_symlink()
+            or not resume_contract_path.is_absolute()
+            or resume_contract_path.resolve(strict=True) != resume_contract_path
+            or resume_contract_path.relative_to(root).parent != TASK41_B0_CONTROLLER_RELATIVE
+            or not re.fullmatch(r"[0-9a-f]{64}", resume_contract_sha)
+            or resume_progress_path.is_symlink()
+            or not resume_progress_path.is_absolute()
+            or resume_progress_path.resolve(strict=True) != resume_progress_path
+            or not resume_progress_path.is_relative_to(results_root)
+            or resume_progress_path.parent.parent != replay_root
+            or resume_progress_path.name != "task41_p0_v17_progress.json"
+            or not re.fullmatch(r"attempt[0-9]{2,}", resume_progress_path.parent.name)
+            or resume_progress_path.parent == output_root
+            or int(resume_progress_path.parent.name.removeprefix("attempt"))
+            >= int(output_root.name.removeprefix("attempt"))
+            or resume_progress_path.stat().st_size > 16 * 1024**2
+            or not re.fullmatch(r"[0-9a-f]{64}", resume_progress_sha)
+            or _sha256_file(resume_progress_path) != resume_progress_sha
+            or (resume_progress_path.parent / "task41_p0_v17_selected_two_cell_worker.json").exists()
+        ):
+            raise ValueError("V17 resume contract/progress is not an older unfinished fixed-window source")
+        required_hashes.update({
+            str(resume_contract_path): resume_contract_sha,
+            str(resume_progress_path): resume_progress_sha,
+        })
+    if any(authorized_hashes.get(path) != digest for path, digest in required_hashes.items()):
+        raise ValueError("V17 checker command inputs are not hash-bound by its authorization")
+
+    from scripts.task40_v20_service_workflow import _task41_p0_v17_readonly_producer_inputs
+
+    producer_binding = {
+        "contract_path": str(producer_path),
+        "contract_sha256": producer_sha,
+        "progress_path": str(progress_path),
+        "progress_sha256": progress_sha,
+        "report_path": str(report_path),
+        "report_sha256": report_sha,
+    }
+    checked_contract, progress_payload, report_payload = _task41_p0_v17_readonly_producer_inputs(
+        producer_binding=producer_binding,
+        consumer_contract=contract,
+        consumer_contract_sha256=contract_sha,
+        window_sha256=campaign.sha256,
+        repo_root=root,
+        consumer_output_path=output_root,
+        require_current_producer=current_report,
+    )
+    if (
+        not isinstance(checked_contract, dict)
+        or not isinstance(progress_payload, dict)
+        or not isinstance(report_payload, dict)
+        or progress_payload.get("run_identity", {}).get("v16_saved_vector_manifest_sha256") != manifest_sha
+    ):
+        raise ValueError("V17 report/progress does not bind the exact producer scope and fixed manifest")
+
+    producer_identity = progress_payload.get("producer_execution_binding")
+    expected_binding = progress_payload.get("latest_consumer_execution_binding")
+    if has_resume:
+        from src.runners.task41_p0_contract import require_task41_p0_contract
+
+        resume_contract, _ = require_task41_p0_contract(
+            resume_contract_path,
+            expected_sha256=resume_contract_sha,
+            current_root=root,
+            require_clean_source=False,
+            check_current_source=False,
+            case_id="B0",
+        )
+        if resume_contract.get("source", {}).get("sha") == contract.get("source", {}).get("sha"):
+            raise ValueError("V17 resume source must be a prior source contract")
+        resume_binding, resume_progress, _ = _task41_p0_v17_readonly_producer_inputs(
+            producer_binding={
+                "contract_path": str(resume_contract_path),
+                "contract_sha256": resume_contract_sha,
+                "progress_path": str(resume_progress_path),
+                "progress_sha256": resume_progress_sha,
+            },
+            consumer_contract=contract,
+            consumer_contract_sha256=contract_sha,
+            window_sha256=campaign.sha256,
+            repo_root=root,
+            consumer_output_path=output_root,
+        )
+        if (
+            not isinstance(resume_binding, dict)
+            or not isinstance(resume_progress, dict)
+            or producer_identity != resume_progress.get("producer_execution_binding")
+            or progress_payload.get("run_identity") != resume_progress.get("run_identity")
+            or resume_progress.get("latest_consumer_execution_binding") not in
+            progress_payload.get("consumer_execution_bindings", [])
+        ):
+            raise ValueError("V17 current report does not retain its exact read-only resume source")
+    elif producer_identity != expected_binding:
+        raise ValueError("V17 producer report requires an explicit hash-bound resume source")
+
+    return raw_paths
+
 def _validate_campaign_closeout_authorization(
     *,
     command: list[str],
@@ -332,129 +679,17 @@ def _validate_campaign_closeout_authorization(
             if product.is_file():
                 input_paths.append(str(product))
         elif checker_kind == 'task41_p0_b0_v17_selected_two_cell_checker':
-            from src.runners.task41_p0_contract import (
-                TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
-                TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE,
-                TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE,
-                TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256,
-                task41_case_id_for_run_id,
+            input_paths = _validate_task41_p0_v17_selected_two_cell_checker_command(
+                argv=argv,
+                root=root,
+                expected_python=expected_python,
+                contract=contract,
+                contract_file=contract_file,
+                contract_sha=str(contract_sha),
+                campaign=campaign,
+                authorization=authorization,
+                environment=environment,
             )
-
-            case = contract.get('case')
-            scope = contract.get('execution_scope')
-            window = contract.get('window')
-            if (
-                len(argv) != 18
-                or Path(argv[0]).resolve() != expected_python
-                or argv[1:4] != [
-                    '-m', 'src.runners.task41_p0_checker',
-                    '--v17-selected-two-cell-check',
-                ]
-                or argv[4::2] != [
-                    '--v17-report', '--v17-report-sha256', '--manifest',
-                    '--manifest-sha256', '--contract', '--contract-sha256', '--output',
-                ]
-                or authorization.get('expected_channel_count') is not None
-                or not continuation
-                or environment.get('TASK41_P0_V17_SELECTED_TWO_CELL_REPLAY') != '1'
-                or environment.get('TASK41_P0_B0_V16_SAVED_VECTOR_ANALYSIS') is not None
-                or environment.get('TASK41_P0_B0_SAVED_Y_G_COMPARISON') is not None
-                or environment.get('TASK41_P0_V9_FAILED_TERMINAL_AUDIT') is not None
-                or environment.get('TASK41_P0_SAVED_B0_EVIDENCE_AUDIT') is not None
-                or environment.get('TASK41_P0_B0_V9_SAVED_STAR_SCREEN') is not None
-                or environment.get('TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY') is not None
-                or not isinstance(case, dict)
-                or case.get('model_id') != 'task41extra_phi90_p50x50_g17x20'
-                or task41_case_id_for_run_id(str(case.get('run_id', ''))) != 'B0'
-                or scope != TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE
-                or not isinstance(window, dict)
-                or window.get('path') != TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE.as_posix()
-                or window.get('sha256') != window_sha
-                or contract.get('numerical_strategy', {}).get('internal_rhs_strategy')
-                != 'same_lu_rhs_solve'
-                or contract.get('source', {}).get('sha') != authorization.get('source_sha')
-                or environment.get('TASK41_P0_CONSUMER_SOURCE_SHA')
-                != authorization.get('source_sha')
-                or environment.get('TASK41_P0_CHECKER_SOURCE_SHA')
-                != authorization.get('source_sha')
-                or authorization.get('source_sha') != contract.get('source', {}).get('sha')
-                or authorization.get('source_branch') != contract.get('branch')
-                or Path(argv[13]).resolve() != contract_file
-                or argv[15] != contract_sha
-                or Path(argv[13]).resolve()
-                != Path(environment.get('TASK41_P0_CONTRACT_PATH', '')).resolve()
-                or argv[15] != environment.get('TASK41_P0_CONTRACT_SHA256')
-                or Path(argv[9]).resolve()
-                != (root / TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE).resolve()
-                or argv[11] != TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256
-                or Path(argv[9]).resolve()
-                != Path(environment.get('TASK41_P0_V17_V16_MANIFEST_PATH', '')).resolve()
-                or argv[11] != environment.get('TASK41_P0_V17_V16_MANIFEST_SHA256')
-                or Path(argv[5]).resolve()
-                != (
-                    Path(environment.get('TASK41_P0_V17_OUTPUT_DIRECTORY', ''))
-                    / 'task41_p0_v17_selected_two_cell_worker.json'
-                ).resolve()
-            ):
-                raise ValueError('V17 closeout checker is not bound to its exact B0 contract, report, and V16 manifest')
-
-            report_path = Path(argv[5]).resolve(strict=True)
-            manifest_path = Path(argv[9]).resolve(strict=True)
-            output_path = Path(argv[17]).resolve()
-            results_root = (root / 'results' / str(case['model_id'])).resolve()
-            expected_parent = report_path.parent.with_name(report_path.parent.name + '.service')
-            expected_window_root = (
-                results_root / 'task41_p0_saved_diagnostics_6h'
-                / str(window['sha256']) / 'selected_incident_replay'
-            ).resolve()
-            raw_paths = authorization.get('input_paths')
-            raw_hashes = authorization.get('input_sha256s')
-            if (
-                not report_path.is_relative_to(expected_window_root)
-                or not report_path.is_relative_to(results_root)
-                or report_path.name != 'task41_p0_v17_selected_two_cell_worker.json'
-                or re.fullmatch(r'attempt[0-9]{2,}', report_path.parent.name) is None
-                or manifest_path
-                != (root / TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE).resolve()
-                or output_path.parent != expected_parent
-                or output_path.name != 'task41_p0_v17_independent_check.json'
-                or output_path.exists()
-                or not output_path.is_relative_to(expected_window_root)
-                or not isinstance(raw_paths, list)
-                or not isinstance(raw_hashes, list)
-                or len(raw_paths) != len(raw_hashes)
-                or len(set(raw_paths)) != len(raw_paths)
-                or not all(isinstance(value, str) for value in raw_paths)
-                or not all(re.fullmatch(r'[0-9a-f]{64}', str(value)) for value in raw_hashes)
-            ):
-                raise ValueError('V17 checker input authorization or output path is malformed')
-            for raw_path in raw_paths:
-                path = Path(raw_path)
-                if (
-                    not path.is_absolute()
-                    or path.resolve(strict=True) != path
-                    or not path.is_file()
-                    or not path.is_relative_to(root)
-                ):
-                    raise ValueError('V17 checker authorized input escaped the registered repository')
-            authorized_hashes = dict(zip(raw_paths, raw_hashes, strict=True))
-            required_inputs = (contract_file, campaign.path, manifest_path, report_path)
-            for path in required_inputs:
-                canonical = str(path.resolve(strict=True))
-                if (
-                    canonical not in authorized_hashes
-                    or not path.is_file()
-                    or not path.is_relative_to(root)
-                ):
-                    raise ValueError('V17 checker omitted a required hash-bound input')
-            if (
-                authorized_hashes[str(contract_file)] != contract_sha
-                or authorized_hashes[str(campaign.path.resolve(strict=True))] != window_sha
-                or authorized_hashes[str(manifest_path)] != argv[11]
-                or authorized_hashes[str(report_path)] != argv[7]
-            ):
-                raise ValueError('V17 checker manifest/report hashes differ from its authorization')
-            input_paths = raw_paths
         elif checker_kind in {
             'task41_p0_b0_v9_failed_terminal_audit_checker',
             'task41_p0_b0_saved_y_g_comparison_checker',

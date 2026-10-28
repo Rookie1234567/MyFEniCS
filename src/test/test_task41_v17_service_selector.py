@@ -673,6 +673,216 @@ def test_v17_checker_authorization_hashes_every_canonical_input(tmp_path: Path) 
     assert authorization["source_clean"] is True
 
 
+@pytest.mark.parametrize("readonly_producer", [False, True])
+def test_v17_service_checker_command_passes_watchdog_binding_and_rejects_bad_hash(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    readonly_producer: bool,
+) -> None:
+    from benchmarks import subreaper_watchdog as watchdog
+
+    root = tmp_path / "repo"
+    contract_path, contract, contract_sha, fixed_window = (
+        _write_valid_v17_contract_fixture(root, monkeypatch)
+    )
+    monkeypatch.chdir(root)
+
+    manifest_relative = Path("fixture/v16_manifest.json")
+    manifest_path = root / manifest_relative
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_bytes(b"v16 manifest fixture\n")
+    manifest_sha = contract_module.sha256_file(manifest_path)
+    monkeypatch.setattr(
+        contract_module, "TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE", manifest_relative
+    )
+    monkeypatch.setattr(
+        contract_module, "TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256", manifest_sha
+    )
+
+    model_root = root / "results" / contract_module.TASK41_MODEL_ID
+    replay_root = (
+        model_root / "task41_p0_saved_diagnostics_6h" / fixed_window.sha256
+        / "selected_incident_replay"
+    )
+    consumer_output = replay_root / ("attempt02" if readonly_producer else "attempt01")
+    consumer_output.mkdir(parents=True)
+    (consumer_output.with_name(consumer_output.name + ".service")).mkdir()
+    producer_output = replay_root / "attempt01"
+    if not readonly_producer:
+        producer_output = consumer_output
+    else:
+        producer_output.mkdir()
+
+    # Read-only review may legitimately reuse a report produced by this same
+    # source/contract; freshness is bound by the old attempt and exact hashes.
+    producer_path = contract_path.resolve()
+    producer_sha = contract_sha
+    producer_binding = {
+        "path": str(producer_path.relative_to(root)),
+        "sha256": producer_sha,
+        "source_sha": contract["source"]["sha"],
+        "fixed_window_sha256": fixed_window.sha256,
+    }
+    run_identity = {
+        "schema": "task41.p0.b0.v17.selected_two_cell_reuse_identity.v1",
+        "fixed_window_sha256": fixed_window.sha256,
+        "v16_saved_vector_manifest_sha256": manifest_sha,
+        "selected_active_row": contract["execution_scope"]["selected_active_row"],
+        "selected_original_row": contract["execution_scope"]["selected_original_row"],
+        "selected_cells": contract["execution_scope"]["incident_cells"],
+    }
+    callback = {
+        "schema": "task41.p0.b0.v17.selected_two_cell_candidate_callback.v1",
+        "status": "COMPLETED_SELECTED_TWO_CELL_CANDIDATE_AND_RHS_REPLAY",
+        "scope": {
+            "selected_active_row": run_identity["selected_active_row"],
+            "selected_original_row": run_identity["selected_original_row"],
+            "cell_order": run_identity["selected_cells"],
+            "columns": [0, 1],
+            "full_owner": False,
+            "carrier_replay": False,
+            "surface_replay": False,
+            "full_q_scan": False,
+            "official_result": False,
+        },
+        "run_identity": run_identity,
+        "run_identity_sha256": worker._task41_p0_v17_json_sha256(run_identity),
+    }
+    progress_path = producer_output / "task41_p0_v17_progress.json"
+    report_path = producer_output / "task41_p0_v17_selected_two_cell_worker.json"
+    progress_payload = {
+        "schema": "task41.p0.b0.v17.selected_two_cell_progress.v2",
+        "run_identity": run_identity,
+        "producer_execution_binding": producer_binding,
+        "consumer_execution_bindings": [producer_binding],
+        "latest_consumer_execution_binding": producer_binding,
+        "selected_two_cell_candidate_callback": callback,
+    }
+    report_payload = {
+        "schema": "task41.p0.b0.v17.selected_two_cell_worker_receipt.v1",
+        "status": "COMPLETED_LOCAL_SELECTED_TWO_CELL_REPLAY",
+        "consumer_contract_sha256": producer_sha,
+        "consumer_window_sha256": fixed_window.sha256,
+        "selected_two_cell_candidate_callback": callback,
+        "official_result": False,
+        "scientific_qualified": False,
+        "full_owner_unlocked": False,
+    }
+    progress_path.write_text(json.dumps(progress_payload), encoding="utf-8")
+    report_path.write_text(json.dumps(report_payload), encoding="utf-8")
+
+    metadata_path = root / "fixture/v17_metadata.json"
+    v16_array_path = root / "fixture/v16_saved_array.npy"
+    donor_path = root / "fixture/v3_donor_manifest.json"
+    for path in (metadata_path, v16_array_path, donor_path):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(path.name.encode("ascii"))
+    authorized_inputs = list(dict.fromkeys([
+        contract_path.resolve(), producer_path.resolve(), manifest_path.resolve(),
+        metadata_path.resolve(), fixed_window.path.resolve(), v16_array_path.resolve(),
+        donor_path.resolve(), report_path.resolve(), progress_path.resolve(),
+    ]))
+    checker_output = consumer_output.with_name(
+        consumer_output.name + ".service"
+    ) / "task41_p0_v17_independent_check.json"
+    command = workflow._task41_p0_v17_checker_command(
+        python=str(Path(contract["runtime"]["runtime_prefix"]) / "bin/python"),
+        worker_report_path=report_path,
+        worker_report_sha256=contract_module.sha256_file(report_path),
+        manifest_path=manifest_path,
+        manifest_sha256=manifest_sha,
+        contract_path=contract_path,
+        contract_sha256=contract_sha,
+        producer_contract_path=producer_path,
+        producer_contract_sha256=producer_sha,
+        progress_path=progress_path,
+        progress_sha256=contract_module.sha256_file(progress_path),
+        output_path=checker_output,
+    )
+    authorization = workflow._task41_p0_v17_checker_authorization(
+        command=command,
+        input_paths=authorized_inputs,
+        window_sha256=fixed_window.sha256,
+        contract_sha256=contract_sha,
+        source_sha=contract["source"]["sha"],
+        source_branch=contract["branch"],
+        sha256_file=contract_module.sha256_file,
+    )
+    environment = {
+        "TASK41_P0_STRICT_EXECUTION": "1",
+        "TASK41_P0_CONTRACT_PATH": str(contract_path.resolve()),
+        "TASK41_P0_CONTRACT_SHA256": contract_sha,
+        "TASK41_P0_EXECUTION_WINDOW_PATH": str(fixed_window.path),
+        "TASK41_P0_EXECUTION_WINDOW_SHA256": fixed_window.sha256,
+        "TASK41_P0_TASK_MEMORY_MAX_BYTES": str(contract["resources"]["task_memory_max_bytes"]),
+        "TASK41_P0_HOST_RESERVE_BYTES": str(contract["resources"]["host_reserve_bytes"]),
+        "TASK41_P0_MEMORY_SWAP_MAX_BYTES": str(contract["resources"]["memory_swap_max_bytes"]),
+        "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
+        "TASK41_P0_CONSUMER_SOURCE_SHA": contract["source"]["sha"],
+        "TASK41_P0_CHECKER_SOURCE_SHA": contract["source"]["sha"],
+        "TASK41_P0_V17_SELECTED_TWO_CELL_REPLAY": "1",
+        "TASK41_P0_V17_V16_MANIFEST_PATH": str(manifest_path.resolve()),
+        "TASK41_P0_V17_V16_MANIFEST_SHA256": manifest_sha,
+        "TASK41_P0_V17_OUTPUT_DIRECTORY": str(consumer_output.resolve()),
+    }
+
+    def fake_git(args: list[str], *, cwd: Path, **_kwargs: Any) -> Any:
+        if args == ["git", "rev-parse", "HEAD"]:
+            stdout = contract["source"]["sha"]
+        elif args == ["git", "branch", "--show-current"]:
+            stdout = contract_module.TASK41_BRANCH
+        elif args == ["git", "status", "--porcelain", "--untracked-files=normal"]:
+            stdout = ""
+        else:
+            raise AssertionError(f"unexpected watchdog git query: {args!r} in {cwd}")
+        return type("GitResult", (), {"stdout": stdout, "returncode": 0})()
+
+    monkeypatch.setattr(watchdog.subprocess, "run", fake_git)
+    # The fixture contract deliberately points at a temporary executable; model
+    # the watchdog process running under that same qualified runtime.
+    monkeypatch.setattr(
+        watchdog,
+        "sys",
+        SimpleNamespace(
+            executable=str(Path(contract["runtime"]["runtime_prefix"]) / "bin/python")
+        ),
+    )
+    validated = watchdog._validate_campaign_closeout_authorization(
+        command=command,
+        campaign=fixed_window,
+        authorization=authorization,
+        worker_environment=environment,
+    )
+    assert validated == authorization
+
+    bad_hash_command = list(command)
+    bad_hash_index = bad_hash_command.index("--v17-producer-contract-sha256") + 1
+    bad_hash_command[bad_hash_index] = "0" * 64
+    bad_hash_authorization = copy.deepcopy(authorization)
+    bad_hash_authorization["command_sha256"] = hashlib.sha256(
+        json.dumps(bad_hash_command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
+    with pytest.raises(ValueError):
+        watchdog._validate_campaign_closeout_authorization(
+            command=bad_hash_command,
+            campaign=fixed_window,
+            authorization=bad_hash_authorization,
+            worker_environment=environment,
+        )
+
+    bad_input_authorization = copy.deepcopy(authorization)
+    bad_input_authorization["input_sha256s"] = list(authorization["input_sha256s"])
+    progress_index = bad_input_authorization["input_paths"].index(str(progress_path.resolve()))
+    bad_input_authorization["input_sha256s"][progress_index] = "0" * 64
+    with pytest.raises(ValueError, match="not hash-bound"):
+        watchdog._validate_campaign_closeout_authorization(
+            command=command,
+            campaign=fixed_window,
+            authorization=bad_input_authorization,
+            worker_environment=environment,
+        )
+
+
 def test_outer_service_dispatch_passes_v17_mode_to_saved_service() -> None:
     source = Path(workflow.__file__).read_text(encoding="utf-8")
     tree = ast.parse(source)

@@ -9987,6 +9987,7 @@ def _task41_p0_v17_readonly_producer_inputs(
     window_sha256: str,
     repo_root: Path,
     consumer_output_path: Path,
+    require_current_producer: bool = False,
 ) -> tuple[dict[str, Any] | None, dict[str, Any] | None, dict[str, Any] | None]:
     """Verify an older V17 producer contract/progress/report without modifying it."""
     if producer_binding is None:
@@ -10060,11 +10061,8 @@ def _task41_p0_v17_readonly_producer_inputs(
         or consumer_window.get("sha256") != window_sha256
         or producer_window_path.resolve(strict=True)
         != (root / TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE).resolve()
-        or producer_contract.get("source", {}).get("sha")
-        == consumer_contract.get("source", {}).get("sha")
-        or producer_contract_sha256 == consumer_contract_sha256
     ):
-        raise ValueError("V17 producer and consumer must bind distinct source contracts to the same exact window/scope")
+        raise ValueError("V17 producer and consumer must bind the same exact window/scope")
 
     progress_path = bound_path("progress_path")
     progress_sha256 = str(producer_binding.get("progress_sha256", ""))
@@ -10110,7 +10108,16 @@ def _task41_p0_v17_readonly_producer_inputs(
         or expected_binding not in history
         or latest != expected_binding
         or progress_path.parent.parent.resolve() != expected_replay_parent
-        or progress_path.parent == consumer_output_path
+        or (require_current_producer and progress_path.parent != consumer_output_path)
+        or (not require_current_producer and progress_path.parent == consumer_output_path)
+        or (
+            require_current_producer
+            and (
+                producer_contract_sha256 != consumer_contract_sha256
+                or producer_contract.get("source", {}).get("sha")
+                != consumer_contract.get("source", {}).get("sha")
+            )
+        )
     ):
         raise ValueError("V17 producer progress is not bound to its exact producer contract and window")
 
