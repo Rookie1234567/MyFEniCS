@@ -91,6 +91,67 @@ DEFAULT_OUTPUT = ROOT / "benchmarks/artifacts/task43/round1_candidates/attempt2"
 _V16_P8_CONTRACT_REL = Path(
     "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json"
 )
+_V18_P8_EXECUTION_RECOVERY_REL = Path(
+    "benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery.json"
+)
+_V18_P8_EXECUTION_RECOVERY_SUMMARY_REL = Path(
+    "docs/task43_hp_adaptivity/outcomes/records/v18_p8_execution_recovery_v1.json"
+)
+_V18_P8_STAGE_LAUNCHER_REL = Path(
+    "benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh"
+)
+_V18_P8_PHASES = {
+    "T": {
+        "root": "support/v18_execution_validation_attempt1",
+        "work_seconds": 270,
+        "whole_seconds": 300,
+        "rss_cap_bytes": 8589934592,
+    },
+    "S": {
+        "root": "support/v18_space_attempt1",
+        "work_seconds": 1740,
+        "whole_seconds": 1800,
+        "rss_cap_bytes": 8589934592,
+    },
+    "F": {
+        "root": "formal/v18_R9_P8_attempt1",
+        "work_seconds": 6900,
+        "whole_seconds": 7200,
+        "rss_cap_bytes": 34359738368,
+    },
+    "C": {
+        "root": "support/v18_paired_comparison_attempt1",
+        "work_seconds": 1740,
+        "whole_seconds": 1800,
+        "rss_cap_bytes": 8589934592,
+    },
+}
+_V18_P8_SOURCE_DELTA = {
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+}
+_V18_P8_V17_EVIDENCE = {
+    "partial_terminal": (
+        "benchmarks/artifacts/task43/v16_p8/formal/R9_P8_attempt1/run/"
+        "task43_v16_p8_partial_terminal.json",
+        "d0c53c802f5bfd99d70d02821535f365cb08aae56da2b916b38ac2e89232df36",
+    ),
+    "root_observation": (
+        "benchmarks/artifacts/task43/v16_p8/formal/R9_P8_attempt1/"
+        "v17_root_F_incomplete_observation.json",
+        "f4d410d1c739cd11ae3064de427438a8bdf9a3011351dd4005ab2f313eddab55",
+    ),
+    "response": (
+        "docs/task43_hp_adaptivity/response_v17.md",
+        "e1e5095a98f1636bc4e6b95a281ffdf5b08eaf8a5fdeea0d51757f99244b51d9",
+    ),
+    "machine_record": (
+        "docs/task43_hp_adaptivity/outcomes/records/"
+        "v17_r9_p8_scientific_results_v1.json",
+        "de800433fb727ff97464003059f078641e2c4efda9d3c8725a809283ec83ec1d",
+    ),
+}
 _V16_P8_BOX = (16.5, 5.0, -10.0, 33.5, 10.0, 0.0)
 _V16_P8_INPUT_ROLES = {
     "R9_authority_plan",
@@ -875,7 +936,326 @@ def _load_v16_p8_contract(path: Path) -> tuple[dict[str, Any], str]:
     return contract, actual_contract_sha256
 
 
-def _v16_p8_input_snapshot(contract: Mapping[str, Any]) -> dict[str, str]:
+def _v18_p8_phase_root(
+    execution_recovery: Mapping[str, Any], phase: str
+) -> Path:
+    """Resolve one separately authorized V18 root without editing V16 protocol data."""
+
+    phase_record = execution_recovery.get("phases", {}).get(phase)
+    expected = _V18_P8_PHASES.get(phase)
+    if not isinstance(phase_record, Mapping) or expected is None:
+        raise ValueError(f"V18 P8 phase is not explicitly authorized: {phase!r}")
+    if any(phase_record.get(key) != value for key, value in expected.items()):
+        raise ValueError(f"V18 P8 {phase} root or budget differs from its fixed recovery binding")
+    prefix = (ROOT / "benchmarks/artifacts/task43/v16_p8").resolve()
+    relative = Path(str(phase_record.get("root", "")))
+    if relative.is_absolute() or ".." in relative.parts:
+        raise ValueError(f"V18 P8 {phase} root is not a safe prefix-relative path")
+    unresolved = prefix / relative
+    current = prefix
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError(f"V18 P8 {phase} root traverses a symlink: {current}")
+    root = unresolved.resolve()
+    if root == prefix or not root.is_relative_to(prefix):
+        raise ValueError(f"V18 P8 {phase} root escaped the frozen artifact prefix")
+    return root
+
+
+def _validate_v18_p8_execution_recovery_record(
+    record: Mapping[str, Any],
+    *,
+    tracked_summary: Mapping[str, Any],
+    prior_qualification: Mapping[str, Any],
+    current_source_sha256: Mapping[str, str],
+    contract_sha256: str,
+    execution_manifest_path: Path,
+    execution_manifest_sha256: str,
+) -> None:
+    """Check only the V18 execution delta and its frozen V16/V17 provenance."""
+
+    protocol = record.get("frozen_protocol", {})
+    authorization = record.get("authorization", {})
+    contract_path = (ROOT / _V16_P8_CONTRACT_REL).resolve()
+    expected_review = {
+        "path": "docs/task43_hp_adaptivity/review_report_v16.md",
+        "commit": "ddbe92264d17f1111dcb551431b3b96d26b0d167",
+        "sha256": "6269be0ddf9308dc08e139563bf01bbf15385d56dff935cbce3976eb8568c4fb",
+    }
+    failure_refs = {
+        name: {"path": path, "sha256": digest}
+        for name, (path, digest) in _V18_P8_V17_EVIDENCE.items()
+    }
+    if (
+        record.get("schema") != "task43.v18.p8-execution-recovery.v1"
+        or authorization.get("scope") != "one_same_model_P8_execution_recovery"
+        or authorization.get("user_directive") != "没有到数值gate不允许停止"
+        or authorization.get("stages") != ["T", "S", "F", "C"]
+        or authorization.get("E_allowed") is not False
+        or protocol.get("contract") != {"path": str(contract_path), "sha256": contract_sha256}
+        or contract_sha256 != "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b"
+        or protocol.get("authorization_review") != expected_review
+        or protocol.get("v17_failure_evidence") != failure_refs
+        or protocol.get("V15_contract_review_commit")
+        != "f72e1c8d031de7acc374f0806ddac06099c461c4"
+    ):
+        raise ValueError("V18 execution binding differs from its user scope or frozen protocol")
+    for ref in [expected_review, *failure_refs.values()]:
+        path = ROOT / ref["path"]
+        if path.is_symlink() or not path.is_file() or _sha256_file(path) != ref["sha256"]:
+            raise ValueError(f"frozen review/failure evidence changed: {ref['path']}")
+
+    if not isinstance(record.get("phases"), Mapping) or set(record["phases"]) != set(_V18_P8_PHASES):
+        raise ValueError("V18 execution binding must name exactly T, S, F and C")
+    roots = [_v18_p8_phase_root(record, phase) for phase in _V18_P8_PHASES]
+    if len(set(roots)) != len(roots):
+        raise ValueError("V18 phases must use distinct new attempt roots")
+    frozen_contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    old_roots = {
+        (ROOT / str(frozen_contract["artifact_prefix"]) / str(item["root"])).resolve()
+        for item in frozen_contract["phases"].values()
+        if isinstance(item, Mapping) and isinstance(item.get("root"), str)
+    }
+    if set(roots).intersection(old_roots):
+        raise ValueError("V18 execution binding reuses a historical V16 root")
+
+    summary_ref = tracked_summary.get("execution_manifest", {})
+    expected_manifest = (ROOT / _V18_P8_EXECUTION_RECOVERY_REL).resolve()
+    if (
+        execution_manifest_path.resolve() != expected_manifest
+        or summary_ref != {"path": str(expected_manifest), "sha256": execution_manifest_sha256}
+        or tracked_summary.get("authorization") != authorization
+        or tracked_summary.get("phases") != record.get("phases")
+        or tracked_summary.get("frozen_protocol") != protocol
+    ):
+        raise ValueError("tracked V18 summary does not identify the execution manifest and scope")
+
+    source_binding = record.get("source_binding", {})
+    prior_source = prior_qualification.get("source_sha256", {})
+    current_source = dict(current_source_sha256)
+    changed = {name for name in current_source if current_source[name] != prior_source.get(name)}
+    if (
+        prior_qualification.get("status") != "PASS_LIMITED_V16_SUPPORT"
+        or prior_qualification.get("contract_sha256") != contract_sha256
+        or source_binding.get("prior_T_source_sha256") != prior_source
+        or source_binding.get("current_source_sha256") != current_source
+        or set(prior_source) != set(current_source)
+        or changed != _V18_P8_SOURCE_DELTA
+    ):
+        raise ValueError("source changes must be limited to the three path-resolution entry files")
+
+    fixture = source_binding.get("targeted_fixture", {})
+    fixture_path = Path(str(fixture.get("path", "")))
+    fixture_file = ROOT / fixture_path
+    if (
+        fixture.get("selector") != "src/test/test_task43_p8_execution_recovery.py"
+        or fixture_path.is_absolute()
+        or ".." in fixture_path.parts
+        or fixture_file.is_symlink()
+        or not fixture_file.is_file()
+        or _sha256_file(fixture_file) != fixture.get("sha256")
+        or tracked_summary.get("targeted_fixture") != dict(fixture)
+    ):
+        raise ValueError("targeted execution fixture path/hash changed")
+    launcher = source_binding.get("launch_script", {})
+    launcher_path = Path(str(launcher.get("path", "")))
+    launcher_file = ROOT / launcher_path
+    if (
+        launcher_path.as_posix() != _V18_P8_STAGE_LAUNCHER_REL.as_posix()
+        or launcher_path.is_absolute()
+        or launcher_file.is_symlink()
+        or not launcher_file.is_file()
+        or _sha256_file(launcher_file) != launcher.get("sha256")
+        or tracked_summary.get("launch_script") != dict(launcher)
+    ):
+        raise ValueError("V18 stage launcher path/hash changed")
+
+
+def _load_v18_p8_execution_recovery(
+    path: Path,
+    *,
+    contract: Mapping[str, Any],
+    contract_sha256: str,
+    phase: str,
+) -> dict[str, Any]:
+    """Read the exact execution-only supplement for a new V18 P8 attempt."""
+
+    manifest_path = Path(path).resolve()
+    expected_path = (ROOT / _V18_P8_EXECUTION_RECOVERY_REL).resolve()
+    if manifest_path != expected_path or manifest_path.is_symlink():
+        raise ValueError("V18 P8 requires the unique bound execution-recovery manifest")
+    if phase not in _V18_P8_PHASES:
+        raise ValueError(f"V18 P8 phase is not authorized: {phase!r}")
+    initial_sha256 = _sha256_file(manifest_path)
+    record = json.loads(manifest_path.read_text(encoding="utf-8"))
+    summary_path = (ROOT / _V18_P8_EXECUTION_RECOVERY_SUMMARY_REL).resolve()
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    prior_path = ROOT / "benchmarks/artifacts/task43/v16_p8/preparation/T_root_qualification.json"
+    prior = json.loads(prior_path.read_text(encoding="utf-8"))
+    prior_ref = record.get("source_binding", {}).get("prior_T_qualification", {})
+    if (
+        prior_ref.get("path") != str(prior_path.resolve())
+        or prior_ref.get("sha256") != _sha256_file(prior_path)
+        or summary.get("prior_T_qualification") != dict(prior_ref)
+        or record.get("frozen_protocol", {}).get("V15_contract_review_commit")
+        != "f72e1c8d031de7acc374f0806ddac06099c461c4"
+        or contract.get("authority", {}).get("review_commit")
+        != "f72e1c8d031de7acc374f0806ddac06099c461c4"
+    ):
+        raise ValueError("V18 P8 recovery does not preserve original T qualification and V15 protocol identity")
+    _validate_v18_p8_execution_recovery_record(
+        record,
+        tracked_summary=summary,
+        prior_qualification=prior,
+        current_source_sha256={
+            **_v11_source_snapshot(),
+            str((ROOT / _V16_P8_CONTRACT_REL).resolve().relative_to(ROOT)):
+                contract_sha256,
+        },
+        contract_sha256=contract_sha256,
+        execution_manifest_path=manifest_path,
+        execution_manifest_sha256=initial_sha256,
+    )
+    test_terminal = None
+    test_qualification = None
+    root_observation = None
+    runtime_identity = None
+    if phase != "T":
+        test_terminal = _v18_p8_phase_root(record, "T") / "test_terminal.json"
+        test_qualification = (
+            _v18_p8_phase_root(record, "T") / "T_root_qualification.json"
+        )
+        if (
+            test_terminal.is_symlink()
+            or not test_terminal.is_file()
+            or test_qualification.is_symlink()
+            or not test_qualification.is_file()
+        ):
+            raise ValueError("V18 T lifecycle/root-reader fixture has not passed")
+        terminal = json.loads(test_terminal.read_text(encoding="utf-8"))
+        qualification = json.loads(test_qualification.read_text(encoding="utf-8"))
+        root_observation = qualification.get("root_observation_record", {})
+        root_observation_path = Path(str(root_observation.get("path", "")))
+        runtime_ref = terminal.get("runtime_identity", {})
+        runtime_identity_path = _v18_p8_phase_root(record, "T") / "v18_runtime_identity.json"
+        if (
+            runtime_ref.get("path") != str(runtime_identity_path.resolve())
+            or runtime_ref.get("sha256") != _sha256_file(runtime_identity_path)
+            or runtime_identity_path.is_symlink()
+            or not runtime_identity_path.is_file()
+        ):
+            raise ValueError("V18 T does not bind its live runtime identity record")
+        runtime_identity = json.loads(runtime_identity_path.read_text(encoding="utf-8"))
+        runtime = runtime_identity.get("runtime_envelope", {})
+        worker = runtime_identity.get("v11_watchdog_worker_identity", {})
+        expected_threads = {
+            "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+            "BLIS_NUM_THREADS", "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS",
+        }
+        qualification_gates = qualification.get("gates", {})
+        if (
+            terminal.get("schema") != "task43.v18.p8.execution-test-terminal.v1"
+            or terminal.get("classification") != "PASS"
+            or terminal.get("exit_code") != 0
+            or terminal.get("manifest_sha256") != initial_sha256
+            or terminal.get("source_sha256")
+            != record.get("source_binding", {}).get("current_source_sha256")
+            or terminal.get("targeted_fixture")
+            != record.get("source_binding", {}).get("targeted_fixture")
+            or runtime_identity.get("schema") != "task43.v18.p8.runtime-identity.v1"
+            or runtime.get("qualified_activation_marker") is not True
+            or "complex128" not in str(runtime.get("petsc_scalar_type", ""))
+            or "int64" not in str(runtime.get("petsc_int_type", ""))
+            or runtime.get("mpi_size") != 1
+            or runtime.get("rank_affinity") != [[1]]
+            or set(runtime.get("v11_math_threads", {})) != expected_threads
+            or any(value != "1" for value in runtime.get("v11_math_threads", {}).values())
+            or worker.get("direct_watchdog_parent_verified") is not True
+            or worker.get("tracer_proc_status_verified") is not True
+            or worker.get("tracer_descends_from_watchdog") is not True
+            or not worker.get("worker_tid_affinities")
+            or any(item.get("cpu_list") != [1] for item in worker.get("worker_tid_affinities", []))
+            or runtime_ref.get("worker_pid") != worker.get("worker_pid")
+            or runtime_ref.get("watchdog_pid") != worker.get("watchdog_pid")
+            or runtime_ref.get("tracer_pid") != worker.get("tracer_pid")
+            or qualification.get("schema")
+            != "task43.v18.p8.execution-test-root-qualification.v1"
+            or qualification.get("status") != "PASS_LIMITED_V18_EXECUTION"
+            or qualification.get("manifest_sha256") != initial_sha256
+            or qualification.get("test_terminal", {}).get("path")
+            != str(test_terminal.resolve())
+            or qualification.get("test_terminal", {}).get("sha256")
+            != _sha256_file(test_terminal)
+            or not root_observation_path.is_absolute()
+            or root_observation_path.resolve() != root_observation_path
+            or root_observation_path.is_symlink()
+            or not root_observation_path.is_file()
+            or _sha256_file(root_observation_path)
+            != root_observation.get("sha256")
+            or qualification.get("source_sha256")
+            != record.get("source_binding", {}).get("current_source_sha256")
+            or set(qualification_gates)
+            != {"source", "input", "resource", "trace", "exit", "cleanup", "whole"}
+            or any(value is not True for value in qualification_gates.values())
+        ):
+            raise ValueError("V18 T root qualification does not bind measured fixture, resource and trace evidence")
+    if _sha256_file(manifest_path) != initial_sha256:
+        raise RuntimeError("V18 P8 execution-recovery manifest changed while it was read")
+    result = dict(record)
+    result.update(
+        manifest_path=str(manifest_path),
+        manifest_sha256=initial_sha256,
+        tracked_summary_path=str(summary_path),
+        tracked_summary_sha256=_sha256_file(summary_path),
+        launch_script_path=str((ROOT / _V18_P8_STAGE_LAUNCHER_REL).resolve()),
+        launch_script_sha256=_sha256_file(ROOT / _V18_P8_STAGE_LAUNCHER_REL),
+        selected_phase=phase,
+    )
+    if test_terminal is not None:
+        result["test_terminal_path"] = str(test_terminal.resolve())
+        result["test_terminal_sha256"] = _sha256_file(test_terminal)
+        result["test_qualification_path"] = str(test_qualification.resolve())
+        result["test_qualification_sha256"] = _sha256_file(test_qualification)
+        result["test_root_observation_path"] = str(root_observation_path)
+        result["test_root_observation_sha256"] = str(root_observation["sha256"])
+        result["runtime_identity_path"] = str(runtime_identity_path.resolve())
+        result["runtime_identity_sha256"] = _sha256_file(runtime_identity_path)
+    return result
+
+
+def _validate_v18_p8_phase_identity(
+    execution_recovery: Mapping[str, Any],
+    *,
+    phase: str,
+    actual_root: Path,
+    manifest_path: Path,
+    manifest_sha256: str,
+    contract_sha256: str,
+) -> Path:
+    """Reject wrong-root or wrong-binding packages at every V18 stage boundary."""
+
+    expected_manifest = (ROOT / _V18_P8_EXECUTION_RECOVERY_REL).resolve()
+    expected_root = _v18_p8_phase_root(execution_recovery, phase)
+    actual_manifest = Path(manifest_path).resolve()
+    if (
+        actual_manifest != expected_manifest
+        or execution_recovery.get("manifest_path") != str(expected_manifest)
+        or execution_recovery.get("manifest_sha256") != manifest_sha256
+        or execution_recovery.get("selected_phase") != phase
+        or execution_recovery.get("frozen_protocol", {}).get("contract", {}).get("sha256")
+        != contract_sha256
+        or Path(actual_root).resolve() != expected_root
+    ):
+        raise ValueError(f"V18 P8 {phase} root or execution-binding identity differs")
+    return expected_root
+
+
+def _v16_p8_input_snapshot(
+    contract: Mapping[str, Any],
+    *,
+    additional_inputs: Mapping[str, str] | None = None,
+) -> dict[str, str]:
     result: dict[str, str] = {}
     for item in contract["inputs"]:
         path = (ROOT / str(item["path"])).resolve()
@@ -885,6 +1265,16 @@ def _v16_p8_input_snapshot(contract: Mapping[str, Any]) -> dict[str, str]:
         result[str(path)] = actual
     contract_path = (ROOT / _V16_P8_CONTRACT_REL).resolve()
     result[str(contract_path)] = _sha256_file(contract_path)
+    for raw_path, expected in (additional_inputs or {}).items():
+        path = Path(raw_path).resolve()
+        if (
+            not path.is_absolute()
+            or path.is_symlink()
+            or not path.is_file()
+            or _sha256_file(path) != expected
+        ):
+            raise RuntimeError(f"V16 P8 additional execution input changed: {path}")
+        result[str(path)] = str(expected)
     return result
 
 
@@ -1505,7 +1895,14 @@ def _validate_v16_p8_audit(
     }
 
 
-def _run_v16_p8_space_plan(args, contract: Mapping[str, Any], contract_sha256: str, cfg, comm) -> None:
+def _run_v16_p8_space_plan(
+    args,
+    contract: Mapping[str, Any],
+    contract_sha256: str,
+    cfg,
+    comm,
+    execution_recovery: Mapping[str, Any] | None = None,
+) -> None:
     expected_selection = (ROOT / contract["parent"]["selection_path"]).resolve()
     selection = next(
         item for item in contract["inputs"] if item["role"] == "R9_selection_transition"
@@ -1518,7 +1915,22 @@ def _run_v16_p8_space_plan(args, contract: Mapping[str, Any], contract_sha256: s
         or args.output_root.resolve() != DEFAULT_OUTPUT.resolve()
     ):
         raise ValueError("V16 P8 space mode accepts only its paired contract argument")
-    expected_root = (Path(contract["artifact_prefix"]) / contract["phases"]["S"]["root"]).resolve()
+    expected_root = (
+        _v18_p8_phase_root(execution_recovery, "S")
+        if execution_recovery is not None
+        else (
+            Path(contract["artifact_prefix"]) / contract["phases"]["S"]["root"]
+        ).resolve()
+    )
+    if execution_recovery is not None:
+        _validate_v18_p8_phase_identity(
+            execution_recovery,
+            phase="S",
+            actual_root=expected_root,
+            manifest_path=Path(execution_recovery["manifest_path"]),
+            manifest_sha256=str(execution_recovery["manifest_sha256"]),
+            contract_sha256=contract_sha256,
+        )
     output_root = expected_root / "plan_output"
     if not expected_root.is_dir() or expected_root.is_symlink():
         raise ValueError("V16 P8 S root must be precreated by its frozen launch shell")
@@ -1528,7 +1940,38 @@ def _run_v16_p8_space_plan(args, contract: Mapping[str, Any], contract_sha256: s
     worker = runtime["v11_watchdog_worker_identity"]
     _require_v11_watchdog_worker_identity(expected_identity=worker)
     source_before = _v11_source_snapshot()
-    input_before = _v16_p8_input_snapshot(contract)
+    execution_inputs = (
+        {
+            execution_recovery["manifest_path"]: execution_recovery[
+                "manifest_sha256"
+            ],
+            execution_recovery["tracked_summary_path"]: execution_recovery[
+                "tracked_summary_sha256"
+            ],
+            execution_recovery["test_terminal_path"]: execution_recovery[
+                "test_terminal_sha256"
+            ],
+            execution_recovery["test_qualification_path"]: execution_recovery[
+                "test_qualification_sha256"
+            ],
+            execution_recovery["test_root_observation_path"]: execution_recovery[
+                "test_root_observation_sha256"
+            ],
+            execution_recovery["runtime_identity_path"]: execution_recovery[
+                "runtime_identity_sha256"
+            ],
+            execution_recovery["launch_script_path"]: execution_recovery[
+                "launch_script_sha256"
+            ],
+        }
+        if execution_recovery is not None
+        else None
+    )
+    input_before = (
+        _v16_p8_input_snapshot(contract, additional_inputs=execution_inputs)
+        if execution_inputs is not None
+        else _v16_p8_input_snapshot(contract)
+    )
     if input_before.get(str((ROOT / _V16_P8_CONTRACT_REL).resolve())) != contract_sha256:
         raise RuntimeError("V16 P8 contract changed after its first read")
     output_root.mkdir(parents=False, exist_ok=False)
@@ -1540,6 +1983,15 @@ def _run_v16_p8_space_plan(args, contract: Mapping[str, Any], contract_sha256: s
             "worker_identity": worker,
             "runtime_environment": runtime,
             "contract_sha256": contract_sha256,
+            "execution_recovery_binding": (
+                {
+                    "path": execution_recovery["manifest_path"],
+                    "sha256": execution_recovery["manifest_sha256"],
+                    "phase": "S",
+                }
+                if execution_recovery is not None
+                else None
+            ),
             "input_sha256": input_before,
             "source_sha256": source_before,
             "pde_matrix_constructed": False,
@@ -1557,6 +2009,15 @@ def _run_v16_p8_space_plan(args, contract: Mapping[str, Any], contract_sha256: s
             "schema": "task43.v16.p8.saved-p5-input-gate.v1",
             "classification": "measured_existing_samples_no_resampling",
             "contract_sha256": contract_sha256,
+            "execution_recovery_binding": (
+                {
+                    "path": execution_recovery["manifest_path"],
+                    "sha256": execution_recovery["manifest_sha256"],
+                    "phase": "S",
+                }
+                if execution_recovery is not None
+                else None
+            ),
             "gate": p5_geometry_gate,
             "official_result": False,
         },
@@ -1576,6 +2037,15 @@ def _run_v16_p8_space_plan(args, contract: Mapping[str, Any], contract_sha256: s
             "schema": "task43.v16.p8.pre-authority-plan-status.v1",
             "classification": "measured_plan_ready_before_authority",
             "contract_sha256": contract_sha256,
+            "execution_recovery_binding": (
+                {
+                    "path": execution_recovery["manifest_path"],
+                    "sha256": execution_recovery["manifest_sha256"],
+                    "phase": "S",
+                }
+                if execution_recovery is not None
+                else None
+            ),
             "plan_path": str(plan_path.resolve()),
             "plan_sha256": _sha256_file(plan_path),
             "plan_status": plan_status,
@@ -1614,6 +2084,15 @@ def _run_v16_p8_space_plan(args, contract: Mapping[str, Any], contract_sha256: s
         "audit_path": str((output_root / "plans/v16_r9_p8.audit.json").resolve()),
         "audit_sha256": _sha256_file(output_root / "plans/v16_r9_p8.audit.json"),
         "contract_sha256": contract_sha256,
+        "execution_recovery_binding": (
+            {
+                "path": execution_recovery["manifest_path"],
+                "sha256": execution_recovery["manifest_sha256"],
+                "phase": "S",
+            }
+            if execution_recovery is not None
+            else None
+        ),
         "actual_space_gate": actual_gate,
         "saved_p5_geometry_gate": p5_geometry_gate,
         "pass": actual_gate["pass"] and p5_geometry_gate["pass"],
@@ -1627,7 +2106,11 @@ def _run_v16_p8_space_plan(args, contract: Mapping[str, Any], contract_sha256: s
         expected_identity=worker, require_unused_phase_file=False
     )
     source_after = _v11_source_snapshot()
-    input_after = _v16_p8_input_snapshot(contract)
+    input_after = (
+        _v16_p8_input_snapshot(contract, additional_inputs=execution_inputs)
+        if execution_inputs is not None
+        else _v16_p8_input_snapshot(contract)
+    )
     if source_after != source_before or input_after != input_before:
         raise RuntimeError("V16 P8 S source/input identity changed during space audit")
     ledger.marker(
@@ -1635,6 +2118,9 @@ def _run_v16_p8_space_plan(args, contract: Mapping[str, Any], contract_sha256: s
         {
             "plan_sha256": bundle["plan_sha256"],
             "audit_sha256": bundle["audit_sha256"],
+            "execution_recovery_binding": bundle[
+                "execution_recovery_binding"
+            ],
             "actual_space_gate": actual_gate,
             "source_sha256_end": source_after,
             "input_sha256_end": input_after,
@@ -3074,6 +3560,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--primary-diagnostic-contract", type=Path)
     parser.add_argument("--execution-recovery-manifest", type=Path)
     parser.add_argument("--paired-p8-contract", type=Path)
+    parser.add_argument("--p8-execution-recovery-binding", type=Path)
     parser.add_argument(
         "--skip-parent-transfer",
         action="store_true",
@@ -3093,20 +3580,39 @@ def main(argv: list[str] | None = None) -> int:
             or args.execution_recovery_manifest is not None
             or args.skip_parent_transfer
         ):
-            parser.error("V16 P8 space mode uses its own contract and no transfer option")
+            parser.error("P8 space mode accepts only its fixed contract and optional V18 binding")
         try:
             p8_contract, p8_contract_sha256 = _load_v16_p8_contract(
                 args.paired_p8_contract
+            )
+            p8_execution_recovery = (
+                _load_v18_p8_execution_recovery(
+                    args.p8_execution_recovery_binding,
+                    contract=p8_contract,
+                    contract_sha256=p8_contract_sha256,
+                    phase="S",
+                )
+                if args.p8_execution_recovery_binding is not None
+                else None
             )
             cfg = _h100_config(
                 kind="empty_h_active_p3",
                 case_name="task43_v16_r9_p8_space_authority_mpi1",
                 geometry_profile="initial_180",
             )
-            _run_v16_p8_space_plan(args, p8_contract, p8_contract_sha256, cfg, comm)
+            _run_v16_p8_space_plan(
+                args,
+                p8_contract,
+                p8_contract_sha256,
+                cfg,
+                comm,
+                p8_execution_recovery,
+            )
         except (OSError, json.JSONDecodeError, KeyError, RuntimeError, TypeError, ValueError) as exc:
             parser.error(f"V16 P8 space contract or authority failed: {exc}")
         return 0
+    if args.p8_execution_recovery_binding is not None:
+        parser.error("--p8-execution-recovery-binding requires --paired-p8-contract")
     if args.skip_parent_transfer and args.accepted_parent_selection_record is None:
         parser.error("--skip-parent-transfer requires --accepted-parent-selection-record")
     v11_contract = None

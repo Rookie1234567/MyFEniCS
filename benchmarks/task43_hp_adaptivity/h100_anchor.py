@@ -4065,35 +4065,64 @@ def _v11_phase_definition(contract: Mapping[str, Any], phase: str) -> Mapping[st
 
 
 def _load_v16_p8_context(
-    contract_path: Path, *, source_id: str, run_root: Path
+    contract_path: Path,
+    *,
+    source_id: str,
+    run_root: Path,
+    execution_recovery_path: Path | None = None,
 ) -> tuple[dict[str, Any], str, dict[str, Any]]:
     """Load the independent P8 contract and one fixed, root-joined S source."""
 
     from benchmarks.task43_hp_adaptivity.round1_candidates import (
+        _load_v18_p8_execution_recovery,
         _load_v16_p8_contract,
+        _v18_p8_phase_root,
     )
 
     contract, contract_sha256 = _load_v16_p8_contract(contract_path)
-    source_paths = contract.get("recovery_sources", {}).get(source_id)
-    if source_id not in {"S_MAIN", "E_S"} or not isinstance(source_paths, Mapping):
-        raise ValueError("V16 P8 requires explicit S_MAIN or E_S source selection")
-    declared_plan = contract.get("phases", {}).get("F", {}).get(
-        "candidate_plan_sources", {}
-    ).get(source_id)
-    if declared_plan != source_paths.get("plan_path"):
-        raise ValueError("V16 P8 F plan selector differs from the fixed source table")
     artifact_root = Path(str(contract["artifact_prefix"])).resolve()
+    execution_recovery = None
+    if execution_recovery_path is not None:
+        if source_id != "S_MAIN":
+            raise ValueError("V18 P8 recovery accepts the freshly measured S_MAIN source only")
+        execution_recovery = _load_v18_p8_execution_recovery(
+            execution_recovery_path,
+            contract=contract,
+            contract_sha256=contract_sha256,
+            phase="F",
+        )
+        s_root = _v18_p8_phase_root(execution_recovery, "S")
+        source_paths = {
+            "plan_path": str(s_root / "plan_output/plans/v16_r9_p8.json"),
+            "audit_path": str(s_root / "plan_output/plans/v16_r9_p8.audit.json"),
+            "bundle_path": str(s_root / "plan_output/plan_audit.json"),
+            "joined_terminal_path": str(
+                s_root / "v18_p8_space_joined_terminal.json"
+            ),
+        }
+        expected_run_root = _v18_p8_phase_root(execution_recovery, "F") / "run"
+    else:
+        source_paths = contract.get("recovery_sources", {}).get(source_id)
+        if source_id not in {"S_MAIN", "E_S"} or not isinstance(
+            source_paths, Mapping
+        ):
+            raise ValueError("V16 P8 requires explicit S_MAIN or E_S source selection")
+        declared_plan = contract.get("phases", {}).get("F", {}).get(
+            "candidate_plan_sources", {}
+        ).get(source_id)
+        if declared_plan != source_paths.get("plan_path"):
+            raise ValueError("V16 P8 F plan selector differs from the fixed source table")
+        expected_run_root = (
+            artifact_root / str(contract["phases"]["F"]["root"]) / "run"
+        ).resolve()
     resolved = {
         key: (artifact_root / str(value)).resolve()
         for key, value in source_paths.items()
     }
     if any(artifact_root not in path.parents for path in resolved.values()):
         raise ValueError("V16 P8 S source path escaped its fixed artifact prefix")
-    expected_run_root = (
-        artifact_root / str(contract["phases"]["F"]["root"]) / "run"
-    ).resolve()
     if Path(run_root).resolve() != expected_run_root:
-        raise ValueError("V16 P8 F run root differs from its fixed contract")
+        raise ValueError("V16 P8 F run root differs from its frozen contract or V18 binding")
     products_root = resolved["plan_path"].parents[2]
     lifecycle_root = (
         products_root
@@ -4112,6 +4141,28 @@ def _load_v16_p8_context(
         "watchdog_exit": lifecycle_root / "watchdog_exit_code.txt",
         "source_head": lifecycle_root / "source_head.txt",
     }
+    if execution_recovery is not None:
+        required_paths["execution_manifest"] = Path(
+            execution_recovery["manifest_path"]
+        )
+        required_paths["execution_summary"] = Path(
+            execution_recovery["tracked_summary_path"]
+        )
+        required_paths["execution_test_terminal"] = Path(
+            execution_recovery["test_terminal_path"]
+        )
+        required_paths["execution_test_qualification"] = Path(
+            execution_recovery["test_qualification_path"]
+        )
+        required_paths["execution_test_root_observation"] = Path(
+            execution_recovery["test_root_observation_path"]
+        )
+        required_paths["execution_runtime_identity"] = Path(
+            execution_recovery["runtime_identity_path"]
+        )
+        required_paths["execution_stage_launcher"] = Path(
+            execution_recovery["launch_script_path"]
+        )
     if any(not path.is_file() or path.is_symlink() for path in required_paths.values()):
         raise FileNotFoundError("V16 P8 selected S source is missing a fixed product or lifecycle record")
     before = {str(path): _sha256_file(path) for path in required_paths.values()}
@@ -4134,6 +4185,31 @@ def _load_v16_p8_context(
         or not isinstance(joined_products, Mapping)
         or set(joined_products) != expected_product_names
         or launch_manifest.get("contract_sha256") != contract_sha256
+            or (
+                execution_recovery is not None
+                and launch_manifest.get("launch_script")
+                != {
+                    "path": execution_recovery["launch_script_path"],
+                    "sha256": execution_recovery["launch_script_sha256"],
+                }
+            )
+        or (
+            execution_recovery is not None
+            and (
+                joined.get("execution_recovery_binding")
+                != {
+                    "path": execution_recovery["manifest_path"],
+                    "sha256": execution_recovery["manifest_sha256"],
+                    "phase": "S",
+                }
+                or launch_manifest.get("execution_recovery_binding")
+                != {
+                    "path": execution_recovery["manifest_path"],
+                    "sha256": execution_recovery["manifest_sha256"],
+                    "phase": "S",
+                }
+            )
+        )
     ):
         raise ValueError("V16 P8 selected S joined terminal is not root-verified")
     source_head = joined.get("source_head")
@@ -4191,6 +4267,32 @@ def _load_v16_p8_context(
         for item in contract["inputs"]
     }
     expected_contract_inputs[str(Path(contract_path).resolve())] = contract_sha256
+    if execution_recovery is not None:
+        expected_contract_inputs.update(
+            {
+                execution_recovery["manifest_path"]: execution_recovery[
+                    "manifest_sha256"
+                ],
+                execution_recovery["tracked_summary_path"]: execution_recovery[
+                    "tracked_summary_sha256"
+                ],
+                execution_recovery["test_terminal_path"]: execution_recovery[
+                    "test_terminal_sha256"
+                ],
+                execution_recovery["test_qualification_path"]: execution_recovery[
+                    "test_qualification_sha256"
+                ],
+                execution_recovery["test_root_observation_path"]: execution_recovery[
+                    "test_root_observation_sha256"
+                ],
+                execution_recovery["runtime_identity_path"]: execution_recovery[
+                    "runtime_identity_sha256"
+                ],
+                execution_recovery["launch_script_path"]: execution_recovery[
+                    "launch_script_sha256"
+                ],
+            }
+        )
     if any(
         input_snapshot_map(launch_manifest).get(path) != digest
         for path, digest in expected_contract_inputs.items()
@@ -4260,6 +4362,19 @@ def _load_v16_p8_context(
     ):
         raise ValueError("V16 P8 F launch snapshot does not bind its selected S source")
     p8_inputs = input_snapshot_map(p8_launch_manifest)
+    if execution_recovery is not None and p8_launch_manifest.get(
+        "execution_recovery_binding"
+    ) != {
+        "path": execution_recovery["manifest_path"],
+        "sha256": execution_recovery["manifest_sha256"],
+        "phase": "F",
+    }:
+        raise ValueError("V18 P8 F launch snapshot names another execution recovery binding")
+    if execution_recovery is not None and p8_launch_manifest.get("launch_script") != {
+        "path": execution_recovery["launch_script_path"],
+        "sha256": execution_recovery["launch_script_sha256"],
+    }:
+        raise ValueError("V18 P8 F launch snapshot does not bind the authorized stage launcher")
     required_s_inputs = {
         **expected_contract_inputs,
         **before,
@@ -4299,6 +4414,16 @@ def _load_v16_p8_context(
         "space_source_id": source_id,
         "contract_path": str(Path(contract_path).resolve()),
         "contract_sha256": contract_sha256,
+        "execution_recovery_binding": (
+            {
+                "path": execution_recovery["manifest_path"],
+                "sha256": execution_recovery["manifest_sha256"],
+                "phase": "F",
+            }
+            if execution_recovery is not None
+            else None
+        ),
+        "execution_recovery": execution_recovery,
         **{name: str(path) for name, path in resolved.items()},
         "products": {
             name: {"path": str(path), "sha256": _sha256_file(path)}
@@ -4583,11 +4708,28 @@ def _validate_v16_p8_cli(
     ):
         raise ValueError("V16 R9_P8 requires one explicit completed S source")
     _verify_v16_p8_source_snapshot(source_binding)
-    expected_root = (
-        Path(str(contract["artifact_prefix"]))
-        / str(contract["phases"]["F"]["root"])
-        / "run"
-    ).resolve()
+    recovery = source_binding.get("execution_recovery")
+    if isinstance(recovery, Mapping):
+        from benchmarks.task43_hp_adaptivity.round1_candidates import (
+            _validate_v18_p8_phase_identity,
+            _v18_p8_phase_root,
+        )
+
+        expected_root = _v18_p8_phase_root(recovery, "F") / "run"
+        _validate_v18_p8_phase_identity(
+            recovery,
+            phase="F",
+            actual_root=expected_root.parent,
+            manifest_path=Path(str(recovery["manifest_path"])),
+            manifest_sha256=str(recovery["manifest_sha256"]),
+            contract_sha256=str(source_binding.get("contract_sha256", "")),
+        )
+    else:
+        expected_root = (
+            Path(str(contract["artifact_prefix"]))
+            / str(contract["phases"]["F"]["root"])
+            / "run"
+        ).resolve()
     if Path(run_root).resolve() != expected_root:
         raise ValueError("V16 R9_P8 run root differs from its fixed contract")
     if candidate_id != "v16_r9_p8":
@@ -9970,6 +10112,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--primary-diagnostic-contract", type=Path)
     parser.add_argument("--execution-recovery-manifest", type=Path)
     parser.add_argument("--paired-p8-contract", type=Path)
+    parser.add_argument("--p8-execution-recovery-binding", type=Path)
     parser.add_argument(
         "--v3-failure-evidence",
         action="store_true",
@@ -10021,6 +10164,7 @@ def main(argv: list[str] | None = None) -> int:
                     args.primary_diagnostic_phase,
                     args.primary_diagnostic_contract,
                     args.execution_recovery_manifest,
+                    args.p8_execution_recovery_binding,
                     args.v3_contract,
                     args.v3_plan,
                 )
@@ -10097,27 +10241,52 @@ def main(argv: list[str] | None = None) -> int:
             v16_p8_contract, v16_p8_contract_sha256 = _load_p8_contract(
                 args.paired_p8_contract
             )
-            plan_sources = v16_p8_contract["phases"]["F"][
-                "candidate_plan_sources"
-            ]
-            artifact_root = Path(
-                str(v16_p8_contract["artifact_prefix"])
-            ).resolve()
-            selected_sources = [
-                source_id
-                for source_id, relative in plan_sources.items()
-                if args.candidate_plan is not None
-                and args.candidate_plan.resolve()
-                == (artifact_root / str(relative)).resolve()
-            ]
-            if len(selected_sources) != 1:
-                raise ValueError(
-                    "R9_P8 candidate plan must explicitly name exactly one S_MAIN or E_S plan"
+            execution_recovery = None
+            if args.p8_execution_recovery_binding is not None:
+                from benchmarks.task43_hp_adaptivity.round1_candidates import (
+                    _load_v18_p8_execution_recovery,
+                    _v18_p8_phase_root,
                 )
+
+                execution_recovery = _load_v18_p8_execution_recovery(
+                    args.p8_execution_recovery_binding,
+                    contract=v16_p8_contract,
+                    contract_sha256=v16_p8_contract_sha256,
+                    phase="F",
+                )
+                expected_plan = (
+                    _v18_p8_phase_root(execution_recovery, "S")
+                    / "plan_output/plans/v16_r9_p8.json"
+                )
+                selected_sources = ["S_MAIN"]
+                if args.candidate_plan is None or args.candidate_plan.resolve() != expected_plan.resolve():
+                    raise ValueError("V18 R9_P8 plan path differs from the newly qualified S root")
+            else:
+                plan_sources = v16_p8_contract["phases"]["F"][
+                    "candidate_plan_sources"
+                ]
+                artifact_root = Path(str(v16_p8_contract["artifact_prefix"])).resolve()
+                selected_sources = [
+                    source_id
+                    for source_id, relative in plan_sources.items()
+                    if args.candidate_plan is not None
+                    and args.candidate_plan.resolve()
+                    == (artifact_root / str(relative)).resolve()
+                ]
+                if len(selected_sources) != 1:
+                    raise ValueError(
+                        "R9_P8 candidate plan must explicitly name exactly one S_MAIN or E_S plan"
+                    )
+            recovery_options = (
+                {"execution_recovery_path": args.p8_execution_recovery_binding}
+                if args.p8_execution_recovery_binding is not None
+                else {}
+            )
             _, _, v16_p8_source_binding = _load_v16_p8_context(
                 args.paired_p8_contract,
                 source_id=selected_sources[0],
                 run_root=args.run_root,
+                **recovery_options,
             )
             _validate_v16_p8_cli(
                 contract=v16_p8_contract,
@@ -10136,6 +10305,8 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(f"V16 R9_P8 contract or worker identity is invalid: {exc}")
     elif args.paired_p8_contract is not None:
         parser.error("--paired-p8-contract requires --primary-diagnostic-phase R9_P8")
+    elif args.p8_execution_recovery_binding is not None:
+        parser.error("--p8-execution-recovery-binding requires --paired-p8-contract")
     if v11_diagnostic:
         if args.primary_diagnostic_contract is None:
             parser.error("V11 primary diagnostics require --primary-diagnostic-contract")

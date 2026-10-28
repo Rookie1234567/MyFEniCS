@@ -3161,33 +3161,71 @@ def _v16_p8_read_and_bind_prevalidation_checkpoint(
 def _v16_p8_frozen_endpoint(
     contract_path: Path,
     accepted_parent_selection_record: Path,
+    *,
+    execution_recovery_path: Path | None = None,
 ) -> dict[str, Any]:
     from benchmarks.task43_hp_adaptivity import h100_anchor
     from benchmarks.task43_hp_adaptivity.round1_candidates import (
+        _load_v18_p8_execution_recovery,
         _load_v16_p8_contract,
+        _validate_v18_p8_phase_identity,
+        _v18_p8_phase_root,
         _v16_p8_input_snapshot,
     )
 
     contract, contract_sha256 = _load_v16_p8_contract(contract_path)
+    execution_recovery = (
+        _load_v18_p8_execution_recovery(
+            execution_recovery_path,
+            contract=contract,
+            contract_sha256=contract_sha256,
+            phase="C",
+        )
+        if execution_recovery_path is not None
+        else None
+    )
+    if execution_recovery is not None:
+        _validate_v18_p8_phase_identity(
+            execution_recovery,
+            phase="C",
+            actual_root=_v18_p8_phase_root(execution_recovery, "C"),
+            manifest_path=Path(execution_recovery["manifest_path"]),
+            manifest_sha256=execution_recovery["manifest_sha256"],
+            contract_sha256=contract_sha256,
+        )
     run_root = (
-        Path(str(contract["artifact_prefix"]))
-        / str(contract["phases"]["F"]["root"])
-        / "run"
-    ).resolve()
+        _v18_p8_phase_root(execution_recovery, "F") / "run"
+        if execution_recovery is not None
+        else (
+            Path(str(contract["artifact_prefix"]))
+            / str(contract["phases"]["F"]["root"])
+            / "run"
+        ).resolve()
+    )
     launch_root = run_root.parent
     launch_manifest_path = launch_root / "snapshots/launch_manifest.json"
     launch_manifest = _json(launch_manifest_path)
     source_id = str(launch_manifest.get("space_source_id", ""))
+    context_options = (
+        {"execution_recovery_path": execution_recovery_path}
+        if execution_recovery_path is not None
+        else {}
+    )
     _loaded_contract, loaded_sha, space_binding = _load_v16_p8_context(
-        contract_path, source_id=source_id, run_root=run_root
+        contract_path, source_id=source_id, run_root=run_root, **context_options
     )
     if loaded_sha != contract_sha256:
         raise RuntimeError("V16 P8 contract changed during C first-read binding")
 
     joined_path = (
-        Path(str(contract["artifact_prefix"]))
-        / str(contract["phases"]["F"]["joined_terminal_path"])
-    ).resolve()
+        _v18_p8_phase_root(execution_recovery, "F")
+        / "v18_p8_endpoint_joined_terminal.json"
+        if execution_recovery is not None
+        else (
+            Path(str(contract["artifact_prefix"]))
+            / str(contract["phases"]["F"]["joined_terminal_path"])
+        ).resolve()
+    )
     terminal_path = run_root / "task43_v16_p8_primary_terminal.json"
     endpoint_path = run_root / "task43_round1_candidate_record.json"
     packet_path = run_root / "primary_state.npz"
@@ -3252,6 +3290,24 @@ def _v16_p8_frozen_endpoint(
         != {"terminal", "endpoint", "primary_packet", "raw_gate_checkpoint"}
         or set(joined.get("gates", {}))
         != {"source", "input", "resource", "trace", "raw", "space", "numerical_endpoint"}
+        or (
+            execution_recovery is not None
+            and joined.get("execution_recovery_binding")
+            != {
+                "path": execution_recovery["manifest_path"],
+                "sha256": execution_recovery["manifest_sha256"],
+                "phase": "F",
+            }
+        )
+        or (
+            execution_recovery is not None
+            and launch_manifest.get("execution_recovery_binding")
+            != {
+                "path": execution_recovery["manifest_path"],
+                "sha256": execution_recovery["manifest_sha256"],
+                "phase": "F",
+            }
+        )
     ):
         raise ValueError("V16 P8 F root-joined terminal is not a successful verified endpoint")
     if (
@@ -3330,7 +3386,38 @@ def _v16_p8_frozen_endpoint(
 
     from benchmarks.task43_hp_adaptivity import round1_candidates
 
-    contract_inputs = _v16_p8_input_snapshot(contract)
+    extra_inputs = (
+        {
+            execution_recovery["manifest_path"]: execution_recovery[
+                "manifest_sha256"
+            ],
+            execution_recovery["tracked_summary_path"]: execution_recovery[
+                "tracked_summary_sha256"
+            ],
+            execution_recovery["test_terminal_path"]: execution_recovery[
+                "test_terminal_sha256"
+            ],
+            execution_recovery["test_qualification_path"]: execution_recovery[
+                "test_qualification_sha256"
+            ],
+            execution_recovery["test_root_observation_path"]: execution_recovery[
+                "test_root_observation_sha256"
+            ],
+            execution_recovery["runtime_identity_path"]: execution_recovery[
+                "runtime_identity_sha256"
+            ],
+            execution_recovery["launch_script_path"]: execution_recovery[
+                "launch_script_sha256"
+            ],
+        }
+        if execution_recovery is not None
+        else None
+    )
+    contract_inputs = (
+        _v16_p8_input_snapshot(contract, additional_inputs=extra_inputs)
+        if extra_inputs is not None
+        else _v16_p8_input_snapshot(contract)
+    )
     source_snapshot = _v11_source_snapshot()
     source_snapshot[Path(contract_path).resolve().relative_to(ROOT).as_posix()] = contract_sha256
     launch_sources = {
@@ -3572,13 +3659,19 @@ def _v16_p8_frozen_endpoint(
     for name, path in lifecycle_paths.items():
         if _sha256_file(path) != product_before[name]:
             raise RuntimeError(f"V16 P8 F input changed during C validation: {name}")
-    if _v16_p8_input_snapshot(contract) != contract_inputs:
+    current_contract_inputs = (
+        _v16_p8_input_snapshot(contract, additional_inputs=extra_inputs)
+        if extra_inputs is not None
+        else _v16_p8_input_snapshot(contract)
+    )
+    if current_contract_inputs != contract_inputs:
         raise RuntimeError("V16 P8 contract inputs changed during C first-read validation")
     if _verify_v16_p8_source_snapshot(space_binding) != space_binding["input_snapshot"]:
         raise RuntimeError("V16 P8 selected S source changed during C first-read validation")
     return {
         "contract": contract,
         "contract_sha256": contract_sha256,
+        "execution_recovery": execution_recovery,
         "source_id": source_id,
         "run_root": run_root,
         "launch_root": launch_root,
@@ -3743,15 +3836,23 @@ def compare_v16_p8_paired(
     *,
     contract_path: Path,
     attempt_id: str,
+    execution_recovery_path: Path | None = None,
 ) -> dict[str, Any]:
     """Reuse the fixed P5 R9/H8/Y6 arrays and sample restored P8 exactly once per q."""
 
     if MPI.COMM_WORLD.size != 1:
         raise RuntimeError("V16 P8 paired comparison is fixed to MPI1")
     contract_path = Path(contract_path).resolve()
-    frozen = _v16_p8_frozen_endpoint(
-        contract_path, Path(accepted_parent_selection_record).resolve()
-    )
+    if execution_recovery_path is None:
+        frozen = _v16_p8_frozen_endpoint(
+            contract_path, Path(accepted_parent_selection_record).resolve()
+        )
+    else:
+        frozen = _v16_p8_frozen_endpoint(
+            contract_path,
+            Path(accepted_parent_selection_record).resolve(),
+            execution_recovery_path=execution_recovery_path,
+        )
     from benchmarks.task43_hp_adaptivity import round1_candidates
 
     if attempt_id != frozen["contract"]["comparison"]["attempt_id"]:
@@ -3759,10 +3860,16 @@ def compare_v16_p8_paired(
     if Path(candidate_run_root).resolve() != Path(frozen["run_root"]).resolve():
         raise ValueError("V16 P8 comparison candidate root differs from the fixed F endpoint")
     contract = frozen["contract"]
+    execution_recovery = frozen.get("execution_recovery")
     output_root = (
-        Path(str(contract["artifact_prefix"]))
-        / str(contract["comparison"]["output_root"])
-    ).resolve()
+        round1_candidates._v18_p8_phase_root(execution_recovery, "C")
+        / "comparison"
+        if execution_recovery is not None
+        else (
+            Path(str(contract["artifact_prefix"]))
+            / str(contract["comparison"]["output_root"])
+        ).resolve()
+    )
     if output_root.exists():
         raise FileExistsError(f"refusing to overwrite V16 P8 comparison root: {output_root}")
     runtime_environment = _check_v11_runtime_envelope(MPI.COMM_WORLD)
@@ -4190,7 +4297,40 @@ def compare_v16_p8_paired(
             )
         source_end = _v11_source_snapshot()
         source_end[contract_path.relative_to(ROOT).as_posix()] = frozen["contract_sha256"]
-        inputs_end = round1_candidates._v16_p8_input_snapshot(contract)
+        execution_inputs = (
+            {
+                execution_recovery["manifest_path"]: execution_recovery[
+                    "manifest_sha256"
+                ],
+                execution_recovery["tracked_summary_path"]: execution_recovery[
+                    "tracked_summary_sha256"
+                ],
+                execution_recovery["test_terminal_path"]: execution_recovery[
+                    "test_terminal_sha256"
+                ],
+                execution_recovery["test_qualification_path"]: execution_recovery[
+                    "test_qualification_sha256"
+                ],
+                execution_recovery["test_root_observation_path"]: execution_recovery[
+                    "test_root_observation_sha256"
+                ],
+                execution_recovery["runtime_identity_path"]: execution_recovery[
+                    "runtime_identity_sha256"
+                ],
+                execution_recovery["launch_script_path"]: execution_recovery[
+                    "launch_script_sha256"
+                ],
+            }
+            if execution_recovery is not None
+            else None
+        )
+        inputs_end = (
+            round1_candidates._v16_p8_input_snapshot(
+                contract, additional_inputs=execution_inputs
+            )
+            if execution_inputs is not None
+            else round1_candidates._v16_p8_input_snapshot(contract)
+        )
         if (
             source_end != source_start
             or inputs_end != frozen["contract_input_snapshot"]
@@ -4215,6 +4355,15 @@ def compare_v16_p8_paired(
             "attempt_id": attempt_id,
             "contract_path": str(contract_path),
             "contract_sha256": frozen["contract_sha256"],
+            "execution_recovery_binding": (
+                {
+                    "path": execution_recovery["manifest_path"],
+                    "sha256": execution_recovery["manifest_sha256"],
+                    "phase": "C",
+                }
+                if execution_recovery is not None
+                else None
+            ),
             "fixed_reference": "Y6_1",
             "candidate_id": "v16_r9_p8",
             "original_P4_status": "FAILED",
@@ -4283,6 +4432,7 @@ def main() -> int:
     parser.add_argument("--execution-recovery-manifest", type=Path)
     parser.add_argument("--saved-primary-recovery-binding", type=Path)
     parser.add_argument("--paired-p8-contract", type=Path)
+    parser.add_argument("--p8-execution-recovery-binding", type=Path)
     args = parser.parse_args()
     if not args.attempt_id or Path(args.attempt_id).name != args.attempt_id:
         parser.error("--attempt-id must be one path component")
@@ -4300,11 +4450,18 @@ def main() -> int:
             parser.error(
                 "V16 P8 paired comparison requires its F run and accepted R9 selection, and rejects other modes"
             )
+        compare_kwargs = {
+            "contract_path": args.paired_p8_contract,
+            "attempt_id": args.attempt_id,
+        }
+        if args.p8_execution_recovery_binding is not None:
+            compare_kwargs["execution_recovery_path"] = (
+                args.p8_execution_recovery_binding
+            )
         result = compare_v16_p8_paired(
             args.candidate_run_root.resolve(),
             args.accepted_parent_selection_record.resolve(),
-            contract_path=args.paired_p8_contract,
-            attempt_id=args.attempt_id,
+            **compare_kwargs,
         )
         print(
             json.dumps(
@@ -4324,6 +4481,8 @@ def main() -> int:
             ),
             flush=True,
         )
+    elif args.p8_execution_recovery_binding is not None:
+        parser.error("--p8-execution-recovery-binding requires --paired-p8-contract")
     elif args.diagnostic_contract is not None:
         if (
             args.candidate_run_root is None
