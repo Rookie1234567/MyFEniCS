@@ -3,7 +3,7 @@
   "classification": "AUTHORIZED_C_ONLY_RECOVERY",
   "execution_manifest": {
     "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_comparison_recovery_attempt2.json",
-    "sha256": "76330b6f03e060a3256f6c0db9a3b864e8c690a06708e940e44e03451095e520"
+    "sha256": "1889600da59c5c0831e7f49ed45f16711625a20a8c912264dcb9e8977c1dc155"
   },
   "authorization": {
     "scope": "C_only_same_model_comparison_recovery",
@@ -268,5 +268,13 @@
     "watchdog_worker_resources_trace": "not_started",
     "classification": "INCOMPLETE"
   },
-  "result": "NOT_RUN"
+  "result": "NOT_RUN",
+  "prelaunch_static_field_correction": {
+    "classification": "PRELAUNCH_STATIC_BINDING_CORRECTION",
+    "launch_started": false,
+    "prior_draft_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_comparison_recovery_attempt2.pre_top_level_fields.json",
+    "prior_draft_sha256": "76330b6f03e060a3256f6c0db9a3b864e8c690a06708e940e44e03451095e520",
+    "finding": "The prelaunch candidate manifest omitted top-level targeted_fixture and launch_script required by the actual C_RECOVERY launch snapshot; both values were already present in source_binding and the tracked summary.",
+    "correction": "Added exact copies of source_binding.targeted_fixture and source_binding.launch_script at the manifest top level; no run was started and no runtime budget was consumed."
+  }
 }
