@@ -1,0 +1,58 @@
+{
+  "schema": "task43.v18.root-endpoint-observation.v1",
+  "reviewer": "/root",
+  "utc": "2026-10-28T09:17:01.281806+00:00",
+  "terminal_audit": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_F_root_terminal_observation.json",
+    "sha256": "a0c5c9053ae28f0474b79145672661920b3e53f84facd5b3d564e84c2906e0fe"
+  },
+  "primary_array_recomputation": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_primary_array_recomputation.json",
+    "sha256": "7190e2831ddc18382921e5529f08de5b643b943a57205681b1fa49005b617f41"
+  },
+  "space_source_joined": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/v18_p8_space_joined_terminal.json",
+    "sha256": "ffe22c3febe7f0bb8a47d01e58a140d66adacb098285368aa2a864287c21f472"
+  },
+  "modal_orders": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json",
+    "sha256": "c7b1ff6033f0a901a6e42f827bd26a9f3e7ab1b046dcf57cd7656548d2e446c8"
+  },
+  "volume_absorption": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run/solve/volume_absorption.json",
+    "sha256": "f718627465f72c0783f02f60c73256232d73de00ca34128e237fc3be7459d080"
+  },
+  "actual_values": {
+    "FE": 110722,
+    "trace": 35392,
+    "interior": 75330,
+    "leaves": 180,
+    "delta_FE": 250,
+    "mode_count": 612,
+    "R_total": 0.2513584864859189,
+    "T_total": 0.05712592329889687,
+    "Av": 0.6915155902132417,
+    "closure": -1.942446203884174e-12,
+    "independent_A6": 8.154258542762765e-09,
+    "full_active_gram": 5.261452776589861e-13,
+    "condensed": 5.36565601165842e-13,
+    "normal_before": 7.36358356126758e-11,
+    "normal_after": 5.36565601165842e-13,
+    "normal_count": 1,
+    "extra_count": 0
+  },
+  "exit_race_observation": {
+    "vanished_worker_samples": 2,
+    "elapsed_seconds": [
+      3658.686311531812,
+      3659.181689874269
+    ],
+    "worker_pid": 3551561,
+    "worker_trace_exit_zero_timestamp": 1793178818.081763,
+    "subsequent_exit_zero_and_clean_samples": 4,
+    "interpretation": "worker termination race; no unreadable living process; completed primary already saved; full trace zero exit and final host absence bound",
+    "initial_root_assertion": "overstrict no-vanished predicate failed; corrected after reading sampler and exact raw tail; no dynamic retry"
+  },
+  "checks": "all 42 arrays, 612 modes, saved vectors, source/input snapshots, complete trace and 5581 resource rows read; no new solve or sampling",
+  "status": "ENDPOINT_HARD_GATES_VERIFIED"
+}

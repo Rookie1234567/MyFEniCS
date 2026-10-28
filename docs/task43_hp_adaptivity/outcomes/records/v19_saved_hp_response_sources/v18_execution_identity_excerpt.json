@@ -1,0 +1,543 @@
+{
+  "C": {
+    "closeout": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/v18_root_comparison_closeout.json",
+    "elapsed_seconds": 460.24501897301525,
+    "following_rows_exit_zero_empty_children": [
+      674,
+      675,
+      676,
+      677
+    ],
+    "root_observation_ref": {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/v18_root_comparison_closeout.json",
+      "sha256": "d76337f95b2c4c62af044b1c0424e6f069d7ce857a5bb94c2eea8c7f4dc894fa"
+    },
+    "trace": {
+      "exit_lines": [
+        {
+          "line": 783,
+          "raw": "1793182584.810873 +++ exited with 0 +++"
+        }
+      ],
+      "line_count": 783,
+      "observed_setter_count": 0,
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/strace/sched.3574825",
+      "setter_stacks": [],
+      "sha256": "fb2c0146506393e763189ca9b18313de5964c3f051cf91b332dfe3ab3c87596b"
+    },
+    "tracer_pid": 3574836,
+    "tracer_start_ticks": 310711943,
+    "vanished_worker_row_zero_based": 673,
+    "watchdog_pid": 3574822,
+    "watchdog_start_ticks": 310711913,
+    "worker_pid": 3574825,
+    "worker_start_ticks": 310711939,
+    "worker_trace_exit_zero_timestamp": 1793182584.810873
+  },
+  "F": {
+    "elapsed_seconds": [
+      3658.686311531812,
+      3659.181689874269
+    ],
+    "endpoint_observation": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_endpoint_observation.json",
+    "root_observation_ref": {
+      "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_endpoint_observation.json",
+      "sha256": "98412be9a8493a39de17378704cf1e658a00cb0985121a7fd4815f5bb9599dc5"
+    },
+    "subsequent_exit_zero_and_clean_samples": 4,
+    "trace": {
+      "exit_lines": [
+        {
+          "line": 1714,
+          "raw": "1793178818.081763 +++ exited with 0 +++"
+        }
+      ],
+      "line_count": 1714,
+      "observed_setter_count": 3,
+      "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/strace/sched.3551561",
+      "setter_stacks": [
+        [
+          {
+            "line": 832,
+            "raw": "1793175176.534644 sched_setaffinity(3551619, 128, [1]) = 0"
+          },
+          {
+            "line": 833,
+            "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(pthread_setaffinity_np+0x11) [0xa37d1]"
+          },
+          {
+            "line": 834,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(_SCOTCHgainTablAddLin+0x101a) [0x6d96a]"
+          },
+          {
+            "line": 835,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(_SCOTCHthreadContextInit+0x121) [0x6ece1]"
+          },
+          {
+            "line": 836,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(_SCOTCHcontextThreadInit2+0x61) [0x6b131]"
+          },
+          {
+            "line": 837,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(_SCOTCHcontextCommit+0x45) [0x6b1e5]"
+          },
+          {
+            "line": 838,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(SCOTCH_dgraphMapCompute+0x157) [0x593b7]"
+          },
+          {
+            "line": 839,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(SCOTCH_dgraphMap+0x49) [0x594c9]"
+          },
+          {
+            "line": 840,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(SCOTCH_dgraphPart+0x5b) [0x5955b]"
+          },
+          {
+            "line": 841,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0(dolfinx::graph::scotch::partitioner(dolfinx::graph::scotch::strategy, double, int)::{lambda(ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool)#1}::operator()(ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool) const+0x927) [0xe70c7]"
+          },
+          {
+            "line": 842,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0(std::_Function_handler<dolfinx::graph::AdjacencyList<int, decltype(nullptr)> (ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool), dolfinx::graph::scotch::partitioner(dolfinx::graph::scotch::strategy, double, int)::{lambda(ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool)#1}>::_M_invoke(std::_Any_data const&, ompi_communicator_t*&&, int&&, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool&&)+0x2a) [0xe8daa]"
+          },
+          {
+            "line": 843,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0(dolfinx::graph::partition_graph(ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool)+0x7d) [0xefb0d]"
+          },
+          {
+            "line": 844,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, int>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, int> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, int> > >::_M_get_insert_hint_unique_pos(std::_Rb_tree_const_iterator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, int> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)+0x187f) [0x3d844f]"
+          },
+          {
+            "line": 845,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0(std::_Function_handler<dolfinx::graph::AdjacencyList<int, decltype(nullptr)> (ompi_communicator_t*, int, std::vector<dolfinx::mesh::CellType, std::allocator<dolfinx::mesh::CellType> > const&, std::vector<std::span<long const, 18446744073709551615ul>, std::allocator<std::span<long const, 18446744073709551615ul> > > const&), dolfinx::mesh::create_cell_partitioner(dolfinx::mesh::GhostMode, std::function<dolfinx::graph::AdjacencyList<int, decltype(nullptr)> (ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool)> const&, std::optional<int>)::{lambda(ompi_communicator_t*, int, std::vector<dolfinx::mesh::CellType, std::allocator<dolfinx::mesh::CellType> > const&, std::vector<std::span<long const, 18446744073709551615ul>, std::allocator<std::span<long const, 18446744073709551615ul> > > const&)#1}>::_M_invoke(std::_Any_data const&, ompi_communicator_t*&&, int&&, std::vector<dolfinx::mesh::CellType, std::allocator<dolfinx::mesh::CellType> > const&, std::vector<std::span<long const, 18446744073709551615ul>, std::allocator<std::span<long const, 18446744073709551615ul> > > const&)+0xe6) [0x1c1516]"
+          },
+          {
+            "line": 846,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::_Sp_counted_ptr_inplace<spdlog::logger, std::allocator<void>, (__gnu_cxx::_Lock_policy)2>::_M_dispose()+0xc803) [0x490e03]"
+          },
+          {
+            "line": 847,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0xa7a) [0x4b469a]"
+          },
+          {
+            "line": 848,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::pair<std::vector<int, std::allocator<int> >, std::vector<signed char, std::allocator<signed char> > >::~pair()+0x1eaa3) [0x536313]"
+          },
+          {
+            "line": 849,
+            "raw": " > /usr/bin/python3.12(PyObject_Vectorcall+0x35) [0x1499b5]"
+          },
+          {
+            "line": 850,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::pair<std::vector<int, std::allocator<int> >, std::vector<signed char, std::allocator<signed char> > >::~pair()+0x318fa) [0x54916a]"
+          },
+          {
+            "line": 851,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0xe750) [0x4c2370]"
+          },
+          {
+            "line": 852,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0xec9f) [0x4c28bf]"
+          },
+          {
+            "line": 853,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::_Sp_counted_ptr_inplace<spdlog::logger, std::allocator<void>, (__gnu_cxx::_Lock_policy)2>::_M_dispose()+0xc4be) [0x490abe]"
+          },
+          {
+            "line": 854,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0x25b7d) [0x4d979d]"
+          },
+          {
+            "line": 855,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0x27f68) [0x4dbb88]"
+          },
+          {
+            "line": 856,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0x28306) [0x4dbf26]"
+          },
+          {
+            "line": 857,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0x28bbe) [0x4dc7de]"
+          },
+          {
+            "line": 858,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::pair<std::vector<int, std::allocator<int> >, std::vector<signed char, std::allocator<signed char> > >::~pair()+0x1f3a1) [0x536c11]"
+          },
+          {
+            "line": 859,
+            "raw": " > /usr/bin/python3.12(PyObject_Vectorcall+0x35) [0x1499b5]"
+          },
+          {
+            "line": 860,
+            "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xadf) [0x1d710f]"
+          },
+          {
+            "line": 861,
+            "raw": " > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]"
+          },
+          {
+            "line": 862,
+            "raw": " > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]"
+          },
+          {
+            "line": 863,
+            "raw": " > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]"
+          },
+          {
+            "line": 864,
+            "raw": " > /usr/bin/python3.12(PyObject_Vectorcall+0x35) [0x1499b5]"
+          },
+          {
+            "line": 865,
+            "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xadf) [0x1d710f]"
+          },
+          {
+            "line": 866,
+            "raw": " > /usr/bin/python3.12(Py_RunMain+0x602) [0x2bcf22]"
+          },
+          {
+            "line": 867,
+            "raw": " > /usr/bin/python3.12(Py_RunMain+0x232) [0x2bcb52]"
+          },
+          {
+            "line": 868,
+            "raw": " > /usr/bin/python3.12(Py_BytesMain+0x2d) [0x2bc7bd]"
+          },
+          {
+            "line": 869,
+            "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_init_first+0x8a) [0x2a1ca]"
+          },
+          {
+            "line": 870,
+            "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x2a28b]"
+          },
+          {
+            "line": 871,
+            "raw": " > /usr/bin/python3.12(_start+0x25) [0x257a05]"
+          }
+        ],
+        [
+          {
+            "line": 872,
+            "raw": "1793175176.576331 sched_setaffinity(3551561, 128, [1]) = 0"
+          },
+          {
+            "line": 873,
+            "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(pthread_setaffinity_np+0x11) [0xa37d1]"
+          },
+          {
+            "line": 874,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(_SCOTCHgainTablAddLin+0x101a) [0x6d96a]"
+          },
+          {
+            "line": 875,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(_SCOTCHthreadContextInit+0x1a9) [0x6ed69]"
+          },
+          {
+            "line": 876,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(_SCOTCHcontextThreadInit2+0x61) [0x6b131]"
+          },
+          {
+            "line": 877,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(_SCOTCHcontextCommit+0x45) [0x6b1e5]"
+          },
+          {
+            "line": 878,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(SCOTCH_dgraphMapCompute+0x157) [0x593b7]"
+          },
+          {
+            "line": 879,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(SCOTCH_dgraphMap+0x49) [0x594c9]"
+          },
+          {
+            "line": 880,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(SCOTCH_dgraphPart+0x5b) [0x5955b]"
+          },
+          {
+            "line": 881,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0(dolfinx::graph::scotch::partitioner(dolfinx::graph::scotch::strategy, double, int)::{lambda(ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool)#1}::operator()(ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool) const+0x927) [0xe70c7]"
+          },
+          {
+            "line": 882,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0(std::_Function_handler<dolfinx::graph::AdjacencyList<int, decltype(nullptr)> (ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool), dolfinx::graph::scotch::partitioner(dolfinx::graph::scotch::strategy, double, int)::{lambda(ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool)#1}>::_M_invoke(std::_Any_data const&, ompi_communicator_t*&&, int&&, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool&&)+0x2a) [0xe8daa]"
+          },
+          {
+            "line": 883,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0(dolfinx::graph::partition_graph(ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool)+0x7d) [0xefb0d]"
+          },
+          {
+            "line": 884,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, int>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, int> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, int> > >::_M_get_insert_hint_unique_pos(std::_Rb_tree_const_iterator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, int> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)+0x187f) [0x3d844f]"
+          },
+          {
+            "line": 885,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0(std::_Function_handler<dolfinx::graph::AdjacencyList<int, decltype(nullptr)> (ompi_communicator_t*, int, std::vector<dolfinx::mesh::CellType, std::allocator<dolfinx::mesh::CellType> > const&, std::vector<std::span<long const, 18446744073709551615ul>, std::allocator<std::span<long const, 18446744073709551615ul> > > const&), dolfinx::mesh::create_cell_partitioner(dolfinx::mesh::GhostMode, std::function<dolfinx::graph::AdjacencyList<int, decltype(nullptr)> (ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool)> const&, std::optional<int>)::{lambda(ompi_communicator_t*, int, std::vector<dolfinx::mesh::CellType, std::allocator<dolfinx::mesh::CellType> > const&, std::vector<std::span<long const, 18446744073709551615ul>, std::allocator<std::span<long const, 18446744073709551615ul> > > const&)#1}>::_M_invoke(std::_Any_data const&, ompi_communicator_t*&&, int&&, std::vector<dolfinx::mesh::CellType, std::allocator<dolfinx::mesh::CellType> > const&, std::vector<std::span<long const, 18446744073709551615ul>, std::allocator<std::span<long const, 18446744073709551615ul> > > const&)+0xe6) [0x1c1516]"
+          },
+          {
+            "line": 886,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::_Sp_counted_ptr_inplace<spdlog::logger, std::allocator<void>, (__gnu_cxx::_Lock_policy)2>::_M_dispose()+0xc803) [0x490e03]"
+          },
+          {
+            "line": 887,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0xa7a) [0x4b469a]"
+          },
+          {
+            "line": 888,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::pair<std::vector<int, std::allocator<int> >, std::vector<signed char, std::allocator<signed char> > >::~pair()+0x1eaa3) [0x536313]"
+          },
+          {
+            "line": 889,
+            "raw": " > /usr/bin/python3.12(PyObject_Vectorcall+0x35) [0x1499b5]"
+          },
+          {
+            "line": 890,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::pair<std::vector<int, std::allocator<int> >, std::vector<signed char, std::allocator<signed char> > >::~pair()+0x318fa) [0x54916a]"
+          },
+          {
+            "line": 891,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0xe750) [0x4c2370]"
+          },
+          {
+            "line": 892,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0xec9f) [0x4c28bf]"
+          },
+          {
+            "line": 893,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::_Sp_counted_ptr_inplace<spdlog::logger, std::allocator<void>, (__gnu_cxx::_Lock_policy)2>::_M_dispose()+0xc4be) [0x490abe]"
+          },
+          {
+            "line": 894,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0x25b7d) [0x4d979d]"
+          },
+          {
+            "line": 895,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0x27f68) [0x4dbb88]"
+          },
+          {
+            "line": 896,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0x28306) [0x4dbf26]"
+          },
+          {
+            "line": 897,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0x28bbe) [0x4dc7de]"
+          },
+          {
+            "line": 898,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::pair<std::vector<int, std::allocator<int> >, std::vector<signed char, std::allocator<signed char> > >::~pair()+0x1f3a1) [0x536c11]"
+          },
+          {
+            "line": 899,
+            "raw": " > /usr/bin/python3.12(PyObject_Vectorcall+0x35) [0x1499b5]"
+          },
+          {
+            "line": 900,
+            "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xadf) [0x1d710f]"
+          },
+          {
+            "line": 901,
+            "raw": " > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]"
+          },
+          {
+            "line": 902,
+            "raw": " > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]"
+          },
+          {
+            "line": 903,
+            "raw": " > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]"
+          },
+          {
+            "line": 904,
+            "raw": " > /usr/bin/python3.12(PyObject_Vectorcall+0x35) [0x1499b5]"
+          },
+          {
+            "line": 905,
+            "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xadf) [0x1d710f]"
+          },
+          {
+            "line": 906,
+            "raw": " > /usr/bin/python3.12(Py_RunMain+0x602) [0x2bcf22]"
+          },
+          {
+            "line": 907,
+            "raw": " > /usr/bin/python3.12(Py_RunMain+0x232) [0x2bcb52]"
+          },
+          {
+            "line": 908,
+            "raw": " > /usr/bin/python3.12(Py_BytesMain+0x2d) [0x2bc7bd]"
+          },
+          {
+            "line": 909,
+            "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_init_first+0x8a) [0x2a1ca]"
+          },
+          {
+            "line": 910,
+            "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x2a28b]"
+          },
+          {
+            "line": 911,
+            "raw": " > /usr/bin/python3.12(_start+0x25) [0x257a05]"
+          }
+        ],
+        [
+          {
+            "line": 912,
+            "raw": "1793175176.607510 sched_setaffinity(3551561, 128, [1]) = 0"
+          },
+          {
+            "line": 913,
+            "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(pthread_setaffinity_np+0x11) [0xa37d1]"
+          },
+          {
+            "line": 914,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(_SCOTCHcontextExit+0x1d) [0x6b06d]"
+          },
+          {
+            "line": 915,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(SCOTCH_dgraphMapCompute+0x12d) [0x5938d]"
+          },
+          {
+            "line": 916,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(SCOTCH_dgraphMap+0x49) [0x594c9]"
+          },
+          {
+            "line": 917,
+            "raw": " > /usr/lib/x86_64-linux-gnu/scotch-int64/libptscotch-7.0.4.so(SCOTCH_dgraphPart+0x5b) [0x5955b]"
+          },
+          {
+            "line": 918,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0(dolfinx::graph::scotch::partitioner(dolfinx::graph::scotch::strategy, double, int)::{lambda(ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool)#1}::operator()(ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool) const+0x927) [0xe70c7]"
+          },
+          {
+            "line": 919,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0(std::_Function_handler<dolfinx::graph::AdjacencyList<int, decltype(nullptr)> (ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool), dolfinx::graph::scotch::partitioner(dolfinx::graph::scotch::strategy, double, int)::{lambda(ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool)#1}>::_M_invoke(std::_Any_data const&, ompi_communicator_t*&&, int&&, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool&&)+0x2a) [0xe8daa]"
+          },
+          {
+            "line": 920,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0(dolfinx::graph::partition_graph(ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool)+0x7d) [0xefb0d]"
+          },
+          {
+            "line": 921,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, int>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, int> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, int> > >::_M_get_insert_hint_unique_pos(std::_Rb_tree_const_iterator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, int> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)+0x187f) [0x3d844f]"
+          },
+          {
+            "line": 922,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib/libdolfinx.so.0.10.0(std::_Function_handler<dolfinx::graph::AdjacencyList<int, decltype(nullptr)> (ompi_communicator_t*, int, std::vector<dolfinx::mesh::CellType, std::allocator<dolfinx::mesh::CellType> > const&, std::vector<std::span<long const, 18446744073709551615ul>, std::allocator<std::span<long const, 18446744073709551615ul> > > const&), dolfinx::mesh::create_cell_partitioner(dolfinx::mesh::GhostMode, std::function<dolfinx::graph::AdjacencyList<int, decltype(nullptr)> (ompi_communicator_t*, int, dolfinx::graph::AdjacencyList<long, decltype(nullptr)> const&, bool)> const&, std::optional<int>)::{lambda(ompi_communicator_t*, int, std::vector<dolfinx::mesh::CellType, std::allocator<dolfinx::mesh::CellType> > const&, std::vector<std::span<long const, 18446744073709551615ul>, std::allocator<std::span<long const, 18446744073709551615ul> > > const&)#1}>::_M_invoke(std::_Any_data const&, ompi_communicator_t*&&, int&&, std::vector<dolfinx::mesh::CellType, std::allocator<dolfinx::mesh::CellType> > const&, std::vector<std::span<long const, 18446744073709551615ul>, std::allocator<std::span<long const, 18446744073709551615ul> > > const&)+0xe6) [0x1c1516]"
+          },
+          {
+            "line": 923,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::_Sp_counted_ptr_inplace<spdlog::logger, std::allocator<void>, (__gnu_cxx::_Lock_policy)2>::_M_dispose()+0xc803) [0x490e03]"
+          },
+          {
+            "line": 924,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0xa7a) [0x4b469a]"
+          },
+          {
+            "line": 925,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::pair<std::vector<int, std::allocator<int> >, std::vector<signed char, std::allocator<signed char> > >::~pair()+0x1eaa3) [0x536313]"
+          },
+          {
+            "line": 926,
+            "raw": " > /usr/bin/python3.12(PyObject_Vectorcall+0x35) [0x1499b5]"
+          },
+          {
+            "line": 927,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::pair<std::vector<int, std::allocator<int> >, std::vector<signed char, std::allocator<signed char> > >::~pair()+0x318fa) [0x54916a]"
+          },
+          {
+            "line": 928,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0xe750) [0x4c2370]"
+          },
+          {
+            "line": 929,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0xec9f) [0x4c28bf]"
+          },
+          {
+            "line": 930,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::_Sp_counted_ptr_inplace<spdlog::logger, std::allocator<void>, (__gnu_cxx::_Lock_policy)2>::_M_dispose()+0xc4be) [0x490abe]"
+          },
+          {
+            "line": 931,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0x25b7d) [0x4d979d]"
+          },
+          {
+            "line": 932,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0x27f68) [0x4dbb88]"
+          },
+          {
+            "line": 933,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0x28306) [0x4dbf26]"
+          },
+          {
+            "line": 934,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::vector<std::array<int, 2ul>, std::allocator<std::array<int, 2ul> > >::reserve(unsigned long)+0x28bbe) [0x4dc7de]"
+          },
+          {
+            "line": 935,
+            "raw": " > /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python/dolfinx/cpp.cpython-312-x86_64-linux-gnu.so(std::pair<std::vector<int, std::allocator<int> >, std::vector<signed char, std::allocator<signed char> > >::~pair()+0x1f3a1) [0x536c11]"
+          },
+          {
+            "line": 936,
+            "raw": " > /usr/bin/python3.12(PyObject_Vectorcall+0x35) [0x1499b5]"
+          },
+          {
+            "line": 937,
+            "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xadf) [0x1d710f]"
+          },
+          {
+            "line": 938,
+            "raw": " > /usr/bin/python3.12(PyEval_EvalCode+0x15b) [0x1d55eb]"
+          },
+          {
+            "line": 939,
+            "raw": " > /usr/bin/python3.12(_PyWeakref_ClearRef+0x9f5c) [0x1d33dc]"
+          },
+          {
+            "line": 940,
+            "raw": " > /usr/bin/python3.12(PyCMethod_New+0x4dd) [0x181fed]"
+          },
+          {
+            "line": 941,
+            "raw": " > /usr/bin/python3.12(PyObject_Vectorcall+0x35) [0x1499b5]"
+          },
+          {
+            "line": 942,
+            "raw": " > /usr/bin/python3.12(_PyEval_EvalFrameDefault+0xadf) [0x1d710f]"
+          },
+          {
+            "line": 943,
+            "raw": " > /usr/bin/python3.12(Py_RunMain+0x602) [0x2bcf22]"
+          },
+          {
+            "line": 944,
+            "raw": " > /usr/bin/python3.12(Py_RunMain+0x232) [0x2bcb52]"
+          },
+          {
+            "line": 945,
+            "raw": " > /usr/bin/python3.12(Py_BytesMain+0x2d) [0x2bc7bd]"
+          },
+          {
+            "line": 946,
+            "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_init_first+0x8a) [0x2a1ca]"
+          },
+          {
+            "line": 947,
+            "raw": " > /usr/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x2a28b]"
+          },
+          {
+            "line": 948,
+            "raw": " > /usr/bin/python3.12(_start+0x25) [0x257a05]"
+          }
+        ]
+      ],
+      "sha256": "a2d99a60e3d32483da013c6b652a56b6b328ba379082cb35f2626f1c8b553ce6"
+    },
+    "vanished_worker_samples": 2,
+    "worker_pid": 3551561,
+    "worker_trace_exit_zero_timestamp": 1793178818.081763
+  },
+  "interpretation": "V18 F had two worker-vanished samples followed by four clean exit samples; C had one at row 673 followed by four clean rows. Preserve these exit races; neither is rewritten as zero vanished. F had three successful SCOTCH affinity setters and C had none. These excerpts are read-only copies; no old audit was rerun.",
+  "schema": "task43.v19.v18_execution_identity_excerpt.v1",
+  "source_archive_index": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/source_archive_index.json"
+}

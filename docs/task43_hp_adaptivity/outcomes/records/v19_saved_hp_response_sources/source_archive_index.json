@@ -1,0 +1,226 @@
+{
+  "F_terminal_excerpt": {
+    "original_path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run/task43_v16_p8_primary_terminal.json",
+    "original_sha256": "90bd2182cfce5fd37734a3fef494b67281cf509e9892b935075fdb44152a5d47",
+    "original_size_bytes": 1893420,
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_F_terminal_excerpt.json",
+    "sha256": "4ead3da3e03b2ddae7469fadd9b2785cc1f53fb0ad528cfcf63219a185068745"
+  },
+  "copied_records": [
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18/v18_root_primary_array_recomputation.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_primary_array_recomputation.json",
+      "role": "primary_array_recomputation",
+      "sha256": "7190e2831ddc18382921e5529f08de5b643b943a57205681b1fa49005b617f41",
+      "size_bytes": 1628364
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18/v18_root_endpoint_observation.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_endpoint_observation.json",
+      "role": "F_endpoint_observation",
+      "sha256": "98412be9a8493a39de17378704cf1e658a00cb0985121a7fd4815f5bb9599dc5",
+      "size_bytes": 2736
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18/v18_root_saved_comparison_recomputation.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/v18_root_saved_comparison_recomputation.json",
+      "role": "saved_comparison_recomputation",
+      "sha256": "4dc24e61b74e32dc0fcd8dc9d9950581fb2f11d15d4401d8d7c9133dbdd674db",
+      "size_bytes": 20014
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18/v18_root_comparison_closeout.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/v18_root_comparison_closeout.json",
+      "role": "C_comparison_closeout",
+      "sha256": "d76337f95b2c4c62af044b1c0424e6f069d7ce857a5bb94c2eea8c7f4dc894fa",
+      "size_bytes": 12288
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18/v18_root_preserved_q8_observation.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_attempt1/v18_root_preserved_q8_observation.json",
+      "role": "preserved_q8_observation",
+      "sha256": "7a863486d6e132dbda1ca26023dda0d7f79dd400ab2cfd023b944c5f31c08829",
+      "size_bytes": 2428
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18/F_launcher_identity.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/launcher_identity.json",
+      "role": "F_launcher_identity",
+      "sha256": "75d644b3ef7380c92f2b2cba192aa20fb071fd1445ee53e9e91bc2a237d5a664",
+      "size_bytes": 169
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18/F_supervisor_identity.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/supervisor_identity.json",
+      "role": "F_supervisor_identity",
+      "sha256": "75d644b3ef7380c92f2b2cba192aa20fb071fd1445ee53e9e91bc2a237d5a664",
+      "size_bytes": 169
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18/C_runtime_identity.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/runtime_identity.json",
+      "role": "C_runtime_identity",
+      "sha256": "4e367a1a23219f6fe99e686be7903be3a81c011b86b649a6670e9481e85ad461",
+      "size_bytes": 3670
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18/C_supervisor_identity.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/supervisor_identity.json",
+      "role": "C_supervisor_identity",
+      "sha256": "827bf6f26714ad86909214024dc0035a13fcd939629bbc2e03b5ab759081384e",
+      "size_bytes": 169
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18/C_launcher_identity.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/launcher_identity.json",
+      "role": "C_launcher_identity",
+      "sha256": "827bf6f26714ad86909214024dc0035a13fcd939629bbc2e03b5ab759081384e",
+      "size_bytes": 169
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18/C_stage_terminal.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/stage_terminal.json",
+      "role": "C_stage_terminal",
+      "sha256": "085f57c6ab6752b8b6b8b67087c7945ae659a612f58532ee7da2f990c7c58d20",
+      "size_bytes": 25321
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_F_terminal_excerpt.json",
+      "original_sha256": "90bd2182cfce5fd37734a3fef494b67281cf509e9892b935075fdb44152a5d47",
+      "original_size_bytes": 1893420,
+      "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run/task43_v16_p8_primary_terminal.json",
+      "role": "F_raw_terminal_excerpt",
+      "sha256": "4ead3da3e03b2ddae7469fadd9b2785cc1f53fb0ad528cfcf63219a185068745",
+      "size_bytes": 3666
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_F_summary.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/watchdog/summary.json",
+      "role": "F_watchdog_summary",
+      "sha256": "d9009de40f41202cb33d20167d5e0645b04348d17ba7b56ccb622e4ab34824c0",
+      "size_bytes": 3559,
+      "original_sha256": "d9009de40f41202cb33d20167d5e0645b04348d17ba7b56ccb622e4ab34824c0"
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_F_historical_host_closeout_excerpt.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_F_root_terminal_observation.json",
+      "role": "F_historical_host_closeout_excerpt",
+      "sha256": "52da30d9ddc3617bebad9223881a6707b3f3e80cfdf81571a16b74a06e8c3ec1",
+      "size_bytes": 358746,
+      "original_sha256": "a0c5c9053ae28f0474b79145672661920b3e53f84facd5b3d564e84c2906e0fe"
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_F_stage_terminal.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/stage_terminal.json",
+      "role": "F_stage_terminal",
+      "sha256": "170cf0f805aeccbe81e7f0fcb2b0dff2ff3683ab92b49a7216b61810b20c3f62",
+      "size_bytes": 16833,
+      "original_sha256": "170cf0f805aeccbe81e7f0fcb2b0dff2ff3683ab92b49a7216b61810b20c3f62"
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_C_summary.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/summary.json",
+      "role": "C_watchdog_summary",
+      "sha256": "ba44e56478c7d268979a51d7752bd0fdbb6533d0d6d238de32c1109b2db3bcdc",
+      "size_bytes": 3552,
+      "original_sha256": "ba44e56478c7d268979a51d7752bd0fdbb6533d0d6d238de32c1109b2db3bcdc"
+    },
+    {
+      "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_C_historical_host_closeout_excerpt.json",
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_C_recovery_attempt3_root_observation.json",
+      "role": "C_historical_host_closeout_excerpt",
+      "sha256": "bddf4a7fcb221e52f92f47b8bc34115f3ef87cf3ad6cdd8a76159b30bdab7742",
+      "size_bytes": 47567,
+      "original_sha256": "0415ca8d9b4d86821ce54f7c7da4c707b998eaef595ecb17690c985265e0f0a8"
+    }
+  ],
+  "execution_excerpt": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_execution_identity_excerpt.json",
+    "sha256": "6e940afc20dda2170886534c43ea6f8cffc4b3a76511519b1cb27824a45b40db",
+    "size_bytes": 38508
+  },
+  "launch_files": [
+    {
+      "path": "benchmarks/artifacts/task43/v19_saved_hp_response/launch/decomposition_attempt1.sh",
+      "sha256": "d6e67bca26480c05c7cc2f5dc2478789260d66d463cb231a182e0527255b789d",
+      "size_bytes": 156,
+      "tracked_copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/launch/decomposition_attempt1.sh.txt"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v19_saved_hp_response/launch/decomposition_recovery1.sh",
+      "sha256": "ca43bab87583ec3e0df6c94b795042568dedc9f88fca85f2313828ce909317eb",
+      "size_bytes": 156,
+      "tracked_copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/launch/decomposition_recovery1.sh.txt"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v19_saved_hp_response/launch/snapshot.py",
+      "sha256": "2eb913a7159f419e6896eaa8ec95e3eb438dd7949970e08377eb9eed52bd6a15",
+      "size_bytes": 3249,
+      "tracked_copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/launch/snapshot.py.txt"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v19_saved_hp_response/launch/stage_launch.sh",
+      "sha256": "87b60b762bb9b9977727d4ccfef82891b774c9ee832c092d3b11ed10026aa52d",
+      "size_bytes": 5455,
+      "tracked_copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/launch/stage_launch.sh.txt"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v19_saved_hp_response/launch/targeted_attempt1.sh",
+      "sha256": "a7e736e13c49570e1817b33b3784de43d1063ad2144640a46c548dc25481cd67",
+      "size_bytes": 156,
+      "tracked_copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/launch/targeted_attempt1.sh.txt"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v19_saved_hp_response/launch/targeted_recovery1.sh",
+      "sha256": "5bc946e286a96601fc383feb2762bcb0eda187d2c2778e4adb30081a259c8710",
+      "size_bytes": 156,
+      "tracked_copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/launch/targeted_recovery1.sh.txt"
+    }
+  ],
+  "launch_runtime_binding": "The launch scripts read the ignored original paths; snapshot.py checks those bytes against these tracked copies before startup.",
+  "no_dynamic_replay": true,
+  "purpose": "Byte-exact archival pointers and compact V18 exit/identity/source evidence for read-only saved-field diagnosis.",
+  "schema": "task43.v19.saved_hp_response_source_archive.v1",
+  "resource_exit_windows": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_exit_window_index.json",
+    "sha256": "00440d3e53a21a56645b41304905e69faeb7777414e9b30a660f59eae4b19c31",
+    "size_bytes": 2941,
+    "windows": {
+      "F": {
+        "source_path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/watchdog/resources.jsonl",
+        "source_sha256": "16761a7c50ce18db7cf78782fb4d0285709812daec1e684ee35c5cc1be43adc4",
+        "source_line_count": 5581,
+        "zero_based_inclusive": [
+          5573,
+          5580
+        ],
+        "one_based_inclusive": [
+          5574,
+          5581
+        ],
+        "copy_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_F_resource_window.jsonl",
+        "copy_sha256": "80c19fc4aee6bffe7def58e6fc931b9f9e00616b4fd7e15a4417852824c8a12c",
+        "copy_size_bytes": 47185,
+        "records": 8
+      },
+      "C": {
+        "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/resources.jsonl",
+        "source_sha256": "257f6ebcf030ee80ed23d0ad6a604abff309dbad73e4cfc6750a38fe9afca9b7",
+        "source_line_count": 678,
+        "zero_based_inclusive": [
+          672,
+          677
+        ],
+        "one_based_inclusive": [
+          673,
+          678
+        ],
+        "copy_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_C_resource_window.jsonl",
+        "copy_sha256": "26c3cb3c1aaa1f48effa924d3fa0aec8992653c2e84bd518770182b61404b16e",
+        "copy_size_bytes": 49214,
+        "records": 6
+      }
+    },
+    "note": "Read-only byte windows of the existing V18 F/C final resource samples and their linked watchdog/stage/host records; no audit was rerun."
+  }
+}

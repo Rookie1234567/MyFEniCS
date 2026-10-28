@@ -1,0 +1,76 @@
+{
+  "schema": "task43.v18.root-preserved-q8-observation.v1",
+  "reviewer": "/root",
+  "sample": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_attempt1/comparison/v16_r9_p8_q8_samples.npz",
+    "sha256": "5475cffe826f45217cebd8df35239f4ba8a4a5813657cf2ca7696ce871af792f"
+  },
+  "identity": {
+    "contract_sha256": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+    "F_terminal_sha256": "90bd2182cfce5fd37734a3fef494b67281cf509e9892b935075fdb44152a5d47",
+    "F_primary_packet_sha256": "826f387c702150954a0fc95fa8f15028e0ba290211522947ee600fa89d9771c6",
+    "P5_sample_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_q8.npz",
+    "P5_sample_sha256": "7286c09d6b3f3bb3a7ece1cd46284a9a5faafd6ebbcb213e2568b6a32ed1119e",
+    "quadrature_order": 8,
+    "sample_count": 565248,
+    "point_identity": {
+      "dtype": "<f8",
+      "sha256": "79133226dbc3a87db3fca45aedc21318b71d81b96e504f7dad3fbd6f617781ca",
+      "shape": [
+        565248,
+        3
+      ]
+    },
+    "weight_identity": {
+      "dtype": "<f8",
+      "sha256": "00e92e61b9f4ae1b3ab2cc57cad2f9e678072257b5ae75c5eef3ecebf7ee319d",
+      "shape": [
+        565248
+      ]
+    },
+    "old_fields_resampled": false,
+    "P8_sampled_once": true
+  },
+  "array_checks": [
+    {
+      "name": "P8_E",
+      "shape": [
+        565248,
+        3
+      ],
+      "sha256": "cbeba2b605bad91aef63074e749b5f2cbd9c81ddc36f6aec407a948cf65c5a25"
+    },
+    {
+      "name": "P8_cell_global_ids",
+      "shape": [
+        180
+      ],
+      "sha256": "9422c248a5c23afc46d87ce8339a644d938174401a67403c2799c48b6f8ba508"
+    },
+    {
+      "name": "P8_curl_E",
+      "shape": [
+        565248,
+        3
+      ],
+      "sha256": "1768401df38723e5f5332f2d4864cb91196f31dded772b131d12f124fbad0409"
+    },
+    {
+      "name": "P8_point_cell_global_ids",
+      "shape": [
+        565248
+      ],
+      "sha256": "c96bddd797f2156b35a24651f20b907f4198b5fdd3db0f3486c39c1bf2bab062"
+    },
+    {
+      "name": "P8_point_cell_local_slots",
+      "shape": [
+        565248
+      ],
+      "sha256": "c96bddd797f2156b35a24651f20b907f4198b5fdd3db0f3486c39c1bf2bab062"
+    }
+  ],
+  "comparison_completed": false,
+  "scientific_acceptance": false,
+  "reuse_role": "only preserved P8 q8 samples; not a completed comparison"
+}

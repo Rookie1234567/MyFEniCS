@@ -1,0 +1,72 @@
+{
+  "identity": {
+    "candidate_identity": {
+      "action": "p_up",
+      "adaptive_round_id": "v16",
+      "candidate_id": "v16_r9_p8",
+      "parent_candidate_id": "round9_p_up",
+      "plan_sha256": "10733af8fc00e29d54fa4d4ee18b2e78bc6ed7c15834db7a0ff6902ba4de9a04",
+      "v16_contract_sha256": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+      "v16_phase": "R9_P8"
+    },
+    "candidate_selected": false,
+    "classification": "measured_primary_nonofficial_v16_p8_endpoint",
+    "endpoint_identity": {
+      "contract_sha256": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+      "schema": "task43.v16.p8.endpoint-identity.v1"
+    },
+    "official_result": false,
+    "passed": false,
+    "phase": "R9_P8",
+    "primary_packet": {
+      "npz_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run/primary_state.npz",
+      "npz_sha256": "826f387c702150954a0fc95fa8f15028e0ba290211522947ee600fa89d9771c6"
+    },
+    "schema": "task43.v16.p8.primary-terminal.v1",
+    "selection_eligible": false,
+    "source_identity": {
+      "file_sha256_count": 43,
+      "file_sha256_map_sha256": "274f31d6439d3bf5f98e3e355d2dacfdfa9497c2e286710fd3ae33740b2721da",
+      "git_head": "196571795199dc0f48fd8ad3daaac258ab3390cb",
+      "v16_p8_contract": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json",
+        "phase": "R9_P8",
+        "sha256": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b"
+      },
+      "v16_p8_space_source": {
+        "products": {
+          "audit": {
+            "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/plan_output/plans/v16_r9_p8.audit.json",
+            "sha256": "3fc01eab3c070c29019fcc3dcb780d2f4856927fc5707e7ec295bf0fcad55c91"
+          },
+          "bundle": {
+            "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/plan_output/plan_audit.json",
+            "sha256": "deb729312519d1d02875cf09abb2d6bdc38f47fecc5713f87dd328b6f65c8c45"
+          },
+          "joined_terminal": {
+            "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/v18_p8_space_joined_terminal.json",
+            "sha256": "ffe22c3febe7f0bb8a47d01e58a140d66adacb098285368aa2a864287c21f472"
+          },
+          "plan": {
+            "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/plan_output/plans/v16_r9_p8.json",
+            "sha256": "10733af8fc00e29d54fa4d4ee18b2e78bc6ed7c15834db7a0ff6902ba4de9a04"
+          },
+          "root_observation_record": {
+            "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/v18_root_space_observation.json",
+            "sha256": "bebb335be9eaf3ed7565aa10a1703d789624d34befb099640e661fbee1086438"
+          }
+        },
+        "source_head": "196571795199dc0f48fd8ad3daaac258ab3390cb",
+        "space_source_id": "S_MAIN"
+      }
+    },
+    "status": "SOLVED_PRIMARY_PENDING_PAIRED_COMPARISON"
+  },
+  "original": {
+    "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run/task43_v16_p8_primary_terminal.json",
+    "sha256": "90bd2182cfce5fd37734a3fef494b67281cf509e9892b935075fdb44152a5d47",
+    "size_bytes": 1893420
+  },
+  "schema": "task43.v19.v18_F_terminal_excerpt.v1",
+  "scope": "Selected identity and outcome fields only; the original terminal remains at its referenced artifact path and is not duplicated into Git."
+}

@@ -1,0 +1,330 @@
+{
+  "schema": "task43.v18.p8.execution-stage-terminal.v1",
+  "phase": "C",
+  "classification": "COMPLETED",
+  "launcher_exit_code": 0,
+  "watchdog_exit_code": 0,
+  "watchdog_pid": 3574822,
+  "watchdog_start_ticks": "310711913",
+  "received_signal": null,
+  "stage_started_monotonic_ns": 3107116809795710,
+  "stage_finished_monotonic_ns": 3107582195378128,
+  "whole_elapsed_seconds": 465.385582418,
+  "whole_limit_seconds": 1800,
+  "whole_limit_pass": true,
+  "watchdog_summary": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/summary.json",
+    "sha256": "ba44e56478c7d268979a51d7752bd0fdbb6533d0d6d238de32c1109b2db3bcdc",
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "sampled_process_tree_rss_peak_bytes": 1639280640,
+    "sampled_process_tree_swap_peak_bytes": 0
+  },
+  "watchdog_summary_error": null,
+  "summary_pass": true,
+  "cleanup_pass": true,
+  "whole_pass": true,
+  "resource_samples": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/resources.jsonl",
+    "sha256": "257f6ebcf030ee80ed23d0ad6a604abff309dbad73e4cfc6750a38fe9afca9b7",
+    "row_count": 678,
+    "first_row": {
+      "schema": "task038.v14.j3.process-sample.v1",
+      "root_pid": 3574822,
+      "stage": "workflow",
+      "timestamp_ns": 1793182124783456278,
+      "exit_code": null,
+      "members": [
+        {
+          "pid": 3574822,
+          "start_ticks": 310711913,
+          "ppid": 3574774,
+          "comm": "python",
+          "state": "R",
+          "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog --wall-seconds 1738 --interval 0.25 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/workflow_phase.json --grace-seconds 2 -- bash -c set -euo pipefail; cd /home/fenics/Projects/NN-Lab-V2; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1; source scripts/activate_task40_phi90_pord64.sh; export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 BLIS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1; exec taskset -c 1 strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o \"$TASK43_V11_TRACE_PREFIX\" \"$@\" task43-v18-worker python -u -c import json,os,pathlib,sys\nimport pytest\nfrom mpi4py import MPI\nfrom benchmarks.task43_hp_adaptivity.h100_anchor import _check_v11_runtime_envelope\n\nruntime=_check_v11_runtime_envelope(MPI.COMM_WORLD)\nidentity=runtime[\"v11_watchdog_worker_identity\"]\nattempt_root=pathlib.Path(os.environ[\"TASK43_V11_ATTEMPT_ROOT\"])\nruntime_path=attempt_root/\"runtime_identity.json\"\nif runtime_path.exists() or runtime_path.is_symlink():\n    raise FileExistsError(f\"refusing to overwrite C recovery runtime identity: {runtime_path}\")\nruntime_record={\"schema\":\"task43.v18.p8.comparison-recovery-runtime-identity.v1\",\"phase\":\"C_RECOVERY\",\"runtime_envelope\":runtime,\"v11_watchdog_worker_identity\":identity,\"identity_ledger\":{\"first_check\":\"_check_v11_runtime_envelope\",\"worker_pid\":os.getpid(),\"worker_start_ticks\":identity[\"worker_start_ticks\"],\"watchdog_pid\":identity[\"watchdog_pid\"],\"tracer_pid\":identity[\"tracer_pid\"],\"phase_path\":identity[\"phase_path\"]}}\nruntime_tmp=runtime_path.with_suffix(\".json.tmp\")\nruntime_tmp.write_text(json.dumps(runtime_record,indent=2,allow_nan=False)+\"\\n\",encoding=\"utf-8\")\nos.replace(runtime_tmp,runtime_path)\nrepo,contract,execution_binding,comparison_binding,candidate_root,selection_record=sys.argv[1:]\ntest_file=pathlib.Path(repo)/\"src/test/test_task43_p8_execution_recovery.py\"\nselectors=[\n    \"test_v18_c_recovery_uses_actual_comparison_and_historical_f_readers\",\n    \"test_v18_c_recovery_actual_reader_rejects_unapproved_source_delta\",\n    \"test_v18_q8_recovery_reads_bound_archive_without_sampling_or_copying\",\n]\npytest_args=[\"-q\",\"--maxfail=1\",\"--junitxml\",str(attempt_root/\"recovery_tests.xml\"),\"--basetemp\",str(attempt_root/\"recovery_fixtures\")]\npytest_args.extend(f\"{test_file}::{selector}\" for selector in selectors)\npytest_status=pytest.main(pytest_args)\nif pytest_status != pytest.ExitCode.OK:\n    raise SystemExit(int(pytest_status))\nsys.argv=[\"compare_round1_candidate\",\"--candidate-run-root\",candidate_root,\"--accepted-parent-selection-record\",selection_record,\"--attempt-id\",\"v16_r9_p8_paired_attempt1\",\"--paired-p8-contract\",contract,\"--p8-execution-recovery-binding\",execution_binding,\"--p8-comparison-recovery-binding\",comparison_binding]\nfrom benchmarks.task43_hp_adaptivity.compare_round1_candidate import main\nraise SystemExit(main()) /home/fenics/Projects/NN-Lab-V2 /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery_attempt3.json /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_comparison_recovery_attempt3.json /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+          "stage": "workflow",
+          "rss_bytes": 38019072,
+          "pss_bytes": null,
+          "swap_bytes": 0,
+          "timestamp_ns": 1793182124783028165,
+          "exit_code": null,
+          "cpu_seconds": 0.34,
+          "affinity": [
+            1
+          ],
+          "io": {
+            "rchar": 6975566,
+            "wchar": 0,
+            "syscr": 6663,
+            "syscw": 0,
+            "read_bytes": 0,
+            "write_bytes": 0,
+            "cancelled_write_bytes": 0
+          }
+        },
+        {
+          "pid": 3574825,
+          "start_ticks": 310711939,
+          "ppid": 3574822,
+          "comm": "python",
+          "state": "R",
+          "cmdline": "python -u -c import json,os,pathlib,sys\nimport pytest\nfrom mpi4py import MPI\nfrom benchmarks.task43_hp_adaptivity.h100_anchor import _check_v11_runtime_envelope\n\nruntime=_check_v11_runtime_envelope(MPI.COMM_WORLD)\nidentity=runtime[\"v11_watchdog_worker_identity\"]\nattempt_root=pathlib.Path(os.environ[\"TASK43_V11_ATTEMPT_ROOT\"])\nruntime_path=attempt_root/\"runtime_identity.json\"\nif runtime_path.exists() or runtime_path.is_symlink():\n    raise FileExistsError(f\"refusing to overwrite C recovery runtime identity: {runtime_path}\")\nruntime_record={\"schema\":\"task43.v18.p8.comparison-recovery-runtime-identity.v1\",\"phase\":\"C_RECOVERY\",\"runtime_envelope\":runtime,\"v11_watchdog_worker_identity\":identity,\"identity_ledger\":{\"first_check\":\"_check_v11_runtime_envelope\",\"worker_pid\":os.getpid(),\"worker_start_ticks\":identity[\"worker_start_ticks\"],\"watchdog_pid\":identity[\"watchdog_pid\"],\"tracer_pid\":identity[\"tracer_pid\"],\"phase_path\":identity[\"phase_path\"]}}\nruntime_tmp=runtime_path.with_suffix(\".json.tmp\")\nruntime_tmp.write_text(json.dumps(runtime_record,indent=2,allow_nan=False)+\"\\n\",encoding=\"utf-8\")\nos.replace(runtime_tmp,runtime_path)\nrepo,contract,execution_binding,comparison_binding,candidate_root,selection_record=sys.argv[1:]\ntest_file=pathlib.Path(repo)/\"src/test/test_task43_p8_execution_recovery.py\"\nselectors=[\n    \"test_v18_c_recovery_uses_actual_comparison_and_historical_f_readers\",\n    \"test_v18_c_recovery_actual_reader_rejects_unapproved_source_delta\",\n    \"test_v18_q8_recovery_reads_bound_archive_without_sampling_or_copying\",\n]\npytest_args=[\"-q\",\"--maxfail=1\",\"--junitxml\",str(attempt_root/\"recovery_tests.xml\"),\"--basetemp\",str(attempt_root/\"recovery_fixtures\")]\npytest_args.extend(f\"{test_file}::{selector}\" for selector in selectors)\npytest_status=pytest.main(pytest_args)\nif pytest_status != pytest.ExitCode.OK:\n    raise SystemExit(int(pytest_status))\nsys.argv=[\"compare_round1_candidate\",\"--candidate-run-root\",candidate_root,\"--accepted-parent-selection-record\",selection_record,\"--attempt-id\",\"v16_r9_p8_paired_attempt1\",\"--paired-p8-contract\",contract,\"--p8-execution-recovery-binding\",execution_binding,\"--p8-comparison-recovery-binding\",comparison_binding]\nfrom benchmarks.task43_hp_adaptivity.compare_round1_candidate import main\nraise SystemExit(main()) /home/fenics/Projects/NN-Lab-V2 /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery_attempt3.json /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_comparison_recovery_attempt3.json /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+          "stage": "workflow",
+          "rss_bytes": 15601664,
+          "pss_bytes": null,
+          "swap_bytes": 0,
+          "timestamp_ns": 1793182124783269615,
+          "exit_code": null,
+          "cpu_seconds": 0.1,
+          "affinity": [
+            1
+          ],
+          "io": {
+            "rchar": 1696355,
+            "wchar": 246,
+            "syscr": 282,
+            "syscw": 8,
+            "read_bytes": 0,
+            "write_bytes": 0,
+            "cancelled_write_bytes": 0
+          }
+        },
+        {
+          "pid": 3574836,
+          "start_ticks": 310711943,
+          "ppid": 3574822,
+          "comm": "strace",
+          "state": "S",
+          "cmdline": "strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/strace/sched python -u -c import json,os,pathlib,sys\nimport pytest\nfrom mpi4py import MPI\nfrom benchmarks.task43_hp_adaptivity.h100_anchor import _check_v11_runtime_envelope\n\nruntime=_check_v11_runtime_envelope(MPI.COMM_WORLD)\nidentity=runtime[\"v11_watchdog_worker_identity\"]\nattempt_root=pathlib.Path(os.environ[\"TASK43_V11_ATTEMPT_ROOT\"])\nruntime_path=attempt_root/\"runtime_identity.json\"\nif runtime_path.exists() or runtime_path.is_symlink():\n    raise FileExistsError(f\"refusing to overwrite C recovery runtime identity: {runtime_path}\")\nruntime_record={\"schema\":\"task43.v18.p8.comparison-recovery-runtime-identity.v1\",\"phase\":\"C_RECOVERY\",\"runtime_envelope\":runtime,\"v11_watchdog_worker_identity\":identity,\"identity_ledger\":{\"first_check\":\"_check_v11_runtime_envelope\",\"worker_pid\":os.getpid(),\"worker_start_ticks\":identity[\"worker_start_ticks\"],\"watchdog_pid\":identity[\"watchdog_pid\"],\"tracer_pid\":identity[\"tracer_pid\"],\"phase_path\":identity[\"phase_path\"]}}\nruntime_tmp=runtime_path.with_suffix(\".json.tmp\")\nruntime_tmp.write_text(json.dumps(runtime_record,indent=2,allow_nan=False)+\"\\n\",encoding=\"utf-8\")\nos.replace(runtime_tmp,runtime_path)\nrepo,contract,execution_binding,comparison_binding,candidate_root,selection_record=sys.argv[1:]\ntest_file=pathlib.Path(repo)/\"src/test/test_task43_p8_execution_recovery.py\"\nselectors=[\n    \"test_v18_c_recovery_uses_actual_comparison_and_historical_f_readers\",\n    \"test_v18_c_recovery_actual_reader_rejects_unapproved_source_delta\",\n    \"test_v18_q8_recovery_reads_bound_archive_without_sampling_or_copying\",\n]\npytest_args=[\"-q\",\"--maxfail=1\",\"--junitxml\",str(attempt_root/\"recovery_tests.xml\"),\"--basetemp\",str(attempt_root/\"recovery_fixtures\")]\npytest_args.extend(f\"{test_file}::{selector}\" for selector in selectors)\npytest_status=pytest.main(pytest_args)\nif pytest_status != pytest.ExitCode.OK:\n    raise SystemExit(int(pytest_status))\nsys.argv=[\"compare_round1_candidate\",\"--candidate-run-root\",candidate_root,\"--accepted-parent-selection-record\",selection_record,\"--attempt-id\",\"v16_r9_p8_paired_attempt1\",\"--paired-p8-contract\",contract,\"--p8-execution-recovery-binding\",execution_binding,\"--p8-comparison-recovery-binding\",comparison_binding]\nfrom benchmarks.task43_hp_adaptivity.compare_round1_candidate import main\nraise SystemExit(main()) /home/fenics/Projects/NN-Lab-V2 /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery_attempt3.json /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_comparison_recovery_attempt3.json /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+          "stage": "workflow",
+          "rss_bytes": 2486272,
+          "pss_bytes": null,
+          "swap_bytes": 0,
+          "timestamp_ns": 1793182124783450247,
+          "exit_code": null,
+          "cpu_seconds": 0.01,
+          "affinity": [
+            1
+          ],
+          "io": {
+            "rchar": 0,
+            "wchar": 0,
+            "syscr": 0,
+            "syscw": 0,
+            "read_bytes": 0,
+            "write_bytes": 0,
+            "cancelled_write_bytes": 0
+          }
+        }
+      ],
+      "unreadable_pids": [],
+      "vanished_pids": [],
+      "all_status_readable": true,
+      "readability_retry_count": 0,
+      "compiler_descendant_count": 0,
+      "rss_bytes": 56107008,
+      "swap_bytes": 0,
+      "pss_sampled": false,
+      "pss_all_readable": null,
+      "pss_bytes": null,
+      "pss_sampling_policy": "disabled_by_profile",
+      "pss_status": "DISABLED_BY_PROFILE",
+      "resource_sample_cost": {
+        "wall_seconds": 0.10089344903826714,
+        "cpu_seconds": 0.04920218000000004
+      },
+      "node_memory_observation": {
+        "node0": {
+          "MemTotal_bytes": 1080832073728,
+          "MemFree_bytes": 464975286272
+        },
+        "node1": {
+          "MemTotal_bytes": 1082268311552,
+          "MemFree_bytes": 839758364672
+        },
+        "sampled_monotonic": 3107119.645804171,
+        "wall_seconds": 0.0007752720266580582,
+        "policy": "observe_only"
+      },
+      "resource_policy_observations": {
+        "process_tree_swap_bytes": 0,
+        "effective_available_bytes": 2081430085632,
+        "reserve_bytes": 324465057792,
+        "minimum_available_bytes": null,
+        "rss_gate_only": false
+      },
+      "elapsed_seconds": 0.2541602700948715,
+      "memory_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2081430085632,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2081430085632,
+        "reserve_bytes": 324465057792,
+        "launch_cap_bytes": 8589934592,
+        "planning_cap_bytes": 8589934592,
+        "cgroup_limits": [],
+        "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+      },
+      "worker_phase": {},
+      "launch_cap_bytes": 8589934592,
+      "rss_warning_bytes": 7301444403,
+      "warning": false,
+      "live_or_unreaped_children": [
+        3574825,
+        3574836
+      ]
+    },
+    "last_row": {
+      "schema": "task038.v14.j3.process-sample.v1",
+      "root_pid": 3574822,
+      "stage": "workflow",
+      "timestamp_ns": 1793182586652476191,
+      "exit_code": 0,
+      "members": [
+        {
+          "pid": 3574822,
+          "start_ticks": 310711913,
+          "ppid": 3574774,
+          "comm": "python",
+          "state": "R",
+          "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog --wall-seconds 1738 --interval 0.25 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/workflow_phase.json --grace-seconds 2 -- bash -c set -euo pipefail; cd /home/fenics/Projects/NN-Lab-V2; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1; source scripts/activate_task40_phi90_pord64.sh; export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 BLIS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1; exec taskset -c 1 strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o \"$TASK43_V11_TRACE_PREFIX\" \"$@\" task43-v18-worker python -u -c import json,os,pathlib,sys\nimport pytest\nfrom mpi4py import MPI\nfrom benchmarks.task43_hp_adaptivity.h100_anchor import _check_v11_runtime_envelope\n\nruntime=_check_v11_runtime_envelope(MPI.COMM_WORLD)\nidentity=runtime[\"v11_watchdog_worker_identity\"]\nattempt_root=pathlib.Path(os.environ[\"TASK43_V11_ATTEMPT_ROOT\"])\nruntime_path=attempt_root/\"runtime_identity.json\"\nif runtime_path.exists() or runtime_path.is_symlink():\n    raise FileExistsError(f\"refusing to overwrite C recovery runtime identity: {runtime_path}\")\nruntime_record={\"schema\":\"task43.v18.p8.comparison-recovery-runtime-identity.v1\",\"phase\":\"C_RECOVERY\",\"runtime_envelope\":runtime,\"v11_watchdog_worker_identity\":identity,\"identity_ledger\":{\"first_check\":\"_check_v11_runtime_envelope\",\"worker_pid\":os.getpid(),\"worker_start_ticks\":identity[\"worker_start_ticks\"],\"watchdog_pid\":identity[\"watchdog_pid\"],\"tracer_pid\":identity[\"tracer_pid\"],\"phase_path\":identity[\"phase_path\"]}}\nruntime_tmp=runtime_path.with_suffix(\".json.tmp\")\nruntime_tmp.write_text(json.dumps(runtime_record,indent=2,allow_nan=False)+\"\\n\",encoding=\"utf-8\")\nos.replace(runtime_tmp,runtime_path)\nrepo,contract,execution_binding,comparison_binding,candidate_root,selection_record=sys.argv[1:]\ntest_file=pathlib.Path(repo)/\"src/test/test_task43_p8_execution_recovery.py\"\nselectors=[\n    \"test_v18_c_recovery_uses_actual_comparison_and_historical_f_readers\",\n    \"test_v18_c_recovery_actual_reader_rejects_unapproved_source_delta\",\n    \"test_v18_q8_recovery_reads_bound_archive_without_sampling_or_copying\",\n]\npytest_args=[\"-q\",\"--maxfail=1\",\"--junitxml\",str(attempt_root/\"recovery_tests.xml\"),\"--basetemp\",str(attempt_root/\"recovery_fixtures\")]\npytest_args.extend(f\"{test_file}::{selector}\" for selector in selectors)\npytest_status=pytest.main(pytest_args)\nif pytest_status != pytest.ExitCode.OK:\n    raise SystemExit(int(pytest_status))\nsys.argv=[\"compare_round1_candidate\",\"--candidate-run-root\",candidate_root,\"--accepted-parent-selection-record\",selection_record,\"--attempt-id\",\"v16_r9_p8_paired_attempt1\",\"--paired-p8-contract\",contract,\"--p8-execution-recovery-binding\",execution_binding,\"--p8-comparison-recovery-binding\",comparison_binding]\nfrom benchmarks.task43_hp_adaptivity.compare_round1_candidate import main\nraise SystemExit(main()) /home/fenics/Projects/NN-Lab-V2 /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery_attempt3.json /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_comparison_recovery_attempt3.json /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+          "stage": "workflow",
+          "rss_bytes": 38207488,
+          "pss_bytes": null,
+          "swap_bytes": 0,
+          "timestamp_ns": 1793182586652450691,
+          "exit_code": null,
+          "cpu_seconds": 146.99,
+          "affinity": [
+            1
+          ],
+          "io": {
+            "rchar": 10313308251,
+            "wchar": 118028553,
+            "syscr": 3232740,
+            "syscw": 1728,
+            "read_bytes": 0,
+            "write_bytes": 118317056,
+            "cancelled_write_bytes": 16384
+          }
+        }
+      ],
+      "unreadable_pids": [],
+      "vanished_pids": [],
+      "all_status_readable": true,
+      "readability_retry_count": 0,
+      "compiler_descendant_count": 0,
+      "rss_bytes": 38207488,
+      "swap_bytes": 0,
+      "pss_sampled": false,
+      "pss_all_readable": null,
+      "pss_bytes": null,
+      "pss_sampling_policy": "disabled_by_profile",
+      "pss_status": "DISABLED_BY_PROFILE",
+      "resource_sample_cost": {
+        "wall_seconds": 0.06819888018071651,
+        "cpu_seconds": 0.06816222000000494
+      },
+      "node_memory_observation": {
+        "node0": {
+          "MemTotal_bytes": 1080832073728,
+          "MemFree_bytes": 468557844480
+        },
+        "node1": {
+          "MemTotal_bytes": 1082268311552,
+          "MemFree_bytes": 838630604800
+        },
+        "sampled_monotonic": 3107580.121063983,
+        "wall_seconds": 0.0009172903373837471,
+        "policy": "observe_only"
+      },
+      "resource_policy_observations": {
+        "process_tree_swap_bytes": 0,
+        "effective_available_bytes": 2084361621504,
+        "reserve_bytes": 324465057792,
+        "minimum_available_bytes": null,
+        "rss_gate_only": false
+      },
+      "elapsed_seconds": 462.12300445791334,
+      "memory_envelope": {
+        "mem_total_bytes": 2163100385280,
+        "mem_available_bytes": 2084361621504,
+        "effective_total_bytes": 2163100385280,
+        "effective_available_bytes": 2084361621504,
+        "reserve_bytes": 324465057792,
+        "launch_cap_bytes": 8589934592,
+        "planning_cap_bytes": 8589934592,
+        "cgroup_limits": [],
+        "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+      },
+      "worker_phase": {
+        "facts": {
+          "classification": "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE",
+          "record": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/comparison/v16_r9_p8_paired_comparison.json"
+        },
+        "phase": "complete",
+        "phase_started_monotonic": 3107574.823683857,
+        "stage": "task43_v16_p8_paired_comparison_complete",
+        "updated_monotonic": 3107574.826554842
+      },
+      "launch_cap_bytes": 8589934592,
+      "rss_warning_bytes": 7301444403,
+      "warning": false,
+      "live_or_unreaped_children": []
+    }
+  },
+  "trace_files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/strace/sched.3574825",
+      "sha256": "fb2c0146506393e763189ca9b18313de5964c3f051cf91b332dfe3ab3c87596b",
+      "size_bytes": 53374
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/strace/sched.3574837",
+      "sha256": "df68b9bd82330482652712764de0835c9afd9eb98c0aae53f56ba78d3f7e3151",
+      "size_bytes": 3717
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/strace/sched.3574838",
+      "sha256": "1dc4f9cc8e4c699404a82d2a2b9ff608cfa9dc8ec6f9491aa788094357c1ddb8",
+      "size_bytes": 40
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/strace/sched.3574839",
+      "sha256": "01f91bb868cac3a0501812b2d331c8b0764956b898f94ef1ad2024954b4d7043",
+      "size_bytes": 40
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/strace/sched.3574840",
+      "sha256": "4ac05f23053c31a9ea6962c48f5be359d6c8ae247db5eceaa67e53ead34f707b",
+      "size_bytes": 40
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/strace/sched.3574841",
+      "sha256": "0e12200f96af7f4661b9e593f8d4390627d61c0e80f53cfe504fac117427bbc4",
+      "size_bytes": 40
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/strace/sched.3574897",
+      "sha256": "a20f6fe40edb8a2110b05dd1baf1f777d7c9021e897a6a842b6590e76c9de65d",
+      "size_bytes": 40
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/strace/sched.3574905",
+      "sha256": "a5f38d9ab6ac75acbd32e148f21b2f99969be278af366c7f71e3e58fb4fcb293",
+      "size_bytes": 40
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/strace/sched.3574973",
+      "sha256": "813c7a4b21b6a2930f459acbd6cfe6d01bf465d572b630bf29e89fde02510f01",
+      "size_bytes": 40
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/strace/sched.3574983",
+      "sha256": "98a9a8b6c56a3607a83e4e3c1a194c599be0b26d2645242c95d1025bf623d826",
+      "size_bytes": 40
+    }
+  ]
+}

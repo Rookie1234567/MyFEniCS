@@ -1,0 +1,58 @@
+{
+  "provenance": "Existing V18 bytes read/copied only; old audit not executed. Resource timestamps are monotonic elapsed + epoch ns; trace epoch is not compared to uncalibrated monotonic.",
+  "index_base": 0,
+  "windows": {
+    "F": {
+      "source_path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/watchdog/resources.jsonl",
+      "source_sha256": "16761a7c50ce18db7cf78782fb4d0285709812daec1e684ee35c5cc1be43adc4",
+      "source_line_count": 5581,
+      "zero_based_inclusive": [
+        5573,
+        5580
+      ],
+      "one_based_inclusive": [
+        5574,
+        5581
+      ],
+      "copy_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_F_resource_window.jsonl",
+      "copy_sha256": "80c19fc4aee6bffe7def58e6fc931b9f9e00616b4fd7e15a4417852824c8a12c",
+      "records": 8,
+      "watchdog/summary.json": {
+        "source_path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/watchdog/summary.json",
+        "copy_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_F_summary.json",
+        "sha256": "d9009de40f41202cb33d20167d5e0645b04348d17ba7b56ccb622e4ab34824c0"
+      },
+      "stage_terminal.json": {
+        "source_path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/stage_terminal.json",
+        "copy_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_F_stage_terminal.json",
+        "sha256": "170cf0f805aeccbe81e7f0fcb2b0dff2ff3683ab92b49a7216b61810b20c3f62"
+      }
+    },
+    "C": {
+      "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/resources.jsonl",
+      "source_sha256": "257f6ebcf030ee80ed23d0ad6a604abff309dbad73e4cfc6750a38fe9afca9b7",
+      "source_line_count": 678,
+      "zero_based_inclusive": [
+        672,
+        677
+      ],
+      "one_based_inclusive": [
+        673,
+        678
+      ],
+      "copy_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_C_resource_window.jsonl",
+      "copy_sha256": "26c3cb3c1aaa1f48effa924d3fa0aec8992653c2e84bd518770182b61404b16e",
+      "records": 6,
+      "watchdog/summary.json": {
+        "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/summary.json",
+        "copy_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_C_summary.json",
+        "sha256": "ba44e56478c7d268979a51d7752bd0fdbb6533d0d6d238de32c1109b2db3bcdc"
+      },
+      "stage_terminal.json": {
+        "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/stage_terminal.json",
+        "copy_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_C_stage_terminal.json",
+        "sha256": "085f57c6ab6752b8b6b8b67087c7945ae659a612f58532ee7da2f990c7c58d20"
+      }
+    }
+  }
+}

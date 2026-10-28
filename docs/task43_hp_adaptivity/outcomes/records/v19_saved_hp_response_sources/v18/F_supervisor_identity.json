@@ -1,0 +1,7 @@
+{
+  "schema": "task43.v18.p8.supervisor-identity.v1",
+  "pid": 3551503,
+  "start_ticks": "310015121",
+  "phase": "F",
+  "stage_started_monotonic_ns": 3100151191308948
+}

@@ -1,0 +1,123 @@
+{
+  "schema": "task43.v18.p8.comparison-recovery-runtime-identity.v1",
+  "phase": "C_RECOVERY",
+  "runtime_envelope": {
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "python_version": "3.12.3",
+    "qualified_activation_marker": true,
+    "petsc_scalar_type": "<class 'numpy.complex128'>",
+    "petsc_int_type": "<class 'numpy.int64'>",
+    "mpi_size": 1,
+    "rank_affinity": [
+      [
+        1
+      ]
+    ],
+    "math_threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "task43_watchdog_resource_gate": {
+      "status": "verified",
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1",
+      "resource_stop_policy": "legacy",
+      "launch_cap_bytes": 8589934592,
+      "effective_reserve_bytes": 324465057792,
+      "planning_cap_bytes": 8589934592,
+      "zero_task_tree_swap_required": true
+    },
+    "v11_math_threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "BLIS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "v11_worker_local_environment": {
+      "HWLOC_COMPONENTS": "-x86",
+      "OMPI_MCA_pml": "ob1"
+    },
+    "v11_mumps_available": true,
+    "v11_watchdog_worker_identity": {
+      "worker_pid": 3574825,
+      "worker_parent_pid": 3574822,
+      "worker_start_ticks": 310711939,
+      "watchdog_pid": 3574822,
+      "watchdog_start_ticks": 310711913,
+      "watchdog_parent_pid_environment": 3574822,
+      "direct_watchdog_parent_verified": true,
+      "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/workflow_phase.json",
+      "tracer_pid": 3574836,
+      "tracer_parent_pid": 3574822,
+      "tracer_start_ticks": 310711943,
+      "tracer_proc_status_verified": true,
+      "tracer_descends_from_watchdog": true,
+      "worker_tid_affinities": [
+        {
+          "tid": 3574825,
+          "cpu_list": [
+            1
+          ]
+        },
+        {
+          "tid": 3574840,
+          "cpu_list": [
+            1
+          ]
+        },
+        {
+          "tid": 3574841,
+          "cpu_list": [
+            1
+          ]
+        }
+      ]
+    }
+  },
+  "v11_watchdog_worker_identity": {
+    "worker_pid": 3574825,
+    "worker_parent_pid": 3574822,
+    "worker_start_ticks": 310711939,
+    "watchdog_pid": 3574822,
+    "watchdog_start_ticks": 310711913,
+    "watchdog_parent_pid_environment": 3574822,
+    "direct_watchdog_parent_verified": true,
+    "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/workflow_phase.json",
+    "tracer_pid": 3574836,
+    "tracer_parent_pid": 3574822,
+    "tracer_start_ticks": 310711943,
+    "tracer_proc_status_verified": true,
+    "tracer_descends_from_watchdog": true,
+    "worker_tid_affinities": [
+      {
+        "tid": 3574825,
+        "cpu_list": [
+          1
+        ]
+      },
+      {
+        "tid": 3574840,
+        "cpu_list": [
+          1
+        ]
+      },
+      {
+        "tid": 3574841,
+        "cpu_list": [
+          1
+        ]
+      }
+    ]
+  },
+  "identity_ledger": {
+    "first_check": "_check_v11_runtime_envelope",
+    "worker_pid": 3574825,
+    "worker_start_ticks": 310711939,
+    "watchdog_pid": 3574822,
+    "tracer_pid": 3574836,
+    "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/workflow_phase.json"
+  }
+}

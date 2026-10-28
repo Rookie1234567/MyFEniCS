@@ -1,0 +1,349 @@
+{
+  "schema": "task43.v18.root-comparison-closeout.v1",
+  "reviewer": "/root",
+  "utc": "2026-10-28T10:19:42.929497+00:00",
+  "status": "COMPLETE_DIAGNOSTIC_ROOT_VERIFIED_NOT_ACCEPTANCE",
+  "scientific_classification": "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE",
+  "comparison": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/comparison/v16_r9_p8_paired_comparison.json",
+    "sha256": "1fca6095529c01685717f3db97b8d00302bb90fc1dfb2df9042cff58e9e137af"
+  },
+  "root_terminal_observation": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_C_recovery_attempt3_root_observation.json",
+    "sha256": "0415ca8d9b4d86821ce54f7c7da4c707b998eaef595ecb17690c985265e0f0a8"
+  },
+  "saved_array_recomputation": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/v18_root_saved_comparison_recomputation.json",
+    "sha256": "4dc24e61b74e32dc0fcd8dc9d9950581fb2f11d15d4401d8d7c9133dbdd674db"
+  },
+  "launch_manifest": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/snapshots/launch_manifest.json",
+    "sha256": "fdd4925ce532c0ac12bd12dbd842a5d2bd3b76de74bcddcbb6636c7b50a49227"
+  },
+  "stage_terminal": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/stage_terminal.json",
+    "sha256": "085f57c6ab6752b8b6b8b67087c7945ae659a612f58532ee7da2f990c7c58d20"
+  },
+  "runtime_identity": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/runtime_identity.json",
+    "sha256": "4e367a1a23219f6fe99e686be7903be3a81c011b86b649a6670e9481e85ad461"
+  },
+  "tests": {
+    "xml": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/recovery_tests.xml",
+      "sha256": "b9763a8f59e14ab74a68e933c65cf8fd9e6c5203a9187483d7660b031605543b"
+    },
+    "passed": 3,
+    "failed": 0,
+    "cases": [
+      "test_v18_c_recovery_uses_actual_comparison_and_historical_f_readers",
+      "test_v18_c_recovery_actual_reader_rejects_unapproved_source_delta",
+      "test_v18_q8_recovery_reads_bound_archive_without_sampling_or_copying"
+    ],
+    "history": "two unchanged alias cases passed in C recovery attempt2; not a single five-case final batch"
+  },
+  "source_checks": {
+    "count": 51,
+    "all_snapshot_git_current_match": true,
+    "all_inputs_unchanged": true,
+    "source_head": "75e1e05c8223bd15237162fc869b51637cdfe710"
+  },
+  "exit_codes": {
+    "launcher": 0,
+    "watchdog": 0,
+    "worker": 0
+  },
+  "whole_seconds": 465.385582418,
+  "whole_limit_seconds": 1800,
+  "resource": {
+    "sample_rows": 678,
+    "tree_rss_peak_bytes": 1639280640,
+    "rss_limit_bytes": 8589934592,
+    "task_swap_peak_bytes": 0,
+    "cpu_affinity": [
+      1
+    ],
+    "mpi_size": 1,
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "BLIS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "vanished_exit_race": {
+      "row": 673,
+      "elapsed_seconds": 460.24501897301525,
+      "pid": 3574825,
+      "following_rows_exit0_empty_children": [
+        674,
+        675,
+        676,
+        677
+      ],
+      "interpretation": "worker exit race; raw vanished observation retained, not claimed zero"
+    }
+  },
+  "trace": {
+    "files": 10,
+    "lines": 838,
+    "setters": [],
+    "signals": [
+      {
+        "file": "sched.3574825",
+        "line": 552,
+        "raw": "1793182133.545325 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3574897, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+      },
+      {
+        "file": "sched.3574825",
+        "line": 586,
+        "raw": "1793182136.910308 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3574905, si_uid=1000, si_status=0, si_utime=0, si_stime=1 /* 0.01 s */} ---"
+      },
+      {
+        "file": "sched.3574825",
+        "line": 618,
+        "raw": "1793182158.093934 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3574973, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---"
+      },
+      {
+        "file": "sched.3574825",
+        "line": 651,
+        "raw": "1793182165.805833 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3574983, si_uid=1000, si_status=0, si_utime=0, si_stime=1 /* 0.01 s */} ---"
+      }
+    ],
+    "tails": [
+      {
+        "file": "sched.3574825",
+        "line": 783,
+        "raw": "1793182584.810873 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3574837",
+        "line": 47,
+        "raw": "1793182584.848912 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3574838",
+        "line": 1,
+        "raw": "1793182584.799126 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3574839",
+        "line": 1,
+        "raw": "1793182584.818947 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3574840",
+        "line": 1,
+        "raw": "1793182584.394356 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3574841",
+        "line": 1,
+        "raw": "1793182584.351443 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3574897",
+        "line": 1,
+        "raw": "1793182133.545216 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3574905",
+        "line": 1,
+        "raw": "1793182136.909828 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3574973",
+        "line": 1,
+        "raw": "1793182158.093827 +++ exited with 0 +++"
+      },
+      {
+        "file": "sched.3574983",
+        "line": 1,
+        "raw": "1793182165.805264 +++ exited with 0 +++"
+      }
+    ],
+    "anomalies": []
+  },
+  "worker_identity": {
+    "worker_pid": 3574825,
+    "worker_parent_pid": 3574822,
+    "worker_start_ticks": 310711939,
+    "watchdog_pid": 3574822,
+    "watchdog_start_ticks": 310711913,
+    "watchdog_parent_pid_environment": 3574822,
+    "direct_watchdog_parent_verified": true,
+    "phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/workflow_phase.json",
+    "tracer_pid": 3574836,
+    "tracer_parent_pid": 3574822,
+    "tracer_start_ticks": 310711943,
+    "tracer_proc_status_verified": true,
+    "tracer_descends_from_watchdog": true,
+    "worker_tid_affinities": [
+      {
+        "tid": 3574825,
+        "cpu_list": [
+          1
+        ]
+      },
+      {
+        "tid": 3574840,
+        "cpu_list": [
+          1
+        ]
+      },
+      {
+        "tid": 3574841,
+        "cpu_list": [
+          1
+        ]
+      }
+    ]
+  },
+  "host_post_exit_checks": [
+    {
+      "pid": 3574822,
+      "start_ticks": "310711913",
+      "same_process_present": false,
+      "current": null
+    },
+    {
+      "pid": 3574825,
+      "start_ticks": "310711939",
+      "same_process_present": false,
+      "current": null
+    },
+    {
+      "pid": 3574836,
+      "start_ticks": "310711943",
+      "same_process_present": false,
+      "current": null
+    },
+    {
+      "pid": 3574837,
+      "start_ticks": "310711981",
+      "same_process_present": false,
+      "current": null
+    },
+    {
+      "pid": 3574774,
+      "start_ticks": "310711687",
+      "same_process_present": false,
+      "current": null
+    }
+  ],
+  "q8_reused_not_resampled": true,
+  "q10_sampled_once": true,
+  "P5_old_samples_resampled": false,
+  "orders": {
+    "q8": {
+      "J": 4.020864574738603,
+      "G": 3.967998186281264e-05,
+      "classification": {
+        "Delta_G": 2.7685237177407627e-07,
+        "Delta_J": 0.04419737048566574,
+        "classification": "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE",
+        "legacy_double_gate_pass": false,
+        "negative_or_tradeoff_condition_pass": false,
+        "positive_condition_pass": false,
+        "selection_transition_written": false
+      },
+      "efficiency": {
+        "H8": {
+          "Delta_FE": 6268,
+          "Delta_G_per_added_FE_dof": -8.801433454809436e-10,
+          "Delta_J_per_added_FE_dof": 1.4440750038713213e-05,
+          "lower": -5.847086962584893e-06,
+          "point_estimate": 1.4440750038713213e-05,
+          "upper": 3.472858704001132e-05
+        },
+        "P8": {
+          "Delta_FE": 250,
+          "Delta_G_per_added_FE_dof": 1.107409487096305e-09,
+          "Delta_J_per_added_FE_dof": 0.00017678948194266297,
+          "lower": -0.0003318671673538831,
+          "point_estimate": 0.00017678948194266297,
+          "upper": 0.0006854461312392091
+        },
+        "P8_lower_exceeds_H8_upper": false,
+        "both_orders_ranking_qualified": false,
+        "ranking_qualified": false
+      },
+      "sample": {
+        "P5_sample_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_q8.npz",
+        "P5_sample_sha256": "7286c09d6b3f3bb3a7ece1cd46284a9a5faafd6ebbcb213e2568b6a32ed1119e",
+        "P8_sampled_once": true,
+        "old_fields_resampled": false,
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_attempt1/comparison/v16_r9_p8_q8_samples.npz",
+        "reused_preserved_sample_archive": true,
+        "sample_count": 565248,
+        "sha256": "5475cffe826f45217cebd8df35239f4ba8a4a5813657cf2ca7696ce871af792f"
+      }
+    },
+    "q10": {
+      "J": 4.020864574738603,
+      "G": 3.9679981862807887e-05,
+      "classification": {
+        "Delta_G": 2.768523717739272e-07,
+        "Delta_J": 0.04419737048566574,
+        "classification": "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE",
+        "legacy_double_gate_pass": false,
+        "negative_or_tradeoff_condition_pass": false,
+        "positive_condition_pass": false,
+        "selection_transition_written": false
+      },
+      "efficiency": {
+        "H8": {
+          "Delta_FE": 6268,
+          "Delta_G_per_added_FE_dof": -8.801433454811793e-10,
+          "Delta_J_per_added_FE_dof": 1.4440750038713213e-05,
+          "lower": -5.847086962584893e-06,
+          "point_estimate": 1.4440750038713213e-05,
+          "upper": 3.472858704001132e-05
+        },
+        "P8": {
+          "Delta_FE": 250,
+          "Delta_G_per_added_FE_dof": 1.1074094870957087e-09,
+          "Delta_J_per_added_FE_dof": 0.00017678948194266297,
+          "lower": -0.0003318671673538831,
+          "point_estimate": 0.00017678948194266297,
+          "upper": 0.0006854461312392091
+        },
+        "P8_lower_exceeds_H8_upper": false,
+        "both_orders_ranking_qualified": false,
+        "ranking_qualified": false
+      },
+      "sample": {
+        "P5_sample_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_q10.npz",
+        "P5_sample_sha256": "82d7bc676e23bea0794caf5e16b3d6c28ee02cb18c57cb59e4bfc08a55759f99",
+        "P8_sampled_once": true,
+        "old_fields_resampled": false,
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/comparison/v16_r9_p8_q10_samples.npz",
+        "reused_preserved_sample_archive": false,
+        "sample_count": 1104000,
+        "sha256": "a3f3edca3f1f07fca79c37c1823b1616d6c330c36122ebc405d47ef2f8c20a85"
+      }
+    }
+  },
+  "FE": {
+    "Delta_FE_H8": 6268,
+    "Delta_FE_P8": 250,
+    "H8": 116740,
+    "P8": 110722,
+    "R9": 110472
+  },
+  "epsilon_J": 0.12716416232413652,
+  "epsilon_G": 9.088158796603444e-06,
+  "actual_precision_failure": {
+    "R00_s_abs_difference": 4.020864574738603e-06,
+    "R00_s_limit": 1e-06,
+    "max_individual_channel_abs_difference": 4.020864574738603e-06,
+    "channel_limit": 1e-06,
+    "J_limit": 1
+  },
+  "official_result": false,
+  "selection_eligible": false,
+  "continuation_all_false": true,
+  "merge_approved": false,
+  "qualification_boundary": "independent G/E/curl/H-total ratios and scattered-E difference norm; J arithmetic uses saved component metrics; no fresh background generation or independent modal physics assembly"
+}
