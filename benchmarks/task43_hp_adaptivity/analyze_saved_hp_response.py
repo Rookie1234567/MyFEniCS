@@ -682,7 +682,7 @@ def _validate_contract(manifest: dict[str, Any]) -> None:
         "cell_groups": {
             "requested": {"forest_root_id": 4, "global_cell_id": 8,
                           "lower": [16.5, 5.0, -10.0], "upper": [33.5, 10.0, 0.0]},
-            "closure": {"forest_root_id": 34, "global_cell_id": 67,
+            "closure": {"forest_root_id": 34, "global_cell_id": None,
                         "lower": [16.5, 5.0, 0.0], "upper": [33.5, 10.0, 30.0]},
         },
     }
@@ -724,7 +724,7 @@ def _validate_contract(manifest: dict[str, Any]) -> None:
     if set(slots) != set(EXPECTED_STAGE_ROOTS):
         raise EvidenceError("V19 execution slots are not exactly T1/T2/D1/D2")
     expected_limits = {"T1": (270, 300, True), "T2": (270, 300, False),
-                       "D1": (1140, 1200, True), "D2": (1140, 1200, False)}
+                       "D1": (1140, 1200, True), "D2": (1140, 1200, True)}
     for stage, root in EXPECTED_STAGE_ROOTS.items():
         slot = slots[stage]
         work, whole, armed = expected_limits[stage]
@@ -856,13 +856,12 @@ def _cell_groups(
         if len(matches) != 1:
             raise EvidenceError(f"root target {name} does not resolve to one R9 global cell")
         actual_global_id = expected_ids[matches[0]]
-        if int(target.get("global_cell_id", -1)) != actual_global_id:
+        if target.get("global_cell_id") is not None and int(target["global_cell_id"]) != actual_global_id:
             raise EvidenceError(f"root target {name} global cell ID/box mismatch")
         expected_forest_root = {"requested": 4, "closure": 34}[name]
         if int(target.get("forest_root_id", -1)) != expected_forest_root:
             raise EvidenceError(f"root target {name} forest-root identity differs from frozen Task43 mapping")
-        expected_global_id = {"requested": 8, "closure": 67}[name]
-        if actual_global_id != expected_global_id:
+        if name == "requested" and actual_global_id != 8:
             raise EvidenceError(f"root target {name} is not the frozen global cell")
         target_index[name] = actual_global_id
     for local_index, global_id in enumerate(expected_ids):
@@ -881,6 +880,34 @@ def _cell_groups(
         if len(contained) != 8:
             raise EvidenceError(f"H8 box {name} must have exactly eight child cells")
     return groups
+
+
+def order_plan_boxes_from_saved_owners(
+    points: np.ndarray, cell_ids: np.ndarray, slots: np.ndarray,
+    owners: np.ndarray, plan_boxes: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Match saved FE owners to geometric plan rows, never equate their indices."""
+    validate_owner_map(cell_ids, slots, owners)
+    count = len(cell_ids)
+    if len(plan_boxes) != count or points.shape != (len(slots), 3):
+        raise EvidenceError("saved owner/plan geometry layouts differ")
+    low = np.full((count, 3), np.inf)
+    high = np.full((count, 3), -np.inf)
+    for axis in range(3):
+        np.minimum.at(low[:, axis], slots, points[:, axis])
+        np.maximum.at(high[:, axis], slots, points[:, axis])
+    selected = []
+    for cell in range(count):
+        matches = [i for i, box in enumerate(plan_boxes)
+                   if all(low[cell, a] >= float(box["lower"][a]) - 1e-12
+                          and high[cell, a] <= float(box["upper"][a]) + 1e-12
+                          for a in range(3))]
+        if len(matches) != 1:
+            raise EvidenceError("saved owner points do not select a unique frozen plan box")
+        selected.append(matches[0])
+    if len(set(selected)) != count:
+        raise EvidenceError("saved owner to frozen plan mapping is not bijective")
+    return [plan_boxes[i] for i in selected]
 
 
 def validate_points_against_r9_boxes(
@@ -1360,11 +1387,15 @@ def _one_order(
     ids = [int(x) for x in p5["R9_cell_global_ids"]]
     if ids != list(range(180)):
         raise EvidenceError(f"{q} R9 global cell id order is not the frozen 0..179 order")
-    groups = _cell_groups(bundle["plans"]["R9"], bundle["plans"]["H8"], ids, root_targets)
+    ordered_r9_boxes = order_plan_boxes_from_saved_owners(
+        p5["points_nm"], p5["R9_cell_global_ids"], p5["R9_point_cell_local_slots"],
+        p5["R9_point_cell_global_ids"], bundle["plans"]["R9"],
+    )
+    groups = _cell_groups(ordered_r9_boxes, bundle["plans"]["H8"], ids, root_targets)
     validate_points_against_r9_boxes(
         p5["points_nm"], p5["R9_cell_global_ids"],
         p5["R9_point_cell_local_slots"], p5["R9_point_cell_global_ids"],
-        bundle["plans"]["R9"],
+        ordered_r9_boxes,
     )
     reference_g = float(np.sum(np.abs(p5["Y6_1_E"]) ** 2 + np.abs(p5["Y6_1_curl_E"] / bundle["k0"]) ** 2, axis=1) @ p5["weights_nm3"])
     if not math.isfinite(reference_g) or reference_g <= 0:
@@ -1486,13 +1517,14 @@ def _one_order(
     reference_g_floor = float(comparison_q["R9"]["field_metrics"]["G"]["incident_g_norm_floor"])
     normalized_g_norm = max(reference_g_norm, reference_g_floor)
     normalized_g_squared = normalized_g_norm ** 2
-    cell_rows = _cell_csv_rows(order, bundle["plans"]["R9"], ids, groups, cell_actions,
+    cell_rows = _cell_csv_rows(order, ordered_r9_boxes, ids, groups, cell_actions,
                                normalized_g_squared, baseline_error_squared)
     mode_rows, all_exceed = _mode_rows(modal_by_case, J_CHANNEL_POWER_TOLERANCE)
     result = {
         "quadrature": {"order": order, **archive_identity},
         "cell_partition": {
             "cell_count": 180,
+            "owner_global_id_to_plan_row": {str(g): bundle["plans"]["R9"].index(ordered_r9_boxes[i]) for i, g in enumerate(ids)},
             "global_reference_G_norm": reference_g_norm,
             "frozen_incident_G_norm_floor": reference_g_floor,
             "frozen_reference_or_floor_G_norm": normalized_g_norm,
@@ -1501,7 +1533,7 @@ def _one_order(
             "special_cell_bindings": {
                 name: {
                     "forest_root_id": int(target["forest_root_id"]),
-                    "global_cell_id": int(target["global_cell_id"]),
+                    "global_cell_id": next(i for i, group in groups.items() if group == ("requested_root4_global8" if name == "requested" else "H8_required_closure_root34")),
                     "box_nm": {"lower": target["lower"], "upper": target["upper"]},
                     "region": "requested_root4_global8" if name == "requested" else "H8_required_closure_root34",
                 }
@@ -1684,6 +1716,18 @@ def main(argv: list[str] | None = None) -> int:
     try:
         write_runtime_identity(stage, "start")
         started = True
+        if stage == "D2":
+            import pytest
+            run_root = Path(os.environ["TASK43_V19_RUN_ROOT"])
+            selectors = [
+                "src/test/test_task43_saved_hp_response.py::test_saved_owner_geometry_reorders_plan_rows",
+                "src/test/test_task43_saved_hp_response.py::test_wrong_owner_map_is_rejected",
+                "src/test/test_task43_saved_hp_response.py::test_weighted_multicell_terms_close_after_reordering",
+            ]
+            test_code = pytest.main(["-v", "-rA", "--maxfail=1", "--junitxml", str(run_root / "tests.xml"),
+                                     "--basetemp", str(run_root / "fixtures"), *selectors])
+            if int(test_code) != 0:
+                raise EvidenceError(f"D2 affected fixture batch failed: {test_code}")
         result = run_analysis(args.manifest, args.output_root, stage, args.resume_from)
     except BaseException as exc:
         failure = exc

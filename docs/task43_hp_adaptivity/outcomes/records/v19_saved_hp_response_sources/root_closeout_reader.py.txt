@@ -1,0 +1,59 @@
+# Root-only read of completed V19 evidence; never imports checker or old auditors.
+import json,hashlib,re,sys,time
+from pathlib import Path
+r=Path(sys.argv[1]);repo=Path('/home/fenics/Projects/NN-Lab-V2')
+def load(p):return json.loads(p.read_text())
+def sha(p):return hashlib.file_digest(p.open('rb'),'sha256').hexdigest()
+s=load(r/'watchdog/summary.json');t=load(r/'launcher_terminal.json');m=load(r/'run_manifest.json');a=load(r/'runtime_start.json')['identity'];z=load(r/'runtime_end.json')['identity'];issues=[]
+for k in ['pid','ppid','start_ticks','tracer_pid','watchdog_pid','watchdog_start_ticks']:
+ if a[k]!=z[k]:issues.append(['runtime_identity_change',k])
+for x in [a,z]:
+ if x['ppid']!=x['watchdog_pid'] or x['tracer']['ppid']!=x['watchdog_pid'] or x['cpu_affinity']!=[1]:issues.append(['parent_cpu',x])
+ if x['task_vmswap_kib']!=0 or any(v!='1' for v in x['thread_environment'].values()) or any(p['cpu_affinity']!=[1] for p in x['threads']):issues.append(['thread_swap',x])
+trace=[];events=[];known={};lines_total=0;stack_count=0
+for p in sorted((r/'strace').glob('sched.*')):
+ lines=p.read_text().splitlines();pid=int(p.name.split('.')[-1]);lines_total+=len(lines)
+ for i,line in enumerate(lines,1):
+  if line.startswith(' > '):stack_count+=1;continue
+  ev={'file':p.name,'line':i,'raw':line};events.append(ev)
+  if re.fullmatch(r'\d+\.\d+ sched_getaffinity\(\d+, \d+, \[1\]\) = 8',line):ev['classification']='GET_CPU1'
+  elif re.fullmatch(r'\d+\.\d+ sched_setaffinity\(\d+, \d+, \[1\]\) = 0',line):ev['classification']='SET_CPU1_SUCCESS'
+  elif re.fullmatch(r'\d+\.\d+ \+\+\+ exited with 0 \+\+\+',line):ev['classification']='EXIT_ZERO'
+  elif '--- SIGCHLD ' in line and 'si_code=CLD_EXITED' in line and 'si_status=0,' in line:ev['classification']='NORMAL_CHILD_EXIT_ZERO'
+  else:ev['classification']='UNCLASSIFIED';issues.append(['trace',ev])
+ if not lines or not re.fullmatch(r'\d+\.\d+ \+\+\+ exited with 0 \+\+\+',lines[-1]):issues.append(['trace_tail',p.name])
+ trace.append({'path':str(p),'sha256':sha(p),'lines':len(lines),'tail':lines[-1:]})
+ known[pid]=None
+samples=[]
+for i,line in enumerate((r/'watchdog/resources.jsonl').read_text().splitlines()):
+ x=json.loads(line);policy=x['resource_policy_observations']
+ if x['rss_bytes']>=x['launch_cap_bytes'] or x['swap_bytes']!=0 or policy['effective_available_bytes']<policy['reserve_bytes']:issues.append(['resource',i])
+ if x['unreadable_pids'] or not x['all_status_readable']:issues.append(['unreadable',i,x['unreadable_pids']])
+ for p in x['members']:
+  known[p['pid']]=p['start_ticks']
+  if p['affinity']!=[1] or p['swap_bytes']!=0:issues.append(['member_cpu_swap',i,p['pid']])
+  if p['pid']==a['pid'] and (p['start_ticks']!=a['start_ticks'] or p['ppid']!=a['watchdog_pid']):issues.append(['worker_parent',i])
+ samples.append({k:x[k] for k in ['elapsed_seconds','exit_code','rss_bytes','swap_bytes','vanished_pids','live_or_unreaped_children']})
+known[a['watchdog_pid']]=a['watchdog_start_ticks'];known[a['tracer_pid']]=a['tracer']['start_ticks'];known[a['pid']]=a['start_ticks']
+post=[]
+for pid,ticks in known.items():
+ p=Path(f'/proc/{pid}/stat');same=False;state=None
+ if p.exists():
+  f=p.read_text().rsplit(')',1)[1].split();same=ticks is None or int(f[19])==ticks;state=f[0]
+ if same:issues.append(['residual_process',pid,ticks,state])
+ post.append({'pid':pid,'start_ticks':ticks,'same_process_present':same})
+checks=[]
+for rel,ref in m['sources'].items():
+ actual=sha(repo/rel);snap=sha(r/'snapshots'/rel);ok=actual==snap==ref['sha256'];checks.append({'path':rel,'sha256':actual,'snapshot_sha256':snap,'matches':ok})
+ if not ok:issues.append(['source',rel])
+for path,ref in m['launch_files'].items():
+ p=Path(path);ok=sha(p)==ref['sha256']==sha(r/'snapshots/launch'/p.name)
+ if not ok:issues.append(['launch',path])
+if s['classification']!='COMPLETED' or s['leader_exit_code']!=0 or not s['descendants_cleared'] or s['remaining_child_pids']:issues.append(['terminal',s['classification']])
+if t['supervisor_exit_code']!=0 or t['watchdog_exit_code']!=0 or not t['whole_limit_pass'] or t['received_signal']:issues.append(['launcher',t])
+if samples[-1]['exit_code']!=0 or samples[-1]['live_or_unreaped_children']:issues.append(['last_resource',samples[-1]])
+# A vanished sample is kept for explicit root assessment, never silently ignored.
+vanished=[{'row':i,**x} for i,x in enumerate(samples) if x['vanished_pids']]
+out={'schema':'task43.v19.root_closeout.v1','source_head':m['actual_head'],'root':str(r),'reviewer':'root','recorded_epoch_ns':time.time_ns(),'issues':issues,'vanished_samples_requiring_root_assessment':vanished,'runtime_start':a,'runtime_end':z,'resource_samples':samples,'resources_sha256':sha(r/'watchdog/resources.jsonl'),'trace_files':trace,'all_nonstack_events':events,'trace_lines_read':lines_total,'stack_lines_read':stack_count,'host_post_exit_checks':post,'source_checks':checks,'summary':s,'launcher_terminal':t,'cache_limit':'No cache-path requested; empty metadata stamp does not establish shared-cache stability','classification':'NO_AUTOMATIC_QUALIFICATION_ROOT_READ_REQUIRED'}
+(r/'root_closeout.json').write_text(json.dumps(out,indent=2)+'\n')
+print(json.dumps({'issues':issues,'vanished':vanished,'resources':samples,'trace_events':events,'host_post_exit_checks':post,'whole':t['entry_elapsed_seconds'],'peak':s['sampled_process_tree_rss_peak_bytes'],'source_checks_all':all(x['matches'] for x in checks)},indent=2))

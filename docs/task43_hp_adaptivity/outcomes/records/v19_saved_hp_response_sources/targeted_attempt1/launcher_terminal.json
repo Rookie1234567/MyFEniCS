@@ -1,0 +1,10 @@
+{
+  "stage": "T1",
+  "entry_elapsed_seconds": 4.016669398,
+  "whole_limit_seconds": 300,
+  "supervisor_exit_code": 0,
+  "watchdog_exit_code": 0,
+  "received_signal": null,
+  "qualification": "REQUIRES_ROOT_REVIEW",
+  "whole_limit_pass": true
+}

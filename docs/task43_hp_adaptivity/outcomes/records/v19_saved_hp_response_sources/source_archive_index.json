@@ -95,43 +95,43 @@
     },
     {
       "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_F_summary.json",
+      "original_sha256": "d9009de40f41202cb33d20167d5e0645b04348d17ba7b56ccb622e4ab34824c0",
       "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/watchdog/summary.json",
       "role": "F_watchdog_summary",
       "sha256": "d9009de40f41202cb33d20167d5e0645b04348d17ba7b56ccb622e4ab34824c0",
-      "size_bytes": 3559,
-      "original_sha256": "d9009de40f41202cb33d20167d5e0645b04348d17ba7b56ccb622e4ab34824c0"
+      "size_bytes": 3559
     },
     {
       "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_F_historical_host_closeout_excerpt.json",
+      "original_sha256": "a0c5c9053ae28f0474b79145672661920b3e53f84facd5b3d564e84c2906e0fe",
       "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_F_root_terminal_observation.json",
       "role": "F_historical_host_closeout_excerpt",
       "sha256": "52da30d9ddc3617bebad9223881a6707b3f3e80cfdf81571a16b74a06e8c3ec1",
-      "size_bytes": 358746,
-      "original_sha256": "a0c5c9053ae28f0474b79145672661920b3e53f84facd5b3d564e84c2906e0fe"
+      "size_bytes": 358746
     },
     {
       "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_F_stage_terminal.json",
+      "original_sha256": "170cf0f805aeccbe81e7f0fcb2b0dff2ff3683ab92b49a7216b61810b20c3f62",
       "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/stage_terminal.json",
       "role": "F_stage_terminal",
       "sha256": "170cf0f805aeccbe81e7f0fcb2b0dff2ff3683ab92b49a7216b61810b20c3f62",
-      "size_bytes": 16833,
-      "original_sha256": "170cf0f805aeccbe81e7f0fcb2b0dff2ff3683ab92b49a7216b61810b20c3f62"
+      "size_bytes": 16833
     },
     {
       "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_C_summary.json",
+      "original_sha256": "ba44e56478c7d268979a51d7752bd0fdbb6533d0d6d238de32c1109b2db3bcdc",
       "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/summary.json",
       "role": "C_watchdog_summary",
       "sha256": "ba44e56478c7d268979a51d7752bd0fdbb6533d0d6d238de32c1109b2db3bcdc",
-      "size_bytes": 3552,
-      "original_sha256": "ba44e56478c7d268979a51d7752bd0fdbb6533d0d6d238de32c1109b2db3bcdc"
+      "size_bytes": 3552
     },
     {
       "copied_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_C_historical_host_closeout_excerpt.json",
+      "original_sha256": "0415ca8d9b4d86821ce54f7c7da4c707b998eaef595ecb17690c985265e0f0a8",
       "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_C_recovery_attempt3_root_observation.json",
       "role": "C_historical_host_closeout_excerpt",
       "sha256": "bddf4a7fcb221e52f92f47b8bc34115f3ef87cf3ad6cdd8a76159b30bdab7742",
-      "size_bytes": 47567,
-      "original_sha256": "0415ca8d9b4d86821ce54f7c7da4c707b998eaef595ecb17690c985265e0f0a8"
+      "size_bytes": 47567
     }
   ],
   "execution_excerpt": {
@@ -160,8 +160,8 @@
     },
     {
       "path": "benchmarks/artifacts/task43/v19_saved_hp_response/launch/stage_launch.sh",
-      "sha256": "87b60b762bb9b9977727d4ccfef82891b774c9ee832c092d3b11ed10026aa52d",
-      "size_bytes": 5455,
+      "sha256": "fc9db4ce99b0bcc1bf912acf5d4d0cdbe0c7c76b37ba78674ff03dd857e2b8f2",
+      "size_bytes": 5469,
       "tracked_copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/launch/stage_launch.sh.txt"
     },
     {
@@ -180,47 +180,47 @@
   "launch_runtime_binding": "The launch scripts read the ignored original paths; snapshot.py checks those bytes against these tracked copies before startup.",
   "no_dynamic_replay": true,
   "purpose": "Byte-exact archival pointers and compact V18 exit/identity/source evidence for read-only saved-field diagnosis.",
-  "schema": "task43.v19.saved_hp_response_source_archive.v1",
   "resource_exit_windows": {
+    "note": "Read-only byte windows of the existing V18 F/C final resource samples and their linked watchdog/stage/host records; no audit was rerun.",
     "path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_exit_window_index.json",
     "sha256": "00440d3e53a21a56645b41304905e69faeb7777414e9b30a660f59eae4b19c31",
     "size_bytes": 2941,
     "windows": {
-      "F": {
-        "source_path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/watchdog/resources.jsonl",
-        "source_sha256": "16761a7c50ce18db7cf78782fb4d0285709812daec1e684ee35c5cc1be43adc4",
-        "source_line_count": 5581,
-        "zero_based_inclusive": [
-          5573,
-          5580
-        ],
-        "one_based_inclusive": [
-          5574,
-          5581
-        ],
-        "copy_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_F_resource_window.jsonl",
-        "copy_sha256": "80c19fc4aee6bffe7def58e6fc931b9f9e00616b4fd7e15a4417852824c8a12c",
-        "copy_size_bytes": 47185,
-        "records": 8
-      },
       "C": {
-        "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/resources.jsonl",
-        "source_sha256": "257f6ebcf030ee80ed23d0ad6a604abff309dbad73e4cfc6750a38fe9afca9b7",
-        "source_line_count": 678,
-        "zero_based_inclusive": [
-          672,
-          677
-        ],
+        "copy_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_C_resource_window.jsonl",
+        "copy_sha256": "26c3cb3c1aaa1f48effa924d3fa0aec8992653c2e84bd518770182b61404b16e",
+        "copy_size_bytes": 49214,
         "one_based_inclusive": [
           673,
           678
         ],
-        "copy_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_C_resource_window.jsonl",
-        "copy_sha256": "26c3cb3c1aaa1f48effa924d3fa0aec8992653c2e84bd518770182b61404b16e",
-        "copy_size_bytes": 49214,
-        "records": 6
+        "records": 6,
+        "source_line_count": 678,
+        "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/resources.jsonl",
+        "source_sha256": "257f6ebcf030ee80ed23d0ad6a604abff309dbad73e4cfc6750a38fe9afca9b7",
+        "zero_based_inclusive": [
+          672,
+          677
+        ]
+      },
+      "F": {
+        "copy_path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/v18_F_resource_window.jsonl",
+        "copy_sha256": "80c19fc4aee6bffe7def58e6fc931b9f9e00616b4fd7e15a4417852824c8a12c",
+        "copy_size_bytes": 47185,
+        "one_based_inclusive": [
+          5574,
+          5581
+        ],
+        "records": 8,
+        "source_line_count": 5581,
+        "source_path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/watchdog/resources.jsonl",
+        "source_sha256": "16761a7c50ce18db7cf78782fb4d0285709812daec1e684ee35c5cc1be43adc4",
+        "zero_based_inclusive": [
+          5573,
+          5580
+        ]
       }
-    },
-    "note": "Read-only byte windows of the existing V18 F/C final resource samples and their linked watchdog/stage/host records; no audit was rerun."
-  }
+    }
+  },
+  "schema": "task43.v19.saved_hp_response_source_archive.v1"
 }

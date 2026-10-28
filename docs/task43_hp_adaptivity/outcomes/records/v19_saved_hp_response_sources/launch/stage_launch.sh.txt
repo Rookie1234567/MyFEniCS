@@ -87,7 +87,7 @@ PY
     (( ${#selectors[@]} > 0 && ${#selectors[@]} <= 12 ))
     argv=(python -u -m pytest -v -rA --maxfail=1 --junitxml "$root/tests.xml" --basetemp "$root/fixtures" "${selectors[@]}") ;;
   D1) argv=(python -u -m benchmarks.task43_hp_adaptivity.analyze_saved_hp_response --manifest "$contract" --output-root "$root/data") ;;
-  D2) echo 'D2 requires a frozen, diagnosed local recovery with <=6 tests in this same worker; not armed.' >&2; exit 91 ;;
+  D2) argv=(python -u -m benchmarks.task43_hp_adaptivity.analyze_saved_hp_response --manifest "$contract" --output-root "$root/data") ;;
 esac
 wrapper='set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; exec taskset -c 1 strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o "$TASK43_V19_RUN_ROOT/strace/sched" "$@"'
 mkdir -- "$root/strace"

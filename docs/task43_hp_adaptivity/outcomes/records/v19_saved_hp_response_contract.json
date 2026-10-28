@@ -70,7 +70,7 @@
         "work_seconds": 1140
       },
       "D2": {
-        "armed": false,
+        "armed": true,
         "cpu_affinity": [
           1
         ],
@@ -131,8 +131,8 @@
     },
     {
       "path": "benchmarks/artifacts/task43/v19_saved_hp_response/launch/stage_launch.sh",
-      "sha256": "87b60b762bb9b9977727d4ccfef82891b774c9ee832c092d3b11ed10026aa52d",
-      "size_bytes": 5455,
+      "sha256": "fc9db4ce99b0bcc1bf912acf5d4d0cdbe0c7c76b37ba78674ff03dd857e2b8f2",
+      "size_bytes": 5469,
       "tracked_copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/launch/stage_launch.sh.txt"
     },
     {
@@ -158,7 +158,7 @@
     "cell_groups": {
       "closure": {
         "forest_root_id": 34,
-        "global_cell_id": 67,
+        "global_cell_id": null,
         "lower": [
           16.5,
           5.0,
@@ -248,7 +248,7 @@
     },
     "source_archive_index": {
       "path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/source_archive_index.json",
-      "sha256": "495fe5ccc9e58e3b0381e140e2af42d5fce478748dba26ae26d679b3a7455006",
+      "sha256": "29987c3ee3ebcf6c000bc3350a11b95042167a50df08b399700243a9c9dfce29",
       "size_bytes": 12623
     }
   },
@@ -716,6 +716,15 @@
       "weight_sha256": "00e92e61b9f4ae1b3ab2cc57cad2f9e678072257b5ae75c5eef3ecebf7ee319d"
     }
   },
+  "recovery_reason": {
+    "completed_prior_orders": [],
+    "failed_contract_sha256": "6c2c1e9f7d2e99b01cfab8a45bed2b18e46409bae08ee0ba548abb3a67d42e81",
+    "failed_run_head": "8898f7e5fab82234786c51ffbd0cdeb167b379fe",
+    "failed_stage": "D1",
+    "failure": "Plan row index was incorrectly used as mesh global ID. Requested box is geometric plan row66, fixed requested mesh ID8. Closure plan row67 does not establish global ID67. Derive a bijection only from saved owners/points and fixed boxes.",
+    "reuse_old_derived_results": false,
+    "scope": "Same original arrays and fixed scientific formulas; D2 same-worker three affected fixtures then recompute q8/q10; no further retry."
+  },
   "schema": "task43.v19.saved_hp_response_contract.v1",
   "sources": {
     "h8_absorption": {
@@ -773,6 +782,11 @@
   },
   "tests": {
     "collection_only": false,
+    "diagnostic_recovery_selectors": [
+      "src/test/test_task43_saved_hp_response.py::test_saved_owner_geometry_reorders_plan_rows",
+      "src/test/test_task43_saved_hp_response.py::test_wrong_owner_map_is_rejected",
+      "src/test/test_task43_saved_hp_response.py::test_weighted_multicell_terms_close_after_reordering"
+    ],
     "expanded_initial_nodes": 12,
     "max_initial_nodes": 12,
     "max_recovery_nodes": 6,

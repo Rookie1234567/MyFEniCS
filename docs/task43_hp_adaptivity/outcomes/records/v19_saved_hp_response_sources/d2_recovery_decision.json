@@ -1,0 +1,38 @@
+{
+  "schema": "task43.v19.d2_recovery_decision.v1",
+  "authority": "5586112bf5bee924cc603253a5cbf7dd6c4a0863 §9.8",
+  "decision": "USE_ONLY_D2_FOR_LOCATED_CHECKER_OWNER_INDEX_BUG",
+  "D1_failed_head": "8898f7e5fab82234786c51ffbd0cdeb167b379fe",
+  "D1_whole_seconds": 13.085514464,
+  "D1_exit_codes": {
+    "supervisor": 2,
+    "watchdog": 2,
+    "worker": 2
+  },
+  "D1_primary_exception": "EvidenceError: root target requested global cell ID/box mismatch",
+  "D1_q8_complete": false,
+  "D1_q10_complete": false,
+  "D1_source_input_hashes_unchanged": true,
+  "root_trace_classification": "worker trace exit2 is the documented checker rejection, child exit0 and normal SIGCHLD; no setters, no resource/parent/swap/cleanup defects. Original root_closeout classifier marked exit2 unclassified and nonzero-terminal; retained, explicitly classified here.",
+  "source_root_cause": "cell_interior_degrees is geometric plan order, while saved point owner is a mesh global ID. Existing round1_candidates.py maps by geometric box and global IDs independently. Frozen requested global8 box is plan row66. Former closure global67 was an erroneous assumption from plan row67; derive closure owner from original saved points within D2.",
+  "fix": "Match each saved owner point group to a unique frozen geometric box and require a bijection; retain fixed global8 request and root34 box. No point/array/reference/epsilon change.",
+  "D2_same_worker_tests": [
+    "test_saved_owner_geometry_reorders_plan_rows",
+    "test_wrong_owner_map_is_rejected",
+    "test_weighted_multicell_terms_close_after_reordering"
+  ],
+  "D2_no_prior_order_reuse": true,
+  "D2_work_seconds": 1140,
+  "D2_whole_seconds": 1200,
+  "D2_no_more_retries": true,
+  "static_cost": "NOT_MEASURED",
+  "supervision_deviation": {
+    "description": "Subagent, despite instruction to remain with source/JSON evidence, executed two standalone stdlib python3 scripts over saved q8 payloads: box/owner filtering and ids[slots] equality. No NumPy, project import, solver, native ABI or writes. One initial python command failed before interpreter start (shell127).",
+    "additional_unmonitored_array_operations": 2,
+    "wall_seconds": "NOT_MEASURED",
+    "absolute_interpreter": "UNKNOWN",
+    "pid_and_numeric_exit_codes": "NOT_SAVED",
+    "qualification": "NOT_QUALIFIED_NOT_USED_AS_SCIENTIFIC_EVIDENCE",
+    "root_correction": "Stopped further agent array work. D2 must independently perform owner checks under its original authorized resource envelope. This deviation is not hidden as static hash-only work or charged against unused T2."
+  }
+}

@@ -18,6 +18,12 @@ from benchmarks.task43_hp_adaptivity import analyze_saved_hp_response as checker
 @pytest.fixture(scope="session", autouse=True)
 def _qualified_worker_identity():
     stage = os.environ.get("TASK43_V19_STAGE", "")
+    if stage == "D2":
+        root = Path(os.environ["TASK43_V19_RUN_ROOT"])
+        start = json.loads((root / "runtime_start.json").read_text())
+        assert start["identity"]["pid"] == os.getpid()
+        yield
+        return
     if stage not in ("T1", "T2"):
         pytest.skip("V19 test nodes run only inside the checked T worker")
     checker.write_runtime_identity(stage, "start")
@@ -356,3 +362,19 @@ def test_archive_readonly_and_q8_survives_q10_write_failure(tmp_path: Path):
     resumed = checker.resume_completed_order(output_root, contract, order="q8")
     assert resumed["status"] == "COMPLETE"
     assert resumed["reused_from"]["order"] == "q8"
+
+
+def test_saved_owner_geometry_reorders_plan_rows():
+    boxes = [
+        {"lower": [1., 0., 0.], "upper": [2., 1., 1.]},
+        {"lower": [0., 0., 0.], "upper": [1., 1., 1.]},
+    ]
+    points = np.array([[.2, .3, .4], [1.7, .4, .2], [.8, .6, .7], [1.2, .9, .5]])
+    cells = np.array([0, 1]); slots = np.array([0, 1, 0, 1])
+    ordered = checker.order_plan_boxes_from_saved_owners(points, cells, slots, slots, boxes)
+    assert ordered == [boxes[1], boxes[0]]
+    checker.validate_points_against_r9_boxes(points, cells, slots, slots, ordered)
+    permutation = np.array([3, 0, 2, 1])
+    assert checker.order_plan_boxes_from_saved_owners(points[permutation], cells, slots[permutation], slots[permutation], boxes) == ordered
+    with pytest.raises(checker.EvidenceError, match="owner global ids"):
+        checker.order_plan_boxes_from_saved_owners(points, cells, 1-slots, slots, boxes)
