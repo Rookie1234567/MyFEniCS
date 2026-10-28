@@ -63,7 +63,6 @@ python -m src.runners.task41_p0_contract --prepare --case B0 \
   --runtime-prefix benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix \
   --abi-receipt benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/abi_receipt_v29_attempt2.json \
   --jit-cache benchmarks/artifacts/task40extra_0p7nm_engineering/local_v29_wsl/jit_cache \
-  --b0-saved-diagnostics-6h \
   --b0-saved-diagnostics-instance v17_selected_two_cell_replay_6h
 ```
 
