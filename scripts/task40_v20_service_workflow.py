@@ -10353,7 +10353,7 @@ def _run_task41_p0_saved_output_service(
                 b0_evidence_audit_mode, b0_v9_saved_star_screen_mode,
                 b0_v9_failed_terminal_audit_mode, b0_saved_y_g_comparison_mode,
                 b0_v16_saved_vector_analysis_mode, b0_v14_saved_rhs_candidate_mode,
-                b0_v8_selected_trace_star_audit_mode, b0_v8_selected_trace_star_mode,
+                b0_v8_saved_trace_star_audit_mode, b0_v8_selected_trace_star_mode,
                 b0_v8_selected_trace_star_metadata_only_mode,
                 b0_v8_selected_trace_star_candidate_replay_mode,
             ))

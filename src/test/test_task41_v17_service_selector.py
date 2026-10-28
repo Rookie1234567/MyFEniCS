@@ -691,6 +691,150 @@ def test_outer_service_dispatch_passes_v17_mode_to_saved_service() -> None:
     assert kw.value.id == "b0_v17_selected_two_cell_mode"
 
 
+def test_v17_saved_service_route_reaches_donor_loader(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "repo"
+    contract_path, contract, contract_sha, fixed_window = (
+        _write_valid_v17_contract_fixture(root, monkeypatch)
+    )
+    model_root = root / "results" / contract_module.TASK41_MODEL_ID
+    manifest_path = (
+        root / contract_module.TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE
+    )
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+
+    fixture_root = model_root / "v17_service_route_fixture"
+
+    def record(name: str, content: bytes) -> dict[str, object]:
+        path = fixture_root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+        return {
+            "path": str(path.resolve()),
+            "bytes": path.stat().st_size,
+            "sha256": hashlib.sha256(content).hexdigest(),
+        }
+
+    report_names = (
+        "v9_audit",
+        "v15_audit",
+        "v15_checkpoint",
+        "v15_checker",
+        "v9_run_manifest",
+        "v15_run_manifest",
+        "v15_candidate_summary",
+    )
+    producer_reports: dict[str, object] = {}
+    for name in report_names:
+        payload = (
+            {
+                "existing_evidence_bytes": 0,
+                "prior_new_evidence_bytes": 0,
+                "new_evidence_bytes": 0,
+            }
+            if name == "v15_audit"
+            else {"fixture": name}
+        )
+        encoded = json.dumps(payload, sort_keys=True).encode()
+        producer_reports[name] = record(f"reports/{name}.json", encoded)
+
+    arrays: dict[str, object] = {}
+    for name in ("y9", "g9", "y15", "g15"):
+        arrays[name] = [
+            record(f"arrays/{name}_column{column}.bin", f"{name}-{column}".encode())
+            for column in range(2)
+        ]
+    active_rows = record("arrays/active_original_rows.bin", b"fixture-map")
+    active_rows.update({
+        "shape": [5_688_000],
+        "dtype": np.dtype(np.int64).str,
+    })
+    manifest = {
+        "schema": "task41.p0.b0.v16.saved_vector_manifest.v1",
+        "rows": 5_752_120,
+        "trace_rows": 5_688_000,
+        "columns": [0, 1],
+        "producer_reports": producer_reports,
+        "arrays": arrays,
+        "metadata_pending": True,
+        "metadata_source": {
+            "active_original_rows": active_rows,
+            "active_original_rows_file_sha256": active_rows["sha256"],
+            "active_original_rows_values_sha256": "a" * 64,
+        },
+    }
+    manifest_bytes = json.dumps(
+        manifest, sort_keys=True, separators=(",", ":")
+    ).encode() + b"\n"
+    manifest_path.write_bytes(manifest_bytes)
+    manifest_sha = hashlib.sha256(manifest_bytes).hexdigest()
+    monkeypatch.setattr(
+        contract_module,
+        "TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256",
+        manifest_sha,
+    )
+    monkeypatch.setattr(
+        workflow,
+        "_task41_p0_v17_readonly_producer_inputs",
+        lambda **_kwargs: (contract, {}, None),
+    )
+
+    class DonorLoaderReached(Exception):
+        pass
+
+    def stop_at_donor_loader(**_kwargs: object) -> None:
+        raise DonorLoaderReached
+
+    monkeypatch.setattr(checker, "_task41_p0_v16_v3_donor_index", stop_at_donor_loader)
+    output_root = (
+        model_root / "task41_p0_saved_diagnostics_6h" / fixed_window.sha256
+        / "selected_incident_replay" / "attempt01"
+    )
+    output_root.parent.mkdir(parents=True, exist_ok=True)
+    source_sha = str(contract["source"]["sha"])
+    environment = {
+        "TASK41_P0_V17_SELECTED_TWO_CELL_REPLAY": "1",
+        "TASK41_P0_CHECKER_SOURCE_SHA": source_sha,
+    }
+
+    with pytest.raises(DonorLoaderReached):
+        workflow._run_task41_p0_saved_output_service(
+            unit="fixture.service",
+            runtime_prefix=tmp_path / "runtime",
+            environment=environment,
+            window=fixed_window,
+            contract=contract,
+            contract_path=contract_path,
+            contract_sha=contract_sha,
+            case_id="B0",
+            run_root=manifest_path.parent,
+            output_root=output_root,
+            consumer_source_sha=source_sha,
+            checker_only=True,
+            checker_snapshot_path=None,
+            checker_snapshot_sha256=None,
+            b0_v17_selected_two_cell_mode=True,
+            v17_manifest_path=manifest_path,
+            v17_manifest_sha256=manifest_sha,
+            v17_producer_binding={"fixture": "hash-bound-inputs-mocked"},
+            input_path=root / contract_module._task41_case("B0")["input_relative"],
+            activation_command=["fixture-activation"],
+            activation_identity="fixture-activation",
+            preflight={"status": "fixture"},
+            preflight_command=["fixture-preflight"],
+            cgroup_start={"status": "fixture"},
+            service_entry_accounting={"status": "fixture"},
+            service_start_sample={"status": "fixture"},
+            repo_root=root,
+            supervise=lambda **_kwargs: pytest.fail(
+                "V17 route must stop at its mocked donor loader before launching work"
+            ),
+            sha256_file=contract_module.sha256_file,
+        )
+
+
 def test_v17_callback_persistence_is_reopened_by_real_checker_cli(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
