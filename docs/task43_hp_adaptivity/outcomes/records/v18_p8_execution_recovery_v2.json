@@ -1,0 +1,306 @@
+{
+  "schema": "task43.v18.p8-execution-recovery-index.v1",
+  "created_utc": "2026-10-28T07:50:16.310051+00:00",
+  "status": "BOUND_FOR_EXECUTION_PENDING",
+  "preparation_head": "33dfadcfbf39c4a1e3be69bc9bd5b196879ec09c",
+  "authorization": {
+    "scope": "one_same_model_P8_execution_recovery",
+    "user_directive": "没有到数值gate不允许停止",
+    "full_user_message": "什么叫做监控父链断裂？没有到数值gate不允许停止",
+    "stages": [
+      "T",
+      "S",
+      "F",
+      "C"
+    ],
+    "E_allowed": false,
+    "basis": "Latest human instruction to repair engineering failures and continue the same scientific task; not a claim that V16 review originally authorized retries.",
+    "bounded_controller_allocation": "One recovery F and targeted T plus fresh S; original unused C redirected to this one comparison. Historical attempts remain consumed.",
+    "numerical_and_resource_thresholds_unchanged": true,
+    "no_merge_approval": true
+  },
+  "frozen_protocol": {
+    "contract": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json",
+      "sha256": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b"
+    },
+    "authorization_review": {
+      "path": "docs/task43_hp_adaptivity/review_report_v16.md",
+      "sha256": "6269be0ddf9308dc08e139563bf01bbf15385d56dff935cbce3976eb8568c4fb",
+      "commit": "ddbe92264d17f1111dcb551431b3b96d26b0d167"
+    },
+    "V15_contract_review_commit": "f72e1c8d031de7acc374f0806ddac06099c461c4",
+    "v17_failure_evidence": {
+      "partial_terminal": {
+        "path": "benchmarks/artifacts/task43/v16_p8/formal/R9_P8_attempt1/run/task43_v16_p8_partial_terminal.json",
+        "sha256": "d0c53c802f5bfd99d70d02821535f365cb08aae56da2b916b38ac2e89232df36"
+      },
+      "root_observation": {
+        "path": "benchmarks/artifacts/task43/v16_p8/formal/R9_P8_attempt1/v17_root_F_incomplete_observation.json",
+        "sha256": "f4d410d1c739cd11ae3064de427438a8bdf9a3011351dd4005ab2f313eddab55"
+      },
+      "response": {
+        "path": "docs/task43_hp_adaptivity/response_v17.md",
+        "sha256": "e1e5095a98f1636bc4e6b95a281ffdf5b08eaf8a5fdeea0d51757f99244b51d9"
+      },
+      "machine_record": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v17_r9_p8_scientific_results_v1.json",
+        "sha256": "de800433fb727ff97464003059f078641e2c4efda9d3c8725a809283ec83ec1d"
+      }
+    }
+  },
+  "phases": {
+    "T": {
+      "root": "support/v18_execution_validation_attempt2",
+      "work_seconds": 270,
+      "whole_seconds": 300,
+      "rss_cap_bytes": 8589934592
+    },
+    "S": {
+      "root": "support/v18_space_attempt1",
+      "work_seconds": 1740,
+      "whole_seconds": 1800,
+      "rss_cap_bytes": 8589934592
+    },
+    "F": {
+      "root": "formal/v18_R9_P8_attempt1",
+      "work_seconds": 6900,
+      "whole_seconds": 7200,
+      "rss_cap_bytes": 34359738368
+    },
+    "C": {
+      "root": "support/v18_paired_comparison_attempt1",
+      "work_seconds": 1740,
+      "whole_seconds": 1800,
+      "rss_cap_bytes": 8589934592
+    }
+  },
+  "source_binding": {
+    "prior_T_qualification": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/T_root_qualification.json",
+      "sha256": "1a7fd4aa5ceaec86d0730825791d8d9f9d7d2d5fc26c472fe591003ea79cc047"
+    },
+    "prior_T_source_sha256": {
+      "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+      "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+      "benchmarks/task43_hp_adaptivity/candidate_records.py": "7f98eacb0aee5e8f3cc98c61620613d02e66c909844c2ab8e171008e1cee73aa",
+      "benchmarks/task43_hp_adaptivity/compare_initial_to_references.py": "c39d5577719ddf4a5bc22acba47d49028717a171fcbcbf2cb667341067d78a8e",
+      "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "342d57b7552934125c22bf42d035f57bbf8c284ce19d4d85f1901e88a11701e3",
+      "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py": "4c16377b491a83424f8b21cb54c9e60f64dcd5bf6f6895f45fee6f11a083ce0c",
+      "benchmarks/task43_hp_adaptivity/h100_anchor.py": "2279e43a4bab41f21b900f4eded95135f2198cff633f39f897ecff16069b1d84",
+      "benchmarks/task43_hp_adaptivity/profile.py": "ddd315bcbe897be4856c42dc68ecbf7897dcf8fa836ef91985863bb6ae8afc2e",
+      "benchmarks/task43_hp_adaptivity/reference_restore.py": "93a7170d92cacae9c9fd491637a22c676fb559d3f5a306812105888a6c0b4505",
+      "benchmarks/task43_hp_adaptivity/round1_candidates.py": "fd64d1ba70ecbac2b09afb3581fd05af2bcfedc71a379982be70c39ff1f63508",
+      "benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py": "d1ad0a22a8e60147a0ccf3856a2c847b9ff3b74c34ec4bc04dc76c258a8d8ae9",
+      "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+      "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+      "scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+      "src/adaptivity/exact_sequence_variable_p.py": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+      "src/adaptivity/hcurl_broken_cell_trace.py": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+      "src/adaptivity/hcurl_broken_trace_graph.py": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+      "src/adaptivity/physical_g_error.py": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+      "src/adaptivity/stage4_local_h.py": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+      "src/adaptivity/variable_p_degree_plan.py": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+      "src/adaptivity/variable_p_entity_map.py": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+      "src/adaptivity/variable_p_transfer.py": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+      "src/common/analytic_fields_3d.py": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "src/common/config_3d.py": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+      "src/common/modes_3d.py": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+      "src/constraints/floquet_3d.py": "cfa0953ba1b6fa60b1943be2f0f977413221857290df7ceee0747df811bca309",
+      "src/geometry/mesh_builder_3d.py": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+      "src/geometry/task43_hp_adaptivity_axis_plan.py": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+      "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+      "src/postprocessing/diffraction_3d.py": "42d65299ce1cc8c2762dc1d3972ea04063b155bd8a58d4553c9ac9732213ce66",
+      "src/postprocessing/flat_layer_reference_3d.py": "ed6493bd2f13dccbcd85a8ef2edb6f6b07726ec6c41b82651525b386d44ec04a",
+      "src/postprocessing/physical_field_comparison.py": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+      "src/postprocessing/physical_field_sampling.py": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+      "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+      "src/postprocessing/rta_3d.py": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+      "src/runners/physical_intermediate.py": "f7c1cd79353911079fb17e9780afd588a5afc6d0efeccd81b4aed3b9c3c902a4",
+      "src/solvers/common_3d_case_flow.py": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+      "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "src/solvers/common_3d_forms.py": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+      "src/solvers/common_3d_postprocess.py": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+      "src/solvers/common_3d_solve.py": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+      "src/solvers/common_3d_utils.py": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+      "src/solvers/dtn_port_3d.py": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+      "src/solvers/hcurl_blocked_gram_tensor.py": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+      "src/solvers/hcurl_variable_p_assembly.py": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+      "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "src/solvers/hcurl_variable_p_reduction.py": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+      "src/solvers/independent_active_action.py": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+      "src/solvers/petsc_residual_correction.py": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+      "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb",
+      "src/test/test_task43_v11_scientific_restart.py": "c7ae026e40ac782652b17e87e7399eef541c139ff62900b20caf7ea59e34a236"
+    },
+    "current_source_sha256": {
+      "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+      "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+      "benchmarks/task43_hp_adaptivity/candidate_records.py": "7f98eacb0aee5e8f3cc98c61620613d02e66c909844c2ab8e171008e1cee73aa",
+      "benchmarks/task43_hp_adaptivity/compare_initial_to_references.py": "c39d5577719ddf4a5bc22acba47d49028717a171fcbcbf2cb667341067d78a8e",
+      "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "b52c7f0953be153b1cc33737d131b5cee7c61b2623586e74988f148f8c531274",
+      "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py": "4c16377b491a83424f8b21cb54c9e60f64dcd5bf6f6895f45fee6f11a083ce0c",
+      "benchmarks/task43_hp_adaptivity/h100_anchor.py": "ffb77328743a37456d4db9a636dcdf07ffc53f40c5c757ad3565deefda4487ec",
+      "benchmarks/task43_hp_adaptivity/profile.py": "ddd315bcbe897be4856c42dc68ecbf7897dcf8fa836ef91985863bb6ae8afc2e",
+      "benchmarks/task43_hp_adaptivity/reference_restore.py": "93a7170d92cacae9c9fd491637a22c676fb559d3f5a306812105888a6c0b4505",
+      "benchmarks/task43_hp_adaptivity/round1_candidates.py": "4105a01b3d09fe900e1f3f475bdc4e8ad447dca1e64ea501c708707480e9a392",
+      "benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py": "d1ad0a22a8e60147a0ccf3856a2c847b9ff3b74c34ec4bc04dc76c258a8d8ae9",
+      "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+      "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+      "scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+      "src/adaptivity/exact_sequence_variable_p.py": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+      "src/adaptivity/hcurl_broken_cell_trace.py": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+      "src/adaptivity/hcurl_broken_trace_graph.py": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+      "src/adaptivity/physical_g_error.py": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+      "src/adaptivity/stage4_local_h.py": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+      "src/adaptivity/variable_p_degree_plan.py": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+      "src/adaptivity/variable_p_entity_map.py": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+      "src/adaptivity/variable_p_transfer.py": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+      "src/common/analytic_fields_3d.py": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "src/common/config_3d.py": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+      "src/common/modes_3d.py": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+      "src/constraints/floquet_3d.py": "cfa0953ba1b6fa60b1943be2f0f977413221857290df7ceee0747df811bca309",
+      "src/geometry/mesh_builder_3d.py": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+      "src/geometry/task43_hp_adaptivity_axis_plan.py": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+      "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+      "src/postprocessing/diffraction_3d.py": "42d65299ce1cc8c2762dc1d3972ea04063b155bd8a58d4553c9ac9732213ce66",
+      "src/postprocessing/flat_layer_reference_3d.py": "ed6493bd2f13dccbcd85a8ef2edb6f6b07726ec6c41b82651525b386d44ec04a",
+      "src/postprocessing/physical_field_comparison.py": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+      "src/postprocessing/physical_field_sampling.py": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+      "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+      "src/postprocessing/rta_3d.py": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+      "src/runners/physical_intermediate.py": "f7c1cd79353911079fb17e9780afd588a5afc6d0efeccd81b4aed3b9c3c902a4",
+      "src/solvers/common_3d_case_flow.py": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+      "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "src/solvers/common_3d_forms.py": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+      "src/solvers/common_3d_postprocess.py": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+      "src/solvers/common_3d_solve.py": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+      "src/solvers/common_3d_utils.py": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+      "src/solvers/dtn_port_3d.py": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+      "src/solvers/hcurl_blocked_gram_tensor.py": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+      "src/solvers/hcurl_variable_p_assembly.py": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+      "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "src/solvers/hcurl_variable_p_reduction.py": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+      "src/solvers/independent_active_action.py": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+      "src/solvers/petsc_residual_correction.py": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+      "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb",
+      "src/test/test_task43_v11_scientific_restart.py": "c7ae026e40ac782652b17e87e7399eef541c139ff62900b20caf7ea59e34a236"
+    },
+    "allowed_execution_source_delta": [
+      "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py",
+      "benchmarks/task43_hp_adaptivity/h100_anchor.py",
+      "benchmarks/task43_hp_adaptivity/round1_candidates.py"
+    ],
+    "targeted_fixture": {
+      "path": "src/test/test_task43_p8_execution_recovery.py",
+      "sha256": "1a391198ec8ad0a2ea76bb09a68375f3aebfc96533c28282fdbaa4e27dea9882",
+      "selector": "src/test/test_task43_p8_execution_recovery.py"
+    },
+    "launch_script": {
+      "path": "benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh",
+      "sha256": "11b8d12bc0fd123459f238fed8b1717a51b0173498d74f2ebd7dfbc33a362b7d"
+    }
+  },
+  "commands": {
+    "T": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh T",
+    "S": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh S",
+    "F": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh F",
+    "C": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh C"
+  },
+  "budget": {
+    "support_attempts_planned": 4,
+    "support_whole_seconds_max": 4200,
+    "formal_recovery_attempts_planned": 1,
+    "formal_work_seconds_max": 6900,
+    "formal_whole_seconds_max": 7200,
+    "total_whole_seconds_max": 11400,
+    "historical_formal_used": 8,
+    "historical_formal_envelope": 9,
+    "recovery_formal_envelope": 10,
+    "max_used_after_recovery": 9,
+    "sealed_historical_slot": 1,
+    "old_unused_C_must_not_launch": true,
+    "already_measured_current_support_whole_seconds": 24.753636937
+  },
+  "model_unchanged": {
+    "candidate": "R9_P8",
+    "parent": "accepted9/R9",
+    "global_cell": 8,
+    "forest_root": 4,
+    "p_from": 5,
+    "p_to": 6,
+    "h_splits": 0,
+    "operator_q": 15,
+    "incident_port_q": 28,
+    "R": 13,
+    "channels": 612,
+    "normal_corrections": 1,
+    "extra_corrections": 0,
+    "reference": "Y6_1"
+  },
+  "limits": [
+    "Old F monitor disappearance remains UNKNOWN; session detachment is protection, not proof of the original cause.",
+    "No old source snapshot, T map, contract, failed attempt or science result is overwritten.",
+    "Missing watchdog or cleanup evidence cannot qualify a stage. Root must read actual host identities and handle only matching task processes.",
+    "No new baseline/model/seed/parameter scan, no merge."
+  ],
+  "previous_execution_binding": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery.json",
+    "sha256": "e55d73af10474102941742936b4a80540911f623df53a7acfdf73f5898db80cc"
+  },
+  "prior_current_round_attempts": [
+    {
+      "stage": "T",
+      "attempt": 1,
+      "status": "FAILED",
+      "reason": "test RECOVERY_PATH NameError; actual ABI/parent checks passed, remaining tests NOT_RUN",
+      "source_head": "33dfadcfbf39c4a1e3be69bc9bd5b196879ec09c",
+      "whole_elapsed_seconds": 24.753636937,
+      "watchdog_elapsed_seconds": 19.7041071257554,
+      "evidence": {
+        "test_terminal.json": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt1/test_terminal.json",
+          "sha256": "404464c79a07954a276b26e7ebe5da186e313e4eeaf806cea36e27ae069d4ce7"
+        },
+        "tests.xml": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt1/tests.xml",
+          "sha256": "801b501620d3f11d249f19e3deaddafea8d05f1c20401cdde3a9b8ec9483b21c"
+        },
+        "watchdog/summary.json": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt1/watchdog/summary.json",
+          "sha256": "7e1f9002626a48c6a6e2a1eb2662946f90f16b77c7c0ba0e6f437c25ee27494c"
+        },
+        "watchdog/resources.jsonl": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt1/watchdog/resources.jsonl",
+          "sha256": "424323bcca5b0c0a5772995927c9cf1dbf898321d5011aadfca3684fef4b3b53"
+        },
+        "v18_runtime_identity.json": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt1/v18_runtime_identity.json",
+          "sha256": "795b014c714ebbf9fa728cbc8bf7ffd228422f1abaa2a56d55ead109a91b3aac"
+        },
+        "launcher_exit.json": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt1/launcher_exit.json",
+          "sha256": "738fd8f89830c58a8db12a9c1c29c9e00d5b1adef042492e83638353a7be0289"
+        }
+      }
+    }
+  ],
+  "local_recovery_reason": "Ordinary test-name bug repaired under latest user continuation instruction; new root and immutable v2 binding, old failure retained.",
+  "execution_manifest": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery_attempt2.json",
+    "sha256": "31ae53e3aec01b71ceabdebc5429c5f8a8355d051edb494d64b4b7c7da403495"
+  },
+  "prior_T_qualification": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/T_root_qualification.json",
+    "sha256": "1a7fd4aa5ceaec86d0730825791d8d9f9d7d2d5fc26c472fe591003ea79cc047"
+  },
+  "targeted_fixture": {
+    "path": "src/test/test_task43_p8_execution_recovery.py",
+    "sha256": "1a391198ec8ad0a2ea76bb09a68375f3aebfc96533c28282fdbaa4e27dea9882",
+    "selector": "src/test/test_task43_p8_execution_recovery.py"
+  },
+  "launch_script": {
+    "path": "benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh",
+    "sha256": "11b8d12bc0fd123459f238fed8b1717a51b0173498d74f2ebd7dfbc33a362b7d"
+  }
+}

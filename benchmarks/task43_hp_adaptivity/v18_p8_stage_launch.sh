@@ -5,8 +5,8 @@ set -euo pipefail
 repo=/home/fenics/Projects/NN-Lab-V2
 prefix="$repo/benchmarks/artifacts/task43/v16_p8"
 contract="$repo/docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json"
-binding="$prefix/preparation/v18_p8_execution_recovery.json"
-summary="$repo/docs/task43_hp_adaptivity/outcomes/records/v18_p8_execution_recovery_v1.json"
+binding="$prefix/preparation/v18_p8_execution_recovery_attempt2.json"
+summary="$repo/docs/task43_hp_adaptivity/outcomes/records/v18_p8_execution_recovery_v2.json"
 script_path="$repo/benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh"
 mode=${1:-}
 invocation_monotonic_ns=$(python3 -c 'import time; print(time.monotonic_ns())')
@@ -331,7 +331,7 @@ c=json.loads(contract.read_text()); rec=json.loads(binding.read_text()); summary
 if sha(contract)!='8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b':raise RuntimeError('V16 contract identity changed')
 if rec.get('schema')!='task43.v18.p8-execution-recovery.v1' or summary.get('execution_manifest')!={'path':str(binding.resolve()),'sha256':sha(binding)}:raise RuntimeError('V18 binding/summary mismatch')
 expected_phases={
- 'T':{'root':'support/v18_execution_validation_attempt1','work_seconds':270,'whole_seconds':300,'rss_cap_bytes':8589934592},
+ 'T':{'root':'support/v18_execution_validation_attempt2','work_seconds':270,'whole_seconds':300,'rss_cap_bytes':8589934592},
  'S':{'root':'support/v18_space_attempt1','work_seconds':1740,'whole_seconds':1800,'rss_cap_bytes':8589934592},
  'F':{'root':'formal/v18_R9_P8_attempt1','work_seconds':6900,'whole_seconds':7200,'rss_cap_bytes':34359738368},
  'C':{'root':'support/v18_paired_comparison_attempt1','work_seconds':1740,'whole_seconds':1800,'rss_cap_bytes':8589934592},
@@ -444,7 +444,7 @@ fi
 case "$mode" in T|S|F|C) ;; *) printf 'usage: bash %s {T|S|F|C}\n' "$script_path" >&2; exit 64 ;; esac
 phase=$mode
 case "$phase" in
-  T) relative_root=support/v18_execution_validation_attempt1 ;;
+  T) relative_root=support/v18_execution_validation_attempt2 ;;
   S) relative_root=support/v18_space_attempt1 ;;
   F) relative_root=formal/v18_R9_P8_attempt1 ;;
   C) relative_root=support/v18_paired_comparison_attempt1 ;;

@@ -23,6 +23,7 @@ from benchmarks.task43_hp_adaptivity import (
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_PATH = ROOT / "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json"
+RECOVERY_PATH = ROOT / round1_candidates._V18_P8_EXECUTION_RECOVERY_REL
 RUNTIME_IDENTITY_PATH = Path(
     os.environ.get("TASK43_V11_ATTEMPT_ROOT", "/tmp")
 ) / "v18_runtime_identity.json"

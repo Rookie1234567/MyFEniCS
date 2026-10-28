@@ -92,17 +92,17 @@ _V16_P8_CONTRACT_REL = Path(
     "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json"
 )
 _V18_P8_EXECUTION_RECOVERY_REL = Path(
-    "benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery.json"
+    "benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery_attempt2.json"
 )
 _V18_P8_EXECUTION_RECOVERY_SUMMARY_REL = Path(
-    "docs/task43_hp_adaptivity/outcomes/records/v18_p8_execution_recovery_v1.json"
+    "docs/task43_hp_adaptivity/outcomes/records/v18_p8_execution_recovery_v2.json"
 )
 _V18_P8_STAGE_LAUNCHER_REL = Path(
     "benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh"
 )
 _V18_P8_PHASES = {
     "T": {
-        "root": "support/v18_execution_validation_attempt1",
+        "root": "support/v18_execution_validation_attempt2",
         "work_seconds": 270,
         "whole_seconds": 300,
         "rss_cap_bytes": 8589934592,
