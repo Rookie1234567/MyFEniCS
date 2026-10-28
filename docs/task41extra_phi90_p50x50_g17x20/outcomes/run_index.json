@@ -2024,6 +2024,37 @@
       "raw_receipt_path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d22e02f713c4a68c79759b2c5cb7cbcec693b7b3277ad98b529838008e38beb/saved_vector_distribution/attempt12.service/task41_p0_service_receipt.json",
       "raw_receipt_sha256": "00f74433b91d7b841256f80307c17a0a91fe1ee8819f9116b734ae33e4cfc9b7",
       "official_result": false
+    },
+    {
+      "review": "V17",
+      "attempt": "attempt07",
+      "source_sha": "17df17b39379001cf2bd368f05ed1da9118762ac",
+      "service": "myfenics-case-20261028T110638-3586058.service",
+      "invocation_id": "033611078df347bba47b8a9a44f470b9",
+      "classification": "COMPLETED_DIAGNOSTIC_ONLY",
+      "status": "LOCAL_REPLAY_COMPLETED",
+      "route": "READ_ONLY_COMPLETED_PRODUCER_REPORT",
+      "new_worker_allowed": false,
+      "new_getrs_allowed": false,
+      "checker_completed": true,
+      "data_integrity": true,
+      "errors": [],
+      "service_parent_accounted_seconds": 37.743761154334,
+      "nested_watchdog_seconds": 17.098682461306453,
+      "watchdog_tree_rss_peak_bytes": 479342592,
+      "job_cgroup_memory_peak_bytes": 411295744,
+      "task_swap_peak_bytes": 0,
+      "official_result": false,
+      "scientific_qualified": false,
+      "full_owner_unlocked": false,
+      "window_sha256": "7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54",
+      "consumer_contract_sha256": "5ca97c97ab0c19d495a0f223c8fd39ce709b65a1723af054cd7fec103334c0e5",
+      "checker_report": "v17_closeout/attempt07_checker_result.json",
+      "checker_report_sha256": "7f8ea99afe3970edf97f958c0b453b12345a1f8960315bd0a254d5b55f38bc43",
+      "service_receipt": "v17_closeout/attempt07_service_receipt.json",
+      "service_receipt_sha256": "d5c6f842fa55c1ac4f58dba23dce39d61dfe805d4f7844606b291f71139aa5d6",
+      "watchdog_summary": "v17_closeout/attempt07_watchdog_summary.json",
+      "watchdog_summary_sha256": "6f032b5c4e8342b2a508d0abe6c759dd7db6bad9db2a287d99ebc7df031719b2"
     }
   ],
   "not_run": [
@@ -2036,7 +2067,7 @@
     "V14 independent full-domain action/recovery acceptance",
     "V14 complete saved candidate LU/pivots and original b_i mappings for the eight representative keys"
   ],
-  "current_state": "V14_SAVED_LOCAL_CANDIDATE_AND_STAR_DECIMAL_SUPPLEMENTS_PASS; NARROW_OWNER_TARGET_REFERENCE_RECOVERY_WIRING_TESTED; FULL_OWNER_AND_GLOBAL_ACTION_NOT_QUALIFIED; V9_GLOBAL_ACTION_GATE_STILL_FAILS",
+  "current_state": "V17_ATTEMPT07_READ_ONLY_LOCAL_TWO_CELL_REPLAY_COMPLETED; DATA_INTEGRITY_PASS; FULL_ACTION_FAIL_PRESERVED; OFFICIAL_AND_SCIENTIFIC_QUALIFICATION_FALSE; NO_NEW_WORKER_OR_GETRS_IN_ATTEMPT07",
   "v6_candidate_history": {
     "candidate_attempt": "20261020T124053Z_attempt10",
     "candidate_attempt_run_index_position": 38,
@@ -2233,5 +2264,14 @@
     "subsequent_document_publication_cost": "UNKNOWN_NOT_MEASURED",
     "final_window_total": false
   },
-  "v14_next_review_target": "Complete full-domain run contract and independent official action/recovery acceptance under separately authorized scope; the eight representative keys still lack full candidate LU/pivots and original b_i mappings."
+  "v14_next_review_target": "Complete full-domain run contract and independent official action/recovery acceptance under separately authorized scope; the eight representative keys still lack full candidate LU/pivots and original b_i mappings.",
+  "v17_compact": "v17_closeout/v17_two_cell_compact.json",
+  "v17_attempt_index": "v17_closeout/attempt_index.json",
+  "v17_window_snapshot": "v17_closeout/window_snapshot.json",
+  "v17_evidence_index": "v17_closeout/evidence_index.json",
+  "v17_next_review_target": "Before any further computation, verify saved exact row operands; if present, compare ordinary versus compensated/reproducible Jz on the same saved initial/final vectors. Same-cell native rank-1/scatter exact decomposition remains missing; no implementation authorized.",
+  "v17_evidence_index_sha256": "a2627c150b1c059877e8923c5d132b85c6726db8cf7bf2ba91952e5150d21be1",
+  "v17_compact_sha256": "0a4d75fd9b812c2337c156959a6e3317948c62ad936790a70ae66d32870d2163",
+  "v17_attempt_index_sha256": "c5d43cdacf8c634eaece0570555b851a74ae3225d929c8dbc889f07cd43644de",
+  "v17_window_snapshot_sha256": "90f540a7ed02bd16281e4583deaca6c4a78484cf625cfaa644b0ca4c32afc61a"
 }

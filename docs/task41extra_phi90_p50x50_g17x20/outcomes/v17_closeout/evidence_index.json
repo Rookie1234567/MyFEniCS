@@ -1,0 +1,193 @@
+{
+  "documents": [
+    {
+      "bytes": 10439,
+      "path": "docs/task41extra_phi90_p50x50_g17x20/response_v17.md",
+      "sha256": "4ebaa85f6cee290766ecad56472478e6762ecb5fcd9f02b00572bc43726334be"
+    },
+    {
+      "bytes": 3847,
+      "path": "docs/task41extra_phi90_p50x50_g17x20/README.md",
+      "sha256": "36255dca7347078c6164240c314ad208917148bf02b230f0d553680f6572a9e5"
+    },
+    {
+      "bytes": 12144,
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v17_preparation.md",
+      "sha256": "faaaaf128688191db6b1e8b61aa42b2e3966bc0a67ab2b1dca004d5bae4d470c"
+    },
+    {
+      "bytes": 76258,
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/summary.md",
+      "sha256": "ab0cf1938a03072c3ffe50c8bdda42825f3a6ca19797cba8596a0eb058357106"
+    },
+    {
+      "bytes": 60009,
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/test_summary.md",
+      "sha256": "f2996dde56ee4a7258559ff6dbf3e37ff6f9c35165ef26ccf4c6433c1899f609"
+    },
+    {
+      "bytes": 323596,
+      "path": "docs/development_progress.md",
+      "sha256": "cfdcf5bd2ef0fe6db0b302d6a56766cd8139fcd39178962e2ee5d011f804aa06"
+    },
+    {
+      "bytes": 32199,
+      "path": "docs/README.md",
+      "sha256": "dc71c4796105d51125ddae8103fee38b56cc8b772c39e34e532bfec41edc2ec4"
+    }
+  ],
+  "local_files": [
+    {
+      "bytes": 4159,
+      "location": "local canonical worktree",
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v17_closeout/attempt07_checker_only_command.json",
+      "sha256": "7c9c03994090ee03fef0b67eb80da2370d9ee8543c63ea3d04493b970698b803"
+    },
+    {
+      "bytes": 56314,
+      "location": "local canonical worktree",
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v17_closeout/attempt07_checker_result.json",
+      "sha256": "7f8ea99afe3970edf97f958c0b453b12345a1f8960315bd0a254d5b55f38bc43"
+    },
+    {
+      "bytes": 48544,
+      "location": "local canonical worktree",
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v17_closeout/attempt07_service_receipt.json",
+      "sha256": "d5c6f842fa55c1ac4f58dba23dce39d61dfe805d4f7844606b291f71139aa5d6"
+    },
+    {
+      "bytes": 23268,
+      "location": "local canonical worktree",
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v17_closeout/attempt07_watchdog_summary.json",
+      "sha256": "6f032b5c4e8342b2a508d0abe6c759dd7db6bad9db2a287d99ebc7df031719b2"
+    },
+    {
+      "bytes": 6862,
+      "location": "local canonical worktree",
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v17_closeout/attempt_index.json",
+      "sha256": "25a3fd2a1bb198026436f9e638d3d2003f44d7e32be8ab3cc2064b3c5753e3a4"
+    },
+    {
+      "bytes": 1573,
+      "location": "local canonical worktree",
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v17_closeout/authorization.json",
+      "sha256": "fda2e65a17c980496733ffa77e755683650252e350e0e4f403717af32a948fc0"
+    },
+    {
+      "bytes": 212117,
+      "location": "local canonical worktree",
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v17_closeout/campaign_accounting_v17_selected_two_cell_replay_6h.jsonl",
+      "sha256": "32da88748afbc640aac92ef358d18e4fe3d9edfe5d35e7609fec3629dd2e4097"
+    },
+    {
+      "bytes": 7343,
+      "location": "local canonical worktree",
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v17_closeout/execution_contract.json",
+      "sha256": "5ca97c97ab0c19d495a0f223c8fd39ce709b65a1723af054cd7fec103334c0e5"
+    },
+    {
+      "bytes": 2311,
+      "location": "local canonical worktree",
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v17_closeout/execution_window.json",
+      "sha256": "7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54"
+    },
+    {
+      "bytes": 6092,
+      "location": "local canonical worktree",
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v17_closeout/v17_two_cell_compact.json",
+      "sha256": "32c129e0e5c3ab90f118f3f88a04a69b11ab5f5992436ece6cbf4ea11ce0041b"
+    },
+    {
+      "bytes": 3794,
+      "location": "local canonical worktree",
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v17_closeout/window_snapshot.json",
+      "sha256": "90f540a7ed02bd16281e4583deaca6c4a78484cf625cfaa644b0ca4c32afc61a"
+    },
+    {
+      "path": "docs/task41extra_phi90_p50x50_g17x20/outcomes/v17_closeout/main_closeout_check.json",
+      "bytes": 895,
+      "sha256": "a84ede2abd2eeaf1c12acc5854dd4981f58ae47526c214122c6a4cb4b5444219",
+      "location": "local canonical worktree"
+    }
+  ],
+  "result_base": "6399beadd62d610100ba3e2b8d55ce7f0d48200a",
+  "schema": "task41.v17.evidence_index.v1",
+  "scope_note": "Large NPY arrays remain in workstation ignored results; this index records identities without copying them into Git.",
+  "source_sha": "17df17b39379001cf2bd368f05ed1da9118762ac",
+  "window_sha256": "7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54",
+  "workstation_files": [
+    {
+      "bytes": 172023,
+      "location": "workstation ignored results",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54/selected_incident_replay/attempt04/task41_p0_v17_selected_two_cell_worker.json",
+      "sha256": "4e6fce6680a0bb304ed0370542f8b5c6003d39940d94ff3e54f19322aeb1709b"
+    },
+    {
+      "bytes": 287868,
+      "location": "workstation ignored results",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54/selected_incident_replay/attempt04/task41_p0_v17_progress.json",
+      "sha256": "bbf3bd03382f738cf4b0d22a167a29f6862028a06f4b6124ad3a07b0796223c6"
+    },
+    {
+      "bytes": 7208,
+      "location": "workstation ignored results",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54/selected_incident_replay/attempt04/task41_p0_v17_progress.jsonl",
+      "sha256": "9cc13ccfa697f573977eab849451dbdb74b8872bb65d3d21b4c68501450f41ce"
+    },
+    {
+      "bytes": 7343,
+      "location": "workstation controller artifact",
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_56ff5a603d4ba17c8ba6c45974777e1abcbca35e_v17_selected_two_cell_replay_6h.json",
+      "sha256": "61dd3a302477ed32071f10a38182bce079550bd432fdd03625b850bed863e419"
+    },
+    {
+      "bytes": 29892,
+      "location": "workstation ignored results",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d22e02f713c4a68c79759b2c5cb7cbcec693b7b3277ad98b529838008e38beb/saved_vector_distribution/attempt05.service/task41_p0_v16_metadata_bound_manifest.json",
+      "sha256": "3fae0774772550faf173444e9c5aedd608212b430957ae591ffdb31daabeb215"
+    },
+    {
+      "bytes": 212117,
+      "location": "workstation controller artifact; local identical copy is separately indexed",
+      "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v17_selected_two_cell_replay_6h.jsonl",
+      "sha256": "32da88748afbc640aac92ef358d18e4fe3d9edfe5d35e7609fec3629dd2e4097"
+    },
+    {
+      "bytes": 23383,
+      "location": "workstation ignored results",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54/selected_incident_replay/attempt03.service/task41_p0_service_receipt.json",
+      "sha256": "10dca9713c8c7a53a8e2b4622bf1ea012c23d3729f8c585b25d3e070a1071bf3"
+    },
+    {
+      "bytes": 23881,
+      "location": "workstation ignored results",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54/selected_incident_replay/attempt04.service/task41_p0_service_receipt.json",
+      "sha256": "902790ad8d4f0cd15be329bfd7417a9557a8621c90e4e089830b549e50c13ad0"
+    },
+    {
+      "bytes": 48553,
+      "location": "workstation ignored results",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54/selected_incident_replay/attempt05.service/task41_p0_service_receipt.json",
+      "sha256": "ce9099799b7245a8f7271e98df6d3aa383fe6b93d2eeac8e4ad78871a966f459"
+    },
+    {
+      "bytes": 12681,
+      "location": "workstation ignored results",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54/selected_incident_replay/attempt05.service/task41_p0_v17_independent_check.json",
+      "sha256": "015477e8244a16eeb9930b269ce2c386c349e9149a25a35ea0710b1e2cf01ece"
+    },
+    {
+      "bytes": 48553,
+      "location": "workstation ignored results",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54/selected_incident_replay/attempt06.service/task41_p0_service_receipt.json",
+      "sha256": "7938e7e34bbd1450d5506ceebdd545e2673665ea6f0751b4dcb77747801d0d92"
+    },
+    {
+      "bytes": 31191,
+      "location": "workstation ignored results",
+      "path": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54/selected_incident_replay/attempt06.service/task41_p0_v17_independent_check.json",
+      "sha256": "883ed0a47188c2179cbaf486a4a1f2fdca5add83386eecaaa3a1a2975e283cd5"
+    }
+  ],
+  "review_head": "06cd1789c717face827476ad70f24ae8efb6b0f1"
+}

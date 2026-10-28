@@ -1,0 +1,66 @@
+{
+  "accounting": {
+    "current_boot_matches": true,
+    "last_persisted_cumulative_charged_seconds": 6579.0473210774,
+    "last_persisted_label": "watchdog_end",
+    "last_persisted_sample_utc": "2026-10-28T11:07:18.144838379Z",
+    "last_persisted_sequence": 179,
+    "ledger_bytes": 212117,
+    "ledger_path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v17_selected_two_cell_replay_6h.jsonl",
+    "ledger_sha256": "32da88748afbc640aac92ef358d18e4fe3d9edfe5d35e7609fec3629dd2e4097",
+    "local_documentary_closeout_seconds": null,
+    "local_documentary_closeout_time_status": "UNKNOWN_NOT_MEASURED; no original start/end clock was captured",
+    "projection_appended_to_ledger": false,
+    "read_only_projected_cumulative_seconds": 7270.0830275044,
+    "read_only_projection_interval_seconds": 691.035706427,
+    "remaining_numerical_seconds_at_snapshot": 13129.916972495601,
+    "remaining_total_seconds_at_snapshot": 14329.916972495601,
+    "row_count": 180
+  },
+  "disk_and_evidence": {
+    "all_postwrite_gates_passed": true,
+    "cumulative_raw_artifact_bytes_after_v17_window": 15680970370,
+    "cumulative_raw_artifact_limit_bytes": 17179869184,
+    "cumulative_raw_artifact_margin_bytes": 1498898814,
+    "free_space_floor_bytes": 2147483648,
+    "latest_read_only_free_space_bytes": 1976820334592,
+    "latest_read_only_free_space_gate_passed": true,
+    "receipt_bound_raw_artifact_bytes_stat_deduplicated": 2628916096,
+    "receipt_current_invocation_bytes": 287219,
+    "receipt_postwrite_free_space_bytes": 1976837951488,
+    "receipt_status": "POST_WRITE_CHECKED",
+    "recorded_cumulative_raw_artifact_bytes_before_v17_window": 15603033504,
+    "v17_window_new_evidence_margin_bytes": 56280862,
+    "v17_window_output_tree_bytes": 77936866,
+    "v17_window_wide_new_evidence_limit_bytes": 134217728
+  },
+  "notes": [
+    "Ledger sequence 179 is the last persisted sample at watchdog_end; later values above are a one-time read-only projection at observed_at_utc and were not appended.",
+    "Disk counters are separate scopes: prior cumulative raw evidence, current V17 window tree, invocation bytes, and stat-deduplicated bound artifact bytes must not be interchanged.",
+    "The final post-write free-space sample is from the service receipt; the later free-space observation is read-only.",
+    "Local documentation closeout duration is UNKNOWN_NOT_MEASURED; it is not included as a fabricated ledger interval.",
+    "Raw watchdog global-swap scope retains the historical WSL-global label; the service was run on the native workstation. This is not attributed as a job-specific metric; raw evidence remains unchanged."
+  ],
+  "observed_at_utc": "2026-10-28T11:18:49.180545Z",
+  "schema": "task41.v17.fixed_window_snapshot.v1",
+  "service_state": {
+    "active_worker_after_completion": false,
+    "invocation_id": "033611078df347bba47b8a9a44f470b9",
+    "systemd_collect_removed_unit": true,
+    "terminal_status": "completed",
+    "unit": "myfenics-case-20261028T110638-3586058.service"
+  },
+  "window": {
+    "authorization_sha256": "fda2e65a17c980496733ffa77e755683650252e350e0e4f403717af32a948fc0",
+    "closeout_seconds": 1200,
+    "consumer_source_sha": "17df17b39379001cf2bd368f05ed1da9118762ac",
+    "deadline_utc": "2026-10-28T15:17:39.097621720Z",
+    "entry_source_sha": "611ec943e79e19a8749ae7c9c7baf13a406db8d6",
+    "numerical_deadline_utc": "2026-10-28T14:57:39.097621720Z",
+    "numerical_seconds": 20400,
+    "path": "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v17_selected_two_cell_replay_6h.json",
+    "sha256": "7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54",
+    "t0_utc": "2026-10-28T09:17:39.097621720Z",
+    "total_seconds": 21600
+  }
+}

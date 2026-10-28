@@ -1,0 +1,17 @@
+{
+  "schema": "task41.v17.main_closeout_check.v1",
+  "source_sha": "17df17b39379001cf2bd368f05ed1da9118762ac",
+  "review_head": "06cd1789c717face827476ad70f24ae8efb6b0f1",
+  "result_base": "6399beadd62d610100ba3e2b8d55ce7f0d48200a",
+  "remote_checked_utc": "2026-10-28T11:20:38Z",
+  "workstation_branch": "task41extra_phi90_p50x50_g17x20",
+  "workstation_head": "17df17b39379001cf2bd368f05ed1da9118762ac",
+  "workstation_worktree_clean": true,
+  "task41_worker_checker_processes_observed": [],
+  "raw_small_file_hashes_verified": 12,
+  "new_numerical_or_checker_execution": false,
+  "github_rendered_view": "NOT_VERIFIED",
+  "static_markdown_tables": "CHECKED",
+  "local_publication_cost": "UNKNOWN_NOT_MEASURED",
+  "accounting_note": "The immutable 11:18:49 snapshot precedes documentation closeout; subsequent publication costs are not zero and have no separately measured parent interval."
+}

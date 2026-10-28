@@ -1,3 +1,25 @@
+# V17 两单元收口与既有测试记录
+
+| 项目 | 结果 | 说明 |
+|---|---|---|
+| V17实现阶段定向回归 | 47 passed in 15.72 s；主控冻结快照独立回归48 passed in 15.74 s | qualified activation；第二批包含一项V15合同兼容回归。两批是各自独立运行，不合并统计 |
+| native ABI preflight | PASS：PETSc complex128/int32、native Linux ABI paths、MPI1；ABI receipt SHA-256 `1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d` | 真实工作站native环境身份，详见V17 service receipt |
+| attempt04 producer与attempt05–07 saved-only checker | attempt04执行有界两单元producer；attempt05/06/07复用producer报告，attempt07为`LOCAL_REPLAY_COMPLETED`，`check_completed=true`、`data_integrity=true`、`errors=[]`；110个NPY / 75,253,856 B | 真实read-only checker收口，attempt07不是pytest，也不代表global action pass |
+| 本轮文档收口 | 没有重跑测试 | 只编辑文档和轻量JSON证据；未运行全仓pytest、未声称CI通过 |
+
+主控后续最小回归（分别在各自冻结前完成，不能累加为一套测试；原工具记录未另存日志，日志hash为UNKNOWN）：
+
+| 冻结源码 | 直接修改范围 | 独立结果 |
+|---|---|---|
+| `56ff5a60` | live resource callable调用链 | 1 passed，0.08 s |
+| `436bb69e` | producer/consumer checker授权及loader链 | 2 passed，0.15 s；另2 passed，0.15 s |
+| `adf3483d` | Decimal J/scatter及真实callback→checker | 3 passed，18.19 s |
+| `17df17b3` | 保存initial/final有符号变化 | 1 passed，19.90 s；先前fixture把数值零的字符串`0.0`与`0`比较导致失败，改数值比较后通过 |
+
+详细命令和数值边界见[response_v17](../response_v17.md)、[compact](v17_closeout/v17_two_cell_compact.json)及[attempt index](v17_closeout/attempt_index.json)。以下测试条目均为各自历史source/环境的独立记录，不可累加成单一套件结果。
+
+---
+
 ## V16定向验证与真实保存服务（2026-10-27）
 
 - 最终分析源码：`086c884121575c8a9662cd0f500a5287a36a79b8`。执行者在对应未提交补丁上运行资格化WSL测试：`source scripts/activate_myfenics_wsl.sh; PYTHONDONTWRITEBYTECODE=1 python -m pytest -q --tb=short -p no:cacheprovider src/test/test_task41_p0_v16_saved_vectors.py`，**20 passed in 1.10s**；随后主控审核三行diff并冻结，没有再改源码。原独立测试输出未归档为文件，日志hash为UNKNOWN，结果依据执行者工具记录。

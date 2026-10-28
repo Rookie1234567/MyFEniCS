@@ -6,7 +6,7 @@
 
 ## 当前任务
 
-当前收口为V16保存分析：y不变、g的trace改变；57个互斥类别显示余差广泛分布。两旧star的y/g分别精确绑定V15，但其类别只覆盖约1.85%/1.83%余差能量。新最大行对应cells7873/8014，已保存metadata，数值块缺失；只交最小补证方案。原全域action仍FAIL，恢复/200q/FGMRES未运行。见[response_v16](response_v16.md)、[阶段摘要](outcomes/summary.md)、[证据索引](outcomes/v16_closeout/evidence_index.json)。没有新全域owner或新GETRS。
+当前为V17两单元诊断收口：指定行1622464/原行5218672、cells7873/8014的attempt04执行有界producer并保存结果，attempt05–07只读checker复核，110个NPY数据完整；initial→final的两列局部变化可按高精度ΔΣJΔz与J乘法舍入闭合。此结论不外推全域；同单元native rank-1/scatter精确分解仍缺，原全域action仍FAIL，official/scientific qualification均false。attempt07未启动新worker/GETRS；200q、恢复、完整参考、target field或官方R/T/A均未运行。见[response_v17](response_v17.md)、[阶段摘要](outcomes/summary.md)、[compact](outcomes/v17_closeout/v17_two_cell_compact.json)、[证据索引](outcomes/v17_closeout/evidence_index.json)。
 
 V6 的 `actual_qmetric_blocked_gram` 候选已构建 28,000 个 `mesh_actual_exact` 键；八个代表键的 raw/oriented 张量、K/G/J/L 与 R/T/S 局部筛查均通过 `1e-11`。候选完整两列作用的冻结分母相对误差为 `1.7183209126709868e-10` 和 `3.6180522433957604e-10`，超过原 `1e-11` 门；独立 saved-only checker 已完成并确认数据完整，但数值资格失败，`official_result=false`。按 Review V6 停在 full-action gate，不进入 200q、factor、KSP/FGMRES、完整场、A6 或 R/T/A。候选恢复也未通过 forward 门，且只做了初次恢复，没有耗尽三次修正额度。V3/V4/V5 均保留为各自历史阶段，不用 donor PASS 替代 V6 候选结果。
 

@@ -1,4 +1,16 @@
-# Task41 V17 准备记录（进行中）
+# Task41 V17 当前收口状态
+
+**当前状态：attempt04 producer 数据已由 attempt07 独立只读 checker 成功复核；V17 两单元诊断完成，global action 仍 FAIL。** 旧的“等待窗口/SSH/真实输入核验”文字是启动前历史，不再表示当前状态。
+
+- 结果说明：[response_v17.md](../response_v17.md)
+- 表格化结果：[summary.md](summary.md)
+- 精简数值与边界：[v17_two_cell_compact.json](v17_closeout/v17_two_cell_compact.json)
+- attempts、hash 与服务资源：[attempt_index.json](v17_closeout/attempt_index.json)、[evidence_index.json](v17_closeout/evidence_index.json)
+- 固定窗口和磁盘快照：[window_snapshot.json](v17_closeout/window_snapshot.json)
+- 原始数组继续留在 workstation ignored `results/`；attempt05–07复用attempt04 producer，没有新 worker 或 GETRS。本轮没有全域 action、恢复、200q、完整参考或 official R/T/A。
+
+## 历史准备记录（窗口启动前）
+
 
 状态：`IN_PROGRESS`。本文只记录代码准备，不授权创建执行窗口、T0、authorization、contract 实例或启动正式计算。
 

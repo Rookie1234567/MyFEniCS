@@ -1,6 +1,23 @@
 # Task41 阶段结果
 
-## V16最新收口：保存向量分析完成，原全域action仍失败（2026-10-27）
+## V17当前收口：指定两单元诊断闭合，完整action仍失败（2026-10-28）
+
+V17只追查 active row 1622464 / original row 5218672 的两个 incident cells 7873、8014 和两列保存数据。独立checker重读110个NPY（75,253,856 B），报告状态`LOCAL_REPLAY_COMPLETED`、数据完整、errors为空。这里的“闭合”仅指该行记录中 initial→final 的有符号复数恒等式闭合到80位Decimal误差；并非全域算子或物理量通过。
+
+| 项目 | 方法 / 结果 | 身份与边界 | 证据入口 |
+|---|---|---|---|
+| 两单元重放 | attempt04 producer完成2个候选张量、2次LU及矩阵/向量RHS GETRS 6/12次；attempt05–07沿saved-only route复核，attempt07精确重现110 NPY、75,253,856 B | measured；固定两单元/两列，不是full owner | [V17 compact](v17_closeout/v17_two_cell_compact.json)、[attempt index](v17_closeout/attempt_index.json) |
+| initial→final归因 | 对`d=y-g`，观测Δd = 高精度ΔΣJΔz + J乘法舍入变化；两列实/虚闭合差约`1e-75`。scatter舍入、最终y−g相减、局部/native`Ju-b_t,volume`变化均为0 | measured/derived；只限指定行，精确同单元native rank-1/scatter分解仍缺失 | [response_v17](../response_v17.md)、[compact](v17_closeout/v17_two_cell_compact.json) |
+| 原完整action | 两列`5.7625744836007965e-11` / `1.212368464357194e-10`，限值`1e-11`，FAIL仍保留；V17未重算 | measured prior result；本轮局部数据不改变全域状态 | [response_v16](../response_v16.md)、[run index](run_index.json) |
+| 资源与时间 | attempt07 parent accounted 37.743761 s，嵌套checker watchdog 17.098682 s；tree RSS 479,342,592 B，job cgroup 411,295,744 B，swap 0，后代清理 | measured；parent/child嵌套，内存口径分开 | [attempt07 receipt](v17_closeout/attempt07_service_receipt.json)、[watchdog](v17_closeout/attempt07_watchdog_summary.json) |
+| 固定窗口 / 产物门 | 6 h总窗：数值20,400 s、收口1,200 s；post-write tree 77,936,866 B，小于128 MiB；累计raw 15,680,970,370 B，小于16 GiB；空闲盘约1.977 TB，大于2 GiB底线 | measured at receipt/read-only snapshot; 不用新窗口、不改T0 | [window snapshot](v17_closeout/window_snapshot.json) |
+| 未运行项 | 同单元rank-1/scatter精确拆分、稳定Jz补查、global action重验、recovery/FGMRES、200q、full reference、target field、A6、official R/T/A | not_run；不把缺项写成通过 | [response_v17](../response_v17.md) |
+
+本包科学producer父段128.293210 s，内含worker126.412692 s；实测树RSS峰2,692,341,760 B、任务swap0。实际新增2张量/2次LU/6次矩阵RHS GETRS和12次向量GETRS；attempt05–07只读复核，无额外求解。详细历史失败、所有服务成本与未知准备费用见response第4节，不以最后一次checker代替整包成本。
+
+下一步只保留一个窄提案：先核实保存数据是否含完整行操作数；若存在，再在相同保存初末向量上比较普通与补偿/可复现的`Jz`求和。该提案没有实施，不能声称是生产修复。原始数组保存在workstation ignored目录，不进入Git。V17 branch/worktree source为`17df17b39379001cf2bd368f05ed1da9118762ac`；执行者只整理文档与轻量证据，没有commit/push。
+
+## V16历史收口：保存向量分析（2026-10-27）
 
 本轮比较同一输入下的完整作用输出 y 和缩减右端 g，找出旧校正究竟改变了哪一侧；同时把旧局部终态与新全域保存结果逐项对应。只做保存数据分析及必要编号/MPC元数据补建，没有新积分、局部LU、GETRS、原生作用或全域数值owner。
 

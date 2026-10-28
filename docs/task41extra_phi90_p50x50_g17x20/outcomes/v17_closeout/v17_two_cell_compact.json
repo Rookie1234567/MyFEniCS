@@ -1,0 +1,168 @@
+{
+  "attempt04_actual_numeric_work": {
+    "candidate_lu_factorizations": 2,
+    "candidate_tensor_builds": 2,
+    "downstream_checker_authorization_failure": true,
+    "matrix_rhs_getrs_count": 6,
+    "service_parent_seconds": 128.2932101986426,
+    "vector_rhs_getrs_count": 12,
+    "worker_job_cgroup_memory_peak_bytes": 2637549568,
+    "worker_swap_peak_bytes": 0,
+    "worker_tree_rss_peak_bytes": 2692341760,
+    "worker_watchdog_seconds": 126.41269180784002
+  },
+  "attempt05_parent_seconds": 32.791400470871,
+  "attempt06_parent_seconds": 36.671775180821,
+  "branch": "task41extra_phi90_p50x50_g17x20",
+  "checker": {
+    "attempt": "attempt07",
+    "check_completed": true,
+    "checker_report_path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54/selected_incident_replay/attempt07.service/task41_p0_v17_independent_check.json",
+    "checker_report_sha256": "7f8ea99afe3970edf97f958c0b453b12345a1f8960315bd0a254d5b55f38bc43",
+    "data_integrity": true,
+    "errors": [],
+    "new_getrs_allowed": false,
+    "new_npy_artifact_count": 110,
+    "new_npy_evidence_bytes_checked": 75253856,
+    "new_worker_allowed": false,
+    "route": "READ_ONLY_COMPLETED_PRODUCER_REPORT",
+    "service_receipt_sha256": "d5c6f842fa55c1ac4f58dba23dce39d61dfe805d4f7844606b291f71139aa5d6",
+    "watchdog_summary_sha256": "6f032b5c4e8342b2a508d0abe6c759dd7db6bad9db2a287d99ebc7df031719b2"
+  },
+  "fixed_window": {
+    "authorization_sha256": "fda2e65a17c980496733ffa77e755683650252e350e0e4f403717af32a948fc0",
+    "closeout_seconds": 1200,
+    "consumer_contract_sha256": "5ca97c97ab0c19d495a0f223c8fd39ce709b65a1723af054cd7fec103334c0e5",
+    "consumer_source_sha": "17df17b39379001cf2bd368f05ed1da9118762ac",
+    "deadline_utc": "2026-10-28T15:17:39.097621720Z",
+    "entry_source_sha": "611ec943e79e19a8749ae7c9c7baf13a406db8d6",
+    "numerical_deadline_utc": "2026-10-28T14:57:39.097621720Z",
+    "numerical_seconds": 20400,
+    "sha256": "7d12b524c385f3d211579a5b49772f36b4e0f1198e9364a49a0afc2733dbbc54",
+    "t0_utc": "2026-10-28T09:17:39.097621720Z",
+    "total_seconds": 21600
+  },
+  "global_action": {
+    "full_owner_unlocked": false,
+    "limit": 1e-11,
+    "official_result": false,
+    "relative_errors": [
+      5.7625744836007965e-11,
+      1.212368464357194e-10
+    ],
+    "scientific_qualified": false,
+    "status": "FAIL_PRESERVED_PRIOR_RESULT_NOT_RECOMPUTED"
+  },
+  "next_narrow_proposal": "Before any future stable-Jz evaluation, verify that all exact row operands already exist in saved evidence; compare ordinary and compensated/reproducible accumulation only on the same saved initial/final vectors. Do not infer a production fix or full-owner pass.",
+  "not_run": [
+    "same-cell native rank-1/scatter exact decomposition",
+    "stable/reproducible Jz follow-up",
+    "global action requalification",
+    "recovery/FGMRES",
+    "200q",
+    "full reference",
+    "target field",
+    "independent A6",
+    "official R/T/A"
+  ],
+  "producer": {
+    "attempt": "attempt04",
+    "producer_completed": true,
+    "producer_contract_sha256": "61dd3a302477ed32071f10a38182bce079550bd432fdd03625b850bed863e419",
+    "progress_sha256": "bbf3bd03382f738cf4b0d22a167a29f6862028a06f4b6124ad3a07b0796223c6",
+    "report_sha256": "4e6fce6680a0bb304ed0370542f8b5c6003d39940d94ff3e54f19322aeb1709b",
+    "source_sha": "56ff5a603d4ba17c8ba6c45974777e1abcbca35e"
+  },
+  "resource": {
+    "attempt07_parent_accounted_seconds": 37.743761154334,
+    "descendants_cleared": true,
+    "global_swap_delta_pages": 0,
+    "global_swap_scope_label_from_raw": "WSL-global (historical label; actual service ran on native workstation)",
+    "job_cgroup_memory_peak_bytes": 411295744,
+    "leader_exit_code": 0,
+    "nested_checker_watchdog_seconds": 17.098682461306453,
+    "task_swap_peak_bytes": 0,
+    "timings_are_nested_not_additive": true,
+    "tree_rss_peak_bytes": 479342592,
+    "watchdog_samples": 15
+  },
+  "review": "Task41extra V17",
+  "schema": "task41.v17.selected_two_cell_closeout.v1",
+  "scope": {
+    "carrier_replay": false,
+    "cells": [
+      7873,
+      8014
+    ],
+    "columns": [
+      0,
+      1
+    ],
+    "full_owner": false,
+    "full_q_scan": false,
+    "official_result": false,
+    "selected_active_row": 1622464,
+    "selected_original_row": 5218672,
+    "surface_replay": false
+  },
+  "selected_row_signed_change": {
+    "broader_global_causal_decomposition": "INCOMPLETE",
+    "columns": [
+      {
+        "closure_difference": [
+          "2.8e-75",
+          "7.1e-75"
+        ],
+        "column": 0,
+        "delta_J_matvec_rounding_in_d": [
+          "2.95933996679380177e-10",
+          "-2.81827116610828702e-11"
+        ],
+        "exact_sum_J_times_z_final_minus_z_initial": [
+          "8.24157992581579704e-11",
+          "-5.91287797091182407e-11"
+        ],
+        "observed_delta_d": [
+          "3.78349795937538147e-10",
+          "-8.73114913702011108e-11"
+        ]
+      },
+      {
+        "closure_difference": [
+          "2e-75",
+          "-5e-75"
+        ],
+        "column": 1,
+        "delta_J_matvec_rounding_in_d": [
+          "3.74501993440900005e-11",
+          "5.91867993358760353e-10"
+        ],
+        "exact_sum_J_times_z_final_minus_z_initial": [
+          "7.89651224828448140e-11",
+          "1.64831598516315941e-10"
+        ],
+        "observed_delta_d": [
+          "1.16415321826934814e-10",
+          "7.56699591875076294e-10"
+        ]
+      }
+    ],
+    "definition": "d=y-g; each value is final minus initial; exact high-precision term is ΣJ(z_final-z_initial), evaluated from saved binary64 inputs",
+    "delta_final_y_minus_g_subtraction_rounding": [
+      0,
+      0
+    ],
+    "delta_g_scatter_rounding": [
+      0,
+      0
+    ],
+    "delta_local_native_Ju_minus_bt_volume": [
+      0,
+      0
+    ],
+    "precision": "80-digit Decimal",
+    "same_cell_native_rank1_scatter_exact_decomposition": "MISSING"
+  },
+  "source_sha": "17df17b39379001cf2bd368f05ed1da9118762ac",
+  "status": "COMPLETED_LOCAL_SELECTED_TWO_CELL_REPLAY"
+}

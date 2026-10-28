@@ -1,3 +1,11 @@
+## Task41extra V17：两单元initial→final诊断收口，全域action仍FAIL（2026-10-28）
+
+V17的attempt04先执行指定两单元producer（2个候选张量、2次LU、矩阵/向量RHS GETRS 6/12次），attempt05–07再复用保存producer输出做saved-only checker；专门复核active row 1622464（原始行5218672）关联的两个单元7873/8014。独立checker读取并验证110个NPY、75,253,856 B；数据完整且精确重现。`d=y-g`的两列initial→final变化可由高精度`ΣJ(z_final-z_initial)`与J矩阵乘法末位舍入变化闭合；scatter舍入、末端`y-g`相减舍入和局部/native `Ju-b_t,volume`变化均为0。这个结论只对所选行成立；exact同单元native rank-1/scatter分解仍缺失，不能说全域因果链已闭合。
+
+旧全域action两列仍为`5.7625744836007965e-11`与`1.212368464357194e-10`，高于`1e-11`门。attempt07没有新worker或GETRS；checker退出0、15个watchdog样本、树RSS峰479,342,592 B、task cgroup峰411,295,744 B、swap0、后代清理完成。6小时固定窗T0不变；attempt07结束时账本累计6,579.047321 s，后续快照是只读投影，不追加账本。窗口、证据和attempt逐项见[response_v17](task41extra_phi90_p50x50_g17x20/response_v17.md)、[V17 compact](task41extra_phi90_p50x50_g17x20/outcomes/v17_closeout/v17_two_cell_compact.json)与[证据索引](task41extra_phi90_p50x50_g17x20/outcomes/v17_closeout/evidence_index.json)。
+
+剩余研究建议仅为：先确认现有保存文件是否含完整行操作数；若有，再比较相同保存初末向量的普通与补偿/可复现Jz求和。没有实施新计算、全域重验、200q、恢复求解、完整参考、target field或官方R/T/A；不声称solver修复或物理资格。
+
 ## Task41extra V16：完整余差分布与旧star终态绑定（2026-10-27）
 
 在0.7nm、50×50×140nm、phi90、p6/28,000-cell/64,120-mode既有保存数据上：两列Δy=0，变化只在g的trace；原action仍5.7625744836e-11 / 1.21236846436e-10，对1e-11失败。57个互斥MPC incident类别中，tag1/perm0/两incident类别占约71.07%/71.11%剩余能量；两旧star类别仅1.85%/1.83%。其y/g各自精确绑定V15，无新GETRS。最大行1622464→original5218672，cells7873/8014数值块缺失，下一步仅提出完整两cell补证，尚未授权重建。
