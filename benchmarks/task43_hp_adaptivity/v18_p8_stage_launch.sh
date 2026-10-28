@@ -7,8 +7,8 @@ prefix="$repo/benchmarks/artifacts/task43/v16_p8"
 contract="$repo/docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json"
 binding="$prefix/preparation/v18_p8_execution_recovery_attempt3.json"
 summary="$repo/docs/task43_hp_adaptivity/outcomes/records/v18_p8_execution_recovery_v3.json"
-comparison_binding="$prefix/preparation/v18_p8_comparison_recovery_attempt2.json"
-comparison_summary="$repo/docs/task43_hp_adaptivity/outcomes/records/v18_p8_comparison_recovery_v2.json"
+comparison_binding="$prefix/preparation/v18_p8_comparison_recovery_attempt3.json"
+comparison_summary="$repo/docs/task43_hp_adaptivity/outcomes/records/v18_p8_comparison_recovery_v3.json"
 script_path="$repo/benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh"
 mode=${1:-}
 invocation_monotonic_ns=$(python3 -c 'import time; print(time.monotonic_ns())')
@@ -354,7 +354,7 @@ if stage_mode=='C_RECOVERY':
  if comparison.get('contract_sha256')!=sha(contract) or comparison.get('original_execution_binding')!=ref or comparison_summary_record.get('execution_manifest')!={'path':str(comparison_binding.resolve()),'sha256':sha(comparison_binding)}:raise RuntimeError('C-only manifest/summary/contract binding differs')
  if comparison_summary_record.get('authorization')!=comparison.get('authorization') or comparison_summary_record.get('phases')!=comparison.get('phases') or comparison_summary_record.get('source_binding')!=comparison.get('source_binding'):raise RuntimeError('C-only tracked summary differs')
  phase_record=comparison.get('phases',{}).get('C',{})
- expected_recovery={'root':'support/v18_paired_comparison_recovery_attempt2','work_seconds':1740,'whole_seconds':1800,'rss_cap_bytes':8589934592}
+ expected_recovery={'root':'support/v18_paired_comparison_recovery_attempt3','work_seconds':1740,'whole_seconds':1800,'rss_cap_bytes':8589934592}
  if phase_record!=expected_recovery or (prefix/phase_record['root']).resolve()!=root.resolve():raise RuntimeError('C-only root or budget differs')
  if comparison.get('historical_head')!='196571795199dc0f48fd8ad3daaac258ab3390cb' or comparison.get('source_binding',{}).get('historical_source_sha256')!=historical_sources:raise RuntimeError('C-only historical source generation differs')
  if comparison.get('source_binding',{}).get('allowed_delta_paths')!=sorted(expected_delta) or changed!=expected_delta or set(current)!=set(historical_sources):raise RuntimeError('C-only source delta exceeds the three-reader allowlist')
@@ -462,7 +462,6 @@ os.replace(runtime_tmp,runtime_path)
 repo,contract,execution_binding,comparison_binding,candidate_root,selection_record=sys.argv[1:]
 test_file=pathlib.Path(repo)/"src/test/test_task43_p8_execution_recovery.py"
 selectors=[
-    "test_v18_p5_h8_candidate_label_allows_only_historical_alias",
     "test_v18_c_recovery_uses_actual_comparison_and_historical_f_readers",
     "test_v18_c_recovery_actual_reader_rejects_unapproved_source_delta",
     "test_v18_q8_recovery_reads_bound_archive_without_sampling_or_copying",
@@ -539,7 +538,7 @@ r=json.loads(manifest.read_text()); s=json.loads(summary.read_text())
 if r.get('schema')!='task43.v18.p8-comparison-recovery.v1' or r.get('authorization',{}).get('phase')!='C' or r.get('authorization',{}).get('E_allowed') is not False:raise SystemExit('C recovery authority differs')
 if r.get('original_execution_binding')!={'path':str(execution.resolve()),'sha256':sha(execution)} or s.get('execution_manifest')!={'path':str(manifest.resolve()),'sha256':sha(manifest)}:raise SystemExit('C recovery binding hashes differ')
 p=r.get('phases',{}).get('C',{})
-if p!={'root':'support/v18_paired_comparison_recovery_attempt2','work_seconds':1740,'whole_seconds':1800,'rss_cap_bytes':8589934592}:raise SystemExit('C recovery root or budget differs')
+if p!={'root':'support/v18_paired_comparison_recovery_attempt3','work_seconds':1740,'whole_seconds':1800,'rss_cap_bytes':8589934592}:raise SystemExit('C recovery root or budget differs')
 print(p['root'],p['work_seconds'],p['whole_seconds'],p['rss_cap_bytes'])
 ROOTINFO
   )

@@ -100,11 +100,11 @@ _V18_P8_EXECUTION_RECOVERY_SUMMARY_REL = Path(
 )
 _V18_P8_COMPARISON_RECOVERY_REL = Path(
     "benchmarks/artifacts/task43/v16_p8/preparation/"
-    "v18_p8_comparison_recovery_attempt2.json"
+    "v18_p8_comparison_recovery_attempt3.json"
 )
 _V18_P8_COMPARISON_RECOVERY_SUMMARY_REL = Path(
     "docs/task43_hp_adaptivity/outcomes/records/"
-    "v18_p8_comparison_recovery_v2.json"
+    "v18_p8_comparison_recovery_v3.json"
 )
 _V18_P8_STAGE_LAUNCHER_REL = Path(
     "benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh"
@@ -977,7 +977,7 @@ def _v18_p8_comparison_recovery_root(
 ) -> Path:
     phase = record.get("phases", {}).get("C")
     expected = {
-        "root": "support/v18_paired_comparison_recovery_attempt2",
+        "root": "support/v18_paired_comparison_recovery_attempt3",
         "work_seconds": 1740,
         "whole_seconds": 1800,
         "rss_cap_bytes": 8589934592,
@@ -1229,6 +1229,12 @@ def _load_v18_p8_comparison_recovery(
         / "support/v18_paired_comparison_recovery_attempt1/launcher_exit.json",
         "previous_C_recovery_attempt1_supervisor_stdout": prefix
         / "support/v18_paired_comparison_recovery_attempt1/supervisor_stdout.log",
+        "previous_C_recovery_attempt1_source_status": prefix
+        / "support/v18_paired_comparison_recovery_attempt1/source_status.txt",
+        "previous_C_recovery_attempt1_launcher_snapshot": prefix
+        / "support/v18_paired_comparison_recovery_attempt1/snapshots/launch.sh",
+        "previous_C_recovery_attempt1_source_head": prefix
+        / "support/v18_paired_comparison_recovery_attempt1/source_head.txt",
     }
     bound_refs = recovery.get("prior_evidence", {})
     expected_refs = {
