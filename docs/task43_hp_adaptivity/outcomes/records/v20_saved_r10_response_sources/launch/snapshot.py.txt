@@ -1,0 +1,46 @@
+"""Snapshot a single V20 slot; stdlib only, no NPZ/member or project import."""
+import hashlib,json,os,shutil,subprocess,sys
+from pathlib import Path
+repo=Path('/home/fenics/Projects/NN-Lab-V2')
+prefix=repo/'benchmarks/artifacts/task43/v20_saved_r10_response'
+root,stage,contract=Path(sys.argv[1]),sys.argv[2],Path(sys.argv[3])
+head=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+def sha(p):
+ with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
+c=json.loads(contract.read_text())
+assert c['schema']=='task43.v20.saved_r10_response_contract.v1'
+assert c['authorization_review']=='0c6158cb96b3ba320d5bd3282a3c18f64c5a08c9'
+assert set(c['slots'])=={'T1','T2','D1','D2'}
+conditions={'T1':'INITIAL_TARGETED','T2':'LOCATED_T1_BUG_ONLY','D1':'TARGETED_GATE_PASSED','D2':'LOCATED_D1_BUG_ONLY'}
+stems={'T1':'targeted_attempt1','T2':'targeted_recovery1','D1':'decomposition_attempt1','D2':'decomposition_recovery1'}
+for key,v in c['slots'].items():
+ assert set(v)=={'root','work_seconds','whole_seconds','condition'}, (key,'ambiguous slot fields')
+ assert v=={'root':str((prefix/'support'/stems[key]).relative_to(repo)),'work_seconds':270 if key.startswith('T') else 1140,'whole_seconds':300 if key.startswith('T') else 1200,'condition':conditions[key]}
+assert root==repo/c['slots'][stage]['root']
+assert not any(k in c for k in ['contract_state','no_follow_on_authority','entrypoints','armed'])
+if stage!='T1':
+ release=prefix/'preparation'/f'{stage}_root_release.json'
+ d=json.loads(release.read_text())
+ assert d['decision']=='ALLOW_ONE_FIXED_SLOT' and d['stage']==stage
+ assert d['actual_head']==head and d['contract_sha256']==sha(contract)
+ assert d['authorization_review']==c['authorization_review']
+ shutil.copyfile(release,root/'root_release.json')
+paths=['benchmarks/__init__.py','benchmarks/task43_hp_adaptivity/__init__.py','src/__init__.py','src/test/__init__.py','src/io/__init__.py','src/runners/__init__.py','benchmarks/task43_hp_adaptivity/analyze_saved_hp_response.py','benchmarks/task43_hp_adaptivity/analyze_saved_r10_response.py','src/test/test_task43_saved_r10_response.py',str(contract.relative_to(repo)),'docs/task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_sources/input_lock.json','scripts/activate_task40_phi90_pord64.sh','benchmarks/subreaper_watchdog.py','benchmarks/task034_wsl_resources.py','benchmarks/task038_full3d_jit_staging.py','src/runners/workflow_timebase.py','src/io/native_capacity_profile.py']
+snapshot=root/'snapshots';snapshot.mkdir();refs={}
+for rel in paths:
+ p=repo/rel
+ assert not p.is_symlink() and p.read_bytes()==subprocess.check_output(['git','show',head+':'+rel]),rel
+ out=snapshot/rel;out.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,out)
+ refs[rel]={'sha256':sha(p),'bytes':p.stat().st_size}
+launch_refs={}
+assert len(c['launch_files'])==2 and {Path(v['path']).name for v in c['launch_files']}=={'stage_launch.sh','snapshot.py'}
+for item in c['launch_files']:
+ p=repo/item['path'];archive=repo/item['tracked_copy']
+ assert not p.is_symlink() and p.parent==prefix/'launch'
+ assert sha(p)==item['sha256']==sha(archive)
+ assert archive.read_bytes()==subprocess.check_output(['git','show',head+':'+item['tracked_copy']])
+ out=snapshot/'launch'/p.name;out.parent.mkdir(exist_ok=True);shutil.copyfile(p,out)
+ launch_refs[str(p)]={'sha256':sha(p),'bytes':p.stat().st_size}
+names=['_MYFENICS_NATIVE_QUALIFIED_ACTIVATION','VIRTUAL_ENV','PATH','PYTHONPATH','LD_LIBRARY_PATH','PHYSICAL_NATIVE_CAPACITY','PHYSICAL_NATIVE_NODE_CAP_BYTES','TASK43_V20_RUN_ROOT','TASK43_V20_STAGE','TASK43_V19_RUN_ROOT','TASK43_V19_STAGE','OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','BLIS_NUM_THREADS','NUMEXPR_NUM_THREADS','VECLIB_MAXIMUM_THREADS']
+out={'schema':'task43.v20.run-manifest.v1','stage':stage,'actual_head':head,'authorization_review':c['authorization_review'],'sources':refs,'launch_files':launch_refs,'contract':{'path':str(contract),'sha256':sha(contract)},'worker_argv':sys.argv[5:],'worker_wrapper':sys.argv[4],'environment':{k:os.environ.get(k) for k in names},'worker_overrides':{'HWLOC_COMPONENTS':'-x86','OMPI_MCA_pml':'ob1','PYTEST_DISABLE_PLUGIN_AUTOLOAD':'1'},'runtime_compatibility_alias':'unchanged V19 identity helper reads V19 environment aliases pointing to this V20 root/stage only','mpi':'NOT_USED_NOT_ABI_QUALIFICATION','numpy_version':'RECORDED_IN_ACTUAL_WORKER_RUNTIME'}
+with (root/'run_manifest.json').open('x') as f:json.dump(out,f,indent=2);f.write('\n')

@@ -1,0 +1,64 @@
+import json,csv,hashlib,math
+from pathlib import Path
+R=Path('/home/fenics/Projects/NN-Lab-V2'); B=R/'docs/task43_hp_adaptivity/outcomes/records'; O=B/'v20_saved_r10_response_sources'
+def load(p):return json.loads((R/p).read_text())
+def sha(p):
+ h=hashlib.sha256()
+ with (R/p).open('rb') as f:
+  for b in iter(lambda:f.read(1024*1024),b''):h.update(b)
+ return h.hexdigest()
+def ref(p,expected=None):
+ s=sha(p)
+ if expected:assert s==expected,(p,s,expected)
+ return {'path':str(p),'sha256':s}
+def digest(o):return hashlib.sha256(json.dumps(o,sort_keys=True,separators=(',',':')).encode('ascii')).hexdigest()
+v19=load(B.relative_to(R)/'v19_saved_hp_response_contract.json');src={k:ref(v['path'],v['sha256']) for k,v in v19['sources'].items() if k.startswith(('r9','y6'))}
+rej='docs/task43_hp_adaptivity/outcomes/records/round10_rejected_candidate_v1.json';j=load(rej)
+src['r10_rejection']=ref(rej)
+for role,key in [('r10_comparison','comparison_raw_record'),('r10_modal','PDE_modal_rows')]:v=j['evidence'][key];src[role]=ref(v['path'],v['sha256'])
+src['r10_plan']=ref('benchmarks/artifacts/task43/round10_p_up_attempt1/run/candidate_plan.json','7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826')
+src['r10_absorption']=ref('benchmarks/artifacts/task43/round10_p_up_attempt1/run/solve/volume_absorption.json')
+src['r9_comparison']=ref('benchmarks/artifacts/task43/round1_candidates/comparisons/round9_p_up_attempt1/candidate_comparison_v2.json')
+src['post_selection_metadata']=ref('benchmarks/artifacts/task43/round1_candidates/comparisons/post_selection_joint_attempt1/post_selection_comparison.json','347195b3e29e23a2907e16264385346e208a2a7d2d48fb8b2d8c0b00ede3b6aa')
+post=load(src['post_selection_metadata']['path']);quad={}
+for q,s in [('q8','ce3707052419ada5a8e55574a826772bcb1e37cf1f764fc115eb8bf8a52306e5'),('q10','895b65ffbf63176ac20008e6488c1c1318141f877eb5814496fcc945c049514d')]:
+ p=f'benchmarks/artifacts/task43/round1_candidates/comparisons/post_selection_joint_attempt1/post_selection_shared_{q}.npz'
+ quad[q]={**ref(p,s),**{k:post['quadrature'][q][k] for k in ['sample_count','partition_boxes','axis_breakpoints_nm','rule_sha256']}}
+ # Full-file hashing only; no ZIP/NPY/NPZ open or array processing in this static preparation.
+rows={}
+for q in ('q8','q10'):
+ p=f'docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/{q}/cells.csv';src['v19_'+q+'_cells']=ref(p)
+ with (R/p).open() as f:rows[q]=list(csv.DictReader(f))
+assert len(rows['q8'])==len(rows['q10'])==180
+geom=lambda r:(int(r['global_cell_id']),tuple(json.loads(r['lower_nm'])),tuple(json.loads(r['upper_nm'])))
+assert [geom(r) for r in rows['q8']]==[geom(r) for r in rows['q10']]
+p9=load(src['r9_plan']['path']);p10=load(src['r10_plan']['path']);a=p9['base_config']['axis_values'];tags=p9['base_config']['material_tags']
+roots=[];leaf=[]
+for iz in range(len(a['z'])-1):
+ for iy in range(len(a['y'])-1):
+  for ix in range(len(a['x'])-1):
+   box=[a['x'][ix],a['y'][iy],a['z'][iz],a['x'][ix+1],a['y'][iy+1],a['z'][iz+1]];mid=[(box[i]+box[i+3])/2 for i in range(3)];gb=p9['base_config']['grating_bounds']
+   tag=tags['grating'] if all(gb[i]<=mid[i]<=gb[i+3] for i in range(3)) else tags['substrate'] if mid[2]<p9['base_config']['interface_z'] else tags['air']
+   leaf.append({'key':{'root':len(roots),'level':0,'i':0,'j':0,'k':0},'box':box,'material_tag':tag});roots.append({'box':box,'material_tag':tag})
+for plan in [p9,p10]:
+ assert digest(roots)==plan['expected_forest']['root_catalog_sha256']
+ assert digest(leaf)==plan['expected_forest']['leaf_catalog_sha256']
+ assert plan['expected_forest']['leaf_cell_count']==180 and not plan['marked_root_boxes']
+boxkey=lambda row:tuple(row['lower']+row['upper'])
+deg9={boxkey(r):r['degree'] for r in p9['cell_interior_degrees']};deg10={boxkey(r):r['degree'] for r in p10['cell_interior_degrees']}
+rootmap={tuple(r['box']):i for i,r in enumerate(roots)};assert set(deg9)==set(deg10)==set(rootmap)
+cells=[]
+for r in rows['q10']:
+ gid,lo,hi=geom(r);key=lo+hi;cells.append({'global_cell_id':gid,'forest_root':rootmap[key],'lower':list(lo),'upper':list(hi),'r9_p':deg9[key],'r10_p':deg10[key],'raised':deg9[key]==5})
+assert sum(c['raised'] for c in cells)==28 and all(c['r10_p']==6 for c in cells)
+assert next(c for c in cells if c['global_cell_id']==8)['forest_root']==4
+assert next(c for c in cells if c['global_cell_id']==14)['forest_root']==34
+c10=load(src['r10_comparison']['path']);c9=load(src['r9_comparison']['path']);assert c10['candidate_id']=='round10_p_up' and c10['parent_candidate_id']=='round9_p_up' and c10['selection_reference']=='Y6_1'
+assert src['r9_comparison']['sha256']==c10['parent_identity']['comparison_record_sha256']
+anchors={}
+for name,case in [('R9','parent'),('R10','candidate')]:
+ anchors[name]={'field_metrics':c10['field_metrics_vs_selection_reference'][case],'J_infinity':c10['J_infinity'][case],'modal_and_power_metrics':c10['modal_and_power_metrics_vs_selection_reference'][case]}
+# Retain only allowed role anchors; no post-selection result pair/holdout/control metric read.
+lock={'schema':'task43.v20.static_input_lock.v1','authorization_review':'0c6158cb96b3ba320d5bd3282a3c18f64c5a08c9','sources':src,'quadrature':quad,'cells':cells,'physics':{k:v19['physics'][k] for k in ['k0_per_nm','magnetic_field_scale_a_per_m']},'anchors':anchors,'epsilon_J':c10['J_infinity']['epsilon_J'],'epsilon_G':c10['selection']['epsilon_G'],'delta_FE_historical':8328,'forest_json_crosscheck':{'method':'Read original JSON axis/material/forest hashes; reproduce serialized catalogs with stdlib only, no mesh/forest constructor or native import. Cross-map V19 already committed equal-q geometries by box, never plan row index.','root_catalog_sha256':digest(roots),'leaf_catalog_sha256':digest(leaf),'R9_p_counts':{'5':28,'6':152},'R10_p_counts':{'6':180}},'historical_V19':{'request_global':8,'closure_global':14,'top10_B9_globals':[int(r['global_cell_id']) for r in sorted(rows['q10'],key=lambda r:float(r['H8.G.B']),reverse=True)[:10]],'note':'Read only completed CSV geometry/scalars; no H8/P8 NPZ access'},'static_wall':'NOT_MEASURED','npz_access':'OUTER_FILE_HASH_ONLY'}
+lock['physics']['incident_g_norm_floor']=anchors['R9']['field_metrics']['G']['incident_g_norm_floor']
+p=O/'input_lock.json';p.write_text(json.dumps(lock,indent=2,allow_nan=False)+'\n');print('LOCK',p,'cells',len(cells),'sources',len(src),'quad hashes verified',list(quad),'anchor_modal_keys',{n:list(v['modal_and_power_metrics']) for n,v in anchors.items()})

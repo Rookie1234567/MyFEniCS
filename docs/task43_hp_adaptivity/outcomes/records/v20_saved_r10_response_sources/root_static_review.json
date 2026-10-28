@@ -1,0 +1,31 @@
+{
+  "schema": "task43.v20.root_static_review.v1",
+  "reviewer": "root",
+  "authorization_review": "0c6158cb96b3ba320d5bd3282a3c18f64c5a08c9",
+  "source_sha256": {
+    "benchmarks/task43_hp_adaptivity/analyze_saved_r10_response.py": "ea6005ad389388d02888001bf668ae7eab514831ba8379ddc4431fa81baaaa43",
+    "src/test/test_task43_saved_r10_response.py": "814b85db5ffcc029ab6210f6f1c15b1d0184434c3a21085e76a7c0aab0cfaa52"
+  },
+  "AST": "PARSED_WITHOUT_IMPORT",
+  "shell": "bash -n passed; no stage invocation",
+  "tests": "12 exact AST nodes match contract; NOT_RUN at freeze",
+  "independent_mapping": "root_static_map_read.json",
+  "reviews": [
+    "Exact eight-member reader; six forbidden members cannot be opened in test access monitor",
+    "Geometry join not plan-row index; half-open boundaries and nonuniform weights",
+    "Direct Y6-R10 remaining norm independent from X-D; cell and global gates",
+    "J sixteen components and saved 612 modal powers; no power reassembly",
+    "main microfixture writes real files; q10 injected mid-write preserves q8 and input hashes",
+    "Terminal published after both order products and final input checks; outer runtime/resource audit still required",
+    "Single-source slots and two hash-matching launch/archive files; no parallel controller"
+  ],
+  "fixed_during_static_review": [
+    "fixture serialization hash mismatch",
+    "R9 direct remaining norm incorrectly wired to R10 corrected before any test",
+    "test node expected fields/counts and reference-fixture path flag corrected",
+    "half-open fixture weights corrected",
+    "q rebind/ref-direction negatives and group/location/scalar outputs completed"
+  ],
+  "scope": "No NPZ members opened outside numbered worker; no pytest/native imports/driver/PDE in static preparation",
+  "wall": "NOT_MEASURED"
+}

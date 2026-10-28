@@ -1,0 +1,17 @@
+{
+  "scope": "STATIC_ONLY_NO_PROJECT_IMPORT_NO_NPZ_MEMBER_ACCESS",
+  "failures": [
+    {
+      "action": "initial input-lock script",
+      "result": "KeyError incident_g_norm_floor",
+      "correction": "read actual field_metrics.G.incident_g_norm_floor from frozen R10 comparison; rerun only static lock step",
+      "old_script": "benchmarks/artifacts/task43/v20_saved_r10_response/preparation/input_lock_failed_v1.py.txt"
+    },
+    {
+      "action": "optional source path search",
+      "result": "src/mesh directory does not exist",
+      "correction": "read existing src/adaptivity source only"
+    }
+  ],
+  "wall": "NOT_MEASURED"
+}

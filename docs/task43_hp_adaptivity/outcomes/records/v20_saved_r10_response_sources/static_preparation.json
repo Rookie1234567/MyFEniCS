@@ -1,0 +1,30 @@
+{
+  "schema": "task43.v20.static_preparation.v1",
+  "canonical": "/home/fenics/Projects/NN-Lab-V2",
+  "review_commit": "0c6158cb96b3ba320d5bd3282a3c18f64c5a08c9",
+  "HEAD_at_preparation": "0c6158cb96b3ba320d5bd3282a3c18f64c5a08c9",
+  "upstream": "origin/task43_hp_adaptivity",
+  "ff_changes": [
+    "docs/task43_hp_adaptivity/review_report_v19.md"
+  ],
+  "worktree_before": "clean",
+  "later_remote_commits": [],
+  "host_process_check": "No Task43 scientific worker/watchdog seen; unrelated task038 MPI1 process on CPU24 present, not altered. Runtime admission still required.",
+  "input_lock_sha256": "c7682d78a35e43318140f661bb440c858e27b286982a4f9cd236293bd155a8b0",
+  "root_global_mapping": {
+    "method": "Read original JSON axis/material/forest hashes; reproduce serialized catalogs with stdlib only, no mesh/forest constructor or native import. Cross-map V19 already committed equal-q geometries by box, never plan row index.",
+    "root_catalog_sha256": "8b49201ee7f3f24fb1594a255f7477ce9653ffe4322e6de0ef9af57285f9d5f2",
+    "leaf_catalog_sha256": "53a1e36b24a676ceb5554c9bdddafe89a426d38f6a1d268515cb44b9586b5590",
+    "R9_p_counts": {
+      "5": 28,
+      "6": 152
+    },
+    "R10_p_counts": {
+      "6": 180
+    }
+  },
+  "allowed_static_work": "source/JSON/committed CSV/hash only; no ZIP member read, np.load, NumPy/project/native import, testing, sampler or PDE",
+  "subagent_boundary": "Only one existing Luna Max executor; code/tests implementation only; all dynamic shells exclusively main after frozen review.",
+  "stage_calls_so_far": 0,
+  "wall": "NOT_MEASURED"
+}
