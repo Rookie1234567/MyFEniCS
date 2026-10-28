@@ -148,6 +148,80 @@ def test_selected_trace_star_uses_noncontiguous_partition_and_mpc_preimages(monk
     assert len(cells) == selected["owned_cells"]
 
 
+def test_selected_trace_star_can_restrict_incidence_to_ordered_cells(monkeypatch):
+    space, constraints, tags, _cells = _fake_selected_trace_case()
+
+    def owned_numbering(function_space, local_interiors, *, compact):
+        assert function_space is space
+        assert compact is True
+        return (
+            np.asarray([0, 2, 3, 4, 5, 9, 10, 12], dtype=np.int32),
+            {row: index for index, row in enumerate([0, 2, 3, 4, 5, 9, 10, 12])},
+            8,
+            16,
+        )
+
+    monkeypatch.setattr(condensation, "_owned_trace_numbering", owned_numbering)
+    monkeypatch.setattr(
+        condensation,
+        "_trace_constraint_map",
+        lambda *_args, **_kwargs: constraints,
+    )
+
+    selected = condensation.build_selected_volume_trace_star_metadata(
+        space,
+        object(),
+        tags,
+        selected_active_row=2,
+        expected_active_original_rows=np.asarray([0, 2, 3, 4], dtype=np.int64),
+        selected_cell_indices=[1, 0],
+    )
+
+    assert selected["selected_cell_indices"] == [1, 0]
+    assert [item["cell_index"] for item in selected["incidents"]] == [1, 0]
+
+
+@pytest.mark.parametrize(
+    ("selected_cell_indices", "exception", "message"),
+    [
+        ([0, 0], ValueError, "cannot contain duplicates"),
+        ([3], IndexError, "unowned cell"),
+        ([2], ValueError, "does not contain the selected active row"),
+        ([True], ValueError, "nonempty integer sequence"),
+    ],
+)
+def test_selected_trace_star_rejects_invalid_or_nonincident_cell_scope(
+    monkeypatch, selected_cell_indices, exception, message
+):
+    space, constraints, tags, _cells = _fake_selected_trace_case()
+
+    def owned_numbering(_space, _interiors, *, compact):
+        assert compact is True
+        return (
+            np.asarray([0, 2, 3, 4, 5, 9, 10, 12], dtype=np.int32),
+            {},
+            8,
+            16,
+        )
+
+    monkeypatch.setattr(condensation, "_owned_trace_numbering", owned_numbering)
+    monkeypatch.setattr(
+        condensation,
+        "_trace_constraint_map",
+        lambda *_args, **_kwargs: constraints,
+    )
+
+    with pytest.raises(exception, match=message):
+        condensation.build_selected_volume_trace_star_metadata(
+            space,
+            object(),
+            tags,
+            selected_active_row=2,
+            expected_active_original_rows=np.asarray([0, 2, 3, 4], dtype=np.int64),
+            selected_cell_indices=selected_cell_indices,
+        )
+
+
 @pytest.mark.parametrize("candidate_only", [False, True])
 def test_v8_metadata_selection_reaches_requested_roles_and_saved_arrays(
     monkeypatch, tmp_path, candidate_only
@@ -239,6 +313,7 @@ def test_v8_metadata_selection_reaches_requested_roles_and_saved_arrays(
         return record
 
     progress = []
+    checkpoints = []
     role_results = {}
     for row in metadata["incidents"]:
         cell_index = int(row["cell_index"])
@@ -255,6 +330,11 @@ def test_v8_metadata_selection_reaches_requested_roles_and_saved_arrays(
             persist_array=persist,
             progress=progress.append,
             candidate_only=candidate_only,
+            checkpoint=(
+                lambda phase, payload: checkpoints.append((phase, dict(payload)))
+                if candidate_only
+                else None
+            ),
         )
 
     assert set(role_results) == {0, 1}
@@ -296,6 +376,19 @@ def test_v8_metadata_selection_reaches_requested_roles_and_saved_arrays(
     assert sum(event["status"] == "COMPLETED" for event in progress) == (
         2 * len(expected_roles)
     )
+    if candidate_only:
+        assert len(checkpoints) == 2 * 7
+        for cell_index in (0, 1):
+            cell_checkpoints = [
+                item for item in checkpoints if item[1]["cell_index"] == cell_index
+            ]
+            assert [item[1]["artifact_name"] for item in cell_checkpoints] == [
+                "raw_tensor", "oriented_tensor", "R", "T", "S",
+                "interior_lu", "interior_lu_pivots",
+            ]
+            assert [
+                len(item[1]["persisted_artifacts"]) for item in cell_checkpoints
+            ] == list(range(1, 8))
 
 
 def test_selected_trace_column_support_ignores_exact_zero_but_keeps_complex_slave_term():

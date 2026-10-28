@@ -15,7 +15,7 @@ import socket
 import subprocess
 import sys
 import tomllib
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -9802,6 +9802,378 @@ def _parse_task41_p0_v14_decimal_recheck_suffix(
     return (*base, *decimal, *extension)
 
 
+def _task41_p0_v17_worker_command(
+    *,
+    python: str,
+    manifest_path: Path,
+    manifest_sha256: str,
+    consumer_contract_path: Path,
+    consumer_contract_sha256: str,
+    pre_admission_path: Path,
+    pre_admission_sha256: str,
+    output_directory: Path,
+    ffcx_c_source_path: Path,
+    producer_contract_path: Path | None = None,
+    producer_contract_sha256: str | None = None,
+    producer_progress_path: Path | None = None,
+    producer_progress_sha256: str | None = None,
+) -> list[str]:
+    from src.runners.task41_p0_v4_volume_only_audit import TASK41_P0_V17_ACTIVE_ROW
+
+    command = [
+        python,
+        "-m",
+        "src.runners.task41_p0_v4_volume_only_audit",
+        "--v17-selected-two-cell-replay",
+        "--v16-saved-vector-manifest", str(manifest_path),
+        "--v16-saved-vector-manifest-sha256", manifest_sha256,
+        "--v17-consumer-contract", str(consumer_contract_path),
+        "--v17-consumer-contract-sha256", consumer_contract_sha256,
+        "--v17-pre-admission", str(pre_admission_path),
+        "--v17-pre-admission-sha256", pre_admission_sha256,
+        "--output-dir", str(output_directory),
+        "--selected-active-row", str(TASK41_P0_V17_ACTIVE_ROW),
+        "--geometry-policy", "mesh_actual_exact",
+        "--raw-tensor-evaluator", "actual_qmetric_blocked_gram",
+        "--ffcx-c-source", str(ffcx_c_source_path),
+    ]
+    supplied = (
+        producer_contract_path,
+        producer_contract_sha256,
+        producer_progress_path,
+        producer_progress_sha256,
+    )
+    if any(value is not None for value in supplied):
+        if any(value is None for value in supplied):
+            raise ValueError("V17 worker producer reuse requires all contract/progress bindings")
+        command.extend([
+            "--v17-producer-contract", str(producer_contract_path),
+            "--v17-producer-contract-sha256", str(producer_contract_sha256),
+            "--v17-producer-progress", str(producer_progress_path),
+            "--v17-producer-progress-sha256", str(producer_progress_sha256),
+        ])
+    return command
+
+
+def _task41_p0_v17_worker_completed(
+    watchdog: Mapping[str, Any],
+    payload: Any,
+    *,
+    contract_sha256: str,
+    window_sha256: str,
+) -> bool:
+    return bool(
+        watchdog.get("classification") == "COMPLETED"
+        and watchdog.get("leader_exit_code") == 0
+        and isinstance(payload, Mapping)
+        and payload.get("schema")
+        == "task41.p0.b0.v17.selected_two_cell_worker_receipt.v1"
+        and payload.get("status") == "COMPLETED_LOCAL_SELECTED_TWO_CELL_REPLAY"
+        and payload.get("consumer_contract_sha256") == contract_sha256
+        and payload.get("consumer_window_sha256") == window_sha256
+        and payload.get("official_result") is False
+        and payload.get("scientific_qualified") is False
+        and payload.get("full_owner_unlocked") is False
+    )
+
+
+def _task41_p0_v17_checker_command(
+    *,
+    python: str,
+    worker_report_path: Path,
+    worker_report_sha256: str,
+    manifest_path: Path,
+    manifest_sha256: str,
+    contract_path: Path,
+    contract_sha256: str,
+    producer_contract_path: Path,
+    producer_contract_sha256: str,
+    progress_path: Path,
+    progress_sha256: str,
+    output_path: Path,
+    resume_contract_path: Path | None = None,
+    resume_contract_sha256: str | None = None,
+    resume_progress_path: Path | None = None,
+    resume_progress_sha256: str | None = None,
+) -> list[str]:
+    command = [
+        python,
+        "-m",
+        "src.runners.task41_p0_checker",
+        "--v17-selected-two-cell-check",
+        "--v17-report", str(worker_report_path),
+        "--v17-report-sha256", worker_report_sha256,
+        "--manifest", str(manifest_path),
+        "--manifest-sha256", manifest_sha256,
+        "--contract", str(contract_path),
+        "--contract-sha256", contract_sha256,
+        "--v17-producer-contract", str(producer_contract_path),
+        "--v17-producer-contract-sha256", producer_contract_sha256,
+        "--v17-progress", str(progress_path),
+        "--v17-progress-sha256", progress_sha256,
+        "--output", str(output_path),
+    ]
+    resume_bindings = (
+        resume_contract_path,
+        resume_contract_sha256,
+        resume_progress_path,
+        resume_progress_sha256,
+    )
+    if any(value is not None for value in resume_bindings):
+        if any(value is None for value in resume_bindings):
+            raise ValueError("V17 checker resume-source binding requires contract/progress paths and hashes")
+        command.extend([
+            "--v17-resume-contract", str(resume_contract_path),
+            "--v17-resume-contract-sha256", str(resume_contract_sha256),
+            "--v17-resume-progress", str(resume_progress_path),
+            "--v17-resume-progress-sha256", str(resume_progress_sha256),
+        ])
+    return command
+
+
+def _task41_p0_v17_checker_completed(watchdog: Mapping[str, Any], payload: Any) -> bool:
+    return bool(
+        watchdog.get("classification") == "COMPLETED"
+        and watchdog.get("leader_exit_code") == 0
+        and isinstance(payload, Mapping)
+        and payload.get("schema")
+        == "task41.p0.b0.v17.selected_two_cell_independent_check.v1"
+        and payload.get("check_completed") is True
+        and payload.get("data_integrity") is True
+        and payload.get("status")
+        in {"LOCAL_REPLAY_COMPLETED", "LOCAL_REPLAY_UNBOUND"}
+        and payload.get("official_result") is False
+        and payload.get("scientific_qualified") is False
+        and payload.get("full_owner_unlocked") is False
+        and payload.get("errors") == []
+    )
+
+
+def _task41_p0_v17_checker_authorization(
+    *,
+    command: Sequence[str],
+    input_paths: Sequence[Path],
+    window_sha256: str,
+    contract_sha256: str,
+    source_sha: str,
+    source_branch: str,
+    sha256_file: Callable[[Path], str],
+) -> dict[str, Any]:
+    canonical_paths = list(dict.fromkeys(path.resolve(strict=True) for path in input_paths))
+    return {
+        "schema": "task41.p0.closeout_checker_authorization.v1",
+        "phase": "closeout",
+        "purpose": "registered_read_only_required_checker",
+        "checker_kind": "task41_p0_b0_v17_selected_two_cell_checker",
+        "command_sha256": hashlib.sha256(
+            json.dumps(list(command), separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        ).hexdigest(),
+        "input_paths": [str(path) for path in canonical_paths],
+        "input_sha256s": [sha256_file(path) for path in canonical_paths],
+        "expected_channel_count": None,
+        "campaign_window_sha256": window_sha256,
+        "task41_contract_sha256": contract_sha256,
+        "source_sha": source_sha,
+        "source_branch": source_branch,
+        "source_clean": True,
+    }
+
+
+def _task41_p0_v17_readonly_producer_inputs(
+    *,
+    producer_binding: Mapping[str, Any] | None,
+    consumer_contract: Mapping[str, Any],
+    consumer_contract_sha256: str,
+    window_sha256: str,
+    repo_root: Path,
+    consumer_output_path: Path,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None, dict[str, Any] | None]:
+    """Verify an older V17 producer contract/progress/report without modifying it."""
+    if producer_binding is None:
+        return None, None, None
+
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_CONTROLLER_RELATIVE,
+        TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
+        TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE,
+        require_task41_p0_contract,
+        sha256_file,
+    )
+
+    root = Path(repo_root).resolve(strict=True)
+    results_root = (root / "results" / str(consumer_contract["case"]["model_id"])).resolve(strict=True)
+    expected_replay_parent = (
+        results_root
+        / "task41_p0_saved_diagnostics_6h"
+        / window_sha256
+        / "selected_incident_replay"
+    ).resolve(strict=True)
+    consumer_output_path = Path(consumer_output_path).resolve()
+    if (
+        not re.fullmatch(r"[0-9a-f]{64}", str(consumer_contract_sha256))
+        or consumer_contract.get("execution_scope") != TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE
+        or consumer_output_path.parent != expected_replay_parent
+        or re.fullmatch(r"attempt[0-9]{2,}", consumer_output_path.name) is None
+    ):
+        raise ValueError("V17 consumer contract or output attempt is outside its fixed scope")
+
+    def bound_path(name: str) -> Path:
+        raw = Path(str(producer_binding.get(name, "")))
+        if raw.is_symlink():
+            raise ValueError(f"V17 producer {name} cannot be a symlink")
+        path = raw.resolve(strict=True)
+        permitted_root = (
+            root / "benchmarks" / "artifacts"
+            if name == "contract_path" else results_root
+        )
+        if not path.is_relative_to(permitted_root):
+            raise ValueError(f"V17 producer {name} escaped the model results tree")
+        return path
+
+    producer_contract_path = bound_path("contract_path")
+    if (
+        producer_contract_path.relative_to(root).parent != TASK41_B0_CONTROLLER_RELATIVE
+    ):
+        raise ValueError("V17 producer contract is outside its registered controller directory")
+    producer_contract, producer_contract_sha256 = require_task41_p0_contract(
+        producer_contract_path,
+        expected_sha256=str(producer_binding["contract_sha256"]),
+        current_root=root,
+        require_clean_source=False,
+        check_current_source=False,
+        case_id="B0",
+    )
+    producer_scope = producer_contract.get("execution_scope")
+    consumer_scope = consumer_contract.get("execution_scope")
+    producer_window = producer_contract.get("window")
+    consumer_window = consumer_contract.get("window")
+    producer_window_path = Path(str(producer_window.get("path", "")))
+    if not producer_window_path.is_absolute():
+        producer_window_path = root / producer_window_path
+    if (
+        producer_scope != TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE
+        or consumer_scope != TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE
+        or producer_contract.get("case") != consumer_contract.get("case")
+        or producer_contract.get("numerical_strategy") != consumer_contract.get("numerical_strategy")
+        or producer_window.get("path") != consumer_window.get("path")
+        or producer_window.get("sha256") != window_sha256
+        or consumer_window.get("sha256") != window_sha256
+        or producer_window_path.resolve(strict=True)
+        != (root / TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE).resolve()
+        or producer_contract.get("source", {}).get("sha")
+        == consumer_contract.get("source", {}).get("sha")
+        or producer_contract_sha256 == consumer_contract_sha256
+    ):
+        raise ValueError("V17 producer and consumer must bind distinct source contracts to the same exact window/scope")
+
+    progress_path = bound_path("progress_path")
+    progress_sha256 = str(producer_binding.get("progress_sha256", ""))
+    if (
+        progress_path.name != "task41_p0_v17_progress.json"
+        or progress_path.stat().st_size > 16 * 1024**2
+        or not re.fullmatch(r"[0-9a-f]{64}", progress_sha256)
+        or sha256_file(progress_path) != progress_sha256
+    ):
+        raise ValueError("V17 producer progress path, size, or SHA-256 differs")
+    try:
+        progress_payload = json.loads(progress_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("V17 producer progress is unreadable JSON") from exc
+    producer_relative = str(producer_contract_path.relative_to(root))
+    expected_binding = {
+        "path": producer_relative,
+        "sha256": producer_contract_sha256,
+        "source_sha": producer_contract.get("source", {}).get("sha"),
+        "fixed_window_sha256": window_sha256,
+    }
+    history = progress_payload.get("consumer_execution_bindings") if isinstance(progress_payload, Mapping) else None
+    latest = (
+        progress_payload.get("latest_consumer_execution_binding")
+        if isinstance(progress_payload, Mapping)
+        else None
+    )
+    if latest is None and isinstance(history, list) and history:
+        latest = history[-1]
+    run_identity = progress_payload.get("run_identity") if isinstance(progress_payload, Mapping) else None
+    original_binding = (
+        progress_payload.get("producer_execution_binding")
+        if isinstance(progress_payload, Mapping) else None
+    )
+    if (
+        not isinstance(progress_payload, Mapping)
+        or progress_payload.get("schema") != "task41.p0.b0.v17.selected_two_cell_progress.v2"
+        or not isinstance(run_identity, Mapping)
+        or run_identity.get("fixed_window_sha256") != window_sha256
+        or not isinstance(original_binding, Mapping)
+        or original_binding.get("fixed_window_sha256") != window_sha256
+        or not isinstance(history, list)
+        or expected_binding not in history
+        or latest != expected_binding
+        or progress_path.parent.parent.resolve() != expected_replay_parent
+        or progress_path.parent == consumer_output_path
+    ):
+        raise ValueError("V17 producer progress is not bound to its exact producer contract and window")
+
+    report_path = producer_binding.get("report_path")
+    report_sha256 = producer_binding.get("report_sha256")
+    adjacent_report = progress_path.parent / "task41_p0_v17_selected_two_cell_worker.json"
+    report_payload: dict[str, Any] | None = None
+    if report_path is None:
+        if adjacent_report.exists() or adjacent_report.is_symlink():
+            raise ValueError("V17 completed producer report exists but was not explicitly hash-bound")
+    else:
+        report_path = bound_path("report_path")
+        report_sha256 = str(report_sha256 or "")
+        if (
+            report_path != adjacent_report.resolve(strict=True)
+            or report_path.stat().st_size > 16 * 1024**2
+            or not re.fullmatch(r"[0-9a-f]{64}", report_sha256)
+            or sha256_file(report_path) != report_sha256
+        ):
+            raise ValueError("V17 completed producer report path, size, or SHA-256 differs")
+        try:
+            candidate_report = json.loads(report_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError("V17 completed producer report is unreadable JSON") from exc
+        callback = progress_payload.get("selected_two_cell_candidate_callback")
+        if (
+            not isinstance(candidate_report, dict)
+            or candidate_report.get("schema") != "task41.p0.b0.v17.selected_two_cell_worker_receipt.v1"
+            or candidate_report.get("status") != "COMPLETED_LOCAL_SELECTED_TWO_CELL_REPLAY"
+            or candidate_report.get("consumer_contract_sha256") != producer_contract_sha256
+            or candidate_report.get("consumer_window_sha256") != window_sha256
+            or candidate_report.get("selected_two_cell_candidate_callback") != callback
+            or candidate_report.get("official_result") is not False
+            or candidate_report.get("scientific_qualified") is not False
+            or candidate_report.get("full_owner_unlocked") is not False
+            or not isinstance(callback, Mapping)
+            or callback.get("status") != "COMPLETED_SELECTED_TWO_CELL_CANDIDATE_AND_RHS_REPLAY"
+        ):
+            raise ValueError("V17 completed producer report does not match its hash-bound progress receipt")
+        report_payload = candidate_report
+
+    # ``bound_path`` also enforces the model-results root for the progress/report.
+    return producer_contract, dict(progress_payload), report_payload
+
+
+def _task41_p0_v17_acquire_worker_report(
+    *,
+    producer_report_path: Path | None,
+    producer_report_payload: Mapping[str, Any] | None,
+    consumer_report_path: Path,
+    run_worker: Callable[[], tuple[Mapping[str, Any], Mapping[str, Any]]],
+) -> tuple[Path, Mapping[str, Any], Mapping[str, Any] | None, bool]:
+    """Reuse a hash-verified completed producer receipt or execute the worker callback."""
+    if producer_report_payload is not None:
+        if producer_report_path is None or not producer_report_path.is_file():
+            raise ValueError("V17 producer report route lacks its verified read-only source")
+        return producer_report_path, producer_report_payload, None, True
+    watchdog, payload = run_worker()
+    if not isinstance(watchdog, Mapping) or not isinstance(payload, Mapping):
+        raise ValueError("V17 supervised worker route returned malformed report evidence")
+    return Path(consumer_report_path), payload, watchdog, False
+
+
 def _run_task41_p0_saved_output_service(
     *,
     unit: str,
@@ -9823,6 +10195,10 @@ def _run_task41_p0_saved_output_service(
     b0_v9_failed_terminal_audit_mode: bool = False,
     b0_saved_y_g_comparison_mode: bool = False,
     b0_v16_saved_vector_analysis_mode: bool = False,
+    b0_v17_selected_two_cell_mode: bool = False,
+    v17_manifest_path: Path | None = None,
+    v17_manifest_sha256: str | None = None,
+    v17_producer_binding: Mapping[str, Any] | None = None,
     v16_manifest_path: Path | None = None,
     v16_manifest_sha256: str | None = None,
     b0_v14_saved_rhs_candidate_mode: bool = False,
@@ -9914,6 +10290,75 @@ def _run_task41_p0_saved_output_service(
     sha256_file: Callable[[Path], str],
 ) -> int:
     """Use the registered Task41 service/watchdog for a saved-output continuation."""
+    v17_producer_contract: dict[str, Any] | None = None
+    v17_producer_progress: dict[str, Any] | None = None
+    v17_producer_report: dict[str, Any] | None = None
+    if b0_v17_selected_two_cell_mode:
+        _validate_task41_p0_v17_selector_scope(
+            selector=True,
+            case_id=case_id,
+            contract=contract,
+            contract_window=Path(window.path),
+            repo_root=repo_root,
+        )
+        from src.runners.task41_p0_contract import (
+            TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE,
+            TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256,
+        )
+
+        expected_manifest = (
+            repo_root / TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE
+        ).resolve()
+        expected_output_parent = (
+            repo_root
+            / "results"
+            / str(contract["case"]["model_id"])
+            / "task41_p0_saved_diagnostics_6h"
+            / str(window.sha256)
+            / "selected_incident_replay"
+        ).resolve()
+        if (
+            v17_manifest_path is None
+            or v17_manifest_sha256 != TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256
+            or v17_manifest_path.resolve() != expected_manifest
+            or run_root.resolve() != expected_manifest.parent
+            or output_root.parent.resolve() != expected_output_parent
+            or re.fullmatch(r"attempt[0-9]{2,}", output_root.name) is None
+            or output_root.exists()
+            or output_root.is_symlink()
+        ):
+            raise ValueError("Task41 V17 saved-service manifest or output path differs from its fixed binding")
+        (
+            v17_producer_contract,
+            v17_producer_progress,
+            v17_producer_report,
+        ) = _task41_p0_v17_readonly_producer_inputs(
+            producer_binding=v17_producer_binding,
+            consumer_contract=contract,
+            consumer_contract_sha256=contract_sha,
+            window_sha256=window.sha256,
+            repo_root=repo_root,
+            consumer_output_path=output_root,
+        )
+        if (
+            environment.get("TASK41_P0_V17_SELECTED_TWO_CELL_REPLAY") != "1"
+            or environment.get("TASK41_P0_CHECKER_SOURCE_SHA") != consumer_source_sha
+        ):
+            raise ValueError("Task41 V17 saved-service marker or consumer source differs")
+        if (
+            not checker_only
+            or checker_snapshot_path is not None
+            or checker_snapshot_sha256 is not None
+            or any((
+                b0_evidence_audit_mode, b0_v9_saved_star_screen_mode,
+                b0_v9_failed_terminal_audit_mode, b0_saved_y_g_comparison_mode,
+                b0_v16_saved_vector_analysis_mode, b0_v14_saved_rhs_candidate_mode,
+                b0_v8_selected_trace_star_audit_mode, b0_v8_selected_trace_star_mode,
+                b0_v8_selected_trace_star_metadata_only_mode,
+                b0_v8_selected_trace_star_candidate_replay_mode,
+            ))
+        ):
+            raise ValueError("Task41 V17 service must be the isolated selected-two-cell route")
     from benchmarks.subreaper_watchdog import PHYSICAL_MEMORY_PRESSURE_POLICY
 
     saved_route_markers = (
@@ -10374,6 +10819,12 @@ def _run_task41_p0_saved_output_service(
     y_g_shared_donor_identity: dict[str, Any] | None = None
     saved_recorded_raw_bytes: int | None = None
     v16_authorized_input_paths: list[Path] | None = None
+    v17_donor_authorized_input_paths: list[Path] | None = None
+    if b0_v17_selected_two_cell_mode:
+        if v17_manifest_path is None or v17_manifest_sha256 is None:
+            raise ValueError("V17 saved-service route lost its hash-bound V16 manifest")
+        v16_manifest_path = v17_manifest_path
+        v16_manifest_sha256 = v17_manifest_sha256
     if b0_saved_y_g_comparison_mode:
         (
             y_g_authorized_input_paths,
@@ -10383,6 +10834,54 @@ def _run_task41_p0_saved_output_service(
         ) = collect_saved_y_g_inputs()
     if b0_v16_saved_vector_analysis_mode:
         v16_authorized_input_paths, saved_recorded_raw_bytes = collect_v16_saved_vector_inputs()
+    elif b0_v17_selected_two_cell_mode:
+        v16_authorized_input_paths, saved_recorded_raw_bytes = collect_v16_saved_vector_inputs()
+        from src.runners.task41_p0_checker import (
+            TASK41_P0_B0_V3_DONOR_MANIFEST_SHA256,
+            TASK41_P0_B0_V3_VECTOR_INDEX_SHA256,
+            _task41_p0_v16_v3_donor_index,
+            _task41_p0_v16_v3_donor_source_ref,
+        )
+
+        _index, index_path, donor_root, manifest_path, vector_records = (
+            _task41_p0_v16_v3_donor_index(repo_root=repo_root, results_root=results_root)
+        )
+        if (
+            sha256_file(index_path) != TASK41_P0_B0_V3_VECTOR_INDEX_SHA256
+            or sha256_file(manifest_path) != TASK41_P0_B0_V3_DONOR_MANIFEST_SHA256
+        ):
+            raise ValueError("V17 V3 donor/index hashes differ from their frozen identities")
+        donor_manifest = read_json_object(manifest_path, "V17 V3 donor manifest")
+        donor_columns = donor_manifest.get("columns")
+        if not isinstance(donor_columns, list) or len(donor_columns) != 2:
+            raise ValueError("V17 V3 donor manifest must bind two source columns")
+        v17_donor_authorized_input_paths = [index_path, manifest_path]
+        for column_index, column_record in enumerate(donor_columns):
+            artifacts = column_record.get("artifacts") if isinstance(column_record, Mapping) else None
+            if not isinstance(artifacts, Mapping):
+                raise ValueError("V17 V3 donor column omits its artifacts")
+            for role in (
+                "active_original_rows", "known_field", "native_rhs",
+                "native_volume_rhs", "b_alpha_rows", "b_alpha_values",
+            ):
+                bound = _task41_p0_v16_v3_donor_source_ref(
+                    artifacts.get(role),
+                    vector_records=vector_records,
+                    donor_run_root=donor_root,
+                    column=column_index,
+                    role=role,
+                    label=f"V17 column {column_index} {role}",
+                )
+                raw = Path(str(bound["path"]))
+                if (
+                    raw.is_symlink()
+                    or not raw.is_file()
+                    or not raw.resolve(strict=True).is_relative_to(results_root)
+                    or raw.stat().st_size != bound["bytes"]
+                ):
+                    raise ValueError("V17 V3 source array path or byte count differs")
+                v17_donor_authorized_input_paths.append(raw.resolve(strict=True))
+        v17_donor_authorized_input_paths = list(dict.fromkeys(v17_donor_authorized_input_paths))
     elif v16_manifest_path is not None or v16_manifest_sha256 is not None:
         raise ValueError("V16 manifest bindings are only valid in the explicit V16 saved-vector route")
     if b0_v4_volume_only_mode and not b0_evidence_audit_mode:
@@ -10981,12 +11480,31 @@ def _run_task41_p0_saved_output_service(
         ):
             raise ValueError("V16 saved-vector route must use a disjoint manifest parent and new output attempt")
         output_root.mkdir(parents=True, exist_ok=False)
+    elif b0_v17_selected_two_cell_mode:
+        if (
+            checker_snapshot_path is not None
+            or checker_snapshot_sha256 is not None
+            or v16_authorized_input_paths is None
+            or v17_donor_authorized_input_paths is None
+            or v17_manifest_path is None
+            or run_root != v17_manifest_path.parent.resolve()
+            or output_root == run_root
+            or output_root.is_relative_to(run_root)
+            or run_root.is_relative_to(output_root)
+        ):
+            raise ValueError("V17 selected replay requires disjoint bound inputs and a new numbered attempt")
+        output_root.mkdir(parents=True, exist_ok=False)
     elif checker_snapshot_path is not None or checker_snapshot_sha256 is not None:
         raise ValueError("continuation service cannot accept a checker-only snapshot override")
     service_directory = output_root.with_name(output_root.name + ".service")
     service_directory.mkdir(parents=True, exist_ok=False)
     saved_diagnostics_budget: dict[str, Any] | None = None
     saved_bound_raw_paths: list[Path] = []
+    if b0_v17_selected_two_cell_mode:
+        assert v16_authorized_input_paths is not None
+        assert v17_donor_authorized_input_paths is not None
+        saved_bound_raw_paths.extend(v16_authorized_input_paths)
+        saved_bound_raw_paths.extend(v17_donor_authorized_input_paths)
 
     def stat_output_tree(path: Path) -> int:
         if not path.exists():
@@ -11080,6 +11598,7 @@ def _run_task41_p0_saved_output_service(
             TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
             TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
             TASK41_B0_V16_SAVED_VECTOR_SCOPE,
+            TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
             task41_raw_artifact_limit_bytes,
         )
 
@@ -11089,6 +11608,7 @@ def _run_task41_p0_saved_output_service(
             TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
             TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
             TASK41_B0_V16_SAVED_VECTOR_SCOPE,
+            TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
         ):
             raise ValueError("saved-diagnostics disk gate received a different execution scope")
         if saved_scope == TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE and not (
@@ -11100,12 +11620,15 @@ def _run_task41_p0_saved_output_service(
             raise ValueError("V14 initial-screen scope only admits its supervised saved-RHS candidate route")
         if saved_scope == TASK41_B0_V16_SAVED_VECTOR_SCOPE and not b0_v16_saved_vector_analysis_mode:
             raise ValueError("V16 saved-vector scope only admits its isolated distribution diagnostic")
+        if saved_scope == TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE and not b0_v17_selected_two_cell_mode:
+            raise ValueError("V17 two-cell scope only admits its isolated selected-cell replay")
         window_sha = str(contract.get("window", {}).get("sha256", ""))
         window_output_root = results_root / "task41_p0_saved_diagnostics_6h" / window_sha
         expected_name = (
             "v9_failed_terminal_audit" if b0_v9_failed_terminal_audit_mode
             else "saved_y_g_comparison" if b0_saved_y_g_comparison_mode
             else "saved_vector_distribution" if b0_v16_saved_vector_analysis_mode
+            else "selected_incident_replay" if b0_v17_selected_two_cell_mode
             else "selected_incident_replay"
             if b0_v8_selected_trace_star_metadata_only_mode
             or b0_v8_selected_trace_star_candidate_replay_mode
@@ -11203,6 +11726,8 @@ def _run_task41_p0_saved_output_service(
         "mode": (
             "saved_b0_y_g_comparison"
             if b0_saved_y_g_comparison_mode
+            else "saved_b0_v17_selected_two_cell_replay"
+            if b0_v17_selected_two_cell_mode
             else "saved_b0_v16_saved_vector_analysis"
             if b0_v16_saved_vector_analysis_mode
             else "saved_b0_v9_failed_terminal_audit"
@@ -11309,6 +11834,7 @@ def _run_task41_p0_saved_output_service(
         and not b0_v9_failed_terminal_audit_mode
         and not b0_saved_y_g_comparison_mode
         and not b0_v16_saved_vector_analysis_mode
+        and not b0_v17_selected_two_cell_mode
     ):
         record.update(
             checker_input_snapshot_path=str(checker_snapshot_path),
@@ -11321,6 +11847,19 @@ def _run_task41_p0_saved_output_service(
             checker_source_sha=environment.get("TASK41_P0_CHECKER_SOURCE_SHA"),
             v16_manifest_path=str(v16_manifest_path),
             v16_manifest_sha256=v16_manifest_sha256,
+        )
+    elif b0_v17_selected_two_cell_mode:
+        assert v17_manifest_path is not None and v17_manifest_sha256 is not None
+        record.update(
+            checker_source_sha=environment.get("TASK41_P0_CHECKER_SOURCE_SHA"),
+            v16_manifest_path=str(v17_manifest_path),
+            v16_manifest_sha256=v17_manifest_sha256,
+            selected_active_row=1_622_464,
+            selected_original_row=5_218_672,
+            selected_cells=[7873, 8014],
+            official_result=False,
+            scientific_qualified=False,
+            full_owner_unlocked=False,
         )
     elif b0_v9_saved_star_screen_mode:
         assert candidate_report_path is not None
@@ -11467,6 +12006,291 @@ def _run_task41_p0_saved_output_service(
         "campaign_accounting_path": window.accounting_path,
         "worker_environment": environment,
     }
+    if b0_v17_selected_two_cell_mode:
+        result_code = 3
+        worker_ok = False
+        checker_ok = False
+        worker_report_path = output_root / "task41_p0_v17_selected_two_cell_worker.json"
+        checker_result_path = service_directory / "task41_p0_v17_independent_check.json"
+        try:
+            from src.runners.task41_p0_checker import (
+                TASK41_P0_B0_V17_SELECTED_METADATA_RELATIVE,
+            )
+            from src.runners.task41_p0_v4_volume_only_audit import (
+                TASK41_P0_V17_FFCX_C_SOURCE_RELATIVE,
+                TASK41_P0_V17_ACTIVE_ROW,
+            )
+
+            if (
+                v17_manifest_path is None
+                or v17_manifest_sha256 is None
+                or v16_authorized_input_paths is None
+                or v17_donor_authorized_input_paths is None
+                or consumer_source_sha != environment.get("TASK41_P0_CHECKER_SOURCE_SHA")
+                or contract.get("source", {}).get("sha") != consumer_source_sha
+            ):
+                raise ValueError("V17 service source or saved input bindings are incomplete")
+            record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget_check()
+
+            def run_v17_worker() -> tuple[Mapping[str, Any], Mapping[str, Any]]:
+                v17_pre_admission_path = (
+                    service_directory / "task41_p0_v17_pre_admission.json"
+                )
+                producer_contract_path = (
+                    Path(str(v17_producer_binding["contract_path"]))
+                    if v17_producer_binding is not None else None
+                )
+                producer_progress_path = (
+                    Path(str(v17_producer_binding["progress_path"]))
+                    if v17_producer_binding is not None else None
+                )
+                producer_contract_sha256 = (
+                    str(v17_producer_binding["contract_sha256"])
+                    if v17_producer_binding is not None else None
+                )
+                producer_progress_sha256 = (
+                    str(v17_producer_binding["progress_sha256"])
+                    if v17_producer_binding is not None else None
+                )
+                v17_pre_admission = {
+                    "schema": "task41.p0.b0.v17.selected_two_cell_pre_admission.v1",
+                    "consumer_contract_sha256": contract_sha,
+                    "consumer_window_sha256": window.sha256,
+                    "v16_saved_vector_manifest_sha256": v17_manifest_sha256,
+                    "output_directory": str(output_root.resolve(strict=True)),
+                    "service_directory": str(service_directory.resolve(strict=True)),
+                    "producer_contract_path": (
+                        str(producer_contract_path) if producer_contract_path is not None else None
+                    ),
+                    "producer_contract_sha256": producer_contract_sha256,
+                    "producer_progress_path": (
+                        str(producer_progress_path) if producer_progress_path is not None else None
+                    ),
+                    "producer_progress_sha256": producer_progress_sha256,
+                    "saved_diagnostics_disk_budget": record["saved_diagnostics_disk_budget"],
+                }
+                _write_json_fsync(v17_pre_admission_path, v17_pre_admission)
+                v17_pre_admission_sha256 = sha256_file(v17_pre_admission_path)
+                record["v17_pre_admission_path"] = str(v17_pre_admission_path)
+                record["v17_pre_admission_sha256"] = v17_pre_admission_sha256
+                worker_command = _task41_p0_v17_worker_command(
+                    python=python,
+                    manifest_path=v17_manifest_path,
+                    manifest_sha256=v17_manifest_sha256,
+                    consumer_contract_path=contract_path.resolve(),
+                    consumer_contract_sha256=contract_sha,
+                    pre_admission_path=v17_pre_admission_path.resolve(strict=True),
+                    pre_admission_sha256=v17_pre_admission_sha256,
+                    output_directory=output_root,
+                    ffcx_c_source_path=(repo_root / TASK41_P0_V17_FFCX_C_SOURCE_RELATIVE).resolve(),
+                    producer_contract_path=producer_contract_path,
+                    producer_contract_sha256=producer_contract_sha256,
+                    producer_progress_path=producer_progress_path,
+                    producer_progress_sha256=producer_progress_sha256,
+                )
+                worker_watchdog = supervise(
+                    worker_command,
+                    service_directory / "v17_selected_two_cell_worker_watchdog",
+                    wall_seconds=window.cutoff_seconds,
+                    phase_path=service_directory / "v17_selected_two_cell_worker_phase.json",
+                    campaign_phase="numeric",
+                    campaign_phase_authorization=None,
+                    **common_watchdog,
+                )
+                record.update(
+                    v17_worker_command=worker_command,
+                    v17_worker_watchdog=worker_watchdog,
+                    v17_worker_report_path=str(worker_report_path),
+                )
+                worker_payload = (
+                    read_json_object(worker_report_path, "V17 worker report")
+                    if worker_report_path.is_file() else None
+                )
+                return worker_watchdog, worker_payload
+
+            producer_report_path = (
+                Path(str(v17_producer_binding["report_path"]))
+                if v17_producer_binding is not None
+                and v17_producer_binding.get("report_path") is not None
+                else None
+            )
+            worker_report_path, worker_payload, worker_watchdog, worker_reused_read_only = (
+                _task41_p0_v17_acquire_worker_report(
+                    producer_report_path=producer_report_path,
+                    producer_report_payload=v17_producer_report,
+                    consumer_report_path=worker_report_path,
+                    run_worker=run_v17_worker,
+                )
+            )
+            record.update(
+                v17_worker_route=(
+                    "READ_ONLY_COMPLETED_PRODUCER_REPORT"
+                    if worker_reused_read_only else "SUPERVISED_NEW_OR_RESUMED_WORKER"
+                ),
+                v17_worker_report_path=str(worker_report_path),
+                v17_worker_report_sha256=sha256_file(worker_report_path),
+                v17_worker_reused_read_only=worker_reused_read_only,
+            )
+            if worker_reused_read_only:
+                worker_ok = True
+                record["v17_worker_readonly_producer_binding"] = {
+                    "contract_path": str(v17_producer_binding["contract_path"]),
+                    "contract_sha256": str(v17_producer_binding["contract_sha256"]),
+                    "progress_path": str(v17_producer_binding["progress_path"]),
+                    "progress_sha256": str(v17_producer_binding["progress_sha256"]),
+                    "report_path": str(worker_report_path),
+                    "report_sha256": sha256_file(worker_report_path),
+                }
+            else:
+                worker_ok = _task41_p0_v17_worker_completed(
+                    worker_watchdog,
+                    worker_payload,
+                    contract_sha256=contract_sha,
+                    window_sha256=window.sha256,
+                )
+            if worker_ok:
+                worker_report_sha256 = sha256_file(worker_report_path)
+                checker_contract_path = (
+                    Path(str(v17_producer_binding["contract_path"]))
+                    if worker_reused_read_only and v17_producer_binding is not None
+                    else contract_path.resolve(strict=True)
+                )
+                checker_contract_sha256 = (
+                    str(v17_producer_binding["contract_sha256"])
+                    if worker_reused_read_only and v17_producer_binding is not None
+                    else contract_sha
+                )
+                checker_progress_path = (
+                    Path(str(v17_producer_binding["progress_path"]))
+                    if worker_reused_read_only and v17_producer_binding is not None
+                    else output_root / "task41_p0_v17_progress.json"
+                )
+                checker_progress_sha256 = sha256_file(checker_progress_path)
+                checker_authorized_inputs = list(dict.fromkeys([
+                    contract_path.resolve(strict=True),
+                    checker_contract_path.resolve(strict=True),
+                    v17_manifest_path.resolve(strict=True),
+                    (repo_root / TASK41_P0_B0_V17_SELECTED_METADATA_RELATIVE).resolve(strict=True),
+                    Path(window.path).resolve(strict=True),
+                    *v16_authorized_input_paths,
+                    *v17_donor_authorized_input_paths,
+                    worker_report_path.resolve(strict=True),
+                    checker_progress_path.resolve(strict=True),
+                    *(
+                        [
+                            Path(str(v17_producer_binding["contract_path"])).resolve(strict=True),
+                            Path(str(v17_producer_binding["progress_path"])).resolve(strict=True),
+                        ]
+                        if v17_producer_binding is not None and not worker_reused_read_only
+                        else []
+                    ),
+                ]))
+                checker_command = _task41_p0_v17_checker_command(
+                    python=python,
+                    worker_report_path=worker_report_path,
+                    worker_report_sha256=worker_report_sha256,
+                    manifest_path=v17_manifest_path,
+                    manifest_sha256=v17_manifest_sha256,
+                    contract_path=contract_path.resolve(strict=True),
+                    contract_sha256=contract_sha,
+                    producer_contract_path=checker_contract_path.resolve(strict=True),
+                    producer_contract_sha256=checker_contract_sha256,
+                    progress_path=checker_progress_path.resolve(strict=True),
+                    progress_sha256=checker_progress_sha256,
+                    resume_contract_path=(
+                        Path(str(v17_producer_binding["contract_path"])).resolve(strict=True)
+                        if v17_producer_binding is not None and not worker_reused_read_only
+                        else None
+                    ),
+                    resume_contract_sha256=(
+                        str(v17_producer_binding["contract_sha256"])
+                        if v17_producer_binding is not None and not worker_reused_read_only
+                        else None
+                    ),
+                    resume_progress_path=(
+                        Path(str(v17_producer_binding["progress_path"])).resolve(strict=True)
+                        if v17_producer_binding is not None and not worker_reused_read_only
+                        else None
+                    ),
+                    resume_progress_sha256=(
+                        str(v17_producer_binding["progress_sha256"])
+                        if v17_producer_binding is not None and not worker_reused_read_only
+                        else None
+                    ),
+                    output_path=checker_result_path,
+                )
+                checker_authorization = _task41_p0_v17_checker_authorization(
+                    command=checker_command,
+                    input_paths=checker_authorized_inputs,
+                    window_sha256=window.sha256,
+                    contract_sha256=contract_sha,
+                    source_sha=consumer_source_sha,
+                    source_branch=contract["branch"],
+                    sha256_file=sha256_file,
+                )
+                record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget_check()
+                checker_watchdog = supervise(
+                    checker_command,
+                    service_directory / "v17_selected_two_cell_checker_watchdog",
+                    wall_seconds=window.closeout_seconds,
+                    phase_path=service_directory / "v17_selected_two_cell_checker_phase.json",
+                    campaign_phase="closeout",
+                    campaign_phase_authorization=checker_authorization,
+                    **common_watchdog,
+                )
+                checker_payload = (
+                    read_json_object(checker_result_path, "V17 independent check")
+                    if checker_result_path.is_file() else None
+                )
+                checker_ok = _task41_p0_v17_checker_completed(
+                    checker_watchdog, checker_payload
+                )
+                record.update(
+                    v17_checker_command=checker_command,
+                    v17_checker_authorization=checker_authorization,
+                    v17_checker_watchdog=checker_watchdog,
+                    v17_checker_result_path=str(checker_result_path),
+                    v17_checker_result_sha256=(
+                        sha256_file(checker_result_path) if checker_result_path.is_file() else None
+                    ),
+                    v17_independent_check_status=(
+                        checker_payload.get("status") if isinstance(checker_payload, Mapping) else None
+                    ),
+                )
+            result_code = 0 if worker_ok and checker_ok else 3
+            record.update(
+                v17_worker_completed=worker_ok,
+                v17_independent_check_completed=checker_ok,
+                required_checker_status="audit_completed" if checker_ok else "failed",
+                official_result=False,
+                scientific_qualified=False,
+                full_owner_unlocked=False,
+                selected_active_row=TASK41_P0_V17_ACTIVE_ROW,
+                selected_original_row=5_218_672,
+                selected_cells=[7873, 8014],
+                result_classification=(
+                    "V17_SELECTED_TWO_CELL_DIAGNOSTIC_COMPLETED"
+                    if result_code == 0
+                    else "V17_SELECTED_TWO_CELL_DIAGNOSTIC_INCOMPLETE"
+                ),
+            )
+        except Exception as exc:
+            record["workflow_error"] = {"type": type(exc).__name__, "message": str(exc)}
+            result_code = 3
+        finally:
+            try:
+                record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget_check(final=True)
+            except Exception as exc:
+                record["finalization_error"] = {"type": type(exc).__name__, "message": str(exc)}
+                record["result_classification"] = "V17_SELECTED_TWO_CELL_DIAGNOSTIC_INCOMPLETE"
+                result_code = 3
+            record["status"] = "completed" if result_code == 0 else "failed_raw_evidence_retained"
+            record["official_result"] = False
+            record["scientific_qualified"] = False
+            record["full_owner_unlocked"] = False
+            record["receipt_path"] = str(receipt_path)
+            _write_json_fsync(receipt_path, record)
+        return result_code
     if b0_v14_saved_rhs_candidate_mode:
         result_code = 3
         candidate_worker_attempted = False
@@ -14786,6 +15610,7 @@ def _run_task41_p0_service(
     contract_path: Path,
     repo_root: Path,
     v15_full_acceptance_selector: bool = False,
+    v17_selected_two_cell_selector: bool = False,
 ) -> int:
     """Run one registered Task41 P0 case through the existing worker/watchdog path."""
     service_start_sample = clock_sample(include_boot_id=True)
@@ -14878,6 +15703,11 @@ def _run_task41_p0_service(
     b0_v16_saved_vector_analysis_mode = bool(
         case_args and case_args[0] == "--task41-p0-saved-b0-v16-vector-analysis"
     )
+    b0_v17_selected_two_cell_mode = bool(v17_selected_two_cell_selector)
+    if b0_v17_selected_two_cell_mode != (
+        os.environ.get("TASK41_P0_V17_SELECTED_TWO_CELL_REPLAY") == "1"
+    ):
+        raise ValueError("Task41 V17 Python selector and wrapper authorization marker differ")
     v16_manifest_path: Path | None = None
     v16_manifest_sha256: str | None = None
     b0_v4_geometry_pair_mode = False
@@ -14915,9 +15745,13 @@ def _run_task41_p0_service(
         or b0_v9_failed_terminal_audit_mode
         or b0_saved_y_g_comparison_mode
         or b0_v16_saved_vector_analysis_mode
+        or b0_v17_selected_two_cell_mode
     )
     continuation_run_root: Path | None = None
     continuation_output_root: Path | None = None
+    v17_manifest_path: Path | None = None
+    v17_manifest_sha256: str | None = None
+    v17_producer_binding: dict[str, Any] | None = None
     checker_input_path: Path | None = None
     checker_input_sha256: str | None = None
     donor_contract_path: Path | None = None
@@ -14982,6 +15816,17 @@ def _run_task41_p0_service(
     v14_prior_decimal_report_sha256: str | None = None
     v14_prior_service_receipt_path: Path | None = None
     v14_prior_service_receipt_sha256: str | None = None
+    if b0_v17_selected_two_cell_mode:
+        (
+            v17_manifest_path,
+            v17_manifest_sha256,
+            continuation_output_root,
+            v17_producer_binding,
+        ) = _parse_task41_p0_v17_service_args(
+            case_args,
+            repo_root=repo_root,
+        )
+        continuation_run_root = v17_manifest_path.parent.resolve()
     if b0_v9_saved_star_screen_mode:
         if (
             len(case_args) != 11
@@ -15435,6 +16280,13 @@ def _run_task41_p0_service(
             "internal_rhs_strategy": "same_lu_rhs_solve",
         }
     )
+    is_v17_selected_two_cell_replay = _validate_task41_p0_v17_selector_scope(
+        selector=v17_selected_two_cell_selector,
+        case_id=case_id,
+        contract=contract,
+        contract_window=contract_window,
+        repo_root=repo_root,
+    )
     if b0_v16_saved_vector_analysis_mode != is_v16_saved_vector_analysis:
         raise ValueError(
             "Task41 V16 saved-vector analysis requires both its exact fixed contract and explicit service route"
@@ -15444,6 +16296,7 @@ def _run_task41_p0_service(
         b0_v9_failed_terminal_audit_mode
         or b0_saved_y_g_comparison_mode
         or b0_v16_saved_vector_analysis_mode
+        or is_v17_selected_two_cell_replay
         or b0_v14_saved_rhs_candidate_mode
         or v15_full_acceptance_selector
         or b0_v8_selected_trace_star_metadata_only_mode
@@ -15509,7 +16362,12 @@ def _run_task41_p0_service(
         continuation_branch = subprocess.check_output(
             ["git", "branch", "--show-current"], cwd=repo_root, text=True
         ).strip()
-        if b0_evidence_audit_mode or b0_saved_y_g_comparison_mode or b0_v16_saved_vector_analysis_mode:
+        if (
+            b0_evidence_audit_mode
+            or b0_saved_y_g_comparison_mode
+            or b0_v16_saved_vector_analysis_mode
+            or b0_v17_selected_two_cell_mode
+        ):
             if (
                 continuation_branch != contract["branch"]
                 or checker_source_sha != contract["source"]["sha"]
@@ -16134,6 +16992,20 @@ def _run_task41_p0_service(
     else:
         environment.pop("TASK41_P0_V15_FULL_ACCEPTANCE", None)
         environment.pop("TASK41_P0_V15_OUTPUT_DIRECTORY", None)
+    if b0_v17_selected_two_cell_mode:
+        assert v17_manifest_path is not None and v17_manifest_sha256 is not None
+        assert continuation_output_root is not None
+        environment.update(
+            {
+                "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
+                "TASK41_P0_V17_SELECTED_TWO_CELL_REPLAY": "1",
+                "TASK41_P0_CONSUMER_SOURCE_SHA": str(continuation_source_sha),
+                "TASK41_P0_CHECKER_SOURCE_SHA": str(checker_source_sha),
+                "TASK41_P0_V17_V16_MANIFEST_PATH": str(v17_manifest_path),
+                "TASK41_P0_V17_V16_MANIFEST_SHA256": v17_manifest_sha256,
+                "TASK41_P0_V17_OUTPUT_DIRECTORY": str(continuation_output_root),
+            }
+        )
     if continuation_mode:
         environment.update({
             "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
@@ -16330,6 +17202,7 @@ def _run_task41_p0_service(
                 or b0_v9_failed_terminal_audit_mode
                 or b0_saved_y_g_comparison_mode
                 or b0_v16_saved_vector_analysis_mode
+                or b0_v17_selected_two_cell_mode
             ),
             checker_snapshot_path=checker_input_path,
             checker_snapshot_sha256=checker_input_sha256,
@@ -16338,6 +17211,10 @@ def _run_task41_p0_service(
             b0_v9_failed_terminal_audit_mode=b0_v9_failed_terminal_audit_mode,
             b0_saved_y_g_comparison_mode=b0_saved_y_g_comparison_mode,
             b0_v16_saved_vector_analysis_mode=b0_v16_saved_vector_analysis_mode,
+            b0_v17_selected_two_cell_mode=b0_v17_selected_two_cell_mode,
+            v17_manifest_path=v17_manifest_path,
+            v17_manifest_sha256=v17_manifest_sha256,
+            v17_producer_binding=v17_producer_binding,
             v16_manifest_path=v16_manifest_path,
             v16_manifest_sha256=v16_manifest_sha256,
             b0_v14_saved_rhs_candidate_mode=b0_v14_saved_rhs_candidate_mode,
@@ -16757,6 +17634,157 @@ def _run_task41_p0_service(
     return int(return_code)
 
 
+def _validate_task41_p0_v17_selector_scope(
+    *,
+    selector: bool,
+    case_id: str,
+    contract: Mapping[str, Any],
+    contract_window: Path,
+    repo_root: Path,
+) -> bool:
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
+        TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE,
+    )
+
+    window_path = Path(contract_window)
+    if not window_path.is_absolute():
+        window_path = Path(repo_root) / window_path
+    expected_strategy = {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v2",
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+        "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        "refinement_max_steps": 2,
+    }
+    exact_v17_scope = bool(
+        case_id == "B0"
+        and contract.get("execution_scope") == TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE
+        and window_path.resolve()
+        == (Path(repo_root) / TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE).resolve()
+        and contract.get("numerical_strategy") == expected_strategy
+    )
+    if selector != exact_v17_scope:
+        raise ValueError(
+            "Task41 V17 selected two-cell replay requires its exact contract and explicit service selector"
+        )
+    return exact_v17_scope
+
+
+def _parse_task41_p0_v17_service_args(
+    case_args: list[str], *, repo_root: Path
+) -> tuple[Path, str, Path, dict[str, Any] | None]:
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE,
+        TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256,
+    )
+
+    base = [
+        None,
+        "--v16-manifest",
+        None,
+        "--v16-manifest-sha256",
+        None,
+        "--output-dir",
+        None,
+    ]
+    if len(case_args) not in {len(base), len(base) + 8, len(base) + 12} or any(
+        wanted is not None and got != wanted
+        for got, wanted in zip(case_args[:len(base)], base, strict=True)
+    ) or case_args[0].startswith("-"):
+        raise ValueError(
+            "Task41 V17 service requires the contracted DAT, V16 manifest/hash, and output directory"
+        )
+    manifest_path = Path(case_args[2])
+    if not manifest_path.is_absolute():
+        manifest_path = repo_root / manifest_path
+    manifest_path = manifest_path.resolve()
+    expected_manifest = (repo_root / TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE).resolve()
+    manifest_sha256 = case_args[4]
+    if (
+        manifest_path != expected_manifest
+        or manifest_sha256 != TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256
+    ):
+        raise ValueError("Task41 V17 service V16 manifest path or SHA-256 differs from its frozen source")
+    output_directory = Path(case_args[6])
+    if not output_directory.is_absolute():
+        output_directory = repo_root / output_directory
+    producer: dict[str, Any] | None = None
+    suffix = case_args[len(base):]
+    if suffix:
+        expected_producer = [
+            "--v17-producer-contract", None,
+            "--v17-producer-contract-sha256", None,
+            "--v17-producer-progress", None,
+            "--v17-producer-progress-sha256", None,
+        ]
+        if len(suffix) not in {8, 12} or any(
+            wanted is not None and got != wanted
+            for got, wanted in zip(suffix[:8], expected_producer, strict=True)
+        ):
+            raise ValueError("Task41 V17 producer reuse requires its exact contract/progress bindings")
+        producer_contract_raw = Path(suffix[1])
+        producer_progress_raw = Path(suffix[5])
+        if producer_contract_raw.is_symlink() or producer_progress_raw.is_symlink():
+            raise ValueError("Task41 V17 producer contract/progress cannot be symlinks")
+        producer_contract_path = producer_contract_raw
+        producer_progress_path = producer_progress_raw
+        if not producer_contract_path.is_absolute():
+            producer_contract_path = repo_root / producer_contract_path
+        if not producer_progress_path.is_absolute():
+            producer_progress_path = repo_root / producer_progress_path
+        producer_contract_path = producer_contract_path.resolve(strict=True)
+        producer_progress_path = producer_progress_path.resolve(strict=True)
+        producer_contract_sha256 = suffix[3]
+        producer_progress_sha256 = suffix[7]
+        if (
+            not re.fullmatch(r"[0-9a-f]{64}", producer_contract_sha256)
+            or not re.fullmatch(r"[0-9a-f]{64}", producer_progress_sha256)
+            or producer_progress_path.name != "task41_p0_v17_progress.json"
+            or producer_progress_path.is_symlink()
+        ):
+            raise ValueError("Task41 V17 producer contract/progress hash or path is malformed")
+        producer = {
+            "contract_path": producer_contract_path,
+            "contract_sha256": producer_contract_sha256,
+            "progress_path": producer_progress_path,
+            "progress_sha256": producer_progress_sha256,
+            "report_path": None,
+            "report_sha256": None,
+        }
+        if len(suffix) == 12:
+            if (
+                suffix[8] != "--v17-producer-report"
+                or suffix[10] != "--v17-producer-report-sha256"
+            ):
+                raise ValueError("Task41 V17 completed producer report suffix differs")
+            report_raw = Path(suffix[9])
+            if report_raw.is_symlink():
+                raise ValueError("Task41 V17 completed producer report cannot be a symlink")
+            report_path = report_raw
+            if not report_path.is_absolute():
+                report_path = repo_root / report_path
+            report_path = report_path.resolve(strict=True)
+            report_sha256 = suffix[11]
+            if (
+                report_path != producer_progress_path.parent / "task41_p0_v17_selected_two_cell_worker.json"
+                or not re.fullmatch(r"[0-9a-f]{64}", report_sha256)
+                or report_path.is_symlink()
+            ):
+                raise ValueError("Task41 V17 completed producer report path/hash differs")
+            producer["report_path"] = report_path
+            producer["report_sha256"] = report_sha256
+    return manifest_path, manifest_sha256, output_directory.resolve(), producer
+
+
+def _extract_task41_p0_v17_selector(case_args: list[str]) -> tuple[list[str], bool]:
+    token = "--task41-p0-b0-v17-selected-two-cell-replay"
+    count = case_args.count(token)
+    if count > 1:
+        raise ValueError("Task41 V17 selected-two-cell selector may appear only once")
+    return [item for item in case_args if item != token], count == 1
+
+
 def run_service(
     *,
     unit: str,
@@ -16768,11 +17796,16 @@ def run_service(
 ) -> int:
     if case_args and case_args[0] == "--":
         case_args = case_args[1:]
+    case_args, v17_selected_two_cell_selector = _extract_task41_p0_v17_selector(
+        case_args
+    )
     v15_selector_token = "--task41-p0-b0-v15-full-acceptance"
     v15_selector_count = case_args.count(v15_selector_token)
     if v15_selector_count > 1:
         raise ValueError("Task41 V15 full-acceptance selector may appear only once")
     v15_full_acceptance_selector = v15_selector_count == 1
+    if v15_full_acceptance_selector and v17_selected_two_cell_selector:
+        raise ValueError("Task41 V15 and V17 selectors are mutually exclusive")
     if v15_full_acceptance_selector:
         saved_routes = {
             "--task41-p0-saved-output-continuation",
@@ -16802,9 +17835,12 @@ def run_service(
             contract_path=task41_contract_path,
             repo_root=repo_root,
             v15_full_acceptance_selector=v15_full_acceptance_selector,
+            v17_selected_two_cell_selector=v17_selected_two_cell_selector,
         )
     if v15_full_acceptance_selector:
         raise ValueError("Task41 V15 full-acceptance selector requires its Task41 P0 execution contract")
+    if v17_selected_two_cell_selector:
+        raise ValueError("Task41 V17 selected-two-cell selector requires its Task41 P0 execution contract")
     case_args, v29_contract_path = _extract_v29_path_arg(
         case_args, "--task40-v29-execution-contract"
     )

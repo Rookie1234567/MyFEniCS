@@ -272,6 +272,7 @@ def _validate_campaign_closeout_authorization(
         'task41_p0_b0_v9_saved_star_screen_checker',
         'task41_p0_b0_v9_failed_terminal_audit_checker',
         'task41_p0_b0_saved_y_g_comparison_checker',
+        'task41_p0_b0_v17_selected_two_cell_checker',
         'task41_p0_b0_v15_terminal_checker',
         'task41_p0_v11_selected_cell_saved_array_checker',
         'task41_p0_v13_saved_adjoint_diagnostic_independent_check',
@@ -330,6 +331,130 @@ def _validate_campaign_closeout_authorization(
                 product = run_root / 'task41_p0_b0_v15_terminal_sufficient_checkpoint.json'
             if product.is_file():
                 input_paths.append(str(product))
+        elif checker_kind == 'task41_p0_b0_v17_selected_two_cell_checker':
+            from src.runners.task41_p0_contract import (
+                TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
+                TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE,
+                TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE,
+                TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256,
+                task41_case_id_for_run_id,
+            )
+
+            case = contract.get('case')
+            scope = contract.get('execution_scope')
+            window = contract.get('window')
+            if (
+                len(argv) != 18
+                or Path(argv[0]).resolve() != expected_python
+                or argv[1:4] != [
+                    '-m', 'src.runners.task41_p0_checker',
+                    '--v17-selected-two-cell-check',
+                ]
+                or argv[4::2] != [
+                    '--v17-report', '--v17-report-sha256', '--manifest',
+                    '--manifest-sha256', '--contract', '--contract-sha256', '--output',
+                ]
+                or authorization.get('expected_channel_count') is not None
+                or not continuation
+                or environment.get('TASK41_P0_V17_SELECTED_TWO_CELL_REPLAY') != '1'
+                or environment.get('TASK41_P0_B0_V16_SAVED_VECTOR_ANALYSIS') is not None
+                or environment.get('TASK41_P0_B0_SAVED_Y_G_COMPARISON') is not None
+                or environment.get('TASK41_P0_V9_FAILED_TERMINAL_AUDIT') is not None
+                or environment.get('TASK41_P0_SAVED_B0_EVIDENCE_AUDIT') is not None
+                or environment.get('TASK41_P0_B0_V9_SAVED_STAR_SCREEN') is not None
+                or environment.get('TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY') is not None
+                or not isinstance(case, dict)
+                or case.get('model_id') != 'task41extra_phi90_p50x50_g17x20'
+                or task41_case_id_for_run_id(str(case.get('run_id', ''))) != 'B0'
+                or scope != TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE
+                or not isinstance(window, dict)
+                or window.get('path') != TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE.as_posix()
+                or window.get('sha256') != window_sha
+                or contract.get('numerical_strategy', {}).get('internal_rhs_strategy')
+                != 'same_lu_rhs_solve'
+                or contract.get('source', {}).get('sha') != authorization.get('source_sha')
+                or environment.get('TASK41_P0_CONSUMER_SOURCE_SHA')
+                != authorization.get('source_sha')
+                or environment.get('TASK41_P0_CHECKER_SOURCE_SHA')
+                != authorization.get('source_sha')
+                or authorization.get('source_sha') != contract.get('source', {}).get('sha')
+                or authorization.get('source_branch') != contract.get('branch')
+                or Path(argv[13]).resolve() != contract_file
+                or argv[15] != contract_sha
+                or Path(argv[13]).resolve()
+                != Path(environment.get('TASK41_P0_CONTRACT_PATH', '')).resolve()
+                or argv[15] != environment.get('TASK41_P0_CONTRACT_SHA256')
+                or Path(argv[9]).resolve()
+                != (root / TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE).resolve()
+                or argv[11] != TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256
+                or Path(argv[9]).resolve()
+                != Path(environment.get('TASK41_P0_V17_V16_MANIFEST_PATH', '')).resolve()
+                or argv[11] != environment.get('TASK41_P0_V17_V16_MANIFEST_SHA256')
+                or Path(argv[5]).resolve()
+                != (
+                    Path(environment.get('TASK41_P0_V17_OUTPUT_DIRECTORY', ''))
+                    / 'task41_p0_v17_selected_two_cell_worker.json'
+                ).resolve()
+            ):
+                raise ValueError('V17 closeout checker is not bound to its exact B0 contract, report, and V16 manifest')
+
+            report_path = Path(argv[5]).resolve(strict=True)
+            manifest_path = Path(argv[9]).resolve(strict=True)
+            output_path = Path(argv[17]).resolve()
+            results_root = (root / 'results' / str(case['model_id'])).resolve()
+            expected_parent = report_path.parent.with_name(report_path.parent.name + '.service')
+            expected_window_root = (
+                results_root / 'task41_p0_saved_diagnostics_6h'
+                / str(window['sha256']) / 'selected_incident_replay'
+            ).resolve()
+            raw_paths = authorization.get('input_paths')
+            raw_hashes = authorization.get('input_sha256s')
+            if (
+                not report_path.is_relative_to(expected_window_root)
+                or not report_path.is_relative_to(results_root)
+                or report_path.name != 'task41_p0_v17_selected_two_cell_worker.json'
+                or re.fullmatch(r'attempt[0-9]{2,}', report_path.parent.name) is None
+                or manifest_path
+                != (root / TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE).resolve()
+                or output_path.parent != expected_parent
+                or output_path.name != 'task41_p0_v17_independent_check.json'
+                or output_path.exists()
+                or not output_path.is_relative_to(expected_window_root)
+                or not isinstance(raw_paths, list)
+                or not isinstance(raw_hashes, list)
+                or len(raw_paths) != len(raw_hashes)
+                or len(set(raw_paths)) != len(raw_paths)
+                or not all(isinstance(value, str) for value in raw_paths)
+                or not all(re.fullmatch(r'[0-9a-f]{64}', str(value)) for value in raw_hashes)
+            ):
+                raise ValueError('V17 checker input authorization or output path is malformed')
+            for raw_path in raw_paths:
+                path = Path(raw_path)
+                if (
+                    not path.is_absolute()
+                    or path.resolve(strict=True) != path
+                    or not path.is_file()
+                    or not path.is_relative_to(root)
+                ):
+                    raise ValueError('V17 checker authorized input escaped the registered repository')
+            authorized_hashes = dict(zip(raw_paths, raw_hashes, strict=True))
+            required_inputs = (contract_file, campaign.path, manifest_path, report_path)
+            for path in required_inputs:
+                canonical = str(path.resolve(strict=True))
+                if (
+                    canonical not in authorized_hashes
+                    or not path.is_file()
+                    or not path.is_relative_to(root)
+                ):
+                    raise ValueError('V17 checker omitted a required hash-bound input')
+            if (
+                authorized_hashes[str(contract_file)] != contract_sha
+                or authorized_hashes[str(campaign.path.resolve(strict=True))] != window_sha
+                or authorized_hashes[str(manifest_path)] != argv[11]
+                or authorized_hashes[str(report_path)] != argv[7]
+            ):
+                raise ValueError('V17 checker manifest/report hashes differ from its authorization')
+            input_paths = raw_paths
         elif checker_kind in {
             'task41_p0_b0_v9_failed_terminal_audit_checker',
             'task41_p0_b0_saved_y_g_comparison_checker',

@@ -1663,6 +1663,7 @@ def build_selected_volume_trace_star_metadata(
     selected_active_row: int,
     expected_active_original_rows: np.ndarray,
     witness_cell_indices: Iterable[int] = (),
+    selected_cell_indices: Iterable[int] | None = None,
     progress_callback: Callable[[Mapping[str, Any]], Any] | None = None,
     incidence_callback: Callable[[Mapping[str, Any]], Any] | None = None,
 ) -> dict[str, Any]:
@@ -1800,9 +1801,31 @@ def build_selected_volume_trace_star_metadata(
     witness_indices = frozenset(int(value) for value in witness_cell_indices)
     if any(value < 0 or value >= owned_cells for value in witness_indices):
         raise IndexError("selected trace-star witness cell lies outside the owned cell range")
+    if selected_cell_indices is None:
+        requested_cells = None
+        cell_iteration: Iterable[int] = range(owned_cells)
+    else:
+        raw_requested = tuple(selected_cell_indices)
+        if (
+            not raw_requested
+            or any(isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, np.integer))
+                   for value in raw_requested)
+        ):
+            raise ValueError("selected_cell_indices must be a nonempty integer sequence")
+        requested_cells = tuple(int(value) for value in raw_requested)
+        if len(set(requested_cells)) != len(requested_cells):
+            raise ValueError("selected_cell_indices cannot contain duplicates")
+        if any(value < 0 or value >= owned_cells for value in requested_cells):
+            raise IndexError("selected_cell_indices contains an unowned cell")
+        if witness_indices:
+            raise ValueError("selected_cell_indices and witness_cell_indices are mutually exclusive")
+        # The global trace map above is still required to verify the saved
+        # active-row numbering, but the expensive incidence search is skipped:
+        # only the contract-listed cells are inspected below.
+        cell_iteration = requested_cells
     incidents: list[dict[str, Any]] = []
     witnesses: dict[int, dict[str, Any]] = {}
-    for cell_index in range(owned_cells):
+    for cell_index in cell_iteration:
         local_dofs = np.asarray(dofmap.cell_dofs(cell_index), dtype=np.int32)
         original_rows = np.asarray(
             index_map.local_to_global(local_dofs), dtype=np.int64
@@ -1837,6 +1860,10 @@ def build_selected_volume_trace_star_metadata(
                 }
             )
         is_witness = cell_index in witness_indices
+        if support is None and requested_cells is not None:
+            raise ValueError(
+                f"contract-listed cell {cell_index} does not contain the selected active row"
+            )
         if support is None and not is_witness:
             continue
         local_trace_rows, coefficients = (
@@ -1892,7 +1919,7 @@ def build_selected_volume_trace_star_metadata(
         raise ValueError(
             f"active trace row {selected_active_row} has no incident cell in the fresh p6/MPC map"
         )
-    return {
+    result = {
         "trace_constraints": constraints,
         "active_original_rows": fresh_active,
         "selected_active_row": selected_active_row,
@@ -1908,6 +1935,9 @@ def build_selected_volume_trace_star_metadata(
         "incidents": incidents,
         "witness_cells": witnesses,
     }
+    if requested_cells is not None:
+        result["selected_cell_indices"] = list(requested_cells)
+    return result
 
 
 def _collective_preallocation_error(

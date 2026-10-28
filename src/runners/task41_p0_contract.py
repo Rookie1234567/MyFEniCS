@@ -370,6 +370,50 @@ TASK41_B0_V16_SAVED_VECTOR_SCOPE = {
     "official_result": False,
 }
 
+TASK41_B0_V17_SELECTED_TWO_CELL_INSTANCE = "v17_selected_two_cell_replay_6h"
+TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE / "execution_window_v17_selected_two_cell_replay_6h.json"
+)
+TASK41_B0_V17_SELECTED_TWO_CELL_AUTH_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE / "saved_diagnostics_v17_selected_two_cell_replay_authorization.json"
+)
+TASK41_B0_V17_SELECTED_TWO_CELL_ACCOUNTING_RELATIVE = (
+    TASK41_B0_CONTROLLER_RELATIVE / "campaign_accounting_v17_selected_two_cell_replay_6h.jsonl"
+)
+TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE = Path(
+    "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/"
+    "3d22e02f713c4a68c79759b2c5cb7cbcec693b7b3277ad98b529838008e38beb/"
+    "saved_vector_distribution/attempt05.service/task41_p0_v16_metadata_bound_manifest.json"
+)
+TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256 = (
+    "3fae0774772550faf173444e9c5aedd608212b430957ae591ffdb31daabeb215"
+)
+TASK41_B0_V17_SELECTED_TWO_CELL_NEW_EVIDENCE_BYTES = 128 * 1024**2
+TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE = {
+    "kind": "saved_diagnostics_v17_selected_two_cell_replay_only",
+    "actions": ["selected_incident_replay", "signed_two_cell_identity_diagnostic"],
+    "selected_active_row": 1_622_464,
+    "selected_original_row": 5_218_672,
+    "incident_cells": [7873, 8014],
+    "columns": [0, 1],
+    "max_new_incident_cells": 2,
+    "max_ffcx_reference_cells": 0,
+    "max_candidate_builds": 2,
+    "max_candidate_lu_factorizations": 2,
+    "max_matrix_rhs_getrs": 6,
+    "internal_rhs_count": 4,
+    "internal_rhs_refinement": "same_lu_binary64_products_real_imag_fsum",
+    "internal_rhs_refinement_max_steps": 2,
+    "internal_rhs_getrs_max_total": 12,
+    "new_evidence_limit_bytes": TASK41_B0_V17_SELECTED_TWO_CELL_NEW_EVIDENCE_BYTES,
+    "cumulative_raw_artifact_limit_bytes": 16 * 1024**3,
+    "free_space_floor_bytes": 2 * 1024**3,
+    "full_owner": False,
+    "carrier_replay": False,
+    "full_q_scan": False,
+    "official_result": False,
+}
+
 TASK41_COMPARISON_GROUP = "task41extra_phi90_p50x50_g17x20_g13_a1a2"
 TASK41_TOTAL_SECONDS = 172_800.0
 TASK41_NUMERICAL_SECONDS = 171_600.0
@@ -462,7 +506,63 @@ def _task41_saved_diagnostics_instance(instance: str | None = None) -> dict[str,
             "total_seconds": 21_600.0,
             "numerical_seconds": 20_400.0,
         }
+    if instance == TASK41_B0_V17_SELECTED_TWO_CELL_INSTANCE:
+        return {
+            "instance": instance,
+            "window_relative": TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE,
+            "authorization_relative": TASK41_B0_V17_SELECTED_TWO_CELL_AUTH_RELATIVE,
+            "accounting_relative": TASK41_B0_V17_SELECTED_TWO_CELL_ACCOUNTING_RELATIVE,
+            "scope": TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
+            "authorization": "user_explicit_v17_selected_two_cell_replay_6h",
+            "prior_window_relative": TASK41_B0_V16_SAVED_VECTOR_WINDOW_RELATIVE,
+            "prior_ledger_relative": TASK41_B0_V16_SAVED_VECTOR_ACCOUNTING_RELATIVE,
+            "t0_basis": "user_approved_v17_selected_two_cell_replay_6h",
+            "requires_preexisting_user_authorization": True,
+            "total_seconds": 21_600.0,
+            "numerical_seconds": 20_400.0,
+        }
     raise Task41ContractError(f"unknown saved-diagnostics instance: {instance!r}")
+
+
+def _task41_p0_service_command(
+    *,
+    case_input: str,
+    contract_path: str,
+    saved_diagnostics_enabled: bool,
+    saved_diagnostics_instance: str | None,
+    v17_output_directory: str | None = None,
+) -> list[str] | None:
+    if not saved_diagnostics_enabled and saved_diagnostics_instance is not None:
+        raise Task41ContractError("named saved-diagnostics command requires its named instance mode")
+    if saved_diagnostics_enabled and saved_diagnostics_instance not in {
+        TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE,
+        TASK41_B0_V17_SELECTED_TWO_CELL_INSTANCE,
+    }:
+        return None
+    command = [
+        "bash",
+        "scripts/run_case_in_user_service.sh",
+        case_input,
+        "--task41-p0-execution-contract",
+        contract_path,
+    ]
+    if saved_diagnostics_instance == TASK41_B0_V17_SELECTED_TWO_CELL_INSTANCE:
+        if v17_output_directory is None:
+            raise Task41ContractError("V17 service command requires its numbered output directory")
+        command.extend(
+            [
+                "--task41-p0-b0-v17-selected-two-cell-replay",
+                "--v16-manifest",
+                str(TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE),
+                "--v16-manifest-sha256",
+                TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256,
+                "--output-dir",
+                v17_output_directory,
+            ]
+        )
+    elif saved_diagnostics_instance == TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE:
+        command.append("--task41-p0-b0-v15-full-acceptance")
+    return command
 
 
 def _task41_saved_diagnostics_instance_for_path(
@@ -475,6 +575,7 @@ def _task41_saved_diagnostics_instance_for_path(
         TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE,
         TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE,
         TASK41_B0_V16_SAVED_VECTOR_INSTANCE,
+        TASK41_B0_V17_SELECTED_TWO_CELL_INSTANCE,
     ):
         config = _task41_saved_diagnostics_instance(instance)
         if resolved == (root / config["window_relative"]).resolve():
@@ -1348,6 +1449,7 @@ def contract_relative_path(
         TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE: f"_{TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE}",
         TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE: f"_{TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE}",
         TASK41_B0_V16_SAVED_VECTOR_INSTANCE: f"_{TASK41_B0_V16_SAVED_VECTOR_INSTANCE}",
+        TASK41_B0_V17_SELECTED_TWO_CELL_INSTANCE: f"_{TASK41_B0_V17_SELECTED_TWO_CELL_INSTANCE}",
     }
     if saved_diagnostics_instance not in suffix_by_instance:
         raise Task41ContractError("unknown saved-diagnostics contract filename instance")
@@ -1467,7 +1569,7 @@ def require_task41_p0_contract(
             raise Task41ContractError("Task41 contract is outside a registered P0 controller directory")
     case_spec = _task41_case(case_id)
     if relative.parent != case_spec["controller_relative"] or not re.fullmatch(
-        r"execution_contract_source_[0-9a-f]{40}(?:_v12_two_cell_candidate_replay|_v14_same_lu_rhs_candidate_6h|_v15_full_two_column_acceptance_36h|_v16_saved_vector_distribution_6h)?\.json",
+        r"execution_contract_source_[0-9a-f]{40}(?:_v12_two_cell_candidate_replay|_v14_same_lu_rhs_candidate_6h|_v15_full_two_column_acceptance_36h|_v16_saved_vector_distribution_6h|_v17_selected_two_cell_replay_6h)?\.json",
         relative.name,
     ):
         raise Task41ContractError("Task41 contract is not in the registered P0 controller directory")
@@ -1595,6 +1697,11 @@ def require_task41_p0_contract(
         and saved_diagnostics_config["instance"]
         == TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE
     )
+    is_v17_selected_two_cell_contract = bool(
+        is_saved_diagnostics_contract
+        and saved_diagnostics_config["instance"]
+        == TASK41_B0_V17_SELECTED_TWO_CELL_INSTANCE
+    )
     expected_same_lu_strategy = {
         "schema": "task41.p0.b0.internal_rhs_strategy.v1",
         "internal_rhs_strategy": TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
@@ -1614,10 +1721,10 @@ def require_task41_p0_contract(
             window_path=contract_window_path, window_sha256=window["sha256"],
             retry_binding=contract["full_owner_retry_authorization"],
         )
-    if is_v15_full_acceptance_contract:
+    if is_v15_full_acceptance_contract or is_v17_selected_two_cell_contract:
         if numerical_strategy != expected_v14_refined_strategy:
             raise Task41ContractError(
-                "Task41 V15 full acceptance requires the exact same-LU binary64/fsum refinement-v2 strategy"
+                "Task41 V15/V17 scope requires the exact same-LU binary64/fsum refinement-v2 strategy"
             )
     elif is_v14_rhs_candidate_contract:
         if numerical_strategy not in (
@@ -2417,6 +2524,10 @@ def task41_raw_artifact_limit_bytes(contract: Mapping[str, Any]) -> int:
     execution_scope = contract.get("execution_scope")
     if execution_scope == TASK41_B0_V16_SAVED_VECTOR_SCOPE:
         expected["new_evidence_limit_bytes"] = TASK41_B0_V16_SAVED_VECTOR_NEW_EVIDENCE_BYTES
+    elif execution_scope == TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE:
+        expected["new_evidence_limit_bytes"] = (
+            TASK41_B0_V17_SELECTED_TWO_CELL_NEW_EVIDENCE_BYTES
+        )
     elif execution_scope in (
         TASK41_B0_SAVED_DIAGNOSTICS_SCOPE,
         TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE,
@@ -2561,6 +2672,8 @@ def prepare_task41_p0(
                     if saved_diagnostics_instance == TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE
                     else "V16 saved-vector diagnostics"
                     if saved_diagnostics_instance == TASK41_B0_V16_SAVED_VECTOR_INSTANCE
+                    else "V17 selected two-cell replay"
+                    if saved_diagnostics_instance == TASK41_B0_V17_SELECTED_TWO_CELL_INSTANCE
                     else "V14 saved-candidate"
                 )
                 raise Task41ContractError(
@@ -3045,6 +3158,7 @@ def prepare_task41_p0(
             in {
                 TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE,
                 TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE,
+                TASK41_B0_V17_SELECTED_TWO_CELL_INSTANCE,
             }
         ):
             contract["numerical_strategy"].update(
@@ -3113,18 +3227,20 @@ def prepare_task41_p0(
         "same_discrete_comparison_ready": (
             comparison["same_discrete_comparison_ready"] if comparison is not None else None
         ),
-        "service_command": (
-            None
-            if saved_diagnostics_enabled and saved_diagnostics_instance != TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE
-            else [
-                "bash",
-                "scripts/run_case_in_user_service.sh",
-                str(case_spec["input_relative"]),
-                "--task41-p0-execution-contract",
-                str(contract_path.relative_to(root)),
-                *(["--task41-p0-b0-v15-full-acceptance"]
-                  if saved_diagnostics_instance == TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE else []),
-            ]
+        "service_command": _task41_p0_service_command(
+            case_input=str(case_spec["input_relative"]),
+            contract_path=str(contract_path.relative_to(root)),
+            saved_diagnostics_enabled=saved_diagnostics_enabled,
+            saved_diagnostics_instance=saved_diagnostics_instance,
+            v17_output_directory=(
+                str(
+                    root / "results" / TASK41_MODEL_ID
+                    / "task41_p0_saved_diagnostics_6h" / window_sha
+                    / "selected_incident_replay" / "attempt01"
+                )
+                if saved_diagnostics_instance == TASK41_B0_V17_SELECTED_TWO_CELL_INSTANCE
+                else None
+            ),
         ),
         "saved_diagnostics_output_root": (
             str(
@@ -3417,6 +3533,7 @@ def main(argv: list[str] | None = None) -> int:
             TASK41_B0_V14_SAVED_RHS_CANDIDATE_INSTANCE,
             TASK41_B0_V15_FULL_ACCEPTANCE_INSTANCE,
             TASK41_B0_V16_SAVED_VECTOR_INSTANCE,
+            TASK41_B0_V17_SELECTED_TWO_CELL_INSTANCE,
         ),
     )
     parser.add_argument("--case", choices=("A1", "A2", "B0"), default="A1")

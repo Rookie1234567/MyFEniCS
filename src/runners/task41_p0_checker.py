@@ -117,6 +117,22 @@ TASK41_P0_B0_V16_TRACE_ROWS = 5_688_000
 TASK41_P0_B0_V16_STAR_ROWS = (87_567, 4_766_937)
 TASK41_P0_B0_V16_MAX_PROBE_ROW = 1_622_464
 TASK41_P0_B0_V16_GROUP_LIMIT = 4096
+TASK41_P0_B0_V17_SELECTED_ROW = 1_622_464
+TASK41_P0_B0_V17_SELECTED_ORIGINAL_ROW = 5_218_672
+TASK41_P0_B0_V17_SELECTED_CELLS = (7873, 8014)
+TASK41_P0_B0_V17_NEW_NPY_EVIDENCE_LIMIT_BYTES = 128 * 1024**2
+TASK41_P0_B0_V17_SELECTED_METADATA_RELATIVE = Path(
+    "docs/task41extra_phi90_p50x50_g17x20/outcomes/v16_closeout/"
+    "max_row_probe_metadata.json"
+)
+TASK41_P0_B0_V17_SELECTED_METADATA_SHA256 = (
+    "35720a498334c463f660f9179315eb20d5dbed5d6111fcf7201f7de0c9344665"
+)
+TASK41_P0_B0_V17_SELECTED_COORDINATE_SHA256 = {
+    7873: "de118e5efd5a260cd4f362a9acb5c9444531371d7bbc7da3d9f9b8a4eecf5378",
+    8014: "ff063f2c63bd6c7e3255827d9be399920bdaf1a5c6e9b2780c27784730f749ab",
+}
+TASK41_P0_B0_V17_SELECTED_LOCAL_POSITION = {7873: 376, 8014: 76}
 TASK41_P0_B0_V16_V15_CHECKER_REPORT_RELATIVE = Path(
     "benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/"
     "p0_b0/service_source_3b8e7f5327ce1905deae658bd0bbb0fa94dba5ad/"
@@ -138,6 +154,1332 @@ TASK41_P0_B0_V14_WINDOW_SHA256 = (
 TASK41_P0_B0_V16_V11_REPLAY_SHA256 = (
     "2463e322ea72160bfcca7f3345d149ab20e5b017982f1f9ed55010df0afa9876"
 )
+
+
+def _task41_p0_b0_v17_normalize_selected_metadata(
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Validate the V16 metadata used by V17 without trusting sorted key lists.
+
+    Geometry order is recovered only from the producer's ordered
+    ``coordinate_hex`` field.  ``actual_keys`` is intentionally never read:
+    its historical sorted order is not the cell geometry permutation.
+    """
+
+    def exact_int(value: Any, expected: int, label: str) -> None:
+        if type(value) is not int or value != expected:
+            raise ValueError(f"V17 selected metadata {label} differs")
+
+    if (
+        not isinstance(payload, Mapping)
+        or payload.get("schema") != "task41.p0.b0.v16.max_row_probe_metadata.v1"
+        or payload.get("metadata_only_no_fe_operator_or_factor") is not True
+    ):
+        raise ValueError("V17 selected metadata schema or numerical-work declaration differs")
+    exact_int(payload.get("row"), TASK41_P0_B0_V17_SELECTED_ROW, "active row")
+    exact_int(
+        payload.get("original_row"),
+        TASK41_P0_B0_V17_SELECTED_ORIGINAL_ROW,
+        "original row",
+    )
+    raw_cells = payload.get("incident_cells")
+    if not isinstance(raw_cells, list) or len(raw_cells) != len(
+        TASK41_P0_B0_V17_SELECTED_CELLS
+    ):
+        raise ValueError("V17 selected metadata incident-cell coverage differs")
+    normalized: list[dict[str, Any]] = []
+    for record, expected_cell in zip(
+        raw_cells, TASK41_P0_B0_V17_SELECTED_CELLS, strict=True
+    ):
+        if not isinstance(record, Mapping):
+            raise ValueError("V17 selected metadata cell record is malformed")
+        cell_id = record.get("cell_id")
+        exact_int(cell_id, expected_cell, "incident-cell order")
+        exact_int(record.get("cell_tag"), 1, f"cell {cell_id} tag")
+        exact_int(record.get("cell_permutation"), 0, f"cell {cell_id} permutation")
+        exact_int(
+            record.get("local_position"),
+            TASK41_P0_B0_V17_SELECTED_LOCAL_POSITION[expected_cell],
+            f"cell {cell_id} local position",
+        )
+        expected_coordinate_sha = TASK41_P0_B0_V17_SELECTED_COORDINATE_SHA256[
+            expected_cell
+        ]
+        if record.get("actual_coordinate_sha256") != expected_coordinate_sha:
+            raise ValueError(f"V17 selected cell {cell_id} coordinate SHA-256 differs")
+        raw_hex = record.get("coordinate_hex")
+        if (
+            not isinstance(raw_hex, list)
+            or len(raw_hex) != 8
+            or any(not isinstance(row, list) or len(row) != 3 for row in raw_hex)
+            or any(not isinstance(value, str) for row in raw_hex for value in row)
+        ):
+            raise ValueError(f"V17 selected cell {cell_id} ordered coordinate_hex is malformed")
+        try:
+            coordinates = np.asarray(
+                [[float.fromhex(value) for value in row] for row in raw_hex],
+                dtype="<f8",
+            )
+        except (OverflowError, ValueError) as exc:
+            raise ValueError(
+                f"V17 selected cell {cell_id} ordered coordinate_hex is invalid"
+            ) from exc
+        stored_coordinates = np.asarray(record.get("coordinates"), dtype="<f8")
+        if (
+            coordinates.shape != (8, 3)
+            or not np.isfinite(coordinates).all()
+            or stored_coordinates.shape != (8, 3)
+            or not np.array_equal(coordinates, stored_coordinates)
+        ):
+            raise ValueError(
+                f"V17 selected cell {cell_id} ordered coordinates disagree with coordinate_hex"
+            )
+        coordinate_sha = hashlib.sha256(
+            memoryview(np.ascontiguousarray(coordinates, dtype="<f8")).cast("B")
+        ).hexdigest()
+        if coordinate_sha != expected_coordinate_sha:
+            raise ValueError(f"V17 selected cell {cell_id} ordered-coordinate hash differs")
+        active_ids_raw = record.get("active_ids")
+        if (
+            not isinstance(active_ids_raw, list)
+            or len(active_ids_raw) != 432
+            or any(type(value) is not int for value in active_ids_raw)
+            or active_ids_raw.count(TASK41_P0_B0_V17_SELECTED_ROW) != 1
+        ):
+            raise ValueError(f"V17 selected cell {cell_id} active-id map is incomplete")
+        expected_trace = [{
+            "active_id": TASK41_P0_B0_V17_SELECTED_ROW,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 1.0,
+            "local_dof_position": TASK41_P0_B0_V17_SELECTED_LOCAL_POSITION[
+                expected_cell
+            ],
+            "local_trace_position": TASK41_P0_B0_V17_SELECTED_LOCAL_POSITION[
+                expected_cell
+            ],
+        }]
+        if record.get("trace_E") != expected_trace:
+            raise ValueError(f"V17 selected cell {cell_id} direct trace map differs")
+        if record.get("projection_coefficients") != [{"real": 1.0, "imag": 0.0}]:
+            raise ValueError(f"V17 selected cell {cell_id} projection coefficient differs")
+        normalized.append({
+            "cell_id": expected_cell,
+            "cell_tag": 1,
+            "cell_permutation": 0,
+            "local_position": TASK41_P0_B0_V17_SELECTED_LOCAL_POSITION[expected_cell],
+            "actual_coordinate_sha256": expected_coordinate_sha,
+            "coordinates": coordinates,
+            "coordinate_hex": [list(row) for row in raw_hex],
+            "active_ids": np.asarray(active_ids_raw, dtype=np.int64),
+            "trace_E": expected_trace,
+        })
+    return {
+        "schema": "task41.p0.b0.v17.selected_cell_metadata.v1",
+        "selected_active_row": TASK41_P0_B0_V17_SELECTED_ROW,
+        "selected_original_row": TASK41_P0_B0_V17_SELECTED_ORIGINAL_ROW,
+        "incident_cell_order": list(TASK41_P0_B0_V17_SELECTED_CELLS),
+        "source_metadata_sha256": TASK41_P0_B0_V17_SELECTED_METADATA_SHA256,
+        "cells": normalized,
+    }
+
+
+def load_task41_p0_b0_v17_selected_cell_metadata(
+    *, repo_root: str | Path | None = None,
+    metadata_path: str | Path | None = None,
+    expected_sha256: str = TASK41_P0_B0_V17_SELECTED_METADATA_SHA256,
+) -> dict[str, Any]:
+    """Load the exact tracked V16 max-row metadata for a V17 two-cell replay."""
+
+    root = Path(repo_root or Path(__file__).resolve().parents[2]).resolve(strict=True)
+    expected_path = (root / TASK41_P0_B0_V17_SELECTED_METADATA_RELATIVE).resolve(
+        strict=True
+    )
+    if metadata_path is None:
+        path = expected_path
+    else:
+        supplied_path = Path(metadata_path)
+        path = supplied_path.resolve(strict=True)
+        if supplied_path.is_symlink():
+            raise ValueError("V17 selected metadata path cannot be a symlink")
+    if path != expected_path:
+        raise ValueError("V17 selected metadata path differs from its tracked V16 source")
+    raw = path.read_bytes()
+    if (
+        len(raw) > 64 * 1024
+        or not re.fullmatch(r"[0-9a-f]{64}", expected_sha256)
+        or hashlib.sha256(raw).hexdigest() != expected_sha256
+        or expected_sha256 != TASK41_P0_B0_V17_SELECTED_METADATA_SHA256
+    ):
+        raise ValueError("V17 selected metadata size or SHA-256 differs")
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError("V17 selected metadata JSON is invalid") from exc
+    return _task41_p0_b0_v17_normalize_selected_metadata(payload)
+
+
+def _task41_p0_b0_v17_pair(value: Any, *, extended: bool) -> list[float] | list[str]:
+    scalar = np.clongdouble(value) if extended else np.complex128(value)
+    if extended:
+        return [
+            np.format_float_scientific(np.longdouble(scalar.real), precision=20, unique=False),
+            np.format_float_scientific(np.longdouble(scalar.imag), precision=20, unique=False),
+        ]
+    return [float(scalar.real), float(scalar.imag)]
+
+
+def _task41_p0_b0_v17_compensated_residual(
+    K: np.ndarray, rhs: np.ndarray, solved: np.ndarray
+) -> np.ndarray:
+    """Independently reproduce binary64 products with real/imaginary fsum."""
+    matrix = np.asarray(K, dtype=np.complex128)
+    b = np.asarray(rhs, dtype=np.complex128)
+    z = np.asarray(solved, dtype=np.complex128)
+    if (
+        matrix.ndim != 2
+        or matrix.shape[0] != matrix.shape[1]
+        or b.shape != (matrix.shape[0],)
+        or z.shape != b.shape
+        or not np.isfinite(matrix).all()
+        or not np.isfinite(b).all()
+        or not np.isfinite(z).all()
+    ):
+        raise ValueError("V17 compensated residual inputs have invalid layout or values")
+    dimension = b.size
+    result = np.empty(dimension, dtype=np.complex128)
+    real_terms = np.empty(2 * dimension + 1, dtype=np.float64)
+    imag_terms = np.empty(2 * dimension + 1, dtype=np.float64)
+    for row in range(dimension):
+        real_terms[0] = float(b[row].real)
+        imag_terms[0] = float(b[row].imag)
+        np.multiply(matrix.real[row], z.real, out=real_terms[1::2])
+        np.negative(real_terms[1::2], out=real_terms[1::2])
+        np.multiply(matrix.imag[row], z.imag, out=real_terms[2::2])
+        np.multiply(matrix.real[row], z.imag, out=imag_terms[1::2])
+        np.negative(imag_terms[1::2], out=imag_terms[1::2])
+        np.multiply(matrix.imag[row], z.real, out=imag_terms[2::2])
+        result[row] = complex(fsum(real_terms), fsum(imag_terms))
+    if not np.isfinite(result).all():
+        raise ValueError("V17 independently recomputed residual is non-finite")
+    return result
+
+
+def _task41_p0_b0_v17_unpair(value: Sequence[Any]) -> np.clongdouble:
+    if len(value) != 2:
+        raise ValueError("V17 complex pair must contain real and imaginary parts")
+    return np.clongdouble(str(value[0])) + np.clongdouble(1j) * np.clongdouble(str(value[1]))
+
+
+def _task41_p0_b0_v17_accumulate_native_then_cells(
+    native_rhs: complex, ordered_cell_terms: Sequence[complex]
+) -> complex:
+    """Mirror production's b_t-first, ordered-cell complex128 accumulation."""
+    total = complex(native_rhs)
+    for term in ordered_cell_terms:
+        total += complex(term)
+    return total
+
+
+def task41_p0_b0_v17_signed_cell_identity(
+    *,
+    K: np.ndarray,
+    G: np.ndarray,
+    J: np.ndarray,
+    L: np.ndarray,
+    R: np.ndarray,
+    T: np.ndarray,
+    S: np.ndarray,
+    q: np.ndarray,
+    u_i: np.ndarray,
+    t_c: np.ndarray,
+    b_i: np.ndarray,
+    z_c: np.ndarray,
+) -> dict[str, Any]:
+    """Evaluate local signed terms in binary64 and widened arithmetic.
+
+    Global row terms deliberately do not belong here.  They are subtracted
+    once by :func:`task41_p0_b0_v17_signed_two_cell_identity` after local
+    terms from both selected cells have been accumulated.
+    """
+    raw_arrays = {
+        name: np.asarray(value, dtype=np.complex128)
+        for name, value in {
+            "K": K, "G": G, "J": J, "L": L, "R": R, "T": T,
+            "S": S, "q": q, "u_i": u_i, "t_c": t_c, "b_i": b_i,
+            "z_c": z_c,
+        }.items()
+    }
+    if any(not np.isfinite(value).all() for value in raw_arrays.values()):
+        raise ValueError("V17 local identity inputs contain non-finite values")
+    K64, G64, J64, L64, R64, T64, S64 = (
+        raw_arrays[name] for name in ("K", "G", "J", "L", "R", "T", "S")
+    )
+    q64, ui64, tc64, bi64, zc64 = (
+        raw_arrays[name] for name in ("q", "u_i", "t_c", "b_i", "z_c")
+    )
+    if K64.ndim != 2 or K64.shape[0] != K64.shape[1]:
+        raise ValueError("V17 local K must be square")
+    ni = K64.shape[0]
+    nt = G64.shape[1] if G64.ndim == 2 else -1
+    if (
+        G64.ndim != 2
+        or G64.shape[0] != ni
+        or J64.shape != (nt, ni)
+        or L64.shape != (nt, nt)
+        or R64.shape != (ni, nt)
+        or T64.shape != (nt, ni)
+        or S64.shape != (nt, nt)
+        or q64.shape != (nt,)
+        or tc64.shape != (nt,)
+        or any(value.shape != (ni,) for value in (ui64, bi64, zc64))
+    ):
+        raise ValueError("V17 local matrices and vectors have inconsistent I/T layouts")
+    wide_finfo = np.finfo(np.longdouble)
+    if wide_finfo.nmant <= np.finfo(np.float64).nmant:
+        raise RuntimeError("V17 checker requires a wider long-double significand")
+
+    def evaluate(dtype: Any) -> dict[str, Any]:
+        a = {name: value.astype(dtype) for name, value in raw_arrays.items()}
+        k, g, j, ell, rmat, tmat, smat = (
+            a[name] for name in ("K", "G", "J", "L", "R", "T", "S")
+        )
+        qv, uiv, tcv, biv, zcv = (
+            a[name] for name in ("q", "u_i", "t_c", "b_i", "z_c")
+        )
+        w = rmat @ tcv + zcv - uiv
+        residual = biv - k @ zcv
+        e_r = k @ rmat + g
+        c_s = smat - (ell + j @ rmat)
+        delta_i = k @ uiv + g @ tcv - biv
+        local_delta_t = np.vdot(qv, j @ uiv + ell @ tcv)
+        lambda0 = -(tmat.conj().T @ qv)
+        e_lambda = j.conj().T @ qv - k.conj().T @ lambda0
+        q_c_s_t = np.vdot(qv, c_s @ tcv)
+        lambda_e_r_t = np.vdot(lambda0, e_r @ tcv)
+        minus_lambda_delta_i = -np.vdot(lambda0, delta_i)
+        minus_lambda_residual = -np.vdot(lambda0, residual)
+        e_lambda_w = np.vdot(e_lambda, w)
+        direct_q_j_w = np.vdot(qv, j @ w)
+        expanded_q_j_w = (
+            lambda_e_r_t + minus_lambda_delta_i + minus_lambda_residual + e_lambda_w
+        )
+        return {
+            "local_delta_t": local_delta_t,
+            "q_H_C_S_t": q_c_s_t,
+            "lambda0_H_E_R_t": lambda_e_r_t,
+            "minus_lambda0_H_delta_i": minus_lambda_delta_i,
+            "minus_lambda0_H_r": minus_lambda_residual,
+            "e_lambda_H_w": e_lambda_w,
+            "direct_q_H_J_w": direct_q_j_w,
+            "expanded_q_H_J_w": expanded_q_j_w,
+            "adjoint_identity_difference": direct_q_j_w - expanded_q_j_w,
+            "residual_norm2": np.sqrt(np.vdot(residual, residual).real),
+            "t_is_elementwise_zero": bool(np.all(tcv == 0)),
+            "lambda0_norm2": np.sqrt(np.vdot(lambda0, lambda0).real),
+            "e_lambda_norm2": np.sqrt(np.vdot(e_lambda, e_lambda).real),
+        }
+
+    binary = evaluate(np.complex128)
+    widened = evaluate(np.clongdouble)
+    return {
+        "schema": "task41.p0.b0.v17.signed_cell_identity.v2",
+        "status": "DIAGNOSTIC_ONLY",
+        "binary64_evaluation_terms": {
+            key: _task41_p0_b0_v17_pair(value, extended=False)
+            for key, value in binary.items()
+            if key not in {"t_is_elementwise_zero"}
+        },
+        "widened_evaluation_terms": {
+            key: _task41_p0_b0_v17_pair(value, extended=True)
+            for key, value in widened.items()
+            if key not in {"t_is_elementwise_zero"}
+        },
+        "t_is_elementwise_zero": binary["t_is_elementwise_zero"],
+        "independent_evaluation": {
+            "dtype": "numpy.clongdouble",
+            "real_mantissa_bits": int(wide_finfo.nmant + 1),
+            "binary64_mantissa_bits": int(np.finfo(np.float64).nmant + 1),
+            "wider_than_binary64": True,
+            "binary64_identity_is_not_stored_value_proof": True,
+        },
+    }
+
+
+def task41_p0_b0_v17_signed_two_cell_identity(
+    *,
+    cells: Sequence[Mapping[str, Any]],
+    b_t_volume: complex,
+    b_t_full: complex,
+    b_alpha_t: complex,
+    observed_d: complex,
+) -> dict[str, Any]:
+    """Accumulate local cell terms and apply each global scalar exactly once."""
+    if len(cells) != len(TASK41_P0_B0_V17_SELECTED_CELLS):
+        raise ValueError("V17 global identity requires exactly the two selected cells")
+    expected = list(TASK41_P0_B0_V17_SELECTED_CELLS)
+    cell_ids = [cell.get("cell_id") for cell in cells]
+    if cell_ids != expected:
+        raise ValueError("V17 global identity cell order or coverage differs")
+    for scalar in (b_t_volume, b_t_full, b_alpha_t, observed_d):
+        if not np.isfinite(complex(scalar)):
+            raise ValueError("V17 global-row scalar inputs contain non-finite values")
+    keys = (
+        "local_delta_t", "q_H_C_S_t", "lambda0_H_E_R_t",
+        "minus_lambda0_H_delta_i", "minus_lambda0_H_r", "e_lambda_H_w",
+        "direct_q_H_J_w", "expanded_q_H_J_w",
+    )
+    terms: dict[str, np.clongdouble] = {}
+    for key in keys:
+        terms[key] = sum(
+            (
+                _task41_p0_b0_v17_unpair(
+                    cell["widened_evaluation_terms"][key]
+                )
+                for cell in cells
+            ),
+            np.clongdouble(0),
+        )
+    b_volume = np.clongdouble(b_t_volume)
+    b_full = np.clongdouble(b_t_full)
+    b_alpha = np.clongdouble(b_alpha_t)
+    saved_d = np.clongdouble(observed_d)
+    delta_t = terms["local_delta_t"] - b_volume
+    epsilon_t = b_full - b_volume - b_alpha
+    direct_d = (
+        delta_t - epsilon_t + terms["q_H_C_S_t"] + terms["direct_q_H_J_w"]
+    )
+    expanded_d = (
+        delta_t - epsilon_t + terms["q_H_C_S_t"] + terms["expanded_q_H_J_w"]
+    )
+    return {
+        "schema": "task41.p0.b0.v17.signed_two_cell_identity.v1",
+        "status": "DIAGNOSTIC_ONLY",
+        "cell_order": expected,
+        "global_terms_subtracted_once": True,
+        "widened_evaluation_terms": {
+            "sum_local_q_H_Ju_plus_Lt": _task41_p0_b0_v17_pair(
+                terms["local_delta_t"], extended=True
+            ),
+            "b_t_volume": _task41_p0_b0_v17_pair(b_volume, extended=True),
+            "delta_t": _task41_p0_b0_v17_pair(delta_t, extended=True),
+            "epsilon_t": _task41_p0_b0_v17_pair(epsilon_t, extended=True),
+            "sum_q_H_C_S_t": _task41_p0_b0_v17_pair(
+                terms["q_H_C_S_t"], extended=True
+            ),
+            "sum_lambda0_H_E_R_t": _task41_p0_b0_v17_pair(
+                terms["lambda0_H_E_R_t"], extended=True
+            ),
+            "sum_minus_lambda0_H_delta_i": _task41_p0_b0_v17_pair(
+                terms["minus_lambda0_H_delta_i"], extended=True
+            ),
+            "sum_minus_lambda0_H_r": _task41_p0_b0_v17_pair(
+                terms["minus_lambda0_H_r"], extended=True
+            ),
+            "sum_e_lambda_H_w": _task41_p0_b0_v17_pair(
+                terms["e_lambda_H_w"], extended=True
+            ),
+            "sum_direct_q_H_J_w": _task41_p0_b0_v17_pair(
+                terms["direct_q_H_J_w"], extended=True
+            ),
+            "sum_expanded_q_H_J_w": _task41_p0_b0_v17_pair(
+                terms["expanded_q_H_J_w"], extended=True
+            ),
+            "adjoint_identity_difference": _task41_p0_b0_v17_pair(
+                terms["direct_q_H_J_w"] - terms["expanded_q_H_J_w"],
+                extended=True,
+            ),
+            "direct_d_without_evaluation_remainder": _task41_p0_b0_v17_pair(
+                direct_d, extended=True
+            ),
+            "expanded_d_without_evaluation_remainder": _task41_p0_b0_v17_pair(
+                expanded_d, extended=True
+            ),
+            "saved_observed_d": _task41_p0_b0_v17_pair(saved_d, extended=True),
+            "saved_d_minus_direct_evaluation_remainder": _task41_p0_b0_v17_pair(
+                saved_d - direct_d, extended=True
+            ),
+            "saved_d_minus_expanded_evaluation_remainder": _task41_p0_b0_v17_pair(
+                saved_d - expanded_d, extended=True
+            ),
+        },
+        "global_scalar_inputs": {
+            "b_t_volume": _task41_p0_b0_v17_pair(b_volume, extended=True),
+            "b_t_full": _task41_p0_b0_v17_pair(b_full, extended=True),
+            "b_alpha_t": _task41_p0_b0_v17_pair(b_alpha, extended=True),
+        },
+        "per_cell_t_is_elementwise_zero": {
+            str(cell["cell_id"]): bool(cell["t_is_elementwise_zero"])
+            for cell in cells
+        },
+        "evaluation_remainder_is_not_assigned_to_stored_terms": True,
+    }
+
+
+def _task41_p0_v17_json_sha256(value: Mapping[str, Any]) -> str:
+    payload = json.dumps(
+        value, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _task41_p0_v17_array_sha256(value: np.ndarray) -> str:
+    array = np.ascontiguousarray(np.asarray(value))
+    return hashlib.sha256(memoryview(array).cast("B")).hexdigest()
+
+
+def check_task41_p0_b0_v17_selected_two_cell_report(
+    *,
+    report_path: str | Path,
+    report_sha256: str,
+    manifest_path: str | Path,
+    manifest_sha256: str,
+    contract_path: str | Path,
+    contract_sha256: str,
+    producer_contract_path: str | Path,
+    producer_contract_sha256: str,
+    progress_path: str | Path,
+    progress_sha256: str,
+    output_path: str | Path,
+    resume_contract_path: str | Path | None = None,
+    resume_contract_sha256: str | None = None,
+    resume_progress_path: str | Path | None = None,
+    resume_progress_sha256: str | None = None,
+    repo_root: str | Path | None = None,
+) -> dict[str, Any]:
+    """Independently reopen and recompute the saved V17 two-cell diagnostic."""
+    from scipy import sparse
+
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
+        TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE,
+        TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE,
+        TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256,
+        load_task41_p0_fixed_window,
+        require_task41_p0_contract,
+        sha256_file,
+        task41_raw_artifact_limit_bytes,
+    )
+
+    root = Path(repo_root or Path(__file__).resolve().parents[2]).resolve(strict=True)
+    result_path = Path(report_path)
+    if result_path.is_symlink():
+        raise ValueError("V17 worker report cannot be a symlink")
+    result_path = result_path.resolve(strict=True)
+    if (
+        not result_path.is_file()
+        or result_path.stat().st_size > 16 * 1024**2
+        or not re.fullmatch(r"[0-9a-f]{64}", str(report_sha256))
+        or sha256_file(result_path) != report_sha256
+    ):
+        raise ValueError("V17 worker report path, size, or SHA-256 differs")
+    contract, contract_digest = require_task41_p0_contract(
+        contract_path,
+        expected_sha256=contract_sha256,
+        current_root=root,
+        case_id="B0",
+        check_current_source=True,
+        require_clean_source=True,
+    )
+    contract_window = Path(str(contract.get("window", {}).get("path", "")))
+    if not contract_window.is_absolute():
+        contract_window = root / contract_window
+    if (
+        contract.get("execution_scope") != TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE
+        or contract_window.resolve()
+        != (root / TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE).resolve()
+        or task41_raw_artifact_limit_bytes(contract) != 16 * 1024**3
+    ):
+        raise ValueError("V17 independent checker requires the exact two-cell consumer scope/window")
+    fixed_window = load_task41_p0_fixed_window(contract, current_root=root)
+    if fixed_window.sha256 != contract.get("window", {}).get("sha256"):
+        raise ValueError("V17 independent checker fixed-window identity differs")
+
+    results_root = (root / "results" / str(contract["case"]["model_id"])).resolve(strict=True)
+    producer_raw = Path(producer_contract_path)
+    if producer_raw.is_symlink():
+        raise ValueError("V17 report producer contract cannot be a symlink")
+    producer_contract, producer_digest = require_task41_p0_contract(
+        producer_raw,
+        expected_sha256=producer_contract_sha256,
+        current_root=root,
+        case_id="B0",
+        check_current_source=False,
+        require_clean_source=False,
+    )
+    producer_window_path = Path(str(producer_contract.get("window", {}).get("path", "")))
+    if not producer_window_path.is_absolute():
+        producer_window_path = root / producer_window_path
+    if (
+        producer_contract.get("execution_scope") != TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE
+        or producer_contract.get("case") != contract.get("case")
+        or producer_contract.get("numerical_strategy") != contract.get("numerical_strategy")
+        or producer_window_path.resolve() != contract_window.resolve()
+        or producer_contract.get("window", {}).get("sha256") != fixed_window.sha256
+    ):
+        raise ValueError("V17 report producer and current consumer do not share the exact scope/window")
+
+    raw_progress = Path(progress_path)
+    if raw_progress.is_symlink():
+        raise ValueError("V17 report progress cannot be a symlink")
+    progress_file = raw_progress.resolve(strict=True)
+    if (
+        not progress_file.is_file()
+        or not progress_file.is_relative_to(results_root)
+        or progress_file.parent != result_path.parent
+        or progress_file.name != "task41_p0_v17_progress.json"
+        or progress_file.stat().st_size > 16 * 1024**2
+        or not re.fullmatch(r"[0-9a-f]{64}", str(progress_sha256))
+        or sha256_file(progress_file) != progress_sha256
+    ):
+        raise ValueError("V17 report progress path, size, or SHA-256 differs")
+    try:
+        progress_payload = json.loads(progress_file.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("V17 report progress is unreadable JSON") from exc
+    producer_binding = {
+        "path": str(producer_raw.resolve(strict=True).relative_to(root)),
+        "sha256": producer_digest,
+        "source_sha": producer_contract.get("source", {}).get("sha"),
+        "fixed_window_sha256": fixed_window.sha256,
+    }
+    if (
+        not isinstance(progress_payload, Mapping)
+        or progress_payload.get("schema") != "task41.p0.b0.v17.selected_two_cell_progress.v2"
+        or not isinstance(progress_payload.get("run_identity"), Mapping)
+        or progress_payload["run_identity"].get("fixed_window_sha256") != fixed_window.sha256
+        or progress_payload["run_identity"].get("v16_saved_vector_manifest_sha256") != manifest_sha256
+        or progress_payload.get("latest_consumer_execution_binding") != producer_binding
+        or producer_binding not in progress_payload.get("consumer_execution_bindings", [])
+    ):
+        raise ValueError("V17 report progress does not bind its exact report-producing contract")
+
+    resume_binding: dict[str, Any] | None = None
+    resume_values = (
+        resume_contract_path,
+        resume_contract_sha256,
+        resume_progress_path,
+        resume_progress_sha256,
+    )
+    if any(value is not None for value in resume_values):
+        if any(value is None for value in resume_values):
+            raise ValueError("V17 resume source requires both contract/progress path and hash bindings")
+        resume_contract_raw = Path(str(resume_contract_path))
+        resume_progress_raw = Path(str(resume_progress_path))
+        if resume_contract_raw.is_symlink() or resume_progress_raw.is_symlink():
+            raise ValueError("V17 resume source contract/progress cannot be symlinks")
+        resume_contract, resume_digest = require_task41_p0_contract(
+            resume_contract_raw,
+            expected_sha256=str(resume_contract_sha256),
+            current_root=root,
+            case_id="B0",
+            check_current_source=False,
+            require_clean_source=False,
+        )
+        resume_window = Path(str(resume_contract.get("window", {}).get("path", "")))
+        if not resume_window.is_absolute():
+            resume_window = root / resume_window
+        resume_progress_file = resume_progress_raw.resolve(strict=True)
+        if (
+            resume_contract.get("execution_scope") != TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE
+            or resume_contract.get("case") != contract.get("case")
+            or resume_contract.get("numerical_strategy") != contract.get("numerical_strategy")
+            or resume_window.resolve() != contract_window.resolve()
+            or resume_contract.get("window", {}).get("sha256") != fixed_window.sha256
+            or resume_contract.get("source", {}).get("sha") == contract.get("source", {}).get("sha")
+            or not resume_progress_file.is_relative_to(results_root)
+            or resume_progress_file.name != "task41_p0_v17_progress.json"
+            or resume_progress_file.stat().st_size > 16 * 1024**2
+            or not re.fullmatch(r"[0-9a-f]{64}", str(resume_progress_sha256))
+            or sha256_file(resume_progress_file) != resume_progress_sha256
+        ):
+            raise ValueError("V17 resume source contract/progress identity differs")
+        try:
+            resume_payload = json.loads(resume_progress_file.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError("V17 resume source progress is unreadable JSON") from exc
+        resume_binding = {
+            "path": str(resume_contract_raw.resolve(strict=True).relative_to(root)),
+            "sha256": resume_digest,
+            "source_sha": resume_contract.get("source", {}).get("sha"),
+            "fixed_window_sha256": fixed_window.sha256,
+        }
+        if (
+            not isinstance(resume_payload, Mapping)
+            or resume_payload.get("schema") != "task41.p0.b0.v17.selected_two_cell_progress.v2"
+            or resume_payload.get("latest_consumer_execution_binding") != resume_binding
+            or resume_binding not in resume_payload.get("consumer_execution_bindings", [])
+            or resume_payload.get("run_identity") != progress_payload.get("run_identity")
+            or progress_payload.get("producer_execution_binding") != resume_payload.get("producer_execution_binding")
+            or resume_binding not in progress_payload.get("consumer_execution_bindings", [])
+        ):
+            raise ValueError("V17 resumed report does not retain the hash-bound progress source")
+    elif progress_payload.get("producer_execution_binding") != producer_binding:
+        raise ValueError("V17 progress has an unbound prior producer; explicit resume inputs are required")
+
+    expected_manifest = (root / TASK41_B0_V17_SAVED_VECTOR_MANIFEST_RELATIVE).resolve(strict=True)
+    raw_manifest = Path(manifest_path)
+    if (
+        raw_manifest.is_symlink()
+        or raw_manifest.resolve(strict=True) != expected_manifest
+        or manifest_sha256 != TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256
+    ):
+        raise ValueError("V17 independent checker V16 manifest path or frozen SHA differs")
+
+    payload = _json_object(result_path, "V17 two-cell worker report")
+    callback = payload.get("selected_two_cell_candidate_callback")
+    if (
+        payload.get("schema") != "task41.p0.b0.v17.selected_two_cell_worker_receipt.v1"
+        or payload.get("consumer_contract_sha256") != producer_digest
+        or payload.get("consumer_window_sha256") != fixed_window.sha256
+        or not isinstance(callback, Mapping)
+        or callback.get("schema") != "task41.p0.b0.v17.selected_two_cell_candidate_callback.v1"
+    ):
+        raise ValueError("V17 worker report schema or consumer bindings differ")
+    if progress_payload.get("selected_two_cell_candidate_callback") != callback:
+        raise ValueError("V17 worker report callback differs from its hash-bound progress checkpoint")
+    scope = callback.get("scope")
+    if (
+        not isinstance(scope, Mapping)
+        or scope.get("selected_active_row") != TASK41_P0_B0_V17_SELECTED_ROW
+        or scope.get("selected_original_row") != TASK41_P0_B0_V17_SELECTED_ORIGINAL_ROW
+        or scope.get("cell_order") != list(TASK41_P0_B0_V17_SELECTED_CELLS)
+        or scope.get("columns") != [0, 1]
+        or any(scope.get(name) is not False for name in (
+            "full_owner", "carrier_replay", "surface_replay", "full_q_scan", "official_result"
+        ))
+    ):
+        raise ValueError("V17 worker report scope or prohibited downstream work differs")
+    run_identity = callback.get("run_identity")
+    if (
+        not isinstance(run_identity, Mapping)
+        or callback.get("run_identity_sha256") != _task41_p0_v17_json_sha256(run_identity)
+        or run_identity.get("fixed_window_sha256") != fixed_window.sha256
+        or run_identity.get("v16_saved_vector_manifest_sha256") != manifest_sha256
+        or run_identity.get("selected_active_row") != TASK41_P0_B0_V17_SELECTED_ROW
+        or run_identity.get("selected_original_row") != TASK41_P0_B0_V17_SELECTED_ORIGINAL_ROW
+        or run_identity.get("selected_cells") != list(TASK41_P0_B0_V17_SELECTED_CELLS)
+    ):
+        raise ValueError("V17 worker report mathematical run identity is malformed")
+
+    manifest, saved_vectors, _unused_group_codes = load_task41_p0_b0_v16_saved_vector_manifest(
+        manifest_path,
+        manifest_sha256,
+        repo_root=root,
+        include_saved_array_replay=False,
+        include_row_incidence=False,
+    )
+    v16_metadata = load_task41_p0_b0_v17_selected_cell_metadata(repo_root=root)
+    donor = load_task41_p0_b0_v17_v3_selected_donor(
+        repo_root=root, results_root=results_root
+    )
+    if (
+        run_identity.get("v16_metadata_sha256")
+        != TASK41_P0_B0_V17_SELECTED_METADATA_SHA256
+        or run_identity.get("v3_donor_manifest_sha256") != donor["manifest_sha256"]
+        or run_identity.get("v3_vector_index_sha256") != donor["source_index_sha256"]
+    ):
+        raise ValueError("V17 worker report does not bind the pinned V16/V3 inputs")
+
+    checked_artifact_records: dict[Path, tuple[int, str]] = {}
+    checked_new_artifact_bytes = 0
+
+    def track_new_npy(path: Path, record: Mapping[str, Any], label: str) -> None:
+        nonlocal checked_new_artifact_bytes
+        identity = (int(record["bytes"]), str(record["sha256"]))
+        previous = checked_artifact_records.get(path)
+        if previous is not None:
+            if previous != identity:
+                raise ValueError(f"V17 {label} repeats an artifact with conflicting identity")
+            return
+        checked_artifact_records[path] = identity
+        checked_new_artifact_bytes += identity[0]
+        if checked_new_artifact_bytes > TASK41_P0_B0_V17_NEW_NPY_EVIDENCE_LIMIT_BYTES:
+            raise ValueError("V17 newly persisted NPY evidence exceeds the 128 MiB cap")
+
+    def load_record(
+        record: Mapping[str, Any], *, shape: tuple[int, ...], dtype: Any, label: str
+    ) -> np.ndarray:
+        raw_path = record.get("path")
+        digest = record.get("sha256")
+        if (
+            not isinstance(raw_path, str)
+            or not isinstance(digest, str)
+            or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+            or type(record.get("bytes")) is not int
+            or record["bytes"] <= 0
+            or record.get("shape") != list(shape)
+            or record.get("dtype") != str(np.dtype(dtype))
+        ):
+            raise ValueError(f"V17 {label} array record is malformed")
+        raw = Path(raw_path)
+        candidate = raw if raw.is_absolute() else root / raw
+        if candidate.is_symlink():
+            raise ValueError(f"V17 {label} array cannot be a symlink")
+        path = candidate.resolve(strict=True)
+        if (
+            not path.is_file()
+            or not path.is_relative_to(results_root)
+            or path.stat().st_size != record["bytes"]
+            or sha256_file(path) != digest
+        ):
+            raise ValueError(f"V17 {label} array path, size, or SHA-256 differs")
+        track_new_npy(path, record, label)
+        array = np.load(path, mmap_mode="r", allow_pickle=False)
+        if array.shape != shape or array.dtype != np.dtype(dtype):
+            raise ValueError(f"V17 {label} saved array layout differs")
+        for start in range(0, int(array.shape[0]) if array.ndim else 1, 262_144):
+            chunk = array[start : start + 262_144] if array.ndim else array
+            if not np.isfinite(chunk).all():
+                raise ValueError(f"V17 {label} saved array contains non-finite values")
+        return array
+
+    cells = callback.get("cells")
+    columns = callback.get("columns")
+    if (
+        not isinstance(cells, list)
+        or [item.get("cell_index") for item in cells if isinstance(item, Mapping)]
+        != list(TASK41_P0_B0_V17_SELECTED_CELLS)
+        or not isinstance(columns, list)
+        or [item.get("column") for item in columns if isinstance(item, Mapping)] != [0, 1]
+    ):
+        raise ValueError("V17 worker report does not contain exact ordered two-cell/two-column coverage")
+    if (
+        type(callback.get("candidate_builds_charged")) is not int
+        or not 0 <= callback["candidate_builds_charged"] <= 2
+        or type(callback.get("lu_factorizations_charged")) is not int
+        or not 0 <= callback["lu_factorizations_charged"] <= 2
+        or type(callback.get("matrix_rhs_getrs_charged")) is not int
+        or not 0 <= callback["matrix_rhs_getrs_charged"] <= 6
+        or type(callback.get("internal_rhs_getrs_charged")) is not int
+        or not 0 <= callback["internal_rhs_getrs_charged"] <= 12
+    ):
+        raise ValueError("V17 worker report exceeds its candidate/LU/GETRS ceilings")
+
+    map_fields = {
+        "geometry_dofs": (8,),
+        "actual_geometry_coordinates": (8, 3),
+        "local_dofs": (882,),
+        "original_rows": (882,),
+        "interior_positions": (450,),
+        "trace_positions": (432,),
+        "interior_original_rows": (450,),
+        "trace_original_rows": (432,),
+        "active_ids": (432,),
+        "selected_trace_coefficients": (1,),
+    }
+    expected_metadata_by_cell = {
+        int(item["cell_id"]): item for item in v16_metadata["cells"]
+    }
+    candidate_by_cell: dict[int, dict[str, Any]] = {}
+    for cell in cells:
+        cell_index = int(cell["cell_index"])
+        meta = expected_metadata_by_cell.get(cell_index)
+        map_identity = cell.get("fresh_map_identity")
+        map_records = cell.get("fresh_map_artifacts")
+        if (
+            meta is None
+            or cell.get("cell_tag") != 1
+            or cell.get("cell_permutation") != 0
+            or not isinstance(map_identity, Mapping)
+            or cell.get("fresh_map_identity_sha256") != _task41_p0_v17_json_sha256(map_identity)
+            or map_identity.get("cell_index") != cell_index
+            or map_identity.get("cell_tag") != 1
+            or map_identity.get("cell_permutation") != 0
+            or not isinstance(map_records, Mapping)
+        ):
+            raise ValueError(f"V17 cell {cell_index} fresh-map identity is malformed")
+        required_map_names = set(map_fields) | {
+            "trace_expansion_data", "trace_expansion_indices", "trace_expansion_indptr",
+            "selected_local_trace_rows",
+        }
+        if set(map_records) != required_map_names:
+            raise ValueError(f"V17 cell {cell_index} fresh-map artifact coverage differs")
+        maps: dict[str, np.ndarray] = {}
+        for name, record in map_records.items():
+            if not isinstance(record, Mapping):
+                raise ValueError(f"V17 cell {cell_index} map record {name} is malformed")
+            dtype = np.dtype(record.get("dtype"))
+            shape = tuple(int(value) for value in record.get("shape", ()))
+            value = load_record(
+                record, shape=shape, dtype=dtype, label=f"cell {cell_index} map {name}"
+            )
+            expected_hash = map_identity.get("array_sha256s", {}).get(name)
+            if expected_hash != _task41_p0_v17_array_sha256(value):
+                raise ValueError(f"V17 cell {cell_index} map {name} differs from its signed identity")
+            maps[name] = value
+        for name, shape in map_fields.items():
+            if maps[name].shape != shape:
+                raise ValueError(f"V17 cell {cell_index} map {name} shape differs")
+        trace_slots = np.flatnonzero(
+            np.asarray(maps["trace_positions"], dtype=np.int64)
+            == int(meta["local_position"])
+        )
+        if (
+            not np.array_equal(maps["actual_geometry_coordinates"], meta["coordinates"])
+            or not np.array_equal(maps["active_ids"], meta["active_ids"])
+            or maps["actual_geometry_coordinates"].dtype != np.dtype(np.float64)
+            or maps["interior_positions"].dtype.kind not in "iu"
+            or maps["trace_positions"].dtype.kind not in "iu"
+            or trace_slots.shape != (1,)
+            or maps["selected_local_trace_rows"].tolist() != [int(trace_slots[0])]
+            or maps["selected_trace_coefficients"].tolist() != [1.0 + 0.0j]
+            or int(maps["original_rows"][int(meta["local_position"])])
+            != TASK41_P0_B0_V17_SELECTED_ORIGINAL_ROW
+        ):
+            raise ValueError(f"V17 cell {cell_index} fresh I/T/E map differs from V16 metadata")
+        interior = np.asarray(maps["interior_positions"], dtype=np.int64)
+        trace = np.asarray(maps["trace_positions"], dtype=np.int64)
+        if (
+            np.intersect1d(interior, trace).size
+            or not np.array_equal(np.sort(np.concatenate((interior, trace))), np.arange(882))
+            or not np.array_equal(maps["interior_original_rows"], maps["original_rows"][interior])
+            or not np.array_equal(maps["trace_original_rows"], maps["original_rows"][trace])
+        ):
+            raise ValueError(f"V17 cell {cell_index} interior/trace original-row map does not close")
+        expansion = sparse.csr_matrix(
+            (
+                np.asarray(maps["trace_expansion_data"], dtype=np.complex128),
+                np.asarray(maps["trace_expansion_indices"], dtype=np.int32),
+                np.asarray(maps["trace_expansion_indptr"], dtype=np.int32),
+            ),
+            shape=(len(trace), len(maps["active_ids"])),
+        )
+        active_slots = np.flatnonzero(maps["active_ids"] == TASK41_P0_B0_V17_SELECTED_ROW)
+        if active_slots.shape != (1,) or trace_slots.shape != (1,):
+            raise ValueError(f"V17 cell {cell_index} selected E column is not uniquely mapped")
+        q = np.asarray(expansion.getcol(int(active_slots[0])).toarray()).reshape(-1)
+        expected_q = np.zeros(len(trace), dtype=np.complex128)
+        expected_q[int(trace_slots[0])] = 1.0 + 0.0j
+        if not np.array_equal(q, expected_q):
+            raise ValueError(f"V17 cell {cell_index} selected E column is not the frozen +1 slot")
+
+        artifacts = cell.get("candidate_artifacts")
+        if not isinstance(artifacts, Mapping) or set(artifacts) != {
+            "raw_tensor", "oriented_tensor", "R", "T", "S", "interior_lu", "interior_lu_pivots"
+        }:
+            raise ValueError(f"V17 cell {cell_index} candidate artifact coverage differs")
+        candidate_arrays = {
+            name: load_record(
+                artifacts[name],
+                shape=((882, 882) if name in {"raw_tensor", "oriented_tensor"}
+                       else (450, 450) if name == "interior_lu"
+                       else (450, 432) if name == "R"
+                       else (432, 450) if name == "T"
+                       else (432, 432) if name == "S"
+                       else (450,)),
+                dtype=(np.int32 if name == "interior_lu_pivots" else np.complex128),
+                label=f"cell {cell_index} candidate {name}",
+            )
+            for name in artifacts
+        }
+        tensor = candidate_arrays["oriented_tensor"]
+        K = tensor[np.ix_(interior, interior)]
+        G = tensor[np.ix_(interior, trace)]
+        J = tensor[np.ix_(trace, interior)]
+        L = tensor[np.ix_(trace, trace)]
+        Rmat, Tmat, Smat = (
+            candidate_arrays[name] for name in ("R", "T", "S")
+        )
+        scaled = max(float(np.linalg.norm(K, ord=np.inf)), 1.0)
+        if (
+            np.linalg.norm(K @ Rmat + G, ord=np.inf) / scaled > 1.0e-11
+            or np.linalg.norm(Tmat @ K + J, ord=np.inf) / scaled > 1.0e-11
+            or np.linalg.norm(Smat - (L + J @ Rmat), ord=np.inf) / scaled > 1.0e-11
+        ):
+            raise ValueError(f"V17 cell {cell_index} saved R/T/S does not match its oriented candidate tensor")
+        candidate_by_cell[cell_index] = {
+            "maps": maps,
+            "interior": interior,
+            "trace": trace,
+            "q": q,
+            "K": K,
+            "G": G,
+            "J": J,
+            "L": L,
+            "R": Rmat,
+            "T": Tmat,
+            "S": Smat,
+            "artifacts": candidate_arrays,
+        }
+
+    global_results = []
+    column_cell_terms: dict[tuple[int, int], dict[str, Any]] = {}
+    v16_active = TASK41_P0_B0_V17_SELECTED_ROW
+    original_row = TASK41_P0_B0_V17_SELECTED_ORIGINAL_ROW
+    for column_record in columns:
+        column_index = int(column_record["column"])
+        donor_column = donor["columns"][column_index]
+        saved_y9 = complex(saved_vectors["y9"][column_index][v16_active])
+        saved_g9 = complex(saved_vectors["g9"][column_index][v16_active])
+        saved_y15 = complex(saved_vectors["y15"][column_index][v16_active])
+        saved_g15 = complex(saved_vectors["g15"][column_index][v16_active])
+        row_cell_records = column_record.get("cells")
+        if not isinstance(row_cell_records, list) or [item.get("cell_index") for item in row_cell_records] != list(TASK41_P0_B0_V17_SELECTED_CELLS):
+            raise ValueError(f"V17 column {column_index} cell order differs")
+        native_rhs_t = complex(donor_column["native_rhs"][original_row])
+        native_volume_t = complex(donor_column["native_volume_rhs"][original_row])
+        y_sum = 0.0 + 0.0j
+        recomputed_cells = []
+        for row_record in row_cell_records:
+            cell_index = int(row_record["cell_index"])
+            candidate = candidate_by_cell[cell_index]
+            maps = candidate["maps"]
+            original_rows = np.asarray(maps["original_rows"], dtype=np.int64)
+            interior = candidate["interior"]
+            trace = candidate["trace"]
+            known = np.asarray(donor_column["known_field"])
+            native_rhs = np.asarray(donor_column["native_rhs"])
+            volume_rhs = np.asarray(donor_column["native_volume_rhs"])
+            u_i = np.asarray(known[original_rows[interior]], dtype=np.complex128)
+            t_c = np.asarray(known[original_rows[trace]], dtype=np.complex128)
+            b_i = np.asarray(native_rhs[original_rows[interior]], dtype=np.complex128)
+            volume_b_i = np.asarray(volume_rhs[original_rows[interior]], dtype=np.complex128)
+            artifacts = row_record.get("rhs_artifacts")
+            if not isinstance(artifacts, Mapping):
+                raise ValueError(f"V17 cell {cell_index} column {column_index} omits RHS artifacts")
+            z0 = load_record(
+                artifacts["z0"], shape=(len(interior),), dtype=np.complex128,
+                label=f"cell {cell_index} column {column_index} z0",
+            )
+            z_final = load_record(
+                artifacts["final_z"], shape=(len(interior),), dtype=np.complex128,
+                label=f"cell {cell_index} column {column_index} final z",
+            )
+            minus_Jz = load_record(
+                artifacts["returned_minus_Jz"], shape=(len(trace),), dtype=np.complex128,
+                label=f"cell {cell_index} column {column_index} -Jz",
+            )
+            if (
+                not np.array_equal(b_i, volume_b_i)
+                or not np.array_equal(minus_Jz, -candidate["J"] @ z_final)
+                or "z0_minus_Jz" not in artifacts
+            ):
+                raise ValueError(f"V17 cell {cell_index} column {column_index} local RHS identity differs")
+            minus_Jz0 = load_record(
+                artifacts["z0_minus_Jz"], shape=(len(trace),), dtype=np.complex128,
+                label=f"cell {cell_index} column {column_index} same-call z0 action",
+            )
+            if not np.array_equal(minus_Jz0, -candidate["J"] @ z0):
+                raise ValueError(f"V17 cell {cell_index} column {column_index} z0 action differs")
+            rhs_timing = row_record.get("rhs_timing")
+            required_rhs_artifacts = {
+                "z0", "final_z", "returned_minus_Jz", "z0_minus_Jz"
+            }
+            step_fields: dict[int, set[str]] = {1: set(), 2: set()}
+            for artifact_name in artifacts:
+                match = re.fullmatch(
+                    r"step([12])_(z_before|residual|delta|z_after)",
+                    str(artifact_name),
+                )
+                if match is None:
+                    if artifact_name not in required_rhs_artifacts:
+                        raise ValueError(
+                            f"V17 cell {cell_index} column {column_index} has an unknown RHS artifact"
+                        )
+                else:
+                    step_fields[int(match.group(1))].add(match.group(2))
+            if (
+                not required_rhs_artifacts.issubset(artifacts)
+                or any(step_fields[step] and not {
+                    "z_before", "residual", "z_after"
+                }.issubset(step_fields[step]) for step in (1, 2))
+                or (step_fields[2] and not step_fields[1])
+                or not isinstance(rhs_timing, Mapping)
+            ):
+                raise ValueError(
+                    f"V17 cell {cell_index} column {column_index} RHS refinement record is incomplete"
+                )
+            residual_count = sum("residual" in fields for fields in step_fields.values())
+            correction_count = sum("delta" in fields for fields in step_fields.values())
+            nonzero_rhs = bool(np.any(b_i))
+            expected_initial_getrs = 1 if nonzero_rhs else 0
+            timing_counts = {
+                "refinement_max_steps": 2,
+                "refinement_steps": correction_count,
+                "initial_getrs_count": expected_initial_getrs,
+                "correction_getrs_count": correction_count,
+                "getrs_count": expected_initial_getrs + correction_count,
+                "residual_evaluation_count": residual_count,
+            }
+            if (
+                rhs_timing.get("nonzero_rhs") is not nonzero_rhs
+                or any(type(rhs_timing.get(key)) is not int or rhs_timing.get(key) != value
+                       for key, value in timing_counts.items())
+                or rhs_timing.get("stop_reason") not in {
+                    "zero_rhs", "exact_zero_residual", "bitwise_unchanged_update", "max_steps"
+                }
+                or row_record.get("rhs_getrs_count") != rhs_timing.get("getrs_count")
+                or row_record.get("strict_rhs_residual_count") != residual_count
+                or correction_count > 2
+                or residual_count > 2
+            ):
+                raise ValueError(
+                    f"V17 cell {cell_index} column {column_index} RHS timing/count record differs"
+                )
+            if not nonzero_rhs:
+                if (
+                    rhs_timing.get("stop_reason") != "zero_rhs"
+                    or residual_count != 0
+                    or correction_count != 0
+                    or np.any(z0)
+                    or np.any(z_final)
+                ):
+                    raise ValueError(
+                        f"V17 cell {cell_index} column {column_index} zero RHS path is inconsistent"
+                    )
+            elif rhs_timing.get("stop_reason") == "zero_rhs":
+                raise ValueError(
+                    f"V17 cell {cell_index} column {column_index} nonzero RHS used zero-RHS status"
+                )
+            previous_z = z0
+            step_checks: list[dict[str, Any]] = []
+            final_step_stop_reason = None
+            for step_number in (1, 2):
+                fields = step_fields[step_number]
+                if not fields:
+                    continue
+                z_before = load_record(
+                    artifacts[f"step{step_number}_z_before"], shape=(len(interior),),
+                    dtype=np.complex128,
+                    label=f"cell {cell_index} column {column_index} step {step_number} z_before",
+                )
+                residual = load_record(
+                    artifacts[f"step{step_number}_residual"], shape=(len(interior),),
+                    dtype=np.complex128,
+                    label=f"cell {cell_index} column {column_index} step {step_number} residual",
+                )
+                z_after = load_record(
+                    artifacts[f"step{step_number}_z_after"], shape=(len(interior),),
+                    dtype=np.complex128,
+                    label=f"cell {cell_index} column {column_index} step {step_number} z_after",
+                )
+                expected_residual = _task41_p0_b0_v17_compensated_residual(
+                    candidate["K"], b_i, z_before
+                )
+                if not np.array_equal(z_before, previous_z) or not np.array_equal(
+                    residual, expected_residual
+                ):
+                    raise ValueError(
+                        f"V17 cell {cell_index} column {column_index} step {step_number} residual chain differs"
+                    )
+                if "delta" in fields:
+                    delta = load_record(
+                        artifacts[f"step{step_number}_delta"], shape=(len(interior),),
+                        dtype=np.complex128,
+                        label=f"cell {cell_index} column {column_index} step {step_number} delta",
+                    )
+                    expected_after = np.asarray(z_before + delta, dtype=np.complex128)
+                    if not np.array_equal(z_after, expected_after):
+                        raise ValueError(
+                            f"V17 cell {cell_index} column {column_index} step {step_number} update differs"
+                        )
+                    delta_residual = residual - candidate["K"] @ delta
+                    delta_scale = max(
+                        float(np.linalg.norm(candidate["K"], ord=np.inf))
+                        * float(np.linalg.norm(delta, ord=np.inf))
+                        + float(np.linalg.norm(residual, ord=np.inf)),
+                        np.finfo(float).tiny,
+                    )
+                    delta_backward_residual = float(
+                        np.linalg.norm(delta_residual, ord=np.inf) / delta_scale
+                    )
+                    final_step_stop_reason = (
+                        "bitwise_unchanged_update"
+                        if z_after.tobytes(order="C") == z_before.tobytes(order="C")
+                        else None
+                    )
+                    step_checks.append({
+                        "step": step_number,
+                        "residual_exactly_recomputed": True,
+                        "update_exactly_recomputed": True,
+                        "delta_backward_residual": delta_backward_residual,
+                        "delta_backward_residual_is_diagnostic_only": True,
+                    })
+                else:
+                    if np.any(residual) or not np.array_equal(z_after, z_before):
+                        raise ValueError(
+                            f"V17 cell {cell_index} column {column_index} zero-residual stop differs"
+                        )
+                    final_step_stop_reason = "exact_zero_residual"
+                    step_checks.append({
+                        "step": step_number,
+                        "residual_exactly_recomputed": True,
+                        "zero_residual_stop_exactly_recomputed": True,
+                    })
+                previous_z = z_after
+            if not np.array_equal(previous_z, z_final):
+                raise ValueError(
+                    f"V17 cell {cell_index} column {column_index} final z differs from refinement chain"
+                )
+            stop_reason = rhs_timing.get("stop_reason")
+            if (
+                (stop_reason == "zero_rhs" and residual_count != 0)
+                or (stop_reason == "exact_zero_residual" and final_step_stop_reason != "exact_zero_residual")
+                or (stop_reason == "bitwise_unchanged_update" and final_step_stop_reason != "bitwise_unchanged_update")
+                or (stop_reason == "max_steps" and (residual_count != 2 or correction_count != 2))
+            ):
+                raise ValueError(
+                    f"V17 cell {cell_index} column {column_index} stop reason differs from saved steps"
+                )
+            row_record["_independent_rhs_step_checks"] = step_checks
+            term_records = (
+                row_record.get("known_trace_local_artifact"),
+                row_record.get("known_interior_local_artifact"),
+                row_record.get("native_rhs_interior_artifact"),
+                row_record.get("native_volume_rhs_interior_artifact"),
+                row_record.get("S_action_artifact"),
+            )
+            expected_terms = (t_c, u_i, b_i, volume_b_i, candidate["S"] @ t_c)
+            for name, record, expected in zip(
+                ("t_c", "u_i", "b_i", "volume_b_i", "S_action"),
+                term_records,
+                expected_terms,
+                strict=True,
+            ):
+                vector = load_record(
+                    record,
+                    shape=expected.shape,
+                    dtype=np.complex128,
+                    label=f"cell {cell_index} column {column_index} {name}",
+                )
+                if not np.array_equal(vector, expected):
+                    raise ValueError(f"V17 cell {cell_index} column {column_index} {name} differs from source data")
+            y_local = complex(np.vdot(candidate["q"], candidate["S"] @ t_c))
+            g_local = complex(np.vdot(candidate["q"], minus_Jz))
+            g0_local = complex(np.vdot(candidate["q"], minus_Jz0))
+            signed = task41_p0_b0_v17_signed_cell_identity(
+                K=candidate["K"], G=candidate["G"], J=candidate["J"], L=candidate["L"],
+                R=candidate["R"], T=candidate["T"], S=candidate["S"], q=candidate["q"],
+                u_i=u_i, t_c=t_c, b_i=b_i, z_c=z_final,
+            )
+            signed["cell_id"] = cell_index
+            if row_record.get("signed_identity") != signed:
+                raise ValueError(f"V17 cell {cell_index} stored signed identity differs from independent recomputation")
+            y_sum += y_local
+            recomputed_cells.append(signed)
+            column_cell_terms[(column_index, cell_index)] = {
+                "y_local": y_local,
+                "g_local": g_local,
+                "g0_local": g0_local,
+                "rhs_step_checks": row_record.get("_independent_rhs_step_checks", []),
+            }
+        beta_rows = np.asarray(donor_column["b_alpha_rows"], dtype=np.int64)
+        beta_values = np.asarray(donor_column["b_alpha_values"], dtype=np.complex128)
+        beta_positions = np.flatnonzero(beta_rows == original_row)
+        beta_t = complex(np.sum(beta_values[beta_positions], dtype=np.complex128))
+        replay_y = y_sum + beta_t
+        ordered_g_terms = [
+            column_cell_terms[(column_index, cell_index)]["g_local"]
+            for cell_index in TASK41_P0_B0_V17_SELECTED_CELLS
+        ]
+        ordered_g0_terms = [
+            column_cell_terms[(column_index, cell_index)]["g0_local"]
+            for cell_index in TASK41_P0_B0_V17_SELECTED_CELLS
+        ]
+        replay_g = _task41_p0_b0_v17_accumulate_native_then_cells(
+            native_rhs_t, ordered_g_terms
+        )
+        replay_g0 = _task41_p0_b0_v17_accumulate_native_then_cells(
+            native_rhs_t, ordered_g0_terms
+        )
+        reproduced = {
+            "y9": replay_y == saved_y9,
+            "g9": replay_g0 == saved_g9,
+            "y15": replay_y == saved_y15,
+            "g15": replay_g == saved_g15,
+        }
+        saved_identity = task41_p0_b0_v17_signed_two_cell_identity(
+            cells=recomputed_cells,
+            b_t_volume=native_volume_t,
+            b_t_full=native_rhs_t,
+            b_alpha_t=beta_t,
+            observed_d=saved_y15 - saved_g15,
+        )
+        if column_record.get("signed_two_cell_identity") != saved_identity:
+            raise ValueError(f"V17 column {column_index} signed two-cell identity differs")
+        if any(column_record.get(f"{key}_exact_saved_value_reproduced") is not value for key, value in reproduced.items()):
+            raise ValueError(f"V17 column {column_index} saved y/g replay flags differ from recomputation")
+        if (
+            column_record.get("replayed_y15") != _task41_p0_b0_v17_pair(replay_y, extended=False)
+            or column_record.get("replayed_g15") != _task41_p0_b0_v17_pair(replay_g, extended=False)
+            or column_record.get("replayed_g9_from_same_call_z0") != _task41_p0_b0_v17_pair(replay_g0, extended=False)
+            or column_record.get("native_rhs_t") != _task41_p0_b0_v17_pair(native_rhs_t, extended=False)
+            or column_record.get("native_volume_rhs_t") != _task41_p0_b0_v17_pair(native_volume_t, extended=False)
+            or column_record.get("b_alpha_t") != _task41_p0_b0_v17_pair(beta_t, extended=False)
+        ):
+            raise ValueError(f"V17 column {column_index} stored scalar replay differs")
+        global_results.append({
+            "column": column_index,
+            "saved_y9": _task41_p0_b0_v17_pair(saved_y9, extended=False),
+            "saved_g9": _task41_p0_b0_v17_pair(saved_g9, extended=False),
+            "saved_y15": _task41_p0_b0_v17_pair(saved_y15, extended=False),
+            "saved_g15": _task41_p0_b0_v17_pair(saved_g15, extended=False),
+            "replayed_y": _task41_p0_b0_v17_pair(replay_y, extended=False),
+            "replayed_g_from_final_z": _task41_p0_b0_v17_pair(replay_g, extended=False),
+            "replayed_g_from_same_call_z0": _task41_p0_b0_v17_pair(replay_g0, extended=False),
+            "exact_reproduction": reproduced,
+            "rhs_step_checks_by_cell": {
+                str(cell_index): column_cell_terms[(column_index, cell_index)]["rhs_step_checks"]
+                for cell_index in TASK41_P0_B0_V17_SELECTED_CELLS
+            },
+            "signed_two_cell_identity": saved_identity,
+        })
+    if checked_new_artifact_bytes > TASK41_P0_B0_V17_NEW_NPY_EVIDENCE_LIMIT_BYTES:
+        raise ValueError("V17 newly persisted NPY evidence exceeds the 128 MiB cap")
+    if (
+        result_path.parent.name != "selected_incident_replay"
+        and not result_path.parent.parent.name == "selected_incident_replay"
+    ):
+        raise ValueError("V17 checker report is outside selected_incident_replay")
+    status = (
+        "LOCAL_REPLAY_COMPLETED"
+        if all(all(item["exact_reproduction"].values()) for item in global_results)
+        else "LOCAL_REPLAY_UNBOUND"
+    )
+    return {
+        "schema": "task41.p0.b0.v17.selected_two_cell_independent_check.v1",
+        "status": status,
+        "check_completed": True,
+        "data_integrity": True,
+        "official_result": False,
+        "scientific_qualified": False,
+        "full_owner_unlocked": False,
+        "consumer_contract_sha256": contract_digest,
+        "consumer_window_sha256": fixed_window.sha256,
+        "report_producer_contract_sha256": producer_digest,
+        "report_producer_source_sha": producer_contract.get("source", {}).get("sha"),
+        "report_progress_path": str(progress_file),
+        "report_progress_sha256": progress_sha256,
+        "resumed_source_contract_sha256": (
+            resume_binding["sha256"] if resume_binding is not None else None
+        ),
+        "resumed_source_progress_path": (
+            str(Path(str(resume_progress_path)).resolve(strict=True))
+            if resume_progress_path is not None else None
+        ),
+        "resumed_source_progress_sha256": resume_progress_sha256,
+        "worker_report_path": str(result_path),
+        "worker_report_sha256": report_sha256,
+        "v16_manifest_path": str(expected_manifest),
+        "v16_manifest_sha256": manifest_sha256,
+        "v3_donor_manifest_sha256": donor["manifest_sha256"],
+        "v3_source_index_sha256": donor["source_index_sha256"],
+        "scope": {
+            "selected_active_row": TASK41_P0_B0_V17_SELECTED_ROW,
+            "selected_original_row": TASK41_P0_B0_V17_SELECTED_ORIGINAL_ROW,
+            "cells": list(TASK41_P0_B0_V17_SELECTED_CELLS),
+            "columns": [0, 1],
+            "full_owner": False,
+            "carrier_replay": False,
+            "surface_replay": False,
+            "full_q_scan": False,
+            "official_result": False,
+        },
+        "new_npy_evidence_bytes_checked": checked_new_artifact_bytes,
+        "new_npy_artifact_count": len(checked_artifact_records),
+        "independent_columns": global_results,
+        "errors": [],
+    }
 TASK41_P0_B0_V16_V8_METADATA_SHA256 = (
     "332baa3a5253a8322b56615c7fe087e401f909c3c889fa048fccc3f9f2b9fcd3"
 )
@@ -170,6 +1512,20 @@ TASK41_P0_B0_V16_V3_VOLUME_RHS_BINDINGS = {
 }
 TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS = {
     0: {
+        "active_original_rows": (
+            "task41_b0_recovery_mode_16030_active_original_rows.npy",
+            "c30144335e92bc0b66246408793c2e17465f8085aeb599b6bf6eecda431b75b6",
+            45_504_128,
+            "int64",
+            [5_688_000],
+        ),
+        "known_field": (
+            "task41_b0_recovery_mode_16030_known_field.npy",
+            "3a0805be6c88a9d0d386a685bcf3a538a948c2ddff427813d0cecd14f6c599ed",
+            296_016_512,
+            "complex128",
+            [18_501_024],
+        ),
         "native_rhs": (
             "task41_b0_recovery_mode_16030_native_rhs.npy",
             "6769555c63dd204745572909605870aa04a1a9256d92b0d5c232d3d1d6289920",
@@ -191,8 +1547,29 @@ TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS = {
             "complex128",
             [58_000],
         ),
+        "native_volume_rhs": (
+            "task41_b0_recovery_mode_16030_native_volume_rhs.npy",
+            "99aa5d43893764499f31b5168e7dca00f776fba6623d698f43d78e850a15b97e",
+            296_016_512,
+            "complex128",
+            [18_501_024],
+        ),
     },
     1: {
+        "active_original_rows": (
+            "task41_b0_recovery_mode_48090_active_original_rows.npy",
+            "c30144335e92bc0b66246408793c2e17465f8085aeb599b6bf6eecda431b75b6",
+            45_504_128,
+            "int64",
+            [5_688_000],
+        ),
+        "known_field": (
+            "task41_b0_recovery_mode_48090_known_field.npy",
+            "b35d7ce070e83ea5e9710af1a845fabfda2f0dce8139d1130c2ed582b0b96904",
+            296_016_512,
+            "complex128",
+            [18_501_024],
+        ),
         "native_rhs": (
             "task41_b0_recovery_mode_48090_native_rhs.npy",
             "22c2f4637472b310f114929a5bcd601c3a1433d8337eac58de8e2bbc6dc7c48d",
@@ -213,6 +1590,13 @@ TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS = {
             928_128,
             "complex128",
             [58_000],
+        ),
+        "native_volume_rhs": (
+            "task41_b0_recovery_mode_48090_native_volume_rhs.npy",
+            "ec5d487283045efe91c2b3b669dc69ed2a29fb0084a0a7ef91656b1137d2356c",
+            296_016_512,
+            "complex128",
+            [18_501_024],
         ),
     },
 }
@@ -1739,6 +3123,91 @@ def _task41_p0_v16_v3_donor_source_ref(
     elif source_path.parts != (filename,):
         raise ValueError(f"V16 {label} relative source must be the pinned donor basename")
     return {**indexed, "path": str(donor_path)}
+
+
+def load_task41_p0_b0_v17_v3_selected_donor(
+    *, repo_root: str | Path | None = None, results_root: str | Path | None = None
+) -> dict[str, Any]:
+    """Load only the hash-pinned V3 arrays consumed by the V17 two-cell replay."""
+    root = Path(repo_root or Path(__file__).resolve().parents[2]).resolve(strict=True)
+    model_results = Path(
+        results_root or (root / "results" / TASK41_MODEL_ID)
+    ).resolve(strict=True)
+    index, index_path, donor_root, manifest_path, vector_records = (
+        _task41_p0_v16_v3_donor_index(repo_root=root, results_root=model_results)
+    )
+    manifest = _json_object(manifest_path, "V17 V3 donor manifest")
+    columns_meta = manifest.get("columns")
+    if not isinstance(columns_meta, list) or len(columns_meta) != 2:
+        raise ValueError("V17 V3 donor manifest must have exactly two source columns")
+    if manifest_path.stat().st_size > 8 * 1024**2:
+        raise ValueError("V17 V3 donor manifest exceeds the bounded JSON size")
+
+    loaded_columns: list[dict[str, Any]] = []
+    for column_index, column_meta in enumerate(columns_meta):
+        artifacts = column_meta.get("artifacts") if isinstance(column_meta, Mapping) else None
+        if not isinstance(artifacts, Mapping):
+            raise ValueError(f"V17 V3 donor column {column_index} has no artifact bindings")
+        loaded: dict[str, Any] = {"column": column_index}
+        for role in (
+            "active_original_rows",
+            "known_field",
+            "native_rhs",
+            "native_volume_rhs",
+            "b_alpha_rows",
+            "b_alpha_values",
+        ):
+            filename, digest, byte_count, dtype_name, shape = (
+                TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS[column_index][role]
+            )
+            source = artifacts.get(role)
+            bound = _task41_p0_v16_v3_donor_source_ref(
+                source,
+                vector_records=vector_records,
+                donor_run_root=donor_root,
+                column=column_index,
+                role=role,
+                label=f"column {column_index} {role}",
+            )
+            if (
+                bound.get("path") != str(donor_root / filename)
+                or bound.get("sha256") != digest
+                or bound.get("bytes") != byte_count
+                or bound.get("dtype") != dtype_name
+                or bound.get("shape") != shape
+            ):
+                raise ValueError(f"V17 V3 {role} source differs from its exact pinned binding")
+            array = _task41_p0_v16_bound_metadata_npy(
+                bound,
+                results_root=model_results,
+                label=f"V17 V3 column {column_index} {role}",
+            )
+            if array.dtype != np.dtype(dtype_name) or list(array.shape) != shape:
+                raise ValueError(f"V17 V3 column {column_index} {role} layout differs")
+            loaded[role] = array
+        loaded_columns.append(loaded)
+
+    active = np.asarray(loaded_columns[0]["active_original_rows"])
+    if (
+        active.shape != (TASK41_P0_B0_V16_TRACE_ROWS,)
+        or active.dtype != np.dtype(np.int64)
+        or not np.array_equal(active, loaded_columns[1]["active_original_rows"])
+        or int(active[TASK41_P0_B0_V17_SELECTED_ROW])
+        != TASK41_P0_B0_V17_SELECTED_ORIGINAL_ROW
+    ):
+        raise ValueError("V17 V3 active-to-original row map differs from the pinned V16 row")
+    return {
+        "schema": "task41.p0.b0.v17.v3_selected_donor_inputs.v1",
+        "manifest_sha256": TASK41_P0_B0_V3_DONOR_MANIFEST_SHA256,
+        "manifest_path": str(manifest_path),
+        "source_index_sha256": TASK41_P0_B0_V3_VECTOR_INDEX_SHA256,
+        "source_index_path": str(index_path),
+        "run_name": donor_root.name,
+        "columns": loaded_columns,
+        "active_map_sha256": str(
+            TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS[0]["active_original_rows"][1]
+        ),
+    }
 
 
 def _task41_p0_v16_active_map_binding(
@@ -4423,6 +5892,7 @@ def load_task41_p0_b0_v16_saved_vector_manifest(
     expected_trace_rows: int = TASK41_P0_B0_V16_TRACE_ROWS,
     include_saved_array_replay: bool = False,
     allow_missing_metadata: bool = False,
+    include_row_incidence: bool = True,
 ) -> tuple[
     dict[str, Any], dict[str, tuple[np.ndarray, np.ndarray]], np.ndarray | None
 ]:
@@ -4818,6 +6288,8 @@ def load_task41_p0_b0_v16_saved_vector_manifest(
             "V16 compact row-incidence metadata is partially present or incomplete: "
             f"{missing_metadata}"
         )
+    if not include_row_incidence:
+        return manifest, vectors, None
     group_record = manifest.get("row_group_codes")
     group_definitions = manifest.get("row_group_definitions")
     row_provenance = manifest.get("row_incidence_provenance")
@@ -21113,6 +22585,7 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--saved-b0-evidence-audit", action="store_true")
     mode.add_argument("--saved-b0-y-g-comparison", action="store_true")
     mode.add_argument("--saved-b0-v16-vector-analysis", action="store_true")
+    mode.add_argument("--v17-selected-two-cell-check", action="store_true")
     mode.add_argument("--v9-saved-star-screen", action="store_true")
     mode.add_argument("--v9-failed-terminal-audit", action="store_true")
     mode.add_argument("--v15-terminal-audit", action="store_true")
@@ -21123,6 +22596,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--donor-summary-sha256")
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--manifest-sha256")
+    parser.add_argument("--v17-report", type=Path)
+    parser.add_argument("--v17-report-sha256")
+    parser.add_argument("--v17-producer-contract", type=Path)
+    parser.add_argument("--v17-producer-contract-sha256")
+    parser.add_argument("--v17-progress", type=Path)
+    parser.add_argument("--v17-progress-sha256")
+    parser.add_argument("--v17-resume-contract", type=Path)
+    parser.add_argument("--v17-resume-contract-sha256")
+    parser.add_argument("--v17-resume-progress", type=Path)
+    parser.add_argument("--v17-resume-progress-sha256")
     parser.add_argument("--numerical-output", type=Path)
     parser.add_argument("--run-root", type=Path)
     parser.add_argument("--contract", required=True, type=Path)
@@ -21152,6 +22635,74 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--v13-diagnostic-sha256")
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[2]
+    if args.v17_selected_two_cell_check:
+        allowed = {
+            "v17_selected_two_cell_check", "v17_report", "v17_report_sha256",
+            "manifest", "manifest_sha256", "contract", "contract_sha256", "output",
+            "v17_producer_contract", "v17_producer_contract_sha256",
+            "v17_progress", "v17_progress_sha256", "v17_resume_contract",
+            "v17_resume_contract_sha256", "v17_resume_progress",
+            "v17_resume_progress_sha256",
+        }
+        unexpected = [
+            name for name, value in vars(args).items()
+            if name not in allowed and value not in (None, False)
+        ]
+        if (
+            args.v17_report is None
+            or args.v17_report_sha256 is None
+            or args.manifest is None
+            or args.manifest_sha256 is None
+            or args.v17_producer_contract is None
+            or args.v17_producer_contract_sha256 is None
+            or args.v17_progress is None
+            or args.v17_progress_sha256 is None
+            or (args.v17_resume_contract is None) != (args.v17_resume_contract_sha256 is None)
+            or (args.v17_resume_progress is None) != (args.v17_resume_progress_sha256 is None)
+            or (args.v17_resume_contract is None) != (args.v17_resume_progress is None)
+            or unexpected
+        ):
+            parser.error(
+                "V17 checker requires only its hash-bound worker report, V16 manifest, "
+                "current consumer and report producer contracts, corresponding progress "
+                "and optional resumed-source bindings, and output"
+            )
+        output_path = args.output
+        try:
+            result = check_task41_p0_b0_v17_selected_two_cell_report(
+                report_path=args.v17_report,
+                report_sha256=args.v17_report_sha256,
+                manifest_path=args.manifest,
+                manifest_sha256=args.manifest_sha256,
+                contract_path=args.contract,
+                contract_sha256=args.contract_sha256,
+                producer_contract_path=args.v17_producer_contract,
+                producer_contract_sha256=args.v17_producer_contract_sha256,
+                progress_path=args.v17_progress,
+                progress_sha256=args.v17_progress_sha256,
+                resume_contract_path=args.v17_resume_contract,
+                resume_contract_sha256=args.v17_resume_contract_sha256,
+                resume_progress_path=args.v17_resume_progress,
+                resume_progress_sha256=args.v17_resume_progress_sha256,
+                output_path=output_path,
+                repo_root=root,
+            )
+        except (OSError, ValueError, RuntimeError, KeyError, TypeError, IndexError, AttributeError) as exc:
+            result = {
+                "schema": "task41.p0.b0.v17.selected_two_cell_independent_check.v1",
+                "status": "INCOMPLETE",
+                "classification": "V17_CHECK_INCOMPLETE",
+                "check_completed": False,
+                "data_integrity": False,
+                "official_result": False,
+                "scientific_qualified": False,
+                "full_owner_unlocked": False,
+                "errors": [f"{type(exc).__name__}: {exc}"],
+                "raw_evidence_retained": True,
+            }
+        _task41_p0_v16_write_new_json(output_path, result)
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        return 0 if result.get("check_completed") is True else 2
     if args.saved_b0_v16_vector_analysis:
         allowed = {
             "saved_b0_v16_vector_analysis", "manifest", "manifest_sha256",
