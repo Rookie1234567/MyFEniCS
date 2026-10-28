@@ -7,6 +7,7 @@ import hashlib
 import json
 import math
 import os
+import subprocess
 import sys
 import time
 from functools import wraps
@@ -96,6 +97,14 @@ _V18_P8_EXECUTION_RECOVERY_REL = Path(
 )
 _V18_P8_EXECUTION_RECOVERY_SUMMARY_REL = Path(
     "docs/task43_hp_adaptivity/outcomes/records/v18_p8_execution_recovery_v3.json"
+)
+_V18_P8_COMPARISON_RECOVERY_REL = Path(
+    "benchmarks/artifacts/task43/v16_p8/preparation/"
+    "v18_p8_comparison_recovery_attempt1.json"
+)
+_V18_P8_COMPARISON_RECOVERY_SUMMARY_REL = Path(
+    "docs/task43_hp_adaptivity/outcomes/records/"
+    "v18_p8_comparison_recovery_v1.json"
 )
 _V18_P8_STAGE_LAUNCHER_REL = Path(
     "benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh"
@@ -963,6 +972,36 @@ def _v18_p8_phase_root(
     return root
 
 
+def _v18_p8_comparison_recovery_root(
+    record: Mapping[str, Any],
+) -> Path:
+    phase = record.get("phases", {}).get("C")
+    expected = {
+        "root": "support/v18_paired_comparison_recovery_attempt1",
+        "work_seconds": 1740,
+        "whole_seconds": 1800,
+        "rss_cap_bytes": 8589934592,
+    }
+    if not isinstance(phase, Mapping) or any(
+        phase.get(key) != value for key, value in expected.items()
+    ):
+        raise ValueError("V18 P8 comparison recovery must bind its unique C-only root and budget")
+    prefix = (ROOT / "benchmarks/artifacts/task43/v16_p8").resolve()
+    relative = Path(str(phase["root"]))
+    if relative.is_absolute() or ".." in relative.parts:
+        raise ValueError("V18 P8 comparison recovery root is not prefix-relative")
+    unresolved = prefix / relative
+    current = prefix
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError(f"V18 P8 comparison recovery root traverses a symlink: {current}")
+    root = unresolved.resolve()
+    if root == prefix or not root.is_relative_to(prefix):
+        raise ValueError("V18 P8 comparison recovery root escaped the artifact prefix")
+    return root
+
+
 def _validate_v18_p8_execution_recovery_record(
     record: Mapping[str, Any],
     *,
@@ -972,6 +1011,7 @@ def _validate_v18_p8_execution_recovery_record(
     contract_sha256: str,
     execution_manifest_path: Path,
     execution_manifest_sha256: str,
+    comparison_recovery: Mapping[str, Any] | None = None,
 ) -> None:
     """Check only the V18 execution delta and its frozen V16/V17 provenance."""
 
@@ -1052,9 +1092,14 @@ def _validate_v18_p8_execution_recovery_record(
         fixture.get("selector") != "src/test/test_task43_p8_execution_recovery.py"
         or fixture_path.is_absolute()
         or ".." in fixture_path.parts
-        or fixture_file.is_symlink()
-        or not fixture_file.is_file()
-        or _sha256_file(fixture_file) != fixture.get("sha256")
+        or (
+            comparison_recovery is None
+            and (
+                fixture_file.is_symlink()
+                or not fixture_file.is_file()
+                or _sha256_file(fixture_file) != fixture.get("sha256")
+            )
+        )
         or tracked_summary.get("targeted_fixture") != dict(fixture)
     ):
         raise ValueError("targeted execution fixture path/hash changed")
@@ -1064,12 +1109,218 @@ def _validate_v18_p8_execution_recovery_record(
     if (
         launcher_path.as_posix() != _V18_P8_STAGE_LAUNCHER_REL.as_posix()
         or launcher_path.is_absolute()
-        or launcher_file.is_symlink()
-        or not launcher_file.is_file()
-        or _sha256_file(launcher_file) != launcher.get("sha256")
+        or (
+            comparison_recovery is None
+            and (
+                launcher_file.is_symlink()
+                or not launcher_file.is_file()
+                or _sha256_file(launcher_file) != launcher.get("sha256")
+            )
+        )
         or tracked_summary.get("launch_script") != dict(launcher)
     ):
         raise ValueError("V18 stage launcher path/hash changed")
+    if comparison_recovery is not None:
+        historical_launcher = (
+            _v18_p8_phase_root(record, "S") / "snapshots/launch.sh"
+        )
+        if (
+            historical_launcher.is_symlink()
+            or not historical_launcher.is_file()
+            or _sha256_file(historical_launcher) != launcher.get("sha256")
+        ):
+            raise ValueError("historical V18 launcher bytes are absent from the S archive")
+
+
+def _load_v18_p8_comparison_recovery(
+    path: Path,
+    *,
+    record: Mapping[str, Any],
+    contract_sha256: str,
+    execution_manifest_path: Path,
+    execution_manifest_sha256: str,
+) -> dict[str, Any]:
+    """Validate a single C-only source delta without rewriting V18 S/F history."""
+
+    manifest_path = Path(path).resolve()
+    expected_path = (ROOT / _V18_P8_COMPARISON_RECOVERY_REL).resolve()
+    if manifest_path != expected_path or manifest_path.is_symlink():
+        raise ValueError("V18 P8 requires the unique C-only comparison-recovery binding")
+    initial_sha256 = _sha256_file(manifest_path)
+    recovery = json.loads(manifest_path.read_text(encoding="utf-8"))
+    summary_path = (ROOT / _V18_P8_COMPARISON_RECOVERY_SUMMARY_REL).resolve()
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    if (
+        recovery.get("schema") != "task43.v18.p8-comparison-recovery.v1"
+        or recovery.get("authorization", {}).get("scope")
+        != "C_only_same_model_comparison_recovery"
+        or recovery.get("authorization", {}).get("phase") != "C"
+        or recovery.get("authorization", {}).get("E_allowed") is not False
+        or recovery.get("contract_sha256") != contract_sha256
+        or recovery.get("original_execution_binding")
+        != {
+            "path": str(execution_manifest_path.resolve()),
+            "sha256": execution_manifest_sha256,
+        }
+        or summary.get("execution_manifest")
+        != {"path": str(expected_path), "sha256": initial_sha256}
+        or summary.get("authorization") != recovery.get("authorization")
+        or summary.get("phases") != recovery.get("phases")
+        or summary.get("source_binding") != recovery.get("source_binding")
+    ):
+        raise ValueError("C-only recovery binding or tracked summary changed its fixed scope")
+    root = _v18_p8_comparison_recovery_root(recovery)
+    old_roots = {
+        _v18_p8_phase_root(record, phase)
+        for phase in _V18_P8_PHASES
+    }
+    if root in old_roots:
+        raise ValueError("C-only recovery reuses a T/S/F/C attempt root")
+
+    source_binding = recovery.get("source_binding", {})
+    historical_sources = record.get("source_binding", {}).get(
+        "current_source_sha256", {}
+    )
+    current_sources = {
+        **_v11_source_snapshot(),
+        _V16_P8_CONTRACT_REL.as_posix(): contract_sha256,
+    }
+    changed = {
+        name
+        for name in current_sources
+        if current_sources[name] != historical_sources.get(name)
+    }
+    if (
+        source_binding.get("historical_source_sha256") != historical_sources
+        or source_binding.get("current_source_sha256") != current_sources
+        or set(current_sources) != set(historical_sources)
+        or source_binding.get("allowed_delta_paths") != sorted(_V18_P8_SOURCE_DELTA)
+        or changed != _V18_P8_SOURCE_DELTA
+        or recovery.get("historical_head")
+        != "196571795199dc0f48fd8ad3daaac258ab3390cb"
+    ):
+        raise ValueError("C-only recovery source delta differs from the three authorized readers")
+
+    prefix = ROOT / "benchmarks/artifacts/task43/v16_p8"
+    old_c_root = _v18_p8_phase_root(record, "C")
+    refs = {
+        "historical_F_joined": _v18_p8_phase_root(record, "F")
+        / "v18_p8_endpoint_joined_terminal.json",
+        "historical_S_joined": _v18_p8_phase_root(record, "S")
+        / "v18_p8_space_joined_terminal.json",
+        "previous_C_failure": old_c_root
+        / "comparison/v16_r9_p8_comparison_failure.json",
+        "previous_C_terminal": old_c_root / "stage_terminal.json",
+        "previous_C_root_observation": prefix
+        / "preparation/v18_C_root_terminal_observation.json",
+        "previous_C_launch_manifest": old_c_root
+        / "snapshots/launch_manifest.json",
+        "preserved_q8_root_observation": old_c_root
+        / "v18_root_preserved_q8_observation.json",
+        "preserved_q8_sample": old_c_root
+        / "comparison/v16_r9_p8_q8_samples.npz",
+    }
+    bound_refs = recovery.get("prior_evidence", {})
+    expected_refs = {
+        name: {"path": str(path.resolve()), "sha256": _sha256_file(path)}
+        for name, path in refs.items()
+        if path.is_file() and not path.is_symlink()
+    }
+    if set(expected_refs) != set(refs) or bound_refs != expected_refs:
+        raise ValueError("C-only recovery prior S/F/C evidence paths or hashes changed")
+    for name, ref in expected_refs.items():
+        if _sha256_file(Path(ref["path"])) != ref["sha256"]:
+            raise ValueError(f"C-only recovery prior evidence changed: {name}")
+
+    f_joined = json.loads(Path(expected_refs["historical_F_joined"]["path"]).read_text())
+    s_joined = json.loads(Path(expected_refs["historical_S_joined"]["path"]).read_text())
+    failure = json.loads(Path(expected_refs["previous_C_failure"]["path"]).read_text())
+    c_terminal = json.loads(Path(expected_refs["previous_C_terminal"]["path"]).read_text())
+    c_launch = json.loads(
+        Path(expected_refs["previous_C_launch_manifest"]["path"]).read_text()
+    )
+    q8_observation = json.loads(
+        Path(expected_refs["preserved_q8_root_observation"]["path"]).read_text()
+    )
+    q8_ref = expected_refs["preserved_q8_sample"]
+    if (
+        f_joined.get("status") != "F_COMPLETE_ROOT_VERIFIED"
+        or s_joined.get("status") != "S_COMPLETE_ROOT_VERIFIED"
+        or f_joined.get("source_head") != recovery.get("historical_head")
+        or s_joined.get("source_head") != recovery.get("historical_head")
+        or failure.get("status") != "FAILED_BEFORE_Q8"
+        or failure.get("completed_q_orders") != []
+        or failure.get("contract_sha256") != contract_sha256
+        or c_terminal.get("classification") != "INCOMPLETE"
+        or c_terminal.get("watchdog_summary", {}).get("classification") != "WORKER_FAILED"
+        or c_launch.get("head") != recovery.get("historical_head")
+        or q8_observation.get("sample") != q8_ref
+        or q8_observation.get("comparison_completed") is not False
+        or q8_observation.get("scientific_acceptance") is not False
+        or q8_ref.get("sha256")
+        != "5475cffe826f45217cebd8df35239f4ba8a4a5813657cf2ca7696ce871af792f"
+    ):
+        raise ValueError("C-only recovery does not bind the preserved failed C/q8 evidence")
+
+    fixture = recovery.get("targeted_fixture", {})
+    fixture_path = Path(str(fixture.get("path", "")))
+    fixture_file = ROOT / fixture_path
+    launcher = recovery.get("launch_script", {})
+    launcher_path = Path(str(launcher.get("path", "")))
+    launcher_file = ROOT / launcher_path
+    if (
+        fixture.get("selector")
+        != "src/test/test_task43_p8_execution_recovery.py"
+        or fixture_path.is_absolute()
+        or ".." in fixture_path.parts
+        or fixture_file.is_symlink()
+        or not fixture_file.is_file()
+        or _sha256_file(fixture_file) != fixture.get("sha256")
+        or summary.get("targeted_fixture") != dict(fixture)
+        or launcher_path.as_posix() != _V18_P8_STAGE_LAUNCHER_REL.as_posix()
+        or launcher_path.is_absolute()
+        or launcher_file.is_symlink()
+        or not launcher_file.is_file()
+        or _sha256_file(launcher_file) != launcher.get("sha256")
+        or summary.get("launch_script") != dict(launcher)
+    ):
+        raise ValueError("C-only recovery current fixture or launcher identity changed")
+    historical_fixture = record["source_binding"]["targeted_fixture"]
+    try:
+        historical_fixture_bytes = subprocess.run(
+            [
+                "git",
+                "show",
+                "196571795199dc0f48fd8ad3daaac258ab3390cb:"
+                + str(historical_fixture["path"]),
+            ],
+            cwd=ROOT,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise ValueError("historical T3 fixture bytes cannot be read from its frozen HEAD") from exc
+    if hashlib.sha256(historical_fixture_bytes).hexdigest() != historical_fixture.get(
+        "sha256"
+    ):
+        raise ValueError("historical T3 fixture bytes differ from the passed qualification")
+    if _sha256_file(manifest_path) != initial_sha256:
+        raise RuntimeError("C-only recovery manifest changed while it was read")
+    return {
+        **dict(recovery),
+        "manifest_path": str(manifest_path),
+        "manifest_sha256": initial_sha256,
+        "tracked_summary_path": str(summary_path),
+        "tracked_summary_sha256": _sha256_file(summary_path),
+        "root": str(root),
+        "q8_sample_path": q8_ref["path"],
+        "q8_sample_sha256": q8_ref["sha256"],
+        "launch_script_path": str(launcher_file.resolve()),
+        "launch_script_sha256": _sha256_file(launcher_file),
+        "targeted_fixture_path": str(fixture_file.resolve()),
+        "targeted_fixture_sha256": _sha256_file(fixture_file),
+    }
 
 
 def _load_v18_p8_execution_recovery(
@@ -1078,6 +1329,7 @@ def _load_v18_p8_execution_recovery(
     contract: Mapping[str, Any],
     contract_sha256: str,
     phase: str,
+    comparison_recovery_path: Path | None = None,
 ) -> dict[str, Any]:
     """Read the exact execution-only supplement for a new V18 P8 attempt."""
 
@@ -1104,18 +1356,36 @@ def _load_v18_p8_execution_recovery(
         != "f72e1c8d031de7acc374f0806ddac06099c461c4"
     ):
         raise ValueError("V18 P8 recovery does not preserve original T qualification and V15 protocol identity")
+    comparison_recovery = None
+    historical_sources = record.get("source_binding", {}).get(
+        "current_source_sha256", {}
+    )
+    if comparison_recovery_path is not None:
+        if phase != "C":
+            raise ValueError("C-only comparison recovery is forbidden for T, S or F")
+        comparison_recovery = _load_v18_p8_comparison_recovery(
+            comparison_recovery_path,
+            record=record,
+            contract_sha256=contract_sha256,
+            execution_manifest_path=manifest_path,
+            execution_manifest_sha256=initial_sha256,
+        )
     _validate_v18_p8_execution_recovery_record(
         record,
         tracked_summary=summary,
         prior_qualification=prior,
-        current_source_sha256={
-            **_v11_source_snapshot(),
-            str((ROOT / _V16_P8_CONTRACT_REL).resolve().relative_to(ROOT)):
-                contract_sha256,
-        },
+        current_source_sha256=(
+            historical_sources
+            if comparison_recovery is not None
+            else {
+                **_v11_source_snapshot(),
+                _V16_P8_CONTRACT_REL.as_posix(): contract_sha256,
+            }
+        ),
         contract_sha256=contract_sha256,
         execution_manifest_path=manifest_path,
         execution_manifest_sha256=initial_sha256,
+        comparison_recovery=comparison_recovery,
     )
     test_terminal = None
     test_qualification = None
@@ -1209,9 +1479,17 @@ def _load_v18_p8_execution_recovery(
         tracked_summary_path=str(summary_path),
         tracked_summary_sha256=_sha256_file(summary_path),
         launch_script_path=str((ROOT / _V18_P8_STAGE_LAUNCHER_REL).resolve()),
-        launch_script_sha256=_sha256_file(ROOT / _V18_P8_STAGE_LAUNCHER_REL),
+        launch_script_sha256=record["source_binding"]["launch_script"]["sha256"],
         selected_phase=phase,
     )
+    if comparison_recovery is not None:
+        result["historical_launch_script_archive_path"] = str(
+            (_v18_p8_phase_root(record, "S") / "snapshots/launch.sh").resolve()
+        )
+        result["historical_launch_script_archive_sha256"] = record[
+            "source_binding"
+        ]["launch_script"]["sha256"]
+        result["comparison_recovery"] = comparison_recovery
     if test_terminal is not None:
         result["test_terminal_path"] = str(test_terminal.resolve())
         result["test_terminal_sha256"] = _sha256_file(test_terminal)

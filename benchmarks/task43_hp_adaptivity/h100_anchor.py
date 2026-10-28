@@ -4070,6 +4070,7 @@ def _load_v16_p8_context(
     source_id: str,
     run_root: Path,
     execution_recovery_path: Path | None = None,
+    execution_recovery_record: Mapping[str, Any] | None = None,
 ) -> tuple[dict[str, Any], str, dict[str, Any]]:
     """Load the independent P8 contract and one fixed, root-joined S source."""
 
@@ -4085,12 +4086,37 @@ def _load_v16_p8_context(
     if execution_recovery_path is not None:
         if source_id != "S_MAIN":
             raise ValueError("V18 P8 recovery accepts the freshly measured S_MAIN source only")
-        execution_recovery = _load_v18_p8_execution_recovery(
-            execution_recovery_path,
-            contract=contract,
-            contract_sha256=contract_sha256,
-            phase="F",
-        )
+        if execution_recovery_record is None:
+            execution_recovery = _load_v18_p8_execution_recovery(
+                execution_recovery_path,
+                contract=contract,
+                contract_sha256=contract_sha256,
+                phase="F",
+            )
+        else:
+            expected_execution_path = (
+                _REPOSITORY_ROOT
+                / "benchmarks/artifacts/task43/v16_p8/preparation/"
+                "v18_p8_execution_recovery_attempt3.json"
+            ).resolve()
+            comparison_recovery = execution_recovery_record.get(
+                "comparison_recovery"
+            )
+            if (
+                Path(execution_recovery_path).resolve() != expected_execution_path
+                or execution_recovery_record.get("manifest_path")
+                != str(expected_execution_path)
+                or execution_recovery_record.get("selected_phase") != "C"
+                or execution_recovery_record.get("frozen_protocol", {})
+                .get("contract", {})
+                .get("sha256")
+                != contract_sha256
+                or not isinstance(comparison_recovery, Mapping)
+            ):
+                raise ValueError(
+                    "V18 P8 historical S/F context requires the already validated C recovery binding"
+                )
+            execution_recovery = dict(execution_recovery_record)
         s_root = _v18_p8_phase_root(execution_recovery, "S")
         source_paths = {
             "plan_path": str(s_root / "plan_output/plans/v16_r9_p8.json"),
@@ -4161,7 +4187,10 @@ def _load_v16_p8_context(
             execution_recovery["runtime_identity_path"]
         )
         required_paths["execution_stage_launcher"] = Path(
-            execution_recovery["launch_script_path"]
+            execution_recovery.get(
+                "historical_launch_script_archive_path",
+                execution_recovery["launch_script_path"],
+            )
         )
     if any(not path.is_file() or path.is_symlink() for path in required_paths.values()):
         raise FileNotFoundError("V16 P8 selected S source is missing a fixed product or lifecycle record")
@@ -4239,7 +4268,12 @@ def _load_v16_p8_context(
         ):
             raise ValueError("V16 P8 S source snapshot is absent or changed")
         snapshots[name] = digest
-    expected_sources = _v11_source_snapshot()
+    expected_sources = (
+        dict(execution_recovery["source_binding"]["current_source_sha256"])
+        if execution_recovery is not None
+        and execution_recovery.get("comparison_recovery") is not None
+        else _v11_source_snapshot()
+    )
     expected_sources[Path(contract_path).resolve().relative_to(_REPOSITORY_ROOT).as_posix()] = contract_sha256
     if snapshots != expected_sources:
         raise ValueError(
@@ -4377,7 +4411,15 @@ def _load_v16_p8_context(
         raise ValueError("V18 P8 F launch snapshot does not bind the authorized stage launcher")
     required_s_inputs = {
         **expected_contract_inputs,
-        **before,
+        **{
+            path: digest
+            for path, digest in before.items()
+            if not (
+                execution_recovery is not None
+                and execution_recovery.get("comparison_recovery") is not None
+                and path == str(required_paths["execution_stage_launcher"])
+            )
+        },
         **gate_evidence,
         str(observation_path): str(observation["sha256"]),
         **{

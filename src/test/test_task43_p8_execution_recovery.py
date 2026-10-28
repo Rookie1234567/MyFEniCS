@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 import time
 
+import numpy as np
 import pytest
 
 from benchmarks.task43_hp_adaptivity import (
@@ -24,6 +25,7 @@ from benchmarks.task43_hp_adaptivity import (
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_PATH = ROOT / "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json"
 RECOVERY_PATH = ROOT / round1_candidates._V18_P8_EXECUTION_RECOVERY_REL
+COMPARISON_RECOVERY_PATH = ROOT / round1_candidates._V18_P8_COMPARISON_RECOVERY_REL
 RUNTIME_IDENTITY_PATH = Path(
     os.environ.get("TASK43_V11_ATTEMPT_ROOT", "/tmp")
 ) / "v18_runtime_identity.json"
@@ -95,6 +97,168 @@ def test_02_v18_current_manifest_t_reader_binds_51_sources_and_contract() -> Non
     assert len(current_source) == 51
     assert contract_sha256 == "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b"
     assert contract["authority"]["review_commit"] == "f72e1c8d031de7acc374f0806ddac06099c461c4"
+
+
+@pytest.mark.parametrize("order", ["q8", "q10"])
+def test_v18_p5_h8_candidate_label_allows_only_historical_alias(order: str) -> None:
+    """Exercise the exact saved P5 field consumed by the real comparison loop."""
+
+    contract, _ = round1_candidates._load_v16_p8_contract(CONTRACT_PATH)
+    roles = {item["role"]: item for item in contract["inputs"]}
+    p5_path = ROOT / roles["V15_P5_comparison_record"]["path"]
+    p5 = json.loads(p5_path.read_text(encoding="utf-8"))
+    saved = p5["results"][order]["R9_H8"]
+    assert saved["modal_metrics"]["candidate_label"] == "v11_r9_h8"
+
+    canonical = copy.deepcopy(saved)
+    canonical["modal_metrics"]["candidate_label"] = "R9_H8"
+    compare_round1_candidate._v16_require_saved_p5_candidate_metrics_match(
+        saved,
+        canonical,
+        candidate_label="R9_H8",
+        context=f"P5.{order}.R9_H8",
+    )
+
+    unknown_alias = copy.deepcopy(saved)
+    unknown_alias["modal_metrics"]["candidate_label"] = "v11_h8_unapproved"
+    with pytest.raises(ValueError, match=f"P5\\.{order}\\.R9_H8.modal_metrics.candidate_label"):
+        compare_round1_candidate._v16_require_saved_p5_candidate_metrics_match(
+            unknown_alias,
+            canonical,
+            candidate_label="R9_H8",
+            context=f"P5.{order}.R9_H8",
+        )
+
+    numeric_mismatch = copy.deepcopy(canonical)
+    numeric_mismatch["eta"] = float(numeric_mismatch["eta"]) + 1.0e-6
+    with pytest.raises(ValueError, match=f"P5\\.{order}\\.R9_H8.eta"):
+        compare_round1_candidate._v16_require_saved_p5_candidate_metrics_match(
+            saved,
+            numeric_mismatch,
+            candidate_label="R9_H8",
+            context=f"P5.{order}.R9_H8",
+        )
+
+
+def _load_current_c_recovery():
+    contract, contract_sha256 = round1_candidates._load_v16_p8_contract(
+        CONTRACT_PATH
+    )
+    recovery = round1_candidates._load_v18_p8_execution_recovery(
+        RECOVERY_PATH,
+        contract=contract,
+        contract_sha256=contract_sha256,
+        phase="C",
+        comparison_recovery_path=COMPARISON_RECOVERY_PATH,
+    )
+    return contract, contract_sha256, recovery
+
+
+def test_v18_c_recovery_uses_actual_comparison_and_historical_f_readers() -> None:
+    _, contract_sha256, recovery = _load_current_c_recovery()
+    frozen = compare_round1_candidate._v16_p8_frozen_endpoint(
+        CONTRACT_PATH,
+        ROOT / "docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+        execution_recovery_path=RECOVERY_PATH,
+        comparison_recovery_path=COMPARISON_RECOVERY_PATH,
+    )
+    assert recovery["selected_phase"] == "C"
+    assert frozen["contract_sha256"] == contract_sha256
+    assert frozen["source_id"] == "S_MAIN"
+    assert frozen["comparison_recovery"]["root"] == recovery[
+        "comparison_recovery"
+    ]["root"]
+    assert frozen["source_snapshot"] == recovery["comparison_recovery"][
+        "source_binding"
+    ]["current_source_sha256"]
+    assert frozen["historical_source_snapshot"] == recovery["source_binding"][
+        "current_source_sha256"
+    ]
+
+
+def test_v18_c_recovery_actual_reader_rejects_unapproved_source_delta(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    contract, contract_sha256 = round1_candidates._load_v16_p8_contract(
+        CONTRACT_PATH
+    )
+    original = round1_candidates._v11_source_snapshot
+
+    def with_unapproved_delta() -> dict[str, str]:
+        changed = original()
+        changed["benchmarks/subreaper_watchdog.py"] = "0" * 64
+        return changed
+
+    monkeypatch.setattr(
+        round1_candidates, "_v11_source_snapshot", with_unapproved_delta
+    )
+    with pytest.raises(ValueError, match="C-only recovery source delta"):
+        round1_candidates._load_v18_p8_execution_recovery(
+            RECOVERY_PATH,
+            contract=contract,
+            contract_sha256=contract_sha256,
+            phase="C",
+            comparison_recovery_path=COMPARISON_RECOVERY_PATH,
+        )
+
+
+def test_v18_q8_recovery_reads_bound_archive_without_sampling_or_copying(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    contract, contract_sha256, recovery = _load_current_c_recovery()
+    roles = {item["role"]: item for item in contract["inputs"]}
+    p5_path = (ROOT / roles["V15_P5_q8_union_npz"]["path"]).resolve()
+    with np.load(p5_path, allow_pickle=False) as archive:
+        p5_sample = json.loads(
+            np.asarray(archive["__task43_record_json__"], dtype=np.uint8)
+            .tobytes()
+            .decode("utf-8")
+        )
+        points = np.asarray(archive["points_nm"], dtype=np.float64).copy()
+        weights = np.asarray(archive["weights_nm3"], dtype=np.float64).copy()
+    q8_path = Path(recovery["comparison_recovery"]["q8_sample_path"])
+    with np.load(q8_path, allow_pickle=False) as archive:
+        saved = json.loads(
+            np.asarray(archive["__task43_record_json__"], dtype=np.uint8)
+            .tobytes()
+            .decode("utf-8")
+        )
+    monkeypatch.setattr(
+        compare_round1_candidate,
+        "_sample_field",
+        lambda *_args, **_kwargs: pytest.fail("q8 restoration sampler was called"),
+    )
+    loaded = compare_round1_candidate._v18_load_preserved_q8_sample(
+        q8_path,
+        expected_sha256=recovery["comparison_recovery"]["q8_sample_sha256"],
+        contract_sha256=contract_sha256,
+        f_terminal_sha256=saved["identity"]["F_terminal_sha256"],
+        f_primary_packet_sha256=saved["identity"]["F_primary_packet_sha256"],
+        p5_sample_path=p5_path,
+        p5_sample_sha256=roles["V15_P5_q8_union_npz"]["sha256"],
+        points=points,
+        weights=weights,
+        candidate_identity=saved["identity"]["candidate_identity"],
+        mesh_identity=saved["identity"]["mesh_identity"],
+    )
+    assert loaded["npz_path"] == str(q8_path.resolve())
+    assert loaded["npz_sha256"] == recovery["comparison_recovery"]["q8_sample_sha256"]
+    assert loaded["record"]["identity"]["P8_sampled_once"] is True
+    assert p5_sample["identity"]["quadrature_order"] == 8
+    with pytest.raises(ValueError, match="mixed or unexpected identity"):
+        compare_round1_candidate._v18_load_preserved_q8_sample(
+            q8_path,
+            expected_sha256=recovery["comparison_recovery"]["q8_sample_sha256"],
+            contract_sha256=contract_sha256,
+            f_terminal_sha256="0" * 64,
+            f_primary_packet_sha256=saved["identity"]["F_primary_packet_sha256"],
+            p5_sample_path=p5_path,
+            p5_sample_sha256=roles["V15_P5_q8_union_npz"]["sha256"],
+            points=points,
+            weights=weights,
+            candidate_identity=saved["identity"]["candidate_identity"],
+            mesh_identity=saved["identity"]["mesh_identity"],
+        )
 
 
 def _sha256(path: Path) -> str:

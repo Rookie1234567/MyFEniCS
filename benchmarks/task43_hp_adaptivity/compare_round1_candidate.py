@@ -3163,6 +3163,7 @@ def _v16_p8_frozen_endpoint(
     accepted_parent_selection_record: Path,
     *,
     execution_recovery_path: Path | None = None,
+    comparison_recovery_path: Path | None = None,
 ) -> dict[str, Any]:
     from benchmarks.task43_hp_adaptivity import h100_anchor
     from benchmarks.task43_hp_adaptivity.round1_candidates import (
@@ -3174,12 +3175,15 @@ def _v16_p8_frozen_endpoint(
     )
 
     contract, contract_sha256 = _load_v16_p8_contract(contract_path)
+    if comparison_recovery_path is not None and execution_recovery_path is None:
+        raise ValueError("C-only comparison recovery requires the original V18 execution binding")
     execution_recovery = (
         _load_v18_p8_execution_recovery(
             execution_recovery_path,
             contract=contract,
             contract_sha256=contract_sha256,
             phase="C",
+            comparison_recovery_path=comparison_recovery_path,
         )
         if execution_recovery_path is not None
         else None
@@ -3193,6 +3197,11 @@ def _v16_p8_frozen_endpoint(
             manifest_sha256=execution_recovery["manifest_sha256"],
             contract_sha256=contract_sha256,
         )
+    comparison_recovery = (
+        execution_recovery.get("comparison_recovery")
+        if execution_recovery is not None
+        else None
+    )
     run_root = (
         _v18_p8_phase_root(execution_recovery, "F") / "run"
         if execution_recovery is not None
@@ -3205,9 +3214,75 @@ def _v16_p8_frozen_endpoint(
     launch_root = run_root.parent
     launch_manifest_path = launch_root / "snapshots/launch_manifest.json"
     launch_manifest = _json(launch_manifest_path)
+    comparison_launch_manifest_path = None
+    comparison_launch_manifest_sha256 = None
+    comparison_launch_manifest = None
+    comparison_launch_head = None
+    if comparison_recovery is not None:
+        comparison_root = Path(str(comparison_recovery["root"])).resolve()
+        comparison_launch_manifest_path = (
+            comparison_root / "snapshots/launch_manifest.json"
+        )
+        if (
+            not comparison_launch_manifest_path.is_file()
+            or comparison_launch_manifest_path.is_symlink()
+        ):
+            raise FileNotFoundError("C-only comparison recovery launch snapshot is missing")
+        comparison_launch_manifest_sha256 = _sha256_file(
+            comparison_launch_manifest_path
+        )
+        comparison_launch_manifest = _json(comparison_launch_manifest_path)
+        comparison_launch_head = comparison_launch_manifest.get("head")
+        expected_current_sources = comparison_recovery["source_binding"][
+            "current_source_sha256"
+        ]
+        comparison_source_map = {
+            str(item.get("path")): str(item.get("sha256"))
+            for item in comparison_launch_manifest.get("source", [])
+            if isinstance(item, Mapping)
+        }
+        if (
+            comparison_launch_manifest.get("phase") != "C_RECOVERY"
+            or not isinstance(comparison_launch_head, str)
+            or len(comparison_launch_head) != 40
+            or any(char not in "0123456789abcdef" for char in comparison_launch_head)
+            or comparison_launch_manifest.get("contract_sha256") != contract_sha256
+            or comparison_launch_manifest.get("source_sha256")
+            != expected_current_sources
+            or comparison_source_map != expected_current_sources
+            or comparison_launch_manifest.get("historical_source_sha256")
+            != execution_recovery["source_binding"]["current_source_sha256"]
+            or comparison_launch_manifest.get("historical_head")
+            != "196571795199dc0f48fd8ad3daaac258ab3390cb"
+            or comparison_launch_manifest.get("execution_recovery_binding")
+            != {
+                "path": execution_recovery["manifest_path"],
+                "sha256": execution_recovery["manifest_sha256"],
+                "phase": "C",
+            }
+            or comparison_launch_manifest.get("comparison_recovery_binding")
+            != {
+                "path": comparison_recovery["manifest_path"],
+                "sha256": comparison_recovery["manifest_sha256"],
+                "phase": "C",
+            }
+            or comparison_launch_manifest.get("launch_script")
+            != {
+                "path": comparison_recovery["launch_script_path"],
+                "sha256": comparison_recovery["launch_script_sha256"],
+            }
+        ):
+            raise ValueError("C-only comparison launch snapshot mixes source or recovery generations")
     source_id = str(launch_manifest.get("space_source_id", ""))
     context_options = (
-        {"execution_recovery_path": execution_recovery_path}
+        {
+            "execution_recovery_path": execution_recovery_path,
+            **(
+                {"execution_recovery_record": execution_recovery}
+                if execution_recovery.get("comparison_recovery") is not None
+                else {}
+            ),
+        }
         if execution_recovery_path is not None
         else {}
     )
@@ -3386,8 +3461,13 @@ def _v16_p8_frozen_endpoint(
 
     from benchmarks.task43_hp_adaptivity import round1_candidates
 
-    extra_inputs = (
-        {
+    extra_inputs = None
+    if execution_recovery is not None:
+        historical_launcher_path = execution_recovery.get(
+            "historical_launch_script_archive_path",
+            execution_recovery["launch_script_path"],
+        )
+        extra_inputs = {
             execution_recovery["manifest_path"]: execution_recovery[
                 "manifest_sha256"
             ],
@@ -3406,18 +3486,53 @@ def _v16_p8_frozen_endpoint(
             execution_recovery["runtime_identity_path"]: execution_recovery[
                 "runtime_identity_sha256"
             ],
-            execution_recovery["launch_script_path"]: execution_recovery[
-                "launch_script_sha256"
+            historical_launcher_path: execution_recovery[
+                "historical_launch_script_archive_sha256"
+                if "historical_launch_script_archive_sha256" in execution_recovery
+                else "launch_script_sha256"
             ],
         }
-        if execution_recovery is not None
-        else None
-    )
+        comparison_recovery = execution_recovery.get("comparison_recovery")
+        if comparison_recovery is not None:
+            extra_inputs.update(
+                {
+                    comparison_recovery["manifest_path"]: comparison_recovery[
+                        "manifest_sha256"
+                    ],
+                    comparison_recovery["tracked_summary_path"]: comparison_recovery[
+                        "tracked_summary_sha256"
+                    ],
+                    comparison_recovery["q8_sample_path"]: comparison_recovery[
+                        "q8_sample_sha256"
+                    ],
+                    comparison_recovery["launch_script_path"]: comparison_recovery[
+                        "launch_script_sha256"
+                    ],
+                    comparison_recovery["targeted_fixture_path"]: comparison_recovery[
+                        "targeted_fixture_sha256"
+                    ],
+                    **{
+                        item["path"]: item["sha256"]
+                        for item in comparison_recovery["prior_evidence"].values()
+                    },
+                }
+            )
     contract_inputs = (
         _v16_p8_input_snapshot(contract, additional_inputs=extra_inputs)
         if extra_inputs is not None
         else _v16_p8_input_snapshot(contract)
     )
+    if comparison_launch_manifest is not None:
+        comparison_inputs = {
+            str(item.get("path")): str(item.get("sha256"))
+            for item in comparison_launch_manifest.get("inputs", [])
+            if isinstance(item, Mapping)
+        }
+        if any(
+            comparison_inputs.get(path) != digest
+            for path, digest in contract_inputs.items()
+        ):
+            raise ValueError("C-only launch snapshot omits or changes a fixed comparison input")
     source_snapshot = _v11_source_snapshot()
     source_snapshot[Path(contract_path).resolve().relative_to(ROOT).as_posix()] = contract_sha256
     launch_sources = {
@@ -3425,7 +3540,13 @@ def _v16_p8_frozen_endpoint(
         for item in launch_manifest.get("source", [])
         if isinstance(item, Mapping)
     }
-    if launch_sources != source_snapshot:
+    expected_historical_sources = (
+        execution_recovery["source_binding"]["current_source_sha256"]
+        if execution_recovery is not None
+        and execution_recovery.get("comparison_recovery") is not None
+        else source_snapshot
+    )
+    if launch_sources != expected_historical_sources:
         raise ValueError("V16 P8 F source snapshot differs from the current frozen worker source set")
     selection = next(
         item for item in contract["inputs"] if item["role"] == "R9_selection_transition"
@@ -3668,10 +3789,21 @@ def _v16_p8_frozen_endpoint(
         raise RuntimeError("V16 P8 contract inputs changed during C first-read validation")
     if _verify_v16_p8_source_snapshot(space_binding) != space_binding["input_snapshot"]:
         raise RuntimeError("V16 P8 selected S source changed during C first-read validation")
+    if (
+        comparison_launch_manifest_path is not None
+        and _sha256_file(comparison_launch_manifest_path)
+        != comparison_launch_manifest_sha256
+    ):
+        raise RuntimeError("C-only comparison launch snapshot changed during F first-read validation")
     return {
         "contract": contract,
         "contract_sha256": contract_sha256,
         "execution_recovery": execution_recovery,
+        "comparison_recovery": (
+            execution_recovery.get("comparison_recovery")
+            if execution_recovery is not None
+            else None
+        ),
         "source_id": source_id,
         "run_root": run_root,
         "launch_root": launch_root,
@@ -3691,6 +3823,15 @@ def _v16_p8_frozen_endpoint(
         "lifecycle_snapshot": product_before,
         "contract_input_snapshot": contract_inputs,
         "source_snapshot": source_snapshot,
+        "additional_input_snapshot": dict(extra_inputs or {}),
+        "historical_source_snapshot": (
+            dict(execution_recovery["source_binding"]["current_source_sha256"])
+            if execution_recovery is not None
+            else None
+        ),
+        "comparison_launch_manifest_path": comparison_launch_manifest_path,
+        "comparison_launch_manifest_sha256": comparison_launch_manifest_sha256,
+        "comparison_launch_head": comparison_launch_head,
     }
 
 
@@ -3731,6 +3872,134 @@ def _v16_require_saved_metrics_match(
         return
     if expected != actual:
         raise ValueError(f"{context} differs from the saved P5 value")
+
+
+def _v16_require_saved_p5_candidate_metrics_match(
+    expected: Mapping[str, Any],
+    actual: Mapping[str, Any],
+    *,
+    candidate_label: str,
+    context: str,
+) -> None:
+    """Compare P5 metrics, normalizing only its historical H8 label alias."""
+
+    saved: Mapping[str, Any] = expected
+    modal_metrics = expected.get("modal_metrics")
+    if (
+        candidate_label == "R9_H8"
+        and isinstance(modal_metrics, Mapping)
+        and modal_metrics.get("candidate_label") == "v11_r9_h8"
+    ):
+        normalized_modal_metrics = dict(modal_metrics)
+        normalized_modal_metrics["candidate_label"] = "R9_H8"
+        normalized = dict(expected)
+        normalized["modal_metrics"] = normalized_modal_metrics
+        saved = normalized
+    _v16_require_saved_metrics_match(saved, actual, context=context)
+
+
+def _v18_load_preserved_q8_sample(
+    path: Path,
+    *,
+    expected_sha256: str,
+    contract_sha256: str,
+    f_terminal_sha256: str,
+    f_primary_packet_sha256: str,
+    p5_sample_path: Path,
+    p5_sample_sha256: str,
+    points: np.ndarray,
+    weights: np.ndarray,
+    candidate_identity: Mapping[str, Any],
+    mesh_identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Read the already sampled q8 field and verify its complete saved identity."""
+
+    path = Path(path).resolve()
+    if path.is_symlink() or not path.is_file() or _sha256_file(path) != expected_sha256:
+        raise ValueError("preserved V18 q8 sample path or byte identity differs")
+    expected_members = {
+        "P8_E",
+        "P8_curl_E",
+        "P8_cell_global_ids",
+        "P8_point_cell_local_slots",
+        "P8_point_cell_global_ids",
+        "__task43_record_json__",
+    }
+    with np.load(path, allow_pickle=False) as archive:
+        if set(archive.files) != expected_members:
+            raise ValueError("preserved V18 q8 sample member inventory differs")
+        record = json.loads(
+            np.asarray(archive["__task43_record_json__"], dtype=np.uint8)
+            .tobytes()
+            .decode("utf-8")
+        )
+        identity = record.get("identity", {})
+        if (
+            record.get("schema") != "task43.v16.p8.paired-sample.v1"
+            or record.get("classification")
+            != "measured_P8_only_sample_reusing_hash_bound_P5_points"
+            or record.get("official_result") is not False
+            or record.get("passed") is not False
+            or record.get("selection_eligible") is not False
+            or record.get("candidate_selected") is not False
+            or record.get("continuation_all_false") is not True
+            or identity.get("contract_sha256") != contract_sha256
+            or identity.get("F_terminal_sha256") != f_terminal_sha256
+            or identity.get("F_primary_packet_sha256") != f_primary_packet_sha256
+            or identity.get("P5_sample_path") != str(Path(p5_sample_path).resolve())
+            or identity.get("P5_sample_sha256") != p5_sample_sha256
+            or identity.get("quadrature_order") != 8
+            or identity.get("sample_count") != int(points.shape[0])
+            or identity.get("P8_sampled_once") is not True
+            or identity.get("old_fields_resampled") is not False
+            or identity.get("candidate_identity") != dict(candidate_identity)
+            or identity.get("mesh_identity") != dict(mesh_identity)
+            or identity.get("point_identity") != base._array_identity(points)
+            or identity.get("weight_identity") != base._array_identity(weights)
+        ):
+            raise ValueError("preserved V18 q8 sample has a mixed or unexpected identity")
+        arrays = {
+            name: np.asarray(archive[name]).copy()
+            for name in expected_members - {"__task43_record_json__"}
+        }
+    declared_arrays = record.get("arrays", {})
+    if set(declared_arrays) != expected_members - {"__task43_record_json__"}:
+        raise ValueError("preserved V18 q8 array identity inventory differs")
+    for name, values in arrays.items():
+        if _checkpoint_array_identity(values) != declared_arrays[name]:
+            raise ValueError(f"preserved V18 q8 array identity differs: {name}")
+    npoints = int(points.shape[0])
+    cell_ids = np.asarray(arrays["P8_cell_global_ids"], dtype=np.int64)
+    slots = np.asarray(arrays["P8_point_cell_local_slots"], dtype=np.int64)
+    point_cell_ids = np.asarray(arrays["P8_point_cell_global_ids"], dtype=np.int64)
+    fields = {
+        "E": np.asarray(arrays["P8_E"], dtype=np.complex128),
+        "curl_E": np.asarray(arrays["P8_curl_E"], dtype=np.complex128),
+    }
+    if (
+        fields["E"].shape != (npoints, 3)
+        or fields["curl_E"].shape != (npoints, 3)
+        or not np.isfinite(fields["E"]).all()
+        or not np.isfinite(fields["curl_E"]).all()
+        or cell_ids.ndim != 1
+        or slots.shape != (npoints,)
+        or point_cell_ids.shape != (npoints,)
+        or np.any(slots < 0)
+        or np.any(slots >= cell_ids.size)
+        or not np.array_equal(cell_ids[slots], point_cell_ids)
+    ):
+        raise ValueError("preserved V18 q8 field or point-owner arrays are invalid")
+    if _sha256_file(path) != expected_sha256:
+        raise RuntimeError("preserved V18 q8 sample changed while it was read")
+    return {
+        "record": record,
+        "npz_path": str(path),
+        "npz_sha256": expected_sha256,
+        "fields": fields,
+        "cell_global_ids": cell_ids,
+        "point_cell_local_slots": slots,
+        "point_cell_global_ids": point_cell_ids,
+    }
 
 
 def _restore_v16_p8_field(frozen: Mapping[str, Any]) -> dict[str, Any]:
@@ -3837,12 +4106,15 @@ def compare_v16_p8_paired(
     contract_path: Path,
     attempt_id: str,
     execution_recovery_path: Path | None = None,
+    comparison_recovery_path: Path | None = None,
 ) -> dict[str, Any]:
     """Reuse the fixed P5 R9/H8/Y6 arrays and sample restored P8 exactly once per q."""
 
     if MPI.COMM_WORLD.size != 1:
         raise RuntimeError("V16 P8 paired comparison is fixed to MPI1")
     contract_path = Path(contract_path).resolve()
+    if comparison_recovery_path is not None and execution_recovery_path is None:
+        raise ValueError("C-only comparison recovery requires the original V18 execution binding")
     if execution_recovery_path is None:
         frozen = _v16_p8_frozen_endpoint(
             contract_path, Path(accepted_parent_selection_record).resolve()
@@ -3852,6 +4124,7 @@ def compare_v16_p8_paired(
             contract_path,
             Path(accepted_parent_selection_record).resolve(),
             execution_recovery_path=execution_recovery_path,
+            comparison_recovery_path=comparison_recovery_path,
         )
     from benchmarks.task43_hp_adaptivity import round1_candidates
 
@@ -3862,8 +4135,14 @@ def compare_v16_p8_paired(
     contract = frozen["contract"]
     execution_recovery = frozen.get("execution_recovery")
     output_root = (
-        round1_candidates._v18_p8_phase_root(execution_recovery, "C")
+        Path(execution_recovery["comparison_recovery"]["root"]).resolve()
         / "comparison"
+        if execution_recovery is not None
+        and execution_recovery.get("comparison_recovery") is not None
+        else (
+            round1_candidates._v18_p8_phase_root(execution_recovery, "C")
+            / "comparison"
+        )
         if execution_recovery is not None
         else (
             Path(str(contract["artifact_prefix"]))
@@ -4084,12 +4363,43 @@ def compare_v16_p8_paired(
                 )
             ):
                 raise ValueError(f"V16 P8 P5 q{order} points, weights or saved fields are invalid")
-            p8_samples = _sample_field(p8, points)
+            preserved_q8 = None
+            if (
+                order == "q8"
+                and frozen.get("comparison_recovery") is not None
+            ):
+                comparison_recovery = frozen["comparison_recovery"]
+                preserved_q8 = _v18_load_preserved_q8_sample(
+                    Path(comparison_recovery["q8_sample_path"]),
+                    expected_sha256=comparison_recovery["q8_sample_sha256"],
+                    contract_sha256=frozen["contract_sha256"],
+                    f_terminal_sha256=frozen["lifecycle_snapshot"]["terminal"],
+                    f_primary_packet_sha256=frozen["lifecycle_snapshot"][
+                        "primary_packet"
+                    ],
+                    p5_sample_path=old_sample_path,
+                    p5_sample_sha256=old_sample_sha256,
+                    points=points,
+                    weights=weights,
+                    candidate_identity=frozen["terminal"]["candidate_identity"],
+                    mesh_identity=p8["mesh_identity"],
+                )
+                p8_samples = preserved_q8["fields"]
+            else:
+                p8_samples = _sample_field(p8, points)
             if any(not np.isfinite(value).all() for value in p8_samples.values()):
                 raise ValueError(f"V16 P8 q{order} restored field samples are nonfinite")
-            p8_global_ids, p8_slots = base._cell_slot_for_points(
-                p8["mesh_data"].mesh, p8["axes"], points
-            )
+            if preserved_q8 is None:
+                p8_global_ids, p8_slots = base._cell_slot_for_points(
+                    p8["mesh_data"].mesh, p8["axes"], points
+                )
+            else:
+                p8_global_ids = preserved_q8["cell_global_ids"]
+                p8_slots = preserved_q8["point_cell_local_slots"]
+                if not np.array_equal(
+                    preserved_q8["point_cell_global_ids"], p8_global_ids[p8_slots]
+                ):
+                    raise ValueError("preserved V18 q8 point-owner identity differs")
             boxes = p8["mesh_boxes"]
             if (
                 p8_slots.shape != (points.shape[0],)
@@ -4110,28 +4420,35 @@ def compare_v16_p8_paired(
                 "P8_point_cell_local_slots": np.asarray(p8_slots),
                 "P8_point_cell_global_ids": np.asarray(p8_owner_ids),
             }
-            p8_sample_path = output_root / f"v16_r9_p8_{order}_samples.npz"
-            p8_sample_record = write_atomic_npz(
-                p8_sample_path,
-                p8_sample_arrays,
-                schema="task43.v16.p8.paired-sample.v1",
-                classification="measured_P8_only_sample_reusing_hash_bound_P5_points",
-                identity={
-                    "contract_sha256": frozen["contract_sha256"],
-                    "F_terminal_sha256": frozen["lifecycle_snapshot"]["terminal"],
-                    "F_primary_packet_sha256": frozen["lifecycle_snapshot"]["primary_packet"],
-                    "P5_sample_path": str(old_sample_path),
-                    "P5_sample_sha256": old_sample_sha256,
-                    "quadrature_order": int(order.removeprefix("q")),
-                    "sample_count": int(points.shape[0]),
-                    "point_identity": base._array_identity(points),
-                    "weight_identity": base._array_identity(weights),
-                    "old_fields_resampled": False,
-                    "P8_sampled_once": True,
-                    "candidate_identity": frozen["terminal"]["candidate_identity"],
-                    "mesh_identity": p8["mesh_identity"],
-                },
-            )
+            if preserved_q8 is not None:
+                p8_sample_record = {
+                    "npz_path": preserved_q8["npz_path"],
+                    "npz_sha256": preserved_q8["npz_sha256"],
+                    "reused_preserved_sample": True,
+                }
+            else:
+                p8_sample_path = output_root / f"v16_r9_p8_{order}_samples.npz"
+                p8_sample_record = write_atomic_npz(
+                    p8_sample_path,
+                    p8_sample_arrays,
+                    schema="task43.v16.p8.paired-sample.v1",
+                    classification="measured_P8_only_sample_reusing_hash_bound_P5_points",
+                    identity={
+                        "contract_sha256": frozen["contract_sha256"],
+                        "F_terminal_sha256": frozen["lifecycle_snapshot"]["terminal"],
+                        "F_primary_packet_sha256": frozen["lifecycle_snapshot"]["primary_packet"],
+                        "P5_sample_path": str(old_sample_path),
+                        "P5_sample_sha256": old_sample_sha256,
+                        "quadrature_order": int(order.removeprefix("q")),
+                        "sample_count": int(points.shape[0]),
+                        "point_identity": base._array_identity(points),
+                        "weight_identity": base._array_identity(weights),
+                        "old_fields_resampled": False,
+                        "P8_sampled_once": True,
+                        "candidate_identity": frozen["terminal"]["candidate_identity"],
+                        "mesh_identity": p8["mesh_identity"],
+                    },
+                )
             recomputed_old_results: dict[str, dict[str, Any]] = {}
             for label in ("R9", "R9_H8"):
                 old_field_metrics = base._field_metrics(
@@ -4164,8 +4481,11 @@ def compare_v16_p8_paired(
                     raise ValueError(
                         f"V16 P8 original P5 {order}/{label} result is missing"
                     )
-                _v16_require_saved_metrics_match(
-                    expected_result, recomputed, context=f"P5.{order}.{label}"
+                _v16_require_saved_p5_candidate_metrics_match(
+                    expected_result,
+                    recomputed,
+                    candidate_label=label,
+                    context=f"P5.{order}.{label}",
                 )
                 recomputed_old_results[label] = recomputed
             p8_case_samples = p8_samples
@@ -4239,6 +4559,7 @@ def compare_v16_p8_paired(
                     "P5_sample_sha256": old_sample_sha256,
                     "old_fields_resampled": False,
                     "P8_sampled_once": True,
+                    "reused_preserved_sample_archive": preserved_q8 is not None,
                     "sample_count": int(points.shape[0]),
                 },
             }
@@ -4297,39 +4618,9 @@ def compare_v16_p8_paired(
             )
         source_end = _v11_source_snapshot()
         source_end[contract_path.relative_to(ROOT).as_posix()] = frozen["contract_sha256"]
-        execution_inputs = (
-            {
-                execution_recovery["manifest_path"]: execution_recovery[
-                    "manifest_sha256"
-                ],
-                execution_recovery["tracked_summary_path"]: execution_recovery[
-                    "tracked_summary_sha256"
-                ],
-                execution_recovery["test_terminal_path"]: execution_recovery[
-                    "test_terminal_sha256"
-                ],
-                execution_recovery["test_qualification_path"]: execution_recovery[
-                    "test_qualification_sha256"
-                ],
-                execution_recovery["test_root_observation_path"]: execution_recovery[
-                    "test_root_observation_sha256"
-                ],
-                execution_recovery["runtime_identity_path"]: execution_recovery[
-                    "runtime_identity_sha256"
-                ],
-                execution_recovery["launch_script_path"]: execution_recovery[
-                    "launch_script_sha256"
-                ],
-            }
-            if execution_recovery is not None
-            else None
-        )
-        inputs_end = (
-            round1_candidates._v16_p8_input_snapshot(
-                contract, additional_inputs=execution_inputs
-            )
-            if execution_inputs is not None
-            else round1_candidates._v16_p8_input_snapshot(contract)
+        additional_inputs = frozen["additional_input_snapshot"] or None
+        inputs_end = round1_candidates._v16_p8_input_snapshot(
+            contract, additional_inputs=additional_inputs
         )
         if (
             source_end != source_start
@@ -4362,6 +4653,44 @@ def compare_v16_p8_paired(
                     "phase": "C",
                 }
                 if execution_recovery is not None
+                else None
+            ),
+            "comparison_recovery_binding": (
+                {
+                    "path": frozen["comparison_recovery"]["manifest_path"],
+                    "sha256": frozen["comparison_recovery"]["manifest_sha256"],
+                    "phase": "C",
+                    "root": frozen["comparison_recovery"]["root"],
+                    "launch_manifest_path": str(
+                        frozen["comparison_launch_manifest_path"]
+                    ),
+                    "launch_manifest_sha256": frozen[
+                        "comparison_launch_manifest_sha256"
+                    ],
+                }
+                if frozen["comparison_recovery"] is not None
+                else None
+            ),
+            "source_generations": (
+                {
+                    "historical_S_F": {
+                        "head": frozen["comparison_recovery"]["historical_head"],
+                        "source_sha256": frozen["historical_source_snapshot"],
+                        "execution_binding": {
+                            "path": execution_recovery["manifest_path"],
+                            "sha256": execution_recovery["manifest_sha256"],
+                        },
+                    },
+                    "current_C": {
+                        "head": frozen["comparison_launch_head"],
+                        "source_sha256": source_start,
+                        "comparison_binding": {
+                            "path": frozen["comparison_recovery"]["manifest_path"],
+                            "sha256": frozen["comparison_recovery"]["manifest_sha256"],
+                        },
+                    },
+                }
+                if frozen["comparison_recovery"] is not None
                 else None
             ),
             "fixed_reference": "Y6_1",
@@ -4433,6 +4762,7 @@ def main() -> int:
     parser.add_argument("--saved-primary-recovery-binding", type=Path)
     parser.add_argument("--paired-p8-contract", type=Path)
     parser.add_argument("--p8-execution-recovery-binding", type=Path)
+    parser.add_argument("--p8-comparison-recovery-binding", type=Path)
     args = parser.parse_args()
     if not args.attempt_id or Path(args.attempt_id).name != args.attempt_id:
         parser.error("--attempt-id must be one path component")
@@ -4446,6 +4776,10 @@ def main() -> int:
             or args.post_selection_record is not None
             or args.assets_manifest is not None
             or args.validation_reference_root is not None
+            or (
+                args.p8_comparison_recovery_binding is not None
+                and args.p8_execution_recovery_binding is None
+            )
         ):
             parser.error(
                 "V16 P8 paired comparison requires its F run and accepted R9 selection, and rejects other modes"
@@ -4457,6 +4791,10 @@ def main() -> int:
         if args.p8_execution_recovery_binding is not None:
             compare_kwargs["execution_recovery_path"] = (
                 args.p8_execution_recovery_binding
+            )
+        if args.p8_comparison_recovery_binding is not None:
+            compare_kwargs["comparison_recovery_path"] = (
+                args.p8_comparison_recovery_binding
             )
         result = compare_v16_p8_paired(
             args.candidate_run_root.resolve(),
@@ -4483,6 +4821,8 @@ def main() -> int:
         )
     elif args.p8_execution_recovery_binding is not None:
         parser.error("--p8-execution-recovery-binding requires --paired-p8-contract")
+    elif args.p8_comparison_recovery_binding is not None:
+        parser.error("--p8-comparison-recovery-binding requires --paired-p8-contract")
     elif args.diagnostic_contract is not None:
         if (
             args.candidate_run_root is None
