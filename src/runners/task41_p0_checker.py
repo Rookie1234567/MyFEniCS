@@ -380,6 +380,202 @@ def _task41_p0_b0_v17_accumulate_native_then_cells(
     return total
 
 
+def task41_p0_b0_v17_decimal_action_scatter_attribution(
+    *,
+    cells: Sequence[Mapping[str, Any]],
+    b_t_volume: complex,
+    b_t_full: complex,
+    b_alpha_t: complex,
+    observed_y: complex,
+    observed_g: complex,
+    observed_d: complex,
+) -> dict[str, Any]:
+    """Attribute the selected q-row J action, ordered g scatter, and d subtraction.
+
+    Decimal.from_float retains exact stored complex128 components.  Only the
+    selected one-hot q row is dotted against J; no PDE, integral, LU, or GETRS
+    is run, and no full-matrix high-precision action is formed.
+    """
+    from decimal import Decimal, localcontext
+
+    expected_cells = list(TASK41_P0_B0_V17_SELECTED_CELLS)
+    if len(cells) != 2 or [cell.get("cell_id") for cell in cells] != expected_cells:
+        raise ValueError("V17 Decimal action attribution cell order or coverage differs")
+
+    def dc(value: Any) -> tuple[Decimal, Decimal]:
+        scalar = complex(np.complex128(value))
+        return Decimal.from_float(scalar.real), Decimal.from_float(scalar.imag)
+
+    def pair(value: tuple[Decimal, Decimal]) -> list[str]:
+        return [str(value[0]), str(value[1])]
+
+    def add(a: tuple[Decimal, Decimal], b: tuple[Decimal, Decimal]) -> tuple[Decimal, Decimal]:
+        return a[0] + b[0], a[1] + b[1]
+
+    def sub(a: tuple[Decimal, Decimal], b: tuple[Decimal, Decimal]) -> tuple[Decimal, Decimal]:
+        return a[0] - b[0], a[1] - b[1]
+
+    def mul(a: tuple[Decimal, Decimal], b: tuple[Decimal, Decimal]) -> tuple[Decimal, Decimal]:
+        return (a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0])
+
+    def row_dot(row: np.ndarray, vector: np.ndarray) -> tuple[Decimal, Decimal]:
+        total = (Decimal(0), Decimal(0))
+        for left, right in zip(row, vector, strict=True):
+            total = add(total, mul(dc(left), dc(right)))
+        return total
+
+    with localcontext() as context:
+        context.prec = 80
+        bvol, bfull, beta = dc(b_t_volume), dc(b_t_full), dc(b_alpha_t)
+        y, g, d = dc(observed_y), dc(observed_g), dc(observed_d)
+        g_binary = complex(np.complex128(b_t_full))
+        exact_jz: list[tuple[Decimal, Decimal]] = []
+        exact_ju: list[tuple[Decimal, Decimal]] = []
+        saved_actions: list[tuple[Decimal, Decimal]] = []
+        cells_out: list[dict[str, Any]] = []
+        scatter_steps: list[dict[str, Any]] = []
+        scatter_steps_sum = (Decimal(0), Decimal(0))
+        trace_zero = True
+
+        for cell in cells:
+            cid = int(cell["cell_id"])
+            J = np.asarray(cell["J"], dtype=np.complex128)
+            q = np.asarray(cell["q"], dtype=np.complex128)
+            u = np.asarray(cell["u_i"], dtype=np.complex128)
+            t = np.asarray(cell["t_c"], dtype=np.complex128)
+            z = np.asarray(cell["z_c"], dtype=np.complex128)
+            returned = np.asarray(cell["returned_minus_Jz"], dtype=np.complex128)
+            if (
+                J.ndim != 2 or q.shape != (J.shape[0],) or returned.shape != q.shape
+                or u.shape != (J.shape[1],) or z.shape != u.shape or t.shape != q.shape
+                or not all(np.isfinite(a).all() for a in (J, q, u, t, z, returned))
+            ):
+                raise ValueError(f"V17 Decimal action attribution cell {cid} layout is invalid")
+            q_rows = np.flatnonzero(q == (1.0 + 0.0j))
+            if q_rows.shape != (1,):
+                raise ValueError(f"V17 Decimal action attribution cell {cid} q is not one-hot +1")
+            row_index = int(q_rows[0])
+            expected_q = np.zeros(q.size, dtype=np.complex128)
+            expected_q[row_index] = 1.0 + 0.0j
+            if not np.array_equal(q, expected_q) or not np.array_equal(-(J @ z), returned):
+                raise ValueError(f"V17 Decimal action attribution cell {cid} q or returned -Jz differs")
+
+            jz = row_dot(J[row_index], z)
+            ju = row_dot(J[row_index], u)
+            c_saved = dc(returned[row_index])
+            exact_jz.append(jz)
+            exact_ju.append(ju)
+            saved_actions.append(c_saved)
+            j_error_g = add(c_saved, jz)
+            cell_g = complex(np.vdot(q, returned))
+            after = complex(g_binary + cell_g)
+            add_error_g = sub(dc(after), add(dc(g_binary), dc(cell_g)))
+            scatter_steps_sum = add(scatter_steps_sum, add_error_g)
+            scatter_steps.append({
+                "cell_id": cid,
+                "binary64_before": pair(dc(g_binary)),
+                "binary64_cell_term": pair(dc(cell_g)),
+                "binary64_after": pair(dc(after)),
+                "rounding_in_g_addition": pair(add_error_g),
+                "rounding_in_d_sign": pair((-add_error_g[0], -add_error_g[1])),
+            })
+            g_binary = after
+            trace_zero = trace_zero and bool(np.all(t == 0))
+            cells_out.append({
+                "cell_id": cid,
+                "q_selected_local_trace_row": row_index,
+                "decimal_J_row_dot_z": pair(jz),
+                "decimal_J_row_dot_u": pair(ju),
+                "decimal_J_row_dot_z_minus_u": pair(sub(jz, ju)),
+                "returned_minus_Jz_selected_component": pair(c_saved),
+                "J_matvec_rounding_in_g": pair(j_error_g),
+                "J_matvec_rounding_in_d": pair((-j_error_g[0], -j_error_g[1])),
+                "returned_minus_Jz_matches_binary64_J_matvec": True,
+                "trace_is_elementwise_zero": bool(np.all(t == 0)),
+            })
+
+        if not trace_zero:
+            raise ValueError("V17 exact action closure requires both saved trace vectors to be zero")
+        if y != beta:
+            raise ValueError("V17 zero-trace action attribution y does not equal its single Balpha add")
+        if g_binary != complex(np.complex128(observed_g)):
+            raise ValueError("V17 Decimal action attribution g scatter differs from observed g")
+        if complex(np.complex128(observed_y) - np.complex128(observed_g)) != complex(np.complex128(observed_d)):
+            raise ValueError("V17 Decimal action attribution final subtraction differs")
+
+        def total(items: Sequence[tuple[Decimal, Decimal]]) -> tuple[Decimal, Decimal]:
+            result = (Decimal(0), Decimal(0))
+            for item in items:
+                result = add(result, item)
+            return result
+
+        jz_sum, ju_sum, c_sum = total(exact_jz), total(exact_ju), total(saved_actions)
+        action_rounding_g = total([
+            add(c, jz) for c, jz in zip(saved_actions, exact_jz, strict=True)
+        ])
+        action_error_d = (-action_rounding_g[0], -action_rounding_g[1])
+        scatter_error_g = sub(g, add(bfull, c_sum))
+        scatter_error_d = (-scatter_error_g[0], -scatter_error_g[1])
+        final_subtraction_error = sub(d, sub(y, g))
+        local_native = sub(ju_sum, bvol)
+        solve_increment = total([sub(jz, ju) for jz, ju in zip(exact_jz, exact_ju, strict=True)])
+        global_adjustment = add(sub(bvol, bfull), beta)
+        exact_d = add(sub(jz_sum, bfull), beta)
+        decomposed_d = add(add(local_native, solve_increment), global_adjustment)
+        observed_remainder = sub(d, exact_d)
+        reconstructed = add(add(action_error_d, scatter_error_d), final_subtraction_error)
+        closure = sub(observed_remainder, reconstructed)
+        identity_closure = sub(exact_d, decomposed_d)
+        bound = Decimal("1e-60")
+        closed = max(abs(closure[0]), abs(closure[1]), abs(identity_closure[0]), abs(identity_closure[1])) <= bound
+        return {
+            "schema": "task41.p0.b0.v17.decimal_action_scatter_attribution.v1",
+            "status": "DIAGNOSTIC_ONLY",
+            "precision": 80,
+            "input_arithmetic": "Decimal.from_float on stored complex128 components",
+            "scope": "selected one-hot q-row dots, ordered native-first g scatter, final y-g subtraction",
+            "no_new_pde_integral_lu_getrs": True,
+            "cell_order": expected_cells,
+            "per_cell": cells_out,
+            "g_scatter": {
+                "native_rhs_t_full": pair(bfull),
+                "ordered_additions": scatter_steps,
+                "binary64_final_g": pair(dc(g_binary)),
+                "decimal_exact_native_plus_saved_actions": pair(add(bfull, c_sum)),
+                "rounding_in_g": pair(scatter_error_g),
+                "rounding_in_d_sign": pair(scatter_error_d),
+                "ordered_add_rounding_sum_in_g": pair(scatter_steps_sum),
+                "ordered_addition_closure_difference": pair(sub(scatter_error_g, scatter_steps_sum)),
+            },
+            "final_subtraction": {
+                "binary64_y": pair(y),
+                "binary64_g": pair(g),
+                "binary64_y_minus_g": pair(d),
+                "decimal_exact_y_minus_g_operands": pair(sub(y, g)),
+                "rounding_in_d_subtraction": pair(final_subtraction_error),
+            },
+            "signed_closure": {
+                "formula_applicable": True,
+                "exact_local_native_sum_Ju_minus_b_t_volume": pair(local_native),
+                "exact_solve_increment_sum_Jz_minus_Ju": pair(solve_increment),
+                "global_adjustment_b_volume_minus_b_full_plus_b_alpha": pair(global_adjustment),
+                "exact_d_sum_Jz_minus_b_full_plus_b_alpha": pair(exact_d),
+                "decomposed_exact_d": pair(decomposed_d),
+                "identity_closure_difference": pair(identity_closure),
+                "observed_d_minus_exact_d": pair(observed_remainder),
+                "J_matvec_rounding_in_d": pair(action_error_d),
+                "g_scatter_rounding_in_d": pair(scatter_error_d),
+                "final_subtraction_rounding_in_d": pair(final_subtraction_error),
+                "reconstructed_signed_remainder": pair(reconstructed),
+                "closure_difference": pair(closure),
+                "closure_bound_per_component": str(bound),
+                "closed_within_decimal_bound": closed,
+                "t_all_elementwise_zero": trace_zero,
+                "b_alpha_t_is_zero": beta == (Decimal(0), Decimal(0)),
+            },
+        }
+
+
 def task41_p0_b0_v17_signed_cell_identity(
     *,
     K: np.ndarray,
@@ -1120,6 +1316,7 @@ def check_task41_p0_b0_v17_selected_two_cell_report(
         native_volume_t = complex(donor_column["native_volume_rhs"][original_row])
         y_sum = 0.0 + 0.0j
         recomputed_cells = []
+        decimal_action_cells = []
         for row_record in row_cell_records:
             cell_index = int(row_record["cell_index"])
             candidate = candidate_by_cell[cell_index]
@@ -1363,6 +1560,15 @@ def check_task41_p0_b0_v17_selected_two_cell_report(
                 "g0_local": g0_local,
                 "rhs_step_checks": row_record.get("_independent_rhs_step_checks", []),
             }
+            decimal_action_cells.append({
+                "cell_id": cell_index,
+                "J": candidate["J"],
+                "q": candidate["q"],
+                "u_i": u_i,
+                "t_c": t_c,
+                "z_c": z_final,
+                "returned_minus_Jz": minus_Jz,
+            })
         beta_rows = np.asarray(donor_column["b_alpha_rows"], dtype=np.int64)
         beta_values = np.asarray(donor_column["b_alpha_values"], dtype=np.complex128)
         beta_positions = np.flatnonzero(beta_rows == original_row)
@@ -1397,6 +1603,15 @@ def check_task41_p0_b0_v17_selected_two_cell_report(
         )
         if column_record.get("signed_two_cell_identity") != saved_identity:
             raise ValueError(f"V17 column {column_index} signed two-cell identity differs")
+        action_attribution = task41_p0_b0_v17_decimal_action_scatter_attribution(
+            cells=decimal_action_cells,
+            b_t_volume=native_volume_t,
+            b_t_full=native_rhs_t,
+            b_alpha_t=beta_t,
+            observed_y=replay_y,
+            observed_g=replay_g,
+            observed_d=saved_y15 - saved_g15,
+        )
         if any(column_record.get(f"{key}_exact_saved_value_reproduced") is not value for key, value in reproduced.items()):
             raise ValueError(f"V17 column {column_index} saved y/g replay flags differ from recomputation")
         if (
@@ -1423,6 +1638,7 @@ def check_task41_p0_b0_v17_selected_two_cell_report(
                 for cell_index in TASK41_P0_B0_V17_SELECTED_CELLS
             },
             "signed_two_cell_identity": saved_identity,
+            "decimal_action_scatter_attribution": action_attribution,
         })
     if checked_new_artifact_bytes > TASK41_P0_B0_V17_NEW_NPY_EVIDENCE_LIMIT_BYTES:
         raise ValueError("V17 newly persisted NPY evidence exceeds the 128 MiB cap")

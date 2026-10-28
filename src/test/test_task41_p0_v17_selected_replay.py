@@ -11,6 +11,7 @@ from src.runners.task41_p0_checker import (
     TASK41_P0_B0_V17_SELECTED_METADATA_RELATIVE,
     TASK41_P0_B0_V17_SELECTED_METADATA_SHA256,
     _task41_p0_b0_v17_accumulate_native_then_cells,
+    task41_p0_b0_v17_decimal_action_scatter_attribution,
     _task41_p0_b0_v17_normalize_selected_metadata,
     load_task41_p0_b0_v17_selected_cell_metadata,
     task41_p0_b0_v17_signed_cell_identity,
@@ -502,3 +503,84 @@ def test_v17_allocation_gate_uses_live_resource_sampler_each_time(
         item["current_process_cgroup"]["memory_current_bytes"]
         for item in admissions
     ] == [1, 2]
+
+
+def test_v17_decimal_action_scatter_attribution_closes_signed_remainder() -> None:
+    cells = [
+        {
+            "cell_id": 7873,
+            "J": np.asarray([[1.0 + 0.0j]], dtype=np.complex128),
+            "q": np.asarray([1.0 + 0.0j], dtype=np.complex128),
+            "u_i": np.asarray([0.0 + 0.0j], dtype=np.complex128),
+            "t_c": np.asarray([0.0 + 0.0j], dtype=np.complex128),
+            "z_c": np.asarray([-1.0 + 0.0j], dtype=np.complex128),
+            "returned_minus_Jz": np.asarray([1.0 + 0.0j], dtype=np.complex128),
+        },
+        {
+            "cell_id": 8014,
+            "J": np.asarray([[1.0 + 0.0j]], dtype=np.complex128),
+            "q": np.asarray([1.0 + 0.0j], dtype=np.complex128),
+            "u_i": np.asarray([0.0 + 0.0j], dtype=np.complex128),
+            "t_c": np.asarray([0.0 + 0.0j], dtype=np.complex128),
+            "z_c": np.asarray([1.0e16 + 0.0j], dtype=np.complex128),
+            "returned_minus_Jz": np.asarray([-1.0e16 + 0.0j], dtype=np.complex128),
+        },
+    ]
+    native_first = _task41_p0_b0_v17_accumulate_native_then_cells(
+        1.0e16 + 0.0j, (1.0 + 0.0j, -1.0e16 + 0.0j)
+    )
+    result = task41_p0_b0_v17_decimal_action_scatter_attribution(
+        cells=cells,
+        b_t_volume=1.0e16 + 0.0j,
+        b_t_full=1.0e16 + 0.0j,
+        b_alpha_t=0.0 + 0.0j,
+        observed_y=0.0 + 0.0j,
+        observed_g=native_first,
+        observed_d=0.0 + 0.0j,
+    )
+
+    assert result["status"] == "DIAGNOSTIC_ONLY"
+    assert result["no_new_pde_integral_lu_getrs"] is True
+    closure = result["signed_closure"]
+    assert closure["formula_applicable"] is True
+    assert closure["exact_d_sum_Jz_minus_b_full_plus_b_alpha"] == ["-1", "0"]
+    assert closure["observed_d_minus_exact_d"] == ["1", "0"]
+    assert closure["J_matvec_rounding_in_d"] == ["0", "0"]
+    assert closure["g_scatter_rounding_in_d"] == ["1", "0"]
+    assert closure["final_subtraction_rounding_in_d"] == ["0", "0"]
+    assert closure["reconstructed_signed_remainder"] == ["1", "0"]
+    assert closure["closure_difference"] == ["0", "0"]
+    assert closure["closed_within_decimal_bound"] is True
+
+
+def test_v17_decimal_action_attribution_refuses_nonzero_trace_formula() -> None:
+    cells = [
+        {
+            "cell_id": 7873,
+            "J": np.asarray([[1.0 + 0.0j]], dtype=np.complex128),
+            "q": np.asarray([1.0 + 0.0j], dtype=np.complex128),
+            "u_i": np.asarray([0.0 + 0.0j], dtype=np.complex128),
+            "t_c": np.asarray([1.0 + 0.0j], dtype=np.complex128),
+            "z_c": np.asarray([0.0 + 0.0j], dtype=np.complex128),
+            "returned_minus_Jz": np.asarray([0.0 + 0.0j], dtype=np.complex128),
+        },
+        {
+            "cell_id": 8014,
+            "J": np.asarray([[1.0 + 0.0j]], dtype=np.complex128),
+            "q": np.asarray([1.0 + 0.0j], dtype=np.complex128),
+            "u_i": np.asarray([0.0 + 0.0j], dtype=np.complex128),
+            "t_c": np.asarray([0.0 + 0.0j], dtype=np.complex128),
+            "z_c": np.asarray([0.0 + 0.0j], dtype=np.complex128),
+            "returned_minus_Jz": np.asarray([0.0 + 0.0j], dtype=np.complex128),
+        },
+    ]
+    with pytest.raises(ValueError, match="requires both saved trace vectors to be zero"):
+        task41_p0_b0_v17_decimal_action_scatter_attribution(
+            cells=cells,
+            b_t_volume=0.0 + 0.0j,
+            b_t_full=0.0 + 0.0j,
+            b_alpha_t=0.0 + 0.0j,
+            observed_y=0.0 + 0.0j,
+            observed_g=0.0 + 0.0j,
+            observed_d=0.0 + 0.0j,
+        )
