@@ -691,7 +691,7 @@ def test_outer_service_dispatch_passes_v17_mode_to_saved_service() -> None:
     assert kw.value.id == "b0_v17_selected_two_cell_mode"
 
 
-def test_v17_saved_service_route_reaches_donor_loader(
+def test_v17_saved_service_route_reaches_worker_supervision_boundary(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -775,19 +775,107 @@ def test_v17_saved_service_route_reaches_donor_loader(
         "TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256",
         manifest_sha,
     )
+
+    donor_root = fixture_root / "donor_v17_fixture"
+    donor_root.mkdir(parents=True)
+    index_path = fixture_root / "v3_index.json"
+    index_path.parent.mkdir(parents=True, exist_ok=True)
+    roles = (
+        "active_original_rows",
+        "known_field",
+        "native_rhs",
+        "native_volume_rhs",
+        "b_alpha_rows",
+        "b_alpha_values",
+    )
+    source_bindings: dict[int, dict[str, tuple[str, str, int, str, list[int]]]] = {}
+    vector_records: list[dict[str, object]] = []
+    donor_columns: list[dict[str, object]] = []
+    for column in range(2):
+        column_bindings: dict[str, tuple[str, str, int, str, list[int]]] = {}
+        artifacts: dict[str, object] = {}
+        for role in roles:
+            filename = f"column{column}_{role}.bin"
+            payload = f"fixture:{column}:{role}".encode()
+            donor_array = donor_root / filename
+            donor_array.write_bytes(payload)
+            digest = hashlib.sha256(payload).hexdigest()
+            shape = [len(payload)]
+            dtype = "|u1"
+            column_bindings[role] = (filename, digest, len(payload), dtype, shape)
+            vector_records.append({
+                "path": filename,
+                "sha256": digest,
+                "bytes": len(payload),
+                "dtype": dtype,
+                "shape": shape,
+            })
+            artifacts[role] = {
+                "path": filename,
+                "sha256": digest,
+                "bytes": len(payload),
+                "dtype": dtype,
+                "shape": shape,
+            }
+        source_bindings[column] = column_bindings
+        donor_columns.append({"artifacts": artifacts})
+    donor_manifest = {"columns": donor_columns}
+    donor_manifest_path = donor_root / "task41_b0_recovery_manifest.json"
+    donor_manifest_bytes = json.dumps(
+        donor_manifest, sort_keys=True, separators=(",", ":")
+    ).encode() + b"\n"
+    donor_manifest_path.write_bytes(donor_manifest_bytes)
+    donor_manifest_sha = hashlib.sha256(donor_manifest_bytes).hexdigest()
+    index = {
+        "schema": "task41.p0.b0.saved_vector_hash_index.v1",
+        "run_id": "task41extra_b0_p6_phi90_07nm_iterative",
+        "source_sha": "afbe91e5947ed18fb74d7105097e129c1b8b4cc7",
+        "postrun_sha256_verification": {
+            "all_file_sizes_match": True,
+            "all_manifest_file_hashes_match": True,
+            "manifest_paths_equal_root_npy_inventory": True,
+            "verified_files": 141,
+        },
+        "recovery_manifest": {
+            "sha256": donor_manifest_sha,
+            "status": "FAIL",
+            "stage": "FULL_ACTION_GATE_FAILED",
+            "path": str(donor_manifest_path.relative_to(model_root)),
+        },
+        "run_directory_remote": str(donor_root),
+        "vectors": vector_records,
+    }
+    index_bytes = json.dumps(index, sort_keys=True, separators=(",", ":")).encode() + b"\n"
+    index_path.write_bytes(index_bytes)
     monkeypatch.setattr(
-        workflow,
-        "_task41_p0_v17_readonly_producer_inputs",
-        lambda **_kwargs: (contract, {}, None),
+        checker,
+        "TASK41_P0_B0_V3_VECTOR_INDEX_RELATIVE",
+        index_path.relative_to(root),
+    )
+    monkeypatch.setattr(
+        checker,
+        "TASK41_P0_B0_V3_VECTOR_INDEX_SHA256",
+        hashlib.sha256(index_bytes).hexdigest(),
+    )
+    monkeypatch.setattr(
+        checker,
+        "TASK41_P0_B0_V3_DONOR_MANIFEST_SHA256",
+        donor_manifest_sha,
+    )
+    monkeypatch.setattr(
+        checker,
+        "TASK41_P0_B0_V16_V3_DONOR_RUN_NAME",
+        donor_root.name,
+    )
+    monkeypatch.setattr(
+        checker,
+        "TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS",
+        source_bindings,
     )
 
-    class DonorLoaderReached(Exception):
-        pass
-
-    def stop_at_donor_loader(**_kwargs: object) -> None:
-        raise DonorLoaderReached
-
-    monkeypatch.setattr(checker, "_task41_p0_v16_v3_donor_index", stop_at_donor_loader)
+    ffcx_path = root / worker.TASK41_P0_V17_FFCX_C_SOURCE_RELATIVE
+    ffcx_path.parent.mkdir(parents=True, exist_ok=True)
+    ffcx_path.write_text("/* fixture FFCx source */\n", encoding="utf-8")
     output_root = (
         model_root / "task41_p0_saved_diagnostics_6h" / fixed_window.sha256
         / "selected_incident_replay" / "attempt01"
@@ -798,42 +886,87 @@ def test_v17_saved_service_route_reaches_donor_loader(
         "TASK41_P0_V17_SELECTED_TWO_CELL_REPLAY": "1",
         "TASK41_P0_CHECKER_SOURCE_SHA": source_sha,
     }
+    supervised: dict[str, Any] = {}
 
-    with pytest.raises(DonorLoaderReached):
-        workflow._run_task41_p0_saved_output_service(
-            unit="fixture.service",
-            runtime_prefix=tmp_path / "runtime",
-            environment=environment,
-            window=fixed_window,
-            contract=contract,
-            contract_path=contract_path,
-            contract_sha=contract_sha,
-            case_id="B0",
-            run_root=manifest_path.parent,
-            output_root=output_root,
-            consumer_source_sha=source_sha,
-            checker_only=True,
-            checker_snapshot_path=None,
-            checker_snapshot_sha256=None,
-            b0_v17_selected_two_cell_mode=True,
-            v17_manifest_path=manifest_path,
-            v17_manifest_sha256=manifest_sha,
-            v17_producer_binding={"fixture": "hash-bound-inputs-mocked"},
-            input_path=root / contract_module._task41_case("B0")["input_relative"],
-            activation_command=["fixture-activation"],
-            activation_identity="fixture-activation",
-            preflight={"status": "fixture"},
-            preflight_command=["fixture-preflight"],
-            cgroup_start={"status": "fixture"},
-            service_entry_accounting={"status": "fixture"},
-            service_start_sample={"status": "fixture"},
-            repo_root=root,
-            supervise=lambda **_kwargs: pytest.fail(
-                "V17 route must stop at its mocked donor loader before launching work"
-            ),
-            sha256_file=contract_module.sha256_file,
-        )
+    class WorkerSupervisionBoundaryReached(Exception):
+        pass
 
+    def stop_at_worker(command: list[str], stage_dir: Path, **kwargs: Any) -> dict[str, Any]:
+        supervised.update(command=command, stage_dir=stage_dir, options=kwargs)
+        raise WorkerSupervisionBoundaryReached("fixture stops before subprocess execution")
+
+    result = workflow._run_task41_p0_saved_output_service(
+        unit="fixture.service",
+        runtime_prefix=root / "qualified-runtime",
+        environment=environment,
+        window=fixed_window,
+        contract=contract,
+        contract_path=contract_path,
+        contract_sha=contract_sha,
+        case_id="B0",
+        run_root=manifest_path.parent,
+        output_root=output_root,
+        consumer_source_sha=source_sha,
+        checker_only=True,
+        checker_snapshot_path=None,
+        checker_snapshot_sha256=None,
+        b0_v17_selected_two_cell_mode=True,
+        v17_manifest_path=manifest_path,
+        v17_manifest_sha256=manifest_sha,
+        v17_producer_binding=None,
+        input_path=root / contract_module._task41_case("B0")["input_relative"],
+        activation_command=["fixture-activation"],
+        activation_identity="fixture-activation",
+        preflight={"status": "fixture"},
+        preflight_command=["fixture-preflight"],
+        cgroup_start={"status": "fixture"},
+        service_entry_accounting={"status": "fixture"},
+        service_start_sample={"status": "fixture"},
+        repo_root=root,
+        supervise=stop_at_worker,
+        sha256_file=contract_module.sha256_file,
+    )
+
+    assert result == 3
+    command = supervised["command"]
+    options = supervised["options"]
+    service_dir = output_root.with_name("attempt01.service")
+    assert command[1:4] == [
+        "-m",
+        "src.runners.task41_p0_v4_volume_only_audit",
+        "--v17-selected-two-cell-replay",
+    ]
+    assert command[command.index("--v16-saved-vector-manifest") + 1] == str(manifest_path)
+    assert command[command.index("--v16-saved-vector-manifest-sha256") + 1] == manifest_sha
+    assert command[command.index("--v17-consumer-contract") + 1] == str(contract_path.resolve())
+    assert command[command.index("--v17-consumer-contract-sha256") + 1] == contract_sha
+    assert command[command.index("--v17-pre-admission") + 1] == str(
+        service_dir / "task41_p0_v17_pre_admission.json"
+    )
+    assert command[command.index("--output-dir") + 1] == str(output_root)
+    assert command[command.index("--selected-active-row") + 1] == str(
+        worker.TASK41_P0_V17_ACTIVE_ROW
+    )
+    assert command[command.index("--geometry-policy") + 1] == "mesh_actual_exact"
+    assert command[command.index("--raw-tensor-evaluator") + 1] == "actual_qmetric_blocked_gram"
+    assert command[command.index("--ffcx-c-source") + 1] == str(ffcx_path.resolve())
+    assert supervised["stage_dir"] == service_dir / "v17_selected_two_cell_worker_watchdog"
+    assert options["campaign_phase"] == "numeric"
+    assert options["campaign_phase_authorization"] is None
+    assert options["wall_seconds"] == fixed_window.cutoff_seconds
+    assert not any(arg.startswith("--v17-producer-") for arg in command)
+
+    receipt_path = service_dir / "task41_p0_service_receipt.json"
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["mode"] == "saved_b0_v17_selected_two_cell_replay"
+    assert receipt["workflow_error"] == {
+        "type": "WorkerSupervisionBoundaryReached",
+        "message": "fixture stops before subprocess execution",
+    }
+    assert receipt["v17_pre_admission_sha256"] == contract_module.sha256_file(
+        service_dir / "task41_p0_v17_pre_admission.json"
+    )
+    assert not (output_root / "task41_p0_v17_selected_two_cell_worker.json").exists()
 
 def test_v17_callback_persistence_is_reopened_by_real_checker_cli(
     tmp_path: Path,

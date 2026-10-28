@@ -11418,6 +11418,7 @@ def _run_task41_p0_saved_output_service(
         and not b0_v9_failed_terminal_audit_mode
         and not b0_saved_y_g_comparison_mode
         and not b0_v16_saved_vector_analysis_mode
+        and not b0_v17_selected_two_cell_mode
     ):
         if checker_snapshot_path is None or checker_snapshot_sha256 is None:
             raise ValueError("checker-only service requires an explicitly hash-bound saved-output snapshot")
