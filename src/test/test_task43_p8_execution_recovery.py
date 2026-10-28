@@ -469,6 +469,9 @@ def test_v18_detached_watchdog_signal_lifecycle_records_terminal(
         lifecycle = json.loads(
             (fixture_root / "launcher_exit.json").read_text(encoding="utf-8")
         )
+        stage_terminal = json.loads(
+            (fixture_root / "stage_terminal.json").read_text(encoding="utf-8")
+        )
         if mode == "normal":
             summary = json.loads(
                 (fixture_root / "watchdog/summary.json").read_text(encoding="utf-8")
@@ -490,16 +493,17 @@ def test_v18_detached_watchdog_signal_lifecycle_records_terminal(
             assert summary["descendants_cleared"] is True
             assert summary["remaining_child_pids"] == []
         else:
+            expected_watchdog_exit = 23 if mode == "prewatchdog_nonzero" else 0
             assert code != 0
             assert lifecycle["classification"] == "INCOMPLETE"
+            assert stage_terminal["classification"] == "INCOMPLETE"
+            assert lifecycle["launcher_exit_code"] == code
+            assert stage_terminal["launcher_exit_code"] == code
+            assert lifecycle["watchdog_exit_code"] == expected_watchdog_exit
+            assert stage_terminal["watchdog_exit_code"] == expected_watchdog_exit
             assert lifecycle["cleanup_pass"] is False
             assert lifecycle["summary_pass"] is False
-            if mode == "prewatchdog_nonzero":
-                assert lifecycle["watchdog_exit_code"] == 23
-                assert lifecycle["watchdog_summary"] is None
-            else:
-                assert lifecycle["watchdog_exit_code"] == 0
-                assert lifecycle["watchdog_summary"] is None
+            assert stage_terminal["watchdog_summary"] is None
     finally:
         if process.poll() is None:
             try:
