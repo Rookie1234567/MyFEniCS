@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="3" time="11.709" timestamp="2026-10-28T15:46:39.346016" hostname="fenics-ws01"><testcase classname="src.test.test_task43_p8_execution_recovery" name="test_00_v18_t_records_live_runtime_abi_affinity_parent_and_trace" time="0.175" /><testcase classname="src.test.test_task43_p8_execution_recovery" name="test_01_v18_t_fixture_checks_reuse_the_live_worker_identity" time="0.133" /><testcase classname="src.test.test_task43_p8_execution_recovery" name="test_02_v18_current_manifest_t_reader_binds_51_sources_and_contract" time="4.655"><failure message="NameError: name 'RECOVERY_PATH' is not defined">def test_02_v18_current_manifest_t_reader_binds_51_sources_and_contract() -&gt; None:
+        contract, contract_sha256 = round1_candidates._load_v16_p8_contract(
+            CONTRACT_PATH
+        )
+        recovery = round1_candidates._load_v18_p8_execution_recovery(
+&gt;           RECOVERY_PATH,
+            contract=contract,
+            contract_sha256=contract_sha256,
+            phase="T",
+        )
+E       NameError: name 'RECOVERY_PATH' is not defined
+
+src/test/test_task43_p8_execution_recovery.py:83: NameError</failure></testcase></testsuite></testsuites>

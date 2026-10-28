@@ -1,0 +1,96 @@
+{
+  "schema": "task43.v16.p8-endpoint-root-joined-terminal.v1",
+  "status": "F_COMPLETE_ROOT_VERIFIED",
+  "space_source_id": "S_MAIN",
+  "contract_sha256": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+  "review_commit": "f72e1c8d031de7acc374f0806ddac06099c461c4",
+  "source_head": "196571795199dc0f48fd8ad3daaac258ab3390cb",
+  "authorization_review": {
+    "path": "docs/task43_hp_adaptivity/review_report_v16.md",
+    "sha256": "6269be0ddf9308dc08e139563bf01bbf15385d56dff935cbce3976eb8568c4fb",
+    "commit": "ddbe92264d17f1111dcb551431b3b96d26b0d167"
+  },
+  "execution_recovery_binding": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery_attempt3.json",
+    "sha256": "be6506a97ea0535cdaff85ffbf12c88da54548ccedfb21bd0f452611f22dab53",
+    "phase": "F"
+  },
+  "launcher_exit_code": 0,
+  "watchdog_exit_code": 0,
+  "worker_exit_code": 0,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "root_observation_record": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_endpoint_observation.json",
+    "sha256": "98412be9a8493a39de17378704cf1e658a00cb0985121a7fd4815f5bb9599dc5"
+  },
+  "products": {
+    "terminal": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run/task43_v16_p8_primary_terminal.json",
+      "sha256": "90bd2182cfce5fd37734a3fef494b67281cf509e9892b935075fdb44152a5d47"
+    },
+    "endpoint": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run/task43_round1_candidate_record.json",
+      "sha256": "d48d3986eafebb1981b4f8d8ef3ba0d8c59bfa5b7ca249454449b15f92174ed2"
+    },
+    "primary_packet": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run/primary_state.npz",
+      "sha256": "826f387c702150954a0fc95fa8f15028e0ba290211522947ee600fa89d9771c6"
+    },
+    "raw_gate_checkpoint": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run/primary_raw_vector_audit.json",
+      "sha256": "db78b67b0db5b3ca7d8a0cb0f6539271c832dffc21948264e29b07d2bcbb6382"
+    }
+  },
+  "gates": {
+    "source": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_endpoint_observation.json",
+        "sha256": "98412be9a8493a39de17378704cf1e658a00cb0985121a7fd4815f5bb9599dc5"
+      }
+    },
+    "input": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_endpoint_observation.json",
+        "sha256": "98412be9a8493a39de17378704cf1e658a00cb0985121a7fd4815f5bb9599dc5"
+      }
+    },
+    "resource": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_endpoint_observation.json",
+        "sha256": "98412be9a8493a39de17378704cf1e658a00cb0985121a7fd4815f5bb9599dc5"
+      }
+    },
+    "trace": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_endpoint_observation.json",
+        "sha256": "98412be9a8493a39de17378704cf1e658a00cb0985121a7fd4815f5bb9599dc5"
+      }
+    },
+    "raw": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_endpoint_observation.json",
+        "sha256": "98412be9a8493a39de17378704cf1e658a00cb0985121a7fd4815f5bb9599dc5"
+      }
+    },
+    "space": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_endpoint_observation.json",
+        "sha256": "98412be9a8493a39de17378704cf1e658a00cb0985121a7fd4815f5bb9599dc5"
+      }
+    },
+    "numerical_endpoint": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_endpoint_observation.json",
+        "sha256": "98412be9a8493a39de17378704cf1e658a00cb0985121a7fd4815f5bb9599dc5"
+      }
+    }
+  }
+}

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="10" time="84.698" timestamp="2026-10-28T15:50:52.998979" hostname="fenics-ws01"><testcase classname="src.test.test_task43_p8_execution_recovery" name="test_00_v18_t_records_live_runtime_abi_affinity_parent_and_trace" time="0.097" /><testcase classname="src.test.test_task43_p8_execution_recovery" name="test_01_v18_t_fixture_checks_reuse_the_live_worker_identity" time="0.036" /><testcase classname="src.test.test_task43_p8_execution_recovery" name="test_02_v18_current_manifest_t_reader_binds_51_sources_and_contract" time="4.724" /><testcase classname="src.test.test_task43_p8_execution_recovery" name="test_v18_f_reader_accepts_disk_bound_s_package" time="7.890" /><testcase classname="src.test.test_task43_p8_execution_recovery" name="test_v18_c_reader_accepts_bound_handoff_then_rejects_mixed_binding" time="24.495" /><testcase classname="src.test.test_task43_p8_execution_recovery" name="test_v18_detached_watchdog_signal_lifecycle_records_terminal[normal-None]" time="8.409" /><testcase classname="src.test.test_task43_p8_execution_recovery" name="test_v18_detached_watchdog_signal_lifecycle_records_terminal[term-15]" time="9.850" /><testcase classname="src.test.test_task43_p8_execution_recovery" name="test_v18_detached_watchdog_signal_lifecycle_records_terminal[int-2]" time="8.620" /><testcase classname="src.test.test_task43_p8_execution_recovery" name="test_v18_detached_watchdog_signal_lifecycle_records_terminal[hup-1]" time="10.019" /><testcase classname="src.test.test_task43_p8_execution_recovery" name="test_v18_detached_watchdog_signal_lifecycle_records_terminal[prewatchdog_nonzero-None]" time="1.923"><failure message="KeyError: 'watchdog_summary'">tmp_path = PosixPath('/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt2/fixtures/test_v18_detached_watchdog_sig4')
+mode = 'prewatchdog_nonzero', signum = None
+
+    @pytest.mark.parametrize(
+        ("mode", "signum"),
+        [
+            ("normal", None),
+            ("term", signal.SIGTERM),
+            ("int", signal.SIGINT),
+            ("hup", signal.SIGHUP),
+            ("prewatchdog_nonzero", None),
+            ("missing_summary", None),
+        ],
+    )
+    def test_v18_detached_watchdog_signal_lifecycle_records_terminal(
+        tmp_path: Path, mode: str, signum: int | None
+    ) -&gt; None:
+        script = ROOT / "benchmarks/task43_hp_adaptivity/v18_p8_stage_launch.sh"
+        fixture_root = tmp_path / mode
+        process = subprocess.Popen(
+            ["bash", str(script), "--lifecycle-fixture", str(fixture_root), mode],
+            cwd=ROOT,
+            env=os.environ.copy(),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        try:
+            ready = fixture_root / "fixture_ready.json"
+            resources = fixture_root / "watchdog/resources.jsonl"
+            deadline = time.monotonic() + 15.0
+            needs_resource_sample = mode != "prewatchdog_nonzero"
+            while (
+                (not ready.is_file() or (needs_resource_sample and (not resources.is_file() or resources.stat().st_size == 0)))
+                and process.poll() is None
+                and time.monotonic() &lt; deadline
+            ):
+                time.sleep(0.05)
+            assert ready.is_file(), "fixture launcher did not publish its bound child identity"
+            if needs_resource_sample:
+                assert resources.is_file() and resources.stat().st_size, (
+                    "watchdog did not install handlers and begin resource sampling"
+                )
+            if signum is not None:
+                os.kill(process.pid, signum)
+            code = process.wait(timeout=30.0)
+            lifecycle = json.loads(
+                (fixture_root / "launcher_exit.json").read_text(encoding="utf-8")
+            )
+            if mode == "normal":
+                summary = json.loads(
+                    (fixture_root / "watchdog/summary.json").read_text(encoding="utf-8")
+                )
+                assert code == 0
+                assert lifecycle["classification"] == "COMPLETED"
+                assert lifecycle["watchdog_exit_code"] == 0
+                assert summary["classification"] == "COMPLETED"
+                assert summary["descendants_cleared"] is True
+                assert summary["remaining_child_pids"] == []
+            elif mode in {"term", "int", "hup"}:
+                summary = json.loads(
+                    (fixture_root / "watchdog/summary.json").read_text(encoding="utf-8")
+                )
+                assert code == 128 + signum
+                assert lifecycle["received_signal"] == mode.upper()
+                assert lifecycle["watchdog_exit_code"] == 2
+                assert summary["classification"] == "USER_CONTROLLED_STOP"
+                assert summary["descendants_cleared"] is True
+                assert summary["remaining_child_pids"] == []
+            else:
+                assert code != 0
+                assert lifecycle["classification"] == "INCOMPLETE"
+                assert lifecycle["cleanup_pass"] is False
+                assert lifecycle["summary_pass"] is False
+                if mode == "prewatchdog_nonzero":
+                    assert lifecycle["watchdog_exit_code"] == 23
+&gt;                   assert lifecycle["watchdog_summary"] is None
+E                   KeyError: 'watchdog_summary'
+
+src/test/test_task43_p8_execution_recovery.py:499: KeyError</failure></testcase></testsuite></testsuites>

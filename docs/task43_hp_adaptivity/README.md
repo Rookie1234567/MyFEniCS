@@ -1,6 +1,14 @@
 # Task43：面向三维 Maxwell 的自适应 h/p 网格
 
-## V17 当前结果：P8 空间门通过，求解端点未完成
+## V18 当前结果：P8 求解与两阶比较完成，收益不足以接受
+
+用户明确要求普通工程故障修复后继续。本轮恢复同一 R9_P8：只把 global cell8/root4 的 p5 提至 p6，保持180叶且不分裂网格。实际 FE=110,722，较 R9 增加250；求解残差与独立A6通过。q8/q10比较均为 `NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE`：J=4.020864574738603，改善0.04419737048566574小于冻结εJ=0.12716416232413652。零级s反射率差4.020864574738603e-6仍大于1e-6，不能作为第10次接受更新。
+
+h/p同位置配对已取得：旧H8增加6268个自由度，新P8增加250；虽然P8单位自由度收益点估计较大，但区间跨零，不能认定p优于h。全部工程失败、旧V17不完整端点及其UNKNOWN均保留。五项能力不升级，无合并许可。
+
+[Response V18](response_v18.md) · [机器结果](outcomes/records/v18_r9_p8_scientific_results_v1.json) · [科学结果表](outcomes/summary.md)。本轮8次支持、1次正式恢复，whole合计4984.382091381秒；正式账9/10，历史末槽封存。实验链已完成，因实际精度与收益门未通过，停止新增科学尝试并等待审阅。
+
+## V17 历史结果：P8 空间门通过，求解端点未完成
 
 V16 review 授权的 S→F→C 链执行到 F。S 独立空间审计得到 180 个叶单元、p5/p6 为 27/153、无 h 分裂、独立 FE=110,722（较 R9 增加 250）。F 在 `V11 application worker is not the watchdog's direct child` 父链守卫处留下 incomplete terminal；外层 session=143、launcher exit 文件=0、watchdog exit/summary 缺失，原因未知。C 未运行；没有 P8 primary、R/T/A_volume、q8/q10 或效率结果，也不产生合并资格。详见[Response V17](response_v17.md)和[机器结果](outcomes/records/v17_r9_p8_scientific_results_v1.json)。
 
@@ -36,7 +44,7 @@ P5 whole=1,134.8697960400023 s、RSS采样峰1,621,196,800 B、swap0、退出0/0
 | 执行分支 | `task43_hp_adaptivity` |
 | 建立日期 | 2026-10-22 |
 | 源码基线 | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` |
-| 当前状态 | V17：S空间FE 110,722（ΔFE 250）；F在worker/watchdog父链守卫处不完整，外层143与watchdog终态缺失原因未知；C未运行。正式8/9、P8槽1/1，历史槽封存。见[Response V17](response_v17.md)。 |
+| 当前状态 | V18：P8求解与q8/q10比较完成，FE110722（+250），J4.020864574738603>1，改善不足εJ；formal9/10，旧末槽封存。见[Response V18](response_v18.md)。 |
 | 第一目标 | 在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环 |
 | 第一验证波长 | 13.5 nm；小规模 direct 作数值核验 |
 | 后续方向 | 自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot |
@@ -45,7 +53,7 @@ P5 whole=1,134.8697960400023 s、RSS采样峰1,621,196,800 B、swap0、退出0/0
 
 ## 阅读入口
 
-**当前交付是[Response V17](response_v17.md)：按 V16 review 执行的 S 通过，F 不完整，C 未运行。** V16 review 第9节的 S→F→C 正常链授权已消耗到 F；F 的外层终态原因未知，不据此重试、使用 E 或宣称科学响应。更早阶段见[Response V16](response_v16.md)及旧 review。
+**当前交付是[Response V18](response_v18.md)：用户授权普通工程修复后完成同一P8科学链，数值收益和精度未获接受。** [Response V17](response_v17.md)记录旧失败，终止来源仍UNKNOWN；V18不回写该历史，也不开放其他模型、E或合并。
 
 上一轮[V10正式review](review_report_v10.md)已验收有限静态整改；原执行依据为[正式V9 review第9节](review_report_v9.md)，V10当轮未新增运行。其交付见[Response V10](response_v10.md)、[静态纠正记录](outcomes/records/v10_static_evidence_correction_v1.json)及[纠正版依赖表](outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json)。原V9派生表保留原字节；三个边界的12个字段更正在新文件中。V11/V12/V13有限工程证据与受控停止见[Response V11](response_v11.md)、[Response V12](response_v12.md)和[Response V13](response_v13.md)；没有新增正式 PDE 结果或合并许可。
 

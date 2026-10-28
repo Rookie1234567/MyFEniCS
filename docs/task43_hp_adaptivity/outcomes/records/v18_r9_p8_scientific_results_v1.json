@@ -1,0 +1,475 @@
+{
+  "schema": "task43.v18.r9-p8-scientific-results.v1",
+  "status": "COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE",
+  "scientific_classification": "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE",
+  "official_result": false,
+  "selection_eligible": false,
+  "accepted_state_transition_written": false,
+  "merge_approved": false,
+  "production_qualified": false,
+  "E_status": "NOT_RUN_FROZEN",
+  "model": {
+    "case": "phi90 periodic 3D Maxwell grating",
+    "period_nm": [
+      50,
+      50
+    ],
+    "height_nm": 140,
+    "wavelength_nm": 13.5,
+    "modal_order": 13,
+    "paired_modes": 612,
+    "reference": "Y6_1",
+    "target_cell": {
+      "global_cell": 8,
+      "forest_root_index": 4,
+      "box_nm": [
+        [
+          16.5,
+          5,
+          -10
+        ],
+        [
+          33.5,
+          10,
+          0
+        ]
+      ]
+    },
+    "adaptation": {
+      "p5_to_p6": true,
+      "h_splits": 0
+    },
+    "correction_contract": {
+      "normal": 1,
+      "extra": 0,
+      "actual_F_normal_count": 1,
+      "actual_F_extra_count": 0
+    },
+    "quadrature": {
+      "operator": 15,
+      "incident_port": 28,
+      "field_comparison": [
+        8,
+        10
+      ],
+      "A_volume_material_regions": {
+        "degree": 15,
+        "quadrature_rule": "default",
+        "form_count": 2
+      },
+      "region_volume_check_forms": {
+        "metadata": {},
+        "degree": "automatic",
+        "form_count": 2
+      }
+    }
+  },
+  "source_identity": {
+    "contract_sha256": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+    "historical_T_S_F_head": "196571795199dc0f48fd8ad3daaac258ab3390cb",
+    "current_C_RECOVERY3_head": "75e1e05c8223bd15237162fc869b51637cdfe710",
+    "T_qualification_sha256": "ec41517074133ad2d1ee8a7de9c2e2cbe83702cf88b11e190a36806e27fb54d5",
+    "S_joined_sha256": "ffe22c3febe7f0bb8a47d01e58a140d66adacb098285368aa2a864287c21f472",
+    "F_joined_sha256": "3af1cffd5f87e4bb6ef41f22464b622d68b2f9c36c5ee7cbbf46527f34eed7bc",
+    "C_binding_v3_sha256": "a339a1e97b8661cd58030eda73083808ca1c487275608400c77ea9c6cb405300",
+    "C_joined_sha256": "d76337f95b2c4c62af044b1c0424e6f069d7ce857a5bb94c2eea8c7f4dc894fa",
+    "C_root_observation_sha256": "0415ca8d9b4d86821ce54f7c7da4c707b998eaef595ecb17690c985265e0f0a8",
+    "source_index": "v18_r9_p8_sources/source_index.json",
+    "baseline_commit_full_sha": "405e3aff42ac421a4c99315df1ed9b96941ecbe4",
+    "V16_authorization_review": {
+      "commit": "ddbe92264d17f1111dcb551431b3b96d26b0d167",
+      "review_file": "docs/task43_hp_adaptivity/review_report_v16.md",
+      "review_file_sha256": "6269be0ddf9308dc08e139563bf01bbf15385d56dff935cbce3976eb8568c4fb"
+    },
+    "F_run_head": "196571795199dc0f48fd8ad3daaac258ab3390cb",
+    "C_RECOVERY3_run_head": "75e1e05c8223bd15237162fc869b51637cdfe710",
+    "T3_fixture": {
+      "path": "src/test/test_task43_p8_execution_recovery.py",
+      "sha256_at_T3": "46168e480ce22939806bc0a00ee0cc10cc692187f659e13522e2f593b3955414"
+    },
+    "C_RECOVERY3_fixture": {
+      "path": "src/test/test_task43_p8_execution_recovery.py",
+      "sha256_at_C_RECOVERY3": "a2347a91910322444f479373ea2631d01ade43be6fc46449cd63e657430f7de6"
+    },
+    "user_authorization_scope": "Fix ordinary engineering bugs and continue this same frozen P8 workflow through its numerical gate; this is not an expansion of the V16 review authorization and does not authorize E or later automatic runs."
+  },
+  "space_and_endpoint": {
+    "S": {
+      "whole_seconds": 355.11277669,
+      "leaves": 180,
+      "p5_leaves": 27,
+      "p6_leaves": 153,
+      "actual_h_splits": 0,
+      "FE": 110722,
+      "R9_FE": 110472,
+      "delta_FE": 250,
+      "trace_rows": 35392,
+      "interior_rows": 75330,
+      "raw_broken_active_rows_before_constraints": 116174,
+      "periodic_slave_rows": 5452,
+      "predicted_returned_trace_dtn_rows": 36004,
+      "qualification_limit": "space audit only; no matrix/NNZ assembly, accuracy or merge qualification"
+    },
+    "F": {
+      "whole_seconds": 3663.379578318,
+      "FE": 110722,
+      "trace_rows": 35392,
+      "interior_rows": 75330,
+      "mode_count": 612,
+      "independent_A6": 8.154258542762765e-09,
+      "A6_limit": 1e-08,
+      "normal_before": 7.36358356126758e-11,
+      "normal_after": 5.36565601165842e-13,
+      "normal_count": 1,
+      "extra_count": 0,
+      "R_total": 0.2513584864859189,
+      "T_total": 0.05712592329889687,
+      "A_volume": 0.6915155902132417,
+      "energy_closure": -1.942446203884174e-12,
+      "official_result": false,
+      "selection_eligible": false,
+      "resources": {
+        "sample_rows": 5581,
+        "tree_rss_peak_bytes": 6338056192,
+        "rss_limit_bytes": 34359738368,
+        "task_swap_peak_bytes": 0,
+        "cpu_affinity": [
+          1
+        ],
+        "trace_files": 8,
+        "trace_lines": 1767,
+        "successful_affinity_setters": 3,
+        "unknown_or_abnormal_trace_events": 0,
+        "exit_race_vanished_samples": 2,
+        "following_exit0_empty_child_samples": 4
+      },
+      "full_active_relative_residual": 5.261452776589861e-13,
+      "full_active_relative_residual_limit": 1e-08,
+      "condensed_relative_residual": 5.36565601165842e-13,
+      "condensed_relative_residual_limit": 1e-09,
+      "energy_closure_limit": 1e-05,
+      "actual_returned_rows": 36004,
+      "matrix_nnz_used": 29053038,
+      "matrix_nnz_allocated": 35416466,
+      "R00_s": 0.25132633206457183,
+      "R00_p": 1.581133012287804e-23,
+      "R00_total": 0.25132633206457183,
+      "A_volume_integration": {
+        "automatic_region_volume_form_count": 2,
+        "forms": [
+          {
+            "integral_type": "cell",
+            "metadata": {},
+            "subdomain_id": 3
+          },
+          {
+            "integral_type": "cell",
+            "metadata": {
+              "quadrature_degree": 15,
+              "quadrature_rule": "default"
+            },
+            "subdomain_id": 3
+          },
+          {
+            "integral_type": "cell",
+            "metadata": {},
+            "subdomain_id": 2
+          },
+          {
+            "integral_type": "cell",
+            "metadata": {
+              "quadrature_degree": 15,
+              "quadrature_rule": "default"
+            },
+            "subdomain_id": 2
+          }
+        ],
+        "material_form_count": 2,
+        "material_quadrature_degree": 15,
+        "material_quadrature_rule": "default",
+        "status": "actual_forms_observed"
+      },
+      "full_active_residual_norm": "blocked Gram norm"
+    }
+  },
+  "comparison": {
+    "terminal_status": "COMPLETE_DIAGNOSTIC_ROOT_VERIFIED_NOT_ACCEPTANCE",
+    "whole_seconds": 465.385582418,
+    "tests_this_final_call": {
+      "passed": 3,
+      "failed": 0,
+      "selector_batch_size": 3,
+      "note": "Two alias cases passed in C_RECOVERY2; this was not one final five-case batch."
+    },
+    "resource_and_trace": {
+      "source_count": 51,
+      "source_snapshot_git_current_match": true,
+      "inputs_unchanged": true,
+      "resource_rows": 678,
+      "tree_rss_peak_bytes": 1639280640,
+      "rss_limit_bytes": 8589934592,
+      "task_swap_peak_bytes": 0,
+      "cpu_affinity": [
+        1
+      ],
+      "trace_files": 10,
+      "trace_lines": 838,
+      "getter_events": 29,
+      "setter_events": 0,
+      "normal_SIGCHLD_status0": 4,
+      "exit0_trace_tails": 10,
+      "host_identities_absent_after_exit": true,
+      "vanished_exit_race": {
+        "row": 673,
+        "elapsed_seconds": 460.24501897301525,
+        "worker_pid": 3574825,
+        "following_exit0_empty_child_rows": [
+          674,
+          675,
+          676,
+          677
+        ]
+      }
+    },
+    "thresholds": {
+      "epsilon_J": 0.12716416232413652,
+      "epsilon_G": 9.088158796603444e-06,
+      "J_acceptance_limit": 1.0,
+      "R00_s_abs_limit": 1e-06
+    },
+    "accuracy_failure": {
+      "witness": "power.R00_s",
+      "absolute_difference": 4.020864574738603e-06,
+      "limit": 1e-06,
+      "J": 4.020864574738603,
+      "J_limit": 1.0
+    },
+    "orders": {
+      "q8": {
+        "J": 4.020864574738603,
+        "G": 3.967998186281264e-05,
+        "delta_J": 0.04419737048566574,
+        "delta_G": 2.7685237177407627e-07,
+        "classification": "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE",
+        "P8_efficiency_interval_per_added_FE": [
+          -0.0003318671673538831,
+          0.0006854461312392091
+        ],
+        "H8_interval_upper": 3.472858704001132e-05,
+        "P8_lower_exceeds_H8_upper": false,
+        "sample_count": 565248,
+        "P8_sample_sha256": "5475cffe826f45217cebd8df35239f4ba8a4a5813657cf2ca7696ce871af792f",
+        "sample_action": "preserved q8 archive reused; not resampled",
+        "reference_metrics": {
+          "R9": {
+            "J": 4.065061945224269,
+            "G": 3.995683423458671e-05
+          },
+          "H8_historical": {
+            "J": 3.9745473239816143,
+            "G": 4.547357272406127e-05
+          }
+        }
+      },
+      "q10": {
+        "J": 4.020864574738603,
+        "G": 3.9679981862807887e-05,
+        "delta_J": 0.04419737048566574,
+        "delta_G": 2.768523717739272e-07,
+        "classification": "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE",
+        "P8_efficiency_interval_per_added_FE": [
+          -0.0003318671673538831,
+          0.0006854461312392091
+        ],
+        "H8_interval_upper": 3.472858704001132e-05,
+        "P8_lower_exceeds_H8_upper": false,
+        "sample_count": 1104000,
+        "P8_sample_sha256": "a3f3edca3f1f07fca79c37c1823b1616d6c330c36122ebc405d47ef2f8c20a85",
+        "sample_action": "one new q10 sample",
+        "reference_metrics": {
+          "R9": {
+            "J": 4.065061945224269,
+            "G": 3.9956834234581814e-05
+          },
+          "H8_historical": {
+            "J": 3.9745473239816143,
+            "G": 4.5473572724057846e-05
+          }
+        }
+      }
+    },
+    "interpretation": "Neither q8 nor q10 clears a frozen output-gain gate. P8 efficiency interval crosses zero and its lower bound does not exceed the historical H8 upper bound. This does not show p-refinement is superior to h-refinement.",
+    "saved_array_recomputation": {
+      "classification": "saved_array_arithmetic_no_solve_no_sampling",
+      "wall_seconds": 40.116043168120086,
+      "sha256": "4dc24e61b74e32dc0fcd8dc9d9950581fb2f11d15d4401d8d7c9133dbdd674db"
+    }
+  },
+  "run_accounting": {
+    "support_dispatch_count": 8,
+    "formal_dispatch_count": 1,
+    "formal_dispatch": "F only; user-authorized same-model recovery, no extra scientific solve beyond this one F",
+    "whole_seconds_by_root": {
+      "T1": 24.753636937,
+      "T2": 95.981342056,
+      "T3": 101.654528933,
+      "S": 355.11277669,
+      "F": 3663.379578318,
+      "C0": 243.148277828,
+      "C_RECOVERY1": 3.589317171,
+      "C_RECOVERY2": 31.37705103,
+      "C_RECOVERY3": 465.385582418
+    },
+    "support_whole_seconds": 1321.002513063,
+    "formal_whole_seconds": 3663.379578318,
+    "total_measured_v18_whole_seconds": 4984.382091381,
+    "original_v18_sequence_whole_cap_seconds": 11700,
+    "additional_three_C_recovery_whole_cap_seconds": 5400,
+    "combined_max_whole_cap_seconds": 17100,
+    "V17_failed_F_whole_seconds": "NOT_MEASURED",
+    "readonly_non_driver_costs_seconds": [
+      {
+        "activity": "independent saved-array numerical recomputation",
+        "seconds": 40.116043168120086
+      },
+      {
+        "activity": "independent primary 42-array residual recomputation",
+        "seconds": 0.5373938349075615
+      },
+      {
+        "activity": "partial preserved-q8 G arithmetic before C recovery",
+        "seconds": 3.96355346404016
+      }
+    ],
+    "unmeasured_manual_static_work": "NOT_MEASURED",
+    "formal_accounting": {
+      "before_V18_user_authorized_recovery": "8/9",
+      "after_one_user_authorized_F": "9/10",
+      "P8_formal_slot": "1/1",
+      "historical_slots_remain_sealed": true
+    },
+    "support_dispatches": {
+      "count": 8,
+      "phases": [
+        "T1",
+        "T2",
+        "T3",
+        "S",
+        "C0",
+        "C_RECOVERY1",
+        "C_RECOVERY2",
+        "C_RECOVERY3"
+      ]
+    }
+  },
+  "attempt_ledger": [
+    {
+      "root": "T1",
+      "kind": "support",
+      "whole_seconds": 24.753636937,
+      "outcome": "FAILED_TEST_FIXTURE_NAMEERROR_RECOVERY_PATH"
+    },
+    {
+      "root": "T2",
+      "kind": "support",
+      "whole_seconds": 95.981342056,
+      "outcome": "FAILED_TEST_FIXTURE_TERMINAL_FIELD_MISMATCH"
+    },
+    {
+      "root": "T3",
+      "kind": "support",
+      "whole_seconds": 101.654528933,
+      "outcome": "PASS_LIMITED_V18_EXECUTION_11_OF_11"
+    },
+    {
+      "root": "S",
+      "kind": "support",
+      "whole_seconds": 355.11277669,
+      "outcome": "S_COMPLETE_ROOT_VERIFIED"
+    },
+    {
+      "root": "F",
+      "kind": "formal",
+      "whole_seconds": 3663.379578318,
+      "outcome": "F_COMPLETE_ROOT_VERIFIED_NOT_ACCEPTANCE"
+    },
+    {
+      "root": "C0",
+      "kind": "support",
+      "whole_seconds": 243.148277828,
+      "outcome": "FAILED_COMPARISON_LABEL_ALIAS"
+    },
+    {
+      "root": "C_RECOVERY1",
+      "kind": "support",
+      "whole_seconds": 3.589317171,
+      "outcome": "FAILED_PREWATCHDOG_MANIFEST_MISSING_TARGETED_FIXTURE; runtime/tests_not_run"
+    },
+    {
+      "root": "C_RECOVERY2",
+      "kind": "support",
+      "whole_seconds": 31.37705103,
+      "outcome": "2_ALIAS_CASES_PASSED_1_ACTUAL_READER_CASE_FAILED_13_VS_16_REFS"
+    },
+    {
+      "root": "C_RECOVERY3",
+      "kind": "support",
+      "whole_seconds": 465.385582418,
+      "outcome": "3_REMAINING_SELECTORS_PASSED_THEN_DIAGNOSTIC_COMPARE_COMPLETE"
+    }
+  ],
+  "engineering_scope": {
+    "classification": "research-only Task43 P8 execution-identity/path/lifecycle recovery",
+    "source_diff_vs_V17_delivery": {
+      "insertions": 4647,
+      "deletions": 91,
+      "includes": "source and tracked execution-binding/documentation data as counted by parent review",
+      "measured_at_head": "75e1e05c8223bd15237162fc869b51637cdfe710",
+      "excludes": "final response/evidence/navigation delivery added afterward"
+    },
+    "not_a_production_generic_fix": true,
+    "modified_numerical_core": false,
+    "changed_activation_or_default_watchdog": false,
+    "review_risk": "The change is sizeable for a task-specific research path and warrants external review for maintenance burden; no production promotion is recommended."
+  },
+  "evidence_directory": "v18_r9_p8_sources/",
+  "capability_status": {
+    "space_plan": {
+      "status": "PARTIAL",
+      "reason": "S plan and F endpoint were measured for this single frozen P8 candidate."
+    },
+    "selection": {
+      "status": "PARTIAL",
+      "reason": "Paired comparison is diagnostic; no selection transition was written."
+    },
+    "accuracy": {
+      "status": "NOT_PASSED",
+      "reason": "R00_s absolute difference exceeds 1e-6 and J exceeds 1."
+    },
+    "equal_accuracy_total_cost": {
+      "status": "NOT_ESTABLISHED",
+      "reason": "P8 and H8 were not ranked at equal accuracy; the P8 efficiency interval crosses zero."
+    },
+    "iteration": {
+      "status": "NOT_RUN / NOT_QUALIFIED",
+      "reason": "No iterative comparison was run."
+    }
+  },
+  "future_automatic_authorization": false,
+  "authorization_boundary": "No later dynamic run, E phase, new model, resampling, acceptance transition, or production promotion is automatically authorized.",
+  "delivery_static_validation": {
+    "status": "PASS_STATIC_DELIVERY_CHECK",
+    "hash_references_checked": 71,
+    "unique_files_hashed": 123,
+    "byte_identical_copies_checked": 13,
+    "test_xmls_parsed": 5,
+    "frozen_source_files_unchanged": 51,
+    "current_document_links": "PASS",
+    "json_parse": "PASS",
+    "git_diff_check": "PASS",
+    "new_dynamic_test_or_PDE_runs": 0,
+    "checker_path": "/tmp/task43_v18_final_static_check.py",
+    "checker_sha256": "91010de4ec2e54dc59267a786b3b302da8a7ab049486884d0e5941aed2206a45",
+    "qualification": "Static delivery integrity only; does not grant production, scientific acceptance or merge approval."
+  }
+}

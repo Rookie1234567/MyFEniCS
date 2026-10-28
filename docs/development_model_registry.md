@@ -1,6 +1,22 @@
-# Task43：accepted9/R9冻结，最终空间精度未达（V17 当前收口）
+# Task43：accepted9/R9冻结，h/p配对诊断完成但精度未达（V18）
 
-## V17 当前收口：空间审计完成，正式端点不完整
+## V18 当前模型：P8实际求解完成，固定参考精度与收益未接受
+
+本次在原R9同一单元提高多项式阶数（p5→p6），不细分网格；目的是与旧H8的局部细分比较增加未知量的收益。固定新phi90、50×50×140 nm、13.5 nm、q15/q28、R13完整612通道、Y6_1参考，normal1/extra0。
+
+| 模型/来源 | 独立FE / ΔFE | R_total / T_total / Av | J q10 / G q10 | 状态 |
+|---|---|---|---|---|
+| R9父状态（旧样本复用） | 110472 / 0 | 旧原件不改 | 4.065061945224269 / 3.9956834234581814e-5 | accepted9保持 |
+| H8（旧P5同点数组复算） | 116740 / 6268 | 旧原件不改 | 3.9745473239816143 / 4.5473572724057846e-5 | 旧P4 FAILED保留，诊断完整 |
+| P8（本轮新direct求解） | 110722 / 250 | .2513584864859189 / .05712592329889687 / .6915155902132417 | 4.020864574738603 / 3.9679981862807887e-5 | 完整诊断；精度和明确收益未通过 |
+
+P8 R00_s=.25132633206457183、R00_p=1.581133012287804e-23、总和=.25132633206457183；R00_s与Y6_1差4.020864574738603e-6>1e-6，J>1。q8/q10均NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE，ΔJ=.04419737048566574<εJ=.12716416232413652，G改善2.768523717739272e-7。P8新增FE少但收益/FE区间跨零，不给p优于h结论。612复幅/功率保存在原件与轻证据索引；没有新的接受更新。
+
+求解A6=8.154258542762765e-9≤1e-8，full-active=5.261452776589861e-13≤1e-8，condensed=5.36565601165842e-13≤1e-9；能量闭合差-1.942446203884174e-12。180叶、trace/interior35392/75330、矩阵returned rows36004、NNZ used29053038。F whole3663.379578318秒，树RSS峰6338056192B；最终C465.385582418秒、峰1639280640B，CPU1/task swap0/清理完成。F源码196571795199dc0f48fd8ad3daaac258ab3390cb；C源码75e1e05c8223bd15237162fc869b51637cdfe710。
+
+本轮全部9次调用whole4984.382091381秒（8支持1321.002513063+1正式3663.379578318），包括所有fixture/接线失败；formal9/10，旧末槽封存；旧V17F whole未知仍不补造。五项能力与无合并资格保持。详细数值、测试字节、原件与主控复算见[Response V18](task43_hp_adaptivity/response_v18.md)、[机器结果](task43_hp_adaptivity/outcomes/records/v18_r9_p8_scientific_results_v1.json)和[总表](task43_hp_adaptivity/outcomes/summary.md)。
+
+## V17 历史收口：空间审计完成，正式端点不完整
 
 V16 review授权链已运行S和F。S得到180叶、p5/p6=27/153、无h分裂、独立FE=110,722（较R9 +250）；对象为phi90、50×50×140 nm域、13.5 nm波长下forest root4/global cell8的p5→p6计划。F因 `V11 application worker is not the watchdog's direct child` 守卫不完整，没有official primary。外层session=143、launcher记录=0、watchdog终态缺失，原因及信号来源未知；F whole未测，末资源样本756.7104571810924秒仅为下界。合同配置normal correction=1、extra correction=0，但F未到达实际修正阶段。C未运行，P8的R/T/A_volume、残差、q8/q10和效率都未取得。accepted9/R9、R10拒绝和五项能力裁决保持；正式累计8/9，P8/F槽1/1，无READY或merge approval。详见[Response V17](task43_hp_adaptivity/response_v17.md)与[V17机器结果](task43_hp_adaptivity/outcomes/records/v17_r9_p8_scientific_results_v1.json)。
 

@@ -1,0 +1,70 @@
+from pathlib import Path
+import datetime,hashlib,json,math,time
+import numpy as np
+R=Path('/home/fenics/Projects/NN-Lab-V2');r=R/'benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run';start=time.monotonic()
+def read(p):return json.loads(p.read_text())
+def sha(p):
+ h=hashlib.sha256()
+ with p.open('rb') as f:
+  for x in iter(lambda:f.read(8388608),b''):h.update(x)
+ return h.hexdigest()
+def ref(p):return {'path':str(p),'sha256':sha(p)}
+def ident(a):
+ a=np.ascontiguousarray(a);h=hashlib.sha256();h.update(a.dtype.str.encode('ascii'));h.update(json.dumps(list(a.shape)).encode('ascii'));h.update(a.view(np.uint8));return {'dtype':a.dtype.str,'shape':list(a.shape),'sha256':h.hexdigest()}
+p=r/'primary_state.npz';before=ref(p);checkpoint=read(r/'primary_raw_vector_audit.json')
+with np.load(p,allow_pickle=False) as z:
+ e=json.loads(z['__task43_record_json__'].tobytes());expected=e['arrays'];assert set(z.files)==set(expected)|{'__task43_record_json__'}
+ a={};checks=[]
+ for n in expected:
+  x=z[n];i=ident(x);assert all(i[k]==expected[n][k] for k in i),(n,i,expected[n]);finite=bool(np.isfinite(x).all()) if np.issubdtype(x.dtype,np.number) else None
+  assert finite is not False,n
+  checks.append({'name':n,**i,'finite':finite});a[n]=x
+identity=e['identity'];scope=identity['raw_full_active_scope'];nt=scope['independent_reduced_trace_rows'];ni=scope['active_interior_rows'];nf=scope['active_full_rows'];nraw=nf-ni
+assert nt+ni==identity['independent_active_fe_dofs']==110722
+assert identity['normal_correction_count']==1 and identity['extra_correction_count']==0
+assert identity['ordered_mode_count']==len(identity['ordered_mode_keys'])==612
+assert len({tuple(x) for x in identity['ordered_mode_keys']})==612
+
+def vec(n):
+ v=a[n];assert v.ndim==1 and np.isfinite(v).all(),n;return v
+
+def sq(n):
+ v=vec(n);return float(np.vdot(v,v).real)
+def metric(n,action):
+ v=vec(n)[:nt];w=vec(action);assert v.shape==w.shape
+ z=np.vdot(v,w);assert abs(z.imag)<=5e-11*max(abs(z.real),1.) and z.real>=-5e-11
+ return max(float(z.real),0.)
+def ratio(n,d):
+ assert math.isfinite(d) and d>0;return math.sqrt(n)/math.sqrt(d)
+a6_r=sum(sq('independent_A6_'+x) for x in ['independent_active_residual_trace','independent_active_residual_cell_interior','independent_active_modal_lower_solver_gauge'])
+a6_b=sum(sq('independent_A6_'+x) for x in ['independent_active_rhs_trace','independent_active_rhs_cell_interior','independent_active_modal_lower_solver_gauge_rhs'])
+assert not np.any(vec('independent_A6_independent_active_modal_lower_solver_gauge_rhs'))
+rr='full_active_reduced_trace_dtn_residual_Ax_minus_b_owned';rb='full_active_reduced_trace_dtn_rhs_owned';rx='full_active_reduced_trace_dtn_solution_owned'
+assert len(vec(rr))==len(vec(rb))==len(vec(rx))==nt+612
+assert len(vec('full_active_active_full_rhs'))==len(vec('full_active_active_full_solution'))==len(vec('full_active_eliminated_active_interior_residual'))==nf
+assert not np.any(vec('full_active_eliminated_active_interior_residual')[:nraw])
+full_r=metric(rr,'full_active_reduced_trace_dtn_residual_trace_metric_action')+float(np.vdot(vec(rr)[nt:],vec(rr)[nt:]).real)+sq('full_active_eliminated_active_interior_residual')
+full_b=metric(rb,'full_active_reduced_trace_dtn_rhs_trace_metric_action')+float(np.vdot(vec(rb)[nt:],vec(rb)[nt:]).real)+float(np.vdot(vec('full_active_active_full_rhs')[nraw:],vec('full_active_active_full_rhs')[nraw:]).real)
+for lhs,rhs in [('full_active_active_full_rhs','recovered_active_full_rhs_owned'),('full_active_active_full_solution','recovered_active_full_solution_owned'),(rb,'returned_trace_dtn_rhs'),(rx,'returned_trace_dtn_solution'),('normal_before_normal_correction_rhs','normal_after_normal_correction_rhs'),('normal_after_normal_correction_rhs','returned_trace_dtn_rhs'),('normal_after_normal_correction_solution','returned_trace_dtn_solution'),('normal_after_normal_correction_residual_b_minus_Ax','returned_trace_dtn_b_minus_Ax')]:assert np.array_equal(vec(lhs),vec(rhs)),(lhs,rhs)
+assert np.array_equal(vec(rr),-vec('returned_trace_dtn_b_minus_Ax'))
+returned=ratio(sq('returned_trace_dtn_b_minus_Ax'),sq('returned_trace_dtn_rhs'))
+normal_before=ratio(sq('normal_before_normal_correction_residual_b_minus_Ax'),sq('normal_before_normal_correction_rhs'))
+normal_after=ratio(sq('normal_after_normal_correction_residual_b_minus_Ax'),sq('normal_after_normal_correction_rhs'))
+values={'independent_A6':ratio(a6_r,a6_b),'full_active_gram':ratio(full_r,full_b),'condensed':returned,'normal_before':normal_before,'normal_after':normal_after,'normal_count':identity['normal_correction_count'],'extra_count':identity['extra_correction_count']}
+gates={'A6_le_1e-8':values['independent_A6']<=1e-8,'full_active_le_1e-8':values['full_active_gram']<=1e-8,'condensed_le_1e-9':returned<=1e-9,'normal_strict_decrease':normal_after<normal_before,'normal_once_extra_zero':identity['normal_correction_count']==1 and identity['extra_correction_count']==0}
+for name,key in [('independent_A6','independent_A6'),('full_active_gram','full_active_transformed'),('condensed','returned_condensed')]:assert math.isclose(values[name],checkpoint['audit'][key]['relative_residual'],rel_tol=2e-13,abs_tol=0),(name,values[name],checkpoint['audit'][key])
+assert checkpoint['identity']['primary_packet']['identity']==identity
+assert checkpoint['identity']['primary_packet']['arrays']==expected
+assert checkpoint['identity']['primary_packet']['npz_sha256']==before['sha256']
+pre_meta=read(r/'pre_validation_checkpoint.json');bound=identity['pre_validation_checkpoint'];assert bound['npz_sha256']==sha(r/'pre_validation_checkpoint.npz')
+pre_checks=[]
+with np.load(r/'pre_validation_checkpoint.npz',allow_pickle=False) as z:
+ for n in z.files:
+  if n=='__task43_record_json__':continue
+  assert 'recovered_'+n in a and np.array_equal(z[n],a['recovered_'+n]),n
+  pre_checks.append(n)
+assert before==ref(p)
+result={'schema':'task43.v18.primary-root-array-recomputation.v1','reviewer':'/root','utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'classification':'saved_arrays_recomputation_no_solve_no_sampling','primary':before,'checkpoint':ref(r/'primary_raw_vector_audit.json'),'array_checks':checks,'prevalidation_arrays_identical':pre_checks,'identity':identity,'raw_values':values,'gates':gates,'raw_gate_pass':all(gates.values()),'claimed_raw_audit':checkpoint['audit'],'wall_seconds':time.monotonic()-start}
+out=r.parent/'v18_root_primary_array_recomputation.json'
+with out.open('x') as f:json.dump(result,f,indent=2,ensure_ascii=False);f.write('\n')
+print(json.dumps({'record':ref(out),'values':values,'gates':gates,'arrays':len(checks),'wall_seconds':result['wall_seconds']},indent=2))

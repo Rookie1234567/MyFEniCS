@@ -1,0 +1,52 @@
+from pathlib import Path
+import json,hashlib,math,time,datetime,sys
+import numpy as np
+R=Path('/home/fenics/Projects/NN-Lab-V2');B=R/'benchmarks/artifacts/task43/v16_p8';C=B/(sys.argv[1] if len(sys.argv)>1 else 'support/v18_paired_comparison_recovery_attempt1');p=C/'comparison/v16_r9_p8_paired_comparison.json';start=time.monotonic()
+def sha(p):
+ h=hashlib.sha256()
+ with p.open('rb') as f:
+  for b in iter(lambda:f.read(8388608),b''):h.update(b)
+ return h.hexdigest()
+def ref(p):return {'path':str(p),'sha256':sha(p)}
+def read(p):return json.loads(p.read_text())
+def ident(a):
+ a=np.ascontiguousarray(a);h=hashlib.sha256();h.update(a.dtype.str.encode());h.update(json.dumps(list(a.shape)).encode());h.update(a.view(np.uint8));return {'dtype':a.dtype.str,'shape':list(a.shape),'sha256':h.hexdigest()}
+def close(x,y):assert math.isclose(float(x),float(y),rel_tol=3e-11,abs_tol=1e-15),(x,y)
+def archive_check(z):
+ meta=json.loads(z['__task43_record_json__'].tobytes());checks=[]
+ for n,v in meta['arrays'].items():
+  a=z[n];got=ident(a);assert all(got[k]==v[k] for k in got),n;assert np.isfinite(a).all(),n;checks.append({'name':n,**got})
+ return meta,checks
+record=read(p);assert record['status']=='COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE';assert record['source_identity_start']==record['source_identity_end'];assert record['contract_input_identity_start']==record['contract_input_identity_end'];assert record['P5_old_samples_resampled'] is False
+contract=read(R/'docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json');roles={x['role']:x for x in contract['inputs']};before=ref(p);orders={};k0=2*math.pi/13.5
+for q in ['q8','q10']:
+ old=R/roles[f'V15_P5_{q}_union_npz']['path'];sample=record['results'][q]['R9_P8']['sample'];new=Path(sample['path']);assert sha(old)==roles[f'V15_P5_{q}_union_npz']['sha256']==sample['P5_sample_sha256'];assert sha(new)==sample['sha256'];results={}
+ with np.load(old,allow_pickle=False) as z,np.load(new,allow_pickle=False) as n:
+  om,oc=archive_check(z);nm,nc=archive_check(n);w=z['weights_nm3'];points=z['points_nm'];re=z['Y6_1_E'];rc=z['Y6_1_curl_E'];assert np.all(w>0);close(w.sum(),350000)
+  assert nm['identity']['point_identity']==ident(points) and nm['identity']['weight_identity']==ident(w)
+  assert nm['identity']['P5_sample_sha256']==sha(old) and nm['identity']['old_fields_resampled'] is False and nm['identity']['P8_sampled_once'] is True
+  def l2(v):return float(np.sqrt(np.dot(w,np.sum(abs(v)**2,axis=1))))
+  def gn(e,c):return float(np.sqrt(np.dot(w,np.sum(abs(e)**2+abs(c/k0)**2,axis=1))))
+  for label in ['R9','R9_H8','R9_P8']:
+   e=n['P8_E'] if label=='R9_P8' else z[label+'_E'];c=n['P8_curl_E'] if label=='R9_P8' else z[label+'_curl_E'];given=record['results'][q][label];fm=given['field_metrics'];G=gn(e-re,c-rc)/max(gn(re,rc),math.sqrt(700000));E=l2(e-re)/max(l2(re),math.sqrt(350000));H=l2((c-rc)/k0)/max(l2(rc/k0),math.sqrt(350000));close(G,given['eta']);close(G,fm['G']['relative_with_incident_floor']);close(E,fm['E_total_code']['relative_to_reference_or_floor']);close(H,fm['H_total_A_per_m']['relative_to_reference_or_floor']);close(H,fm['curl_E_over_k0_code']['relative_to_reference_or_floor'])
+   # Same fixed background cancels in the difference; audit raw scattered difference norms without regenerating the background.
+   close(l2(e-re),fm['E_scattered_code']['difference_l2'])
+   scaled={};m=given['modal_metrics']
+   for key,tol in {'R_total':1e-5,'T_total':1e-5,'A_volume':1e-5,'R00_s':1e-6,'R00_p':1e-6,'R00_total':1e-5}.items():scaled['power.'+key]=abs(m['power_absolute_differences'][key])/tol
+   scaled['power.max_individual_channel']=m['maximum_individual_channel_power_ratio_absolute_difference']/1e-6
+   for key,v in m['boundary_amplitude_groups'].items():scaled['amplitude.'+key]=v['relative_with_unit_incident_modal_floor']/1e-4
+   for key in ['E_total_code','H_total_A_per_m','E_scattered_code','H_scattered_A_per_m']:scaled['field.'+key]=fm[key]['relative_to_reference_or_floor']/1e-4
+   scaled['field.G']=G/1e-4;j=max(scaled.values());close(j,given['J_infinity']['value'])
+   for k,v in scaled.items():close(v,given['J_infinity']['components'][k])
+   results[label]={'J':j,'G':G,'E_total_relative':E,'H_total_relative':H,'J_witness':max(scaled,key=scaled.get),'J_components':scaled}
+  dj=results['R9']['J']-results['R9_P8']['J'];dg=results['R9']['G']-results['R9_P8']['G'];ej=record['epsilon_J'];eg=record['epsilon_G'];positive=dj>ej and results['R9_P8']['G']<=results['R9']['G']+eg;negative=results['R9_P8']['J']>results['R9']['J']+ej or results['R9_P8']['G']>results['R9']['G']+eg;classification='POSITIVE_FIXED_REFERENCE_OUTPUT_RESPONSE' if positive else 'NEGATIVE_OR_TRADEOFF_RESPONSE' if negative else 'NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE';assert classification==record['results'][q]['classification']['classification'];close(dj,record['results'][q]['classification']['Delta_J']);close(dg,record['results'][q]['classification']['Delta_G']);eff=record['results'][q]['efficiency_per_added_FE'];assert eff['P8']['Delta_FE']==250 and eff['H8']['Delta_FE']==6268
+  close(eff['P8']['Delta_J_per_added_FE_dof'],dj/250);close(eff['P8']['Delta_G_per_added_FE_dof'],dg/250)
+  lower=(dj-ej)/250;upper=(dj+ej)/250;close(lower,eff['P8']['lower']);close(upper,eff['P8']['upper']);hup=(results['R9']['J']-results['R9_H8']['J']+ej)/6268;rank=positive and lower>hup;assert rank==eff['ranking_qualified']
+  orders[q]={'old':ref(old),'new':ref(new),'old_array_checks':oc,'new_array_checks':nc,'count':len(w),'weight_sum_nm3':float(w.sum()),'results':results,'classification':classification,'Delta_J':dj,'Delta_G':dg,'epsilon_J':ej,'epsilon_G':eg,'P8_efficiency_interval':[lower,upper],'ranking_qualified':rank}
+ assert sha(old)==sample['P5_sample_sha256'] and sha(new)==sample['sha256']
+assert before==ref(p)
+final=orders['q10']['classification'] if orders['q10']['classification']==orders['q8']['classification'] else 'SAMPLING_SENSITIVITY_UNRESOLVED';assert final==record['classification']
+result={'schema':'task43.v18.root-saved-comparison-recomputation.v1','reviewer':'/root','utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'classification':'saved_array_arithmetic_no_solve_no_sampling','comparison':before,'orders':orders,'final_classification':final,'boundary':'independent G/E/curl/H-total ratios and scattered-E difference norm; J arithmetic uses saved component metrics; no fresh background generation or independent modal physics assembly','wall_seconds':time.monotonic()-start}
+out=C/'v18_root_saved_comparison_recomputation.json'
+with out.open('x') as f:json.dump(result,f,indent=2);f.write('\n')
+print(json.dumps({'record':ref(out),'classification':final,'orders':{q:{k:v for k,v in x.items() if k not in ['old_array_checks','new_array_checks','results']} for q,x in orders.items()},'values':{q:{label:{k:v for k,v in x.items() if k!='J_components'} for label,x in data['results'].items()} for q,data in orders.items()},'wall_seconds':result['wall_seconds']},indent=2))

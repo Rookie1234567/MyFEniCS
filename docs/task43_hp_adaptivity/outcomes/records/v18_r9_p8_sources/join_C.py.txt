@@ -1,0 +1,41 @@
+from pathlib import Path
+import json,hashlib,datetime,xml.etree.ElementTree as ET
+R=Path('/home/fenics/Projects/NN-Lab-V2');B=R/'benchmarks/artifacts/task43/v16_p8';C=B/'support/v18_paired_comparison_recovery_attempt3'
+def read(p):return json.loads(p.read_text())
+def ref(p):
+ with p.open('rb') as f:h=hashlib.file_digest(f,'sha256').hexdigest()
+ return {'path':str(p),'sha256':h}
+o_path=B/'preparation/v18_C_recovery_attempt3_root_observation.json';o=read(o_path);t=o['stage_terminal'];s=o['watchdog_summary'];m=read(C/'snapshots/launch_manifest.json');c_path=C/'comparison/v16_r9_p8_paired_comparison.json';c=read(c_path);a_path=C/'v18_root_saved_comparison_recomputation.json';a=read(a_path);rt=read(C/'runtime_identity.json');w=rt['v11_watchdog_worker_identity'];env=rt['runtime_envelope']
+assert t['classification']==s['classification']=='COMPLETED'
+assert t['launcher_exit_code']==t['watchdog_exit_code']==s['leader_exit_code']==0
+assert s['descendants_cleared'] and s['remaining_child_pids']==[]
+assert t['whole_elapsed_seconds']<=1800 and s['sampled_process_tree_rss_peak_bytes']<=8589934592 and s['sampled_process_tree_swap_peak_bytes']==0
+assert not o['resource_issues'] and not o['parse_anomalies'] and not o['setters']
+assert all('si_status=0' in e['raw'] and 'SIGCHLD' in e['raw'] for e in o['signals'])
+assert len(o['tails'])==len(o['trace_files'])==10 and all('exited with 0' in e['raw'] for e in o['tails'])
+assert all(x['expected']==x['snapshot']==x['git_blob']==x['current'] for x in o['source_checks'])
+assert all(x['expected']==x['current'] for x in o['input_checks'])
+assert env['mpi_size']==1 and env['rank_affinity']==[[1]] and all(v=='1' for v in env['v11_math_threads'].values())
+assert len(env['v11_math_threads'])==6 and 'complex128' in env['petsc_scalar_type'] and 'int64' in env['petsc_int_type']
+assert w['direct_watchdog_parent_verified'] and w['tracer_descends_from_watchdog'] and w['tracer_proc_status_verified']
+assert c['source_identity_start']==c['source_identity_end']==m['source_sha256'] and c['contract_input_identity_start']==c['contract_input_identity_end']
+assert c['status']=='COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE' and c['modal_count']==612
+assert c['source_generations']['current_C']['head']==m['head']=='75e1e05c8223bd15237162fc869b51637cdfe710'
+assert all(c[k] is False for k in ['official_result','passed','candidate_selected','selection_eligible']) and c['continuation_all_false']
+assert c['classification']==a['final_classification']=='NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE' and a['comparison']==ref(c_path)
+assert c['results']['q8']['R9_P8']['sample']['reused_preserved_sample_archive'] and not c['results']['q10']['R9_P8']['sample']['reused_preserved_sample_archive']
+assert not c['P5_old_samples_resampled'] and not (C/'comparison/v16_r9_p8_q8_samples.npz').exists()
+xml=ET.parse(C/'recovery_tests.xml');cases=list(xml.iter('testcase'));assert len(cases)==3 and all(x.find('failure') is None and x.find('error') is None and x.find('skipped') is None for x in cases)
+rows=o['resource_rows'];vanished=[(i,x) for i,x in enumerate(rows) if x['vanished_pids']];assert len(vanished)==1 and vanished[0][0]==673 and vanished[0][1]['vanished_pids']==[w['worker_pid']]
+assert all(x['exit_code']==0 and not x['live_or_unreaped_children'] and not x['vanished_pids'] for x in rows[674:])
+ids={str(x['pid']):str(x['start_ticks']) for x in o['process_identities']};sup=read(C/'supervisor_identity.json');ids[str(sup['pid'])]=str(sup['start_ticks']);host=[]
+for pid,ticks in ids.items():
+ p=Path('/proc')/pid/'stat';v=None
+ if p.exists():
+  z=p.read_text().rsplit(')',1)[1].split();v={'state':z[0],'start_ticks':z[19]};assert z[19]!=ticks
+ host.append({'pid':int(pid),'start_ticks':ticks,'same_process_present':False,'current':v})
+source_checks={'count':len(o['source_checks']),'all_snapshot_git_current_match':True,'all_inputs_unchanged':True,'source_head':m['head']}
+result={'schema':'task43.v18.root-comparison-closeout.v1','reviewer':'/root','utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'status':'COMPLETE_DIAGNOSTIC_ROOT_VERIFIED_NOT_ACCEPTANCE','scientific_classification':c['classification'],'comparison':ref(c_path),'root_terminal_observation':ref(o_path),'saved_array_recomputation':ref(a_path),'launch_manifest':ref(C/'snapshots/launch_manifest.json'),'stage_terminal':ref(C/'stage_terminal.json'),'runtime_identity':ref(C/'runtime_identity.json'),'tests':{'xml':ref(C/'recovery_tests.xml'),'passed':3,'failed':0,'cases':[x.attrib['name'] for x in cases],'history':'two unchanged alias cases passed in C recovery attempt2; not a single five-case final batch'},'source_checks':source_checks,'exit_codes':{'launcher':0,'watchdog':0,'worker':0},'whole_seconds':t['whole_elapsed_seconds'],'whole_limit_seconds':1800,'resource':{'sample_rows':len(rows),'tree_rss_peak_bytes':s['sampled_process_tree_rss_peak_bytes'],'rss_limit_bytes':8589934592,'task_swap_peak_bytes':0,'cpu_affinity':[1],'mpi_size':1,'threads':env['v11_math_threads'],'vanished_exit_race':{'row':673,'elapsed_seconds':rows[673]['elapsed_seconds'],'pid':w['worker_pid'],'following_rows_exit0_empty_children':[674,675,676,677],'interpretation':'worker exit race; raw vanished observation retained, not claimed zero'}},'trace':{'files':len(o['trace_files']),'lines':sum(x['line_count'] for x in o['trace_files']),'setters':o['setters'],'signals':o['signals'],'tails':o['tails'],'anomalies':o['parse_anomalies']},'worker_identity':w,'host_post_exit_checks':host,'q8_reused_not_resampled':True,'q10_sampled_once':True,'P5_old_samples_resampled':False,'orders':{q:{'J':c['results'][q]['R9_P8']['J_infinity']['value'],'G':c['results'][q]['R9_P8']['eta'],'classification':c['results'][q]['classification'],'efficiency':c['results'][q]['efficiency_per_added_FE'],'sample':c['results'][q]['R9_P8']['sample']} for q in ['q8','q10']},'FE':c['FE'],'epsilon_J':c['epsilon_J'],'epsilon_G':c['epsilon_G'],'actual_precision_failure':{'R00_s_abs_difference':4.020864574738603e-6,'R00_s_limit':1e-6,'max_individual_channel_abs_difference':c['results']['q10']['R9_P8']['modal_metrics']['maximum_individual_channel_power_ratio_absolute_difference'],'channel_limit':1e-6,'J_limit':1},'official_result':False,'selection_eligible':False,'continuation_all_false':True,'merge_approved':False,'qualification_boundary':a['boundary']}
+out=C/'v18_root_comparison_closeout.json'
+with out.open('x') as f:json.dump(result,f,indent=2,ensure_ascii=False);f.write('\n')
+print(json.dumps({'record':ref(out),'status':result['status'],'classification':c['classification'],'host':host},ensure_ascii=False))

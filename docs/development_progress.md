@@ -1,6 +1,18 @@
-# Task43 当前收口（2026-10-28）：PARTIAL / INCOMPLETE
+# Task43 当前收口（2026-10-28）：P8完整诊断，精度与明确收益未通过
 
-## V17 当前收口：S 完成，F 不完整，C 未运行
+## V18 当前收口：工程恢复完成，明确科学负结果
+
+用户要求普通bug修复后继续，主控与唯一Luna Max执行代理已完成同一P8的T→S→F→C。修复研究入口的恢复身份读取与生命周期留证；T1/T2 fixture失败后T3 11项通过，C0标签兼容错误后保留q8样本，C恢复1缺字段和恢复2严格集合不对称均保留失败，最终恢复3验证剩余3项并完成q10。没有改共享数值核心或环境，也没有用旧通过标签替代新字节验证。
+
+实际P8 FE110722（+250），A6=8.154258542762765e-9通过，R/T/Av=.2513584864859189/.05712592329889687/.6915155902132417。q8/q10 J均4.020864574738603，较R9改善.04419737048566574<εJ.12716416232413652；R00_s差4.020864574738603e-6>1e-6。P8增量比H8的6268小，但效率区间跨零，不能接受第10次更新或宣称p优于h。
+
+本轮正式恢复1次、支持8次，whole4984.382091381秒；formal9/10，历史末槽封存。主控亲读最终trace、资源/退出/清理，并独立复算保存数组的G与J算术；F退出两条、C退出一条vanished采样如实分类，不写成全程零异常。V17原父链消失/信号来源仍UNKNOWN，旧失败不回写。
+
+反思：本轮主控预审漏掉fixture与严格集合对称性，导致可避免的支持失败；C恢复2前代理误将summary字段核验当实际manifest核验，主控拦截修正。恢复身份绑定累积较多研究代码，后续需审查维护范围，不继续建设控制框架。当前完整数据已回答固定同位置h/p实验，真正未过的是精度与可分辨收益门，不再因普通bug搁置。
+
+空间/选择PARTIAL；精度NOT_PASSED；同精度成本NOT_ESTABLISHED；迭代NOT_RUN/NOT_QUALIFIED。不合并、不追加候选，交付后等待明确下一项科学任务及预算。详见[Response V18](task43_hp_adaptivity/response_v18.md)、[机器结果](task43_hp_adaptivity/outcomes/records/v18_r9_p8_scientific_results_v1.json)。
+
+## V17 历史收口：S 完成，F 不完整，C 未运行
 
 V16 review授权的S→F→C链执行到F。S空间审计通过：180叶、p5/p6=27/153、无h分裂、独立FE=110,722，较R9增加250。F在worker/watchdog父链守卫处不完整，没有official primary；外层143、launcher退出文件0与watchdog终态缺失之间的原因和信号来源未知。F watchdog whole未测，末资源样本只给出756.7104571810924秒下界；C未运行。正式累计8/9，P8/F槽1/1；accepted9/R9保持，R10仍拒绝，五项能力不变，无READY或merge approval。参见[Response V17](task43_hp_adaptivity/response_v17.md)、[结果记录](task43_hp_adaptivity/outcomes/records/v17_r9_p8_scientific_results_v1.json)及[精简来源](task43_hp_adaptivity/outcomes/records/v17_r9_p8_sources/README.md)。
 

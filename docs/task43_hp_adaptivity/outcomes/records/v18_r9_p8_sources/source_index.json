@@ -1,0 +1,929 @@
+{
+  "schema": "task43.v18.p8.closeout-index.v4",
+  "index_role": "Navigation and transcription aid only; not an independent gate, not a runner, and not a substitute for review of ignored originals.",
+  "path_bases": {
+    "all_paths_in_this_file": "repository-root-relative unless the field is explicitly named absolute_source_path",
+    "copied_records": "copied_compact_outputs[*].path and source_path are repository-root-relative; path is not relative to this index directory",
+    "original_ignored_observations": "repository-root-relative; large raw observations remain ignored and are referenced by SHA256",
+    "absolute_source_path": "absolute filesystem path; used for the three existing /tmp read-only audit-script snapshots only"
+  },
+  "run_identity": {
+    "frozen_contract_sha256": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+    "V16_authorization_review_commit": "ddbe92264d17f1111dcb551431b3b96d26b0d167",
+    "historical_T_S_F_source_head": "196571795199dc0f48fd8ad3daaac258ab3390cb",
+    "current_C_RECOVERY3_source_head": "75e1e05c8223bd15237162fc869b51637cdfe710",
+    "execution_recovery_binding_v3": {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery_attempt3.json",
+      "sha256": "be6506a97ea0535cdaff85ffbf12c88da54548ccedfb21bd0f452611f22dab53"
+    },
+    "comparison_recovery_binding_v3": {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_comparison_recovery_attempt3.json",
+      "sha256": "a339a1e97b8661cd58030eda73083808ca1c487275608400c77ea9c6cb405300"
+    },
+    "old_C_recovery_reader_source_head": "84ae81d3",
+    "old_T_S_F_execution_bindings_are_not_rewritten": true
+  },
+  "execution_bindings": [
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery.json",
+      "exists": true,
+      "sha256": "e55d73af10474102941742936b4a80540911f623df53a7acfdf73f5898db80cc"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery_attempt2.json",
+      "exists": true,
+      "sha256": "31ae53e3aec01b71ceabdebc5429c5f8a8355d051edb494d64b4b7c7da403495"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery_attempt3.json",
+      "exists": true,
+      "sha256": "be6506a97ea0535cdaff85ffbf12c88da54548ccedfb21bd0f452611f22dab53"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_comparison_recovery_attempt1.json",
+      "exists": true,
+      "sha256": "4d188cf4c1a978411b4b9093d07c8c491ace62fa9b3b2fef155fda141d17cfb7"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_comparison_recovery_attempt2.json",
+      "exists": true,
+      "sha256": "1889600da59c5c0831e7f49ed45f16711625a20a8c912264dcb9e8977c1dc155"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_comparison_recovery_attempt3.json",
+      "exists": true,
+      "sha256": "a339a1e97b8661cd58030eda73083808ca1c487275608400c77ea9c6cb405300"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_p8_execution_recovery_v3.json",
+      "exists": true,
+      "sha256": "15776dfe06c837abd8646143e89b28a3d617145783741eea62cc67874a68af47"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_p8_comparison_recovery_v1.json",
+      "exists": true,
+      "sha256": "4ab6c1f5707fed8cbcd309b96a0b8e0bdb9b2affe1129bc40100a447d2e62b53"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_p8_comparison_recovery_v2.json",
+      "exists": true,
+      "sha256": "f2ac1bfe436454549a57deba4c1d788543ac0fa3cac9e52890ea97c0a2d96d9c"
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_p8_comparison_recovery_v3.json",
+      "exists": true,
+      "sha256": "ba0f565e068db889509bc86fac24332ce67388fc61b6f6d6956470d19094c70a"
+    }
+  ],
+  "root_observations": {
+    "T1": {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_T_attempt1_root_observation.json",
+      "exists": true,
+      "sha256": "354025515f59338d952e3ebc3afad23132f33e7427432ea1cf705bd71ed68de6"
+    },
+    "T2": {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_T_attempt2_root_observation_corrected.json",
+      "exists": true,
+      "sha256": "b899c0420bc78b3756b0f39a3828b5bac71729eaba33fb5cd9124984ed842a98"
+    },
+    "T3": {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_T_attempt3_root_observation.json",
+      "exists": true,
+      "sha256": "0c3b869a4f782ed85902967c2c8507f874b9f00181021d8f86ee4c2dc9b6b06e"
+    },
+    "T_qualification": {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt3/T_root_qualification.json",
+      "exists": true,
+      "sha256": "ec41517074133ad2d1ee8a7de9c2e2cbe83702cf88b11e190a36806e27fb54d5"
+    },
+    "S": {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_S_root_terminal_observation.json",
+      "exists": true,
+      "sha256": "e770f8189599b55214f10432eb7511961bad47cb8300bc2695db7f0254fb97c5"
+    },
+    "F": {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_F_root_terminal_observation.json",
+      "exists": true,
+      "sha256": "a0c5c9053ae28f0474b79145672661920b3e53f84facd5b3d564e84c2906e0fe"
+    },
+    "F_endpoint": {
+      "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_endpoint_observation.json",
+      "exists": true,
+      "sha256": "98412be9a8493a39de17378704cf1e658a00cb0985121a7fd4815f5bb9599dc5"
+    },
+    "C0": {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_C_root_terminal_observation.json",
+      "exists": true,
+      "sha256": "254518cc9d4ceef26d6ebf7265c8643e8b236e771b41c33e08d01f3edc739a29"
+    },
+    "C_RECOVERY1": {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_C_recovery_attempt1_root_observation.json",
+      "exists": true,
+      "sha256": "3b7dccf7d904c2b12dff258ee88bbfac33def7766fdc470ff1348a0365badf80"
+    },
+    "C_RECOVERY2": {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_C_recovery_attempt2_root_observation.json",
+      "exists": true,
+      "sha256": "59b5a1f262b0f43005db6750444502a91dc4bc2c9b5c8f2bcb53bc08ceeb9ddd"
+    },
+    "C_RECOVERY3": {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_C_recovery_attempt3_root_observation.json",
+      "exists": true,
+      "sha256": "0415ca8d9b4d86821ce54f7c7da4c707b998eaef595ecb17690c985265e0f0a8"
+    },
+    "preserved_q8": {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_attempt1/v18_root_preserved_q8_observation.json",
+      "exists": true,
+      "sha256": "7a863486d6e132dbda1ca26023dda0d7f79dd400ab2cfd023b944c5f31c08829"
+    },
+    "pre_C_static_review": {
+      "path": "benchmarks/artifacts/task43/v16_p8/preparation/v18_root_review_notes_before_C_recovery.json",
+      "exists": true,
+      "sha256": "d9d69aa11d736bd929c03514f36cb3336398b10b00621fdb47624586b4fdcf86"
+    },
+    "C_joined_closeout": {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/v18_root_comparison_closeout.json",
+      "exists": true,
+      "sha256": "d76337f95b2c4c62af044b1c0424e6f069d7ce857a5bb94c2eea8c7f4dc894fa",
+      "compact_copy": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/C_root_comparison_closeout.json"
+    },
+    "C_saved_array_recomputation": {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/v18_root_saved_comparison_recomputation.json",
+      "exists": true,
+      "sha256": "4dc24e61b74e32dc0fcd8dc9d9950581fb2f11d15d4401d8d7c9133dbdd674db",
+      "compact_copy": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/C_saved_array_recomputation.json"
+    }
+  },
+  "phases": [
+    {
+      "phase": "T1",
+      "root": "benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt1",
+      "whole_seconds": 24.753636937,
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt1/test_terminal.json",
+        "sha256": "404464c79a07954a276b26e7ebe5da186e313e4eeaf806cea36e27ae069d4ce7",
+        "classification": "FAILED",
+        "exit_codes": {
+          "launcher_exit_code": 2,
+          "watchdog_exit_code": 2
+        }
+      },
+      "resource": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt1/watchdog/resources.jsonl",
+        "sha256": "424323bcca5b0c0a5772995927c9cf1dbf898321d5011aadfca3684fef4b3b53",
+        "rows": 30,
+        "tree_rss_peak_bytes": 269787136,
+        "task_swap_peak_bytes": 0,
+        "parse_errors": [],
+        "vanished_samples": 1,
+        "last_live_or_unreaped": []
+      },
+      "trace": {
+        "file_count": 6
+      },
+      "tests": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/T1_tests.xml",
+        "sha256": "801b501620d3f11d249f19e3deaddafea8d05f1c20401cdde3a9b8ec9483b21c",
+        "test_count": 3,
+        "passed": 2,
+        "failed": 1,
+        "skipped": 0,
+        "cases": [
+          {
+            "name": "test_00_v18_t_records_live_runtime_abi_affinity_parent_and_trace",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_01_v18_t_fixture_checks_reuse_the_live_worker_identity",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_02_v18_current_manifest_t_reader_binds_51_sources_and_contract",
+            "outcome": "failed"
+          }
+        ],
+        "planned_cases_this_call": 11,
+        "not_run_after_maxfail": 8
+      }
+    },
+    {
+      "phase": "T2",
+      "root": "benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt2",
+      "whole_seconds": 95.981342056,
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt2/test_terminal.json",
+        "sha256": "a3d58edb74f9cf0cd437eec68c260daaabae8ebec6236265cca7fc112efd00c9",
+        "classification": "FAILED",
+        "exit_codes": {
+          "launcher_exit_code": 2,
+          "watchdog_exit_code": 2
+        }
+      },
+      "resource": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt2/watchdog/resources.jsonl",
+        "sha256": "985c9c6782fed4f844bc926f3cbbaec629ed427440908041518d180f0884180d",
+        "rows": 127,
+        "tree_rss_peak_bytes": 332460032,
+        "task_swap_peak_bytes": 0,
+        "parse_errors": [],
+        "vanished_samples": 1,
+        "last_live_or_unreaped": []
+      },
+      "trace": {
+        "file_count": 206
+      },
+      "tests": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/T2_tests.xml",
+        "sha256": "1d19e3fdcde7e244e1a9ec0b17d6bf5e18c7a63524ccba6ee83cf7e87282113f",
+        "test_count": 10,
+        "passed": 9,
+        "failed": 1,
+        "skipped": 0,
+        "cases": [
+          {
+            "name": "test_00_v18_t_records_live_runtime_abi_affinity_parent_and_trace",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_01_v18_t_fixture_checks_reuse_the_live_worker_identity",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_02_v18_current_manifest_t_reader_binds_51_sources_and_contract",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_f_reader_accepts_disk_bound_s_package",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_c_reader_accepts_bound_handoff_then_rejects_mixed_binding",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_detached_watchdog_signal_lifecycle_records_terminal[normal-None]",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_detached_watchdog_signal_lifecycle_records_terminal[term-15]",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_detached_watchdog_signal_lifecycle_records_terminal[int-2]",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_detached_watchdog_signal_lifecycle_records_terminal[hup-1]",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_detached_watchdog_signal_lifecycle_records_terminal[prewatchdog_nonzero-None]",
+            "outcome": "failed"
+          }
+        ],
+        "planned_cases_this_call": 11,
+        "not_run_after_maxfail": 1
+      }
+    },
+    {
+      "phase": "T3",
+      "root": "benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt3",
+      "whole_seconds": 101.654528933,
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt3/test_terminal.json",
+        "sha256": "8d4cfb63c516000593b596586964d3bb252ef66f1100f517e6492a0d99cab450",
+        "classification": "PASS",
+        "exit_codes": {
+          "launcher_exit_code": 0,
+          "watchdog_exit_code": 0
+        }
+      },
+      "resource": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt3/watchdog/resources.jsonl",
+        "sha256": "c6a692b25d6d6e58e0c4666c6b822bc778f91d6c67636e570f173ba6442e1512",
+        "rows": 135,
+        "tree_rss_peak_bytes": 331329536,
+        "task_swap_peak_bytes": 0,
+        "parse_errors": [],
+        "vanished_samples": 2,
+        "last_live_or_unreaped": []
+      },
+      "trace": {
+        "file_count": 242
+      },
+      "tests": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/T3_tests.xml",
+        "sha256": "6942ea2b83c3f8792ab1990b9f1701477ffcf866a87a5534e23c3294e514e100",
+        "test_count": 11,
+        "passed": 11,
+        "failed": 0,
+        "skipped": 0,
+        "cases": [
+          {
+            "name": "test_00_v18_t_records_live_runtime_abi_affinity_parent_and_trace",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_01_v18_t_fixture_checks_reuse_the_live_worker_identity",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_02_v18_current_manifest_t_reader_binds_51_sources_and_contract",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_f_reader_accepts_disk_bound_s_package",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_c_reader_accepts_bound_handoff_then_rejects_mixed_binding",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_detached_watchdog_signal_lifecycle_records_terminal[normal-None]",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_detached_watchdog_signal_lifecycle_records_terminal[term-15]",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_detached_watchdog_signal_lifecycle_records_terminal[int-2]",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_detached_watchdog_signal_lifecycle_records_terminal[hup-1]",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_detached_watchdog_signal_lifecycle_records_terminal[prewatchdog_nonzero-None]",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_detached_watchdog_signal_lifecycle_records_terminal[missing_summary-None]",
+            "outcome": "passed"
+          }
+        ],
+        "planned_cases_this_call": 11,
+        "not_run_after_maxfail": 0
+      }
+    },
+    {
+      "phase": "S",
+      "root": "benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1",
+      "whole_seconds": 355.11277669,
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/stage_terminal.json",
+        "sha256": "32857e7b0db3cef2238cdef16699d0ef807f12ff07f52b2f840912f140a0f427",
+        "classification": "COMPLETED",
+        "exit_codes": {
+          "launcher_exit_code": 0,
+          "watchdog_exit_code": 0
+        }
+      },
+      "resource": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/watchdog/resources.jsonl",
+        "sha256": "0d04136633bd084ee1e6faa1c32cb887e235120db1c06607134b7cf0a2fe0e6e",
+        "rows": 675,
+        "tree_rss_peak_bytes": 1366196224,
+        "task_swap_peak_bytes": 0,
+        "parse_errors": [],
+        "vanished_samples": 0,
+        "last_live_or_unreaped": []
+      },
+      "trace": {
+        "file_count": 6
+      },
+      "tests": null
+    },
+    {
+      "phase": "F",
+      "root": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1",
+      "whole_seconds": 3663.379578318,
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/stage_terminal.json",
+        "sha256": "170cf0f805aeccbe81e7f0fcb2b0dff2ff3683ab92b49a7216b61810b20c3f62",
+        "classification": "COMPLETED",
+        "exit_codes": {
+          "launcher_exit_code": 0,
+          "watchdog_exit_code": 0
+        }
+      },
+      "resource": {
+        "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/watchdog/resources.jsonl",
+        "sha256": "16761a7c50ce18db7cf78782fb4d0285709812daec1e684ee35c5cc1be43adc4",
+        "rows": 5581,
+        "tree_rss_peak_bytes": 6338056192,
+        "task_swap_peak_bytes": 0,
+        "parse_errors": [],
+        "vanished_samples": 2,
+        "last_live_or_unreaped": []
+      },
+      "trace": {
+        "file_count": 8
+      },
+      "tests": null
+    },
+    {
+      "phase": "C0",
+      "root": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_attempt1",
+      "whole_seconds": 243.148277828,
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_attempt1/stage_terminal.json",
+        "sha256": "bbd9ddbdd1c2dfa8041fbe9ee78243bc37a57df8810ad3a321577dcabcfddf39",
+        "classification": "INCOMPLETE",
+        "exit_codes": {
+          "launcher_exit_code": 2,
+          "watchdog_exit_code": 2
+        }
+      },
+      "resource": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_attempt1/watchdog/resources.jsonl",
+        "sha256": "b766e988bd392e917967f6ab8b15c0367e6a017c6221f36bac54413e9f59d7d1",
+        "rows": 345,
+        "tree_rss_peak_bytes": 1005113344,
+        "task_swap_peak_bytes": 0,
+        "parse_errors": [],
+        "vanished_samples": 1,
+        "last_live_or_unreaped": []
+      },
+      "trace": {
+        "file_count": 6
+      },
+      "tests": null
+    },
+    {
+      "phase": "C_RECOVERY1",
+      "root": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt1",
+      "whole_seconds": 3.589317171,
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt1/stage_terminal.json",
+        "sha256": "89517e70fe931501db3836049d216e533a4057664cbe236e28b921d4d03c335c",
+        "classification": "INCOMPLETE",
+        "exit_codes": {
+          "launcher_exit_code": 1,
+          "watchdog_exit_code": null
+        }
+      },
+      "resource": {
+        "status": "NOT_CREATED_OR_NOT_PRESENT"
+      },
+      "trace": {
+        "file_count": 0
+      },
+      "tests": null
+    },
+    {
+      "phase": "C_RECOVERY2",
+      "root": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt2",
+      "whole_seconds": 31.37705103,
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt2/stage_terminal.json",
+        "sha256": "fcabb0055e9d608c53a80d9ff4dd4c136ab616349014d7eed9316d1e8df3be6b",
+        "classification": "INCOMPLETE",
+        "exit_codes": {
+          "launcher_exit_code": 2,
+          "watchdog_exit_code": 2
+        }
+      },
+      "resource": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt2/watchdog/resources.jsonl",
+        "sha256": "9dce2578bf517a3eefaf0e9166f77489530bc28a7b64bc247b619cb61b5c9f17",
+        "rows": 40,
+        "tree_rss_peak_bytes": 272154624,
+        "task_swap_peak_bytes": 0,
+        "parse_errors": [],
+        "vanished_samples": 0,
+        "last_live_or_unreaped": []
+      },
+      "trace": {
+        "file_count": 6
+      },
+      "tests": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/C_RECOVERY2_tests.xml",
+        "sha256": "1be9b0389583e599a49cd5339de9dce51db3dc45ee7578506628c22f8ab4311b",
+        "test_count": 3,
+        "passed": 2,
+        "failed": 1,
+        "skipped": 0,
+        "cases": [
+          {
+            "name": "test_v18_p5_h8_candidate_label_allows_only_historical_alias[q8]",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_p5_h8_candidate_label_allows_only_historical_alias[q10]",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_c_recovery_uses_actual_comparison_and_historical_f_readers",
+            "outcome": "failed"
+          }
+        ],
+        "planned_cases_this_call": 5,
+        "not_run_after_maxfail": 2
+      }
+    },
+    {
+      "phase": "C_RECOVERY3",
+      "root": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3",
+      "whole_seconds": 465.385582418,
+      "terminal": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/stage_terminal.json",
+        "sha256": "085f57c6ab6752b8b6b8b67087c7945ae659a612f58532ee7da2f990c7c58d20",
+        "classification": "COMPLETED",
+        "exit_codes": {
+          "launcher_exit_code": 0,
+          "watchdog_exit_code": 0
+        }
+      },
+      "resource": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/watchdog/resources.jsonl",
+        "sha256": "257f6ebcf030ee80ed23d0ad6a604abff309dbad73e4cfc6750a38fe9afca9b7",
+        "rows": 678,
+        "tree_rss_peak_bytes": 1639280640,
+        "task_swap_peak_bytes": 0,
+        "parse_errors": [],
+        "vanished_samples": 1,
+        "last_live_or_unreaped": []
+      },
+      "trace": {
+        "file_count": 10
+      },
+      "tests": {
+        "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/C_RECOVERY3_tests.xml",
+        "sha256": "b9763a8f59e14ab74a68e933c65cf8fd9e6c5203a9187483d7660b031605543b",
+        "test_count": 3,
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "cases": [
+          {
+            "name": "test_v18_c_recovery_uses_actual_comparison_and_historical_f_readers",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_c_recovery_actual_reader_rejects_unapproved_source_delta",
+            "outcome": "passed"
+          },
+          {
+            "name": "test_v18_q8_recovery_reads_bound_archive_without_sampling_or_copying",
+            "outcome": "passed"
+          }
+        ],
+        "planned_cases_this_call": 3,
+        "not_run_after_maxfail": 0
+      }
+    }
+  ],
+  "science_results": {
+    "S": {
+      "path": "benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/v18_root_space_observation.json",
+      "exists": true,
+      "sha256": "bebb335be9eaf3ed7565aa10a1703d789624d34befb099640e661fbee1086438",
+      "whole_seconds": 355.11277669,
+      "actual_FE": 110722,
+      "parent_FE": 110472,
+      "delta_FE": 250,
+      "trace_rows": 35392,
+      "interior_rows": 75330,
+      "raw_broken_active_rows_before_constraints": 116174,
+      "periodic_slave_rows": 5452,
+      "leaf_count": 180,
+      "actual_one_level_root_splits": 0,
+      "p_degree_leaf_histogram": {
+        "p5": 27,
+        "p6": 153
+      },
+      "predicted_returned_trace_dtn_rows": 36004,
+      "limits": [
+        "Actual space only; returned rows predicted, matrix/NNZ not assembled.",
+        "No scientific accuracy or merge qualification."
+      ]
+    },
+    "F": {
+      "path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_endpoint_observation.json",
+      "exists": true,
+      "sha256": "98412be9a8493a39de17378704cf1e658a00cb0985121a7fd4815f5bb9599dc5",
+      "status": "ENDPOINT_HARD_GATES_VERIFIED",
+      "actual_values": {
+        "FE": 110722,
+        "trace": 35392,
+        "interior": 75330,
+        "leaves": 180,
+        "delta_FE": 250,
+        "mode_count": 612,
+        "R_total": 0.2513584864859189,
+        "T_total": 0.05712592329889687,
+        "Av": 0.6915155902132417,
+        "closure": -1.942446203884174e-12,
+        "independent_A6": 8.154258542762765e-09,
+        "normal_before": 7.36358356126758e-11,
+        "normal_after": 5.36565601165842e-13,
+        "normal_count": 1,
+        "extra_count": 0,
+        "full_active_relative_residual": 5.261452776589861e-13,
+        "full_active_relative_residual_limit": 1e-08,
+        "condensed_relative_residual": 5.36565601165842e-13,
+        "condensed_relative_residual_limit": 1e-09,
+        "energy_closure_limit": 1e-05,
+        "actual_returned_rows": 36004,
+        "matrix_nnz_used": 29053038,
+        "matrix_nnz_allocated": 35416466,
+        "R00_s": 0.25132633206457183,
+        "R00_p": 1.581133012287804e-23,
+        "R00_total": 0.25132633206457183
+      },
+      "exit_race_observation": {
+        "vanished_worker_samples": 2,
+        "elapsed_seconds": [
+          3658.686311531812,
+          3659.181689874269
+        ],
+        "worker_pid": 3551561,
+        "worker_trace_exit_zero_timestamp": 1793178818.081763,
+        "subsequent_exit_zero_and_clean_samples": 4,
+        "interpretation": "worker termination race; no unreadable living process; completed primary already saved; full trace zero exit and final host absence bound",
+        "initial_root_assertion": "overstrict no-vanished predicate failed; corrected after reading sampler and exact raw tail; no dynamic retry"
+      },
+      "checks": "all 42 arrays, 612 modes, saved vectors, source/input snapshots, complete trace and 5581 resource rows read; no new solve or sampling",
+      "reference_paths": {
+        "primary_array_recomputation": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_root_primary_array_recomputation.json",
+          "sha256": "7190e2831ddc18382921e5529f08de5b643b943a57205681b1fa49005b617f41"
+        },
+        "modal_orders": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run/solve/dtn_port_diffraction_orders_3d.json",
+          "sha256": "c7b1ff6033f0a901a6e42f827bd26a9f3e7ab1b046dcf57cd7656548d2e446c8"
+        },
+        "volume_absorption": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run/solve/volume_absorption.json",
+          "sha256": "f718627465f72c0783f02f60c73256232d73de00ca34128e237fc3be7459d080"
+        }
+      }
+    },
+    "C": {
+      "classification": "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE",
+      "whole_seconds": 465.385582418,
+      "J_epsilon": 0.12716416232413652,
+      "G_epsilon": 9.088158796603444e-06,
+      "actual_precision_failure": {
+        "R00_s_abs_difference": 4.020864574738603e-06,
+        "R00_s_limit": 1e-06,
+        "max_individual_channel_abs_difference": 4.020864574738603e-06,
+        "channel_limit": 1e-06,
+        "J_limit": 1
+      },
+      "FE": {
+        "Delta_FE_H8": 6268,
+        "Delta_FE_P8": 250,
+        "H8": 116740,
+        "P8": 110722,
+        "R9": 110472
+      },
+      "q8": {
+        "J": 4.020864574738603,
+        "G": 3.967998186281264e-05,
+        "classification": {
+          "Delta_G": 2.7685237177407627e-07,
+          "Delta_J": 0.04419737048566574,
+          "classification": "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE",
+          "legacy_double_gate_pass": false,
+          "negative_or_tradeoff_condition_pass": false,
+          "positive_condition_pass": false,
+          "selection_transition_written": false
+        },
+        "efficiency": {
+          "H8": {
+            "Delta_FE": 6268,
+            "Delta_G_per_added_FE_dof": -8.801433454809436e-10,
+            "Delta_J_per_added_FE_dof": 1.4440750038713213e-05,
+            "lower": -5.847086962584893e-06,
+            "point_estimate": 1.4440750038713213e-05,
+            "upper": 3.472858704001132e-05
+          },
+          "P8": {
+            "Delta_FE": 250,
+            "Delta_G_per_added_FE_dof": 1.107409487096305e-09,
+            "Delta_J_per_added_FE_dof": 0.00017678948194266297,
+            "lower": -0.0003318671673538831,
+            "point_estimate": 0.00017678948194266297,
+            "upper": 0.0006854461312392091
+          },
+          "P8_lower_exceeds_H8_upper": false,
+          "both_orders_ranking_qualified": false,
+          "ranking_qualified": false
+        },
+        "sample": {
+          "P5_sample_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_q8.npz",
+          "P5_sample_sha256": "7286c09d6b3f3bb3a7ece1cd46284a9a5faafd6ebbcb213e2568b6a32ed1119e",
+          "P8_sampled_once": true,
+          "old_fields_resampled": false,
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_attempt1/comparison/v16_r9_p8_q8_samples.npz",
+          "reused_preserved_sample_archive": true,
+          "sample_count": 565248,
+          "sha256": "5475cffe826f45217cebd8df35239f4ba8a4a5813657cf2ca7696ce871af792f"
+        }
+      },
+      "q10": {
+        "J": 4.020864574738603,
+        "G": 3.9679981862807887e-05,
+        "classification": {
+          "Delta_G": 2.768523717739272e-07,
+          "Delta_J": 0.04419737048566574,
+          "classification": "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE",
+          "legacy_double_gate_pass": false,
+          "negative_or_tradeoff_condition_pass": false,
+          "positive_condition_pass": false,
+          "selection_transition_written": false
+        },
+        "efficiency": {
+          "H8": {
+            "Delta_FE": 6268,
+            "Delta_G_per_added_FE_dof": -8.801433454811793e-10,
+            "Delta_J_per_added_FE_dof": 1.4440750038713213e-05,
+            "lower": -5.847086962584893e-06,
+            "point_estimate": 1.4440750038713213e-05,
+            "upper": 3.472858704001132e-05
+          },
+          "P8": {
+            "Delta_FE": 250,
+            "Delta_G_per_added_FE_dof": 1.1074094870957087e-09,
+            "Delta_J_per_added_FE_dof": 0.00017678948194266297,
+            "lower": -0.0003318671673538831,
+            "point_estimate": 0.00017678948194266297,
+            "upper": 0.0006854461312392091
+          },
+          "P8_lower_exceeds_H8_upper": false,
+          "both_orders_ranking_qualified": false,
+          "ranking_qualified": false
+        },
+        "sample": {
+          "P5_sample_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/support/union_comparison_attempt1/comparison/v11_r9_h8_union_q10.npz",
+          "P5_sample_sha256": "82d7bc676e23bea0794caf5e16b3d6c28ee02cb18c57cb59e4bfc08a55759f99",
+          "P8_sampled_once": true,
+          "old_fields_resampled": false,
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/comparison/v16_r9_p8_q10_samples.npz",
+          "reused_preserved_sample_archive": false,
+          "sample_count": 1104000,
+          "sha256": "a3f3edca3f1f07fca79c37c1823b1616d6c330c36122ebc405d47ef2f8c20a85"
+        }
+      },
+      "saved_array_recomputation": {
+        "path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/v18_root_saved_comparison_recomputation.json",
+        "sha256": "4dc24e61b74e32dc0fcd8dc9d9950581fb2f11d15d4401d8d7c9133dbdd674db",
+        "classification": "saved_array_arithmetic_no_solve_no_sampling",
+        "wall_seconds": 40.116043168120086
+      },
+      "saved_comparison": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/comparison/v16_r9_p8_paired_comparison.json",
+        "sha256": "1fca6095529c01685717f3db97b8d00302bb90fc1dfb2df9042cff58e9e137af"
+      }
+    }
+  },
+  "accounting": {
+    "support_dispatch_count": 8,
+    "formal_dispatch_count": 1,
+    "formal_dispatch": "F only; user-authorized same-model recovery, no extra scientific solve beyond this one F",
+    "whole_seconds_by_root": {
+      "T1": 24.753636937,
+      "T2": 95.981342056,
+      "T3": 101.654528933,
+      "S": 355.11277669,
+      "F": 3663.379578318,
+      "C0": 243.148277828,
+      "C_RECOVERY1": 3.589317171,
+      "C_RECOVERY2": 31.37705103,
+      "C_RECOVERY3": 465.385582418
+    },
+    "support_whole_seconds": 1321.002513063,
+    "formal_whole_seconds": 3663.379578318,
+    "total_measured_v18_whole_seconds": 4984.382091381,
+    "original_v18_sequence_whole_cap_seconds": 11700,
+    "additional_three_C_recovery_whole_cap_seconds": 5400,
+    "combined_max_whole_cap_seconds": 17100,
+    "V17_failed_F_whole_seconds": "NOT_MEASURED",
+    "readonly_non_driver_costs_seconds": [
+      {
+        "activity": "independent saved-array numerical recomputation",
+        "seconds": 40.116043168120086
+      },
+      {
+        "activity": "separate read-only audit operation; not a workflow terminal",
+        "seconds": 0.5373938349075615
+      },
+      {
+        "activity": "separate read-only audit operation; not a workflow terminal",
+        "seconds": 3.96355346404016
+      }
+    ],
+    "unmeasured_manual_static_work": "NOT_MEASURED"
+  },
+  "review_corrections_and_boundary": [
+    "T1 failure was a test fixture NameError (RECOVERY_PATH); T2 failure was a test fixture reading the wrong terminal field; T3 passed 11/11 affected nodes. All three roots and costs retained.",
+    "T2 first root review misread rss_warning_bytes as a warning; corrected observation supersedes that classification while preserving the original audit history.",
+    "C_RECOVERY1 omitted top-level targeted_fixture from its actual manifest; watchdog, runtime identity and tests did not run. No watchdog-cleanup pass is claimed.",
+    "C_RECOVERY2 strict actual-reader expected 13 prior-evidence refs while binding had 16; common refs matched path/hash. Two historical alias cases passed and the actual reader case failed. C_RECOVERY3 ran only the remaining three selectors, 3/3; do not call it a final five-case batch.",
+    "A prelaunch C_RECOVERY2 candidate missing targeted_fixture and launch_script was caught and corrected before dispatch; it is not a run or cost.",
+    "The C_RECOVERY2 audit initially checked referenced file hashes but missed exact reader-key-set equality; the final binding and reader now match 16/16.",
+    "F has two raw vanished-worker samples during process exit; C_RECOVERY3 has one. Each is followed by exit-0/empty-child rows. Preserve the races; do not claim vanished=0.",
+    "The original V17 F watchdog whole remains NOT_MEASURED and its outer exit cause remains UNKNOWN; V18 does not retroactively explain it.",
+    "E was not run and remains frozen. No acceptance-state transition, official result, selection eligibility, merge approval or production qualification was created."
+  ],
+  "copied_compact_outputs": {
+    "T_qualification": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/T_root_qualification.json",
+      "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt3/T_root_qualification.json",
+      "sha256": "ec41517074133ad2d1ee8a7de9c2e2cbe83702cf88b11e190a36806e27fb54d5",
+      "bytes": 8825,
+      "byte_identical_to_source": true
+    },
+    "S_joined_terminal": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/S_space_joined_terminal.json",
+      "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/v18_p8_space_joined_terminal.json",
+      "sha256": "ffe22c3febe7f0bb8a47d01e58a140d66adacb098285368aa2a864287c21f472",
+      "bytes": 3845,
+      "byte_identical_to_source": true
+    },
+    "F_joined_terminal": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/F_endpoint_joined_terminal.json",
+      "source_path": "benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/v18_p8_endpoint_joined_terminal.json",
+      "sha256": "3af1cffd5f87e4bb6ef41f22464b622d68b2f9c36c5ee7cbbf46527f34eed7bc",
+      "bytes": 4446,
+      "byte_identical_to_source": true
+    },
+    "C_joined_closeout": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/C_root_comparison_closeout.json",
+      "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/v18_root_comparison_closeout.json",
+      "sha256": "d76337f95b2c4c62af044b1c0424e6f069d7ce857a5bb94c2eea8c7f4dc894fa",
+      "bytes": 12288,
+      "byte_identical_to_source": true
+    },
+    "C_saved_array_recomputation": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/C_saved_array_recomputation.json",
+      "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/v18_root_saved_comparison_recomputation.json",
+      "sha256": "4dc24e61b74e32dc0fcd8dc9d9950581fb2f11d15d4401d8d7c9133dbdd674db",
+      "bytes": 20014,
+      "byte_identical_to_source": true
+    },
+    "T1_tests": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/T1_tests.xml",
+      "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt1/tests.xml",
+      "sha256": "801b501620d3f11d249f19e3deaddafea8d05f1c20401cdde3a9b8ec9483b21c",
+      "bytes": 1284,
+      "byte_identical_to_source": true
+    },
+    "T2_tests": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/T2_tests.xml",
+      "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt2/tests.xml",
+      "sha256": "1d19e3fdcde7e244e1a9ec0b17d6bf5e18c7a63524ccba6ee83cf7e87282113f",
+      "bytes": 5645,
+      "byte_identical_to_source": true
+    },
+    "T3_tests": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/T3_tests.xml",
+      "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_execution_validation_attempt3/tests.xml",
+      "sha256": "6942ea2b83c3f8792ab1990b9f1701477ffcf866a87a5534e23c3294e514e100",
+      "bytes": 1939,
+      "byte_identical_to_source": true
+    },
+    "C_RECOVERY2_tests": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/C_RECOVERY2_tests.xml",
+      "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt2/recovery_tests.xml",
+      "sha256": "1be9b0389583e599a49cd5339de9dce51db3dc45ee7578506628c22f8ab4311b",
+      "bytes": 7248,
+      "byte_identical_to_source": true
+    },
+    "C_RECOVERY3_tests": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/C_RECOVERY3_tests.xml",
+      "source_path": "benchmarks/artifacts/task43/v16_p8/support/v18_paired_comparison_recovery_attempt3/recovery_tests.xml",
+      "sha256": "b9763a8f59e14ab74a68e933c65cf8fd9e6c5203a9187483d7660b031605543b",
+      "bytes": 687,
+      "byte_identical_to_source": true
+    },
+    "readonly_script_read_comparison": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/read_comparison.py.txt",
+      "absolute_source_path": "/tmp/task43_v18_read_comparison.py",
+      "sha256": "7335117af15a67e9bab49f314e9753834fde21c0b33e3749362a499cb9b795a5",
+      "bytes": 6973,
+      "byte_identical_to_source": true,
+      "role": "read-only audit script snapshot; copied as .py.txt, not an entry point or test"
+    },
+    "readonly_script_read_primary": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/read_primary.py.txt",
+      "absolute_source_path": "/tmp/task43_v18_read_primary.py",
+      "sha256": "1156932053edcb8d141b27ae617361fae71e92ab4f0242d69b8f5ab4a91d975f",
+      "bytes": 6660,
+      "byte_identical_to_source": true,
+      "role": "read-only audit script snapshot; copied as .py.txt, not an entry point or test"
+    },
+    "readonly_script_join_C": {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v18_r9_p8_sources/join_C.py.txt",
+      "absolute_source_path": "/tmp/task43_v18_join_C.py",
+      "sha256": "f068b2800acf96606349fddc078b1de4baa6eea33f21ff06937edb5046b8e8be",
+      "bytes": 6591,
+      "byte_identical_to_source": true,
+      "role": "read-only audit script snapshot; copied as .py.txt, not an entry point or test"
+    }
+  }
+}

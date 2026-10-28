@@ -1,6 +1,19 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V17 当前状态：F 未完成，无合并批准
+## V18 当前状态：有限研究工程链完成，科学门未过，无合并批准
+
+| 依赖组 | 变化与实证 | 合入顺序与边界 |
+|---|---|---|
+| production numerical/core | 未改共享数值核心、物理、容差、activation或ABI；新P8求解通过残差/A6 | 不据本次研究端点赋予production资格，本组无本轮变更 |
+| reusable runner/watchdog | 通用watchdog默认不改；新增固定研究launch的分离会话与终态留证 | 只验证有限生命周期fixture及本次实跑；V17原信号来源仍UNKNOWN，不称修复了已知根因或通用资格 |
+| checker/benchmark | 三个既有研究入口的恢复身份读取、唯一历史标签兼容、q8复用；定向fixture | T3 11项对应196571字节；C标签2项历史通过+最终3项实测。没有最终全仓/整套CI资格 |
+| compact evidence/docs | response_v18、机器结果、轻量原文与主控独立复算、费用和失败索引 | 先审来源/失败与实际门值，再审代码；可审阅不等于允许合并 |
+| research-only | round1_candidates、h100_anchor、compare_round1_candidate、v18_p8_stage_launch及fixture | 整轮绑定/恢复改动规模较大，维护复杂度须外审；保持opt-in，不提升默认，不建立自动后续运行权 |
+| do-not-merge | ignored大数组/trace/resource原件、未经批准整分支及科学接受标志 | 保留原件和全部失败；不得生成transition10、更新accepted9或提升五项能力 |
+
+实际P8 FE110722（+250）；q8/q10 J4.020864574738603>1，ΔJ.04419737048566574<εJ.12716416232413652。单位自由度收益区间跨零，p/h优劣未获资格。8次支持+1次正式恢复；formal9/10，旧末槽封存；没有merge approval。相关依赖必须绑定F源码196571、C源码75e1e05及各自实际测试，不把后续文档追认为运行字节。见[Response V18](../response_v18.md)、[机器结果](records/v18_r9_p8_scientific_results_v1.json)。
+
+## V17 历史状态：F 未完成，无合并批准
 
 | 依赖组 | V17 文件/证据与验证 | 建议顺序与边界 |
 |---|---|---|

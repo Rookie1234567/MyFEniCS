@@ -1,0 +1,85 @@
+{
+  "schema": "task43.v16.p8-space-root-joined-terminal.v1",
+  "space_source_id": "S_MAIN",
+  "status": "S_COMPLETE_ROOT_VERIFIED",
+  "contract_sha256": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+  "review_commit": "f72e1c8d031de7acc374f0806ddac06099c461c4",
+  "authorization_review": {
+    "path": "docs/task43_hp_adaptivity/review_report_v16.md",
+    "commit": "ddbe92264d17f1111dcb551431b3b96d26b0d167",
+    "sha256": "6269be0ddf9308dc08e139563bf01bbf15385d56dff935cbce3976eb8568c4fb"
+  },
+  "execution_recovery_binding": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/preparation/v18_p8_execution_recovery_attempt3.json",
+    "sha256": "be6506a97ea0535cdaff85ffbf12c88da54548ccedfb21bd0f452611f22dab53",
+    "phase": "S"
+  },
+  "source_head": "196571795199dc0f48fd8ad3daaac258ab3390cb",
+  "launcher_exit_code": 0,
+  "watchdog_exit_code": 0,
+  "worker_exit_code": 0,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "root_observation_record": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/v18_root_space_observation.json",
+    "sha256": "bebb335be9eaf3ed7565aa10a1703d789624d34befb099640e661fbee1086438"
+  },
+  "products": {
+    "plan": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/plan_output/plans/v16_r9_p8.json",
+      "sha256": "10733af8fc00e29d54fa4d4ee18b2e78bc6ed7c15834db7a0ff6902ba4de9a04"
+    },
+    "audit": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/plan_output/plans/v16_r9_p8.audit.json",
+      "sha256": "3fc01eab3c070c29019fcc3dcb780d2f4856927fc5707e7ec295bf0fcad55c91"
+    },
+    "bundle": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/plan_output/plan_audit.json",
+      "sha256": "deb729312519d1d02875cf09abb2d6bdc38f47fecc5713f87dd328b6f65c8c45"
+    }
+  },
+  "gates": {
+    "source": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/v18_root_space_observation.json",
+        "sha256": "bebb335be9eaf3ed7565aa10a1703d789624d34befb099640e661fbee1086438"
+      }
+    },
+    "input": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/v18_root_space_observation.json",
+        "sha256": "bebb335be9eaf3ed7565aa10a1703d789624d34befb099640e661fbee1086438"
+      }
+    },
+    "resource": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/v18_root_space_observation.json",
+        "sha256": "bebb335be9eaf3ed7565aa10a1703d789624d34befb099640e661fbee1086438"
+      }
+    },
+    "trace": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/v18_root_space_observation.json",
+        "sha256": "bebb335be9eaf3ed7565aa10a1703d789624d34befb099640e661fbee1086438"
+      }
+    },
+    "space": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/v18_root_space_observation.json",
+        "sha256": "bebb335be9eaf3ed7565aa10a1703d789624d34befb099640e661fbee1086438"
+      }
+    },
+    "old_samples": {
+      "pass": true,
+      "evidence": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/support/v18_space_attempt1/v18_root_space_observation.json",
+        "sha256": "bebb335be9eaf3ed7565aa10a1703d789624d34befb099640e661fbee1086438"
+      }
+    }
+  }
+}
