@@ -73,4 +73,4 @@ C_RECOVERY3 的 678 条资源记录显示树 RSS 峰为1,639,280,640 B（限值8
 
 科学和数值边界以 [机器结果](outcomes/records/v18_r9_p8_scientific_results_v1.json)、[轻量证据目录](outcomes/records/v18_r9_p8_sources/README.md)及其 hash-bound 原件为准。
 
-交付前静态核验：71项hash引用、123个唯一文件、13份逐字节副本、5份测试XML、51项冻结源码、当前文档链接、JSON与diff格式均通过。该核验没有启动测试或PDE，不扩大已有运行资格。
+交付前静态核验：71项hash引用、123个唯一文件、13份逐字节副本、5份测试XML、51项冻结源码、当前文档链接与JSON均通过。最终纳入新证据后的diff检查发现，逐字节复制的失败JUnit XML `C_RECOVERY2_tests.xml` 第4、5、10、23、58、82行带原始行尾空白；为保持原件hash不修剪。排除这一固定原件副本后，其余编辑文本diff格式通过。早先未暂存检查未覆盖untracked副本，不能声称那次覆盖了全部新文件。该核验没有启动测试或PDE，不扩大已有运行资格。

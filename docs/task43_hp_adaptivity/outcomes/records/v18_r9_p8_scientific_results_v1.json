@@ -466,7 +466,12 @@
     "frozen_source_files_unchanged": 51,
     "current_document_links": "PASS",
     "json_parse": "PASS",
-    "git_diff_check": "PASS",
+    "git_diff_check": {
+      "edited_text_excluding_byte_exact_failed_junit": "PASS",
+      "byte_exact_C_RECOVERY2_tests_xml": "6 trailing-whitespace findings at XML lines 4,5,10,23,58,82; preserved from original pytest failure output",
+      "initial_unstaged_check_limitation": "Untracked evidence was not included until staging; the staged check then reported these original-byte whitespace findings.",
+      "no_historical_byte_trimming": true
+    },
     "new_dynamic_test_or_PDE_runs": 0,
     "checker_path": "/tmp/task43_v18_final_static_check.py",
     "checker_sha256": "91010de4ec2e54dc59267a786b3b302da8a7ab049486884d0e5941aed2206a45",
