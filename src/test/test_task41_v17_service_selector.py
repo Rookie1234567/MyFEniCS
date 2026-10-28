@@ -1554,6 +1554,38 @@ def test_v17_callback_persistence_is_reopened_by_real_checker_cli(
     assert checked["new_npy_artifact_count"] == len(referenced_npy)
     assert checked["new_npy_evidence_bytes_checked"] == sum(referenced_npy.values())
     for column in checked["independent_columns"]:
+        attribution = column["decimal_action_scatter_attribution"]
+        initial_attribution = column["initial_decimal_action_scatter_attribution"]
+        comparison = column["initial_final_decimal_action_scatter_comparison"]
+        assert attribution["schema"] == "task41.p0.b0.v17.decimal_action_scatter_attribution.v1"
+        assert attribution["status"] == "DIAGNOSTIC_ONLY"
+        assert attribution["no_new_pde_integral_lu_getrs"] is True
+        assert initial_attribution["schema"] == attribution["schema"]
+        assert initial_attribution["status"] == "DIAGNOSTIC_ONLY"
+        assert initial_attribution["no_new_pde_integral_lu_getrs"] is True
+        assert comparison["same_saved_call_z0_and_final_z"] is True
+        assert comparison["initial_replays_saved_y9_g9"] is True
+        assert comparison["final_replays_saved_y15_g15"] is True
+        assert comparison["no_new_pde_integral_lu_getrs"] is True
+        assert comparison["identity_change_closed_within_decimal_bound"] is True
+        assert len(comparison["per_cell_decimal_Jz_final_minus_initial"]) == 2
+        assert max(
+            abs(float(value))
+            for value in comparison["exact_d_change_minus_sum_Jz_change"]
+        ) <= 1.0e-60
+        closure = attribution["signed_closure"]
+        assert closure["formula_applicable"] is True
+        assert closure["t_all_elementwise_zero"] is True
+        assert closure["b_alpha_t_is_zero"] is True
+        assert closure["closed_within_decimal_bound"] is True
+        assert max(abs(float(value)) for value in closure["closure_difference"]) <= 1.0e-60
+        assert max(
+            abs(float(value))
+            for value in attribution["g_scatter"]["ordered_addition_closure_difference"]
+        ) <= 1.0e-60
+        for cell in attribution["per_cell"]:
+            assert type(cell["q_selected_local_trace_row"]) is int
+            assert cell["returned_minus_Jz_matches_binary64_J_matvec"] is True
         for cell_index in selected_cells:
             step_checks = column["rhs_step_checks_by_cell"][str(cell_index)]
             if column["column"] == 0 and cell_index == selected_cells[0]:

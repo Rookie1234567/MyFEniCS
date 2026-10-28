@@ -1317,6 +1317,7 @@ def check_task41_p0_b0_v17_selected_two_cell_report(
         y_sum = 0.0 + 0.0j
         recomputed_cells = []
         decimal_action_cells = []
+        decimal_initial_action_cells = []
         for row_record in row_cell_records:
             cell_index = int(row_record["cell_index"])
             candidate = candidate_by_cell[cell_index]
@@ -1569,6 +1570,15 @@ def check_task41_p0_b0_v17_selected_two_cell_report(
                 "z_c": z_final,
                 "returned_minus_Jz": minus_Jz,
             })
+            decimal_initial_action_cells.append({
+                "cell_id": cell_index,
+                "J": candidate["J"],
+                "q": candidate["q"],
+                "u_i": u_i,
+                "t_c": t_c,
+                "z_c": z0,
+                "returned_minus_Jz": minus_Jz0,
+            })
         beta_rows = np.asarray(donor_column["b_alpha_rows"], dtype=np.int64)
         beta_values = np.asarray(donor_column["b_alpha_values"], dtype=np.complex128)
         beta_positions = np.flatnonzero(beta_rows == original_row)
@@ -1603,6 +1613,15 @@ def check_task41_p0_b0_v17_selected_two_cell_report(
         )
         if column_record.get("signed_two_cell_identity") != saved_identity:
             raise ValueError(f"V17 column {column_index} signed two-cell identity differs")
+        initial_action_attribution = task41_p0_b0_v17_decimal_action_scatter_attribution(
+            cells=decimal_initial_action_cells,
+            b_t_volume=native_volume_t,
+            b_t_full=native_rhs_t,
+            b_alpha_t=beta_t,
+            observed_y=saved_y9,
+            observed_g=saved_g9,
+            observed_d=saved_y9 - saved_g9,
+        )
         action_attribution = task41_p0_b0_v17_decimal_action_scatter_attribution(
             cells=decimal_action_cells,
             b_t_volume=native_volume_t,
@@ -1612,6 +1631,123 @@ def check_task41_p0_b0_v17_selected_two_cell_report(
             observed_g=replay_g,
             observed_d=saved_y15 - saved_g15,
         )
+        from decimal import Decimal, localcontext
+
+        initial_closure = initial_action_attribution["signed_closure"]
+        final_closure = action_attribution["signed_closure"]
+
+        def decimal_pair_change(final_pair: Sequence[str], initial_pair: Sequence[str]) -> list[str]:
+            with localcontext() as context:
+                context.prec = 80
+                return [
+                    str(Decimal(final_pair[index]) - Decimal(initial_pair[index]))
+                    for index in range(2)
+                ]
+
+        per_cell_initial = {int(cell["cell_id"]): cell for cell in initial_action_attribution["per_cell"]}
+        per_cell_final = {int(cell["cell_id"]): cell for cell in action_attribution["per_cell"]}
+        per_cell_jz_change = [
+            (cell_id, decimal_pair_change(
+                per_cell_final[cell_id]["decimal_J_row_dot_z"],
+                per_cell_initial[cell_id]["decimal_J_row_dot_z"],
+            ))
+            for cell_id in TASK41_P0_B0_V17_SELECTED_CELLS
+        ]
+        with localcontext() as context:
+            context.prec = 80
+            per_cell_jz_change_sum = [
+                str(sum((Decimal(change[index]) for _, change in per_cell_jz_change), Decimal(0)))
+                for index in range(2)
+            ]
+        numeric_delta_fields = {
+            "observed_binary64_d": (
+                action_attribution["final_subtraction"]["binary64_y_minus_g"],
+                initial_action_attribution["final_subtraction"]["binary64_y_minus_g"],
+            ),
+            "exact_local_native_sum_Ju_minus_b_t_volume": (
+                final_closure["exact_local_native_sum_Ju_minus_b_t_volume"],
+                initial_closure["exact_local_native_sum_Ju_minus_b_t_volume"],
+            ),
+            "exact_solve_increment_sum_Jz_minus_Ju": (
+                final_closure["exact_solve_increment_sum_Jz_minus_Ju"],
+                initial_closure["exact_solve_increment_sum_Jz_minus_Ju"],
+            ),
+            "global_adjustment_b_volume_minus_b_full_plus_b_alpha": (
+                final_closure["global_adjustment_b_volume_minus_b_full_plus_b_alpha"],
+                initial_closure["global_adjustment_b_volume_minus_b_full_plus_b_alpha"],
+            ),
+            "exact_d_sum_Jz_minus_b_full_plus_b_alpha": (
+                final_closure["exact_d_sum_Jz_minus_b_full_plus_b_alpha"],
+                initial_closure["exact_d_sum_Jz_minus_b_full_plus_b_alpha"],
+            ),
+            "observed_d_minus_exact_d": (
+                final_closure["observed_d_minus_exact_d"],
+                initial_closure["observed_d_minus_exact_d"],
+            ),
+            "J_matvec_rounding_in_d": (
+                final_closure["J_matvec_rounding_in_d"],
+                initial_closure["J_matvec_rounding_in_d"],
+            ),
+            "g_scatter_rounding_in_d": (
+                final_closure["g_scatter_rounding_in_d"],
+                initial_closure["g_scatter_rounding_in_d"],
+            ),
+            "final_subtraction_rounding_in_d": (
+                final_closure["final_subtraction_rounding_in_d"],
+                initial_closure["final_subtraction_rounding_in_d"],
+            ),
+            "reconstructed_signed_remainder": (
+                final_closure["reconstructed_signed_remainder"],
+                initial_closure["reconstructed_signed_remainder"],
+            ),
+            "closure_difference": (
+                final_closure["closure_difference"],
+                initial_closure["closure_difference"],
+            ),
+        }
+        signed_final_minus_initial = {
+            name: decimal_pair_change(final, initial)
+            for name, (final, initial) in numeric_delta_fields.items()
+        }
+        solve_increment_change = signed_final_minus_initial[
+            "exact_solve_increment_sum_Jz_minus_Ju"
+        ]
+        exact_d_change = signed_final_minus_initial[
+            "exact_d_sum_Jz_minus_b_full_plus_b_alpha"
+        ]
+        with localcontext() as context:
+            context.prec = 80
+            solve_increment_identity_delta = [
+                str(Decimal(solve_increment_change[index]) - Decimal(per_cell_jz_change_sum[index]))
+                for index in range(2)
+            ]
+            exact_d_identity_delta = [
+                str(Decimal(exact_d_change[index]) - Decimal(per_cell_jz_change_sum[index]))
+                for index in range(2)
+            ]
+        comparison_bound = Decimal("1e-60")
+        initial_final_comparison = {
+            "status": "DIAGNOSTIC_ONLY",
+            "same_saved_call_z0_and_final_z": True,
+            "no_new_pde_integral_lu_getrs": True,
+            "initial_replays_saved_y9_g9": reproduced["y9"] and reproduced["g9"],
+            "final_replays_saved_y15_g15": reproduced["y15"] and reproduced["g15"],
+            "per_cell_decimal_Jz_final_minus_initial": [
+                {"cell_id": cell_id, "value": change}
+                for cell_id, change in per_cell_jz_change
+            ],
+            "per_cell_decimal_Jz_change_sum": per_cell_jz_change_sum,
+            "signed_final_minus_initial": signed_final_minus_initial,
+            "solve_increment_change_minus_sum_Jz_change": solve_increment_identity_delta,
+            "exact_d_change_minus_sum_Jz_change": exact_d_identity_delta,
+            "identity_change_closed_within_decimal_bound": max(
+                abs(Decimal(value))
+                for value in (*solve_increment_identity_delta, *exact_d_identity_delta)
+            ) <= comparison_bound,
+            "closure_bound_per_component": str(comparison_bound),
+        }
+        if not initial_final_comparison["identity_change_closed_within_decimal_bound"]:
+            raise ValueError(f"V17 column {column_index} initial/final Decimal action change does not close")
         if any(column_record.get(f"{key}_exact_saved_value_reproduced") is not value for key, value in reproduced.items()):
             raise ValueError(f"V17 column {column_index} saved y/g replay flags differ from recomputation")
         if (
@@ -1638,7 +1774,9 @@ def check_task41_p0_b0_v17_selected_two_cell_report(
                 for cell_index in TASK41_P0_B0_V17_SELECTED_CELLS
             },
             "signed_two_cell_identity": saved_identity,
+            "initial_decimal_action_scatter_attribution": initial_action_attribution,
             "decimal_action_scatter_attribution": action_attribution,
+            "initial_final_decimal_action_scatter_comparison": initial_final_comparison,
         })
     if checked_new_artifact_bytes > TASK41_P0_B0_V17_NEW_NPY_EVIDENCE_LIMIT_BYTES:
         raise ValueError("V17 newly persisted NPY evidence exceeds the 128 MiB cap")
