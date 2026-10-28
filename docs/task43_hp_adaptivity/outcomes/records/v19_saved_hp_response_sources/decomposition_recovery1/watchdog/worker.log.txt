@@ -1,0 +1,18 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-7.4.4, pluggy-1.4.0 -- /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/fenics/Projects/NN-Lab-V2
+collecting ... collected 3 items
+
+src/test/test_task43_saved_hp_response.py::test_saved_owner_geometry_reorders_plan_rows PASSED [ 33%]
+src/test/test_task43_saved_hp_response.py::test_wrong_owner_map_is_rejected PASSED [ 66%]
+src/test/test_task43_saved_hp_response.py::test_weighted_multicell_terms_close_after_reordering PASSED [100%]
+
+==================================== PASSES ====================================
+- generated xml file: /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/tests.xml -
+=========================== short test summary info ============================
+PASSED src/test/test_task43_saved_hp_response.py::test_saved_owner_geometry_reorders_plan_rows
+PASSED src/test/test_task43_saved_hp_response.py::test_wrong_owner_map_is_rejected
+PASSED src/test/test_task43_saved_hp_response.py::test_weighted_multicell_terms_close_after_reordering
+============================== 3 passed in 0.69s ===============================
+{"classification": "COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE", "output_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data"}

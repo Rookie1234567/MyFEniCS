@@ -1,0 +1,217 @@
+"""Root closeout: stdlib audit of completed CSV/JSON; never opens NPZ or runs project code."""
+import csv
+import hashlib
+import json
+import math
+import shutil
+from decimal import Decimal
+from pathlib import Path
+
+repo = Path('/home/fenics/Projects/NN-Lab-V2')
+records = repo / 'docs/task43_hp_adaptivity/outcomes/records'
+dest = records / 'v19_saved_hp_response_sources'
+base = repo / 'benchmarks/artifacts/task43/v19_saved_hp_response/support'
+
+def read(p):
+    return json.loads(p.read_text())
+
+def sha(p):
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+def write(p, obj):
+    p.write_text(json.dumps(obj, ensure_ascii=False, indent=2, allow_nan=False) + '\n')
+
+def close(x, y, rel=1e-10, absolute=1e-30):
+    assert abs(x-y) <= max(absolute, rel*max(abs(x),abs(y))), (x,y)
+
+stages = []
+copied = []
+for stage, name in [('T1','targeted_attempt1'),('D1','decomposition_attempt1'),('D2','decomposition_recovery1')]:
+    root = base/name
+    out = dest/name
+    out.mkdir(exist_ok=True)
+    # Existing copies must remain byte-identical; new evidence is copied verbatim.
+    names = ['run_manifest.json','root_closeout.json','launcher_terminal.json',
+             'runtime_start.json','runtime_end.json','watchdog/summary.json',
+             'watchdog/workflow_phase.json','tests.xml','data/run_manifest.json']
+    if stage == 'D2':
+        names += ['data/diagnostic.json'] + [f'data/q{q}/{n}' for q in (8,10) for n in ('diagnostic.json','cells.csv','modes_612.csv')]
+    for name2 in names + ['watchdog/worker.log']:
+        src=root/name2
+        if not src.exists():
+            continue
+        target=out/(name2+'.txt' if name2.endswith('.log') else name2)
+        target.parent.mkdir(parents=True,exist_ok=True)
+        if target.exists():
+            assert target.read_bytes()==src.read_bytes(), target
+        else:
+            shutil.copyfile(src,target)
+        copied.append({'source':str(src.relative_to(repo)), 'copy':str(target.relative_to(repo)), 'sha256':sha(src), 'bytes':src.stat().st_size})
+    # Small complete new traces, including every stack and exit tail, are reviewable.
+    for src in sorted((root/'strace').glob('sched.*')):
+        target=out/(src.name+'.txt')
+        if target.exists(): assert target.read_bytes()==src.read_bytes()
+        else: shutil.copyfile(src,target)
+        copied.append({'source':str(src.relative_to(repo)), 'copy':str(target.relative_to(repo)), 'sha256':sha(src),'bytes':src.stat().st_size})
+    terminal=read(root/'launcher_terminal.json')
+    summary=read(root/'watchdog/summary.json')
+    audit=read(root/'root_closeout.json')
+    manifest=read(root/'run_manifest.json')
+    assert summary['descendants_cleared'] and not summary['remaining_child_pids']
+    assert summary['sampled_process_tree_swap_peak_bytes']==0
+    assert summary['sampled_process_tree_rss_peak_bytes'] <= 8*1024**3
+    if stage != 'D1': assert not audit['issues'], audit['issues']
+    stages.append({'stage':stage,'root':str(root.relative_to(repo)),
+      'source_head':audit['source_head'], 'whole_seconds':terminal['entry_elapsed_seconds'],
+      'whole_limit_seconds':terminal['whole_limit_seconds'], 'watchdog_seconds_nested':summary['elapsed_seconds'],
+      'sampled_tree_rss_peak_bytes':summary['sampled_process_tree_rss_peak_bytes'],
+      'sampled_tree_swap_peak_bytes':summary['sampled_process_tree_swap_peak_bytes'],
+      'global_swap_activity':summary['global_swap_activity'],
+      'exit_codes':{'worker':summary['leader_exit_code'],'watchdog':terminal['watchdog_exit_code'],'supervisor':terminal['supervisor_exit_code']},
+      'received_signal':terminal['received_signal'], 'descendants_cleared':True,
+      'root_audit':str((out/'root_closeout.json').relative_to(repo)),
+      'raw_trace_lines_read':audit['trace_lines_read'], 'raw_resource_sha256':audit['resources_sha256'],
+      'root_audit_issues_as_saved':audit['issues'],
+      'D1_issue_classification':'Known checker owner-index rejection, not unknown exit; see d2_recovery_decision.json' if stage=='D1' else None,
+      'tests':{'T1':'12 passed; initial frozen bytes','D1':'NOT_RUN','D2':'3 affected nodes passed in same worker before checker'}[stage]})
+
+audits={}
+science={}
+for q in (8,10):
+    root=base/'decomposition_recovery1/data'/f'q{q}'
+    d=read(root/'diagnostic.json')
+    with (root/'cells.csv').open() as f: rows=list(csv.DictReader(f))
+    with (root/'modes_612.csv').open() as f: modes=list(csv.DictReader(f))
+    assert len(rows)==180 and {int(r['global_cell_id']) for r in rows}==set(range(180))
+    assert len(modes)==612 and len({(r['side'],r['m'],r['n'],r['polarization']) for r in modes})==612
+    maxima={}
+    sums={}
+    for action in ('H8','P8'):
+        sums[action]={}
+        for comp in ('E','curl_over_k0','G'):
+            fields=('B','D','X','I','after_error_squared','I_independent')
+            values={k:math.fsum(float(r[f'{action}.{comp}.{k}']) for r in rows) for k in fields}
+            maximum=0.0
+            for r in rows:
+                v={k:float(r[f'{action}.{comp}.{k}']) for k in fields}
+                assert all(math.isfinite(x) for x in v.values())
+                scale=max(v['B'],v['after_error_squared'],abs(v['X']),v['D'],1e-30)
+                discrepancy=max(abs((v['X']-v['D'])-(v['B']-v['after_error_squared'])),abs(v['I']-(v['X']-v['D'])),abs(v['I_independent']-(v['B']-v['after_error_squared'])))
+                maximum=max(maximum,discrepancy/scale)
+                assert discrepancy<=1e-10*scale
+            maxima[f'{action}.{comp}']=maximum
+            stored=d['actions'][action]['G_identity_checks'][comp]
+            for key in fields:
+                close(values[key],stored['sum_'+key])
+            for region in d['block_response_summaries']:
+                subset=[r for r in rows if r['region']==region]
+                block=d['block_response_summaries'][region][action][comp]
+                assert len(subset)==block['cell_count']
+                for key in fields:
+                    close(math.fsum(float(r[f'{action}.{comp}.{key}']) for r in subset),block[key])
+            sums[action][comp]=values
+        G=math.sqrt(sums[action]['G']['after_error_squared']/d['cell_partition']['normalized_G_squared_denominator'])
+        close(G,d['actions'][action]['G_eta_saved'],3e-11,1e-15)
+        # E+curl must equal G per cell, not just their global aggregate.
+        for r in rows:
+            for k in fields:
+                x=float(r[f'{action}.E.{k}'])+float(r[f'{action}.curl_over_k0.{k}'])
+                y=float(r[f'{action}.G.{k}'])
+                close(x,y)
+    exceeds=[]
+    max_amplitude_identity_error=0.0
+    for r in modes:
+        for a in ('R9','H8','P8'):
+            ref=complex(float(r['R9_amplitude_real']),float(r['R9_amplitude_imag']))
+            amp=complex(float(r[a+'_amplitude_real']),float(r[a+'_amplitude_imag']))
+            for other in ('R9','Y6_1'):
+                signed=float(r[a+'_saved_power_ratio'])-float(r[other+'_saved_power_ratio'])
+                close(signed,float(r[f'{a}_minus_{other}_power_ratio_signed']))
+                od=amp-complex(float(r[other+'_amplitude_real']),float(r[other+'_amplitude_imag']))
+                close(od.real,float(r[f'{a}_minus_{other}_amplitude_real']))
+                close(od.imag,float(r[f'{a}_minus_{other}_amplitude_imag']))
+            delta=amp-ref
+            direct=abs(amp)**2-abs(ref)**2
+            expanded=2*(ref.conjugate()*delta).real+abs(delta)**2
+            max_amplitude_identity_error=max(max_amplitude_identity_error,abs(direct-expanded))
+            close(direct,expanded,3e-11,1e-15)
+            diff=float(r[f'{a}_minus_Y6_1_power_ratio_signed'])
+            if abs(diff)>float(r['power_threshold']):
+                exceeds.append({'action':a,'side':r['side'],'m':int(r['m']),'n':int(r['n']),'polarization':r['polarization'],'signed_difference':diff,'absolute_difference':abs(diff),'threshold':float(r['power_threshold'])})
+    key=lambda x:(x['action'],x['side'],x['m'],x['n'],x['polarization'])
+    assert sorted(exceeds,key=key)==sorted(d['power_channels_over_1e-6'],key=key)
+    for action in ('R9','H8','P8'):
+        jr=d['actions'][action]['J_replay']
+        assert len(jr['components'])==16
+        close(max(jr['components'].values()),jr['value'])
+    top=sorted(rows,key=lambda r:float(r['H8.G.B']),reverse=True)[:10]
+    totalB=d['cell_partition']['baseline_R9_to_Y6_1_error_G_squared']
+    z={}
+    for r in rows:
+        k=str((json.loads(r['lower_nm'])[2],json.loads(r['upper_nm'])[2]))
+        z[k]=z.get(k,0)+float(r['H8.G.B'])/totalB
+    audits[f'q{q}']={'cells':180,'channels':612,'identity_relative_limit':1e-10,
+      'cell_identity_max_relative_error':maxima,'CSV_global_sums':sums,
+      'all_power_exceedances_independently_enumerated':exceeds,
+      'amplitude_squared_identity_max_absolute_error':max_amplitude_identity_error,
+      'original_error_share_by_z_interval_nm':z,
+      'top10_original_error_cells':[{'global_cell_id':int(r['global_cell_id']),'lower_nm':json.loads(r['lower_nm']),'B_share':float(r['H8.G.B'])/totalB} for r in top],
+      'top10_original_error_share':math.fsum(float(r['H8.G.B']) for r in top)/totalB,
+      'root_scope':'Recomputed completed CSV/JSON scalar arithmetic using stdlib; NPZ array checks performed by D2 worker, not reexecuted by root.'}
+    science[f'q{q}']={k:d[k] for k in ('quadrature','cell_partition','block_response_summaries','actions','power_channels_over_1e-6')}
+
+manifest=read(base/'decomposition_recovery1/data/run_manifest.json')
+assert manifest['status']=='COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE'
+assert manifest['source_sha256_start']==manifest['source_sha256_end']
+whole=sum(Decimal(str(s['whole_seconds'])) for s in stages)
+assert whole==Decimal('105.266475099')
+write(dest/'root_scientific_table_audit.json',audits)
+shutil.copyfile('/tmp/task43_v19_delivery.py',dest/'root_delivery_table_audit.py.txt')
+draft=Path('/tmp/task43_v19_science_draft.md').read_text()
+(dest/'unmonitored_operations_self_report.md').write_text('# 代理越界操作自述（非资格证据）\n\n来源：代理消息及其临时草稿；只保留操作自述，不以其 q8 暂定解释充当最终科学证据。\n\n'+draft.split('## 越界数组读取操作自述',1)[1])
+write(dest/'delivery_copy_index.json',{'copies':copied,'copy_rule':'verbatim; original large NPZ/resources remain ignored'})
+decision=read(dest/'d2_recovery_decision.json')
+results={
+ 'schema':'task43.v19.saved_hp_response_results.v1',
+ 'authority_review':'5586112bf5bee924cc603253a5cbf7dd6c4a0863',
+ 'authority_section':'review_report_v18.md §9',
+ 'branch':'task43_hp_adaptivity',
+ 'baseline_sha':'405e3aff42ac421a4c99315df1ed9b96941ecbe4',
+ 'initial_freeze':'8898f7e5fab82234786c51ffbd0cdeb167b379fe',
+ 'D2_actual_run_head':'f066305d7e95b438a5ef8b223f2d5928bc6d79d9',
+ 'status':'COMPLETE_SAVED_FIELD_DIAGNOSTIC_WITH_REPORTED_SUPERVISION_DEVIATION',
+ 'contract':{'path':'docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_contract.json','sha256':sha(records/'v19_saved_hp_response_contract.json')},
+ 'final_checker_sha256':sha(repo/'benchmarks/task43_hp_adaptivity/analyze_saved_hp_response.py'),
+ 'final_tests_sha256':sha(repo/'src/test/test_task43_saved_hp_response.py'),
+ 'stages':stages,'T2':'NOT_RUN; T1 passed; not transferable',
+ 'cost':{'counted_support_shell_calls':3,'support_slots_authorized_max':4,'whole_seconds':str(whole),'whole_limit_seconds':3000,
+    'nested_times_not_added':True,'static_and_manual_wall':'NOT_MEASURED',
+    'unmonitored_array_operations':2,'unmonitored_array_wall':'NOT_MEASURED','extra_shell127_before_interpreter':1},
+ 'supervision_deviation':decision['supervision_deviation'],
+ 'non_dynamic_mechanical_failures':['Static source-index dict/list reader assumption corrected; AST pytest decorator tuple/list reader corrected.',
+    'Read-only path lookups of absent optional config and mistaken D2 summary.json location failed; actual summary is watchdog/summary.json. No dynamic rerun or input mutation.'],
+ 'tests_qualification':'T1 12 initial-byte nodes; D2 3 affected final-byte nodes in same monitored worker. Not one final 13-node run or CI.',
+ 'original_inputs':read(records/'v19_saved_hp_response_contract.json')['quadrature_archives'],
+ 'source_input_checks':'D2 source_sha256_start equals end; per-array dtype/shape/hash/finite and 17 source/archive file identities checked in D2; root read final manifests, not a second raw array execution.',
+ 'scientific_results':science,
+ 'scientific_classification':{'q8':'P8_LOCAL_ALIGNED_GAIN_GLOBAL_SMALL; H8_LOCAL_GAIN_OUTWEIGHED_BY_OFFSITE_WORSENING',
+    'q10':'P8_LOCAL_ALIGNED_GAIN_GLOBAL_SMALL; H8_LOCAL_GAIN_OUTWEIGHED_BY_OFFSITE_WORSENING',
+    'sampling_interpretation':'CONSISTENT','output_gain':'NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE',
+    'epsilon_J':0.12716416232413652,'epsilon_G':9.088158796603444e-6},
+ 'FE_historical':{'R9':110472,'H8':116740,'P8':110722,'Y6_1':380160,'separate_6x10x6_p6_control':237600},
+ 'root_review':{'table_audit':str((dest/'root_scientific_table_audit.json').relative_to(repo)),
+    'raw_traces':'Read all T1/D1/D2 trace files, including stack/exit tails; all getters CPU1, no setters. Normal SIGCHLD and exact exit statuses classified.',
+    'resources':'All lines parsed; CPU1/task swap0/8GiB and dynamic cap maintained; runtime direct parent/tracer verified; recorded processes absent after exit.',
+    'review_decision':'D2 finite diagnostic evidence qualifies within saved-array scope; overall execution is not claimed fully authorization-compliant due to two extra unmonitored operations.'},
+ 'limitations':['No independent physical modal power reassembly; saved powers used directly; amplitude-square algebra separate.',
+    'Scattered reference denominators/floors and signed aggregate comparison values are historical hash-bound reuse; individual channel differences/direct aggregate sums independently checked.',
+    'General resume interface not used by D2; only fixture coverage, not general future resume qualification.',
+    'Sampled tree RSS is not continuous high-water; trace starts after taskset; unsampled short-lived children lack start_ticks; empty watchdog cache metadata is not cache stability proof.',
+    'No local R00 error, DWR, selector qualification, continuum truth, accepted10, production ABI or merge approval.'],
+ 'new_PDE':0,'new_sampling':0,'FE_field_restore':0,'new_background':0,'operator_application':0,
+ 'formal_ledger':{'used':9,'envelope':10,'last_slot':'SEALED'},
+ 'capabilities':{'space':'PARTIAL','selection':'PARTIAL','accuracy':'NOT_PASSED','same_accuracy_cost':'NOT_ESTABLISHED','iteration':'NOT_RUN / NOT_QUALIFIED'},
+ 'merge_approval':False,'next_run_authorized':False,
+ 'evidence_copy_index':str((dest/'delivery_copy_index.json').relative_to(repo))}
+write(records/'v19_saved_hp_response_results_v1.json',results)
+print(json.dumps({'whole':str(whole),'copied_files':len(copied),'audits':{q:{'max_identity':max(a['cell_identity_max_relative_error'].values()),'z_error_shares':a['original_error_share_by_z_interval_nm'],'top10_share':a['top10_original_error_share']} for q,a in audits.items()}},indent=2))

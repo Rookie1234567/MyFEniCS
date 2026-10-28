@@ -1,0 +1,466 @@
+{
+  "q8": {
+    "cells": 180,
+    "channels": 612,
+    "identity_relative_limit": 1e-10,
+    "cell_identity_max_relative_error": {
+      "H8.E": 1.405140784852484e-15,
+      "H8.curl_over_k0": 1.1761249122195785e-15,
+      "H8.G": 1.2444659042136477e-15,
+      "P8.E": 1.2334998272342723e-15,
+      "P8.curl_over_k0": 1.3083592780186395e-15,
+      "P8.G": 1.2142022992215464e-15
+    },
+    "CSV_global_sums": {
+      "H8": {
+        "E": {
+          "B": 7.554609920636796e-05,
+          "D": 0.00016029273021540561,
+          "X": 9.281689469063933e-07,
+          "I": -0.0001593645612684992,
+          "after_error_squared": 0.0002349106604748672,
+          "I_independent": -0.00015936456126849923
+        },
+        "curl_over_k0": {
+          "B": 0.0010420379222287996,
+          "D": 0.00020165244608934076,
+          "X": 3.11089573896646e-05,
+          "I": -0.00017054348869967616,
+          "after_error_squared": 0.0012125814109284758,
+          "I_independent": -0.00017054348869967613
+        },
+        "G": {
+          "B": 0.0011175840214351677,
+          "D": 0.0003619451763047464,
+          "X": 3.203712633657099e-05,
+          "I": -0.0003299080499681754,
+          "after_error_squared": 0.001447492071403343,
+          "I_independent": -0.0003299080499681754
+        }
+      },
+      "P8": {
+        "E": {
+          "B": 7.554609920636796e-05,
+          "D": 3.415841644234352e-07,
+          "X": 9.559397584605342e-07,
+          "I": 6.143555940370989e-07,
+          "after_error_squared": 7.493174361233086e-05,
+          "I_independent": 6.143555940371014e-07
+        },
+        "curl_over_k0": {
+          "B": 0.0010420379222287996,
+          "D": 1.451501361065226e-05,
+          "X": 2.9334007008585614e-05,
+          "I": 1.4818993397933352e-05,
+          "after_error_squared": 0.0010272189288308663,
+          "I_independent": 1.4818993397933404e-05
+        },
+        "G": {
+          "B": 0.0011175840214351677,
+          "D": 1.4856597775075695e-05,
+          "X": 3.0289946767046144e-05,
+          "I": 1.543334899197045e-05,
+          "after_error_squared": 0.0011021506724431971,
+          "I_independent": 1.5433348991970505e-05
+        }
+      }
+    },
+    "all_power_exceedances_independently_enumerated": [
+      {
+        "action": "R9",
+        "side": "top",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "signed_difference": 4.065061945224269e-06,
+        "absolute_difference": 4.065061945224269e-06,
+        "threshold": 1e-06
+      },
+      {
+        "action": "H8",
+        "side": "top",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "signed_difference": 3.974547323981614e-06,
+        "absolute_difference": 3.974547323981614e-06,
+        "threshold": 1e-06
+      },
+      {
+        "action": "P8",
+        "side": "top",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "signed_difference": 4.020864574738603e-06,
+        "absolute_difference": 4.020864574738603e-06,
+        "threshold": 1e-06
+      },
+      {
+        "action": "R9",
+        "side": "bottom",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "signed_difference": -2.1482450713386503e-06,
+        "absolute_difference": 2.1482450713386503e-06,
+        "threshold": 1e-06
+      },
+      {
+        "action": "H8",
+        "side": "bottom",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "signed_difference": -2.1129819847975906e-06,
+        "absolute_difference": 2.1129819847975906e-06,
+        "threshold": 1e-06
+      },
+      {
+        "action": "P8",
+        "side": "bottom",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "signed_difference": -2.083962419685559e-06,
+        "absolute_difference": 2.083962419685559e-06,
+        "threshold": 1e-06
+      }
+    ],
+    "amplitude_squared_identity_max_absolute_error": 2.268944508832134e-17,
+    "original_error_share_by_z_interval_nm": {
+      "(-10.0, 0.0)": 0.34345032615493776,
+      "(0.0, 30.0)": 0.06168800903182006,
+      "(30.0, 60.0)": 0.07885977451600032,
+      "(60.0, 90.0)": 0.15164530280657612,
+      "(90.0, 120.0)": 0.2569226590810893,
+      "(120.0, 130.0)": 0.10743392840957666
+    },
+    "top10_original_error_cells": [
+      {
+        "global_cell_id": 8,
+        "lower_nm": [
+          16.5,
+          5.0,
+          -10.0
+        ],
+        "B_share": 0.012433618952223197
+      },
+      {
+        "global_cell_id": 115,
+        "lower_nm": [
+          16.5,
+          40.0,
+          -10.0
+        ],
+        "B_share": 0.012416104686897743
+      },
+      {
+        "global_cell_id": 17,
+        "lower_nm": [
+          16.5,
+          10.0,
+          -10.0
+        ],
+        "B_share": 0.012412493833400791
+      },
+      {
+        "global_cell_id": 44,
+        "lower_nm": [
+          16.5,
+          20.0,
+          -10.0
+        ],
+        "B_share": 0.012403663874617357
+      },
+      {
+        "global_cell_id": 97,
+        "lower_nm": [
+          16.5,
+          35.0,
+          -10.0
+        ],
+        "B_share": 0.012401076473642785
+      },
+      {
+        "global_cell_id": 61,
+        "lower_nm": [
+          16.5,
+          25.0,
+          -10.0
+        ],
+        "B_share": 0.012392782033166476
+      },
+      {
+        "global_cell_id": 3,
+        "lower_nm": [
+          16.5,
+          0.0,
+          -10.0
+        ],
+        "B_share": 0.012388346574118905
+      },
+      {
+        "global_cell_id": 29,
+        "lower_nm": [
+          16.5,
+          15.0,
+          -10.0
+        ],
+        "B_share": 0.012387402085351981
+      },
+      {
+        "global_cell_id": 132,
+        "lower_nm": [
+          16.5,
+          45.0,
+          -10.0
+        ],
+        "B_share": 0.012379594473392382
+      },
+      {
+        "global_cell_id": 79,
+        "lower_nm": [
+          16.5,
+          30.0,
+          -10.0
+        ],
+        "B_share": 0.012368857268175595
+      }
+    ],
+    "top10_original_error_share": 0.1239839402549872,
+    "root_scope": "Recomputed completed CSV/JSON scalar arithmetic using stdlib; NPZ array checks performed by D2 worker, not reexecuted by root."
+  },
+  "q10": {
+    "cells": 180,
+    "channels": 612,
+    "identity_relative_limit": 1e-10,
+    "cell_identity_max_relative_error": {
+      "H8.E": 9.611117293435952e-16,
+      "H8.curl_over_k0": 1.0291705895538443e-15,
+      "H8.G": 1.0738451434352883e-15,
+      "P8.E": 1.0474990919566217e-15,
+      "P8.curl_over_k0": 1.1942041466872019e-15,
+      "P8.G": 1.060446942619111e-15
+    },
+    "CSV_global_sums": {
+      "H8": {
+        "E": {
+          "B": 7.554609920625665e-05,
+          "D": 0.00016029273021539968,
+          "X": 9.281689469057773e-07,
+          "I": -0.0001593645612684939,
+          "after_error_squared": 0.00023491066047475053,
+          "I_independent": -0.0001593645612684939
+        },
+        "curl_over_k0": {
+          "B": 0.0010420379222286366,
+          "D": 0.00020165244608933938,
+          "X": 3.1108957389599484e-05,
+          "I": -0.00017054348869973988,
+          "after_error_squared": 0.0012125814109283765,
+          "I_independent": -0.00017054348869973985
+        },
+        "G": {
+          "B": 0.0011175840214348934,
+          "D": 0.00036194517630473906,
+          "X": 3.203712633650526e-05,
+          "I": -0.0003299080499682338,
+          "after_error_squared": 0.001447492071403127,
+          "I_independent": -0.0003299080499682338
+        }
+      },
+      "P8": {
+        "E": {
+          "B": 7.554609920625665e-05,
+          "D": 3.4158416442335086e-07,
+          "X": 9.559397584613935e-07,
+          "I": 6.143555940380426e-07,
+          "after_error_squared": 7.49317436122186e-05,
+          "I_independent": 6.143555940380445e-07
+        },
+        "curl_over_k0": {
+          "B": 0.0010420379222286366,
+          "D": 1.4515013610651842e-05,
+          "X": 2.9334007008573583e-05,
+          "I": 1.4818993397921743e-05,
+          "after_error_squared": 0.001027218928830715,
+          "I_independent": 1.481899339792175e-05
+        },
+        "G": {
+          "B": 0.0011175840214348934,
+          "D": 1.4856597775075192e-05,
+          "X": 3.0289946767034977e-05,
+          "I": 1.5433348991959785e-05,
+          "after_error_squared": 0.0011021506724429335,
+          "I_independent": 1.543334899195979e-05
+        }
+      }
+    },
+    "all_power_exceedances_independently_enumerated": [
+      {
+        "action": "R9",
+        "side": "top",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "signed_difference": 4.065061945224269e-06,
+        "absolute_difference": 4.065061945224269e-06,
+        "threshold": 1e-06
+      },
+      {
+        "action": "H8",
+        "side": "top",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "signed_difference": 3.974547323981614e-06,
+        "absolute_difference": 3.974547323981614e-06,
+        "threshold": 1e-06
+      },
+      {
+        "action": "P8",
+        "side": "top",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "signed_difference": 4.020864574738603e-06,
+        "absolute_difference": 4.020864574738603e-06,
+        "threshold": 1e-06
+      },
+      {
+        "action": "R9",
+        "side": "bottom",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "signed_difference": -2.1482450713386503e-06,
+        "absolute_difference": 2.1482450713386503e-06,
+        "threshold": 1e-06
+      },
+      {
+        "action": "H8",
+        "side": "bottom",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "signed_difference": -2.1129819847975906e-06,
+        "absolute_difference": 2.1129819847975906e-06,
+        "threshold": 1e-06
+      },
+      {
+        "action": "P8",
+        "side": "bottom",
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "signed_difference": -2.083962419685559e-06,
+        "absolute_difference": 2.083962419685559e-06,
+        "threshold": 1e-06
+      }
+    ],
+    "amplitude_squared_identity_max_absolute_error": 2.268944508832134e-17,
+    "original_error_share_by_z_interval_nm": {
+      "(-10.0, 0.0)": 0.3434503261550273,
+      "(0.0, 30.0)": 0.06168800903181979,
+      "(30.0, 60.0)": 0.07885977451589528,
+      "(60.0, 90.0)": 0.1516453028064694,
+      "(90.0, 120.0)": 0.2569226590811845,
+      "(120.0, 130.0)": 0.10743392840960364
+    },
+    "top10_original_error_cells": [
+      {
+        "global_cell_id": 8,
+        "lower_nm": [
+          16.5,
+          5.0,
+          -10.0
+        ],
+        "B_share": 0.012433618952227665
+      },
+      {
+        "global_cell_id": 115,
+        "lower_nm": [
+          16.5,
+          40.0,
+          -10.0
+        ],
+        "B_share": 0.012416104686898041
+      },
+      {
+        "global_cell_id": 17,
+        "lower_nm": [
+          16.5,
+          10.0,
+          -10.0
+        ],
+        "B_share": 0.01241249383340279
+      },
+      {
+        "global_cell_id": 44,
+        "lower_nm": [
+          16.5,
+          20.0,
+          -10.0
+        ],
+        "B_share": 0.012403663874622566
+      },
+      {
+        "global_cell_id": 97,
+        "lower_nm": [
+          16.5,
+          35.0,
+          -10.0
+        ],
+        "B_share": 0.012401076473644933
+      },
+      {
+        "global_cell_id": 61,
+        "lower_nm": [
+          16.5,
+          25.0,
+          -10.0
+        ],
+        "B_share": 0.012392782033169064
+      },
+      {
+        "global_cell_id": 3,
+        "lower_nm": [
+          16.5,
+          0.0,
+          -10.0
+        ],
+        "B_share": 0.012388346574121767
+      },
+      {
+        "global_cell_id": 29,
+        "lower_nm": [
+          16.5,
+          15.0,
+          -10.0
+        ],
+        "B_share": 0.012387402085355624
+      },
+      {
+        "global_cell_id": 132,
+        "lower_nm": [
+          16.5,
+          45.0,
+          -10.0
+        ],
+        "B_share": 0.012379594473395959
+      },
+      {
+        "global_cell_id": 79,
+        "lower_nm": [
+          16.5,
+          30.0,
+          -10.0
+        ],
+        "B_share": 0.012368857268176717
+      }
+    ],
+    "top10_original_error_share": 0.12398394025501513,
+    "root_scope": "Recomputed completed CSV/JSON scalar arithmetic using stdlib; NPZ array checks performed by D2 worker, not reexecuted by root."
+  }
+}

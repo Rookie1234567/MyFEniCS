@@ -1,0 +1,201 @@
+{
+  "checker_sha256": "f1191f223e087a4d8d589e7a11a056e06e2c831a37ae2c5aa862c2da55868ca8",
+  "contract_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_contract.json",
+  "contract_sha256": "d03f3414811813891b3381a45bf52b38d55df14bb1ae22114a66042fae737fde",
+  "elapsed_monotonic_seconds": 81.60440509067848,
+  "execution_slot": {
+    "armed": true,
+    "cpu_affinity": [
+      1
+    ],
+    "mpi_processes": 0,
+    "output_subdir": "data",
+    "root": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1",
+    "rss_limit_bytes": 8589934592,
+    "threads": 1,
+    "whole_seconds": 1200,
+    "work_seconds": 1140
+  },
+  "finished_utc": "2026-10-28T14:10:58.986013+00:00",
+  "git_head": "f066305d7e95b438a5ef8b223f2d5928bc6d79d9",
+  "last_complete_order": "q10",
+  "numpy_version": "1.26.4",
+  "orders": {
+    "q10": {
+      "cells_csv": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/q10/cells.csv",
+        "rows": 180,
+        "sha256": "adc602880f83bf9614fc9e645f2f5c80432f048e7a403d408b015b86cd242bb7"
+      },
+      "diagnostic": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/q10/diagnostic.json",
+        "sha256": "2cbef6b2661c464da2d8f67adb8e0144b32aed9f261d1d874dbff783794cf754"
+      },
+      "modes_612_csv": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/q10/modes_612.csv",
+        "rows": 612,
+        "sha256": "4c9e91f2a78de2c33bf995a39222a3c8e7604f6203e15ba63bd4e16af88b6923"
+      },
+      "status": "COMPLETE"
+    },
+    "q8": {
+      "cells_csv": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/q8/cells.csv",
+        "rows": 180,
+        "sha256": "52f2be313a3b57c73f675ce4cad5d55ada79a26c60f50568a565eb0871b5e56b"
+      },
+      "diagnostic": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/q8/diagnostic.json",
+        "sha256": "1242642f278406d7332d8e8d074ae9648a31d028a6676437abbf18212e5cd123"
+      },
+      "modes_612_csv": {
+        "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/q8/modes_612.csv",
+        "rows": 612,
+        "sha256": "4c9e91f2a78de2c33bf995a39222a3c8e7604f6203e15ba63bd4e16af88b6923"
+      },
+      "status": "COMPLETE"
+    }
+  },
+  "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+  "result": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/diagnostic.json",
+    "sha256": "d5e9e2dafe51b2f95761b0110c046f6635e2fa0cf8ed8f45eecd6e327c56c264"
+  },
+  "runtime_identity": {
+    "activation_marker": "1",
+    "ancestors": [
+      {
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog --wall-seconds 1140 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; ex",
+        "pid": 3615313,
+        "ppid": 3615256,
+        "start_ticks": 312156873,
+        "state": "S"
+      },
+      {
+        "cmdline": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/launch/stage_launch.sh D2 --supervise 3121568315880976 ",
+        "pid": 3615256,
+        "ppid": 1,
+        "start_ticks": 312156832,
+        "state": "S"
+      }
+    ],
+    "cpu_affinity": [
+      1
+    ],
+    "numpy": "1.26.4",
+    "pid": 3615316,
+    "ppid": 3615313,
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "qualified_venv": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv",
+    "run_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1",
+    "stage": "D2",
+    "start_ticks": 312156949,
+    "state": "R",
+    "task_vmswap_kib": 0,
+    "thread_environment": {
+      "BLIS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "threads": [
+      {
+        "cpu_affinity": [
+          1
+        ],
+        "start_ticks": 312156949,
+        "state": "R",
+        "tid": 3615316
+      }
+    ],
+    "tracer": {
+      "cmdline": "strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/strace/sched python -u -m benchmarks.task43_hp_adaptivity.analyze_saved_hp_response --manifest /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_contract.json --output-root /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomp",
+      "pid": 3615320,
+      "ppid": 3615313,
+      "start_ticks": 312156954,
+      "state": "S"
+    },
+    "tracer_ancestor_chain": [
+      {
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog --wall-seconds 1140 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; ex",
+        "pid": 3615313,
+        "ppid": 3615256,
+        "start_ticks": 312156873,
+        "state": "S"
+      },
+      {
+        "cmdline": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/launch/stage_launch.sh D2 --supervise 3121568315880976 ",
+        "pid": 3615256,
+        "ppid": 1,
+        "start_ticks": 312156832,
+        "state": "S"
+      }
+    ],
+    "tracer_owned_by_watchdog": true,
+    "tracer_pid": 3615320,
+    "virtual_env": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv",
+    "watchdog": {
+      "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog --wall-seconds 1140 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; ex",
+      "pid": 3615313,
+      "ppid": 3615256,
+      "start_ticks": 312156873,
+      "state": "S"
+    },
+    "watchdog_is_direct_parent": true,
+    "watchdog_phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog/workflow_phase.json",
+    "watchdog_pid": 3615313,
+    "watchdog_start_ticks": 312156873
+  },
+  "runtime_identity_end": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/runtime_end.json",
+    "sha256": "70767544220b4779eb4872c27d93f8c7e20a7960c5cbc7c726739e07fcabc830"
+  },
+  "runtime_identity_start": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/runtime_start.json",
+    "sha256": "55427e39a64092305ac092e9b6ecea555f6b5c40dd34669cd1d8cdb747817d78"
+  },
+  "schema": "task43.v19.saved_hp_response_run.v1",
+  "source_sha256_end": {
+    "h8_absorption": "63fad5942ada7021ce18c4394ec557dc2133c4e19136da2741fb2bcfbe2657cb",
+    "h8_modal": "cd035508492b0f65798afc669db4e9f93516608d965612f6650ab327d83d8ed3",
+    "h8_plan": "f26dc8a9c4a0c6d4aed7d9767477e142e57dadb69db39a437bb05b9bed701688",
+    "p5_comparison": "26c836ba9abab4ec2636c7c3467381a25b087e7b9c6e85cd655508589abe8097",
+    "p8_absorption": "f718627465f72c0783f02f60c73256232d73de00ca34128e237fc3be7459d080",
+    "p8_comparison": "1fca6095529c01685717f3db97b8d00302bb90fc1dfb2df9042cff58e9e137af",
+    "p8_modal": "c7b1ff6033f0a901a6e42f827bd26a9f3e7ab1b046dcf57cd7656548d2e446c8",
+    "p8_plan": "10733af8fc00e29d54fa4d4ee18b2e78bc6ed7c15834db7a0ff6902ba4de9a04",
+    "quadrature.q10.p5": "82d7bc676e23bea0794caf5e16b3d6c28ee02cb18c57cb59e4bfc08a55759f99",
+    "quadrature.q10.p8": "a3f3edca3f1f07fca79c37c1823b1616d6c330c36122ebc405d47ef2f8c20a85",
+    "quadrature.q8.p5": "7286c09d6b3f3bb3a7ece1cd46284a9a5faafd6ebbcb213e2568b6a32ed1119e",
+    "quadrature.q8.p8": "5475cffe826f45217cebd8df35239f4ba8a4a5813657cf2ca7696ce871af792f",
+    "r9_absorption": "4f73d4db2da94f52ff5206942e8953b98d7427691f827da7ca047f171851bdd8",
+    "r9_modal": "443bd3683027534b349903fc11c97ef21a69fb3982d1bc70fd47781fed28be0e",
+    "r9_plan": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+    "y6_modal": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463",
+    "y6_summary": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc"
+  },
+  "source_sha256_start": {
+    "h8_absorption": "63fad5942ada7021ce18c4394ec557dc2133c4e19136da2741fb2bcfbe2657cb",
+    "h8_modal": "cd035508492b0f65798afc669db4e9f93516608d965612f6650ab327d83d8ed3",
+    "h8_plan": "f26dc8a9c4a0c6d4aed7d9767477e142e57dadb69db39a437bb05b9bed701688",
+    "p5_comparison": "26c836ba9abab4ec2636c7c3467381a25b087e7b9c6e85cd655508589abe8097",
+    "p8_absorption": "f718627465f72c0783f02f60c73256232d73de00ca34128e237fc3be7459d080",
+    "p8_comparison": "1fca6095529c01685717f3db97b8d00302bb90fc1dfb2df9042cff58e9e137af",
+    "p8_modal": "c7b1ff6033f0a901a6e42f827bd26a9f3e7ab1b046dcf57cd7656548d2e446c8",
+    "p8_plan": "10733af8fc00e29d54fa4d4ee18b2e78bc6ed7c15834db7a0ff6902ba4de9a04",
+    "quadrature.q10.p5": "82d7bc676e23bea0794caf5e16b3d6c28ee02cb18c57cb59e4bfc08a55759f99",
+    "quadrature.q10.p8": "a3f3edca3f1f07fca79c37c1823b1616d6c330c36122ebc405d47ef2f8c20a85",
+    "quadrature.q8.p5": "7286c09d6b3f3bb3a7ece1cd46284a9a5faafd6ebbcb213e2568b6a32ed1119e",
+    "quadrature.q8.p8": "5475cffe826f45217cebd8df35239f4ba8a4a5813657cf2ca7696ce871af792f",
+    "r9_absorption": "4f73d4db2da94f52ff5206942e8953b98d7427691f827da7ca047f171851bdd8",
+    "r9_modal": "443bd3683027534b349903fc11c97ef21a69fb3982d1bc70fd47781fed28be0e",
+    "r9_plan": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+    "y6_modal": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463",
+    "y6_summary": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc"
+  },
+  "stage": "D2",
+  "started_utc": "2026-10-28T14:09:47.035400+00:00",
+  "status": "COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE"
+}

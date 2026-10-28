@@ -1,0 +1,93 @@
+{
+  "identity": {
+    "activation_marker": "1",
+    "ancestors": [
+      {
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog --wall-seconds 1140 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; ex",
+        "pid": 3615313,
+        "ppid": 3615256,
+        "start_ticks": 312156873,
+        "state": "S"
+      },
+      {
+        "cmdline": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/launch/stage_launch.sh D2 --supervise 3121568315880976 ",
+        "pid": 3615256,
+        "ppid": 1,
+        "start_ticks": 312156832,
+        "state": "S"
+      }
+    ],
+    "cpu_affinity": [
+      1
+    ],
+    "numpy": "1.26.4",
+    "pid": 3615316,
+    "ppid": 3615313,
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "qualified_venv": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv",
+    "run_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1",
+    "stage": "D2",
+    "start_ticks": 312156949,
+    "state": "R",
+    "task_vmswap_kib": 0,
+    "thread_environment": {
+      "BLIS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "threads": [
+      {
+        "cpu_affinity": [
+          1
+        ],
+        "start_ticks": 312156949,
+        "state": "R",
+        "tid": 3615316
+      }
+    ],
+    "tracer": {
+      "cmdline": "strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/strace/sched python -u -m benchmarks.task43_hp_adaptivity.analyze_saved_hp_response --manifest /home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_contract.json --output-root /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomp",
+      "pid": 3615320,
+      "ppid": 3615313,
+      "start_ticks": 312156954,
+      "state": "S"
+    },
+    "tracer_ancestor_chain": [
+      {
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog --wall-seconds 1140 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; ex",
+        "pid": 3615313,
+        "ppid": 3615256,
+        "start_ticks": 312156873,
+        "state": "S"
+      },
+      {
+        "cmdline": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/launch/stage_launch.sh D2 --supervise 3121568315880976 ",
+        "pid": 3615256,
+        "ppid": 1,
+        "start_ticks": 312156832,
+        "state": "S"
+      }
+    ],
+    "tracer_owned_by_watchdog": true,
+    "tracer_pid": 3615320,
+    "virtual_env": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv",
+    "watchdog": {
+      "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog --wall-seconds 1140 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; ex",
+      "pid": 3615313,
+      "ppid": 3615256,
+      "start_ticks": 312156873,
+      "state": "S"
+    },
+    "watchdog_is_direct_parent": true,
+    "watchdog_phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog/workflow_phase.json",
+    "watchdog_pid": 3615313,
+    "watchdog_start_ticks": 312156873
+  },
+  "moment": "end",
+  "recorded_utc": "2026-10-28T14:10:59.015612+00:00",
+  "schema": "task43.v19.runtime_identity.v1",
+  "stage": "D2"
+}

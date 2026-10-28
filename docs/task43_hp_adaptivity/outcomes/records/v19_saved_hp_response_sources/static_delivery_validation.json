@@ -1,0 +1,122 @@
+{
+  "schema": "task43.v19.static_delivery_validation.v1",
+  "scope": "stdlib JSON/link/hash/format closeout only; no project/native imports, NPZ payload, pytest or support launch",
+  "json_files_parsed": 17,
+  "copied_files_hash_verified": 42,
+  "D2_current_source_hashes_match": 15,
+  "new_v19_local_links_verified": [
+    {
+      "from": "docs/task43_hp_adaptivity/response_v19.md",
+      "target": "review_report_v18.md#9-下一轮唯一执行授权已有四场的局部误差动作响应诊断"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/response_v19.md",
+      "target": "outcomes/records/v19_saved_hp_response_contract.json"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/response_v19.md",
+      "target": "outcomes/records/v19_saved_hp_response_sources/unmonitored_operations_self_report.md"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/response_v19.md",
+      "target": "outcomes/records/v19_saved_hp_response_results_v1.json"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/response_v19.md",
+      "target": "outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/q8/cells.csv"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/response_v19.md",
+      "target": "outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/q8/modes_612.csv"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/response_v19.md",
+      "target": "outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/q8/diagnostic.json"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/response_v19.md",
+      "target": "outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/q10/cells.csv"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/response_v19.md",
+      "target": "outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/q10/modes_612.csv"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/response_v19.md",
+      "target": "outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/q10/diagnostic.json"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/response_v19.md",
+      "target": "outcomes/records/v19_saved_hp_response_sources/root_scientific_table_audit.json"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/response_v19.md",
+      "target": "outcomes/records/v19_saved_hp_response_sources/delivery_copy_index.json"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/response_v19.md",
+      "target": "outcomes/records/v19_saved_hp_response_sources/d2_recovery_decision.json"
+    },
+    {
+      "from": "docs/development_model_registry.md",
+      "target": "task43_hp_adaptivity/response_v19.md"
+    },
+    {
+      "from": "docs/development_model_registry.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_results_v1.json"
+    },
+    {
+      "from": "docs/development_progress.md",
+      "target": "task43_hp_adaptivity/response_v19.md"
+    },
+    {
+      "from": "docs/development_progress.md",
+      "target": "task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_results_v1.json"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/README.md",
+      "target": "response_v19.md"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/README.md",
+      "target": "outcomes/records/v19_saved_hp_response_results_v1.json"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/README.md",
+      "target": "outcomes/summary.md"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+      "target": "../response_v19.md"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/outcomes/selective_merge_manifest.md",
+      "target": "records/v19_saved_hp_response_results_v1.json"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/outcomes/summary.md",
+      "target": "../response_v19.md"
+    },
+    {
+      "from": "docs/task43_hp_adaptivity/outcomes/summary.md",
+      "target": "records/v19_saved_hp_response_results_v1.json"
+    }
+  ],
+  "failure_retained": {
+    "action": "Initial whole-file Markdown link check",
+    "result": "AssertionError",
+    "path": "docs/development_model_registry.md",
+    "historical_missing_target": "../tmp/task40_d13_y2_scale_homogeneous_launch_v1/terminal_receipt_20261017.json",
+    "resolution": "Untouched historical target; scoped recheck of newly added V19 links"
+  },
+  "wall": "NOT_MEASURED",
+  "runtime_source_unchanged": true,
+  "full_tests_rerun": false,
+  "format_check": {
+    "default_git_diff_cached_check": "exit2: four byte-preserved CSVs use standard csv CRLF line endings, reported as trailing whitespace",
+    "preserve_bytes": true,
+    "command_scoped_cr_at_eol_check": "git -c core.whitespace=cr-at-eol diff --cached --check",
+    "scoped_check_exit": 0,
+    "shared_git_config_modified": false
+  }
+}

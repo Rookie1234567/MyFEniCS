@@ -1,6 +1,21 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V18 当前状态：有限研究工程链完成，科学门未过，无合并批准
+## V19 当前依赖组：保存数组研究诊断完成，无合并批准
+
+| 依赖组 | 本轮变更及依赖 | 验证／建议审查顺序 |
+|---|---|---|
+| production numerical/core | 无改动；方程、离散、求解、默认writer不变 | 新增fresh PDE=0，不授予生产资格 |
+| reusable runner/watchdog | 共享watchdog/activation/ABI不改；任务内短launch及snapshot归档 | 仅T1/D1/D2实际父链、CPU/资源/清理证据；不授予通用运行器资格 |
+| checker/benchmark | 新`analyze_saved_hp_response.py`，stdlib/NumPy读旧数组；依赖固定V19合同及17项旧输入身份 | 先审输入/owner、两种独立恒等式，再审完整180/612表；T1初始12项+D2最终3项受影响验证，不是一次全套 |
+| compact evidence/docs | response_v19、机器结果、三槽原件摘录、两阶完整CSV和逐项JSON、监督偏差与主控核算 | 研究证据可审，不等于merge approval；先核失败及超范围操作，再评价D2有限证据 |
+| research-only | 新checker/小fixture/任务内launch、V19合同 | 不生成selector、DWR、transition10；未使用的通用resume路径仅fixture覆盖，不外推恢复资格 |
+| do-not-merge | 大型NPZ/完整资源流、额外未监控数组操作的资格推断、未经批准整分支 | 原件ignored保留；不得把监督偏差隐去或以诊断完成提升科学/生产状态 |
+
+D2固定运行源码`f066305d7e95b438a5ef8b223f2d5928bc6d79d9`，T1/D1为`8898f7e5fab82234786c51ffbd0cdeb167b379fe`。全域P8收益小、H8域外恶化占主导；所有旧精度失败保持。3次授权支持shell/105.266475099秒，另有两次未监控数组操作及一次shell127失败（NOT_MEASURED），正式新增0、账9/10末槽封存。不存在本轮合入顺序授权，只给审查依赖顺序。见[Response V19](../response_v19.md)、[机器结果](records/v19_saved_hp_response_results_v1.json)。
+
+本轮收口另发现新合同残留D2未启用/无动态授权文案及一处旧launch hash；实际快照绑定一致，原合同字节保留，当前response明确订正。整体合同一致性与监督偏差仍待外审，不称工程全量验收通过。
+
+## V18 历史状态：有限研究工程链完成，科学门未过，无合并批准
 
 | 依赖组 | 变化与实证 | 合入顺序与边界 |
 |---|---|---|

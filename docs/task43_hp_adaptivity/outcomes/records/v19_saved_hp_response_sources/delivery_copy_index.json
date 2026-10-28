@@ -1,0 +1,257 @@
+{
+  "copies": [
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/targeted_attempt1/run_manifest.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/targeted_attempt1/run_manifest.json",
+      "sha256": "37d4782394822b889ed4fa2ed25bb2d7dfe6eaa7b6b76e10a05cf63f5d121213",
+      "bytes": 8333
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/targeted_attempt1/root_closeout.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/targeted_attempt1/root_closeout.json",
+      "sha256": "6c314796b5feed89bdeae2390c6c2b1bb254c803a1e89fdc95862125f0037803",
+      "bytes": 22301
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/targeted_attempt1/launcher_terminal.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/targeted_attempt1/launcher_terminal.json",
+      "sha256": "7360dd84e8bac1071812465c2332868bf78305e36f047e0cb79b5dc5efc4af06",
+      "bytes": 244
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/targeted_attempt1/runtime_start.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/targeted_attempt1/runtime_start.json",
+      "sha256": "cab237c2fa0ebe09d68b8f4c95dca92d16b4d4ca8567a5c7eacbb1dc7d91e46f",
+      "bytes": 4757
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/targeted_attempt1/runtime_end.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/targeted_attempt1/runtime_end.json",
+      "sha256": "2ba365bda1a18abc471d9934c93d1c98c3000798fce93536fff71a5bfbfaa94c",
+      "bytes": 4755
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/targeted_attempt1/watchdog/summary.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/targeted_attempt1/watchdog/summary.json",
+      "sha256": "7c0df7c5a939b5db6e661b4799d6526fea9cc7eae60ac09ec1d7b0a8d7504d5b",
+      "bytes": 3525
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/targeted_attempt1/watchdog/workflow_phase.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/targeted_attempt1/watchdog/workflow_phase.json",
+      "sha256": "62685b2fe02af817b83dfa0b47206f3b92911b838e2da978f59d6e8004840320",
+      "bytes": 149
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/targeted_attempt1/tests.xml",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/targeted_attempt1/tests.xml",
+      "sha256": "0f863f9e3c7a92c2061db18ef4dd23293f3bfcd40af5f5fb5e9d84360b3e4f9c",
+      "bytes": 1743
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/targeted_attempt1/watchdog/worker.log",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/targeted_attempt1/watchdog/worker.log.txt",
+      "sha256": "c677fceea97f38361635dfc881b892dba4b94bd92ada7d5bf02eb7fe1fc378e8",
+      "bytes": 3055
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/targeted_attempt1/strace/sched.3613584",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/targeted_attempt1/sched.3613584.txt",
+      "sha256": "82b91cf3bf960e967162edf1c8abd104becd43a1bb77ee0eeb60277a19282f50",
+      "bytes": 21497
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/targeted_attempt1/strace/sched.3613589",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/targeted_attempt1/sched.3613589.txt",
+      "sha256": "d00b4f4894264ba8a3728c01f387c40693045af17c15661cd66ba9650df25c87",
+      "bytes": 40
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_attempt1/run_manifest.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_attempt1/run_manifest.json",
+      "sha256": "71ea3980c9d55a8b08282110f520a9a69413e871a44ef27f34a824c00672177d",
+      "bytes": 7221
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_attempt1/root_closeout.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_attempt1/root_closeout.json",
+      "sha256": "1255b7ba9b678d6832ad4e96e788f6e8d1a50065050ad0d16c91b182fe323bac",
+      "bytes": 28011
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_attempt1/launcher_terminal.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_attempt1/launcher_terminal.json",
+      "sha256": "11483ee05b3663651f87155c9843f76c847cea9832c8b05bc285a2659acea9f1",
+      "bytes": 246
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_attempt1/runtime_start.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_attempt1/runtime_start.json",
+      "sha256": "84a2f6432443e1efeb03e0ae688e46d2f2a83442e9cec5cf4fec74ca3dbb99ff",
+      "bytes": 4767
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_attempt1/runtime_end.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_attempt1/runtime_end.json",
+      "sha256": "be7321c3e6791dcfc3d64686dfd96c09ec2e8bfd432945c7295b0376bd394e66",
+      "bytes": 4765
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_attempt1/watchdog/summary.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_attempt1/watchdog/summary.json",
+      "sha256": "5725e66b2ed996747bd7b22349f6ebdfb0f907ff3a35e4cab0f0f5ee48c6f616",
+      "bytes": 3532
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_attempt1/watchdog/workflow_phase.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_attempt1/watchdog/workflow_phase.json",
+      "sha256": "0cadc2a3af7b69d77f70e2bf080a4eda6c6994c280754df53bb5afdb2d7c9adf",
+      "bytes": 149
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_attempt1/data/run_manifest.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_attempt1/data/run_manifest.json",
+      "sha256": "c7c36d98e1b0e15d7fc3f0642e7389b4a0b1eaca3d79ab39b4d8ea0ecdfc3445",
+      "bytes": 7602
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_attempt1/watchdog/worker.log",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_attempt1/watchdog/worker.log.txt",
+      "sha256": "2753906c82537e0ff66b9ba73e7280ab61054be63e66e39b9f5a5afbd6f533ba",
+      "bytes": 100
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_attempt1/strace/sched.3614126",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_attempt1/sched.3614126.txt",
+      "sha256": "971f9c00f31f6fdb3969fcc9ecdd2553599a91fcff610619636ce509663de7dc",
+      "bytes": 11337
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_attempt1/strace/sched.3614157",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_attempt1/sched.3614157.txt",
+      "sha256": "874dab003072581fc8a5a9d052a344a63afc6bd9a2de0398762c084908e5e5ff",
+      "bytes": 40
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/run_manifest.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/run_manifest.json",
+      "sha256": "fe0a751eff59575884ef9aab49e52d642d581841b91f6478e581c72deff39f26",
+      "bytes": 7223
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/root_closeout.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/root_closeout.json",
+      "sha256": "789e8bf41d22f0fbc18ee8590292c571a6621982149751d2f668fa7a0eeddc12",
+      "bytes": 52998
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/launcher_terminal.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/launcher_terminal.json",
+      "sha256": "04a8a3cb070a2a73d1fed17957c5a68f2c9e375f316205af081030f9dfcba915",
+      "bytes": 246
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/runtime_start.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/runtime_start.json",
+      "sha256": "55427e39a64092305ac092e9b6ecea555f6b5c40dd34669cd1d8cdb747817d78",
+      "bytes": 4769
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/runtime_end.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/runtime_end.json",
+      "sha256": "70767544220b4779eb4872c27d93f8c7e20a7960c5cbc7c726739e07fcabc830",
+      "bytes": 4767
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog/summary.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/watchdog/summary.json",
+      "sha256": "39d13514220cea990b345f27afd684937ef8273fae426c1c77a566982d2ac94c",
+      "bytes": 3528
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog/workflow_phase.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/watchdog/workflow_phase.json",
+      "sha256": "201278526c0e3689ee23caab30680e6814ef7c33d46b12873b7c21587d3bdc1b",
+      "bytes": 149
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/tests.xml",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/tests.xml",
+      "sha256": "583d6659a2c3d5b3394a6f42405ab5c77bddb560bfa5757cf415cb97756260a8",
+      "bytes": 601
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/run_manifest.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/run_manifest.json",
+      "sha256": "e29a8fc80bc4bc9266845981d8ed06dd3a89ee7e167b6004dc026b34f31111e8",
+      "bytes": 11417
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/diagnostic.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/diagnostic.json",
+      "sha256": "d5e9e2dafe51b2f95761b0110c046f6635e2fa0cf8ed8f45eecd6e327c56c264",
+      "bytes": 100179
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/q8/diagnostic.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/q8/diagnostic.json",
+      "sha256": "1242642f278406d7332d8e8d074ae9648a31d028a6676437abbf18212e5cd123",
+      "bytes": 46401
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/q8/cells.csv",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/q8/cells.csv",
+      "sha256": "52f2be313a3b57c73f675ce4cad5d55ada79a26c60f50568a565eb0871b5e56b",
+      "bytes": 546913
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/q8/modes_612.csv",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/q8/modes_612.csv",
+      "sha256": "4c9e91f2a78de2c33bf995a39222a3c8e7604f6203e15ba63bd4e16af88b6923",
+      "bytes": 761765
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/q10/diagnostic.json",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/q10/diagnostic.json",
+      "sha256": "2cbef6b2661c464da2d8f67adb8e0144b32aed9f261d1d874dbff783794cf754",
+      "bytes": 46206
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/q10/cells.csv",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/q10/cells.csv",
+      "sha256": "adc602880f83bf9614fc9e645f2f5c80432f048e7a403d408b015b86cd242bb7",
+      "bytes": 547211
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/data/q10/modes_612.csv",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/q10/modes_612.csv",
+      "sha256": "4c9e91f2a78de2c33bf995a39222a3c8e7604f6203e15ba63bd4e16af88b6923",
+      "bytes": 761765
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/watchdog/worker.log",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/watchdog/worker.log.txt",
+      "sha256": "163c9849b9d7069aa9e78f0750b2f8b50f7ee07a474b285d2607d3539a36672a",
+      "bytes": 1503
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/strace/sched.3615316",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/sched.3615316.txt",
+      "sha256": "8628e27bc90d850e99b4e3f363f13be21862a1b0850f0e531aae5661e84352bb",
+      "bytes": 14794
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/strace/sched.3615321",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/sched.3615321.txt",
+      "sha256": "37dfe6fff5b6a426521016bed595ec64b75776ea6807fcca11eccf67d244749d",
+      "bytes": 40
+    },
+    {
+      "source": "benchmarks/artifacts/task43/v19_saved_hp_response/support/decomposition_recovery1/strace/sched.3615325",
+      "copy": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/sched.3615325.txt",
+      "sha256": "0f0067521c7d92649f6e2f4985b2031783869af91ae6d1d366486f3447ad1fbc",
+      "bytes": 40
+    }
+  ],
+  "copy_rule": "verbatim; original large NPZ/resources remain ignored"
+}

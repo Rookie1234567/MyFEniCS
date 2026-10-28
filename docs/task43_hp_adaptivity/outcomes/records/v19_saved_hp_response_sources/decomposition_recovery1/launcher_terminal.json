@@ -1,0 +1,10 @@
+{
+  "stage": "D2",
+  "entry_elapsed_seconds": 88.164291237,
+  "whole_limit_seconds": 1200,
+  "supervisor_exit_code": 0,
+  "watchdog_exit_code": 0,
+  "received_signal": null,
+  "qualification": "REQUIRES_ROOT_REVIEW",
+  "whole_limit_pass": true
+}

@@ -1,0 +1,35 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-7.4.4, pluggy-1.4.0 -- /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/fenics/Projects/NN-Lab-V2
+collecting ... collected 12 items
+
+src/test/test_task43_saved_hp_response.py::test_weighted_multicell_terms_close_after_reordering PASSED [  8%]
+src/test/test_task43_saved_hp_response.py::test_response_direction_cases[aligned] PASSED [ 16%]
+src/test/test_task43_saved_hp_response.py::test_response_direction_cases[opposite] PASSED [ 25%]
+src/test/test_task43_saved_hp_response.py::test_response_direction_cases[orthogonal] PASSED [ 33%]
+src/test/test_task43_saved_hp_response.py::test_domain_cancellation_and_zero_increment PASSED [ 41%]
+src/test/test_task43_saved_hp_response.py::test_channel_reference_inventory_is_exact PASSED [ 50%]
+src/test/test_task43_saved_hp_response.py::test_wrong_owner_map_is_rejected PASSED [ 58%]
+src/test/test_task43_saved_hp_response.py::test_modal_missing_key_is_rejected PASSED [ 66%]
+src/test/test_task43_saved_hp_response.py::test_modal_duplicate_key_is_rejected PASSED [ 75%]
+src/test/test_task43_saved_hp_response.py::test_mixed_sample_package_rebound_hash_is_rejected PASSED [ 83%]
+src/test/test_task43_saved_hp_response.py::test_amplitude_square_identity_is_not_physical_power PASSED [ 91%]
+src/test/test_task43_saved_hp_response.py::test_archive_readonly_and_q8_survives_q10_write_failure PASSED [100%]
+
+==================================== PASSES ====================================
+- generated xml file: /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v19_saved_hp_response/support/targeted_attempt1/tests.xml -
+=========================== short test summary info ============================
+PASSED src/test/test_task43_saved_hp_response.py::test_weighted_multicell_terms_close_after_reordering
+PASSED src/test/test_task43_saved_hp_response.py::test_response_direction_cases[aligned]
+PASSED src/test/test_task43_saved_hp_response.py::test_response_direction_cases[opposite]
+PASSED src/test/test_task43_saved_hp_response.py::test_response_direction_cases[orthogonal]
+PASSED src/test/test_task43_saved_hp_response.py::test_domain_cancellation_and_zero_increment
+PASSED src/test/test_task43_saved_hp_response.py::test_channel_reference_inventory_is_exact
+PASSED src/test/test_task43_saved_hp_response.py::test_wrong_owner_map_is_rejected
+PASSED src/test/test_task43_saved_hp_response.py::test_modal_missing_key_is_rejected
+PASSED src/test/test_task43_saved_hp_response.py::test_modal_duplicate_key_is_rejected
+PASSED src/test/test_task43_saved_hp_response.py::test_mixed_sample_package_rebound_hash_is_rejected
+PASSED src/test/test_task43_saved_hp_response.py::test_amplitude_square_identity_is_not_physical_power
+PASSED src/test/test_task43_saved_hp_response.py::test_archive_readonly_and_q8_survives_q10_write_failure
+============================== 12 passed in 1.05s ==============================
