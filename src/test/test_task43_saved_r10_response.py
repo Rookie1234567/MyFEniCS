@@ -537,4 +537,3 @@ def test_main_mid_write_failure_preserves_q8_and_marks_incomplete(tmp_path: Path
 def test_terminal_refuses_incomplete_order(tmp_path: Path):
     with pytest.raises(v20.EvidenceError, match="both q8 and q10"):
         v20._terminal_payload({"orders": {"q8": {}}}, tmp_path)
-

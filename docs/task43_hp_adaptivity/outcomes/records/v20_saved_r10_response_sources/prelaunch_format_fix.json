@@ -1,0 +1,18 @@
+{
+  "failure": "staged git diff --check reported trailing blank line at EOF in two NEW source files; initial freeze commit already created before result was inspected",
+  "remedy": "Remove only surplus final blank line before any T call; subsequent commit preserves first commit and byte hashes",
+  "files": [
+    {
+      "path": "benchmarks/task43_hp_adaptivity/analyze_saved_r10_response.py",
+      "before_sha256": "ea6005ad389388d02888001bf668ae7eab514831ba8379ddc4431fa81baaaa43",
+      "after_sha256": "83f4b4661a16de42f5fd4195cf73e96df26eff4686eda8813f33558788b8f6e4"
+    },
+    {
+      "path": "src/test/test_task43_saved_r10_response.py",
+      "before_sha256": "814b85db5ffcc029ab6210f6f1c15b1d0184434c3a21085e76a7c0aab0cfaa52",
+      "after_sha256": "aae3293805be1741fe51e3b1e615906bb43e121c8207ae4d3173d38fea776959"
+    }
+  ],
+  "new_driver_calls": 0,
+  "wall": "NOT_MEASURED"
+}
