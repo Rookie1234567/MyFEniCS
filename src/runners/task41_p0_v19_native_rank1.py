@@ -31,6 +31,15 @@ V19_MAX_NEW_EVIDENCE_BYTES = 16 * 1024**2
 V19_MAX_CUMULATIVE_RAW_BYTES = 16 * 1024**3
 V19_MIN_FREE_BYTES = 2 * 1024**3
 V19_MAX_PLANNED_WORKING_BYTES = 16 * 1024**3
+
+
+def _dolfinx_cell_integral_type() -> Any:
+    """Return DOLFINx's public cell-integral enum for the active ABI."""
+    from dolfinx import fem
+
+    return fem.IntegralType.cell
+
+
 V19_ORIGINAL_PRODUCER_SOURCE_SHA = "afbe91e5947ed18fb74d7105097e129c1b8b4cc7"
 V19_ORIGINAL_DONOR_RUN = "20261019T053402.514018Z"
 V19_ORIGINAL_RECOVERY_MANIFEST_SHA256 = (
@@ -1422,7 +1431,7 @@ def run_v19_native_rank1_worker(
         "direction_transform_seconds": 0.0,
         "term_archive_save_seconds": 0.0,
     }
-    from dolfinx.cpp.fem import IntegralType
+    integral_type_cell = _dolfinx_cell_integral_type()
     from mpi4py import MPI
     if MPI.COMM_WORLD.Get_size() != 1:
         raise ValueError("V19 native rank-1 capture requires an MPI-1 service process")
@@ -1703,7 +1712,7 @@ def run_v19_native_rank1_worker(
             component: _native_action_identity(
                 action,
                 component=component,
-                integral_type_cell=IntegralType.cell,
+                integral_type_cell=integral_type_cell,
                 selected_cells=V19_SELECTED_CELLS,
                 abi_identity=abi_identity,
             )
@@ -1912,7 +1921,7 @@ def run_v19_native_rank1_worker(
                     capture_selected_rank1_cell_terms,
                     selected_cells=V19_SELECTED_CELLS,
                     column=column,
-                    integral_type_cell=IntegralType.cell,
+                    integral_type_cell=integral_type_cell,
                     native_action_identities=native_action_identities,
                     on_term=persist_term,
                     reuse_term=reopen_term,

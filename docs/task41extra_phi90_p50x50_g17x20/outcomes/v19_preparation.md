@@ -120,3 +120,7 @@ prepare 产出的真实 service 命令绑定 B0 DAT、当前 source 的执行合
 ## 同窗 wrapper 窄修
 
 首次正式服务 `myfenics-case-20261029T070552-3773295.service` 在 systemd 子 shell 的 `set -u` 处退出：`task41_v19_checker_only` 未初始化。外层有变量，内层缺初始化及 receipt 参数解析；尚无 worker/FE/native 产品，旧日志与费用保留。修复仅补内层解析和校验，数学代码不变。新增实际执行内嵌 shell 的 capture/checker/default 三条 fixture，主控资格化本机复核 **3 passed / 0.07 s**；bash 语法及 diff 检查通过。另一次执行者误在本机使用工作站 runtime 路径的 preflight 失败保留，未迁移/重装环境。新 source 重新 prepare 合同，原 window/T0/截止和授权不变。
+
+## 同窗 native IntegralType 导入修复
+
+冻结 `f8be458c9437d8be916cd33dc17e4633ec2297a9` 的服务 `myfenics-case-20261029T072200-3777733.service` 已越过 wrapper，在 worker 导入阶段因 `dolfinx.cpp.fem.IntegralType` 不存在而退出，未建 FE、未执行 native 核。worker watchdog 耗时 4.305215 s；service CPU 7.599906 s，父墙钟约8秒，口径不同不相加。改用公开 `dolfinx.fem.IntegralType.cell`，数学和资源合同不变。新增公开 namespace fixture 为 **1 passed / 0.65 s**；早一次 ABI 断言未正确门控的测试不计资格，修正 preflight 后同 shell 重跑通过。主控在工作站原 native activation 中额外执行 imports-only 检查，公开 cell enum 实际可用。原 libibverbs 编译路径 warning 保留，不冒充本轮 FE 结果。旧失败和原 T0/window 保留，修复源码冻结后同窗接续。

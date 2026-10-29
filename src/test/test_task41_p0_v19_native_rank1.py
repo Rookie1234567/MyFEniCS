@@ -3,7 +3,8 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-from types import SimpleNamespace
+import sys
+from types import ModuleType, SimpleNamespace
 from typing import Any
 
 import numpy as np
@@ -982,3 +983,25 @@ def test_completed_receipt_reuse_requires_fresh_term_and_archive_bindings() -> N
     ] = "c" * 64
     with np.testing.assert_raises_regex(ValueError, "archive SHA differs"):
         _receipt_term_bindings(bad_direct_archive_sha)
+
+
+def test_cell_integral_type_uses_public_dolfinx_fem_namespace(monkeypatch: Any) -> None:
+    from src.runners.task41_p0_v19_native_rank1 import _dolfinx_cell_integral_type
+
+    expected_cell_type = object()
+    public_fem = ModuleType("dolfinx.fem")
+    public_fem.IntegralType = SimpleNamespace(cell=expected_cell_type)
+    cpp_fem = ModuleType("dolfinx.cpp.fem")
+    cpp_fem._IntegralType = SimpleNamespace(cell=object())
+    cpp = ModuleType("dolfinx.cpp")
+    cpp.fem = cpp_fem
+    dolfinx = ModuleType("dolfinx")
+    dolfinx.fem = public_fem
+    dolfinx.cpp = cpp
+
+    monkeypatch.setitem(sys.modules, "dolfinx", dolfinx)
+    monkeypatch.setitem(sys.modules, "dolfinx.fem", public_fem)
+    monkeypatch.setitem(sys.modules, "dolfinx.cpp", cpp)
+    monkeypatch.setitem(sys.modules, "dolfinx.cpp.fem", cpp_fem)
+
+    assert _dolfinx_cell_integral_type() is expected_cell_type
