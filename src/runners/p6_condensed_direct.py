@@ -1673,11 +1673,15 @@ def _task40_d07c_mesh_evidence(
     if hashes != plan["parent_axis_sha256_le_f64"] and case_name == "B":
         raise ValueError("D07C-B axes differ from their frozen baseline identity")
     if case_name != "B":
-        if route.get("task40_changed_axis") != "y":
-            raise ValueError(f"D07C-{case_name} must change only y")
-        for axis in ("x", "z"):
-            if hashes[axis] != plan["parent_axis_sha256_le_f64"][axis]:
-                raise ValueError(f"D07C-{case_name} changed the frozen {axis} axis")
+        declared_axes = plan.get("changed_axes", [plan["changed_axis"]])
+        if route.get("task40_changed_axis") != plan["changed_axis"]:
+            raise ValueError(f"D07C-{case_name} changed-axis identity differs from plan")
+        if list(route.get("task40_changed_axes", [])) != declared_axes:
+            raise ValueError(f"D07C-{case_name} changed axes differ from plan")
+        for axis in "xyz":
+            differs = hashes[axis] != plan["parent_axis_sha256_le_f64"][axis]
+            if differs != (axis in declared_axes):
+                raise ValueError(f"D07C-{case_name} unexpected change status for {axis}")
     counts = tuple(len(axes[axis]) - 1 for axis in "xyz")
     cells = int(msh.topology.index_map(msh.topology.dim).size_global)
     if counts != tuple(route["expected_axis_cell_counts"]):

@@ -20,6 +20,8 @@ D07C_CASE_SEGMENT_COUNTS = {
     "Y2": {"x": (2, 2, 2), "y": (10, 10, 10), "z": (2, 2, 2)},
     # Exact bisection of every B y interval; x/z remain frozen.
     "Y3": {"x": (2, 2, 2), "y": (20, 12, 20), "z": (2, 2, 2)},
+    "G2": {"x": (2, 2, 2), "y": (20, 28, 20), "z": (2, 4, 2)},
+    "G3": {"x": (2, 2, 2), "y": (30, 40, 30), "z": (2, 4, 2)},
 }
 
 def _uniform_segment(start: float, stop: float, cells: int) -> tuple[float, ...]:
@@ -72,7 +74,7 @@ def d07c_axis_plan(case: str) -> dict[str, object]:
     hashes = {axis: _axis_digest(axes[axis]) for axis in "xyz"}
     parent_hashes = {axis: _axis_digest(parent_axes[axis]) for axis in "xyz"}
     changed = [axis for axis in "xyz" if hashes[axis] != parent_hashes[axis]]
-    expected_changed = [] if case == "B" else ["y"]
+    expected_changed = [] if case == "B" else (["y", "z"] if case in {"G2", "G3"} else ["y"])
     if changed != expected_changed:
         raise AssertionError(f"D07C-{case} changed axes {changed}, expected {expected_changed}")
     edge_lengths = {
@@ -106,7 +108,7 @@ def d07c_axis_plan(case: str) -> dict[str, object]:
         "display_name": f"D07C-{case}",
         "case": case,
         "parent_case": "B",
-        "changed_axis": None if case == "B" else "y",
+        "changed_axis": None if case == "B" else ("yz" if case in {"G2", "G3"} else "y"),
         "segment_cell_counts": {axis: list(segments[axis]) for axis in "xyz"},
         "axes_nm": {axis: list(axes[axis]) for axis in "xyz"},
         "axis_cell_counts": list(counts),
@@ -127,6 +129,8 @@ def d07c_axis_plan(case: str) -> dict[str, object]:
             "material_and_periodic_endpoints_preserved": True,
         },
     }
+    if case in {"G2", "G3"}:
+        plan["changed_axes"] = ["y", "z"]
     plan_sha = hashlib.sha256(
         json.dumps(plan, sort_keys=True, separators=(",", ":")).encode("ascii")
     ).hexdigest()

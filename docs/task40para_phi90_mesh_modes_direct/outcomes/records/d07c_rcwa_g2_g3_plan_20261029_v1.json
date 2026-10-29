@@ -1,0 +1,392 @@
+{
+  "schema": "task40.d07c.rcwa_coarse_screen.v1",
+  "status": "PREPARED_NOT_RUN",
+  "user_authority": "G2 M8 first after B_M8 natural clear and independent full fresh; G3 discretionary if R remains near unity. No RCWA R/T/A accuracy gate requested.",
+  "cases": {
+    "G2": {
+      "schema": "task40.phi90.d07c.axis_plan.v1",
+      "display_name": "D07C-G2",
+      "case": "G2",
+      "parent_case": "B",
+      "changed_axis": "yz",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          20,
+          28,
+          20
+        ],
+        "z": [
+          2,
+          4,
+          2
+        ]
+      },
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          0.75,
+          1.5,
+          2.25,
+          3.0,
+          3.75,
+          4.5,
+          5.25,
+          6.0,
+          6.75,
+          7.5,
+          8.25,
+          9.0,
+          9.75,
+          10.5,
+          11.25,
+          12.0,
+          12.75,
+          13.5,
+          14.25,
+          15.0,
+          15.714285714285714,
+          16.428571428571427,
+          17.142857142857142,
+          17.857142857142858,
+          18.571428571428573,
+          19.285714285714285,
+          20.0,
+          20.714285714285715,
+          21.42857142857143,
+          22.142857142857142,
+          22.857142857142858,
+          23.57142857142857,
+          24.285714285714285,
+          25.0,
+          25.714285714285715,
+          26.42857142857143,
+          27.142857142857142,
+          27.857142857142858,
+          28.57142857142857,
+          29.285714285714285,
+          30.0,
+          30.714285714285715,
+          31.428571428571427,
+          32.14285714285714,
+          32.85714285714286,
+          33.57142857142857,
+          34.285714285714285,
+          35.0,
+          35.75,
+          36.5,
+          37.25,
+          38.0,
+          38.75,
+          39.5,
+          40.25,
+          41.0,
+          41.75,
+          42.5,
+          43.25,
+          44.0,
+          44.75,
+          45.5,
+          46.25,
+          47.0,
+          47.75,
+          48.5,
+          49.25,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          30.0,
+          60.0,
+          90.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        68,
+        8
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "2741f0ffd8c6b50ebeaf5e0075b44d9edd533772685fba89424a08a3701bc733",
+        "z": "b603d8672fe0097d827859e5b4cab92ad139ba71427d4f75fa421bbd8bc25501"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "aa2a74d4601c89a8ef5f7ad94bbb19961ec058442307502c1c006dd792d77832",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "expected_global_cell_count": 3264,
+      "expected_material_tag_counts": {
+        "1": 2224,
+        "2": 816,
+        "3": 224
+      },
+      "static_geometry_only": {
+        "method": "independent_cell_midpoint_classification; not live mesh QA",
+        "strictly_increasing_axes": true,
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "minimum_edge_nm": 0.7142857142857082,
+        "maximum_edge_nm": 30.0,
+        "maximum_cell_aspect_ratio": 42.000000000000355,
+        "minimum_cell_volume_nm3": 29.464285714285463,
+        "material_and_periodic_endpoints_preserved": true
+      },
+      "changed_axes": [
+        "y",
+        "z"
+      ],
+      "mesh_plan_id": "task40_phi90_d07c_g2_axes_v1",
+      "mesh_plan_sha256": "c34b361e87c2b0fee0083a6d4209da7ab504130d8bfb9008810c6fbd7de6b001"
+    },
+    "G3": {
+      "schema": "task40.phi90.d07c.axis_plan.v1",
+      "display_name": "D07C-G3",
+      "case": "G3",
+      "parent_case": "B",
+      "changed_axis": "yz",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          30,
+          40,
+          30
+        ],
+        "z": [
+          2,
+          4,
+          2
+        ]
+      },
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5,
+          8.0,
+          8.5,
+          9.0,
+          9.5,
+          10.0,
+          10.5,
+          11.0,
+          11.5,
+          12.0,
+          12.5,
+          13.0,
+          13.5,
+          14.0,
+          14.5,
+          15.0,
+          15.5,
+          16.0,
+          16.5,
+          17.0,
+          17.5,
+          18.0,
+          18.5,
+          19.0,
+          19.5,
+          20.0,
+          20.5,
+          21.0,
+          21.5,
+          22.0,
+          22.5,
+          23.0,
+          23.5,
+          24.0,
+          24.5,
+          25.0,
+          25.5,
+          26.0,
+          26.5,
+          27.0,
+          27.5,
+          28.0,
+          28.5,
+          29.0,
+          29.5,
+          30.0,
+          30.5,
+          31.0,
+          31.5,
+          32.0,
+          32.5,
+          33.0,
+          33.5,
+          34.0,
+          34.5,
+          35.0,
+          35.5,
+          36.0,
+          36.5,
+          37.0,
+          37.5,
+          38.0,
+          38.5,
+          39.0,
+          39.5,
+          40.0,
+          40.5,
+          41.0,
+          41.5,
+          42.0,
+          42.5,
+          43.0,
+          43.5,
+          44.0,
+          44.5,
+          45.0,
+          45.5,
+          46.0,
+          46.5,
+          47.0,
+          47.5,
+          48.0,
+          48.5,
+          49.0,
+          49.5,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          30.0,
+          60.0,
+          90.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        100,
+        8
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "538a217db2639320447c691a4d5cf79437c84bea4ffea119df6ba2702a2c676c",
+        "z": "b603d8672fe0097d827859e5b4cab92ad139ba71427d4f75fa421bbd8bc25501"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "aa2a74d4601c89a8ef5f7ad94bbb19961ec058442307502c1c006dd792d77832",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "expected_global_cell_count": 4800,
+      "expected_material_tag_counts": {
+        "1": 3280,
+        "2": 1200,
+        "3": 320
+      },
+      "static_geometry_only": {
+        "method": "independent_cell_midpoint_classification; not live mesh QA",
+        "strictly_increasing_axes": true,
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "minimum_edge_nm": 0.5,
+        "maximum_edge_nm": 30.0,
+        "maximum_cell_aspect_ratio": 60.0,
+        "minimum_cell_volume_nm3": 20.625,
+        "material_and_periodic_endpoints_preserved": true
+      },
+      "changed_axes": [
+        "y",
+        "z"
+      ],
+      "mesh_plan_id": "task40_phi90_d07c_g3_axes_v1",
+      "mesh_plan_sha256": "983fe462c34a525fa23331c0001d5f8ce3648c6f386d051abcd3a6ffbaa9fc03"
+    }
+  },
+  "finite_modes": {
+    "signed_bounds": [
+      -8,
+      8,
+      -143,
+      1
+    ],
+    "count": 9860,
+    "sha256": "5524a412514e85d243665050d7bf0f272c7f1347da338b03e2fbda22d257b057"
+  },
+  "quadrature": {
+    "surface": 81,
+    "volume": 15,
+    "volume_rule": "default"
+  },
+  "RCWA_user_supplied": {
+    "wavelength_nm": 0.7,
+    "R": 0.12138682,
+    "T_z0_minus": 0.79762924,
+    "T_zminus10nm": 0.7243038,
+    "A": 0.15430938,
+    "independently_verified": false
+  },
+  "screening": {
+    "RCWA_difference_accuracy_gate": null,
+    "G3_if_G2_R_at_least": 0.999,
+    "threshold_role": "scheduling heuristic for near-total-reflection plateau, not accuracy qualification",
+    "single_field_gates_unchanged": true,
+    "maximum_new_FE_attempts": 2,
+    "automatic_FE_retry": false
+  },
+  "deployment": {
+    "base_sha": "babb1f4387f83a899c86aa839fce86661b193eeb",
+    "prepare_in_registered_detached_worktree": true,
+    "canonical_source_promotion_only_after_B_M8_natural_clear": true,
+    "fresh_independent_each_case": true,
+    "systemd_only": true,
+    "Y3_superseded_not_to_launch": true,
+    "B_M8_vs_M32_comparison_not_launch_gate_for_G2": true
+  },
+  "limitations": [
+    "FULL_DTN_NOT_VERIFIED",
+    "canonical sidewall NOT_MEASURED",
+    "R departure from unity does not establish RCWA agreement or mesh convergence"
+  ]
+}

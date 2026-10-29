@@ -163,7 +163,7 @@ TASK40_PHI90_D5C_PROFILES = frozenset(
 # D07C is the separate 0.7 nm finite signed-window full-solve study.
 TASK40_PHI90_D07C_PROFILE_BY_CASE = {
     case: f"task40para_phi90_0p7_D07C_{case}_p6_direct_v1"
-    for case in ("B", "Y1", "Y2", "B_M8", "Y3_M8")
+    for case in ("B", "Y1", "Y2", "B_M8", "Y3_M8", "G2_M8", "G3_M8")
 }
 TASK40_PHI90_D07C_PROFILES = frozenset(
     TASK40_PHI90_D07C_PROFILE_BY_CASE.values()
@@ -1675,7 +1675,7 @@ def _task40_phi90_d07c_profile_facts(identity):
             "case": case_name,
             "display_name": f"D07C-{case_name}",
             "parent_case": "B",
-            "changed_axis": None if case_name == "B" else "y",
+            "changed_axis": plan["changed_axis"],
             "axis_cell_counts": counts,
             "segment_cell_counts": {
                 axis: [int(value) for value in plan["segment_cell_counts"][axis]]
@@ -1783,6 +1783,14 @@ def _task40_phi90_d07c_profile_facts(identity):
             "fad8f4be8404605d5e75cd6f19506890689e10f7d81367ef44aaadb9437e7873"
         )
         mode_selection["cutoff_validation_status"] = "REQUIRES_SAME_GRID_SOLVE_COMPARISON"
+    if case_name in {"G2", "G3"}:
+        options["directional_mesh_comparison"]["changed_axes"] = ["y", "z"]
+        base["campaign_authorization"]["source"] = (
+            "User-authorized 2026-10-29 G2 first and conditional G3, M8/q81/q15 fixed; "
+            "after B_M8 natural clear, independent fresh and one systemd submission per case. "
+            "RCWA R/T/A differences are diagnostic only; near-unity R triggers consideration of G3."
+        )
+        mode_selection["cutoff_validation_status"] = "FINITE_M8_DIAGNOSTIC_NOT_CONVERGENCE_QUALIFICATION"
     base["operator_scope"] = operator_scope
     base["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"
     return base

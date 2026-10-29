@@ -25,6 +25,8 @@ ROOT = Path(__file__).resolve().parents[2]
     [
         ("b", 936, {"1": 600, "2": 312, "3": 24}),
         ("y3", 1872, {"1": 1200, "2": 624, "3": 48}),
+        ("g2", 3264, {"1": 2224, "2": 816, "3": 224}),
+        ("g3", 4800, {"1": 3280, "2": 1200, "3": 320}),
     ],
 )
 def test_formal_m8_input_mode_inventory_and_worker(case, cells, tags, tmp_path):
@@ -99,3 +101,24 @@ def test_y3_bisects_all_actual_b_y_edges_and_keeps_x_z():
         (np.array(b["axes_nm"]["y"][:-1]) + b["axes_nm"]["y"][1:]) / 2,
     )
     assert y["segment_cell_counts"]["y"] == [20, 12, 20]
+
+
+@pytest.mark.parametrize("case,y_counts,cells", [("G2", [20, 28, 20], 3264), ("G3", [30, 40, 30], 4800)])
+def test_rcwa_screening_actual_mesh_and_multiaxis_guard(case, y_counts, cells, tmp_path):
+    from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+    from src.runners.p6_condensed_direct import _task40_d07c_mesh_evidence
+
+    plan = d07c_axis_plan(case)
+    assert plan["segment_cell_counts"] == {"x": [2, 2, 2], "y": y_counts, "z": [2, 4, 2]}
+    assert plan["changed_axes"] == ["y", "z"]
+    assert plan["axes_nm"]["x"] == d07c_axis_plan("B")["axes_nm"]["x"]
+    spec = load_and_resolve(ROOT / f"input/task40para_phi90_mesh_modes_direct/d07c_{case.lower()}_m8_nminus143_to1_p6_direct.dat")
+    cfg = simulation_config_3d_from_normalized(spec.as_jsonable())
+    route = _direct_run_contract(spec.as_jsonable()["solver"]["native_capacity_profile"])
+    mesh_data = build_airbox_mesh_3d(cfg, tmp_path)
+    evidence = _task40_d07c_mesh_evidence({"mesh_data": mesh_data}, cfg, route)
+    assert evidence["actual_global_cell_count"] == cells
+    assert evidence["material_tag_counts"] == plan["expected_material_tag_counts"]
+    assert evidence["changed_axis"] == "yz"
+    with pytest.raises(ValueError, match="changed axes differ"):
+        _task40_d07c_mesh_evidence({"mesh_data": mesh_data}, cfg, dict(route, task40_changed_axes=["y"]))
