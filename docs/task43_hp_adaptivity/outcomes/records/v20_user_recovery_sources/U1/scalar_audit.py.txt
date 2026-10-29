@@ -1,0 +1,50 @@
+"""Independent root CSV/JSON audit only; no NPZ or project imports."""
+import json,csv,math,sys,hashlib
+from pathlib import Path
+r=Path(sys.argv[1]);repo=Path('/home/fenics/Projects/NN-Lab-V2');c=json.loads((repo/'docs/task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_contract.json').read_text())
+def load(p):return json.loads(p.read_text())
+def close(a,b,label):
+ assert math.isfinite(a) and math.isfinite(b)
+ assert abs(a-b)<=max(1e-15,3e-11*abs(b)),(label,a,b)
+ return {'actual':a,'expected':b,'absolute_error':abs(a-b)}
+modal={n:load(repo/c['sources'][role+'_modal']['path']) for n,role in [('R9','r9'),('R10','r10'),('Y6_1','y6')]}
+av={n:load(repo/c['sources'][role+'_absorption']['path'])['A_volume_total'] for n,role in [('R9','r9'),('R10','r10')]};av['Y6_1']=load(repo/c['sources']['y6_summary']['path'])['official_result']['volume_metrics']['A_volume_total']
+tau={'R_total':1e-5,'T_total':1e-5,'A_volume':1e-5,'R00_s':1e-6,'R00_p':1e-6,'R00_total':1e-5}
+output={}
+for q in ['q8','q10']:
+ d=load(r/'data'/q/'diagnostic.json');cells=list(csv.DictReader((r/'data'/q/'cells.csv').open()));rows=list(csv.DictReader((r/'data'/q/'modes_612.csv').open()));qs={}
+ for n in ['R9','R10']:
+  a=c['anchors'][n];components={};checks={}
+  for name,scale in tau.items():
+   value=av[n]-av['Y6_1'] if name=='A_volume' else modal[n]['metrics'][name]-modal['Y6_1']['metrics'][name]
+   components['power.'+name]=abs(value)/scale
+  components['power.max_individual_channel']=max(abs(float(row[n+'_power_ratio'])-float(row['Y6_1_power_ratio'])) for row in rows)/1e-6
+  for side in ['top','bottom']:
+   for pol in ['s','p']:
+    v=[(float(row[n+'_amplitude_real'])-float(row['Y6_1_amplitude_real']))**2+(float(row[n+'_amplitude_imag'])-float(row['Y6_1_amplitude_imag']))**2 for row in rows if row['side']==side and row['polarization']==pol]
+    assert len(v)==153;components['amplitude.'+side+'_'+pol]=math.sqrt(math.fsum(v))/1e-4
+  e=math.sqrt(math.fsum(float(row[n+'.E.B10']) for row in cells));h=c['physics']['magnetic_field_scale_a_per_m']*math.sqrt(math.fsum(float(row[n+'.curl_over_k0.B10']) for row in cells));g=math.sqrt(math.fsum(float(row[n+'.G.B10']) for row in cells))
+  for name,norm in [('E_total_code',e),('E_scattered_code',e),('H_total_A_per_m',h),('H_scattered_A_per_m',h)]:
+   anchor=a['field_metrics'][name];ratio=norm/max(anchor['reference_l2'],anchor['reference_norm_floor']);components['field.'+name]=ratio/1e-4
+   checks[name]=close(ratio,d['field_and_J_replay'][n]['field_relative_metrics'][name],q+n+name)
+  ga=a['field_metrics']['G'];components['field.G']=g/max(ga['reference_g_norm'],ga['incident_g_norm_floor'])/1e-4
+  assert len(components)==16
+  for name,value in components.items():
+   checks[name+'.current']=close(value,d['field_and_J_replay'][n]['J_replay']['components'][name],q+n+name+'current')
+   checks[name+'.old']=close(value,a['J_infinity']['components'][name],q+n+name+'old')
+  witness=max(components,key=components.__getitem__);assert witness==a['J_infinity']['witness'];j=max(components.values());close(j,d['field_and_J_replay'][n]['J_replay']['value'],q+n+'J')
+  qs[n]={'J':j,'witness':witness,'components':components,'checks':checks}
+ layers={}
+ for name,lr in d['z_layer_summaries'].items():
+  z0,z1=lr['z_interval_nm'];subset=[row for row in cells if json.loads(row['lower_nm'])[2]==z0 and json.loads(row['upper_nm'])[2]==z1];assert len(subset)==lr['cell_count'];terms={}
+  for term in ['B','D','X','I','B10','I_independent']:
+   value=math.fsum(float(row['R10.G.'+term]) for row in subset);close(value,lr['terms']['R10']['G'][term],q+name+term);terms[term]=value
+  impacts=[float(row['R10.G.I']) for row in subset];terms['positive_I']=math.fsum(v for v in impacts if v>0);terms['negative_I']=math.fsum(v for v in impacts if v<0)
+  layers[name]={'bounds':lr['z_interval_nm'],'count':len(subset),'terms':terms}
+ for name,g in d['degree_summaries'].items():
+  subset=[row for row in cells if int(row['r9_p'])==(5 if name=='p5_to_p6' else 6)];assert len(subset)==g['cell_count']
+  for key,value in g['terms'].items():close(math.fsum(float(row[key]) for row in subset),value,q+name+key)
+ rank=sorted(cells,key=lambda x:(-float(x['R10.G.B10']),int(x['global_cell_id'])));assert [int(x['global_cell_id']) for x in rank]==[x['global_cell_id'] for x in d['remaining_error_location']['complete_ranking']]
+ output[q]={'J':qs,'six_z_layers':layers,'all_180_ranking_and_degree_group_sums':'MATCH','normalization_sources':'field reference/floor from hash-bound old comparison, saved modal metrics/Av from original JSON; no background generation or operator'}
+(r/'root_scalar_audit.json').write_text(json.dumps({'scope':'root stdlib independent CSV/JSON recomputation','quadrature':output,'wall':'NOT_MEASURED'},indent=2)+'\n')
+print(json.dumps({q:{'J':{n:x['J'] for n,x in v['J'].items()},'layers':v['six_z_layers']} for q,v in output.items()},indent=2))

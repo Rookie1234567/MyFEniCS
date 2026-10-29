@@ -1,14 +1,16 @@
 # Task43：面向三维 Maxwell 的自适应 h/p 网格
 
-## V20 当前收口：R10诊断未完成，支持槽已用尽
+## V20 当前收口：U1保存场诊断完成，R10仍被拒绝
 
-本轮要回答旧R9的28处p加阶究竟改善了哪里，以及被拒R10的剩余场差是否集中。输入锁和180个单元的几何/阶数映射已完成；未产生合格的两阶180单元响应表、612通道复现表或位置提案。这是工程验证失败后的次数上限收口，不是模型数值结论。
+用户在原四槽T1/T2/D1/D2结束后明确要求“不是数值gate那就继续”，因此单独追加一次U1支持诊断。它只分析已有R9、R10、Y6_1场和q8/q10点集，没有新PDE、场恢复或采样。J从4.065061945224269降到2.837172688008316，方向改善超过冻结可分辨尺度；但R10的`R00_s`差仍为2.837172688008316e-6，大于1e-6，J仍大于1。全域G的改善约8.4129e-6，小于冻结尺度εG=9.0882e-6。
 
-T1因拒绝信息的正则断言错误失败（6通过/1失败/5未运行），T2只补6项并通过；D1在q8的J复现检查因保存功率与重新加和口径不同失败；D2同worker的新增ULP fixture因并列最大指标名称的JSON排序差异失败（1失败/2未运行）。D1无已完成阶次，D2真实两阶未运行。fixture已静态修补但未重跑；主控漏查顺序依赖的责任保留，不能拼成最终测试全通过。
+逐单元响应显示既有28处p5→p6贡献约90.116%的净G²改善，其余152个旧p6单元也均为正贡献、没有抵消；但它们仍留下约99.429%的最终误差平方。q8/q10稳定指向global67/root127作为最大剩余误差位置（占1.851749%）；这只是保存场位置建议，不是DWR估计、选择器或已授权h计划。R9仍是accepted9，R10历史拒绝不变，正式账9/10、末槽封存。
 
-本轮支持4/4，whole合计71.744198859秒；最大采样树RSS443715584 B，CPU1、六线程变量1、task swap0，终态与清理已核。新增PDE、场恢复、新采样和holdout/control数组消费均为0。正式账仍9/10、末槽封存；空间/选择PARTIAL，精度NOT_PASSED，同精度全过程成本NOT_ESTABLISHED，迭代NOT_RUN/NOT_QUALIFIED。没有合并批准。
+U1在新绑定root下由同worker完成3个受影响节点，whole 120.410646534秒，RSS峰784568320 B，CPU1、线程变量1、任务swap0，退出0/0/0且后代清理已核。原四槽4次和71.744198859秒仍单独保留，U1另计1次；V20共5次实际调用whole合计192.154845393秒。详见[Response V20](response_v20.md)、[U1机器结果](outcomes/records/v20_user_recovery_results_v1.json)、[U1证据目录](outcomes/records/v20_user_recovery_sources/U1/)与[原四槽失败账](outcomes/records/v20_saved_r10_response_results_v1.json)。后续额外运行没有自动授权。
 
-[Response V20](response_v20.md) · [机器记录](outcomes/records/v20_saved_r10_response_results_v1.json) · [失败与原件索引](outcomes/records/v20_saved_r10_response_sources/README.md)。后续最小需求是验证已修正fixture并完成同一保存数组诊断，须重新明确授权次数和预算；不能复用已耗尽槽，也不需新PDE。
+### V20原四槽批次历史失败账
+
+原T1为6通过/1失败/5未运行，T2补测6项通过；D1因J汇总口径错误失败，D2因ULP fixture的并列witness顺序失败，真实两阶当时均未完成。主控的预审漏查也保留在历史记录中。U1后来形成独立完整诊断，不把原四槽改写成通过；详见[原始Response](response_v20.md)。
 
 ## V19 历史结果：解释已有 h/p 场响应，无新增 PDE
 
@@ -73,7 +75,7 @@ P5 whole=1,134.8697960400023 s、RSS采样峰1,621,196,800 B、swap0、退出0/0
 
 ## 阅读入口
 
-**当前交付是[Response V18](response_v18.md)：用户授权普通工程修复后完成同一P8科学链，数值收益和精度未获接受。** [Response V17](response_v17.md)记录旧失败，终止来源仍UNKNOWN；V18不回写该历史，也不开放其他模型、E或合并。
+**当前交付是[Response V20](response_v20.md)：在原四槽失败账之外，用户明确授权的U1完成保存场响应诊断；方向有改善，但绝对精度和冻结G可分辨门仍未通过。** [U1机器结果](outcomes/records/v20_user_recovery_results_v1.json)及[U1证据索引](outcomes/records/v20_user_recovery_sources/U1/source_artifact_index.json)记录真实运行；V20原四槽与更早V17的失败分别保留。没有新PDE、R10状态迁移、自动后续运行或合并批准。
 
 上一轮[V10正式review](review_report_v10.md)已验收有限静态整改；原执行依据为[正式V9 review第9节](review_report_v9.md)，V10当轮未新增运行。其交付见[Response V10](response_v10.md)、[静态纠正记录](outcomes/records/v10_static_evidence_correction_v1.json)及[纠正版依赖表](outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json)。原V9派生表保留原字节；三个边界的12个字段更正在新文件中。V11/V12/V13有限工程证据与受控停止见[Response V11](response_v11.md)、[Response V12](response_v12.md)和[Response V13](response_v13.md)；没有新增正式 PDE 结果或合并许可。
 
@@ -92,6 +94,7 @@ P5 whole=1,134.8697960400023 s、RSS采样峰1,621,196,800 B、swap0、退出0/0
 
 ## 最终结果入口
 
+- [V20 U1执行回应](response_v20.md)、[U1机器结果](outcomes/records/v20_user_recovery_results_v1.json)、[U1来源索引](outcomes/records/v20_user_recovery_sources/U1/source_artifact_index.json)、[V20原四槽机器失败账](outcomes/records/v20_saved_r10_response_results_v1.json)
 - [V17执行回应](response_v17.md)、[V17机器结果](outcomes/records/v17_r9_p8_scientific_results_v1.json)、[V17轻量来源索引](outcomes/records/v17_r9_p8_sources/README.md)
 
 九次按冻结规则接受的 p-up 将最后接受场推进到 R9（110,472 FE），但 top/bottom `(0,0,s)` 两个功率通道仍超过 `1e-6` 精度限值；R10自然到180格全p6、118,800 FE，G改善小于冻结参考噪声，拒绝且没有transition10。真实600叶局部h1已完成数值求解和全场比较，但同样未达到最终空间精度。用户要求的相近精度下更少独立未知量尚未证明；任务书还要求比较同精度全过程成本，但不要求成本必须获胜。

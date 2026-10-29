@@ -1,0 +1,3925 @@
+{
+  "checker_sha256_end": {
+    "checker": "011659adbeda3acf882d61c53056bec3e056f5d161466c110a2b61040322e471",
+    "v19_checker": "f1191f223e087a4d8d589e7a11a056e06e2c831a37ae2c5aa862c2da55868ca8"
+  },
+  "checker_sha256_start": {
+    "checker": "011659adbeda3acf882d61c53056bec3e056f5d161466c110a2b61040322e471",
+    "v19_checker": "f1191f223e087a4d8d589e7a11a056e06e2c831a37ae2c5aa862c2da55868ca8"
+  },
+  "contract_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_contract.json",
+  "contract_sha256": "d087e39b058d718f01da7dbd3df0b7c44b2f458c67b2535a8f10dc6c21f43efd",
+  "diagnostic_summary": {
+    "q10": {
+      "remaining_error_location": {
+        "complete_ranking": [
+          {
+            "B10": 1.2897688107408396e-05,
+            "cumulative_B10": 1.2897688107408396e-05,
+            "cumulative_fraction": 0.018517490592120343,
+            "fraction": 0.018517490592120343,
+            "global_cell_id": 67,
+            "rank": 1
+          },
+          {
+            "B10": 1.2784002038899892e-05,
+            "cumulative_B10": 2.5681690146308287e-05,
+            "cumulative_fraction": 0.03687175962960779,
+            "fraction": 0.01835426903748745,
+            "global_cell_id": 85,
+            "rank": 2
+          },
+          {
+            "B10": 1.2754543544302583e-05,
+            "cumulative_B10": 3.843623369061087e-05,
+            "cumulative_fraction": 0.05518373446738899,
+            "fraction": 0.018311974837781197,
+            "global_cell_id": 153,
+            "rank": 3
+          },
+          {
+            "B10": 1.2708808968114042e-05,
+            "cumulative_B10": 5.114504265872491e-05,
+            "cumulative_fraction": 0.07343004718206306,
+            "fraction": 0.018246312714674074,
+            "global_cell_id": 138,
+            "rank": 4
+          },
+          {
+            "B10": 9.770123122760098e-06,
+            "cumulative_B10": 6.091516578148501e-05,
+            "cumulative_fraction": 0.08745722488266575,
+            "fraction": 0.014027177700602689,
+            "global_cell_id": 66,
+            "rank": 5
+          },
+          {
+            "B10": 9.77012311869512e-06,
+            "cumulative_B10": 7.068528890018014e-05,
+            "cumulative_fraction": 0.10148440257743227,
+            "fraction": 0.01402717769476651,
+            "global_cell_id": 104,
+            "rank": 6
+          },
+          {
+            "B10": 9.741642633338762e-06,
+            "cumulative_B10": 8.042693153351889e-05,
+            "cumulative_fraction": 0.1154706902215747,
+            "fraction": 0.013986287644142443,
+            "global_cell_id": 120,
+            "rank": 7
+          },
+          {
+            "B10": 9.741642632808401e-06,
+            "cumulative_B10": 9.01685741663273e-05,
+            "cumulative_fraction": 0.1294569778649557,
+            "fraction": 0.013986287643380991,
+            "global_cell_id": 154,
+            "rank": 8
+          },
+          {
+            "B10": 9.527007819351261e-06,
+            "cumulative_B10": 9.969558198567855e-05,
+            "cumulative_fraction": 0.14313510965080348,
+            "fraction": 0.0136781317858478,
+            "global_cell_id": 48,
+            "rank": 9
+          },
+          {
+            "B10": 9.527007813696252e-06,
+            "cumulative_B10": 0.0001092225897993748,
+            "cumulative_fraction": 0.15681324142853226,
+            "fraction": 0.01367813177772878,
+            "global_cell_id": 86,
+            "rank": 10
+          },
+          {
+            "B10": 9.4975850233461e-06,
+            "cumulative_B10": 0.0001187201748227209,
+            "cumulative_fraction": 0.17044913026791694,
+            "fraction": 0.013635888839384665,
+            "global_cell_id": 137,
+            "rank": 11
+          },
+          {
+            "B10": 9.497585019210496e-06,
+            "cumulative_B10": 0.0001282177598419314,
+            "cumulative_fraction": 0.18408501910136402,
+            "fraction": 0.01363588883344709,
+            "global_cell_id": 166,
+            "rank": 12
+          },
+          {
+            "B10": 9.399771413893788e-06,
+            "cumulative_B10": 0.0001376175312558252,
+            "cumulative_fraction": 0.19758047481988775,
+            "fraction": 0.013495455718523714,
+            "global_cell_id": 103,
+            "rank": 13
+          },
+          {
+            "B10": 9.375766355877279e-06,
+            "cumulative_B10": 0.00014699329761170247,
+            "cumulative_fraction": 0.21104146595590006,
+            "fraction": 0.01346099113601232,
+            "global_cell_id": 121,
+            "rank": 14
+          },
+          {
+            "B10": 9.288763105122908e-06,
+            "cumulative_B10": 0.00015628206071682539,
+            "cumulative_fraction": 0.2243775446375321,
+            "fraction": 0.013336078681632023,
+            "global_cell_id": 49,
+            "rank": 15
+          },
+          {
+            "B10": 9.234959038355353e-06,
+            "cumulative_B10": 0.00016551701975518073,
+            "cumulative_fraction": 0.23763637565338952,
+            "fraction": 0.01325883101585743,
+            "global_cell_id": 165,
+            "rank": 16
+          },
+          {
+            "B10": 8.756252007816025e-06,
+            "cumulative_B10": 0.00017427327176299675,
+            "cumulative_fraction": 0.2502079166014012,
+            "fraction": 0.012571540948011694,
+            "global_cell_id": 33,
+            "rank": 17
+          },
+          {
+            "B10": 8.736308255248918e-06,
+            "cumulative_B10": 0.00018300958001824568,
+            "cumulative_fraction": 0.26275082387123294,
+            "fraction": 0.012542907269831738,
+            "global_cell_id": 173,
+            "rank": 18
+          },
+          {
+            "B10": 8.716590657757741e-06,
+            "cumulative_B10": 0.00019172617067600341,
+            "cumulative_fraction": 0.275265422158633,
+            "fraction": 0.012514598287400045,
+            "global_cell_id": 102,
+            "rank": 19
+          },
+          {
+            "B10": 8.716590646075658e-06,
+            "cumulative_B10": 0.00020044276132207909,
+            "cumulative_fraction": 0.2877800204292608,
+            "fraction": 0.012514598270627824,
+            "global_cell_id": 139,
+            "rank": 20
+          },
+          {
+            "B10": 8.71610294516934e-06,
+            "cumulative_B10": 0.0002091588642672484,
+            "cumulative_fraction": 0.30029391849711823,
+            "fraction": 0.01251389806785743,
+            "global_cell_id": 84,
+            "rank": 21
+          },
+          {
+            "B10": 8.71610294081412e-06,
+            "cumulative_B10": 0.00021787496720806254,
+            "cumulative_fraction": 0.3128078165587228,
+            "fraction": 0.012513898061604543,
+            "global_cell_id": 122,
+            "rank": 22
+          },
+          {
+            "B10": 8.586321528005664e-06,
+            "cumulative_B10": 0.0002264612887360682,
+            "cumulative_fraction": 0.3251353846307432,
+            "fraction": 0.012327568072020421,
+            "global_cell_id": 68,
+            "rank": 23
+          },
+          {
+            "B10": 8.586321525336829e-06,
+            "cumulative_B10": 0.00023504761026140502,
+            "cumulative_fraction": 0.33746295269893195,
+            "fraction": 0.012327568068188717,
+            "global_cell_id": 32,
+            "rank": 24
+          },
+          {
+            "B10": 8.577042674593549e-06,
+            "cumulative_B10": 0.00024362465293599857,
+            "cumulative_fraction": 0.34977719891983194,
+            "fraction": 0.012314246220900002,
+            "global_cell_id": 152,
+            "rank": 25
+          },
+          {
+            "B10": 8.577042673516702e-06,
+            "cumulative_B10": 0.00025220169560951527,
+            "cumulative_fraction": 0.3620914451391859,
+            "fraction": 0.01231424621935395,
+            "global_cell_id": 174,
+            "rank": 26
+          },
+          {
+            "B10": 8.42811007954441e-06,
+            "cumulative_B10": 0.0002606298056890597,
+            "cumulative_fraction": 0.3741918656027319,
+            "fraction": 0.012100420463545987,
+            "global_cell_id": 19,
+            "rank": 27
+          },
+          {
+            "B10": 8.428110078670872e-06,
+            "cumulative_B10": 0.00026905791576773054,
+            "cumulative_fraction": 0.38629228606502364,
+            "fraction": 0.012100420462291829,
+            "global_cell_id": 50,
+            "rank": 28
+          },
+          {
+            "B10": 8.426493982809436e-06,
+            "cumulative_B10": 0.00027748440975054,
+            "cumulative_fraction": 0.398390386263431,
+            "fraction": 0.012098100198407255,
+            "global_cell_id": 178,
+            "rank": 29
+          },
+          {
+            "B10": 8.426493982717231e-06,
+            "cumulative_B10": 0.00028591090373325723,
+            "cumulative_fraction": 0.4104884864617058,
+            "fraction": 0.012098100198274874,
+            "global_cell_id": 164,
+            "rank": 30
+          },
+          {
+            "B10": 7.624236812551141e-06,
+            "cumulative_B10": 0.0002935351405458084,
+            "cumulative_fraction": 0.42143476863823165,
+            "fraction": 0.010946282176525804,
+            "global_cell_id": 52,
+            "rank": 31
+          },
+          {
+            "B10": 7.557095091045754e-06,
+            "cumulative_B10": 0.00030109223563685414,
+            "cumulative_fraction": 0.4322846539887557,
+            "fraction": 0.010849885350524047,
+            "global_cell_id": 141,
+            "rank": 32
+          },
+          {
+            "B10": 7.402797851426539e-06,
+            "cumulative_B10": 0.00030849503348828066,
+            "cumulative_fraction": 0.4429130114453467,
+            "fraction": 0.01062835745659104,
+            "global_cell_id": 70,
+            "rank": 33
+          },
+          {
+            "B10": 7.378135135691916e-06,
+            "cumulative_B10": 0.0003158731686239726,
+            "cumulative_fraction": 0.45350596010597455,
+            "fraction": 0.010592948660627856,
+            "global_cell_id": 124,
+            "rank": 34
+          },
+          {
+            "B10": 5.6990297566491855e-06,
+            "cumulative_B10": 0.0003215721983806218,
+            "cumulative_fraction": 0.4616881807508007,
+            "fraction": 0.00818222064482611,
+            "global_cell_id": 51,
+            "rank": 35
+          },
+          {
+            "B10": 5.699029753148436e-06,
+            "cumulative_B10": 0.0003272712281337702,
+            "cumulative_fraction": 0.4698704013906007,
+            "fraction": 0.008182220639800009,
+            "global_cell_id": 89,
+            "rank": 36
+          },
+          {
+            "B10": 5.680467200078268e-06,
+            "cumulative_B10": 0.00033295169533384845,
+            "cumulative_fraction": 0.4780259713702994,
+            "fraction": 0.00815556997969875,
+            "global_cell_id": 105,
+            "rank": 37
+          },
+          {
+            "B10": 5.680467196180099e-06,
+            "cumulative_B10": 0.00033863216253002856,
+            "cumulative_fraction": 0.4861815413444015,
+            "fraction": 0.008155569974102064,
+            "global_cell_id": 142,
+            "rank": 38
+          },
+          {
+            "B10": 5.6064942130472124e-06,
+            "cumulative_B10": 0.0003442386567430758,
+            "cumulative_fraction": 0.4942309067019997,
+            "fraction": 0.008049365357598159,
+            "global_cell_id": 71,
+            "rank": 39
+          },
+          {
+            "B10": 5.606494210610737e-06,
+            "cumulative_B10": 0.0003498451509536865,
+            "cumulative_fraction": 0.5022802720560997,
+            "fraction": 0.00804936535410006,
+            "global_cell_id": 34,
+            "rank": 40
+          },
+          {
+            "B10": 5.582939067761699e-06,
+            "cumulative_B10": 0.0003554280900214482,
+            "cumulative_fraction": 0.5102958187806539,
+            "fraction": 0.00801554672455415,
+            "global_cell_id": 123,
+            "rank": 41
+          },
+          {
+            "B10": 5.582939067508893e-06,
+            "cumulative_B10": 0.0003610110290889571,
+            "cumulative_fraction": 0.518311365504845,
+            "fraction": 0.00801554672419119,
+            "global_cell_id": 157,
+            "rank": 42
+          },
+          {
+            "B10": 5.493817093954422e-06,
+            "cumulative_B10": 0.00036650484618291153,
+            "cumulative_fraction": 0.5261989578783726,
+            "fraction": 0.00788759237352751,
+            "global_cell_id": 35,
+            "rank": 43
+          },
+          {
+            "B10": 5.480819710364235e-06,
+            "cumulative_B10": 0.00037198566589327577,
+            "cumulative_fraction": 0.5340678896263408,
+            "fraction": 0.007868931747968173,
+            "global_cell_id": 88,
+            "rank": 44
+          },
+          {
+            "B10": 5.478781568531785e-06,
+            "cumulative_B10": 0.00037746444746180756,
+            "cumulative_fraction": 0.5419338951698688,
+            "fraction": 0.007866005543528004,
+            "global_cell_id": 156,
+            "rank": 45
+          },
+          {
+            "B10": 5.470838155358298e-06,
+            "cumulative_B10": 0.00038293528561716587,
+            "cumulative_fraction": 0.5497884961827953,
+            "fraction": 0.007854601012926518,
+            "global_cell_id": 106,
+            "rank": 46
+          },
+          {
+            "B10": 5.143417905638135e-06,
+            "cumulative_B10": 0.00038807870352280396,
+            "cumulative_fraction": 0.557173012840807,
+            "fraction": 0.00738451665801176,
+            "global_cell_id": 21,
+            "rank": 47
+          },
+          {
+            "B10": 5.135710545318277e-06,
+            "cumulative_B10": 0.00039321441406812226,
+            "cumulative_fraction": 0.5645464638744198,
+            "fraction": 0.007373451033612682,
+            "global_cell_id": 167,
+            "rank": 48
+          },
+          {
+            "B10": 5.096035466713078e-06,
+            "cumulative_B10": 0.0003983104495348353,
+            "cumulative_fraction": 0.5718629525370481,
+            "fraction": 0.007316488662628426,
+            "global_cell_id": 125,
+            "rank": 49
+          },
+          {
+            "B10": 5.096035464420661e-06,
+            "cumulative_B10": 0.000403406484999256,
+            "cumulative_fraction": 0.5791794411963853,
+            "fraction": 0.007316488659337154,
+            "global_cell_id": 87,
+            "rank": 50
+          },
+          {
+            "B10": 5.095481984999039e-06,
+            "cumulative_B10": 0.00040850196698425506,
+            "cumulative_fraction": 0.5864951352133108,
+            "fraction": 0.007315694016925471,
+            "global_cell_id": 69,
+            "rank": 51
+          },
+          {
+            "B10": 5.095481984717499e-06,
+            "cumulative_B10": 0.00041359744896897255,
+            "cumulative_fraction": 0.5938108292298321,
+            "fraction": 0.007315694016521258,
+            "global_cell_id": 107,
+            "rank": 52
+          },
+          {
+            "B10": 5.050823691314913e-06,
+            "cumulative_B10": 0.00041864827266028745,
+            "cumulative_fraction": 0.6010624063657887,
+            "fraction": 0.007251577135956628,
+            "global_cell_id": 20,
+            "rank": 53
+          },
+          {
+            "B10": 5.050823689400305e-06,
+            "cumulative_B10": 0.00042369909634968776,
+            "cumulative_fraction": 0.6083139834989965,
+            "fraction": 0.007251577133207785,
+            "global_cell_id": 53,
+            "rank": 54
+          },
+          {
+            "B10": 5.042270333512823e-06,
+            "cumulative_B10": 0.0004287413666832006,
+            "cumulative_fraction": 0.6155532803936173,
+            "fraction": 0.007239296894620954,
+            "global_cell_id": 140,
+            "rank": 55
+          },
+          {
+            "B10": 5.042270333122288e-06,
+            "cumulative_B10": 0.00043378363701632286,
+            "cumulative_fraction": 0.6227925772876777,
+            "fraction": 0.007239296894060253,
+            "global_cell_id": 168,
+            "rank": 56
+          },
+          {
+            "B10": 4.9528647986072845e-06,
+            "cumulative_B10": 0.00043873650181493017,
+            "cumulative_fraction": 0.6299035127164522,
+            "fraction": 0.00711093542877454,
+            "global_cell_id": 10,
+            "rank": 57
+          },
+          {
+            "B10": 4.952864798134371e-06,
+            "cumulative_B10": 0.00044368936661306455,
+            "cumulative_fraction": 0.6370144481445478,
+            "fraction": 0.007110935428095567,
+            "global_cell_id": 36,
+            "rank": 58
+          },
+          {
+            "B10": 4.952343973069525e-06,
+            "cumulative_B10": 0.00044864171058613404,
+            "cumulative_fraction": 0.6441246358128,
+            "fraction": 0.007110187668252244,
+            "global_cell_id": 155,
+            "rank": 59
+          },
+          {
+            "B10": 4.952343970818286e-06,
+            "cumulative_B10": 0.00045359405455695236,
+            "cumulative_fraction": 0.6512348234778201,
+            "fraction": 0.007110187665020092,
+            "global_cell_id": 175,
+            "rank": 60
+          },
+          {
+            "B10": 4.569870818588975e-06,
+            "cumulative_B10": 0.0004581639253755413,
+            "cumulative_fraction": 0.6577958861415869,
+            "fraction": 0.006561062663766825,
+            "global_cell_id": 118,
+            "rank": 61
+          },
+          {
+            "B10": 4.569397355467619e-06,
+            "cumulative_B10": 0.0004627333227310089,
+            "cumulative_fraction": 0.6643562690440801,
+            "fraction": 0.0065603829024931445,
+            "global_cell_id": 135,
+            "rank": 62
+          },
+          {
+            "B10": 4.5493822169046844e-06,
+            "cumulative_B10": 0.0004672827049479136,
+            "cumulative_fraction": 0.6708879157779705,
+            "fraction": 0.006531646733890476,
+            "global_cell_id": 100,
+            "rank": 63
+          },
+          {
+            "B10": 4.543761833853174e-06,
+            "cumulative_B10": 0.0004718264667817668,
+            "cumulative_fraction": 0.6774114932059967,
+            "fraction": 0.00652357742802622,
+            "global_cell_id": 150,
+            "rank": 64
+          },
+          {
+            "B10": 4.046498423136792e-06,
+            "cumulative_B10": 0.0004758729652049036,
+            "cumulative_fraction": 0.6832211387686326,
+            "fraction": 0.005809645562635771,
+            "global_cell_id": 151,
+            "rank": 65
+          },
+          {
+            "B10": 4.046498420902659e-06,
+            "cumulative_B10": 0.00047991946362580624,
+            "cumulative_fraction": 0.6890307843280608,
+            "fraction": 0.005809645559428179,
+            "global_cell_id": 117,
+            "rank": 66
+          },
+          {
+            "B10": 4.046270309321051e-06,
+            "cumulative_B10": 0.0004839657339351273,
+            "cumulative_fraction": 0.694840102382743,
+            "fraction": 0.005809318054682273,
+            "global_cell_id": 136,
+            "rank": 67
+          },
+          {
+            "B10": 4.046270302325584e-06,
+            "cumulative_B10": 0.00048801200423745285,
+            "cumulative_fraction": 0.7006494204273817,
+            "fraction": 0.005809318044638729,
+            "global_cell_id": 99,
+            "rank": 68
+          },
+          {
+            "B10": 4.0408962984071396e-06,
+            "cumulative_B10": 0.0004920529005358601,
+            "cumulative_fraction": 0.7064510228980221,
+            "fraction": 0.005801602470640266,
+            "global_cell_id": 119,
+            "rank": 69
+          },
+          {
+            "B10": 4.04089628811842e-06,
+            "cumulative_B10": 0.0004960937968239784,
+            "cumulative_fraction": 0.7122526253538904,
+            "fraction": 0.005801602455868528,
+            "global_cell_id": 81,
+            "rank": 70
+          },
+          {
+            "B10": 4.038704180391336e-06,
+            "cumulative_B10": 0.0005001325010043697,
+            "cumulative_fraction": 0.718051080553144,
+            "fraction": 0.00579845519925361,
+            "global_cell_id": 163,
+            "rank": 71
+          },
+          {
+            "B10": 4.038704168515131e-06,
+            "cumulative_B10": 0.0005041712051728848,
+            "cumulative_fraction": 0.7238495357353467,
+            "fraction": 0.005798455182202685,
+            "global_cell_id": 134,
+            "rank": 72
+          },
+          {
+            "B10": 3.95335383631373e-06,
+            "cumulative_B10": 0.0005081245590091986,
+            "cumulative_fraction": 0.7295254515941907,
+            "fraction": 0.005675915858843953,
+            "global_cell_id": 82,
+            "rank": 73
+          },
+          {
+            "B10": 3.95283631236282e-06,
+            "cumulative_B10": 0.0005120773953215614,
+            "cumulative_fraction": 0.7352006244326722,
+            "fraction": 0.005675172838481515,
+            "global_cell_id": 162,
+            "rank": 74
+          },
+          {
+            "B10": 3.946537337066258e-06,
+            "cumulative_B10": 0.0005160239326586277,
+            "cumulative_fraction": 0.7408667536956833,
+            "fraction": 0.005666129263011033,
+            "global_cell_id": 64,
+            "rank": 75
+          },
+          {
+            "B10": 3.939546077006443e-06,
+            "cumulative_B10": 0.0005199634787356342,
+            "cumulative_fraction": 0.7465228454549723,
+            "fraction": 0.005656091759288925,
+            "global_cell_id": 171,
+            "rank": 76
+          },
+          {
+            "B10": 3.885117741840644e-06,
+            "cumulative_B10": 0.0005238485964774748,
+            "cumulative_fraction": 0.7521007932728055,
+            "fraction": 0.005577947817833361,
+            "global_cell_id": 47,
+            "rank": 77
+          },
+          {
+            "B10": 3.881862385399424e-06,
+            "cumulative_B10": 0.0005277304588628743,
+            "cumulative_fraction": 0.7576740673047813,
+            "fraction": 0.0055732740319755945,
+            "global_cell_id": 38,
+            "rank": 78
+          },
+          {
+            "B10": 3.880353781115122e-06,
+            "cumulative_B10": 0.0005316108126439894,
+            "cumulative_fraction": 0.7632451754008612,
+            "fraction": 0.005571108096080017,
+            "global_cell_id": 176,
+            "rank": 79
+          },
+          {
+            "B10": 3.842728881459093e-06,
+            "cumulative_B10": 0.0005354535415254485,
+            "cumulative_fraction": 0.7687622646123468,
+            "fraction": 0.005517089211485514,
+            "global_cell_id": 127,
+            "rank": 80
+          },
+          {
+            "B10": 3.824919998726514e-06,
+            "cumulative_B10": 0.0005392784615241749,
+            "cumulative_fraction": 0.7742537852245832,
+            "fraction": 0.005491520612236531,
+            "global_cell_id": 83,
+            "rank": 81
+          },
+          {
+            "B10": 3.82491999663326e-06,
+            "cumulative_B10": 0.0005431033815208082,
+            "cumulative_fraction": 0.7797453058338144,
+            "fraction": 0.005491520609231201,
+            "global_cell_id": 46,
+            "rank": 82
+          },
+          {
+            "B10": 3.823892813469165e-06,
+            "cumulative_B10": 0.0005469272743342774,
+            "cumulative_fraction": 0.7852353516938954,
+            "fraction": 0.005490045860080879,
+            "global_cell_id": 161,
+            "rank": 83
+          },
+          {
+            "B10": 3.823892812681223e-06,
+            "cumulative_B10": 0.0005507511671469586,
+            "cumulative_fraction": 0.790725397552845,
+            "fraction": 0.005490045858949614,
+            "global_cell_id": 177,
+            "rank": 84
+          },
+          {
+            "B10": 3.7943023182387417e-06,
+            "cumulative_B10": 0.0005545454694651973,
+            "cumulative_fraction": 0.7961729596970473,
+            "fraction": 0.005447562144202309,
+            "global_cell_id": 63,
+            "rank": 85
+          },
+          {
+            "B10": 3.794302313287719e-06,
+            "cumulative_B10": 0.000558339771778485,
+            "cumulative_fraction": 0.8016205218341412,
+            "fraction": 0.005447562137094019,
+            "global_cell_id": 101,
+            "rank": 86
+          },
+          {
+            "B10": 3.793501130775561e-06,
+            "cumulative_B10": 0.0005621332729092607,
+            "cumulative_fraction": 0.8070669336961234,
+            "fraction": 0.005446411861982083,
+            "global_cell_id": 149,
+            "rank": 87
+          },
+          {
+            "B10": 3.7935011281348477e-06,
+            "cumulative_B10": 0.0005659267740373955,
+            "cumulative_fraction": 0.8125133455543142,
+            "fraction": 0.005446411858190754,
+            "global_cell_id": 172,
+            "rank": 88
+          },
+          {
+            "B10": 3.7781234489600803e-06,
+            "cumulative_B10": 0.0005697048974863555,
+            "cumulative_fraction": 0.8179376793449413,
+            "fraction": 0.005424333790627325,
+            "global_cell_id": 31,
+            "rank": 89
+          },
+          {
+            "B10": 3.7781234478911747e-06,
+            "cumulative_B10": 0.0005734830209342467,
+            "cumulative_fraction": 0.823362013134034,
+            "fraction": 0.005424333789092674,
+            "global_cell_id": 65,
+            "rank": 90
+          },
+          {
+            "B10": 3.777431967336844e-06,
+            "cumulative_B10": 0.0005772604529015835,
+            "cumulative_fraction": 0.8287853541494953,
+            "fraction": 0.0054233410154612425,
+            "global_cell_id": 179,
+            "rank": 91
+          },
+          {
+            "B10": 3.777431966644548e-06,
+            "cumulative_B10": 0.0005810378848682281,
+            "cumulative_fraction": 0.8342086951639627,
+            "fraction": 0.005423341014467299,
+            "global_cell_id": 170,
+            "rank": 92
+          },
+          {
+            "B10": 3.7726239961515464e-06,
+            "cumulative_B10": 0.0005848105088643796,
+            "cumulative_fraction": 0.8396251332708987,
+            "fraction": 0.005416438106936126,
+            "global_cell_id": 55,
+            "rank": 93
+          },
+          {
+            "B10": 3.7637205897669973e-06,
+            "cumulative_B10": 0.0005885742294541467,
+            "cumulative_fraction": 0.8450287885641562,
+            "fraction": 0.005403655293257369,
+            "global_cell_id": 109,
+            "rank": 94
+          },
+          {
+            "B10": 2.904142300115851e-06,
+            "cumulative_B10": 0.0005914783717542625,
+            "cumulative_fraction": 0.8491983286610114,
+            "fraction": 0.004169540096855373,
+            "global_cell_id": 37,
+            "rank": 95
+          },
+          {
+            "B10": 2.904142298060022e-06,
+            "cumulative_B10": 0.0005943825140523225,
+            "cumulative_fraction": 0.8533678687549152,
+            "fraction": 0.004169540093903775,
+            "global_cell_id": 74,
+            "rank": 96
+          },
+          {
+            "B10": 2.893622841048214e-06,
+            "cumulative_B10": 0.0005972761368933708,
+            "cumulative_fraction": 0.8575223058361995,
+            "fraction": 0.004154437081284135,
+            "global_cell_id": 90,
+            "rank": 97
+          },
+          {
+            "B10": 2.8936228384151793e-06,
+            "cumulative_B10": 0.000600169759731786,
+            "cumulative_fraction": 0.8616767429137033,
+            "fraction": 0.00415443707750383,
+            "global_cell_id": 128,
+            "rank": 98
+          },
+          {
+            "B10": 2.8588960770242352e-06,
+            "cumulative_B10": 0.0006030286558088102,
+            "cumulative_fraction": 0.8657813220265861,
+            "fraction": 0.0041045791128828495,
+            "global_cell_id": 56,
+            "rank": 99
+          },
+          {
+            "B10": 2.8588960747588426e-06,
+            "cumulative_B10": 0.000605887551883569,
+            "cumulative_fraction": 0.8698859011362164,
+            "fraction": 0.004104579109630376,
+            "global_cell_id": 22,
+            "rank": 100
+          },
+          {
+            "B10": 2.8447871899883946e-06,
+            "cumulative_B10": 0.0006087323390735574,
+            "cumulative_fraction": 0.8739702238139323,
+            "fraction": 0.004084322677715883,
+            "global_cell_id": 145,
+            "rank": 101
+          },
+          {
+            "B10": 2.8447871899871587e-06,
+            "cumulative_B10": 0.0006115771262635445,
+            "cumulative_fraction": 0.8780545464916464,
+            "fraction": 0.004084322677714109,
+            "global_cell_id": 108,
+            "rank": 102
+          },
+          {
+            "B10": 2.802940638592366e-06,
+            "cumulative_B10": 0.0006143800669021369,
+            "cumulative_fraction": 0.8820787891677888,
+            "fraction": 0.004024242676142303,
+            "global_cell_id": 23,
+            "rank": 103
+          },
+          {
+            "B10": 2.7988935009380447e-06,
+            "cumulative_B10": 0.000617178960403075,
+            "cumulative_fraction": 0.8860972212806104,
+            "fraction": 0.0040184321128215895,
+            "global_cell_id": 144,
+            "rank": 104
+          },
+          {
+            "B10": 2.796215918255007e-06,
+            "cumulative_B10": 0.00061997517632133,
+            "cumulative_fraction": 0.8901118091298919,
+            "fraction": 0.0040145878492814984,
+            "global_cell_id": 73,
+            "rank": 105
+          },
+          {
+            "B10": 2.7904595570003265e-06,
+            "cumulative_B10": 0.0006227656358783303,
+            "cumulative_fraction": 0.8941181324464532,
+            "fraction": 0.004006323316561315,
+            "global_cell_id": 91,
+            "rank": 106
+          },
+          {
+            "B10": 2.62785041827169e-06,
+            "cumulative_B10": 0.000625393486296602,
+            "cumulative_fraction": 0.8978909942952286,
+            "fraction": 0.003772861848775415,
+            "global_cell_id": 12,
+            "rank": 107
+          },
+          {
+            "B10": 2.623818502610241e-06,
+            "cumulative_B10": 0.0006280173047992123,
+            "cumulative_fraction": 0.9016580674352287,
+            "fraction": 0.0037670731400000633,
+            "global_cell_id": 158,
+            "rank": 108
+          },
+          {
+            "B10": 2.596666380746108e-06,
+            "cumulative_B10": 0.0006306139711799583,
+            "cumulative_fraction": 0.9053861576848852,
+            "fraction": 0.0037280902496566086,
+            "global_cell_id": 54,
+            "rank": 109
+          },
+          {
+            "B10": 2.5966663802009815e-06,
+            "cumulative_B10": 0.0006332106375601593,
+            "cumulative_fraction": 0.9091142479337593,
+            "fraction": 0.003728090248873958,
+            "global_cell_id": 92,
+            "rank": 110
+          },
+          {
+            "B10": 2.596661045054514e-06,
+            "cumulative_B10": 0.0006358072986052139,
+            "cumulative_fraction": 0.9128423305228477,
+            "fraction": 0.003728082589088445,
+            "global_cell_id": 110,
+            "rank": 111
+          },
+          {
+            "B10": 2.5966610427575193e-06,
+            "cumulative_B10": 0.0006384039596479714,
+            "cumulative_fraction": 0.9165704131086383,
+            "fraction": 0.0037280825857906,
+            "global_cell_id": 72,
+            "rank": 112
+          },
+          {
+            "B10": 2.576821916135591e-06,
+            "cumulative_B10": 0.0006409807815641069,
+            "cumulative_fraction": 0.9202700122299879,
+            "fraction": 0.00369959912134968,
+            "global_cell_id": 11,
+            "rank": 113
+          },
+          {
+            "B10": 2.576821914299708e-06,
+            "cumulative_B10": 0.0006435576034784067,
+            "cumulative_fraction": 0.9239696113487018,
+            "fraction": 0.003699599118713863,
+            "global_cell_id": 39,
+            "rank": 114
+          },
+          {
+            "B10": 2.5710195731374554e-06,
+            "cumulative_B10": 0.0006461286230515441,
+            "cumulative_fraction": 0.9276608799203447,
+            "fraction": 0.003691268571642984,
+            "global_cell_id": 126,
+            "rank": 115
+          },
+          {
+            "B10": 2.571019573107795e-06,
+            "cumulative_B10": 0.0006486996426246519,
+            "cumulative_fraction": 0.9313521484919453,
+            "fraction": 0.0036912685716003995,
+            "global_cell_id": 159,
+            "rank": 116
+          },
+          {
+            "B10": 2.526988396842212e-06,
+            "cumulative_B10": 0.0006512266310214941,
+            "cumulative_fraction": 0.934980200548658,
+            "fraction": 0.0036280520567127748,
+            "global_cell_id": 4,
+            "rank": 117
+          },
+          {
+            "B10": 2.5269883963429598e-06,
+            "cumulative_B10": 0.0006537536194178371,
+            "cumulative_fraction": 0.938608252604654,
+            "fraction": 0.0036280520559959875,
+            "global_cell_id": 24,
+            "rank": 118
+          },
+          {
+            "B10": 2.526463337566831e-06,
+            "cumulative_B10": 0.000656280082755404,
+            "cumulative_fraction": 0.9422355508223755,
+            "fraction": 0.003627298217721538,
+            "global_cell_id": 143,
+            "rank": 119
+          },
+          {
+            "B10": 2.526463335817e-06,
+            "cumulative_B10": 0.0006588065460912209,
+            "cumulative_fraction": 0.9458628490375848,
+            "fraction": 0.003627298215209268,
+            "global_cell_id": 169,
+            "rank": 120
+          },
+          {
+            "B10": 1.5080599405031742e-06,
+            "cumulative_B10": 0.0006603146060317241,
+            "cumulative_fraction": 0.9480280034069621,
+            "fraction": 0.002165154369377313,
+            "global_cell_id": 26,
+            "rank": 121
+          },
+          {
+            "B10": 1.4982319571491217e-06,
+            "cumulative_B10": 0.0006618128379888732,
+            "cumulative_fraction": 0.9501790475274496,
+            "fraction": 0.002151044120487541,
+            "global_cell_id": 112,
+            "rank": 122
+          },
+          {
+            "B10": 1.4834146655777364e-06,
+            "cumulative_B10": 0.0006632962526544509,
+            "cumulative_fraction": 0.9523088181410118,
+            "fraction": 0.0021297706135622006,
+            "global_cell_id": 41,
+            "rank": 123
+          },
+          {
+            "B10": 1.4779176863568409e-06,
+            "cumulative_B10": 0.0006647741703408078,
+            "cumulative_fraction": 0.9544306966222662,
+            "fraction": 0.002121878481254431,
+            "global_cell_id": 94,
+            "rank": 124
+          },
+          {
+            "B10": 1.1397868697377634e-06,
+            "cumulative_B10": 0.0006659139572105455,
+            "cumulative_fraction": 0.9560671133553758,
+            "fraction": 0.0016364167331095643,
+            "global_cell_id": 25,
+            "rank": 125
+          },
+          {
+            "B10": 1.1397868686611675e-06,
+            "cumulative_B10": 0.0006670537440792067,
+            "cumulative_fraction": 0.9577035300869396,
+            "fraction": 0.0016364167315638723,
+            "global_cell_id": 59,
+            "rank": 126
+          },
+          {
+            "B10": 1.1340818516731665e-06,
+            "cumulative_B10": 0.0006681878259308799,
+            "cumulative_fraction": 0.9593317560018608,
+            "fraction": 0.0016282259149211196,
+            "global_cell_id": 75,
+            "rank": 127
+          },
+          {
+            "B10": 1.1340818496228445e-06,
+            "cumulative_B10": 0.0006693219077805027,
+            "cumulative_fraction": 0.9609599819138382,
+            "fraction": 0.0016282259119774277,
+            "global_cell_id": 113,
+            "rank": 128
+          },
+          {
+            "B10": 1.115640343414065e-06,
+            "cumulative_B10": 0.0006704375481239168,
+            "cumulative_fraction": 0.962561730955319,
+            "fraction": 0.0016017490414808112,
+            "global_cell_id": 42,
+            "rank": 129
+          },
+          {
+            "B10": 1.1156403414587057e-06,
+            "cumulative_B10": 0.0006715531884653754,
+            "cumulative_fraction": 0.9641634799939924,
+            "fraction": 0.0016017490386734594,
+            "global_cell_id": 13,
+            "rank": 130
+          },
+          {
+            "B10": 1.1137122559958703e-06,
+            "cumulative_B10": 0.0006726669007213713,
+            "cumulative_fraction": 0.965762460838543,
+            "fraction": 0.0015989808445504871,
+            "global_cell_id": 93,
+            "rank": 131
+          },
+          {
+            "B10": 1.1137122557917131e-06,
+            "cumulative_B10": 0.0006737806129771631,
+            "cumulative_fraction": 0.9673614416828004,
+            "fraction": 0.0015989808442573741,
+            "global_cell_id": 131,
+            "rank": 132
+          },
+          {
+            "B10": 1.0949168838393479e-06,
+            "cumulative_B10": 0.0006748755298610024,
+            "cumulative_fraction": 0.968933437603837,
+            "fraction": 0.001571995921036645,
+            "global_cell_id": 14,
+            "rank": 133
+          },
+          {
+            "B10": 1.0947090114621e-06,
+            "cumulative_B10": 0.0006759702388724645,
+            "cumulative_fraction": 0.9705051350779924,
+            "fraction": 0.001571697474155468,
+            "global_cell_id": 58,
+            "rank": 134
+          },
+          {
+            "B10": 1.094098467716532e-06,
+            "cumulative_B10": 0.0006770643373401811,
+            "cumulative_fraction": 0.9720759559812485,
+            "fraction": 0.001570820903256057,
+            "global_cell_id": 76,
+            "rank": 135
+          },
+          {
+            "B10": 1.092832943146039e-06,
+            "cumulative_B10": 0.0006781571702833271,
+            "cumulative_fraction": 0.973644959943427,
+            "fraction": 0.0015690039621784743,
+            "global_cell_id": 130,
+            "rank": 136
+          },
+          {
+            "B10": 1.0327583220468571e-06,
+            "cumulative_B10": 0.000679189928605374,
+            "cumulative_fraction": 0.9751277134689563,
+            "fraction": 0.0014827535255292647,
+            "global_cell_id": 6,
+            "rank": 137
+          },
+          {
+            "B10": 1.032289599569936e-06,
+            "cumulative_B10": 0.0006802222182049439,
+            "cumulative_fraction": 0.9766097940394579,
+            "fraction": 0.0014820805705016331,
+            "global_cell_id": 146,
+            "rank": 138
+          },
+          {
+            "B10": 1.0173692408975807e-06,
+            "cumulative_B10": 0.0006812395874458415,
+            "cumulative_fraction": 0.9780704531273616,
+            "fraction": 0.0014606590879037015,
+            "global_cell_id": 40,
+            "rank": 139
+          },
+          {
+            "B10": 1.0173692401559805e-06,
+            "cumulative_B10": 0.0006822569566859975,
+            "cumulative_fraction": 0.9795311122142006,
+            "fraction": 0.0014606590868389698,
+            "global_cell_id": 77,
+            "rank": 140
+          },
+          {
+            "B10": 1.0167949033590822e-06,
+            "cumulative_B10": 0.0006832737515893565,
+            "cumulative_fraction": 0.9809909467132417,
+            "fraction": 0.0014598344990411642,
+            "global_cell_id": 95,
+            "rank": 141
+          },
+          {
+            "B10": 1.0167949014037484e-06,
+            "cumulative_B10": 0.0006842905464907602,
+            "cumulative_fraction": 0.9824507812094755,
+            "fraction": 0.001459834496233849,
+            "global_cell_id": 57,
+            "rank": 142
+          },
+          {
+            "B10": 1.0079039809389732e-06,
+            "cumulative_B10": 0.0006852984504716992,
+            "cumulative_fraction": 0.9838978508183365,
+            "fraction": 0.0014470696088609565,
+            "global_cell_id": 5,
+            "rank": 143
+          },
+          {
+            "B10": 1.0079039796544838e-06,
+            "cumulative_B10": 0.0006863063544513537,
+            "cumulative_fraction": 0.9853449204253533,
+            "fraction": 0.0014470696070167871,
+            "global_cell_id": 27,
+            "rank": 144
+          },
+          {
+            "B10": 1.0062302210410113e-06,
+            "cumulative_B10": 0.0006873125846723947,
+            "cumulative_fraction": 0.9867895869808216,
+            "fraction": 0.0014446665554682964,
+            "global_cell_id": 147,
+            "rank": 145
+          },
+          {
+            "B10": 1.0062302206031827e-06,
+            "cumulative_B10": 0.000688318814892998,
+            "cumulative_fraction": 0.9882342535356614,
+            "fraction": 0.0014446665548396964,
+            "global_cell_id": 111,
+            "rank": 146
+          },
+          {
+            "B10": 9.89053958824296e-07,
+            "cumulative_B10": 0.0006893078688518222,
+            "cumulative_fraction": 0.989654259758878,
+            "fraction": 0.0014200062232167263,
+            "global_cell_id": 1,
+            "rank": 147
+          },
+          {
+            "B10": 9.890539587975915e-07,
+            "cumulative_B10": 0.0006902969228106198,
+            "cumulative_fraction": 0.9910742659820564,
+            "fraction": 0.0014200062231783858,
+            "global_cell_id": 15,
+            "rank": 148
+          },
+          {
+            "B10": 9.889152579814862e-07,
+            "cumulative_B10": 0.0006912858380686013,
+            "cumulative_fraction": 0.9924940730694645,
+            "fraction": 0.0014198070874080091,
+            "global_cell_id": 129,
+            "rank": 149
+          },
+          {
+            "B10": 9.889152569181308e-07,
+            "cumulative_B10": 0.0006922747533255195,
+            "cumulative_fraction": 0.9939138801553459,
+            "fraction": 0.0014198070858813267,
+            "global_cell_id": 160,
+            "rank": 150
+          },
+          {
+            "B10": 1.7520099037563444e-07,
+            "cumulative_B10": 0.0006924499543158951,
+            "cumulative_fraction": 0.9941654200176835,
+            "fraction": 0.0002515398623376131,
+            "global_cell_id": 79,
+            "rank": 151
+          },
+          {
+            "B10": 1.7488520522287234e-07,
+            "cumulative_B10": 0.000692624839521118,
+            "cumulative_fraction": 0.9944165065004272,
+            "fraction": 0.00025108648274378925,
+            "global_cell_id": 61,
+            "rank": 152
+          },
+          {
+            "B10": 1.7097388190950538e-07,
+            "cumulative_B10": 0.0006927958134030274,
+            "cumulative_fraction": 0.9946619774114456,
+            "fraction": 0.000245470911018465,
+            "global_cell_id": 44,
+            "rank": 153
+          },
+          {
+            "B10": 1.6952137035519066e-07,
+            "cumulative_B10": 0.0006929653347733827,
+            "cumulative_fraction": 0.9949053629201178,
+            "fraction": 0.00024338550867209258,
+            "global_cell_id": 29,
+            "rank": 154
+          },
+          {
+            "B10": 1.4679772136985922e-07,
+            "cumulative_B10": 0.0006931121324947525,
+            "cumulative_fraction": 0.9951161235930208,
+            "fraction": 0.00021076067290305098,
+            "global_cell_id": 97,
+            "rank": 155
+          },
+          {
+            "B10": 1.4189178351814513e-07,
+            "cumulative_B10": 0.0006932540242782706,
+            "cumulative_fraction": 0.9953198407045306,
+            "fraction": 0.0002037171115098691,
+            "global_cell_id": 17,
+            "rank": 156
+          },
+          {
+            "B10": 1.418591125040553e-07,
+            "cumulative_B10": 0.0006933958833907747,
+            "cumulative_fraction": 0.9955235109095568,
+            "fraction": 0.00020367020502624152,
+            "global_cell_id": 8,
+            "rank": 157
+          },
+          {
+            "B10": 1.4183527196667868e-07,
+            "cumulative_B10": 0.0006935377186627413,
+            "cumulative_fraction": 0.9957271468862064,
+            "fraction": 0.00020363597664958163,
+            "global_cell_id": 28,
+            "rank": 158
+          },
+          {
+            "B10": 1.418352713609225e-07,
+            "cumulative_B10": 0.0006936795539341023,
+            "cumulative_fraction": 0.9959307828619863,
+            "fraction": 0.0002036359757798843,
+            "global_cell_id": 62,
+            "rank": 159
+          },
+          {
+            "B10": 1.4156097138734516e-07,
+            "cumulative_B10": 0.0006938211149054896,
+            "cumulative_fraction": 0.996134025019344,
+            "fraction": 0.00020324215735771146,
+            "global_cell_id": 16,
+            "rank": 160
+          },
+          {
+            "B10": 1.4156097105562238e-07,
+            "cumulative_B10": 0.0006939626758765453,
+            "cumulative_fraction": 0.9963372671762255,
+            "fraction": 0.00020324215688144988,
+            "global_cell_id": 45,
+            "rank": 161
+          },
+          {
+            "B10": 1.4117685271473737e-07,
+            "cumulative_B10": 0.00069410385272926,
+            "cumulative_fraction": 0.9965399578460726,
+            "fraction": 0.00020269066984715623,
+            "global_cell_id": 80,
+            "rank": 162
+          },
+          {
+            "B10": 1.4117685269909643e-07,
+            "cumulative_B10": 0.0006942450295819591,
+            "cumulative_fraction": 0.9967426485158973,
+            "fraction": 0.0002026906698247002,
+            "global_cell_id": 43,
+            "rank": 163
+          },
+          {
+            "B10": 1.4103469955221364e-07,
+            "cumulative_B10": 0.0006943860642815113,
+            "cumulative_fraction": 0.9969451350933655,
+            "fraction": 0.0002024865774681382,
+            "global_cell_id": 115,
+            "rank": 164
+          },
+          {
+            "B10": 1.4024621104978258e-07,
+            "cumulative_B10": 0.0006945263104925611,
+            "cumulative_fraction": 0.9971464896207869,
+            "fraction": 0.0002013545274213259,
+            "global_cell_id": 60,
+            "rank": 165
+          },
+          {
+            "B10": 1.4024621004771098e-07,
+            "cumulative_B10": 0.0006946665567026088,
+            "cumulative_fraction": 0.9973478441467696,
+            "fraction": 0.00020135452598262998,
+            "global_cell_id": 98,
+            "rank": 166
+          },
+          {
+            "B10": 1.4020758268390645e-07,
+            "cumulative_B10": 0.0006948067642852927,
+            "cumulative_fraction": 0.997549143214608,
+            "fraction": 0.00020129906783851204,
+            "global_cell_id": 3,
+            "rank": 167
+          },
+          {
+            "B10": 1.3953320605302907e-07,
+            "cumulative_B10": 0.0006949462974913458,
+            "cumulative_fraction": 0.997749474065289,
+            "fraction": 0.0002003308506810011,
+            "global_cell_id": 132,
+            "rank": 168
+          },
+          {
+            "B10": 1.3216434394511398e-07,
+            "cumulative_B10": 0.0006950784618352908,
+            "cumulative_fraction": 0.9979392252807965,
+            "fraction": 0.0001897512155075027,
+            "global_cell_id": 2,
+            "rank": 169
+          },
+          {
+            "B10": 1.321643438314388e-07,
+            "cumulative_B10": 0.0006952106261791223,
+            "cumulative_fraction": 0.9981289764961407,
+            "fraction": 0.00018975121534429678,
+            "global_cell_id": 18,
+            "rank": 170
+          },
+          {
+            "B10": 1.312957115052609e-07,
+            "cumulative_B10": 0.0006953419218906276,
+            "cumulative_fraction": 0.998317480597212,
+            "fraction": 0.0001885041010712534,
+            "global_cell_id": 30,
+            "rank": 171
+          },
+          {
+            "B10": 1.3129571087301605e-07,
+            "cumulative_B10": 0.0006954732176015006,
+            "cumulative_fraction": 0.9985059846973755,
+            "fraction": 0.00018850410016352576,
+            "global_cell_id": 7,
+            "rank": 172
+          },
+          {
+            "B10": 1.307108344563582e-07,
+            "cumulative_B10": 0.000695603928435957,
+            "cumulative_fraction": 0.9986936490777806,
+            "fraction": 0.00018766438040500612,
+            "global_cell_id": 96,
+            "rank": 173
+          },
+          {
+            "B10": 1.307108343581021e-07,
+            "cumulative_B10": 0.000695734639270315,
+            "cumulative_fraction": 0.9988813134580444,
+            "fraction": 0.00018766438026393767,
+            "global_cell_id": 133,
+            "rank": 174
+          },
+          {
+            "B10": 1.3005800956867843e-07,
+            "cumulative_B10": 0.0006958646972798837,
+            "cumulative_fraction": 0.9990680405635972,
+            "fraction": 0.00018672710555270381,
+            "global_cell_id": 78,
+            "rank": 175
+          },
+          {
+            "B10": 1.3005800917423827e-07,
+            "cumulative_B10": 0.000695994755289058,
+            "cumulative_fraction": 0.9992547676685837,
+            "fraction": 0.00018672710498639754,
+            "global_cell_id": 116,
+            "rank": 176
+          },
+          {
+            "B10": 1.3002439955288502e-07,
+            "cumulative_B10": 0.0006961247796886109,
+            "cumulative_fraction": 0.9994414465195076,
+            "fraction": 0.00018667885092396165,
+            "global_cell_id": 9,
+            "rank": 177
+          },
+          {
+            "B10": 1.3002439943242842e-07,
+            "cumulative_B10": 0.0006962548040880432,
+            "cumulative_fraction": 0.9996281253702585,
+            "fraction": 0.00018667885075101948,
+            "global_cell_id": 0,
+            "rank": 178
+          },
+          {
+            "B10": 1.2950790954220012e-07,
+            "cumulative_B10": 0.0006963843119975854,
+            "cumulative_fraction": 0.9998140626852704,
+            "fraction": 0.00018593731501193348,
+            "global_cell_id": 114,
+            "rank": 179
+          },
+          {
+            "B10": 1.2950790934534302e-07,
+            "cumulative_B10": 0.0006965138199069308,
+            "cumulative_fraction": 0.9999999999999999,
+            "fraction": 0.00018593731472930146,
+            "global_cell_id": 148,
+            "rank": 180
+          }
+        ],
+        "normalized_fractions": {
+          "0": 0.00018667885075101948,
+          "1": 0.0014200062232167263,
+          "10": 0.00711093542877454,
+          "100": 0.006531646733890476,
+          "101": 0.005447562137094019,
+          "102": 0.012514598287400045,
+          "103": 0.013495455718523714,
+          "104": 0.01402717769476651,
+          "105": 0.00815556997969875,
+          "106": 0.007854601012926518,
+          "107": 0.007315694016521258,
+          "108": 0.004084322677714109,
+          "109": 0.005403655293257369,
+          "11": 0.00369959912134968,
+          "110": 0.003728082589088445,
+          "111": 0.0014446665548396964,
+          "112": 0.002151044120487541,
+          "113": 0.0016282259119774277,
+          "114": 0.00018593731501193348,
+          "115": 0.0002024865774681382,
+          "116": 0.00018672710498639754,
+          "117": 0.005809645559428179,
+          "118": 0.006561062663766825,
+          "119": 0.005801602470640266,
+          "12": 0.003772861848775415,
+          "120": 0.013986287644142443,
+          "121": 0.01346099113601232,
+          "122": 0.012513898061604543,
+          "123": 0.00801554672455415,
+          "124": 0.010592948660627856,
+          "125": 0.007316488662628426,
+          "126": 0.003691268571642984,
+          "127": 0.005517089211485514,
+          "128": 0.00415443707750383,
+          "129": 0.0014198070874080091,
+          "13": 0.0016017490386734594,
+          "130": 0.0015690039621784743,
+          "131": 0.0015989808442573741,
+          "132": 0.0002003308506810011,
+          "133": 0.00018766438026393767,
+          "134": 0.005798455182202685,
+          "135": 0.0065603829024931445,
+          "136": 0.005809318054682273,
+          "137": 0.013635888839384665,
+          "138": 0.018246312714674074,
+          "139": 0.012514598270627824,
+          "14": 0.001571995921036645,
+          "140": 0.007239296894620954,
+          "141": 0.010849885350524047,
+          "142": 0.008155569974102064,
+          "143": 0.003627298217721538,
+          "144": 0.0040184321128215895,
+          "145": 0.004084322677715883,
+          "146": 0.0014820805705016331,
+          "147": 0.0014446665554682964,
+          "148": 0.00018593731472930146,
+          "149": 0.005446411861982083,
+          "15": 0.0014200062231783858,
+          "150": 0.00652357742802622,
+          "151": 0.005809645562635771,
+          "152": 0.012314246220900002,
+          "153": 0.018311974837781197,
+          "154": 0.013986287643380991,
+          "155": 0.007110187668252244,
+          "156": 0.007866005543528004,
+          "157": 0.00801554672419119,
+          "158": 0.0037670731400000633,
+          "159": 0.0036912685716003995,
+          "16": 0.00020324215735771146,
+          "160": 0.0014198070858813267,
+          "161": 0.005490045860080879,
+          "162": 0.005675172838481515,
+          "163": 0.00579845519925361,
+          "164": 0.012098100198274874,
+          "165": 0.01325883101585743,
+          "166": 0.01363588883344709,
+          "167": 0.007373451033612682,
+          "168": 0.007239296894060253,
+          "169": 0.003627298215209268,
+          "17": 0.0002037171115098691,
+          "170": 0.005423341014467299,
+          "171": 0.005656091759288925,
+          "172": 0.005446411858190754,
+          "173": 0.012542907269831738,
+          "174": 0.01231424621935395,
+          "175": 0.007110187665020092,
+          "176": 0.005571108096080017,
+          "177": 0.005490045858949614,
+          "178": 0.012098100198407255,
+          "179": 0.0054233410154612425,
+          "18": 0.00018975121534429678,
+          "19": 0.012100420463545987,
+          "2": 0.0001897512155075027,
+          "20": 0.007251577135956628,
+          "21": 0.00738451665801176,
+          "22": 0.004104579109630376,
+          "23": 0.004024242676142303,
+          "24": 0.0036280520559959875,
+          "25": 0.0016364167331095643,
+          "26": 0.002165154369377313,
+          "27": 0.0014470696070167871,
+          "28": 0.00020363597664958163,
+          "29": 0.00024338550867209258,
+          "3": 0.00020129906783851204,
+          "30": 0.0001885041010712534,
+          "31": 0.005424333790627325,
+          "32": 0.012327568068188717,
+          "33": 0.012571540948011694,
+          "34": 0.00804936535410006,
+          "35": 0.00788759237352751,
+          "36": 0.007110935428095567,
+          "37": 0.004169540096855373,
+          "38": 0.0055732740319755945,
+          "39": 0.003699599118713863,
+          "4": 0.0036280520567127748,
+          "40": 0.0014606590879037015,
+          "41": 0.0021297706135622006,
+          "42": 0.0016017490414808112,
+          "43": 0.0002026906698247002,
+          "44": 0.000245470911018465,
+          "45": 0.00020324215688144988,
+          "46": 0.005491520609231201,
+          "47": 0.005577947817833361,
+          "48": 0.0136781317858478,
+          "49": 0.013336078681632023,
+          "5": 0.0014470696088609565,
+          "50": 0.012100420462291829,
+          "51": 0.00818222064482611,
+          "52": 0.010946282176525804,
+          "53": 0.007251577133207785,
+          "54": 0.0037280902496566086,
+          "55": 0.005416438106936126,
+          "56": 0.0041045791128828495,
+          "57": 0.001459834496233849,
+          "58": 0.001571697474155468,
+          "59": 0.0016364167315638723,
+          "6": 0.0014827535255292647,
+          "60": 0.0002013545274213259,
+          "61": 0.00025108648274378925,
+          "62": 0.0002036359757798843,
+          "63": 0.005447562144202309,
+          "64": 0.005666129263011033,
+          "65": 0.005424333789092674,
+          "66": 0.014027177700602689,
+          "67": 0.018517490592120343,
+          "68": 0.012327568072020421,
+          "69": 0.007315694016925471,
+          "7": 0.00018850410016352576,
+          "70": 0.01062835745659104,
+          "71": 0.008049365357598159,
+          "72": 0.0037280825857906,
+          "73": 0.0040145878492814984,
+          "74": 0.004169540093903775,
+          "75": 0.0016282259149211196,
+          "76": 0.001570820903256057,
+          "77": 0.0014606590868389698,
+          "78": 0.00018672710555270381,
+          "79": 0.0002515398623376131,
+          "8": 0.00020367020502624152,
+          "80": 0.00020269066984715623,
+          "81": 0.005801602455868528,
+          "82": 0.005675915858843953,
+          "83": 0.005491520612236531,
+          "84": 0.01251389806785743,
+          "85": 0.01835426903748745,
+          "86": 0.01367813177772878,
+          "87": 0.007316488659337154,
+          "88": 0.007868931747968173,
+          "89": 0.008182220639800009,
+          "9": 0.00018667885092396165,
+          "90": 0.004154437081284135,
+          "91": 0.004006323316561315,
+          "92": 0.003728090248873958,
+          "93": 0.0015989808445504871,
+          "94": 0.002121878481254431,
+          "95": 0.0014598344990411642,
+          "96": 0.00018766438040500612,
+          "97": 0.00021076067290305098,
+          "98": 0.00020135452598262998,
+          "99": 0.005809318044638729
+        },
+        "prefix_to_50_percent": [
+          67,
+          85,
+          153,
+          138,
+          66,
+          104,
+          120,
+          154,
+          48,
+          86,
+          137,
+          166,
+          103,
+          121,
+          49,
+          165,
+          33,
+          173,
+          102,
+          139,
+          84,
+          122,
+          68,
+          32,
+          152,
+          174,
+          19,
+          50,
+          178,
+          164,
+          52,
+          141,
+          70,
+          124,
+          51,
+          89,
+          105,
+          142,
+          71,
+          34
+        ],
+        "prefix_to_50_percent_sum": 0.0003498451509536865,
+        "q8_q10_location_stability": {
+          "L1_limit": 1e-06,
+          "location_stable": true,
+          "max_cell_q10": 67,
+          "max_cell_q8": 67,
+          "normalized_cell_B10_fraction_L1": 1.2656911380515973e-12,
+          "same_max_cell": true
+        },
+        "status": "RANKED",
+        "top": [
+          {
+            "B10": 1.2897688107408396e-05,
+            "fraction": 0.018517490592120343,
+            "global_cell_id": 67
+          },
+          {
+            "B10": 1.2784002038899892e-05,
+            "fraction": 0.01835426903748745,
+            "global_cell_id": 85
+          },
+          {
+            "B10": 1.2754543544302583e-05,
+            "fraction": 0.018311974837781197,
+            "global_cell_id": 153
+          },
+          {
+            "B10": 1.2708808968114042e-05,
+            "fraction": 0.018246312714674074,
+            "global_cell_id": 138
+          },
+          {
+            "B10": 9.770123122760098e-06,
+            "fraction": 0.014027177700602689,
+            "global_cell_id": 66
+          },
+          {
+            "B10": 9.77012311869512e-06,
+            "fraction": 0.01402717769476651,
+            "global_cell_id": 104
+          },
+          {
+            "B10": 9.741642633338762e-06,
+            "fraction": 0.013986287644142443,
+            "global_cell_id": 120
+          },
+          {
+            "B10": 9.741642632808401e-06,
+            "fraction": 0.013986287643380991,
+            "global_cell_id": 154
+          },
+          {
+            "B10": 9.527007819351261e-06,
+            "fraction": 0.0136781317858478,
+            "global_cell_id": 48
+          },
+          {
+            "B10": 9.527007813696252e-06,
+            "fraction": 0.01367813177772878,
+            "global_cell_id": 86
+          },
+          {
+            "B10": 9.4975850233461e-06,
+            "fraction": 0.013635888839384665,
+            "global_cell_id": 137
+          },
+          {
+            "B10": 9.497585019210496e-06,
+            "fraction": 0.01363588883344709,
+            "global_cell_id": 166
+          },
+          {
+            "B10": 9.399771413893788e-06,
+            "fraction": 0.013495455718523714,
+            "global_cell_id": 103
+          },
+          {
+            "B10": 9.375766355877279e-06,
+            "fraction": 0.01346099113601232,
+            "global_cell_id": 121
+          },
+          {
+            "B10": 9.288763105122908e-06,
+            "fraction": 0.013336078681632023,
+            "global_cell_id": 49
+          },
+          {
+            "B10": 9.234959038355353e-06,
+            "fraction": 0.01325883101585743,
+            "global_cell_id": 165
+          },
+          {
+            "B10": 8.756252007816025e-06,
+            "fraction": 0.012571540948011694,
+            "global_cell_id": 33
+          },
+          {
+            "B10": 8.736308255248918e-06,
+            "fraction": 0.012542907269831738,
+            "global_cell_id": 173
+          },
+          {
+            "B10": 8.716590657757741e-06,
+            "fraction": 0.012514598287400045,
+            "global_cell_id": 102
+          },
+          {
+            "B10": 8.716590646075658e-06,
+            "fraction": 0.012514598270627824,
+            "global_cell_id": 139
+          }
+        ],
+        "top_k_globals": {
+          "1": [
+            67
+          ],
+          "10": [
+            67,
+            85,
+            153,
+            138,
+            66,
+            104,
+            120,
+            154,
+            48,
+            86
+          ],
+          "20": [
+            67,
+            85,
+            153,
+            138,
+            66,
+            104,
+            120,
+            154,
+            48,
+            86,
+            137,
+            166,
+            103,
+            121,
+            49,
+            165,
+            33,
+            173,
+            102,
+            139
+          ],
+          "5": [
+            67,
+            85,
+            153,
+            138,
+            66
+          ]
+        },
+        "total_B10": 0.0006965138199069309
+      },
+      "response_identity_max_relative_error": {
+        "R10.E": 9.502682310632051e-16,
+        "R10.E.global": 4.4848533870263284e-17,
+        "R10.G": 9.213547796151268e-16,
+        "R10.G.global": 1.455195517774417e-16,
+        "R10.curl_over_k0": 1.0271309320933716e-15,
+        "R10.curl_over_k0.global": 5.2023162946255683e-17,
+        "R9.E": 0.0,
+        "R9.E.global": 0.0,
+        "R9.G": 0.0,
+        "R9.G.global": 0.0,
+        "R9.curl_over_k0": 0.0,
+        "R9.curl_over_k0.global": 0.0
+      }
+    },
+    "q8": {
+      "remaining_error_location": {
+        "complete_ranking": [
+          {
+            "B10": 1.2897688107409969e-05,
+            "cumulative_B10": 1.2897688107409969e-05,
+            "cumulative_fraction": 0.018517490592117002,
+            "fraction": 0.018517490592117002,
+            "global_cell_id": 67,
+            "rank": 1
+          },
+          {
+            "B10": 1.2784002038911308e-05,
+            "cumulative_B10": 2.5681690146321277e-05,
+            "cumulative_fraction": 0.036871759629615294,
+            "fraction": 0.018354269037498292,
+            "global_cell_id": 85,
+            "rank": 2
+          },
+          {
+            "B10": 1.2754543544324232e-05,
+            "cumulative_B10": 3.843623369064551e-05,
+            "cumulative_fraction": 0.055183734467422044,
+            "fraction": 0.018311974837806742,
+            "global_cell_id": 153,
+            "rank": 3
+          },
+          {
+            "B10": 1.2708808968106801e-05,
+            "cumulative_B10": 5.114504265875231e-05,
+            "cumulative_fraction": 0.0734300471820802,
+            "fraction": 0.018246312714658163,
+            "global_cell_id": 138,
+            "rank": 4
+          },
+          {
+            "B10": 9.77012312276571e-06,
+            "cumulative_B10": 6.091516578151802e-05,
+            "cumulative_fraction": 0.0874572248826867,
+            "fraction": 0.014027177700606505,
+            "global_cell_id": 66,
+            "rank": 5
+          },
+          {
+            "B10": 9.770123118689624e-06,
+            "cumulative_B10": 7.068528890020765e-05,
+            "cumulative_fraction": 0.1014844025774411,
+            "fraction": 0.014027177694754379,
+            "global_cell_id": 104,
+            "rank": 6
+          },
+          {
+            "B10": 9.741642633337382e-06,
+            "cumulative_B10": 8.042693153354502e-05,
+            "cumulative_fraction": 0.11547069022157731,
+            "fraction": 0.013986287644136232,
+            "global_cell_id": 120,
+            "rank": 7
+          },
+          {
+            "B10": 9.74164263283267e-06,
+            "cumulative_B10": 9.01685741663777e-05,
+            "cumulative_fraction": 0.12945697786498891,
+            "fraction": 0.013986287643411607,
+            "global_cell_id": 154,
+            "rank": 8
+          },
+          {
+            "B10": 9.52700781934926e-06,
+            "cumulative_B10": 9.969558198572696e-05,
+            "cumulative_fraction": 0.1431351096508297,
+            "fraction": 0.013678131785840791,
+            "global_cell_id": 48,
+            "rank": 9
+          },
+          {
+            "B10": 9.527007813687282e-06,
+            "cumulative_B10": 0.00010922258979941424,
+            "cumulative_fraction": 0.1568132414285415,
+            "fraction": 0.013678131777711766,
+            "global_cell_id": 86,
+            "rank": 10
+          },
+          {
+            "B10": 9.497585023338445e-06,
+            "cumulative_B10": 0.00011872017482275268,
+            "cumulative_fraction": 0.17044913026791103,
+            "fraction": 0.013635888839369554,
+            "global_cell_id": 137,
+            "rank": 11
+          },
+          {
+            "B10": 9.497585019200015e-06,
+            "cumulative_B10": 0.0001282177598419527,
+            "cumulative_fraction": 0.18408501910133895,
+            "fraction": 0.01363588883342792,
+            "global_cell_id": 166,
+            "rank": 12
+          },
+          {
+            "B10": 9.399771413872173e-06,
+            "cumulative_B10": 0.00013761753125582487,
+            "cumulative_fraction": 0.19758047481982757,
+            "fraction": 0.013495455718488604,
+            "global_cell_id": 103,
+            "rank": 13
+          },
+          {
+            "B10": 9.37576635585607e-06,
+            "cumulative_B10": 0.00014699329761168095,
+            "cumulative_fraction": 0.21104146595580536,
+            "fraction": 0.0134609911359778,
+            "global_cell_id": 121,
+            "rank": 14
+          },
+          {
+            "B10": 9.288763105125475e-06,
+            "cumulative_B10": 0.0001562820607168064,
+            "cumulative_fraction": 0.22437754463743703,
+            "fraction": 0.013336078681631678,
+            "global_cell_id": 49,
+            "rank": 15
+          },
+          {
+            "B10": 9.234959038380793e-06,
+            "cumulative_B10": 0.0001655170197551872,
+            "cumulative_fraction": 0.237636375653327,
+            "fraction": 0.013258831015889948,
+            "global_cell_id": 165,
+            "rank": 16
+          },
+          {
+            "B10": 8.756252007819327e-06,
+            "cumulative_B10": 0.00017427327176300654,
+            "cumulative_fraction": 0.2502079166013396,
+            "fraction": 0.012571540948012635,
+            "global_cell_id": 33,
+            "rank": 17
+          },
+          {
+            "B10": 8.736308255244708e-06,
+            "cumulative_B10": 0.00018300958001825124,
+            "cumulative_fraction": 0.2627508238711615,
+            "fraction": 0.012542907269821903,
+            "global_cell_id": 173,
+            "rank": 18
+          },
+          {
+            "B10": 8.716590657751255e-06,
+            "cumulative_B10": 0.0001917261706760025,
+            "cumulative_fraction": 0.27526542215854843,
+            "fraction": 0.01251459828738695,
+            "global_cell_id": 102,
+            "rank": 19
+          },
+          {
+            "B10": 8.716590646091299e-06,
+            "cumulative_B10": 0.0002004427613220938,
+            "cumulative_fraction": 0.287780020429195,
+            "fraction": 0.012514598270646498,
+            "global_cell_id": 139,
+            "rank": 20
+          },
+          {
+            "B10": 8.716102945185387e-06,
+            "cumulative_B10": 0.0002091588642672792,
+            "cumulative_fraction": 0.30029391849707165,
+            "fraction": 0.012513898067876684,
+            "global_cell_id": 84,
+            "rank": 21
+          },
+          {
+            "B10": 8.716102940830494e-06,
+            "cumulative_B10": 0.00021787496720810967,
+            "cumulative_fraction": 0.31280781655869594,
+            "fraction": 0.01251389806162427,
+            "global_cell_id": 122,
+            "rank": 22
+          },
+          {
+            "B10": 8.586321528013504e-06,
+            "cumulative_B10": 0.00022646128873612319,
+            "cumulative_fraction": 0.3251353846307239,
+            "fraction": 0.012327568072027952,
+            "global_cell_id": 68,
+            "rank": 23
+          },
+          {
+            "B10": 8.58632152535734e-06,
+            "cumulative_B10": 0.0002350476102614805,
+            "cumulative_fraction": 0.3374629526989383,
+            "fraction": 0.01232756806821444,
+            "global_cell_id": 32,
+            "rank": 24
+          },
+          {
+            "B10": 8.577042674605104e-06,
+            "cumulative_B10": 0.00024362465293608563,
+            "cumulative_fraction": 0.3497771989198512,
+            "fraction": 0.01231424622091287,
+            "global_cell_id": 152,
+            "rank": 25
+          },
+          {
+            "B10": 8.577042673522611e-06,
+            "cumulative_B10": 0.00025220169560960824,
+            "cumulative_fraction": 0.3620914451392099,
+            "fraction": 0.012314246219358711,
+            "global_cell_id": 174,
+            "rank": 26
+          },
+          {
+            "B10": 8.428110079532786e-06,
+            "cumulative_B10": 0.000260629805689141,
+            "cumulative_fraction": 0.37419186560273554,
+            "fraction": 0.012100420463525639,
+            "global_cell_id": 19,
+            "rank": 27
+          },
+          {
+            "B10": 8.428110078673342e-06,
+            "cumulative_B10": 0.00026905791576781435,
+            "cumulative_fraction": 0.3862922860650272,
+            "fraction": 0.012100420462291716,
+            "global_cell_id": 50,
+            "rank": 28
+          },
+          {
+            "B10": 8.426493982763925e-06,
+            "cumulative_B10": 0.0002774844097505783,
+            "cumulative_fraction": 0.3983903862633655,
+            "fraction": 0.012098100198338256,
+            "global_cell_id": 178,
+            "rank": 29
+          },
+          {
+            "B10": 8.426493982716028e-06,
+            "cumulative_B10": 0.0002859109037332943,
+            "cumulative_fraction": 0.410488486461635,
+            "fraction": 0.01209810019826949,
+            "global_cell_id": 164,
+            "rank": 30
+          },
+          {
+            "B10": 7.624236812546261e-06,
+            "cumulative_B10": 0.0002935351405458406,
+            "cumulative_fraction": 0.4214347686381505,
+            "fraction": 0.010946282176515488,
+            "global_cell_id": 52,
+            "rank": 31
+          },
+          {
+            "B10": 7.557095091067067e-06,
+            "cumulative_B10": 0.00030109223563690765,
+            "cumulative_fraction": 0.43228465398870186,
+            "fraction": 0.010849885350551368,
+            "global_cell_id": 141,
+            "rank": 32
+          },
+          {
+            "B10": 7.402797851433037e-06,
+            "cumulative_B10": 0.0003084950334883407,
+            "cumulative_fraction": 0.442913011445299,
+            "fraction": 0.010628357456597157,
+            "global_cell_id": 70,
+            "rank": 33
+          },
+          {
+            "B10": 7.378135135659186e-06,
+            "cumulative_B10": 0.0003158731686239999,
+            "cumulative_fraction": 0.4535059601058767,
+            "fraction": 0.010592948660577663,
+            "global_cell_id": 124,
+            "rank": 34
+          },
+          {
+            "B10": 5.699029756664559e-06,
+            "cumulative_B10": 0.00032157219838066444,
+            "cumulative_fraction": 0.4616881807507224,
+            "fraction": 0.008182220644845709,
+            "global_cell_id": 51,
+            "rank": 35
+          },
+          {
+            "B10": 5.699029753152049e-06,
+            "cumulative_B10": 0.0003272712281338165,
+            "cumulative_fraction": 0.4698704013905251,
+            "fraction": 0.008182220639802722,
+            "global_cell_id": 89,
+            "rank": 36
+          },
+          {
+            "B10": 5.680467200071825e-06,
+            "cumulative_B10": 0.0003329516953338883,
+            "cumulative_fraction": 0.47802597137021213,
+            "fraction": 0.008155569979687034,
+            "global_cell_id": 105,
+            "rank": 37
+          },
+          {
+            "B10": 5.68046719618919e-06,
+            "cumulative_B10": 0.0003386321625300775,
+            "cumulative_fraction": 0.4861815413443248,
+            "fraction": 0.008155569974112651,
+            "global_cell_id": 142,
+            "rank": 38
+          },
+          {
+            "B10": 5.60649421304698e-06,
+            "cumulative_B10": 0.0003442386567431245,
+            "cumulative_fraction": 0.49423090670192016,
+            "fraction": 0.008049365357595392,
+            "global_cell_id": 71,
+            "rank": 39
+          },
+          {
+            "B10": 5.606494210607237e-06,
+            "cumulative_B10": 0.0003498451509537317,
+            "cumulative_fraction": 0.5022802720560128,
+            "fraction": 0.008049365354092598,
+            "global_cell_id": 34,
+            "rank": 40
+          },
+          {
+            "B10": 5.582939067779282e-06,
+            "cumulative_B10": 0.000355428090021511,
+            "cumulative_fraction": 0.5102958187805897,
+            "fraction": 0.008015546724576971,
+            "global_cell_id": 123,
+            "rank": 41
+          },
+          {
+            "B10": 5.5829390675111716e-06,
+            "cumulative_B10": 0.00036101102908902216,
+            "cumulative_fraction": 0.5183113655047817,
+            "fraction": 0.008015546724192038,
+            "global_cell_id": 157,
+            "rank": 42
+          },
+          {
+            "B10": 5.493817093952764e-06,
+            "cumulative_B10": 0.00036650484618297495,
+            "cumulative_fraction": 0.5261989578783046,
+            "fraction": 0.007887592373522745,
+            "global_cell_id": 35,
+            "rank": 43
+          },
+          {
+            "B10": 5.480819710365489e-06,
+            "cumulative_B10": 0.00037198566589334044,
+            "cumulative_fraction": 0.5340678896262722,
+            "fraction": 0.007868931747967593,
+            "global_cell_id": 88,
+            "rank": 44
+          },
+          {
+            "B10": 5.478781568532078e-06,
+            "cumulative_B10": 0.0003774644474618725,
+            "cumulative_fraction": 0.5419338951697982,
+            "fraction": 0.007866005543526048,
+            "global_cell_id": 156,
+            "rank": 45
+          },
+          {
+            "B10": 5.470838155369813e-06,
+            "cumulative_B10": 0.0003829352856172423,
+            "cumulative_fraction": 0.5497884961827388,
+            "fraction": 0.007854601012940676,
+            "global_cell_id": 106,
+            "rank": 46
+          },
+          {
+            "B10": 5.14341790563809e-06,
+            "cumulative_B10": 0.0003880787035228804,
+            "cumulative_fraction": 0.5571730128407483,
+            "fraction": 0.007384516658009464,
+            "global_cell_id": 21,
+            "rank": 47
+          },
+          {
+            "B10": 5.135710545332564e-06,
+            "cumulative_B10": 0.00039321441406821295,
+            "cumulative_fraction": 0.5645464638743792,
+            "fraction": 0.007373451033630965,
+            "global_cell_id": 167,
+            "rank": 48
+          },
+          {
+            "B10": 5.096035466713596e-06,
+            "cumulative_B10": 0.00039831044953492656,
+            "cumulative_fraction": 0.5718629525370063,
+            "fraction": 0.007316488662626959,
+            "global_cell_id": 125,
+            "rank": 49
+          },
+          {
+            "B10": 5.096035464429381e-06,
+            "cumulative_B10": 0.0004034064849993559,
+            "cumulative_fraction": 0.5791794411963537,
+            "fraction": 0.007316488659347462,
+            "global_cell_id": 87,
+            "rank": 50
+          },
+          {
+            "B10": 5.095481984999942e-06,
+            "cumulative_B10": 0.0004085019669843559,
+            "cumulative_fraction": 0.5864951352132782,
+            "fraction": 0.007315694016924556,
+            "global_cell_id": 69,
+            "rank": 51
+          },
+          {
+            "B10": 5.095481984715182e-06,
+            "cumulative_B10": 0.00041359744896907105,
+            "cumulative_fraction": 0.593810829229794,
+            "fraction": 0.007315694016515719,
+            "global_cell_id": 107,
+            "rank": 52
+          },
+          {
+            "B10": 5.050823691321936e-06,
+            "cumulative_B10": 0.000418648272660393,
+            "cumulative_fraction": 0.6010624063657585,
+            "fraction": 0.007251577135964519,
+            "global_cell_id": 20,
+            "rank": 53
+          },
+          {
+            "B10": 5.050823689404092e-06,
+            "cumulative_B10": 0.0004236990963497971,
+            "cumulative_fraction": 0.6083139834989696,
+            "fraction": 0.007251577133211029,
+            "global_cell_id": 53,
+            "rank": 54
+          },
+          {
+            "B10": 5.042270333517739e-06,
+            "cumulative_B10": 0.00042874136668331485,
+            "cumulative_fraction": 0.6155532803935954,
+            "fraction": 0.007239296894625823,
+            "global_cell_id": 140,
+            "rank": 55
+          },
+          {
+            "B10": 5.0422703331251295e-06,
+            "cumulative_B10": 0.00043378363701643995,
+            "cumulative_fraction": 0.6227925772876575,
+            "fraction": 0.007239296894062145,
+            "global_cell_id": 168,
+            "rank": 56
+          },
+          {
+            "B10": 4.9528647986069635e-06,
+            "cumulative_B10": 0.00043873650181504694,
+            "cumulative_fraction": 0.6299035127164294,
+            "fraction": 0.007110935428771929,
+            "global_cell_id": 10,
+            "rank": 57
+          },
+          {
+            "B10": 4.952864798126386e-06,
+            "cumulative_B10": 0.0004436893666131733,
+            "cumulative_fraction": 0.6370144481445114,
+            "fraction": 0.007110935428081953,
+            "global_cell_id": 36,
+            "rank": 58
+          },
+          {
+            "B10": 4.952343973072812e-06,
+            "cumulative_B10": 0.0004486417105862461,
+            "cumulative_fraction": 0.6441246358127661,
+            "fraction": 0.007110187668254814,
+            "global_cell_id": 155,
+            "rank": 59
+          },
+          {
+            "B10": 4.952343970834479e-06,
+            "cumulative_B10": 0.0004535940545570806,
+            "cumulative_fraction": 0.6512348234778074,
+            "fraction": 0.007110187665041191,
+            "global_cell_id": 175,
+            "rank": 60
+          },
+          {
+            "B10": 4.569870818601853e-06,
+            "cumulative_B10": 0.0004581639253756825,
+            "cumulative_fraction": 0.6577958861415908,
+            "fraction": 0.006561062663783332,
+            "global_cell_id": 118,
+            "rank": 61
+          },
+          {
+            "B10": 4.569397355459413e-06,
+            "cumulative_B10": 0.0004627333227311419,
+            "cumulative_fraction": 0.6643562690440701,
+            "fraction": 0.00656038290247938,
+            "global_cell_id": 135,
+            "rank": 62
+          },
+          {
+            "B10": 4.549382216907806e-06,
+            "cumulative_B10": 0.00046728270494804966,
+            "cumulative_fraction": 0.670887915777963,
+            "fraction": 0.006531646733892982,
+            "global_cell_id": 100,
+            "rank": 63
+          },
+          {
+            "B10": 4.543761833856204e-06,
+            "cumulative_B10": 0.0004718264667819059,
+            "cumulative_fraction": 0.6774114932059917,
+            "fraction": 0.006523577428028598,
+            "global_cell_id": 150,
+            "rank": 64
+          },
+          {
+            "B10": 4.046498423135154e-06,
+            "cumulative_B10": 0.000475872965205041,
+            "cumulative_fraction": 0.6832211387686233,
+            "fraction": 0.005809645562631664,
+            "global_cell_id": 151,
+            "rank": 65
+          },
+          {
+            "B10": 4.04649842091353e-06,
+            "cumulative_B10": 0.00047991946362595456,
+            "cumulative_fraction": 0.6890307843280654,
+            "fraction": 0.00580964555944203,
+            "global_cell_id": 117,
+            "rank": 66
+          },
+          {
+            "B10": 4.0462703093296266e-06,
+            "cumulative_B10": 0.0004839657339352842,
+            "cumulative_fraction": 0.6948401023827582,
+            "fraction": 0.005809318054692829,
+            "global_cell_id": 136,
+            "rank": 67
+          },
+          {
+            "B10": 4.046270302322282e-06,
+            "cumulative_B10": 0.0004880120042376065,
+            "cumulative_fraction": 0.7006494204273904,
+            "fraction": 0.005809318044632233,
+            "global_cell_id": 99,
+            "rank": 68
+          },
+          {
+            "B10": 4.040896298407656e-06,
+            "cumulative_B10": 0.0004920529005360141,
+            "cumulative_fraction": 0.7064510228980296,
+            "fraction": 0.005801602470639254,
+            "global_cell_id": 119,
+            "rank": 69
+          },
+          {
+            "B10": 4.0408962881269455e-06,
+            "cumulative_B10": 0.000496093796824141,
+            "cumulative_fraction": 0.7122526253539087,
+            "fraction": 0.0058016024558790145,
+            "global_cell_id": 81,
+            "rank": 70
+          },
+          {
+            "B10": 4.038704180387943e-06,
+            "cumulative_B10": 0.000500132501004529,
+            "cumulative_fraction": 0.7180510805531557,
+            "fraction": 0.005798455199246985,
+            "global_cell_id": 163,
+            "rank": 71
+          },
+          {
+            "B10": 4.03870416850852e-06,
+            "cumulative_B10": 0.0005041712051730375,
+            "cumulative_fraction": 0.723849535735347,
+            "fraction": 0.005798455182191441,
+            "global_cell_id": 134,
+            "rank": 72
+          },
+          {
+            "B10": 3.953353836316233e-06,
+            "cumulative_B10": 0.0005081245590093538,
+            "cumulative_fraction": 0.7295254515941929,
+            "fraction": 0.0056759158588458305,
+            "global_cell_id": 82,
+            "rank": 73
+          },
+          {
+            "B10": 3.952836312337951e-06,
+            "cumulative_B10": 0.0005120773953216917,
+            "cumulative_fraction": 0.735200624432637,
+            "fraction": 0.0056751728384440946,
+            "global_cell_id": 162,
+            "rank": 74
+          },
+          {
+            "B10": 3.946537337070774e-06,
+            "cumulative_B10": 0.0005160239326587625,
+            "cumulative_fraction": 0.7408667536956529,
+            "fraction": 0.005666129263015804,
+            "global_cell_id": 64,
+            "rank": 75
+          },
+          {
+            "B10": 3.939546077006478e-06,
+            "cumulative_B10": 0.0005199634787357689,
+            "cumulative_fraction": 0.7465228454549401,
+            "fraction": 0.005656091759287265,
+            "global_cell_id": 171,
+            "rank": 76
+          },
+          {
+            "B10": 3.885117741839622e-06,
+            "cumulative_B10": 0.0005238485964776086,
+            "cumulative_fraction": 0.7521007932727702,
+            "fraction": 0.005577947817830208,
+            "global_cell_id": 47,
+            "rank": 77
+          },
+          {
+            "B10": 3.881862385402861e-06,
+            "cumulative_B10": 0.0005277304588630114,
+            "cumulative_fraction": 0.7576740673047491,
+            "fraction": 0.0055732740319788445,
+            "global_cell_id": 38,
+            "rank": 78
+          },
+          {
+            "B10": 3.8803537810993765e-06,
+            "cumulative_B10": 0.0005316108126441108,
+            "cumulative_fraction": 0.7632451754008048,
+            "fraction": 0.005571108096055727,
+            "global_cell_id": 176,
+            "rank": 79
+          },
+          {
+            "B10": 3.842728881453086e-06,
+            "cumulative_B10": 0.0005354535415255639,
+            "cumulative_fraction": 0.7687622646122801,
+            "fraction": 0.005517089211475222,
+            "global_cell_id": 127,
+            "rank": 80
+          },
+          {
+            "B10": 3.82491999873045e-06,
+            "cumulative_B10": 0.0005392784615242944,
+            "cumulative_fraction": 0.7742537852245207,
+            "fraction": 0.005491520612240522,
+            "global_cell_id": 83,
+            "rank": 81
+          },
+          {
+            "B10": 3.824919996641154e-06,
+            "cumulative_B10": 0.0005431033815209355,
+            "cumulative_fraction": 0.7797453058337614,
+            "fraction": 0.005491520609240874,
+            "global_cell_id": 46,
+            "rank": 82
+          },
+          {
+            "B10": 3.8238928134863765e-06,
+            "cumulative_B10": 0.0005469272743344219,
+            "cumulative_fraction": 0.7852353516938655,
+            "fraction": 0.005490045860103931,
+            "global_cell_id": 161,
+            "rank": 83
+          },
+          {
+            "B10": 3.823892812684807e-06,
+            "cumulative_B10": 0.0005507511671471067,
+            "cumulative_fraction": 0.7907253975528186,
+            "fraction": 0.0054900458589530994,
+            "global_cell_id": 177,
+            "rank": 84
+          },
+          {
+            "B10": 3.794302318239744e-06,
+            "cumulative_B10": 0.0005545454694653464,
+            "cumulative_fraction": 0.7961729596970206,
+            "fraction": 0.005447562144202102,
+            "global_cell_id": 63,
+            "rank": 85
+          },
+          {
+            "B10": 3.7943023132865877e-06,
+            "cumulative_B10": 0.000558339771778633,
+            "cumulative_fraction": 0.8016205218341114,
+            "fraction": 0.005447562137090748,
+            "global_cell_id": 101,
+            "rank": 86
+          },
+          {
+            "B10": 3.7935011307713097e-06,
+            "cumulative_B10": 0.0005621332729094043,
+            "cumulative_fraction": 0.8070669336960856,
+            "fraction": 0.005446411861974333,
+            "global_cell_id": 149,
+            "rank": 87
+          },
+          {
+            "B10": 3.7935011281389334e-06,
+            "cumulative_B10": 0.0005659267740375433,
+            "cumulative_fraction": 0.8125133455542807,
+            "fraction": 0.005446411858194973,
+            "global_cell_id": 172,
+            "rank": 88
+          },
+          {
+            "B10": 3.778123448958417e-06,
+            "cumulative_B10": 0.0005697048974865017,
+            "cumulative_fraction": 0.8179376793449039,
+            "fraction": 0.005424333790623297,
+            "global_cell_id": 31,
+            "rank": 89
+          },
+          {
+            "B10": 3.778123447887608e-06,
+            "cumulative_B10": 0.0005734830209343893,
+            "cumulative_fraction": 0.8233620131339898,
+            "fraction": 0.005424333789085913,
+            "global_cell_id": 65,
+            "rank": 90
+          },
+          {
+            "B10": 3.777431967325563e-06,
+            "cumulative_B10": 0.0005772604529017148,
+            "cumulative_fraction": 0.8287853541494333,
+            "fraction": 0.005423341015443407,
+            "global_cell_id": 179,
+            "rank": 91
+          },
+          {
+            "B10": 3.7774319666432217e-06,
+            "cumulative_B10": 0.0005810378848683581,
+            "cumulative_fraction": 0.8342086951638972,
+            "fraction": 0.005423341014463755,
+            "global_cell_id": 170,
+            "rank": 92
+          },
+          {
+            "B10": 3.7726239961613177e-06,
+            "cumulative_B10": 0.0005848105088645194,
+            "cumulative_fraction": 0.8396251332708455,
+            "fraction": 0.005416438106948517,
+            "global_cell_id": 55,
+            "rank": 93
+          },
+          {
+            "B10": 3.763720589776017e-06,
+            "cumulative_B10": 0.0005885742294542954,
+            "cumulative_fraction": 0.8450287885641142,
+            "fraction": 0.005403655293268686,
+            "global_cell_id": 109,
+            "rank": 94
+          },
+          {
+            "B10": 2.9041423001202863e-06,
+            "cumulative_B10": 0.0005914783717544158,
+            "cumulative_fraction": 0.8491983286609748,
+            "fraction": 0.004169540096860481,
+            "global_cell_id": 37,
+            "rank": 95
+          },
+          {
+            "B10": 2.90414229805655e-06,
+            "cumulative_B10": 0.0005943825140524722,
+            "cumulative_fraction": 0.8533678687548722,
+            "fraction": 0.00416954009389753,
+            "global_cell_id": 74,
+            "rank": 96
+          },
+          {
+            "B10": 2.893622841044085e-06,
+            "cumulative_B10": 0.0005972761368935164,
+            "cumulative_fraction": 0.8575223058361493,
+            "fraction": 0.004154437081276952,
+            "global_cell_id": 90,
+            "rank": 97
+          },
+          {
+            "B10": 2.893622838428586e-06,
+            "cumulative_B10": 0.0006001697597319449,
+            "cumulative_fraction": 0.861676742913671,
+            "fraction": 0.004154437077521823,
+            "global_cell_id": 128,
+            "rank": 98
+          },
+          {
+            "B10": 2.8588960770228995e-06,
+            "cumulative_B10": 0.0006030286558089678,
+            "cumulative_fraction": 0.8657813220265507,
+            "fraction": 0.0041045791128796905,
+            "global_cell_id": 56,
+            "rank": 99
+          },
+          {
+            "B10": 2.8588960747567484e-06,
+            "cumulative_B10": 0.0006058875518837245,
+            "cumulative_fraction": 0.8698859011361768,
+            "fraction": 0.004104579109626128,
+            "global_cell_id": 22,
+            "rank": 100
+          },
+          {
+            "B10": 2.8447871899920656e-06,
+            "cumulative_B10": 0.0006087323390737167,
+            "cumulative_fraction": 0.8739702238138968,
+            "fraction": 0.004084322677719919,
+            "global_cell_id": 108,
+            "rank": 101
+          },
+          {
+            "B10": 2.844787189987098e-06,
+            "cumulative_B10": 0.0006115771262637038,
+            "cumulative_fraction": 0.8780545464916096,
+            "fraction": 0.004084322677712787,
+            "global_cell_id": 145,
+            "rank": 102
+          },
+          {
+            "B10": 2.802940638593818e-06,
+            "cumulative_B10": 0.0006143800669022976,
+            "cumulative_fraction": 0.8820787891677528,
+            "fraction": 0.004024242676143172,
+            "global_cell_id": 23,
+            "rank": 103
+          },
+          {
+            "B10": 2.798893500943499e-06,
+            "cumulative_B10": 0.0006171789604032411,
+            "cumulative_fraction": 0.886097221280581,
+            "fraction": 0.004018432112828206,
+            "global_cell_id": 144,
+            "rank": 104
+          },
+          {
+            "B10": 2.796215918253798e-06,
+            "cumulative_B10": 0.0006199751763214949,
+            "cumulative_fraction": 0.8901118091298595,
+            "fraction": 0.004014587849278549,
+            "global_cell_id": 73,
+            "rank": 105
+          },
+          {
+            "B10": 2.7904595569997336e-06,
+            "cumulative_B10": 0.0006227656358784946,
+            "cumulative_fraction": 0.8941181324464187,
+            "fraction": 0.004006323316559254,
+            "global_cell_id": 91,
+            "rank": 106
+          },
+          {
+            "B10": 2.62785041827031e-06,
+            "cumulative_B10": 0.0006253934862967649,
+            "cumulative_fraction": 0.897890994295191,
+            "fraction": 0.0037728618487722935,
+            "global_cell_id": 12,
+            "rank": 107
+          },
+          {
+            "B10": 2.6238185026163966e-06,
+            "cumulative_B10": 0.0006280173047993813,
+            "cumulative_fraction": 0.9016580674351988,
+            "fraction": 0.0037670731400077625,
+            "global_cell_id": 158,
+            "rank": 108
+          },
+          {
+            "B10": 2.5966663807477066e-06,
+            "cumulative_B10": 0.000630613971180129,
+            "cumulative_fraction": 0.9053861576848565,
+            "fraction": 0.0037280902496577765,
+            "global_cell_id": 54,
+            "rank": 109
+          },
+          {
+            "B10": 2.596666380206089e-06,
+            "cumulative_B10": 0.0006332106375603351,
+            "cumulative_fraction": 0.9091142479337367,
+            "fraction": 0.0037280902488801646,
+            "global_cell_id": 92,
+            "rank": 110
+          },
+          {
+            "B10": 2.5966610450599777e-06,
+            "cumulative_B10": 0.000635807298605395,
+            "cumulative_fraction": 0.9128423305228318,
+            "fraction": 0.003728082589095162,
+            "global_cell_id": 110,
+            "rank": 111
+          },
+          {
+            "B10": 2.596661042759758e-06,
+            "cumulative_B10": 0.0006384039596481548,
+            "cumulative_fraction": 0.9165704131086246,
+            "fraction": 0.003728082585792687,
+            "global_cell_id": 72,
+            "rank": 112
+          },
+          {
+            "B10": 2.576821916138518e-06,
+            "cumulative_B10": 0.0006409807815642933,
+            "cumulative_fraction": 0.9202700122299773,
+            "fraction": 0.0036995991213527642,
+            "global_cell_id": 11,
+            "rank": 113
+          },
+          {
+            "B10": 2.5768219143008154e-06,
+            "cumulative_B10": 0.0006435576034785941,
+            "cumulative_fraction": 0.9239696113486917,
+            "fraction": 0.003699599118714335,
+            "global_cell_id": 39,
+            "rank": 114
+          },
+          {
+            "B10": 2.571019573146589e-06,
+            "cumulative_B10": 0.0006461286230517408,
+            "cumulative_fraction": 0.9276608799203467,
+            "fraction": 0.0036912685716549813,
+            "global_cell_id": 126,
+            "rank": 115
+          },
+          {
+            "B10": 2.57101957310586e-06,
+            "cumulative_B10": 0.0006486996426248467,
+            "cumulative_fraction": 0.9313521484919433,
+            "fraction": 0.0036912685715965055,
+            "global_cell_id": 159,
+            "rank": 116
+          },
+          {
+            "B10": 2.526988396842455e-06,
+            "cumulative_B10": 0.0006512266310216891,
+            "cumulative_fraction": 0.9349802005486553,
+            "fraction": 0.003628052056712027,
+            "global_cell_id": 4,
+            "rank": 117
+          },
+          {
+            "B10": 2.5269883963418353e-06,
+            "cumulative_B10": 0.000653753619418031,
+            "cumulative_fraction": 0.9386082526046485,
+            "fraction": 0.0036280520559932765,
+            "global_cell_id": 24,
+            "rank": 118
+          },
+          {
+            "B10": 2.5264633375753994e-06,
+            "cumulative_B10": 0.0006562800827556063,
+            "cumulative_fraction": 0.9422355508223812,
+            "fraction": 0.0036272982177327434,
+            "global_cell_id": 143,
+            "rank": 119
+          },
+          {
+            "B10": 2.526463335818129e-06,
+            "cumulative_B10": 0.0006588065460914244,
+            "cumulative_fraction": 0.945862849037591,
+            "fraction": 0.0036272982152097924,
+            "global_cell_id": 169,
+            "rank": 120
+          },
+          {
+            "B10": 1.5080599405040426e-06,
+            "cumulative_B10": 0.0006603146060319285,
+            "cumulative_fraction": 0.9480280034069689,
+            "fraction": 0.002165154369377905,
+            "global_cell_id": 26,
+            "rank": 121
+          },
+          {
+            "B10": 1.4982319571485176e-06,
+            "cumulative_B10": 0.000661812837989077,
+            "cumulative_fraction": 0.950179047527455,
+            "fraction": 0.0021510441204860235,
+            "global_cell_id": 112,
+            "rank": 122
+          },
+          {
+            "B10": 1.4834146655786796e-06,
+            "cumulative_B10": 0.0006632962526546556,
+            "cumulative_fraction": 0.9523088181410178,
+            "fraction": 0.002129770613562911,
+            "global_cell_id": 41,
+            "rank": 123
+          },
+          {
+            "B10": 1.4779176863578698e-06,
+            "cumulative_B10": 0.0006647741703410136,
+            "cumulative_fraction": 0.9544306966222732,
+            "fraction": 0.0021218784812552668,
+            "global_cell_id": 94,
+            "rank": 124
+          },
+          {
+            "B10": 1.1397868697393526e-06,
+            "cumulative_B10": 0.0006659139572107529,
+            "cumulative_fraction": 0.9560671133553845,
+            "fraction": 0.0016364167331113515,
+            "global_cell_id": 25,
+            "rank": 125
+          },
+          {
+            "B10": 1.139786868662207e-06,
+            "cumulative_B10": 0.0006670537440794151,
+            "cumulative_fraction": 0.9577035300869493,
+            "fraction": 0.0016364167315648702,
+            "global_cell_id": 59,
+            "rank": 126
+          },
+          {
+            "B10": 1.1340818516715165e-06,
+            "cumulative_B10": 0.0006681878259310866,
+            "cumulative_fraction": 0.9593317560018677,
+            "fraction": 0.0016282259149182584,
+            "global_cell_id": 75,
+            "rank": 127
+          },
+          {
+            "B10": 1.1340818496232235e-06,
+            "cumulative_B10": 0.0006693219077807098,
+            "cumulative_fraction": 0.9609599819138451,
+            "fraction": 0.0016282259119774797,
+            "global_cell_id": 113,
+            "rank": 128
+          },
+          {
+            "B10": 1.1156403434125822e-06,
+            "cumulative_B10": 0.0006704375481241224,
+            "cumulative_fraction": 0.9625617309553234,
+            "fraction": 0.0016017490414781982,
+            "global_cell_id": 42,
+            "rank": 129
+          },
+          {
+            "B10": 1.1156403414578796e-06,
+            "cumulative_B10": 0.0006715531884655804,
+            "cumulative_fraction": 0.9641634799939952,
+            "fraction": 0.0016017490386717893,
+            "global_cell_id": 13,
+            "rank": 130
+          },
+          {
+            "B10": 1.113712256000284e-06,
+            "cumulative_B10": 0.0006726669007215806,
+            "cumulative_fraction": 0.9657624608385514,
+            "fraction": 0.0015989808445563405,
+            "global_cell_id": 93,
+            "rank": 131
+          },
+          {
+            "B10": 1.1137122557888845e-06,
+            "cumulative_B10": 0.0006737806129773695,
+            "cumulative_fraction": 0.9673614416828044,
+            "fraction": 0.0015989808442528296,
+            "global_cell_id": 131,
+            "rank": 132
+          },
+          {
+            "B10": 1.0949168838398576e-06,
+            "cumulative_B10": 0.0006748755298612093,
+            "cumulative_fraction": 0.9689334376038411,
+            "fraction": 0.0015719959210369018,
+            "global_cell_id": 14,
+            "rank": 133
+          },
+          {
+            "B10": 1.0947090114608349e-06,
+            "cumulative_B10": 0.0006759702388726701,
+            "cumulative_fraction": 0.9705051350779943,
+            "fraction": 0.0015716974741531767,
+            "global_cell_id": 58,
+            "rank": 134
+          },
+          {
+            "B10": 1.0940984677157467e-06,
+            "cumulative_B10": 0.0006770643373403859,
+            "cumulative_fraction": 0.9720759559812487,
+            "fraction": 0.0015708209032544549,
+            "global_cell_id": 76,
+            "rank": 135
+          },
+          {
+            "B10": 1.0928329431455502e-06,
+            "cumulative_B10": 0.0006781571702835315,
+            "cumulative_fraction": 0.9736449599434261,
+            "fraction": 0.0015690039621772984,
+            "global_cell_id": 130,
+            "rank": 136
+          },
+          {
+            "B10": 1.0327583220475176e-06,
+            "cumulative_B10": 0.000679189928605579,
+            "cumulative_fraction": 0.9751277134689559,
+            "fraction": 0.0014827535255297647,
+            "global_cell_id": 6,
+            "rank": 137
+          },
+          {
+            "B10": 1.0322895995705355e-06,
+            "cumulative_B10": 0.0006802222182051496,
+            "cumulative_fraction": 0.9766097940394579,
+            "fraction": 0.0014820805705020458,
+            "global_cell_id": 146,
+            "rank": 138
+          },
+          {
+            "B10": 1.0173692408985556e-06,
+            "cumulative_B10": 0.0006812395874460481,
+            "cumulative_fraction": 0.9780704531273626,
+            "fraction": 0.0014606590879046597,
+            "global_cell_id": 40,
+            "rank": 139
+          },
+          {
+            "B10": 1.017369240155417e-06,
+            "cumulative_B10": 0.0006822569566862035,
+            "cumulative_fraction": 0.9795311122142002,
+            "fraction": 0.0014606590868377193,
+            "global_cell_id": 77,
+            "rank": 140
+          },
+          {
+            "B10": 1.0167949033618182e-06,
+            "cumulative_B10": 0.0006832737515895653,
+            "cumulative_fraction": 0.9809909467132449,
+            "fraction": 0.001459834499044651,
+            "global_cell_id": 95,
+            "rank": 141
+          },
+          {
+            "B10": 1.0167949014049652e-06,
+            "cumulative_B10": 0.0006842905464909703,
+            "cumulative_fraction": 0.98245078120948,
+            "fraction": 0.0014598344962351547,
+            "global_cell_id": 57,
+            "rank": 142
+          },
+          {
+            "B10": 1.0079039809405206e-06,
+            "cumulative_B10": 0.0006852984504719108,
+            "cumulative_fraction": 0.9838978508183429,
+            "fraction": 0.0014470696088627407,
+            "global_cell_id": 5,
+            "rank": 143
+          },
+          {
+            "B10": 1.0079039796546015e-06,
+            "cumulative_B10": 0.0006863063544515653,
+            "cumulative_fraction": 0.9853449204253593,
+            "fraction": 0.0014470696070165187,
+            "global_cell_id": 27,
+            "rank": 144
+          },
+          {
+            "B10": 1.006230221040274e-06,
+            "cumulative_B10": 0.0006873125846726056,
+            "cumulative_fraction": 0.9867895869808261,
+            "fraction": 0.001444666555466801,
+            "global_cell_id": 147,
+            "rank": 145
+          },
+          {
+            "B10": 1.0062302206041422e-06,
+            "cumulative_B10": 0.0006883188148932098,
+            "cumulative_fraction": 0.9882342535356667,
+            "fraction": 0.0014446665548406372,
+            "global_cell_id": 111,
+            "rank": 146
+          },
+          {
+            "B10": 9.890539588247528e-07,
+            "cumulative_B10": 0.0006893078688520346,
+            "cumulative_fraction": 0.9896542597588838,
+            "fraction": 0.0014200062232169529,
+            "global_cell_id": 1,
+            "rank": 147
+          },
+          {
+            "B10": 9.890539587981173e-07,
+            "cumulative_B10": 0.0006902969228108327,
+            "cumulative_fraction": 0.9910742659820625,
+            "fraction": 0.0014200062231787115,
+            "global_cell_id": 15,
+            "rank": 148
+          },
+          {
+            "B10": 9.889152579792808e-07,
+            "cumulative_B10": 0.000691285838068812,
+            "cumulative_fraction": 0.9924940730694669,
+            "fraction": 0.0014198070874044135,
+            "global_cell_id": 129,
+            "rank": 149
+          },
+          {
+            "B10": 9.88915256917859e-07,
+            "cumulative_B10": 0.0006922747533257298,
+            "cumulative_fraction": 0.9939138801553473,
+            "fraction": 0.001419807085880507,
+            "global_cell_id": 160,
+            "rank": 150
+          },
+          {
+            "B10": 1.7520099037515597e-07,
+            "cumulative_B10": 0.000692449954316105,
+            "cumulative_fraction": 0.9941654200176843,
+            "fraction": 0.0002515398623368501,
+            "global_cell_id": 79,
+            "rank": 151
+          },
+          {
+            "B10": 1.7488520522288086e-07,
+            "cumulative_B10": 0.0006926248395213279,
+            "cumulative_fraction": 0.994416506500428,
+            "fraction": 0.00025108648274372556,
+            "global_cell_id": 61,
+            "rank": 152
+          },
+          {
+            "B10": 1.7097388191001546e-07,
+            "cumulative_B10": 0.0006927958134032378,
+            "cumulative_fraction": 0.994661977411447,
+            "fraction": 0.0002454709110191231,
+            "global_cell_id": 44,
+            "rank": 153
+          },
+          {
+            "B10": 1.6952137035505214e-07,
+            "cumulative_B10": 0.0006929653347735929,
+            "cumulative_fraction": 0.9949053629201189,
+            "fraction": 0.00024338550867182012,
+            "global_cell_id": 29,
+            "rank": 154
+          },
+          {
+            "B10": 1.4679772136979538e-07,
+            "cumulative_B10": 0.0006931121324949628,
+            "cumulative_fraction": 0.9951161235930218,
+            "fraction": 0.0002107606729028956,
+            "global_cell_id": 97,
+            "rank": 155
+          },
+          {
+            "B10": 1.4189178351827063e-07,
+            "cumulative_B10": 0.0006932540242784809,
+            "cumulative_fraction": 0.9953198407045317,
+            "fraction": 0.0002037171115099877,
+            "global_cell_id": 17,
+            "rank": 156
+          },
+          {
+            "B10": 1.418591125042028e-07,
+            "cumulative_B10": 0.0006933958833909852,
+            "cumulative_fraction": 0.9955235109095583,
+            "fraction": 0.00020367020502639176,
+            "global_cell_id": 8,
+            "rank": 157
+          },
+          {
+            "B10": 1.4183527196697297e-07,
+            "cumulative_B10": 0.0006935377186629522,
+            "cumulative_fraction": 0.9957271468862082,
+            "fraction": 0.00020363597664994258,
+            "global_cell_id": 28,
+            "rank": 158
+          },
+          {
+            "B10": 1.4183527136098046e-07,
+            "cumulative_B10": 0.0006936795539343131,
+            "cumulative_fraction": 0.995930782861988,
+            "fraction": 0.00020363597577990598,
+            "global_cell_id": 62,
+            "rank": 159
+          },
+          {
+            "B10": 1.4156097138743166e-07,
+            "cumulative_B10": 0.0006938211149057006,
+            "cumulative_fraction": 0.9961340250193458,
+            "fraction": 0.0002032421573577742,
+            "global_cell_id": 16,
+            "rank": 160
+          },
+          {
+            "B10": 1.4156097105567284e-07,
+            "cumulative_B10": 0.0006939626758767563,
+            "cumulative_fraction": 0.9963372671762273,
+            "fraction": 0.00020324215688146088,
+            "global_cell_id": 45,
+            "rank": 161
+          },
+          {
+            "B10": 1.411768527149959e-07,
+            "cumulative_B10": 0.0006941038527294713,
+            "cumulative_fraction": 0.9965399578460747,
+            "fraction": 0.00020269066984746615,
+            "global_cell_id": 80,
+            "rank": 162
+          },
+          {
+            "B10": 1.4117685269923572e-07,
+            "cumulative_B10": 0.0006942450295821705,
+            "cumulative_fraction": 0.9967426485158996,
+            "fraction": 0.0002026906698248389,
+            "global_cell_id": 43,
+            "rank": 163
+          },
+          {
+            "B10": 1.4103469955214678e-07,
+            "cumulative_B10": 0.0006943860642817226,
+            "cumulative_fraction": 0.9969451350933675,
+            "fraction": 0.000202486577467981,
+            "global_cell_id": 115,
+            "rank": 164
+          },
+          {
+            "B10": 1.4024621104957977e-07,
+            "cumulative_B10": 0.0006945263104927722,
+            "cumulative_fraction": 0.9971464896207886,
+            "fraction": 0.00020135452742097386,
+            "global_cell_id": 60,
+            "rank": 165
+          },
+          {
+            "B10": 1.4024621004736308e-07,
+            "cumulative_B10": 0.0006946665567028196,
+            "cumulative_fraction": 0.9973478441467707,
+            "fraction": 0.00020135452598206964,
+            "global_cell_id": 98,
+            "rank": 166
+          },
+          {
+            "B10": 1.4020758268396208e-07,
+            "cumulative_B10": 0.0006948067642855036,
+            "cumulative_fraction": 0.9975491432146092,
+            "fraction": 0.00020129906783853107,
+            "global_cell_id": 3,
+            "rank": 167
+          },
+          {
+            "B10": 1.3953320605366315e-07,
+            "cumulative_B10": 0.0006949462974915572,
+            "cumulative_fraction": 0.997749474065291,
+            "fraction": 0.00020033085068185092,
+            "global_cell_id": 132,
+            "rank": 168
+          },
+          {
+            "B10": 1.321643439452679e-07,
+            "cumulative_B10": 0.0006950784618355025,
+            "cumulative_fraction": 0.9979392252807986,
+            "fraction": 0.00018975121550766634,
+            "global_cell_id": 2,
+            "rank": 169
+          },
+          {
+            "B10": 1.3216434383147136e-07,
+            "cumulative_B10": 0.0006952106261793339,
+            "cumulative_fraction": 0.9981289764961429,
+            "fraction": 0.00018975121534428618,
+            "global_cell_id": 18,
+            "rank": 170
+          },
+          {
+            "B10": 1.31295711505307e-07,
+            "cumulative_B10": 0.0006953419218908392,
+            "cumulative_fraction": 0.9983174805972141,
+            "fraction": 0.00018850410107126262,
+            "global_cell_id": 30,
+            "rank": 171
+          },
+          {
+            "B10": 1.3129571087303e-07,
+            "cumulative_B10": 0.0006954732176017123,
+            "cumulative_fraction": 0.9985059846973777,
+            "fraction": 0.0001885041001634888,
+            "global_cell_id": 7,
+            "rank": 172
+          },
+          {
+            "B10": 1.3071083445638028e-07,
+            "cumulative_B10": 0.0006956039284361687,
+            "cumulative_fraction": 0.9986936490777827,
+            "fraction": 0.00018766438040498107,
+            "global_cell_id": 96,
+            "rank": 173
+          },
+          {
+            "B10": 1.3071083435780751e-07,
+            "cumulative_B10": 0.0006957346392705264,
+            "cumulative_fraction": 0.9988813134580461,
+            "fraction": 0.00018766438026345802,
+            "global_cell_id": 133,
+            "rank": 174
+          },
+          {
+            "B10": 1.300580095685181e-07,
+            "cumulative_B10": 0.000695864697280095,
+            "cumulative_fraction": 0.9990680405635985,
+            "fraction": 0.00018672710555241718,
+            "global_cell_id": 78,
+            "rank": 175
+          },
+          {
+            "B10": 1.3005800917406738e-07,
+            "cumulative_B10": 0.0006959947552892691,
+            "cumulative_fraction": 0.9992547676685847,
+            "fraction": 0.00018672710498609572,
+            "global_cell_id": 116,
+            "rank": 176
+          },
+          {
+            "B10": 1.3002439955278134e-07,
+            "cumulative_B10": 0.0006961247796888219,
+            "cumulative_fraction": 0.9994414465195084,
+            "fraction": 0.00018667885092375636,
+            "global_cell_id": 9,
+            "rank": 177
+          },
+          {
+            "B10": 1.3002439943232743e-07,
+            "cumulative_B10": 0.0006962548040882542,
+            "cumulative_fraction": 0.9996281253702592,
+            "fraction": 0.00018667885075081806,
+            "global_cell_id": 0,
+            "rank": 178
+          },
+          {
+            "B10": 1.2950790954210258e-07,
+            "cumulative_B10": 0.0006963843119977963,
+            "cumulative_fraction": 0.999814062685271,
+            "fraction": 0.00018593731501173724,
+            "global_cell_id": 114,
+            "rank": 179
+          },
+          {
+            "B10": 1.2950790934517674e-07,
+            "cumulative_B10": 0.0006965138199071415,
+            "cumulative_fraction": 1.0,
+            "fraction": 0.00018593731472900653,
+            "global_cell_id": 148,
+            "rank": 180
+          }
+        ],
+        "normalized_fractions": {
+          "0": 0.00018667885075081806,
+          "1": 0.0014200062232169529,
+          "10": 0.007110935428771929,
+          "100": 0.006531646733892982,
+          "101": 0.005447562137090748,
+          "102": 0.01251459828738695,
+          "103": 0.013495455718488604,
+          "104": 0.014027177694754379,
+          "105": 0.008155569979687034,
+          "106": 0.007854601012940676,
+          "107": 0.007315694016515719,
+          "108": 0.004084322677719919,
+          "109": 0.005403655293268686,
+          "11": 0.0036995991213527642,
+          "110": 0.003728082589095162,
+          "111": 0.0014446665548406372,
+          "112": 0.0021510441204860235,
+          "113": 0.0016282259119774797,
+          "114": 0.00018593731501173724,
+          "115": 0.000202486577467981,
+          "116": 0.00018672710498609572,
+          "117": 0.00580964555944203,
+          "118": 0.006561062663783332,
+          "119": 0.005801602470639254,
+          "12": 0.0037728618487722935,
+          "120": 0.013986287644136232,
+          "121": 0.0134609911359778,
+          "122": 0.01251389806162427,
+          "123": 0.008015546724576971,
+          "124": 0.010592948660577663,
+          "125": 0.007316488662626959,
+          "126": 0.0036912685716549813,
+          "127": 0.005517089211475222,
+          "128": 0.004154437077521823,
+          "129": 0.0014198070874044135,
+          "13": 0.0016017490386717893,
+          "130": 0.0015690039621772984,
+          "131": 0.0015989808442528296,
+          "132": 0.00020033085068185092,
+          "133": 0.00018766438026345802,
+          "134": 0.005798455182191441,
+          "135": 0.00656038290247938,
+          "136": 0.005809318054692829,
+          "137": 0.013635888839369554,
+          "138": 0.018246312714658163,
+          "139": 0.012514598270646498,
+          "14": 0.0015719959210369018,
+          "140": 0.007239296894625823,
+          "141": 0.010849885350551368,
+          "142": 0.008155569974112651,
+          "143": 0.0036272982177327434,
+          "144": 0.004018432112828206,
+          "145": 0.004084322677712787,
+          "146": 0.0014820805705020458,
+          "147": 0.001444666555466801,
+          "148": 0.00018593731472900653,
+          "149": 0.005446411861974333,
+          "15": 0.0014200062231787115,
+          "150": 0.006523577428028598,
+          "151": 0.005809645562631664,
+          "152": 0.01231424622091287,
+          "153": 0.018311974837806742,
+          "154": 0.013986287643411607,
+          "155": 0.007110187668254814,
+          "156": 0.007866005543526048,
+          "157": 0.008015546724192038,
+          "158": 0.0037670731400077625,
+          "159": 0.0036912685715965055,
+          "16": 0.0002032421573577742,
+          "160": 0.001419807085880507,
+          "161": 0.005490045860103931,
+          "162": 0.0056751728384440946,
+          "163": 0.005798455199246985,
+          "164": 0.01209810019826949,
+          "165": 0.013258831015889948,
+          "166": 0.01363588883342792,
+          "167": 0.007373451033630965,
+          "168": 0.007239296894062145,
+          "169": 0.0036272982152097924,
+          "17": 0.0002037171115099877,
+          "170": 0.005423341014463755,
+          "171": 0.005656091759287265,
+          "172": 0.005446411858194973,
+          "173": 0.012542907269821903,
+          "174": 0.012314246219358711,
+          "175": 0.007110187665041191,
+          "176": 0.005571108096055727,
+          "177": 0.0054900458589530994,
+          "178": 0.012098100198338256,
+          "179": 0.005423341015443407,
+          "18": 0.00018975121534428618,
+          "19": 0.012100420463525639,
+          "2": 0.00018975121550766634,
+          "20": 0.007251577135964519,
+          "21": 0.007384516658009464,
+          "22": 0.004104579109626128,
+          "23": 0.004024242676143172,
+          "24": 0.0036280520559932765,
+          "25": 0.0016364167331113515,
+          "26": 0.002165154369377905,
+          "27": 0.0014470696070165187,
+          "28": 0.00020363597664994258,
+          "29": 0.00024338550867182012,
+          "3": 0.00020129906783853107,
+          "30": 0.00018850410107126262,
+          "31": 0.005424333790623297,
+          "32": 0.01232756806821444,
+          "33": 0.012571540948012635,
+          "34": 0.008049365354092598,
+          "35": 0.007887592373522745,
+          "36": 0.007110935428081953,
+          "37": 0.004169540096860481,
+          "38": 0.0055732740319788445,
+          "39": 0.003699599118714335,
+          "4": 0.003628052056712027,
+          "40": 0.0014606590879046597,
+          "41": 0.002129770613562911,
+          "42": 0.0016017490414781982,
+          "43": 0.0002026906698248389,
+          "44": 0.0002454709110191231,
+          "45": 0.00020324215688146088,
+          "46": 0.005491520609240874,
+          "47": 0.005577947817830208,
+          "48": 0.013678131785840791,
+          "49": 0.013336078681631678,
+          "5": 0.0014470696088627407,
+          "50": 0.012100420462291716,
+          "51": 0.008182220644845709,
+          "52": 0.010946282176515488,
+          "53": 0.007251577133211029,
+          "54": 0.0037280902496577765,
+          "55": 0.005416438106948517,
+          "56": 0.0041045791128796905,
+          "57": 0.0014598344962351547,
+          "58": 0.0015716974741531767,
+          "59": 0.0016364167315648702,
+          "6": 0.0014827535255297647,
+          "60": 0.00020135452742097386,
+          "61": 0.00025108648274372556,
+          "62": 0.00020363597577990598,
+          "63": 0.005447562144202102,
+          "64": 0.005666129263015804,
+          "65": 0.005424333789085913,
+          "66": 0.014027177700606505,
+          "67": 0.018517490592117002,
+          "68": 0.012327568072027952,
+          "69": 0.007315694016924556,
+          "7": 0.0001885041001634888,
+          "70": 0.010628357456597157,
+          "71": 0.008049365357595392,
+          "72": 0.003728082585792687,
+          "73": 0.004014587849278549,
+          "74": 0.00416954009389753,
+          "75": 0.0016282259149182584,
+          "76": 0.0015708209032544549,
+          "77": 0.0014606590868377193,
+          "78": 0.00018672710555241718,
+          "79": 0.0002515398623368501,
+          "8": 0.00020367020502639176,
+          "80": 0.00020269066984746615,
+          "81": 0.0058016024558790145,
+          "82": 0.0056759158588458305,
+          "83": 0.005491520612240522,
+          "84": 0.012513898067876684,
+          "85": 0.018354269037498292,
+          "86": 0.013678131777711766,
+          "87": 0.007316488659347462,
+          "88": 0.007868931747967593,
+          "89": 0.008182220639802722,
+          "9": 0.00018667885092375636,
+          "90": 0.004154437081276952,
+          "91": 0.004006323316559254,
+          "92": 0.0037280902488801646,
+          "93": 0.0015989808445563405,
+          "94": 0.0021218784812552668,
+          "95": 0.001459834499044651,
+          "96": 0.00018766438040498107,
+          "97": 0.0002107606729028956,
+          "98": 0.00020135452598206964,
+          "99": 0.005809318044632233
+        },
+        "prefix_to_50_percent": [
+          67,
+          85,
+          153,
+          138,
+          66,
+          104,
+          120,
+          154,
+          48,
+          86,
+          137,
+          166,
+          103,
+          121,
+          49,
+          165,
+          33,
+          173,
+          102,
+          139,
+          84,
+          122,
+          68,
+          32,
+          152,
+          174,
+          19,
+          50,
+          178,
+          164,
+          52,
+          141,
+          70,
+          124,
+          51,
+          89,
+          105,
+          142,
+          71,
+          34
+        ],
+        "prefix_to_50_percent_sum": 0.0003498451509537317,
+        "status": "RANKED",
+        "top": [
+          {
+            "B10": 1.2897688107409969e-05,
+            "fraction": 0.018517490592117002,
+            "global_cell_id": 67
+          },
+          {
+            "B10": 1.2784002038911308e-05,
+            "fraction": 0.018354269037498292,
+            "global_cell_id": 85
+          },
+          {
+            "B10": 1.2754543544324232e-05,
+            "fraction": 0.018311974837806742,
+            "global_cell_id": 153
+          },
+          {
+            "B10": 1.2708808968106801e-05,
+            "fraction": 0.018246312714658163,
+            "global_cell_id": 138
+          },
+          {
+            "B10": 9.77012312276571e-06,
+            "fraction": 0.014027177700606505,
+            "global_cell_id": 66
+          },
+          {
+            "B10": 9.770123118689624e-06,
+            "fraction": 0.014027177694754379,
+            "global_cell_id": 104
+          },
+          {
+            "B10": 9.741642633337382e-06,
+            "fraction": 0.013986287644136232,
+            "global_cell_id": 120
+          },
+          {
+            "B10": 9.74164263283267e-06,
+            "fraction": 0.013986287643411607,
+            "global_cell_id": 154
+          },
+          {
+            "B10": 9.52700781934926e-06,
+            "fraction": 0.013678131785840791,
+            "global_cell_id": 48
+          },
+          {
+            "B10": 9.527007813687282e-06,
+            "fraction": 0.013678131777711766,
+            "global_cell_id": 86
+          },
+          {
+            "B10": 9.497585023338445e-06,
+            "fraction": 0.013635888839369554,
+            "global_cell_id": 137
+          },
+          {
+            "B10": 9.497585019200015e-06,
+            "fraction": 0.01363588883342792,
+            "global_cell_id": 166
+          },
+          {
+            "B10": 9.399771413872173e-06,
+            "fraction": 0.013495455718488604,
+            "global_cell_id": 103
+          },
+          {
+            "B10": 9.37576635585607e-06,
+            "fraction": 0.0134609911359778,
+            "global_cell_id": 121
+          },
+          {
+            "B10": 9.288763105125475e-06,
+            "fraction": 0.013336078681631678,
+            "global_cell_id": 49
+          },
+          {
+            "B10": 9.234959038380793e-06,
+            "fraction": 0.013258831015889948,
+            "global_cell_id": 165
+          },
+          {
+            "B10": 8.756252007819327e-06,
+            "fraction": 0.012571540948012635,
+            "global_cell_id": 33
+          },
+          {
+            "B10": 8.736308255244708e-06,
+            "fraction": 0.012542907269821903,
+            "global_cell_id": 173
+          },
+          {
+            "B10": 8.716590657751255e-06,
+            "fraction": 0.01251459828738695,
+            "global_cell_id": 102
+          },
+          {
+            "B10": 8.716590646091299e-06,
+            "fraction": 0.012514598270646498,
+            "global_cell_id": 139
+          }
+        ],
+        "top_k_globals": {
+          "1": [
+            67
+          ],
+          "10": [
+            67,
+            85,
+            153,
+            138,
+            66,
+            104,
+            120,
+            154,
+            48,
+            86
+          ],
+          "20": [
+            67,
+            85,
+            153,
+            138,
+            66,
+            104,
+            120,
+            154,
+            48,
+            86,
+            137,
+            166,
+            103,
+            121,
+            49,
+            165,
+            33,
+            173,
+            102,
+            139
+          ],
+          "5": [
+            67,
+            85,
+            153,
+            138,
+            66
+          ]
+        },
+        "total_B10": 0.0006965138199071415
+      },
+      "response_identity_max_relative_error": {
+        "R10.E": 1.1313742684418438e-15,
+        "R10.E.global": 8.969706774039908e-17,
+        "R10.G": 1.4626826674576717e-15,
+        "R10.G.global": 4.8506517259135205e-17,
+        "R10.curl_over_k0": 1.5497086913628386e-15,
+        "R10.curl_over_k0.global": 0.0,
+        "R9.E": 0.0,
+        "R9.E.global": 0.0,
+        "R9.G": 0.0,
+        "R9.G.global": 0.0,
+        "R9.curl_over_k0": 0.0,
+        "R9.curl_over_k0.global": 0.0
+      }
+    }
+  },
+  "finished_utc": "2026-10-29T00:47:49.762008+00:00",
+  "orders": {
+    "q10": {
+      "artifacts": {
+        "cells_csv": {
+          "path": "q10/cells.csv",
+          "sha256": "e38cb92236ce054a2d59514ea45103dae8b379de834c7d643491b745e047d9ec"
+        },
+        "diagnostic": {
+          "path": "q10/diagnostic.json",
+          "sha256": "3fe3d3ad602b2456fae55c1849f9918a6e3a4603f91c3fc8091ca2d863dda03c"
+        },
+        "modes_612_csv": {
+          "path": "q10/modes_612.csv",
+          "sha256": "825f17ca6a382e93935dc4f3a07b062148b470e702fb66da8b22dac9d7c94073"
+        }
+      },
+      "sample_count": 1008000,
+      "status": "COMPLETE"
+    },
+    "q8": {
+      "artifacts": {
+        "cells_csv": {
+          "path": "q8/cells.csv",
+          "sha256": "32e6131db8928678252f01f4c1ffa882a65712a37ffa7159bed1baef91868871"
+        },
+        "diagnostic": {
+          "path": "q8/diagnostic.json",
+          "sha256": "27eab9b092a17b32d1e5ce59697e659dc16010962b7a111a9a8d46923f24f3c3"
+        },
+        "modes_612_csv": {
+          "path": "q8/modes_612.csv",
+          "sha256": "825f17ca6a382e93935dc4f3a07b062148b470e702fb66da8b22dac9d7c94073"
+        }
+      },
+      "sample_count": 516096,
+      "status": "COMPLETE"
+    }
+  },
+  "runtime_compatibility_alias": "U1 is the execution stage; V19 runtime helper uses D2 enum only, bound to this U1 root.",
+  "schema": "task43.v20.saved_r10_run_manifest.v1",
+  "science_summary": {
+    "delta_J_G_per_historical_delta_FE": {
+      "G_R10_by_saved_q": {
+        "q10": 3.1543933532839355e-05,
+        "q8": 3.1543933532844126e-05
+      },
+      "G_R9_by_saved_q": {
+        "q10": 3.995683423458049e-05,
+        "q8": 3.995683423458543e-05
+      },
+      "J_R10": 2.837172688008316,
+      "J_R9": 4.065061945224269,
+      "J_direction_status_at_frozen_scale": "IMPROVEMENT_RESOLVED_AT_FROZEN_SCALE",
+      "J_improvement_exceeds_epsilon": true,
+      "J_per_historical_delta_FE_interval_from_epsilon": [
+        0.0001321716012117935,
+        0.00016271054509367066
+      ],
+      "delta_G_improvement_interval_from_saved_q": [
+        8.412900701741137e-06,
+        8.412900701741307e-06
+      ],
+      "delta_G_resolution_by_saved_q": {
+        "q10": {
+          "delta_G_improvement_R9_minus_R10": 8.412900701741137e-06,
+          "direction_status": "WITHIN_FROZEN_UNRESOLVED_SCALE",
+          "epsilon_G_distinguishable_scale": 9.088158796603444e-06,
+          "improvement_exceeds_epsilon": false,
+          "per_historical_delta_FE": 1.010194608758542e-09,
+          "per_historical_delta_FE_interval_from_epsilon": [
+            -8.108286441670348e-11,
+            2.1014720819337873e-09
+          ]
+        },
+        "q8": {
+          "delta_G_improvement_R9_minus_R10": 8.412900701741307e-06,
+          "direction_status": "WITHIN_FROZEN_UNRESOLVED_SCALE",
+          "epsilon_G_distinguishable_scale": 9.088158796603444e-06,
+          "improvement_exceeds_epsilon": false,
+          "per_historical_delta_FE": 1.0101946087585622e-09,
+          "per_historical_delta_FE_interval_from_epsilon": [
+            -8.108286441668314e-11,
+            2.1014720819338076e-09
+          ]
+        }
+      },
+      "delta_J_improvement_R9_minus_R10": 1.2278892572159528,
+      "delta_J_improvement_per_historical_delta_FE": 0.00014744107315273208,
+      "epsilon_G_distinguishable_scale": 9.088158796603444e-06,
+      "epsilon_J_distinguishable_scale": 0.12716416232413652,
+      "historical_delta_FE": 8328,
+      "interpretation": "epsilon_J and epsilon_G are frozen distinguishable scales for the R9-to-R10 improvement; they are not absolute-error acceptance limits or new selection authority"
+    },
+    "location_proposal": {
+      "conditional_remove_only_this_box_B10": {
+        "conditional_G_relative_gain_over_frozen_reference_or_floor": 2.934219530376897e-07,
+        "conditional_absolute_G_norm_gain": 0.00024549441901419375,
+        "q10_total_B10_after_if_box_alone_removed": 0.0006836161317995225,
+        "q10_total_B10_before": 0.0006965138199069309,
+        "selected_box_B10": 1.2897688107408396e-05,
+        "warning": "single-box removal condition only; not a prediction of globally coupled h refinement"
+      },
+      "proposed_cell": {
+        "forest_root": 127,
+        "geometry_relation": {
+          "cell_axis_bounds_nm": {
+            "x": [
+              16.5,
+              33.5
+            ],
+            "y": [
+              10.0,
+              15.0
+            ],
+            "z": [
+              90.0,
+              120.0
+            ]
+          },
+          "grating_bounds_nm": [
+            16.5,
+            15.0,
+            0.0,
+            33.5,
+            35.0,
+            120.0
+          ],
+          "grating_relation_by_axis": {
+            "x": "OVERLAPS",
+            "y": "TOUCHES",
+            "z": "OVERLAPS"
+          },
+          "interface_relation": "ABOVE_INTERFACE",
+          "interface_z_nm": 0.0,
+          "overlaps_grating_volume": false,
+          "source": "R10 plan base_config grating_bounds/interface_z and frozen cell-map z endpoints",
+          "touches_any_grating_face": true,
+          "touches_interface": false,
+          "touches_lower_z_port": false,
+          "touches_upper_z_port": false,
+          "within_z_port_slab": true,
+          "z_port_surfaces_nm": [
+            -10.0,
+            130.0
+          ]
+        },
+        "global_cell_id": 67,
+        "lower_nm": [
+          16.5,
+          10.0,
+          90.0
+        ],
+        "q10_B10_fraction": 0.018517490592120343,
+        "q8_B10_fraction": 0.018517490592117002,
+        "r10_p": 6,
+        "r9_p": 6,
+        "same_as_original_requested_global8": false,
+        "upper_nm": [
+          33.5,
+          15.0,
+          120.0
+        ]
+      },
+      "q8_q10_location_stability": {
+        "L1_limit": 1e-06,
+        "location_stable": true,
+        "max_cell_q10": 67,
+        "max_cell_q8": 67,
+        "normalized_cell_B10_fraction_L1": 1.2656911380515973e-12,
+        "same_max_cell": true
+      },
+      "rule": "q10 B10 descending, exact ties by smaller global_cell_id; q8/q10 normalized B10 L1 <= 1e-6 and same maximum cell",
+      "status": "STABLE_REMAINDER_LOCATION_PROPOSAL"
+    }
+  },
+  "source_sha256_end": {
+    "input_lock": "c7682d78a35e43318140f661bb440c858e27b286982a4f9cd236293bd155a8b0",
+    "manifest": "d087e39b058d718f01da7dbd3df0b7c44b2f458c67b2535a8f10dc6c21f43efd",
+    "quadrature:q10": "895b65ffbf63176ac20008e6488c1c1318141f877eb5814496fcc945c049514d",
+    "quadrature:q8": "ce3707052419ada5a8e55574a826772bcb1e37cf1f764fc115eb8bf8a52306e5",
+    "source:post_selection_metadata": "347195b3e29e23a2907e16264385346e208a2a7d2d48fb8b2d8c0b00ede3b6aa",
+    "source:r10_absorption": "77ab9220fb19596506e532b205de205ed18ad5ba937e927ca68f8d31a5bb5ca8",
+    "source:r10_comparison": "3db50c67e871520398eee3c05219d4ef3090c360f5f2b4495e5fe31f3c70b3e0",
+    "source:r10_modal": "f7048a9ecad65db39faa688d9d4f0041099f2719e64e5ea2898e3dc793003450",
+    "source:r10_plan": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+    "source:r10_rejection": "168a1b02f92a08acf0b590340d8430edcbb511ea9a3b7c0adb69795a50077c51",
+    "source:r9_absorption": "4f73d4db2da94f52ff5206942e8953b98d7427691f827da7ca047f171851bdd8",
+    "source:r9_comparison": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30",
+    "source:r9_modal": "443bd3683027534b349903fc11c97ef21a69fb3982d1bc70fd47781fed28be0e",
+    "source:r9_plan": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+    "source:v19_q10_cells": "adc602880f83bf9614fc9e645f2f5c80432f048e7a403d408b015b86cd242bb7",
+    "source:v19_q8_cells": "52f2be313a3b57c73f675ce4cad5d55ada79a26c60f50568a565eb0871b5e56b",
+    "source:y6_modal": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463",
+    "source:y6_summary": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc",
+    "user_recovery_binding": "4eb69768f205b5f1390bf42a111942fa9c753089fd07545d6057ca655297e4b1",
+    "user_recovery_launch:benchmarks/artifacts/task43/v20_saved_r10_response/launch/user_recovery_attempt1.sh": "3c36d97c58c53570bafe7b8465ea130fe1c675006fe961505fbac313a306b9ef",
+    "user_recovery_launch:benchmarks/artifacts/task43/v20_saved_r10_response/launch/user_recovery_snapshot.py": "5cd6787448d937f6ef3e0349ac037048a20ce661619a0ceff62371a90880fdf6",
+    "user_recovery_launch_copy:docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/launch/user_recovery_attempt1.sh.txt": "3c36d97c58c53570bafe7b8465ea130fe1c675006fe961505fbac313a306b9ef",
+    "user_recovery_launch_copy:docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/launch/user_recovery_snapshot.py.txt": "5cd6787448d937f6ef3e0349ac037048a20ce661619a0ceff62371a90880fdf6"
+  },
+  "source_sha256_start": {
+    "input_lock": "c7682d78a35e43318140f661bb440c858e27b286982a4f9cd236293bd155a8b0",
+    "manifest": "d087e39b058d718f01da7dbd3df0b7c44b2f458c67b2535a8f10dc6c21f43efd",
+    "quadrature:q10": "895b65ffbf63176ac20008e6488c1c1318141f877eb5814496fcc945c049514d",
+    "quadrature:q8": "ce3707052419ada5a8e55574a826772bcb1e37cf1f764fc115eb8bf8a52306e5",
+    "source:post_selection_metadata": "347195b3e29e23a2907e16264385346e208a2a7d2d48fb8b2d8c0b00ede3b6aa",
+    "source:r10_absorption": "77ab9220fb19596506e532b205de205ed18ad5ba937e927ca68f8d31a5bb5ca8",
+    "source:r10_comparison": "3db50c67e871520398eee3c05219d4ef3090c360f5f2b4495e5fe31f3c70b3e0",
+    "source:r10_modal": "f7048a9ecad65db39faa688d9d4f0041099f2719e64e5ea2898e3dc793003450",
+    "source:r10_plan": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+    "source:r10_rejection": "168a1b02f92a08acf0b590340d8430edcbb511ea9a3b7c0adb69795a50077c51",
+    "source:r9_absorption": "4f73d4db2da94f52ff5206942e8953b98d7427691f827da7ca047f171851bdd8",
+    "source:r9_comparison": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30",
+    "source:r9_modal": "443bd3683027534b349903fc11c97ef21a69fb3982d1bc70fd47781fed28be0e",
+    "source:r9_plan": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+    "source:v19_q10_cells": "adc602880f83bf9614fc9e645f2f5c80432f048e7a403d408b015b86cd242bb7",
+    "source:v19_q8_cells": "52f2be313a3b57c73f675ce4cad5d55ada79a26c60f50568a565eb0871b5e56b",
+    "source:y6_modal": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463",
+    "source:y6_summary": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc",
+    "user_recovery_binding": "4eb69768f205b5f1390bf42a111942fa9c753089fd07545d6057ca655297e4b1",
+    "user_recovery_launch:benchmarks/artifacts/task43/v20_saved_r10_response/launch/user_recovery_attempt1.sh": "3c36d97c58c53570bafe7b8465ea130fe1c675006fe961505fbac313a306b9ef",
+    "user_recovery_launch:benchmarks/artifacts/task43/v20_saved_r10_response/launch/user_recovery_snapshot.py": "5cd6787448d937f6ef3e0349ac037048a20ce661619a0ceff62371a90880fdf6",
+    "user_recovery_launch_copy:docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/launch/user_recovery_attempt1.sh.txt": "3c36d97c58c53570bafe7b8465ea130fe1c675006fe961505fbac313a306b9ef",
+    "user_recovery_launch_copy:docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/launch/user_recovery_snapshot.py.txt": "5cd6787448d937f6ef3e0349ac037048a20ce661619a0ceff62371a90880fdf6"
+  },
+  "stage": "U1",
+  "started_utc": "2026-10-29T00:45:56.411733+00:00",
+  "status": "COMPLETE",
+  "user_recovery_binding": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_binding.json",
+    "sha256": "4eb69768f205b5f1390bf42a111942fa9c753089fd07545d6057ca655297e4b1"
+  }
+}

@@ -1,21 +1,22 @@
-# Task43 模型总账：V20诊断未完成，accepted9/R9不变
+# Task43 模型总账：V20 U1保存场诊断完成，accepted9/R9不变
 
-## V20 当前模型：沿用R9/R10/Y6_1，保存数组诊断未完成
+## V20 当前模型：既有R9→R10响应已分解，R10仍未获接受
 
-没有新增模型或FE求解。静态核原180单元同几何，R9为28p5/152p6、R10为180p6；历史FE为110472/118800，增加8328。R9仍accepted9，R10仍历史REJECTED；Y6_1仍原离散选择参考，未消费holdout/control。
+没有新增模型或FE求解。诊断复用原180单元几何：R9为28p5/152p6，R10为180p6；历史FE分别110472/118800，差8328。R9仍accepted9，R10仍历史REJECTED；Y6_1仍是既有离散参考，未消费holdout/control。U1只重放已保存三场及q8/q10点，不是新的网格求解。
 
-T1因拒绝信息的正则断言错误失败（6通过/1失败/5未运行），T2只补6项并通过；D1在q8的J复现检查因保存功率与重新加和口径不同失败；D2同worker的新增ULP fixture因并列最大指标名称的JSON排序差异失败（1失败/2未运行）。D1无已完成阶次，D2真实两阶未运行。fixture已静态修补但未重跑；主控漏查顺序依赖的责任保留，不能拼成最终测试全通过。
-
-| 指标 | R9 | R10 | 来源 |
+| 诊断量 | R9 | R10 | 解释与判定 |
 |---|---:|---:|---|
-| J | 4.065061945224269 | 2.837172688008316 | 旧comparison只读复用；V20完整重算未完成 |
-| G | 3.995683423458756e−5 | 3.154393353284729e−5 | 同上，不拼接为新q8/q10结果 |
-| R00_s绝对差 | 4.065061945224269e−6 | 2.837172688008316e−6 | 历史均大于1e−6，旧拒绝不变 |
-| 新单元分布/612表/位置 | 未生成 | 未生成 | 本轮科学问题仍未回答 |
+| J | 4.065061945224269 | 2.837172688008316 | 改善1.2278892572159528，大于冻结εJ=0.12716416232413652；但R10 J仍>1 |
+| G，q8 | 3.995683423458543e−5 | 3.1543933532844126e−5 | 下降约8.4129e−6，小于冻结εG=9.088158796603444e−6 |
+| G，q10 | 3.995683423458049e−5 | 3.1543933532839355e−5 | 与q8一致；改善方向明确但在冻结可分辨尺度内未分辨 |
+| R00_s绝对差 | 4.065061945224269e−6 | 2.837172688008316e−6 | R10仍大于1e−6，绝对精度未过 |
+| 剩余场差最大位置 | — | global67/root127，p6→p6 | 占R10剩余B10的1.851749%；只是保存场误差位置提案，不是新细化计划 |
 
-本轮支持4/4，whole合计71.744198859秒；最大采样树RSS443715584 B，CPU1、六线程变量1、task swap0，终态与清理已核。新增PDE、场恢复、新采样和holdout/control数组消费均为0。正式账仍9/10、末槽封存；空间/选择PARTIAL，精度NOT_PASSED，同精度全过程成本NOT_ESTABLISHED，迭代NOT_RUN/NOT_QUALIFIED。没有合并批准。
+28个既有p5→p6单元贡献约90.116%的全域净改善；其余152个p6单元也均改善，没有负项抵消，但仍承载约99.429%的剩余B10。q8/q10位置分布L1差1.2656911381e−12。U1三项同worker测试通过；原V20 T1/T2/D1/D2失败账仍分别保留，不拼为全套通过。
 
-[Response V20](task43_hp_adaptivity/response_v20.md) · [机器记录](task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_results_v1.json)。不把静态映射算作新空间实测，不更新模型精度或成本能力。
+U1 whole 120.410646534秒，树RSS采样峰784568320 B、CPU1、task swap0，身份退出和清理已核。原四槽71.744198859秒另列，五次调用合计192.154845393秒。新增PDE、FE场恢复、采样、holdout/control消费均为0；正式账9/10、旧末槽封存。能力状态仍为：空间/选择PARTIAL，精度NOT_PASSED，同精度全过程成本NOT_ESTABLISHED，迭代NOT_RUN/NOT_QUALIFIED；没有自动后续授权或合并批准。
+
+[Response V20](task43_hp_adaptivity/response_v20.md) · [U1机器记录](task43_hp_adaptivity/outcomes/records/v20_user_recovery_results_v1.json) · [U1逐表复核](task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/U1/root_table_audit.json) · [U1标量复核](task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/U1/root_scalar_audit.json)。
 
 ## V19 历史模型：已有四场保存数组诊断，无新模型求解
 

@@ -1,19 +1,23 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V20 当前依赖组：研究检查器未完整验证，无合并资格
+## V20 当前依赖组：U1 保存场诊断完成，无合并批准
 
 | 依赖组 | 本轮文件/行为 | 验证与审阅依赖 |
 |---|---|---|
-| production numerical/core | 无变更；无新PDE | 不提升任何生产默认或科学资格 |
-| reusable runner/watchdog | 共享watchdog/activation不变；仅任务内短launch/snapshot归档 | 4槽CPU/父链/资源/清理实证，不外推通用资格 |
-| checker/benchmark | 新analyze_saved_r10_response.py；依赖未改的V19 helper、固定旧输入和V20合同 | T1/T2局部通过；D1保存功率口径修复后，D2 fixture失败，最终完整路径未合格 |
-| compact evidence/docs | response_v20、机器结果、180项静态几何映射、4槽失败/资源/trace摘录及原件hash | 先核原件/费用/身份，再审修复；不存在两阶科学表可验收 |
-| research-only | checker、小测试、合同和薄launch | 保持研究路径；最终fixture静态修补NOT_RUN，未来需明确新支持授权 |
-| do-not-merge | ignored大NPZ/完整资源流、未验证研究代码的生产提升、整分支 | 无merge approval；禁止accepted10/新h计划/新PDE推断 |
+| production numerical/core | 无共享数值核心或默认行为变更；未新增PDE、场恢复或采样 | 不提升生产默认、R10接受状态或科学资格 |
+| reusable runner/watchdog | 共享watchdog、activation与环境不变；U1使用固定研究入口 | U1 CPU1、身份、资源与清理实证仅适用于该调用，不外推通用资格；runtime helper的D2枚举只是旧接口兼容，U1绑定新root |
+| checker/benchmark | `analyze_saved_r10_response.py` 对已保存三场和q8/q10作后验分解；依赖V20合同及锁定输入 | U1同worker 3/3定向节点通过并完成两阶180单元/612通道诊断；J方向门通过，但J绝对精度与G可分辨改善门未过 |
+| compact evidence/docs | response_v20、U1机器结果、180单元与612通道表、标量/资源/trace轻量摘录 | 主控用stdlib对已保存CSV/JSON复核；未二次读取NPZ。先核U1原件和失败账，仍需外审 |
+| research-only | 新保存场checker、有限测试、固定U1启动与证据 | 仅支持本次已保存数据分析；不生成DWR、自动selector、transition10或未来细化计划 |
+| do-not-merge | ignored原始NPZ/完整资源流、未资格化研究入口提升、整分支 | 无merge approval；不得接受R10、创建新h计划或推断生产资格 |
 
-本轮支持4/4，whole合计71.744198859秒；最大采样树RSS443715584 B，CPU1、六线程变量1、task swap0，终态与清理已核。新增PDE、场恢复、新采样和holdout/control数组消费均为0。正式账仍9/10、末槽封存；空间/选择PARTIAL，精度NOT_PASSED，同精度全过程成本NOT_ESTABLISHED，迭代NOT_RUN/NOT_QUALIFIED。没有合并批准。
+U1新增支持1次、whole 120.410646534秒、进程树RSS峰784568320 B、CPU1、task swap0，三身份退出0且清理已核。连同此前原四槽，V20共5次实际调用、whole合计192.154845393秒；原T1/T2/D1/D2失败原样保留，未拼接成一批全通过测试。新增PDE、场恢复、新采样和holdout/control消费均为0。正式账仍9/10、末槽封存；空间/选择PARTIAL，精度NOT_PASSED，同精度全过程成本NOT_ESTABLISHED，迭代NOT_RUN/NOT_QUALIFIED。没有合并批准。
 
-建议审阅顺序是输入与权限→普通错误及主控遗漏→已修fixture/检查器→后续验证任务，不是获准合入顺序。D2实际运行HEAD为d71f92a604f60990d585e62c9e8f3513629dbae5；交付后改过的fixture字节没有动态证据，见[记录](records/v20_saved_r10_response_results_v1.json)与[回应](../response_v20.md)。
+J 从4.065061945224269降至2.837172688008316，改善大于冻结εJ；但最大R00_s差2.837172688008316e-6仍高于1e-6，J仍大于1。G范数方向下降，但q8/q10的改善8.4129e-6小于冻结εG 9.0882e-6。位置建议global67/root127只是保存场差位置，不是DWR或新网格计划。审阅入口为[Response V20](../response_v20.md)、[U1机器结果](records/v20_user_recovery_results_v1.json)及[U1来源索引](records/v20_user_recovery_sources/U1/source_artifact_index.json)。
+
+### V20 原四槽历史失败账（保留原终态）
+
+T1为6通过/1失败/5未运行，T2只补跑6项并通过；D1在q8的J复现处因使用逐行重加和而非旧保存功率失败；D2的ULP fixture在并列witness排序处失败（1失败/2未运行）。四槽whole合计71.744198859秒；这些错误和主控预审漏查均在[原V20结果记录](records/v20_saved_r10_response_results_v1.json)保留。U1是后续独立授权与独立费用，不追认旧失败为通过。
 
 ## V19 历史依赖组：保存数组研究诊断完成，无合并批准
 

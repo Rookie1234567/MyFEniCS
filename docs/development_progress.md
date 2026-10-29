@@ -1,16 +1,16 @@
-# Task43 当前收口（2026-10-29）：V20保存场诊断未完成
+# Task43 当前收口（2026-10-29）：V20 U1保存场诊断完成，R10未获接受
 
-## V20 当前收口：有界支持运行已用尽，科学诊断未完成
+## V20 当前收口：用户追加授权的U1完成原场响应诊断
 
-T1因拒绝信息的正则断言错误失败（6通过/1失败/5未运行），T2只补6项并通过；D1在q8的J复现检查因保存功率与重新加和口径不同失败；D2同worker的新增ULP fixture因并列最大指标名称的JSON排序差异失败（1失败/2未运行）。D1无已完成阶次，D2真实两阶未运行。fixture已静态修补但未重跑；主控漏查顺序依赖的责任保留，不能拼成最终测试全通过。
+原T1/T2/D1/D2四槽失败全部保留后，用户明确要求“不是数值gate那就继续”，据此另记一次U1支持运行。U1同一受监管worker内3/3定向节点通过，并完成q8/q10的180单元、612通道后验分解；没有新PDE、场恢复、积分点采样或holdout/control消费。
 
-主控在每次失败后先亲读最终trace、资源和退出，再作局部恢复决策；全部四槽原始失败与运行HEAD均保留。D1确认是汇总来源错误，未放宽任何门。D2前虽拦截了一处来源标签错字，却漏查了fixture经排序JSON重读后并列最大指标顺序改变；该监督缺陷造成唯一恢复槽失败。最终只静态修复fixture，不加新slot或用剩余秒数兑换次数。
+R10最差输出差J由4.065061945224269降到2.837172688008316，改善超过冻结εJ，但J仍大于1，R00_s差2.837172688008316e−6仍大于1e−6。全域场差G方向下降约8.4129e−6，但小于冻结εG=9.088158796603444e−6。28个既有升阶单元贡献约90.116%的净改善，余下152格也均有改善；然而它们仍承载约99.429%的剩余B10。最大剩余位置为global67/root127，份额1.851749%，只是已保存场上的位置建议，不是DWR或新网格计划。因此R10仍不接受，不宣称达到最终精度。
 
-本轮支持4/4，whole合计71.744198859秒；最大采样树RSS443715584 B，CPU1、六线程变量1、task swap0，终态与清理已核。新增PDE、场恢复、新采样和holdout/control数组消费均为0。正式账仍9/10、末槽封存；空间/选择PARTIAL，精度NOT_PASSED，同精度全过程成本NOT_ESTABLISHED，迭代NOT_RUN/NOT_QUALIFIED。没有合并批准。
+U1 whole 120.410646534秒，采样进程树RSS峰784568320 B，CPU1、task swap0，worker/watchdog/supervisor退出0且清理已核。原四槽71.744198859秒单独保留；五次实际调用累计192.154845393秒。正式账9/10、旧末槽封存；空间/选择PARTIAL、精度NOT_PASSED、同精度成本NOT_ESTABLISHED、迭代NOT_RUN/NOT_QUALIFIED。后续没有自动授权或合并批准。详见[Response V20](task43_hp_adaptivity/response_v20.md)、[U1机器结果](task43_hp_adaptivity/outcomes/records/v20_user_recovery_results_v1.json)和[U1证据目录](task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/U1/)。
 
-原16文件外hash核对通过；D1/D2后静态复核另测3.1411147443577647 / 2.3361078198067844秒，其余人工/静态未计时。旧V19未监控操作不重演；本轮原NPZ数值只在编号worker中消费，外部只读源码/JSON/CSV/整文件hash。完成终态复核不等于完成科学表级复核；后者没有完整表可读。
+### V20原四槽历史失败账
 
-[Response V20](task43_hp_adaptivity/response_v20.md) · [机器结果](task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_results_v1.json)。后续只需针对已修fixture和同一三场诊断指定新的支持次数/预算，不需新PDE、参考或模型。该说明是技术缺口，未授予新的运行权。
+T1为6通过/1失败/5未运行，T2只补6项并通过；D1在q8 J复现时因保存功率与行重加和口径不同失败；D2的ULP测试fixture在并列witness排序处失败（1失败/2未运行）。原四槽合计71.744198859秒，主控预审漏查及各原始失败均保留在[原V20机器记录](task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_results_v1.json)。U1为新的用户授权，不追认原槽通过。
 
 ## V19 历史收口：诊断已完成，监督偏差需外审
 

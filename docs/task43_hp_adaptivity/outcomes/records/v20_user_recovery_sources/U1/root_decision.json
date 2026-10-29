@@ -1,0 +1,336 @@
+{
+  "reviewer": "root",
+  "status": "COMPLETE_SAVED_ARRAY_DIAGNOSTIC_ONLY",
+  "run_head": "9f73dae93b2ed5ae75a0dffe949a15d887ce5f92",
+  "actual_stage": "U1",
+  "runtime_helper_enum": "D2",
+  "enum_explanation": "Immutable V19 runtime helper admits D2 only; explicit U1 binding and fresh root govern actual invocation. No reuse or refund of old D2 slot.",
+  "trace_all_lines_read": 159,
+  "trace_classification": {
+    "getter_CPU1": 5,
+    "setters": 0,
+    "signals": 0,
+    "exit_zero": 1,
+    "stack_frames": 153
+  },
+  "resource_rows_read": 167,
+  "supervisor_host_absent": {
+    "pid": 3684918,
+    "start_ticks": 315974858,
+    "checked_after_exit": true
+  },
+  "raw_table_review_scope": "root independently read all CSV rows with stdlib programs and reviewed derived component/group/modal/anchor calculations; no second NPZ consumption",
+  "checks": {
+    "q8": {
+      "whole_weight_nm3": 349999.9999999999,
+      "max_cell_volume_difference_nm3": 2.546585164964199e-11,
+      "boundary_hits": {
+        "internal": 0,
+        "upper": 0
+      },
+      "points": 516096,
+      "partition_boxes": 1008,
+      "members_read": [
+        "Y6_1_E",
+        "Y6_1_curl_E",
+        "points_nm",
+        "round10_p_up_E",
+        "round10_p_up_curl_E",
+        "round9_p_up_E",
+        "round9_p_up_curl_E",
+        "weights_nm3"
+      ],
+      "control_members_catalog_only": [
+        "Y3_2_E",
+        "Y3_2_curl_E",
+        "Y3_E",
+        "Y3_curl_E",
+        "Y5_1_E",
+        "Y5_1_curl_E"
+      ],
+      "products_hash_checked": true,
+      "all_input_start_end_hashes_match": true
+    },
+    "q10": {
+      "whole_weight_nm3": 349999.9999999998,
+      "max_cell_volume_difference_nm3": 3.1377567211166024e-11,
+      "boundary_hits": {
+        "internal": 0,
+        "upper": 0
+      },
+      "points": 1008000,
+      "partition_boxes": 1008,
+      "members_read": [
+        "Y6_1_E",
+        "Y6_1_curl_E",
+        "points_nm",
+        "round10_p_up_E",
+        "round10_p_up_curl_E",
+        "round9_p_up_E",
+        "round9_p_up_curl_E",
+        "weights_nm3"
+      ],
+      "control_members_catalog_only": [
+        "Y3_2_E",
+        "Y3_2_curl_E",
+        "Y3_E",
+        "Y3_curl_E",
+        "Y5_1_E",
+        "Y5_1_curl_E"
+      ],
+      "products_hash_checked": true,
+      "all_input_start_end_hashes_match": true
+    }
+  },
+  "additional_table_checks": {
+    "q8": {
+      "blocks_independent": {
+        "requested_root4_global8": {
+          "B": 1.3895613869617531e-05,
+          "D": 1.3709734388024004e-05,
+          "X": 2.7463489145137332e-05,
+          "I": 1.375375475711333e-05,
+          "B10": 1.418591125042028e-07
+        },
+        "H8_required_closure_root34": {
+          "B": 2.3709606075113963e-06,
+          "D": 1.2240334531898857e-06,
+          "X": 2.5000771768614255e-06,
+          "I": 1.2760437236715398e-06,
+          "B10": 1.0949168838398576e-06
+        },
+        "rest_of_domain": {
+          "B": 0.001101317446957967,
+          "D": 0.0004012657298407377,
+          "X": 0.0008073061328879075,
+          "I": 0.0004060404030471698,
+          "B10": 0.0006952770439107974
+        }
+      },
+      "old_top10": [
+        {
+          "R10_B10": 1.418591125042028e-07,
+          "R10_B10_fraction": 0.00020367020502639176,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 4,
+          "global_cell_id": 8,
+          "historical_B9_rank": 1
+        },
+        {
+          "R10_B10": 1.4103469955214678e-07,
+          "R10_B10_fraction": 0.000202486577467981,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 25,
+          "global_cell_id": 115,
+          "historical_B9_rank": 2
+        },
+        {
+          "R10_B10": 1.4189178351827063e-07,
+          "R10_B10_fraction": 0.0002037171115099877,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 7,
+          "global_cell_id": 17,
+          "historical_B9_rank": 3
+        },
+        {
+          "R10_B10": 1.7097388191001546e-07,
+          "R10_B10_fraction": 0.0002454709110191231,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 13,
+          "global_cell_id": 44,
+          "historical_B9_rank": 4
+        },
+        {
+          "R10_B10": 1.4679772136979538e-07,
+          "R10_B10_fraction": 0.0002107606729028956,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 22,
+          "global_cell_id": 97,
+          "historical_B9_rank": 5
+        },
+        {
+          "R10_B10": 1.7488520522288086e-07,
+          "R10_B10_fraction": 0.00025108648274372556,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 16,
+          "global_cell_id": 61,
+          "historical_B9_rank": 6
+        },
+        {
+          "R10_B10": 1.4020758268396208e-07,
+          "R10_B10_fraction": 0.00020129906783853107,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 1,
+          "global_cell_id": 3,
+          "historical_B9_rank": 7
+        },
+        {
+          "R10_B10": 1.6952137035505214e-07,
+          "R10_B10_fraction": 0.00024338550867182012,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 10,
+          "global_cell_id": 29,
+          "historical_B9_rank": 8
+        },
+        {
+          "R10_B10": 1.3953320605366315e-07,
+          "R10_B10_fraction": 0.00020033085068185092,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 28,
+          "global_cell_id": 132,
+          "historical_B9_rank": 9
+        },
+        {
+          "R10_B10": 1.7520099037515597e-07,
+          "R10_B10_fraction": 0.0002515398623368501,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 19,
+          "global_cell_id": 79,
+          "historical_B9_rank": 10
+        }
+      ],
+      "old_top10_remainder_share": 0.002213747250199157,
+      "half_prefix_count": 40,
+      "all_rows_positive_G_I": true
+    },
+    "q10": {
+      "blocks_independent": {
+        "requested_root4_global8": {
+          "B": 1.3895613869619772e-05,
+          "D": 1.3709734388024445e-05,
+          "X": 2.7463489145140145e-05,
+          "I": 1.3753754757115702e-05,
+          "B10": 1.418591125040553e-07
+        },
+        "H8_required_closure_root34": {
+          "B": 2.3709606075119045e-06,
+          "D": 1.2240334531898503e-06,
+          "X": 2.5000771768624055e-06,
+          "I": 1.2760437236725552e-06,
+          "B10": 1.0949168838393479e-06
+        },
+        "rest_of_domain": {
+          "B": 0.0011013174469576873,
+          "D": 0.00040126572984073715,
+          "X": 0.0008073061328878373,
+          "I": 0.00040604040304710007,
+          "B10": 0.0006952770439105874
+        }
+      },
+      "old_top10": [
+        {
+          "R10_B10": 1.418591125040553e-07,
+          "R10_B10_fraction": 0.00020367020502624152,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 4,
+          "global_cell_id": 8,
+          "historical_B9_rank": 1
+        },
+        {
+          "R10_B10": 1.4103469955221364e-07,
+          "R10_B10_fraction": 0.0002024865774681382,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 25,
+          "global_cell_id": 115,
+          "historical_B9_rank": 2
+        },
+        {
+          "R10_B10": 1.4189178351814513e-07,
+          "R10_B10_fraction": 0.0002037171115098691,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 7,
+          "global_cell_id": 17,
+          "historical_B9_rank": 3
+        },
+        {
+          "R10_B10": 1.7097388190950538e-07,
+          "R10_B10_fraction": 0.000245470911018465,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 13,
+          "global_cell_id": 44,
+          "historical_B9_rank": 4
+        },
+        {
+          "R10_B10": 1.4679772136985922e-07,
+          "R10_B10_fraction": 0.00021076067290305098,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 22,
+          "global_cell_id": 97,
+          "historical_B9_rank": 5
+        },
+        {
+          "R10_B10": 1.7488520522287234e-07,
+          "R10_B10_fraction": 0.00025108648274378925,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 16,
+          "global_cell_id": 61,
+          "historical_B9_rank": 6
+        },
+        {
+          "R10_B10": 1.4020758268390645e-07,
+          "R10_B10_fraction": 0.00020129906783851204,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 1,
+          "global_cell_id": 3,
+          "historical_B9_rank": 7
+        },
+        {
+          "R10_B10": 1.6952137035519066e-07,
+          "R10_B10_fraction": 0.00024338550867209258,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 10,
+          "global_cell_id": 29,
+          "historical_B9_rank": 8
+        },
+        {
+          "R10_B10": 1.3953320605302907e-07,
+          "R10_B10_fraction": 0.0002003308506810011,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 28,
+          "global_cell_id": 132,
+          "historical_B9_rank": 9
+        },
+        {
+          "R10_B10": 1.7520099037563444e-07,
+          "R10_B10_fraction": 0.0002515398623376131,
+          "R10_p": 6,
+          "R9_p": 5,
+          "forest_root": 19,
+          "global_cell_id": 79,
+          "historical_B9_rank": 10
+        }
+      ],
+      "old_top10_remainder_share": 0.002213747250198773,
+      "half_prefix_count": 40,
+      "all_rows_positive_G_I": true
+    }
+  },
+  "all_16_J_components_each_case_each_order": "MATCH_FROZEN_ANCHORS",
+  "known_limits": [
+    "Raw arrays consumed by single monitored U1 worker only; root independently audited tables, not another field computation",
+    "Saved physical powers/Av and scattered-reference norms reused; no physical power reassembly or new background",
+    "Trace covers observed worker lifetime after strace attach; no production ABI qualification",
+    "No cache path monitored; empty cache stamp does not prove shared-cache stability",
+    "J remains above 1; delta G below epsilon G; no scientific precision or merge qualification"
+  ],
+  "root_review_wall": "NOT_MEASURED"
+}

@@ -1,0 +1,148 @@
+{
+  "schema": "task43.v20.user_recovery_run_manifest.v1",
+  "stage": "U1",
+  "actual_head": "9f73dae93b2ed5ae75a0dffe949a15d887ce5f92",
+  "authorization_review": "0c6158cb96b3ba320d5bd3282a3c18f64c5a08c9",
+  "user_instruction": "\u4e0d\u662f\u6570\u503cgate\u90a3\u5c31\u7ee7\u7eed",
+  "prior_delivery_commit": "d34eba7002d5abfafb396c8684ed501c8aa2bf6e",
+  "sources": {
+    "benchmarks/__init__.py": {
+      "sha256": "5678b6ce7ef13b9f82c7be455436f0e87d548acf436e13c7db995a2610142445",
+      "bytes": 67
+    },
+    "benchmarks/task43_hp_adaptivity/__init__.py": {
+      "sha256": "5e8806eae425d1f622bf4a4a18b2b300051ee4da84a6a1ea64abcb40bdbd1aab",
+      "bytes": 55
+    },
+    "src/__init__.py": {
+      "sha256": "03b698bbb1fa349e86a99e29ccc436cd73f4fa9dc57d79e39bcdd6dddac4c021",
+      "bytes": 68
+    },
+    "src/test/__init__.py": {
+      "sha256": "15d7dd22a4b3d1579eeb1ffe4d7109b2918f671e96734ef9857c069869910c85",
+      "bytes": 63
+    },
+    "src/io/__init__.py": {
+      "sha256": "f527e4c988829c8724a19a084d65547479b0a019a8a973940679dc62b22bf5f8",
+      "bytes": 835
+    },
+    "src/runners/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "benchmarks/task43_hp_adaptivity/analyze_saved_hp_response.py": {
+      "sha256": "f1191f223e087a4d8d589e7a11a056e06e2c831a37ae2c5aa862c2da55868ca8",
+      "bytes": 93470
+    },
+    "benchmarks/task43_hp_adaptivity/analyze_saved_r10_response.py": {
+      "sha256": "011659adbeda3acf882d61c53056bec3e056f5d161466c110a2b61040322e471",
+      "bytes": 98184
+    },
+    "src/test/test_task43_saved_r10_response.py": {
+      "sha256": "8e2329f414e46f45fb1038be40837d2b17fd23021eb123b1e374ff7b9cd56b84",
+      "bytes": 29544
+    },
+    "docs/task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_contract.json": {
+      "sha256": "d087e39b058d718f01da7dbd3df0b7c44b2f458c67b2535a8f10dc6c21f43efd",
+      "bytes": 108744
+    },
+    "docs/task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_sources/input_lock.json": {
+      "sha256": "c7682d78a35e43318140f661bb440c858e27b286982a4f9cd236293bd155a8b0",
+      "bytes": 104227
+    },
+    "scripts/activate_task40_phi90_pord64.sh": {
+      "sha256": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+      "bytes": 3648
+    },
+    "benchmarks/subreaper_watchdog.py": {
+      "sha256": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+      "bytes": 46422
+    },
+    "benchmarks/task034_wsl_resources.py": {
+      "sha256": "bf6d9a7d337ef4d77721d5e260f986937db2f58c8d06ef4dc9344d8798563653",
+      "bytes": 10638
+    },
+    "benchmarks/task038_full3d_jit_staging.py": {
+      "sha256": "4203bada08b59dfbea0f97c092307366b984484218e4bc68e113b49d2bc44295",
+      "bytes": 16263
+    },
+    "src/runners/workflow_timebase.py": {
+      "sha256": "1327f64adce91535c9e35a42b213a7cfba7bffe0896e5631a041747f9a876eac",
+      "bytes": 3675
+    },
+    "src/io/native_capacity_profile.py": {
+      "sha256": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+      "bytes": 155147
+    },
+    "docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_binding.json": {
+      "sha256": "4eb69768f205b5f1390bf42a111942fa9c753089fd07545d6057ca655297e4b1",
+      "bytes": 1665
+    }
+  },
+  "launch_files": {
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/launch/snapshot.py": {
+      "sha256": "5898c52e97ef925f50012c26656f88a00073c2f6dec7192f8b39a0954e034173",
+      "bytes": 4494
+    },
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/launch/stage_launch.sh": {
+      "sha256": "53bb2feb46eafb254deee2cccaacc9efda37a12fff84a33fd928c90eff7b415a",
+      "bytes": 5610
+    },
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/launch/user_recovery_attempt1.sh": {
+      "sha256": "3c36d97c58c53570bafe7b8465ea130fe1c675006fe961505fbac313a306b9ef",
+      "bytes": 5057
+    },
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/launch/user_recovery_snapshot.py": {
+      "sha256": "5cd6787448d937f6ef3e0349ac037048a20ce661619a0ceff62371a90880fdf6",
+      "bytes": 3886
+    }
+  },
+  "contract": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_contract.json",
+    "sha256": "d087e39b058d718f01da7dbd3df0b7c44b2f458c67b2535a8f10dc6c21f43efd"
+  },
+  "user_recovery_binding": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_binding.json",
+    "sha256": "4eb69768f205b5f1390bf42a111942fa9c753089fd07545d6057ca655297e4b1"
+  },
+  "worker_argv": [
+    "python",
+    "-u",
+    "-m",
+    "benchmarks.task43_hp_adaptivity.analyze_saved_r10_response",
+    "--manifest",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_contract.json",
+    "--output-root",
+    "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/user_recovery_attempt1/data",
+    "--user-recovery-binding",
+    "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_binding.json"
+  ],
+  "worker_wrapper": "set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; exec taskset -c 1 strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o \"$TASK43_V20_RUN_ROOT/strace/sched\" \"$@\"",
+  "environment": {
+    "_MYFENICS_NATIVE_QUALIFIED_ACTIVATION": "1",
+    "VIRTUAL_ENV": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv",
+    "PATH": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin:/usr/local/bin:/usr/bin:/bin",
+    "PYTHONPATH": "/home/fenics/Projects/NN-Lab-V2:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx-python:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/build-tools",
+    "LD_LIBRARY_PATH": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/petsc/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/pord64-overlay/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx_mpc-int64/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/dolfinx/lib:/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/tmp/task39extra_v5_abi_restore_20260923/base/prefix/scotch-int64/lib",
+    "PHYSICAL_NATIVE_CAPACITY": "task43_hp_adaptivity_resource_v1",
+    "PHYSICAL_NATIVE_NODE_CAP_BYTES": "8589934592",
+    "TASK43_V20_RUN_ROOT": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/user_recovery_attempt1",
+    "TASK43_V20_STAGE": "U1",
+    "TASK43_V19_RUN_ROOT": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/user_recovery_attempt1",
+    "TASK43_V19_STAGE": "D2",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "BLIS_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1"
+  },
+  "worker_overrides": {
+    "HWLOC_COMPONENTS": "-x86",
+    "OMPI_MCA_pml": "ob1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"
+  },
+  "runtime_compatibility_alias": "V20 stage U1; V19 stage D2 only for unchanged runtime helper enumeration, bound to U1 root. Old D2 remains failed and consumed.",
+  "mpi": "NOT_USED_NOT_ABI_QUALIFICATION",
+  "numpy_version": "RECORDED_IN_ACTUAL_WORKER_RUNTIME"
+}

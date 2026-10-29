@@ -1,0 +1,235 @@
+{
+  "checker_sha256_end": {
+    "checker": "011659adbeda3acf882d61c53056bec3e056f5d161466c110a2b61040322e471",
+    "v19_checker": "f1191f223e087a4d8d589e7a11a056e06e2c831a37ae2c5aa862c2da55868ca8"
+  },
+  "checker_sha256_start": {
+    "checker": "011659adbeda3acf882d61c53056bec3e056f5d161466c110a2b61040322e471",
+    "v19_checker": "f1191f223e087a4d8d589e7a11a056e06e2c831a37ae2c5aa862c2da55868ca8"
+  },
+  "orders": {
+    "q10": {
+      "artifacts": {
+        "cells_csv": {
+          "path": "q10/cells.csv",
+          "sha256": "e38cb92236ce054a2d59514ea45103dae8b379de834c7d643491b745e047d9ec"
+        },
+        "diagnostic": {
+          "path": "q10/diagnostic.json",
+          "sha256": "3fe3d3ad602b2456fae55c1849f9918a6e3a4603f91c3fc8091ca2d863dda03c"
+        },
+        "modes_612_csv": {
+          "path": "q10/modes_612.csv",
+          "sha256": "825f17ca6a382e93935dc4f3a07b062148b470e702fb66da8b22dac9d7c94073"
+        }
+      },
+      "sample_count": 1008000,
+      "status": "COMPLETE"
+    },
+    "q8": {
+      "artifacts": {
+        "cells_csv": {
+          "path": "q8/cells.csv",
+          "sha256": "32e6131db8928678252f01f4c1ffa882a65712a37ffa7159bed1baef91868871"
+        },
+        "diagnostic": {
+          "path": "q8/diagnostic.json",
+          "sha256": "27eab9b092a17b32d1e5ce59697e659dc16010962b7a111a9a8d46923f24f3c3"
+        },
+        "modes_612_csv": {
+          "path": "q8/modes_612.csv",
+          "sha256": "825f17ca6a382e93935dc4f3a07b062148b470e702fb66da8b22dac9d7c94073"
+        }
+      },
+      "sample_count": 516096,
+      "status": "COMPLETE"
+    }
+  },
+  "schema": "task43.v20.saved_r10_terminal.v1",
+  "science_summary": {
+    "delta_J_G_per_historical_delta_FE": {
+      "G_R10_by_saved_q": {
+        "q10": 3.1543933532839355e-05,
+        "q8": 3.1543933532844126e-05
+      },
+      "G_R9_by_saved_q": {
+        "q10": 3.995683423458049e-05,
+        "q8": 3.995683423458543e-05
+      },
+      "J_R10": 2.837172688008316,
+      "J_R9": 4.065061945224269,
+      "J_direction_status_at_frozen_scale": "IMPROVEMENT_RESOLVED_AT_FROZEN_SCALE",
+      "J_improvement_exceeds_epsilon": true,
+      "J_per_historical_delta_FE_interval_from_epsilon": [
+        0.0001321716012117935,
+        0.00016271054509367066
+      ],
+      "delta_G_improvement_interval_from_saved_q": [
+        8.412900701741137e-06,
+        8.412900701741307e-06
+      ],
+      "delta_G_resolution_by_saved_q": {
+        "q10": {
+          "delta_G_improvement_R9_minus_R10": 8.412900701741137e-06,
+          "direction_status": "WITHIN_FROZEN_UNRESOLVED_SCALE",
+          "epsilon_G_distinguishable_scale": 9.088158796603444e-06,
+          "improvement_exceeds_epsilon": false,
+          "per_historical_delta_FE": 1.010194608758542e-09,
+          "per_historical_delta_FE_interval_from_epsilon": [
+            -8.108286441670348e-11,
+            2.1014720819337873e-09
+          ]
+        },
+        "q8": {
+          "delta_G_improvement_R9_minus_R10": 8.412900701741307e-06,
+          "direction_status": "WITHIN_FROZEN_UNRESOLVED_SCALE",
+          "epsilon_G_distinguishable_scale": 9.088158796603444e-06,
+          "improvement_exceeds_epsilon": false,
+          "per_historical_delta_FE": 1.0101946087585622e-09,
+          "per_historical_delta_FE_interval_from_epsilon": [
+            -8.108286441668314e-11,
+            2.1014720819338076e-09
+          ]
+        }
+      },
+      "delta_J_improvement_R9_minus_R10": 1.2278892572159528,
+      "delta_J_improvement_per_historical_delta_FE": 0.00014744107315273208,
+      "epsilon_G_distinguishable_scale": 9.088158796603444e-06,
+      "epsilon_J_distinguishable_scale": 0.12716416232413652,
+      "historical_delta_FE": 8328,
+      "interpretation": "epsilon_J and epsilon_G are frozen distinguishable scales for the R9-to-R10 improvement; they are not absolute-error acceptance limits or new selection authority"
+    },
+    "location_proposal": {
+      "conditional_remove_only_this_box_B10": {
+        "conditional_G_relative_gain_over_frozen_reference_or_floor": 2.934219530376897e-07,
+        "conditional_absolute_G_norm_gain": 0.00024549441901419375,
+        "q10_total_B10_after_if_box_alone_removed": 0.0006836161317995225,
+        "q10_total_B10_before": 0.0006965138199069309,
+        "selected_box_B10": 1.2897688107408396e-05,
+        "warning": "single-box removal condition only; not a prediction of globally coupled h refinement"
+      },
+      "proposed_cell": {
+        "forest_root": 127,
+        "geometry_relation": {
+          "cell_axis_bounds_nm": {
+            "x": [
+              16.5,
+              33.5
+            ],
+            "y": [
+              10.0,
+              15.0
+            ],
+            "z": [
+              90.0,
+              120.0
+            ]
+          },
+          "grating_bounds_nm": [
+            16.5,
+            15.0,
+            0.0,
+            33.5,
+            35.0,
+            120.0
+          ],
+          "grating_relation_by_axis": {
+            "x": "OVERLAPS",
+            "y": "TOUCHES",
+            "z": "OVERLAPS"
+          },
+          "interface_relation": "ABOVE_INTERFACE",
+          "interface_z_nm": 0.0,
+          "overlaps_grating_volume": false,
+          "source": "R10 plan base_config grating_bounds/interface_z and frozen cell-map z endpoints",
+          "touches_any_grating_face": true,
+          "touches_interface": false,
+          "touches_lower_z_port": false,
+          "touches_upper_z_port": false,
+          "within_z_port_slab": true,
+          "z_port_surfaces_nm": [
+            -10.0,
+            130.0
+          ]
+        },
+        "global_cell_id": 67,
+        "lower_nm": [
+          16.5,
+          10.0,
+          90.0
+        ],
+        "q10_B10_fraction": 0.018517490592120343,
+        "q8_B10_fraction": 0.018517490592117002,
+        "r10_p": 6,
+        "r9_p": 6,
+        "same_as_original_requested_global8": false,
+        "upper_nm": [
+          33.5,
+          15.0,
+          120.0
+        ]
+      },
+      "q8_q10_location_stability": {
+        "L1_limit": 1e-06,
+        "location_stable": true,
+        "max_cell_q10": 67,
+        "max_cell_q8": 67,
+        "normalized_cell_B10_fraction_L1": 1.2656911380515973e-12,
+        "same_max_cell": true
+      },
+      "rule": "q10 B10 descending, exact ties by smaller global_cell_id; q8/q10 normalized B10 L1 <= 1e-6 and same maximum cell",
+      "status": "STABLE_REMAINDER_LOCATION_PROPOSAL"
+    }
+  },
+  "source_sha256_end": {
+    "input_lock": "c7682d78a35e43318140f661bb440c858e27b286982a4f9cd236293bd155a8b0",
+    "manifest": "d087e39b058d718f01da7dbd3df0b7c44b2f458c67b2535a8f10dc6c21f43efd",
+    "quadrature:q10": "895b65ffbf63176ac20008e6488c1c1318141f877eb5814496fcc945c049514d",
+    "quadrature:q8": "ce3707052419ada5a8e55574a826772bcb1e37cf1f764fc115eb8bf8a52306e5",
+    "source:post_selection_metadata": "347195b3e29e23a2907e16264385346e208a2a7d2d48fb8b2d8c0b00ede3b6aa",
+    "source:r10_absorption": "77ab9220fb19596506e532b205de205ed18ad5ba937e927ca68f8d31a5bb5ca8",
+    "source:r10_comparison": "3db50c67e871520398eee3c05219d4ef3090c360f5f2b4495e5fe31f3c70b3e0",
+    "source:r10_modal": "f7048a9ecad65db39faa688d9d4f0041099f2719e64e5ea2898e3dc793003450",
+    "source:r10_plan": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+    "source:r10_rejection": "168a1b02f92a08acf0b590340d8430edcbb511ea9a3b7c0adb69795a50077c51",
+    "source:r9_absorption": "4f73d4db2da94f52ff5206942e8953b98d7427691f827da7ca047f171851bdd8",
+    "source:r9_comparison": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30",
+    "source:r9_modal": "443bd3683027534b349903fc11c97ef21a69fb3982d1bc70fd47781fed28be0e",
+    "source:r9_plan": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+    "source:v19_q10_cells": "adc602880f83bf9614fc9e645f2f5c80432f048e7a403d408b015b86cd242bb7",
+    "source:v19_q8_cells": "52f2be313a3b57c73f675ce4cad5d55ada79a26c60f50568a565eb0871b5e56b",
+    "source:y6_modal": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463",
+    "source:y6_summary": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc",
+    "user_recovery_binding": "4eb69768f205b5f1390bf42a111942fa9c753089fd07545d6057ca655297e4b1",
+    "user_recovery_launch:benchmarks/artifacts/task43/v20_saved_r10_response/launch/user_recovery_attempt1.sh": "3c36d97c58c53570bafe7b8465ea130fe1c675006fe961505fbac313a306b9ef",
+    "user_recovery_launch:benchmarks/artifacts/task43/v20_saved_r10_response/launch/user_recovery_snapshot.py": "5cd6787448d937f6ef3e0349ac037048a20ce661619a0ceff62371a90880fdf6",
+    "user_recovery_launch_copy:docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/launch/user_recovery_attempt1.sh.txt": "3c36d97c58c53570bafe7b8465ea130fe1c675006fe961505fbac313a306b9ef",
+    "user_recovery_launch_copy:docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/launch/user_recovery_snapshot.py.txt": "5cd6787448d937f6ef3e0349ac037048a20ce661619a0ceff62371a90880fdf6"
+  },
+  "source_sha256_start": {
+    "input_lock": "c7682d78a35e43318140f661bb440c858e27b286982a4f9cd236293bd155a8b0",
+    "manifest": "d087e39b058d718f01da7dbd3df0b7c44b2f458c67b2535a8f10dc6c21f43efd",
+    "quadrature:q10": "895b65ffbf63176ac20008e6488c1c1318141f877eb5814496fcc945c049514d",
+    "quadrature:q8": "ce3707052419ada5a8e55574a826772bcb1e37cf1f764fc115eb8bf8a52306e5",
+    "source:post_selection_metadata": "347195b3e29e23a2907e16264385346e208a2a7d2d48fb8b2d8c0b00ede3b6aa",
+    "source:r10_absorption": "77ab9220fb19596506e532b205de205ed18ad5ba937e927ca68f8d31a5bb5ca8",
+    "source:r10_comparison": "3db50c67e871520398eee3c05219d4ef3090c360f5f2b4495e5fe31f3c70b3e0",
+    "source:r10_modal": "f7048a9ecad65db39faa688d9d4f0041099f2719e64e5ea2898e3dc793003450",
+    "source:r10_plan": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+    "source:r10_rejection": "168a1b02f92a08acf0b590340d8430edcbb511ea9a3b7c0adb69795a50077c51",
+    "source:r9_absorption": "4f73d4db2da94f52ff5206942e8953b98d7427691f827da7ca047f171851bdd8",
+    "source:r9_comparison": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30",
+    "source:r9_modal": "443bd3683027534b349903fc11c97ef21a69fb3982d1bc70fd47781fed28be0e",
+    "source:r9_plan": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+    "source:v19_q10_cells": "adc602880f83bf9614fc9e645f2f5c80432f048e7a403d408b015b86cd242bb7",
+    "source:v19_q8_cells": "52f2be313a3b57c73f675ce4cad5d55ada79a26c60f50568a565eb0871b5e56b",
+    "source:y6_modal": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463",
+    "source:y6_summary": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc",
+    "user_recovery_binding": "4eb69768f205b5f1390bf42a111942fa9c753089fd07545d6057ca655297e4b1",
+    "user_recovery_launch:benchmarks/artifacts/task43/v20_saved_r10_response/launch/user_recovery_attempt1.sh": "3c36d97c58c53570bafe7b8465ea130fe1c675006fe961505fbac313a306b9ef",
+    "user_recovery_launch:benchmarks/artifacts/task43/v20_saved_r10_response/launch/user_recovery_snapshot.py": "5cd6787448d937f6ef3e0349ac037048a20ce661619a0ceff62371a90880fdf6",
+    "user_recovery_launch_copy:docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/launch/user_recovery_attempt1.sh.txt": "3c36d97c58c53570bafe7b8465ea130fe1c675006fe961505fbac313a306b9ef",
+    "user_recovery_launch_copy:docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/launch/user_recovery_snapshot.py.txt": "5cd6787448d937f6ef3e0349ac037048a20ce661619a0ceff62371a90880fdf6"
+  },
+  "status": "COMPLETE"
+}

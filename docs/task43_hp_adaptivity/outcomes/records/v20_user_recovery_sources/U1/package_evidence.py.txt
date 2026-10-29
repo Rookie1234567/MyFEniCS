@@ -1,0 +1,54 @@
+"""Package already completed U1; stdlib CSV/JSON/hash only, never reads NPZ."""
+import csv,hashlib,json,math,shutil,time
+from pathlib import Path
+repo=Path('/home/fenics/Projects/NN-Lab-V2'); records=repo/'docs/task43_hp_adaptivity/outcomes/records'; root=repo/'benchmarks/artifacts/task43/v20_saved_r10_response/support/user_recovery_attempt1'; dest=records/'v20_user_recovery_sources/U1'
+def load(p):return json.loads(p.read_text())
+def sha(p):
+ with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
+def write(p,x):p.write_text(json.dumps(x,indent=2,ensure_ascii=False)+'\n')
+assert not dest.exists();dest.mkdir()
+term=load(root/'data/terminal.json');run=load(root/'run_manifest.json');summary=load(root/'watchdog/summary.json');outer=load(root/'launcher_terminal.json');close=load(root/'root_closeout.json');table=load(root/'root_table_audit.json');scalar=load(root/'root_scalar_audit.json')
+assert term['status']=='COMPLETE' and not close['issues'] and not close['vanished_samples_requiring_root_assessment']
+assert term['source_sha256_start']==term['source_sha256_end'] and term['checker_sha256_start']==term['checker_sha256_end']
+assert run['actual_head']=='9f73dae93b2ed5ae75a0dffe949a15d887ce5f92'
+assert not Path('/proc/3684918/stat').exists()
+checks={};extra={}
+for q in ['q8','q10']:
+ d=load(root/'data'/q/'diagnostic.json');rows=list(csv.DictReader((root/'data'/q/'cells.csv').open()));by={int(x['global_cell_id']):x for x in rows};own=d['ownership'];errors=[]
+ for i,row in by.items():
+  lo=json.loads(row['lower_nm']);hi=json.loads(row['upper_nm']);v=math.prod(b-a for a,b in zip(lo,hi));err=abs(own['cell_weight_nm3'][i]-v);assert err<=max(1e-8,1e-12*v);errors.append(err)
+ assert own['global_cell_ids']==list(range(180)) and abs(own['total_weight_nm3']-350000)<=1e-8
+ allowed={'points_nm','weights_nm3','round9_p_up_E','round9_p_up_curl_E','round10_p_up_E','round10_p_up_curl_E','Y6_1_E','Y6_1_curl_E'}
+ assert set(d['array_identity']['read_members'])==allowed and len(d['array_identity']['unread_control_members'])==6
+ assert all(x['finite'] and x['read'] for x in d['array_identity']['read_members'].values())
+ for role,obj in term['orders'][q]['artifacts'].items():assert sha(root/'data'/obj['path'])==obj['sha256']
+ blocks={}
+ for name,ids in [('requested_root4_global8',[8]),('H8_required_closure_root34',[14]),('rest_of_domain',[i for i in by if i not in (8,14)])]:
+  b={k:math.fsum(float(by[i]['R10.G.'+k]) for i in ids) for k in ['B','D','X','I','B10']}
+  for k,v in b.items(): assert abs(v-d['block_summaries'][name]['R10']['G']['after_error_squared' if k=='B10' else k])<=max(1e-15,abs(v)*3e-11)
+  blocks[name]=b
+ old=[]
+ for e in d['historical_V19_top10_B9_positions_after_R10']:
+  row=by[e['global_cell_id']];assert float(row['R10.G.B10'])==e['R10_B10'];old.append(e)
+ checks[q]={'whole_weight_nm3':own['total_weight_nm3'],'max_cell_volume_difference_nm3':max(errors),'boundary_hits':{'internal':own['internal_boundary_coordinate_hits'],'upper':own['outer_upper_boundary_coordinate_hits']},'points':d['sample_count'],'partition_boxes':d['partition_box_count'],'members_read':sorted(allowed),'control_members_catalog_only':d['array_identity']['unread_control_members'],'products_hash_checked':True,'all_input_start_end_hashes_match':True}
+ extra[q]={'blocks_independent':blocks,'old_top10':old,'old_top10_remainder_share':math.fsum(x['R10_B10_fraction'] for x in old),'half_prefix_count':len(table['quadrature'][q]['minimal_half_prefix']),'all_rows_positive_G_I':all(float(x['R10.G.I'])>0 for x in rows)}
+copy_names=['run_manifest.json','runtime_start.json','runtime_end.json','launcher_terminal.json','supervisor_identity.json','tests.xml','source_status.txt','source_diff.patch','watchdog_exit_code.txt','watchdog/summary.json','watchdog/worker.log','watchdog/workflow_phase.json','strace/sched.3684991','data/terminal.json','data/run_manifest.json','root_closeout.json','root_table_audit.json','root_scalar_audit.json']
+for q in ['q8','q10']:
+ copy_names.extend('data/'+q+'/'+n for n in ['cells.csv','modes_612.csv','diagnostic.json'])
+entries=[]
+for n in copy_names:
+ src=root/n;out=dest/n;out.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(src,out);entries.append({'source':str(src.relative_to(repo)),'copy':str(out.relative_to(repo)),'bytes':src.stat().st_size,'sha256':sha(src)});assert sha(out)==sha(src)
+resources=[json.loads(x) for x in (root/'watchdog/resources.jsonl').read_text().splitlines()]
+# Keep every sample with per-PID identity/CPU, not just PASS or a single peak.
+keys=['elapsed_seconds','exit_code','rss_bytes','swap_bytes','members','live_or_unreaped_children','unreadable_pids','all_status_readable','vanished_pids','launch_cap_bytes','resource_policy_observations']
+with (dest/'resources_compact.jsonl').open('w') as f:
+ for x in resources:f.write(json.dumps({k:x[k] for k in keys},separators=(',',':'))+'\n')
+index=[]
+for p in sorted(root.rglob('*')):
+ if p.is_file() and 'fixtures' not in p.relative_to(root).parts:index.append({'path':str(p.relative_to(repo)),'bytes':p.stat().st_size,'sha256':sha(p)})
+write(dest/'source_artifact_index.json',{'root':str(root),'scope':'All non-fixture U1 files including immutable source/launch snapshots and full resources; excludes small synthetic fixture directory','files':index,'git_copies':entries})
+for n in ['root_closeout','table_audit','scalar_audit']:
+ src=Path('/tmp/task43_v20_'+n+'.py');shutil.copyfile(src,dest/(n+'.py.txt'))
+write(dest/'root_decision.json',{'reviewer':'root','status':'COMPLETE_SAVED_ARRAY_DIAGNOSTIC_ONLY','run_head':run['actual_head'],'actual_stage':'U1','runtime_helper_enum':'D2','enum_explanation':'Immutable V19 runtime helper admits D2 only; explicit U1 binding and fresh root govern actual invocation. No reuse or refund of old D2 slot.','trace_all_lines_read':159,'trace_classification':{'getter_CPU1':5,'setters':0,'signals':0,'exit_zero':1,'stack_frames':153},'resource_rows_read':167,'supervisor_host_absent':{'pid':3684918,'start_ticks':315974858,'checked_after_exit':True},'raw_table_review_scope':'root independently read all CSV rows with stdlib programs and reviewed derived component/group/modal/anchor calculations; no second NPZ consumption','checks':checks,'additional_table_checks':extra,'all_16_J_components_each_case_each_order':'MATCH_FROZEN_ANCHORS','known_limits':['Raw arrays consumed by single monitored U1 worker only; root independently audited tables, not another field computation','Saved physical powers/Av and scattered-reference norms reused; no physical power reassembly or new background','Trace covers observed worker lifetime after strace attach; no production ABI qualification','No cache path monitored; empty cache stamp does not prove shared-cache stability','J remains above 1; delta G below epsilon G; no scientific precision or merge qualification'],'root_review_wall':'NOT_MEASURED'})
+write(records/'v20_user_recovery_results_v1.json',{'schema':'task43.v20.user_recovery_results.v1','status':'COMPLETE_SAVED_ARRAY_DIAGNOSTIC_ONLY','authorization_review':'0c6158cb96b3ba320d5bd3282a3c18f64c5a08c9','user_continuation':'不是数值gate那就继续','previous_delivery':'d34eba7002d5abfafb396c8684ed501c8aa2bf6e','run_head':run['actual_head'],'original_contract_sha256':term['source_sha256_start']['manifest'],'user_binding_sha256':term['source_sha256_start']['user_recovery_binding'],'checker_sha256':term['checker_sha256_start']['checker'],'test_sha256':run['sources']['src/test/test_task43_saved_r10_response.py']['sha256'],'tests':{'actual_final_byte_nodes_passed':3,'historical_T1_T2_evidence':'per-function historical reuse; not final full-batch qualification','xml':str((dest/'tests.xml').relative_to(repo))},'counts':{'original_review_support_consumed':4,'original_review_support_limit':4,'additional_user_continuation_U1_consumed':1,'all_V20_support_calls':5,'new_formal_PDE':0,'new_FE_recovery':0,'new_field_sampling':0,'new_background_or_operator':0,'forbidden_control_arrays_read':0,'formal_historical_consumed':9,'formal_envelope':10,'historical_last_slot':'SEALED'},'cost':{'prior_four_whole_seconds':71.744198859,'U1_whole_seconds':outer['entry_elapsed_seconds'],'all_V20_measured_whole_seconds':71.744198859+outer['entry_elapsed_seconds'],'U1_watchdog_inner_seconds':summary['elapsed_seconds'],'no_double_count':'inner pytest/array computation/watchdog included in outer whole','U1_measured_static_hash_seconds':3.251819592900574,'not_measured':['manual/static reads and edits','root stdlib table/scalar audit','git/documentation and packaging'],'sampled_simultaneous_tree_rss_peak_bytes':summary['sampled_process_tree_rss_peak_bytes'],'sampled_task_swap_peak_bytes':0,'global_swap':summary['global_swap_activity'],'global_swap_attribution':'NOT_TASK_ATTRIBUTABLE'},'termination':{'supervisor_exit':0,'watchdog_exit':0,'worker_exit':0,'received_signal':None,'descendants_cleared':True,'root_closeout':str((dest/'root_decision.json').relative_to(repo))},'input_and_owner_checks':checks,'science_summary':term['science_summary'],'independent_table_summary':{q:{'G':table['quadrature'][q]['G'],'degree_groups':table['quadrature'][q]['degree_groups'],'all_exceedances':table['quadrature'][q]['all_power_exceedances'],'remaining_top1_5_10_20':table['quadrature'][q]['top1_5_10_20_share'],**extra[q]} for q in ['q8','q10']},'state':{'space':'PARTIAL','selection':'PARTIAL','accuracy':'NOT_PASSED','same_accuracy_whole_cost':'NOT_ESTABLISHED','iteration':'NOT_RUN / NOT_QUALIFIED','merge':'NOT_APPROVED','accepted9_R9':'UNCHANGED','R10_historical_rejection':'UNCHANGED','new_h_plan':'NOT_CREATED'},'prior_failures':'v20_saved_r10_response_results_v1.json retained byte-for-byte; T1,T2,D1,D2 roots untouched','evidence_index':str((dest/'source_artifact_index.json').relative_to(repo)),'root_programs_and_outputs':str(dest.relative_to(repo)),'github_rendered_view':'NOT_VERIFIED'})
+print(json.dumps({'copied_files':len(entries),'indexed_files':len(index),'bytes':sum(x['bytes'] for x in entries),'checks':checks,'extra':extra,'whole':71.744198859+outer['entry_elapsed_seconds']},ensure_ascii=False))

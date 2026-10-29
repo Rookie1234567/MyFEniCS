@@ -1,0 +1,63 @@
+"""Root independent STDlib review of produced tables only; never reads NPZ."""
+import csv,json,math,hashlib,sys
+from pathlib import Path
+root=Path(sys.argv[1]); repo=Path('/home/fenics/Projects/NN-Lab-V2')
+contract=json.loads((repo/'docs/task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_contract.json').read_text())
+def load(p):return json.loads(p.read_text())
+def sha(p):
+ with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
+def close(a,b,label,rtol=3e-11,atol=1e-15):
+ if abs(a-b)>max(atol,rtol*abs(b)):raise AssertionError((label,a,b))
+results={}; shares={}
+for q in ('q8','q10'):
+ path=root/'data'/q;cells=list(csv.DictReader((path/'cells.csv').open()));modes=list(csv.DictReader((path/'modes_612.csv').open()));d=load(path/'diagnostic.json')
+ assert len(cells)==180 and len(modes)==612
+ ids=[int(r['global_cell_id']) for r in cells];assert ids==list(range(180))
+ expected={tuple([s,m,n,p]) for s in ('top','bottom') for m in range(-4,5) for n in range(-8,9) for p in ('s','p')}
+ assert {(r['side'],int(r['m']),int(r['n']),r['polarization']) for r in modes}==expected
+ maxerr=0.;sums={}
+ for action in ('R9','R10'):
+  for comp in ('E','curl_over_k0','G'):
+   for term in ('B','D','X','I','B10','I_independent'):
+    key=f'{action}.{comp}.{term}';sums[key]=math.fsum(float(r[key]) for r in cells)
+   for r in cells:
+    vals={k:float(r[f'{action}.{comp}.{k}']) for k in ('B','D','X','I','B10','I_independent')}
+    scale=max(vals['B'],vals['B10'],abs(vals['X']),vals['D'],1e-30)
+    err=abs((vals['X']-vals['D'])-(vals['B']-vals['B10']))/scale
+    assert err<=1e-10;(maxerr:=max(maxerr,err))
+    close(vals['I'],vals['X']-vals['D'],'cell I',atol=1e-10*scale)
+    close(vals['I_independent'],vals['B']-vals['B10'],'cell I independent',atol=1e-10*scale)
+   for term in ('B','D','X','I','B10','I_independent'):
+    close(sums[f'{action}.{comp}.{term}'],d['response_global_terms'][action][comp][term],f'{q}.{action}.{comp}.{term}')
+  for r in cells:
+   for term in ('B','D','X','I','B10','I_independent'):
+    close(float(r[f'{action}.G.{term}']),float(r[f'{action}.E.{term}'])+float(r[f'{action}.curl_over_k0.{term}']),'G components')
+ raised=[r for r in cells if int(r['r9_p'])==5];unchanged=[r for r in cells if int(r['r9_p'])==6];assert len(raised)==28 and len(unchanged)==152
+ groups={}
+ for label,rows in [('raised28',raised),('old_p6_152',unchanged)]:
+  vals=[float(r['R10.G.I']) for r in rows]
+  groups[label]={'B9':math.fsum(float(r['R10.G.B']) for r in rows),'B10':math.fsum(float(r['R10.G.B10']) for r in rows),'I':math.fsum(vals),'positive_I':math.fsum(v for v in vals if v>0),'negative_I':math.fsum(v for v in vals if v<0)}
+ total=sums['R10.G.B10'];shares[q]={int(r['global_cell_id']):float(r['R10.G.B10'])/total for r in cells} if total else {}
+ ranked=sorted(cells,key=lambda r:(-float(r['R10.G.B10']),int(r['global_cell_id'])));acc=0.;prefix=[]
+ for r in ranked:
+  prefix.append(int(r['global_cell_id']));acc+=float(r['R10.G.B10'])
+  if acc>=total*.5:break
+ excess=[];powers={}
+ for action in ('R9','R10','Y6_1'):
+  powers[action]={'R_total':math.fsum(float(r[action+'_R']) for r in modes if r['side']=='top'),'T_total':math.fsum(float(r[action+'_T']) for r in modes if r['side']=='bottom')}
+ for r in modes:
+  for action in ('R9','R10'):
+   delta=float(r[action+'_power_ratio'])-float(r['Y6_1_power_ratio'])
+   if abs(delta)>1e-6:excess.append({'case':action,'key':[r['side'],int(r['m']),int(r['n']),r['polarization']],'signed_delta':delta})
+   for part in ('real','imag'):
+    key=f'{action}_minus_Y6_1_amplitude_{part}'
+    if key in r:close(float(r[key]),float(r[action+'_amplitude_'+part])-float(r['Y6_1_amplitude_'+part]),key)
+  close(float(r['R10_minus_R9_power_ratio_signed']),float(r['R10_power_ratio'])-float(r['R9_power_ratio']),'power delta')
+ denom=d['frozen_reference_or_floor_G_squared_nm3'];G={a:math.sqrt(sums[a+'.G.B10']/denom) for a in ('R9','R10')}
+ for a in G:close(G[a],d['field_and_J_replay'][a]['field_relative_metrics']['G'],'G scalar')
+ results[q]={'tables_read':{'cells':len(cells),'modes':len(modes)},'files':{p.name:sha(p) for p in path.iterdir() if p.is_file()},'all_component_sums':sums,'identity_max_relative_error':maxerr,'degree_groups':groups,'G':G,'G_gain':G['R9']-G['R10'],'ranked_global_ids':[int(r['global_cell_id']) for r in ranked],'top1_5_10_20_share':{str(k):math.fsum(float(r['R10.G.B10']) for r in ranked[:k])/total for k in [1,5,10,20]},'minimal_half_prefix':prefix,'powers_from_saved_rows':powers,'all_power_exceedances':excess}
+l1=math.fsum(abs(shares['q8'][i]-shares['q10'][i]) for i in shares['q8']) if all(shares.values()) else None
+same=results['q8']['ranked_global_ids'][0]==results['q10']['ranked_global_ids'][0]
+out={'schema':'task43.v20.root_independent_table_audit.v1','scope':'STDlib independent CSV/JSON arithmetic; not a second NPZ read or project checker run','quadrature':results,'L1_B10_shares':l1,'same_maximum':same,'location_stable':l1 is not None and l1<=1e-6 and same,'wall':'NOT_MEASURED'}
+(root/'root_table_audit.json').write_text(json.dumps(out,indent=2)+'\n')
+print(json.dumps({'q':{q:{k:results[q][k] for k in ['identity_max_relative_error','degree_groups','G','G_gain','top1_5_10_20_share','all_power_exceedances']} for q in results},'L1':l1,'same_maximum':same},indent=2))

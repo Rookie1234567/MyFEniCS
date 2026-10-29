@@ -1,0 +1,24 @@
+import json,re,subprocess,hashlib
+from pathlib import Path
+repo=Path.cwd(); files=subprocess.check_output(['git','diff','--name-only'],text=True).splitlines();issues=[];links=0;tables=0
+for name in files:
+ p=repo/name;s=p.read_text();diff=subprocess.check_output(['git','diff','--unified=0','--',name],text=True)
+ added='\n'.join(x[1:] for x in diff.splitlines() if x.startswith('+') and not x.startswith('+++'))
+ for target in re.findall(r'\]\(([^)]+)\)',added):
+  if target.startswith(('http:','https:','#')):continue
+  target=target.split('#')[0]
+  if target and not (p.parent/target).exists():issues.append(('link',name,target))
+  links+=1
+ for block in re.split(r'\n\s*\n',s):
+  rows=[x for x in block.splitlines() if x.startswith('|')]
+  if len(rows)>1:
+   counts={len(re.split(r'(?<!\\)\|',x)) for x in rows}
+   if len(counts)>1:issues.append(('table',name,sorted(counts)))
+   tables+=1
+ assert '$$' not in added and '\\[' not in added
+for p in (repo/'docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources').rglob('*.json'):json.loads(p.read_text())
+p=repo/'docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_results_v1.json';json.loads(p.read_text())
+for name in ['benchmarks/task43_hp_adaptivity/analyze_saved_r10_response.py','src/test/test_task43_saved_r10_response.py']:
+ assert (repo/name).read_bytes()==subprocess.check_output(['git','show','9f73dae93b2ed5ae75a0dffe949a15d887ce5f92:'+name])
+assert subprocess.check_output(['git','diff','--name-only','d34eba7002d5abfafb396c8684ed501c8aa2bf6e','--','src','scripts','benchmarks'],text=True).splitlines()==['benchmarks/task43_hp_adaptivity/analyze_saved_r10_response.py','src/test/test_task43_saved_r10_response.py']
+print(json.dumps({'issues':issues,'added_local_links':links,'added_table_blocks':tables,'source_test_final_bytes_unchanged':True,'json':'PARSED','runtime_runs_added_by_check':0}));assert not issues
