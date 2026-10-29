@@ -16014,6 +16014,7 @@ def _run_task41_p0_service(
         TASK41_B0_V16_SAVED_VECTOR_INSTANCE,
         TASK41_B0_V16_SAVED_VECTOR_SCOPE,
         TASK41_B0_V16_SAVED_VECTOR_WINDOW_RELATIVE,
+        TASK41_MODEL_ID,
         TASK41_P0_AUTH_SCHEMA,
         load_task41_p0_fixed_window,
         require_task41_p0_contract,
@@ -16229,7 +16230,7 @@ def _run_task41_p0_service(
             raise ValueError("Task41 V18 route requires its explicit numbered output directory")
         from src.runners.task41_p0_v18_saved_jz import SOURCE_BINDINGS as V18_SOURCE_BINDINGS
         v18_v17_source_report = (repo_root / V18_SOURCE_BINDINGS["v17"][0]).resolve(strict=True)
-        results_root_v18 = (repo_root / "results" / str(contract["case"]["model_id"])).resolve(strict=True)
+        results_root_v18 = (repo_root / "results" / TASK41_MODEL_ID).resolve(strict=True)
         if not v18_v17_source_report.is_relative_to(results_root_v18):
             raise ValueError("Task41 V18 fixed V17 source report escaped the registered results root")
         continuation_run_root = v18_v17_source_report.parent.resolve(strict=True)

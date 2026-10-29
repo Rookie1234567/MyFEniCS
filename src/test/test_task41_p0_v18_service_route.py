@@ -448,3 +448,36 @@ def test_v18_saved_output_service_runs_worker_and_independent_checker_in_one_rou
     )
     assert len(check["main_star_signed_D_decomposition"]) == 2
     assert not any(call["stage_dir"].exists() for call in calls)
+
+
+def test_v18_service_entry_reaches_output_symlink_guard_before_contract_load(
+    tmp_path: Path, monkeypatch: Any,
+) -> None:
+    import pytest
+
+    root = tmp_path / "repo"
+    model_root = root / "results" / contract_module.TASK41_MODEL_ID
+    source_report = model_root / "fixture" / "v17.json"
+    source_report.parent.mkdir(parents=True)
+    source_report.write_text("{}\n", encoding="utf-8")
+    monkeypatch.setattr(
+        worker, "SOURCE_BINDINGS", {"v17": (source_report.relative_to(root).as_posix(), "a" * 64)}
+    )
+    target = tmp_path / "output-target"
+    target.mkdir()
+    output_link = root / "attempt01"
+    output_link.symlink_to(target, target_is_directory=True)
+    monkeypatch.setenv("TASK41_P0_V18_SAVED_JZ_CANDIDATE", "1")
+
+    with pytest.raises(ValueError, match="Task41 V18 output directory cannot be a symlink"):
+        workflow._run_task41_p0_service(
+            unit="fixture-v18.service",
+            runtime_prefix=Path(sys.executable).resolve().parent.parent,
+            abi_receipt=tmp_path / "abi.json",
+            jit_cache=tmp_path / "jit-cache",
+            case_args=[],
+            contract_path=root / "unused-contract.json",
+            repo_root=root,
+            v18_saved_jz_selector=True,
+            v18_output_directory=output_link,
+        )
