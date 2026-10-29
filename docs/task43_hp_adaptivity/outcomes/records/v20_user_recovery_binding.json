@@ -1,0 +1,32 @@
+{
+  "schema": "task43.v20.user_recovery_binding.v1",
+  "authorization_review": "0c6158cb96b3ba320d5bd3282a3c18f64c5a08c9",
+  "user_instruction": "不是数值gate那就继续",
+  "prior_delivery_commit": "d34eba7002d5abfafb396c8684ed501c8aa2bf6e",
+  "original_contract": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_contract.json",
+    "sha256": "d087e39b058d718f01da7dbd3df0b7c44b2f458c67b2535a8f10dc6c21f43efd"
+  },
+  "stage": "U1",
+  "root": "benchmarks/artifacts/task43/v20_saved_r10_response/support/user_recovery_attempt1",
+  "work_seconds": 1140,
+  "whole_seconds": 1200,
+  "rss_limit_bytes": 8589934592,
+  "selectors": [
+    "src/test/test_task43_saved_r10_response.py::test_modal_j_replay_reproduces_612_channel_anchor",
+    "src/test/test_task43_saved_r10_response.py::test_main_microfixture_writes_q8_q10_and_terminal",
+    "src/test/test_task43_saved_r10_response.py::test_main_mid_write_failure_preserves_q8_and_marks_incomplete"
+  ],
+  "launch_files": [
+    {
+      "path": "benchmarks/artifacts/task43/v20_saved_r10_response/launch/user_recovery_attempt1.sh",
+      "sha256": "3c36d97c58c53570bafe7b8465ea130fe1c675006fe961505fbac313a306b9ef",
+      "tracked_copy": "docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/launch/user_recovery_attempt1.sh.txt"
+    },
+    {
+      "path": "benchmarks/artifacts/task43/v20_saved_r10_response/launch/user_recovery_snapshot.py",
+      "sha256": "5cd6787448d937f6ef3e0349ac037048a20ce661619a0ceff62371a90880fdf6",
+      "tracked_copy": "docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/launch/user_recovery_snapshot.py.txt"
+    }
+  ]
+}

@@ -42,11 +42,14 @@ def _bound_worker_identity():
         yield
         v19.write_runtime_identity(stage, "end")
         return
-    if stage == "D2":
+    if stage in ("D2", "U1"):
         root = Path(os.environ["TASK43_V20_RUN_ROOT"])
         start = v19._json_file(root / "runtime_start.json")
         assert int(start["identity"]["pid"]) == os.getpid()
         assert start["stage"] == "D2"
+        if stage == "U1":
+            assert os.environ["TASK43_V19_STAGE"] == "D2"
+            assert Path(start["identity"]["run_root"]) == root.resolve()
         yield
         return
     yield
@@ -580,6 +583,29 @@ def test_modal_j_replay_reproduces_612_channel_anchor(tmp_path: Path):
 
 
 def test_main_microfixture_writes_q8_q10_and_terminal(tmp_path: Path):
+    contract_path = v20.REPO_ROOT / v20.CONTRACT_RELATIVE_PATH
+    contract, contract_sha, _ = v20._load_manifest(contract_path)
+    binding_path = v20.REPO_ROOT / v20.USER_RECOVERY_BINDING_RELATIVE_PATH
+    binding = v20._json_file(binding_path)
+    v20._validate_user_recovery_binding(binding, contract, contract_sha)
+
+    for key, bad_value, message in (
+        ("root", str(v20.EXPECTED_ROOTS["D2"]), "fixed U1 stage/root"),
+        ("work_seconds", 1139, "fixed U1 budget"),
+    ):
+        altered_binding = copy.deepcopy(binding)
+        altered_binding[key] = bad_value
+        with pytest.raises(v20.EvidenceError, match=message):
+            v20._validate_user_recovery_binding(altered_binding, contract, contract_sha)
+    altered_binding = copy.deepcopy(binding)
+    altered_binding["original_contract"]["sha256"] = "0" * 64
+    with pytest.raises(v20.EvidenceError, match="original V20 contract"):
+        v20._validate_user_recovery_binding(altered_binding, contract, contract_sha)
+    altered_binding = copy.deepcopy(binding)
+    altered_binding["selectors"] = altered_binding["selectors"][:-1]
+    with pytest.raises(v20.EvidenceError, match="three frozen D2 selectors"):
+        v20._validate_user_recovery_binding(altered_binding, contract, contract_sha)
+
     fixture = _main_fixture(tmp_path)
     final = v20.main(_test_fixture=fixture)
     root = fixture["output_root"]

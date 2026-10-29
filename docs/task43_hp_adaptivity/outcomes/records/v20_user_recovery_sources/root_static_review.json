@@ -1,0 +1,28 @@
+{
+  "reviewer": "root",
+  "user_authorization": "不是数值gate那就继续",
+  "static_checks": {
+    "changed_old_functions": [
+      "_capture_inputs",
+      "_run_diagnostic",
+      "main",
+      "_cli"
+    ],
+    "new_functions": [
+      "limited binding path/shape/file identity helpers"
+    ],
+    "numerical_functions": "AST_IDENTICAL_TO_d34eba7002d5abfafb396c8684ed501c8aa2bf6e",
+    "AST_parse": "PASS_NO_IMPORT",
+    "bash_n": "PASS_NO_EXECUTION",
+    "git_diff_check": "PASS",
+    "launch_actual_and_archive_hashes": "MATCH",
+    "test_scope": "3 affected nodes; binding positive/negative checks nested in existing main node; test-only main remains isolated"
+  },
+  "identities": {
+    "benchmarks/task43_hp_adaptivity/analyze_saved_r10_response.py": "011659adbeda3acf882d61c53056bec3e056f5d161466c110a2b61040322e471",
+    "src/test/test_task43_saved_r10_response.py": "8e2329f414e46f45fb1038be40837d2b17fd23021eb123b1e374ff7b9cd56b84",
+    "docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_binding.json": "4eb69768f205b5f1390bf42a111942fa9c753089fd07545d6057ca655297e4b1"
+  },
+  "scope_limits": "Old contract/old launch/failures unchanged; U1 explicit new user continuation root. No numerical tolerance or input replacement.",
+  "timing": "NOT_MEASURED"
+}

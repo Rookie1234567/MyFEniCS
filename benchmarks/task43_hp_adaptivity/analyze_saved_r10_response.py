@@ -34,6 +34,22 @@ CONTRACT_RELATIVE_PATH = Path(
 CONTRACT_SCHEMA = "task43.v20.saved_r10_response_contract.v1"
 INPUT_LOCK_SCHEMA = "task43.v20.static_input_lock.v1"
 INPUT_LOCK_ROLE = "input_lock"
+USER_RECOVERY_BINDING_RELATIVE_PATH = Path(
+    "docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_binding.json"
+)
+USER_RECOVERY_BINDING_SCHEMA = "task43.v20.user_recovery_binding.v1"
+USER_RECOVERY_ROOT_RELATIVE = Path(
+    "benchmarks/artifacts/task43/v20_saved_r10_response/support/user_recovery_attempt1"
+)
+USER_RECOVERY_AUTHORIZATION_TEXT = "不是数值gate那就继续"
+USER_RECOVERY_PRIOR_DELIVERY_COMMIT = "d34eba7002d5abfafb396c8684ed501c8aa2bf6e"
+USER_RECOVERY_CONTRACT_SHA256 = "d087e39b058d718f01da7dbd3df0b7c44b2f458c67b2535a8f10dc6c21f43efd"
+USER_RECOVERY_LAUNCH_FILES = {
+    "benchmarks/artifacts/task43/v20_saved_r10_response/launch/user_recovery_attempt1.sh":
+        "docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/launch/user_recovery_attempt1.sh.txt",
+    "benchmarks/artifacts/task43/v20_saved_r10_response/launch/user_recovery_snapshot.py":
+        "docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_sources/launch/user_recovery_snapshot.py.txt",
+}
 EXPECTED_REVIEW = "0c6158cb96b3ba320d5bd3282a3c18f64c5a08c9"
 EXPECTED_SOURCE_ROLES = frozenset({
     "r9_absorption", "r9_modal", "r9_plan", "y6_modal", "y6_summary",
@@ -142,6 +158,110 @@ def _checked_file(record: dict[str, Any], *, fixture: bool = False) -> Path:
     if actual != record.get("sha256"):
         raise EvidenceError(f"frozen input SHA256 mismatch: {path}")
     return path
+
+
+def _user_recovery_repo_file(path_text: str, label: str) -> Path:
+    if not isinstance(path_text, str):
+        raise EvidenceError(f"{label} path must be a string")
+    raw = Path(path_text)
+    if raw.is_absolute() or ".." in raw.parts or not raw.parts:
+        raise EvidenceError(f"{label} path must be repo-relative and contained")
+    path = REPO_ROOT
+    for part in raw.parts:
+        path = path / part
+        if path.is_symlink():
+            raise EvidenceError(f"{label} path contains a symlink: {path}")
+    if not path.is_file():
+        raise EvidenceError(f"{label} is missing or not a regular file: {path}")
+    return path
+
+
+def _validate_user_recovery_binding(
+    binding: dict[str, Any], manifest: dict[str, Any], manifest_sha256: str,
+) -> None:
+    """Check the one explicit U1 continuation without changing the old contract."""
+    expected_keys = {
+        "schema", "authorization_review", "user_instruction", "prior_delivery_commit",
+        "original_contract", "stage", "root", "work_seconds", "whole_seconds",
+        "rss_limit_bytes", "selectors", "launch_files",
+    }
+    if set(binding) != expected_keys:
+        raise EvidenceError("user recovery binding has unexpected or missing fields")
+    if binding.get("schema") != USER_RECOVERY_BINDING_SCHEMA:
+        raise EvidenceError("unsupported user recovery binding schema")
+    if binding.get("authorization_review") != EXPECTED_REVIEW or binding.get(
+        "authorization_review"
+    ) != manifest.get("authorization_review"):
+        raise EvidenceError("user recovery binding does not match the V19 authorization review")
+    if binding.get("user_instruction") != USER_RECOVERY_AUTHORIZATION_TEXT:
+        raise EvidenceError("user recovery binding lacks the exact user continuation instruction")
+    if binding.get("prior_delivery_commit") != USER_RECOVERY_PRIOR_DELIVERY_COMMIT:
+        raise EvidenceError("user recovery binding does not match the prior V20 delivery")
+    expected_contract = {
+        "path": str(CONTRACT_RELATIVE_PATH),
+        "sha256": USER_RECOVERY_CONTRACT_SHA256,
+    }
+    if binding.get("original_contract") != expected_contract or manifest_sha256 != USER_RECOVERY_CONTRACT_SHA256:
+        raise EvidenceError("user recovery binding does not preserve the original V20 contract")
+    if (binding.get("stage"), binding.get("root")) != (
+        "U1", str(USER_RECOVERY_ROOT_RELATIVE)
+    ):
+        raise EvidenceError("user recovery binding differs from the fixed U1 stage/root")
+    if (binding.get("work_seconds"), binding.get("whole_seconds"), binding.get("rss_limit_bytes")) != (
+        1140, 1200, 8589934592
+    ):
+        raise EvidenceError("user recovery binding differs from the fixed U1 budget")
+    selectors = binding.get("selectors")
+    contract_tests = manifest.get("tests", {})
+    d2_selectors = contract_tests.get("d2_selectors") if isinstance(contract_tests, dict) else None
+    if (
+        not isinstance(selectors, list) or len(selectors) != 3
+        or any(not isinstance(selector, str) for selector in selectors)
+        or len(set(selectors)) != 3 or selectors != d2_selectors
+    ):
+        raise EvidenceError("user recovery selectors must exactly reuse the three frozen D2 selectors")
+    launch_files = binding.get("launch_files")
+    if not isinstance(launch_files, list) or len(launch_files) != len(USER_RECOVERY_LAUNCH_FILES):
+        raise EvidenceError("user recovery binding must list the two fixed U1 launch files")
+    seen: dict[str, str] = {}
+    for record in launch_files:
+        if not isinstance(record, dict) or set(record) != {"path", "sha256", "tracked_copy"}:
+            raise EvidenceError("user recovery launch record has unexpected or missing fields")
+        path_text = record["path"]
+        if not isinstance(path_text, str) or path_text not in USER_RECOVERY_LAUNCH_FILES or path_text in seen:
+            raise EvidenceError("user recovery launch path inventory is not the exact U1 allowlist")
+        if not isinstance(record["tracked_copy"], str) or record["tracked_copy"] != USER_RECOVERY_LAUNCH_FILES[path_text]:
+            raise EvidenceError("user recovery tracked launch copy path differs from the fixed inventory")
+        digest = record["sha256"]
+        if not isinstance(digest, str) or len(digest) != 64 or any(
+            char not in "0123456789abcdef" for char in digest
+        ):
+            raise EvidenceError("user recovery launch SHA256 is malformed")
+        seen[path_text] = digest
+    if set(seen) != set(USER_RECOVERY_LAUNCH_FILES):
+        raise EvidenceError("user recovery launch path inventory is incomplete")
+
+
+def _load_user_recovery_binding(
+    path: Path, manifest: dict[str, Any], manifest_sha256: str,
+) -> tuple[dict[str, Any], Path, str]:
+    expected = REPO_ROOT / USER_RECOVERY_BINDING_RELATIVE_PATH
+    candidate = path if path.is_absolute() else REPO_ROOT / path
+    if candidate != expected:
+        raise EvidenceError(f"U1 accepts only the fixed user recovery binding path: {expected}")
+    binding_path = _user_recovery_repo_file(
+        str(USER_RECOVERY_BINDING_RELATIVE_PATH), "user recovery binding"
+    )
+    binding = _json_file(binding_path)
+    _validate_user_recovery_binding(binding, manifest, manifest_sha256)
+    for record in binding["launch_files"]:
+        launch_path = _user_recovery_repo_file(record["path"], "U1 launch")
+        copy_path = _user_recovery_repo_file(record["tracked_copy"], "U1 tracked launch copy")
+        if _sha256_file(launch_path) != record["sha256"] or _sha256_file(copy_path) != record["sha256"]:
+            raise EvidenceError(f"U1 launch SHA256 differs from its binding: {record['path']}")
+        if launch_path.read_bytes() != copy_path.read_bytes():
+            raise EvidenceError(f"U1 tracked launch copy is not byte-identical: {record['path']}")
+    return binding, binding_path, _sha256_file(binding_path)
 
 
 def _same_json(left: Any, right: Any, label: str) -> None:
@@ -1449,6 +1569,8 @@ def _analyze_order(
 
 def _capture_inputs(
     manifest_path: Path, manifest: dict[str, Any], source_paths: dict[str, Path], *, fixture: bool,
+    user_recovery_binding: dict[str, Any] | None = None,
+    user_recovery_binding_path: Path | None = None,
 ) -> dict[str, str]:
     values = {"manifest": _sha256_file(manifest_path)}
     if not fixture and isinstance(manifest.get("input_lock"), dict):
@@ -1459,6 +1581,20 @@ def _capture_inputs(
         values[f"quadrature:{label}"] = _sha256_file(_checked_file(record, fixture=fixture))
     values["checker"] = _sha256_file(Path(__file__))
     values["v19_checker"] = _sha256_file(Path(v19.__file__))
+    if (user_recovery_binding is None) != (user_recovery_binding_path is None):
+        raise EvidenceError("U1 binding record and path must be supplied together")
+    if user_recovery_binding is not None and user_recovery_binding_path is not None:
+        checked_binding = _user_recovery_repo_file(
+            str(USER_RECOVERY_BINDING_RELATIVE_PATH), "user recovery binding"
+        )
+        if user_recovery_binding_path != checked_binding:
+            raise EvidenceError("U1 binding path changed after validation")
+        values["user_recovery_binding"] = _sha256_file(checked_binding)
+        for record in user_recovery_binding["launch_files"]:
+            launch_path = _user_recovery_repo_file(record["path"], "U1 launch")
+            copy_path = _user_recovery_repo_file(record["tracked_copy"], "U1 tracked launch copy")
+            values[f"user_recovery_launch:{record['path']}"] = _sha256_file(launch_path)
+            values[f"user_recovery_launch_copy:{record['tracked_copy']}"] = _sha256_file(copy_path)
     return values
 
 
@@ -1524,7 +1660,19 @@ def _run_diagnostic(
     manifest_path: Path, output_root: Path, *, fixture: bool = False,
     fixture_orders: dict[str, int] | None = None, expected_volume: float = DOMAIN_VOLUME_NM3,
     failure_hook: Any = None, pre_analysis: Any = None,
+    user_recovery_binding: dict[str, Any] | None = None,
+    user_recovery_binding_path: Path | None = None,
+    user_recovery_binding_sha256: str | None = None,
+    execution_stage: str | None = None,
 ) -> dict[str, Any]:
+    if user_recovery_binding is None:
+        if user_recovery_binding_path is not None or user_recovery_binding_sha256 is not None or execution_stage is not None:
+            raise EvidenceError("partial U1 execution binding was supplied")
+    elif (
+        user_recovery_binding_path is None or user_recovery_binding_sha256 is None
+        or execution_stage != "U1"
+    ):
+        raise EvidenceError("U1 requires a complete binding record, path, hash, and stage")
     if output_root.is_symlink() or output_root.exists():
         raise EvidenceError(f"output root must be a new unique directory: {output_root}")
     output_root.mkdir(parents=True, exist_ok=False)
@@ -1540,6 +1688,16 @@ def _run_diagnostic(
         "orders": {},
         "started_utc": datetime.now(timezone.utc).isoformat(),
     }
+    if execution_stage is not None:
+        run_manifest["stage"] = execution_stage
+    if user_recovery_binding is not None and user_recovery_binding_path is not None:
+        run_manifest["user_recovery_binding"] = {
+            "path": str(user_recovery_binding_path.relative_to(REPO_ROOT)),
+            "sha256": user_recovery_binding_sha256,
+        }
+        run_manifest["runtime_compatibility_alias"] = (
+            "U1 is the execution stage; V19 runtime helper uses D2 enum only, bound to this U1 root."
+        )
     run_path = output_root / "run_manifest.json"
     completed_diagnostics: dict[str, Any] = {}
     q8_b10: np.ndarray | None = None
@@ -1547,9 +1705,17 @@ def _run_diagnostic(
     try:
         v19.atomic_json(run_path, run_manifest)
         paths = _source_paths(manifest, fixture=fixture)
-        start_inputs = _capture_inputs(manifest_path, manifest, paths, fixture=fixture)
+        start_inputs = _capture_inputs(
+            manifest_path, manifest, paths, fixture=fixture,
+            user_recovery_binding=user_recovery_binding,
+            user_recovery_binding_path=user_recovery_binding_path,
+        )
         if start_inputs["manifest"] != manifest_sha:
             raise EvidenceError("manifest changed between validation and run start")
+        if user_recovery_binding_sha256 is not None and start_inputs.get(
+            "user_recovery_binding"
+        ) != user_recovery_binding_sha256:
+            raise EvidenceError("user recovery binding changed between validation and run start")
         source_only = {key: value for key, value in start_inputs.items() if key not in ("checker", "v19_checker")}
         run_manifest["source_sha256_start"] = source_only
         run_manifest["checker_sha256_start"] = {
@@ -1579,7 +1745,11 @@ def _run_diagnostic(
             v19.atomic_json(run_path, run_manifest)
             if failure_hook is not None:
                 failure_hook(label, "after_persist", output_root)
-        end_inputs = _capture_inputs(manifest_path, manifest, paths, fixture=fixture)
+        end_inputs = _capture_inputs(
+            manifest_path, manifest, paths, fixture=fixture,
+            user_recovery_binding=user_recovery_binding,
+            user_recovery_binding_path=user_recovery_binding_path,
+        )
         source_end = {key: value for key, value in end_inputs.items() if key not in ("checker", "v19_checker")}
         checker_end = {"checker": end_inputs["checker"], "v19_checker": end_inputs["v19_checker"]}
         if source_end != run_manifest["source_sha256_start"]:
@@ -1637,10 +1807,13 @@ def _run_diagnostic(
 
 def main(
     manifest_path: Path | None = None, output_root: Path | None = None, *,
+    user_recovery_binding_path: Path | None = None,
     _test_fixture: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """Run the fixed V20 saved-array diagnostic; fixture override is test-only."""
     if _test_fixture is not None:
+        if user_recovery_binding_path is not None:
+            raise EvidenceError("test-only fixture main cannot accept a real U1 binding")
         manifest = _test_fixture["manifest"]
         _validate_contract(manifest, fixture=True)
         if output_root is None:
@@ -1657,26 +1830,46 @@ def main(
     fixed_manifest = manifest_path or REPO_ROOT / CONTRACT_RELATIVE_PATH
     manifest, manifest_sha, lock = _load_manifest(Path(fixed_manifest))
     stage = os.environ.get("TASK43_V20_STAGE", "")
-    if stage not in ("D1", "D2"):
-        raise EvidenceError("diagnostic main only runs under the frozen D1/D2 worker stage")
+    recovery_binding: dict[str, Any] | None = None
+    recovery_binding_file: Path | None = None
+    recovery_binding_sha256: str | None = None
+    if user_recovery_binding_path is not None:
+        recovery_binding, recovery_binding_file, recovery_binding_sha256 = _load_user_recovery_binding(
+            Path(user_recovery_binding_path), manifest, manifest_sha
+        )
+        if stage != "U1":
+            raise EvidenceError("user recovery binding only permits the explicit U1 stage")
+        if os.environ.get("TASK43_V19_STAGE") != "D2":
+            raise EvidenceError("U1 requires D2 only as the unchanged V19 runtime-helper enum")
+    elif stage not in ("D1", "D2"):
+        raise EvidenceError("diagnostic main only runs under the frozen D1/D2 stages or bound U1")
     root_text = os.environ.get("TASK43_V20_RUN_ROOT", "")
     if not root_text:
         raise EvidenceError("V20 run root environment is missing")
-    expected_root = REPO_ROOT / manifest["slots"][stage]["root"]
+    expected_root = (
+        REPO_ROOT / USER_RECOVERY_ROOT_RELATIVE
+        if stage == "U1" and recovery_binding is not None
+        else REPO_ROOT / manifest["slots"][stage]["root"]
+    )
     run_root = Path(root_text)
     if run_root.absolute() != expected_root.absolute():
         raise EvidenceError("V20 run root does not match the unique slot path")
+    if stage == "U1" and Path(os.environ.get("TASK43_V19_RUN_ROOT", "")).absolute() != expected_root.absolute():
+        raise EvidenceError("V19 runtime-helper root alias does not point to the unique U1 root")
     expected_output = expected_root / "data"
     if output_root is not None and Path(output_root).absolute() != expected_output.absolute():
         raise EvidenceError("V20 output root does not match the unique slot data directory")
     output_root = expected_output
 
     def run_stage_tests() -> None:
-        if stage != "D2":
+        if stage not in ("D2", "U1"):
             return
-        selectors = manifest["tests"]["d2_selectors"]
+        selectors = (
+            recovery_binding["selectors"] if stage == "U1" and recovery_binding is not None
+            else manifest["tests"]["d2_selectors"]
+        )
         if not selectors or len(selectors) > 6:
-            raise EvidenceError("D2 requires a nonempty released subset of at most six T1 nodes")
+            raise EvidenceError("D2/U1 requires a nonempty released subset of at most six frozen nodes")
         import pytest
         run_root.mkdir(parents=True, exist_ok=True)
         code = pytest.main([
@@ -1685,25 +1878,34 @@ def main(
             "--basetemp", str(run_root / "fixtures"), *selectors,
         ])
         if int(code) != 0:
-            raise EvidenceError(f"D2 targeted tests returned {int(code)}")
+            raise EvidenceError(f"{stage} targeted tests returned {int(code)}")
 
-    v19.write_runtime_identity(stage, "start")
+    runtime_helper_stage = "D2" if stage == "U1" else stage
+    v19.write_runtime_identity(runtime_helper_stage, "start")
     try:
         return _run_diagnostic(
             manifest, manifest_sha, lock, Path(fixed_manifest), Path(output_root),
             pre_analysis=run_stage_tests,
+            user_recovery_binding=recovery_binding,
+            user_recovery_binding_path=recovery_binding_file,
+            user_recovery_binding_sha256=recovery_binding_sha256,
+            execution_stage=stage if stage == "U1" else None,
         )
     finally:
-        v19.write_runtime_identity(stage, "end")
+        v19.write_runtime_identity(runtime_helper_stage, "end")
 
 
 def _cli() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=REPO_ROOT / CONTRACT_RELATIVE_PATH)
     parser.add_argument("--output-root", type=Path, default=None)
+    parser.add_argument("--user-recovery-binding", type=Path, default=None)
     args = parser.parse_args()
     try:
-        main(args.manifest, args.output_root)
+        main(
+            args.manifest, args.output_root,
+            user_recovery_binding_path=args.user_recovery_binding,
+        )
     except BaseException as exc:
         print(f"V20 saved R10 response diagnostic failed: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1

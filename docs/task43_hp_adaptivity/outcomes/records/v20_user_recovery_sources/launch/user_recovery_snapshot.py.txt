@@ -1,0 +1,42 @@
+"""Snapshot the explicitly user-authorized U1 continuation; stdlib only."""
+import hashlib,json,os,shutil,subprocess,sys
+from pathlib import Path
+repo=Path('/home/fenics/Projects/NN-Lab-V2')
+prefix=repo/'benchmarks/artifacts/task43/v20_saved_r10_response'
+root,stage,contract,binding=Path(sys.argv[1]),sys.argv[2],Path(sys.argv[3]),Path(sys.argv[4])
+def sha(p):
+ with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
+u=json.loads(binding.read_text());c=json.loads(contract.read_text())
+assert stage==u['stage']=='U1'
+assert root==prefix/'support/user_recovery_attempt1'==repo/u['root']
+assert binding==repo/'docs/task43_hp_adaptivity/outcomes/records/v20_user_recovery_binding.json'
+assert u['schema']=='task43.v20.user_recovery_binding.v1'
+assert u['user_instruction']=='不是数值gate那就继续'
+assert u['prior_delivery_commit']=='d34eba7002d5abfafb396c8684ed501c8aa2bf6e'
+assert u['authorization_review']==c['authorization_review']=='0c6158cb96b3ba320d5bd3282a3c18f64c5a08c9'
+assert contract==repo/u['original_contract']['path']
+assert sha(contract)==u['original_contract']['sha256']=='d087e39b058d718f01da7dbd3df0b7c44b2f458c67b2535a8f10dc6c21f43efd'
+assert (u['work_seconds'],u['whole_seconds'],u['rss_limit_bytes'])==(1140,1200,8589934592)
+assert u['selectors']==c['tests']['d2_selectors'] and len(u['selectors'])==3
+head=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+assert subprocess.check_output(['git','status','--porcelain','--untracked-files=all']).strip()==b''
+old=json.loads((prefix/'support/decomposition_recovery1/run_manifest.json').read_text())
+paths=list(old['sources'])+[str(binding.relative_to(repo))]
+snap=root/'snapshots';snap.mkdir();refs={}
+for rel in paths:
+ p=repo/rel;assert not p.is_symlink()
+ assert p.read_bytes()==subprocess.check_output(['git','show',head+':'+rel]),rel
+ out=snap/rel;out.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,out)
+ refs[rel]={'sha256':sha(p),'bytes':p.stat().st_size}
+launch={}
+assert {Path(v['path']).name for v in u['launch_files']}=={'user_recovery_attempt1.sh','user_recovery_snapshot.py'} and len(u['launch_files'])==2
+for rec in c['launch_files']+u['launch_files']:
+ p=repo/rec['path'];arch=repo/rec['tracked_copy']
+ assert not p.is_symlink() and p.parent==prefix/'launch'
+ assert sha(p)==rec['sha256']==sha(arch)
+ assert arch.read_bytes()==subprocess.check_output(['git','show',head+':'+rec['tracked_copy']])
+ out=snap/'launch'/p.name;out.parent.mkdir(exist_ok=True);shutil.copyfile(p,out)
+ launch[str(p)]={'sha256':sha(p),'bytes':p.stat().st_size}
+names=['_MYFENICS_NATIVE_QUALIFIED_ACTIVATION','VIRTUAL_ENV','PATH','PYTHONPATH','LD_LIBRARY_PATH','PHYSICAL_NATIVE_CAPACITY','PHYSICAL_NATIVE_NODE_CAP_BYTES','TASK43_V20_RUN_ROOT','TASK43_V20_STAGE','TASK43_V19_RUN_ROOT','TASK43_V19_STAGE','OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','BLIS_NUM_THREADS','NUMEXPR_NUM_THREADS','VECLIB_MAXIMUM_THREADS']
+out={'schema':'task43.v20.user_recovery_run_manifest.v1','stage':'U1','actual_head':head,'authorization_review':u['authorization_review'],'user_instruction':u['user_instruction'],'prior_delivery_commit':u['prior_delivery_commit'],'sources':refs,'launch_files':launch,'contract':{'path':str(contract),'sha256':sha(contract)},'user_recovery_binding':{'path':str(binding),'sha256':sha(binding)},'worker_argv':sys.argv[6:],'worker_wrapper':sys.argv[5],'environment':{k:os.environ.get(k) for k in names},'worker_overrides':{'HWLOC_COMPONENTS':'-x86','OMPI_MCA_pml':'ob1','PYTEST_DISABLE_PLUGIN_AUTOLOAD':'1'},'runtime_compatibility_alias':'V20 stage U1; V19 stage D2 only for unchanged runtime helper enumeration, bound to U1 root. Old D2 remains failed and consumed.','mpi':'NOT_USED_NOT_ABI_QUALIFICATION','numpy_version':'RECORDED_IN_ACTUAL_WORKER_RUNTIME'}
+with (root/'run_manifest.json').open('x') as f:json.dump(out,f,indent=2);f.write('\n')

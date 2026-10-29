@@ -1,0 +1,116 @@
+{
+  "schema": "task43.v20.user_continuation_preparation.v1",
+  "authorization": "Direct user message after d34eba7002d5abfafb396c8684ed501c8aa2bf6e delivery",
+  "user_instruction": "不是数值gate那就继续",
+  "interpretation": "Continue ordinary implementation recovery for the same saved-array diagnostic; prior four calls stay consumed. U1 is a separately counted new invocation under this instruction. No new scientific scope, PDE, restore, sampling, reference or tolerance change.",
+  "canonical_worktree": "/home/fenics/Projects/NN-Lab-V2",
+  "HEAD_at_start": "d34eba7002d5abfafb396c8684ed501c8aa2bf6e",
+  "branch": "task43_hp_adaptivity",
+  "upstream": "origin/task43_hp_adaptivity",
+  "origin_HEAD_read": "d34eba7002d5abfafb396c8684ed501c8aa2bf6e",
+  "initial_worktree": "CLEAN",
+  "existing_task43_processes": "NONE at host ps check; no other process changed",
+  "prior_review_support": {
+    "used": 4,
+    "limit": 4,
+    "whole_seconds": 71.744198859,
+    "preserved": true
+  },
+  "fixed_original_contract_sha256": "d087e39b058d718f01da7dbd3df0b7c44b2f458c67b2535a8f10dc6c21f43efd",
+  "input_outer_hashes": [
+    {
+      "role": "r9_absorption",
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/solve/volume_absorption.json",
+      "sha256": "4f73d4db2da94f52ff5206942e8953b98d7427691f827da7ca047f171851bdd8"
+    },
+    {
+      "role": "r9_modal",
+      "path": "benchmarks/artifacts/task43/round9_p_up_attempt1/run/solve/dtn_port_diffraction_orders_3d.json",
+      "sha256": "443bd3683027534b349903fc11c97ef21a69fb3982d1bc70fd47781fed28be0e"
+    },
+    {
+      "role": "r9_plan",
+      "path": "benchmarks/artifacts/task43/round9_p_only_authority_attempt1/plan_output/plans/round9_p_up.json",
+      "sha256": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947"
+    },
+    {
+      "role": "y6_modal",
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/numerical_output/dtn_port_diffraction_orders_3d.json",
+      "sha256": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463"
+    },
+    {
+      "role": "y6_summary",
+      "path": "benchmarks/artifacts/task43/reference_imports/attempt2/Y6_1/p6_condensed_direct_summary.json",
+      "sha256": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc"
+    },
+    {
+      "role": "r10_rejection",
+      "path": "docs/task43_hp_adaptivity/outcomes/records/round10_rejected_candidate_v1.json",
+      "sha256": "168a1b02f92a08acf0b590340d8430edcbb511ea9a3b7c0adb69795a50077c51"
+    },
+    {
+      "role": "r10_comparison",
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round10_p_up_attempt1/candidate_comparison_v2.json",
+      "sha256": "3db50c67e871520398eee3c05219d4ef3090c360f5f2b4495e5fe31f3c70b3e0"
+    },
+    {
+      "role": "r10_modal",
+      "path": "benchmarks/artifacts/task43/round10_p_up_attempt1/run/solve/dtn_port_diffraction_orders_3d.json",
+      "sha256": "f7048a9ecad65db39faa688d9d4f0041099f2719e64e5ea2898e3dc793003450"
+    },
+    {
+      "role": "r10_plan",
+      "path": "benchmarks/artifacts/task43/round10_p_up_attempt1/run/candidate_plan.json",
+      "sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826"
+    },
+    {
+      "role": "r10_absorption",
+      "path": "benchmarks/artifacts/task43/round10_p_up_attempt1/run/solve/volume_absorption.json",
+      "sha256": "77ab9220fb19596506e532b205de205ed18ad5ba937e927ca68f8d31a5bb5ca8"
+    },
+    {
+      "role": "r9_comparison",
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/round9_p_up_attempt1/candidate_comparison_v2.json",
+      "sha256": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30"
+    },
+    {
+      "role": "post_selection_metadata",
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/post_selection_joint_attempt1/post_selection_comparison.json",
+      "sha256": "347195b3e29e23a2907e16264385346e208a2a7d2d48fb8b2d8c0b00ede3b6aa"
+    },
+    {
+      "role": "v19_q8_cells",
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/q8/cells.csv",
+      "sha256": "52f2be313a3b57c73f675ce4cad5d55ada79a26c60f50568a565eb0871b5e56b"
+    },
+    {
+      "role": "v19_q10_cells",
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v19_saved_hp_response_sources/decomposition_recovery1/data/q10/cells.csv",
+      "sha256": "adc602880f83bf9614fc9e645f2f5c80432f048e7a403d408b015b86cd242bb7"
+    },
+    {
+      "role": "q8",
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/post_selection_joint_attempt1/post_selection_shared_q8.npz",
+      "sha256": "ce3707052419ada5a8e55574a826772bcb1e37cf1f764fc115eb8bf8a52306e5"
+    },
+    {
+      "role": "q10",
+      "path": "benchmarks/artifacts/task43/round1_candidates/comparisons/post_selection_joint_attempt1/post_selection_shared_q10.npz",
+      "sha256": "895b65ffbf63176ac20008e6488c1c1318141f877eb5814496fcc945c049514d"
+    }
+  ],
+  "static_hash_wall_seconds": 3.251819592900574,
+  "other_static_wall": "NOT_MEASURED",
+  "runtime_compatibility": "U1 is current stage; D2 env/record enum only to call unchanged V19 identity helper at U1 root; no old D2 slot reuse",
+  "new_runtime_budget": {
+    "work_seconds": 1140,
+    "whole_seconds": 1200,
+    "rss_bytes": 8589934592,
+    "CPU": [
+      1
+    ],
+    "numeric_threads": 1,
+    "task_swap": 0
+  },
+  "initial_root_absent": true
+}
