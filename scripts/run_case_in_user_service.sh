@@ -466,6 +466,12 @@ task41_v15_full_acceptance=0
 task41_v17_selected_two_cell=0
 task41_v18_saved_jz=0
 task41_v19_native_rank1=0
+task41_v19_checker_only=0
+task41_v19_checker_only_count=0
+task41_v19_receipt_sha_count=0
+task41_v19_receipt_sha=""
+task41_v19_receipt_path_count=0
+task41_v19_receipt_path=""
 for arg in "${args[@]}"; do
     if [[ "$arg" == --task41-p0-saved-output-continuation ]]; then
         task41_saved_output_continuation=1
@@ -489,6 +495,66 @@ for arg in "${args[@]}"; do
         task41_v19_native_rank1=1
     fi
 done
+for ((index = 0; index < ${#args[@]}; index++)); do
+    arg="${args[index]}"
+    case "$arg" in
+        --task41-p0-b0-v19-checker-only)
+            task41_v19_checker_only=1
+            ((task41_v19_checker_only_count += 1))
+            ;;
+        --v19-receipt-sha256)
+            ((index + 1 < ${#args[@]})) || {
+                echo "V19 receipt SHA flag needs one value" >&2
+                exit 2
+            }
+            task41_v19_receipt_sha="${args[index + 1]}"
+            ((task41_v19_receipt_sha_count += 1))
+            ((index += 1))
+            ;;
+        --v19-receipt-sha256=*)
+            task41_v19_receipt_sha="${arg#*=}"
+            ((task41_v19_receipt_sha_count += 1))
+            ;;
+        --v19-receipt-path)
+            ((index + 1 < ${#args[@]})) || {
+                echo "V19 receipt path flag needs one value" >&2
+                exit 2
+            }
+            task41_v19_receipt_path="${args[index + 1]}"
+            ((task41_v19_receipt_path_count += 1))
+            ((index += 1))
+            ;;
+        --v19-receipt-path=*)
+            task41_v19_receipt_path="${arg#*=}"
+            ((task41_v19_receipt_path_count += 1))
+            ;;
+    esac
+done
+if (( task41_v19_checker_only_count > 1 || task41_v19_receipt_sha_count > 1 || task41_v19_receipt_path_count > 1 )); then
+    echo "Task41 V19 checker-only selector, receipt path, and SHA may appear only once" >&2
+    exit 2
+fi
+if (( task41_v19_checker_only )); then
+    if (( ! task41_v19_native_rank1 )); then
+        echo "Task41 V19 checker-only mode requires the V19 native-rank1 selector" >&2
+        exit 2
+    fi
+    if (( task41_v19_receipt_sha_count != 1 || task41_v19_receipt_path_count != 1 )); then
+        echo "Task41 V19 checker-only mode requires externally supplied receipt path and SHA" >&2
+        exit 2
+    fi
+    if [[ ! "$task41_v19_receipt_sha" =~ ^[0-9a-f]{64}$ ]]; then
+        echo "Task41 V19 receipt SHA must be 64 lowercase hexadecimal characters" >&2
+        exit 2
+    fi
+    if [[ "$task41_v19_receipt_path" != /* ]]; then
+        echo "Task41 V19 receipt path must be absolute" >&2
+        exit 2
+    fi
+elif (( task41_v19_receipt_sha_count != 0 || task41_v19_receipt_path_count != 0 )); then
+    echo "Task41 V19 receipt path and SHA require checker-only mode" >&2
+    exit 2
+fi
 if (( task41_v15_full_acceptance && (task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis) )); then
     echo "Task41 V15 full acceptance cannot be combined with saved-output routes" >&2
     exit 2

@@ -89,7 +89,6 @@ export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_TH
 mkdir -p benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v19_controller
 python -m src.runners.task41_p0_contract --prepare --case B0 \
   --runtime-prefix "$runtime" --abi-receipt "$abi" --jit-cache "$jit" \
-  --b0-saved-diagnostics-6h \
   --b0-saved-diagnostics-instance v19_selected_native_rank1_6h \
   > benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/v19_controller/prepare.json
 python - <<'RUN_PREPARED_SERVICE'
@@ -109,7 +108,15 @@ prepare 产出的真实 service 命令绑定 B0 DAT、当前 source 的执行合
 已完成 capture 而仅 checker 失败时：保留原 receipt/archive/producer contract，重新 prepare 当前 consumer source（同一批准窗口，T0 不刷新），在其 `service_command` 后追加下列已实现参数，再经同一 wrapper 执行：
 
 ```text
---v19-checker-only --v19-receipt-path <原完成worker回执绝对路径> --v19-receipt-sha256 <该文件真实SHA256>
+--task41-p0-b0-v19-checker-only --v19-receipt-path <原完成worker回执绝对路径> --v19-receipt-sha256 <该文件真实SHA256>
 ```
 
 路径与 SHA 必须来自已完成 attempt 的回执，不以新造文件代替。该路由不调用 worker、不建 FE/form、不重新取证。完整捕获和独立审核完成分别报告，`NATIVE_REPLAY_UNBOUND` 不升级为科学 PASS。正式窗口/批准、实际工作站启动、科学耗时与内存均仍为 NOT_RUN；源码冻结不等于科学资格。
+
+## 获准启动时的命令修正
+
+用户已明确批准本轮六小时取证。主控示例错误地同时传入 legacy `--b0-saved-diagnostics-6h` 与 named instance，首次 prepare 按互斥规则拒绝；没有触发科学 worker，也未因此刷新 T0。正确命令仅保留 `--b0-saved-diagnostics-instance v19_selected_native_rank1_6h`（上述示例已修）。固定 T0 为 `2026-10-29T06:58:54.288229236Z`，数值/总截止为 `12:38:54.288229236Z` / `12:58:54.288229236Z`。冻结科学 source 为 `5c764ec2677087a0e3bf9641ab29470a398b86c4`；本条仅修改本机文档，不热改工作站数值源码。
+
+## 同窗 wrapper 窄修
+
+首次正式服务 `myfenics-case-20261029T070552-3773295.service` 在 systemd 子 shell 的 `set -u` 处退出：`task41_v19_checker_only` 未初始化。外层有变量，内层缺初始化及 receipt 参数解析；尚无 worker/FE/native 产品，旧日志与费用保留。修复仅补内层解析和校验，数学代码不变。新增实际执行内嵌 shell 的 capture/checker/default 三条 fixture，主控资格化本机复核 **3 passed / 0.07 s**；bash 语法及 diff 检查通过。另一次执行者误在本机使用工作站 runtime 路径的 preflight 失败保留，未迁移/重装环境。新 source 重新 prepare 合同，原 window/T0/截止和授权不变。
