@@ -1987,6 +1987,28 @@ def _task41_p0_v17_reopen_completed_rhs(
     return state, z0, z_final, returned_minus_Jz, z0_minus_Jz, timing
 
 
+def task41_p0_v18_evaluate_saved_jz_candidate(
+    actual_trace_interior: np.ndarray, saved_solved: np.ndarray
+) -> np.ndarray:
+    """Evaluate saved ``-J z`` with the shared production candidate helper.
+
+    This saved-data entry accepts only the full J matrix and an already saved
+    solution vector. It deliberately has no LU, RHS solve, or correction-step
+    interface, so replay cannot trigger new GETRS work or replace the saved z.
+    """
+
+    from src.solvers.hcurl_assembly_time_condensation import (
+        JZ_EVALUATION_BINARY64_REAL_IMAG_FSUM,
+        evaluate_same_lu_internal_rhs_correction,
+    )
+
+    return evaluate_same_lu_internal_rhs_correction(
+        actual_trace_interior,
+        saved_solved,
+        strategy=JZ_EVALUATION_BINARY64_REAL_IMAG_FSUM,
+    )
+
+
 def _task41_p0_v17_selected_q_from_expansion(
     expansion: Any,
     *,

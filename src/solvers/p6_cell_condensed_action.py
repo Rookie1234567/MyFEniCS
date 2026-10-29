@@ -31,6 +31,8 @@ from scipy.linalg import lu_factor, lu_solve
 
 from .hcurl_assembly_time_condensation import (
     AssemblyTimeCondensedSystem,
+    JZ_EVALUATION_BLAS,
+    JZ_EVALUATION_BINARY64_REAL_IMAG_FSUM,
     _cell_trace_expansion,
     project_internal_rhs_same_lu,
     _strict_local_lu,
@@ -1277,6 +1279,19 @@ class P6CellCondensedAction:
         )
         if self.internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
             raise ValueError("condensation owner has an unknown internal RHS strategy")
+        self.jz_evaluation_strategy = getattr(
+            condensed, "jz_evaluation_strategy", JZ_EVALUATION_BLAS
+        )
+        if self.jz_evaluation_strategy not in {
+            JZ_EVALUATION_BLAS,
+            JZ_EVALUATION_BINARY64_REAL_IMAG_FSUM,
+        }:
+            raise ValueError("condensation owner has an unknown Jz evaluation strategy")
+        if (
+            self.jz_evaluation_strategy != JZ_EVALUATION_BLAS
+            and self.internal_rhs_strategy != "same_lu_rhs_solve"
+        ):
+            raise ValueError("opt-in Jz evaluation requires same_lu_rhs_solve")
         refinement_steps = getattr(condensed, "internal_rhs_refinement_max_steps", 0)
         if (
             isinstance(refinement_steps, (bool, np.bool_))
@@ -1486,6 +1501,7 @@ class P6CellCondensedAction:
             "shared_LU_factor_buffer_count": len({id(cell.interior_lu[0]) for cell in self._cells}),
             "internal_rhs_strategy": self.internal_rhs_strategy,
             "internal_rhs_refinement_max_steps": self.internal_rhs_refinement_max_steps,
+            "jz_evaluation_strategy": self.jz_evaluation_strategy,
             "same_lu_rhs_refinement_strategy": (
                 "same_lu_binary64_products_real_imag_fsum"
                 if self.internal_rhs_refinement_max_steps
@@ -3283,6 +3299,7 @@ class P6CellCondensedAction:
             cell.trace_interior,
             internal_rhs,
             refinement_max_steps=refinement_max_steps,
+            jz_evaluation_strategy=self.jz_evaluation_strategy,
             actual_internal_matrix=(
                 cell.actual_internal_matrix if refinement_max_steps else None
             ),

@@ -453,6 +453,152 @@ def _validate_task41_p0_v17_selected_two_cell_checker_command(
 
     return raw_paths
 
+
+def _validate_task41_p0_v18_saved_jz_checker_command(
+    *, argv: list[str], root: Path, expected_python: Path,
+    contract: dict[str, Any], contract_file: Path, contract_sha: str,
+    campaign: Any, authorization: dict[str, Any], environment: dict[str, str],
+) -> list[str]:
+    """Validate the exact V18 saved-Jz checker route and its fixed source receipts."""
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V18_SAVED_JZ_SCOPE,
+        TASK41_B0_V18_SAVED_JZ_WINDOW_RELATIVE,
+        TASK41_MODEL_ID,
+        require_task41_p0_contract,
+        task41_case_id_for_run_id,
+    )
+    from src.runners.task41_p0_v18_saved_jz import SOURCE_BINDINGS
+
+    prefix = ["-m", "src.runners.task41_p0_v18_saved_jz_checker"]
+    flags = [
+        "--candidate-report", "--candidate-sha256", "--replay-report", "--replay-sha256",
+        "--contract-path", "--contract-sha256", "--window-path", "--window-sha256",
+    ]
+    if (
+        len(argv) != 1 + len(prefix) + 2 * len(flags)
+        or Path(argv[0]).resolve() != expected_python
+        or argv[1:3] != prefix
+        or authorization.get("expected_channel_count") is not None
+    ):
+        raise ValueError("V18 closeout command is not the registered qualified checker")
+    tokens = argv[3:]
+    if tokens[::2] != flags:
+        raise ValueError("V18 checker arguments do not match the closed command schema")
+    options = dict(zip(tokens[::2], tokens[1::2], strict=True))
+    if any(not value for value in options.values()):
+        raise ValueError("V18 checker command contains an empty argument")
+    forbidden_markers = (
+        "TASK41_P0_V17_SELECTED_TWO_CELL_REPLAY",
+        "TASK41_P0_V16_SAVED_VECTOR_ANALYSIS",
+        "TASK41_P0_B0_SAVED_Y_G_COMPARISON",
+        "TASK41_P0_V9_FAILED_TERMINAL_AUDIT",
+        "TASK41_P0_SAVED_B0_EVIDENCE_AUDIT",
+        "TASK41_P0_B0_V9_SAVED_STAR_SCREEN",
+        "TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY",
+    )
+    if (
+        environment.get("TASK41_P0_V18_SAVED_JZ_CANDIDATE") != "1"
+        or environment.get("TASK41_P0_SAVED_OUTPUT_CONTINUATION") != "1"
+        or any(environment.get(name) is not None for name in forbidden_markers)
+        or environment.get("TASK41_P0_CONSUMER_SOURCE_SHA") != authorization.get("source_sha")
+        or environment.get("TASK41_P0_CHECKER_SOURCE_SHA") != authorization.get("source_sha")
+        or environment.get("TASK41_P0_V18_OUTPUT_DIRECTORY") is None
+        or authorization.get("source_sha") != contract.get("source", {}).get("sha")
+        or authorization.get("source_branch") != contract.get("branch")
+    ):
+        raise ValueError("V18 checker is not bound to its isolated current-source B0 service route")
+    case = contract.get("case")
+    window = contract.get("window")
+    if (
+        not isinstance(case, dict)
+        or case.get("model_id") != TASK41_MODEL_ID
+        or task41_case_id_for_run_id(str(case.get("run_id", ""))) != "B0"
+        or contract.get("execution_scope") != TASK41_B0_V18_SAVED_JZ_SCOPE
+        or not isinstance(window, dict)
+        or window.get("path") != TASK41_B0_V18_SAVED_JZ_WINDOW_RELATIVE.as_posix()
+        or window.get("sha256") != campaign.sha256
+        or window.get("sha256") != authorization.get("campaign_window_sha256")
+        or (root / str(window.get("path"))).resolve(strict=True) != campaign.path.resolve(strict=True)
+        or options["--contract-path"] != str(contract_file)
+        or Path(options["--contract-path"]).is_symlink()
+        or Path(options["--contract-path"]).resolve(strict=True) != contract_file
+        or options["--contract-sha256"] != contract_sha
+        or environment.get("TASK41_P0_CONTRACT_PATH") != str(contract_file)
+        or environment.get("TASK41_P0_CONTRACT_SHA256") != contract_sha
+        or options["--window-path"] != str(campaign.path.resolve(strict=True))
+        or Path(options["--window-path"]).is_symlink()
+        or options["--window-sha256"] != campaign.sha256
+    ):
+        raise ValueError("V18 checker contract/window binding differs from the fixed service")
+    current_contract, actual_sha = require_task41_p0_contract(
+        contract_file, expected_sha256=contract_sha, current_root=root,
+        require_clean_source=True, check_current_source=True, case_id="B0",
+    )
+    if actual_sha != contract_sha or current_contract != contract:
+        raise ValueError("V18 checker contract changed after service admission")
+
+    results_root = (root / "results" / TASK41_MODEL_ID).resolve(strict=True)
+    candidate_path = Path(options["--candidate-report"])
+    replay_path = Path(options["--replay-report"])
+    if candidate_path.is_symlink() or replay_path.is_symlink():
+        raise ValueError("V18 checker candidate/replay reports cannot be symlinks")
+    candidate_path = candidate_path.resolve(strict=True)
+    replay_path = replay_path.resolve(strict=True)
+    output_root = Path(environment["TASK41_P0_V18_OUTPUT_DIRECTORY"])
+    if output_root.is_symlink() or not output_root.is_absolute():
+        raise ValueError("V18 checker output root must be an absolute non-symlink path")
+    output_root = output_root.resolve(strict=True)
+    candidate_sha = options["--candidate-sha256"]
+    replay_sha = options["--replay-sha256"]
+    if (
+        candidate_path.parent != output_root
+        or replay_path != output_root / "task41_p0_v18_saved_jz_replay.json"
+        or candidate_path.name != "task41_p0_v18_saved_jz_candidate.json"
+        or not candidate_path.is_relative_to(results_root)
+        or not re.fullmatch(r"attempt[0-9]{2,}", output_root.name)
+        or not re.fullmatch(r"[0-9a-f]{64}", candidate_sha)
+        or not re.fullmatch(r"[0-9a-f]{64}", replay_sha)
+        or _sha256_file(candidate_path) != candidate_sha
+        or _sha256_file(replay_path) != replay_sha
+        or (output_root / "task41_p0_v18_independent_check.json").exists()
+        or (output_root / "task41_p0_v18_independent_check.json").is_symlink()
+    ):
+        raise ValueError("V18 candidate/replay path, hash, or checker output identity differs")
+    try:
+        candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+        replay = json.loads(replay_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError("V18 candidate/replay report is unreadable") from exc
+    if (
+        not isinstance(candidate, dict) or not isinstance(replay, dict)
+        or candidate.get("schema") != "task41.p0.v18.saved_jz_candidate.v1"
+        or candidate.get("status") != "CANDIDATE_OUTPUT_SAVED_PENDING_REPLAY"
+        or replay.get("schema") != "task41.p0.v18.saved_jz_production_order_replay.v1"
+        or replay.get("status") != "PRODUCTION_ORDER_REPLAYED_PENDING_INDEPENDENT_CHECK"
+        or candidate.get("consumer_contract_sha256") != contract_sha
+        or candidate.get("consumer_window_sha256") != campaign.sha256
+        or replay.get("consumer_contract_sha256") != contract_sha
+        or replay.get("consumer_window_sha256") != campaign.sha256
+        or replay.get("candidate_report_path") != str(candidate_path)
+        or replay.get("candidate_report_sha256") != candidate_sha
+    ):
+        raise ValueError("V18 candidate/replay reports do not bind this contract/window/input")
+    expected_sources = {
+        key: {"path": str((root / relative).resolve(strict=True)), "sha256": digest}
+        for key, (relative, digest) in SOURCE_BINDINGS.items()
+    }
+    if candidate.get("source_reports") != expected_sources:
+        raise ValueError("V18 candidate source report index differs from the fixed bindings")
+    input_paths = [
+        str(candidate_path), str(replay_path), str(contract_file),
+        str(campaign.path.resolve(strict=True)),
+        *(str((root / relative).resolve(strict=True)) for relative, _ in SOURCE_BINDINGS.values()),
+    ]
+    if authorization.get("input_paths") != input_paths:
+        raise ValueError("V18 checker authorized source inputs differ from its fixed report set")
+    return input_paths
+
+
 def _validate_campaign_closeout_authorization(
     *,
     command: list[str],
@@ -620,6 +766,7 @@ def _validate_campaign_closeout_authorization(
         'task41_p0_b0_v9_failed_terminal_audit_checker',
         'task41_p0_b0_saved_y_g_comparison_checker',
         'task41_p0_b0_v17_selected_two_cell_checker',
+        'task41_p0_b0_v18_saved_jz_checker',
         'task41_p0_b0_v15_terminal_checker',
         'task41_p0_v11_selected_cell_saved_array_checker',
         'task41_p0_v13_saved_adjoint_diagnostic_independent_check',
@@ -682,6 +829,18 @@ def _validate_campaign_closeout_authorization(
             input_paths = _validate_task41_p0_v17_selected_two_cell_checker_command(
                 argv=argv,
                 root=root,
+                expected_python=expected_python,
+                contract=contract,
+                contract_file=contract_file,
+                contract_sha=str(contract_sha),
+                campaign=campaign,
+                authorization=authorization,
+                environment=environment,
+            )
+        elif checker_kind == 'task41_p0_b0_v18_saved_jz_checker':
+            input_paths = _validate_task41_p0_v18_saved_jz_checker_command(
+                argv=argv,
+                root=Path.cwd().resolve(),
                 expected_python=expected_python,
                 contract=contract,
                 contract_file=contract_file,

@@ -9979,6 +9979,111 @@ def _task41_p0_v17_checker_authorization(
     }
 
 
+def _task41_p0_v18_worker_command(
+    *, python: str, output_directory: Path, contract_path: Path,
+    contract_sha256: str, window_path: Path, window_sha256: str,
+) -> list[str]:
+    return [
+        python, "-m", "src.runners.task41_p0_v18_saved_jz",
+        "--output-dir", str(output_directory),
+        "--contract-path", str(contract_path),
+        "--contract-sha256", contract_sha256,
+        "--window-path", str(window_path),
+        "--window-sha256", window_sha256,
+    ]
+
+
+def _task41_p0_v18_checker_command(
+    *, python: str, candidate_path: Path, candidate_sha256: str,
+    replay_path: Path, replay_sha256: str, contract_path: Path,
+    contract_sha256: str, window_path: Path, window_sha256: str,
+) -> list[str]:
+    return [
+        python, "-m", "src.runners.task41_p0_v18_saved_jz_checker",
+        "--candidate-report", str(candidate_path),
+        "--candidate-sha256", candidate_sha256,
+        "--replay-report", str(replay_path),
+        "--replay-sha256", replay_sha256,
+        "--contract-path", str(contract_path),
+        "--contract-sha256", contract_sha256,
+        "--window-path", str(window_path),
+        "--window-sha256", window_sha256,
+    ]
+
+
+def _task41_p0_v18_worker_completed(
+    watchdog: Mapping[str, Any], candidate: Any, replay: Any,
+    *, contract_sha256: str, window_sha256: str,
+) -> bool:
+    return bool(
+        watchdog.get("classification") == "COMPLETED"
+        and watchdog.get("leader_exit_code") == 0
+        and isinstance(candidate, Mapping)
+        and candidate.get("schema") == "task41.p0.v18.saved_jz_candidate.v1"
+        and candidate.get("status") == "CANDIDATE_OUTPUT_SAVED_PENDING_REPLAY"
+        and candidate.get("consumer_contract_sha256") == contract_sha256
+        and candidate.get("consumer_window_sha256") == window_sha256
+        and candidate.get("complete_jz_input_count") == 16
+        and candidate.get("factorization_count") == 0
+        and candidate.get("getrs_count") == 0
+        and candidate.get("native_fe_action_count") == 0
+        and candidate.get("official_result") is False
+        and candidate.get("scientific_qualified") is False
+        and candidate.get("full_owner_unlocked") is False
+        and isinstance(replay, Mapping)
+        and replay.get("schema") == "task41.p0.v18.saved_jz_production_order_replay.v1"
+        and replay.get("status") == "PRODUCTION_ORDER_REPLAYED_PENDING_INDEPENDENT_CHECK"
+        and replay.get("consumer_contract_sha256") == contract_sha256
+        and replay.get("consumer_window_sha256") == window_sha256
+        and replay.get("factorization_count") == 0
+        and replay.get("getrs_count") == 0
+        and replay.get("native_fe_action_count") == 0
+        and replay.get("official_result") is False
+        and replay.get("global_qualified") is False
+    )
+
+
+def _task41_p0_v18_checker_completed(watchdog: Mapping[str, Any], payload: Any) -> bool:
+    return bool(
+        watchdog.get("classification") == "COMPLETED"
+        and watchdog.get("leader_exit_code") == 0
+        and isinstance(payload, Mapping)
+        and payload.get("schema") == "task41.p0.v18.saved_jz_independent_check.v1"
+        and payload.get("audit_completed") is True
+        and payload.get("complete_jz_input_count") == 16
+        and payload.get("all_corrections_all_432_rows_checked") is True
+        and payload.get("global_qualified") is False
+        and payload.get("official_result") is False
+        and payload.get("scientific_qualified") is False
+        and payload.get("full_owner_unlocked") is False
+    )
+
+
+def _task41_p0_v18_checker_authorization(
+    *, command: Sequence[str], input_paths: Sequence[Path],
+    window_sha256: str, contract_sha256: str, source_sha: str,
+    source_branch: str, sha256_file: Callable[[Path], str],
+) -> dict[str, Any]:
+    canonical_paths = list(dict.fromkeys(path.resolve(strict=True) for path in input_paths))
+    return {
+        "schema": "task41.p0.closeout_checker_authorization.v1",
+        "phase": "closeout",
+        "purpose": "registered_read_only_required_checker",
+        "checker_kind": "task41_p0_b0_v18_saved_jz_checker",
+        "command_sha256": hashlib.sha256(
+            json.dumps(list(command), separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        ).hexdigest(),
+        "input_paths": [str(path) for path in canonical_paths],
+        "input_sha256s": [sha256_file(path) for path in canonical_paths],
+        "expected_channel_count": None,
+        "campaign_window_sha256": window_sha256,
+        "task41_contract_sha256": contract_sha256,
+        "source_sha": source_sha,
+        "source_branch": source_branch,
+        "source_clean": True,
+    }
+
+
 def _task41_p0_v17_readonly_producer_inputs(
     *,
     producer_binding: Mapping[str, Any] | None,
@@ -9994,6 +10099,7 @@ def _task41_p0_v17_readonly_producer_inputs(
         return None, None, None
 
     from src.runners.task41_p0_contract import (
+        TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
         TASK41_B0_CONTROLLER_RELATIVE,
         TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
         TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE,
@@ -10203,6 +10309,7 @@ def _run_task41_p0_saved_output_service(
     b0_saved_y_g_comparison_mode: bool = False,
     b0_v16_saved_vector_analysis_mode: bool = False,
     b0_v17_selected_two_cell_mode: bool = False,
+    b0_v18_saved_jz_mode: bool = False,
     v17_manifest_path: Path | None = None,
     v17_manifest_sha256: str | None = None,
     v17_producer_binding: Mapping[str, Any] | None = None,
@@ -10300,6 +10407,37 @@ def _run_task41_p0_saved_output_service(
     v17_producer_contract: dict[str, Any] | None = None
     v17_producer_progress: dict[str, Any] | None = None
     v17_producer_report: dict[str, Any] | None = None
+    if b0_v18_saved_jz_mode:
+        _validate_task41_p0_v18_selector_scope(
+            selector=True, case_id=case_id, contract=contract,
+            contract_window=Path(window.path), repo_root=repo_root,
+        )
+        from src.runners.task41_p0_v18_saved_jz import SOURCE_BINDINGS as V18_SOURCE_BINDINGS
+
+        expected_output_parent = (
+            repo_root / "results" / str(contract["case"]["model_id"])
+            / "task41_p0_saved_diagnostics_6h" / str(window.sha256)
+            / "selected_incident_replay"
+        ).resolve()
+        expected_run_root = (repo_root / V18_SOURCE_BINDINGS["v17"][0]).resolve().parent
+        if (
+            output_root.parent.resolve() != expected_output_parent
+            or re.fullmatch(r"attempt[0-9]{2,}", output_root.name) is None
+            or output_root.exists() or output_root.is_symlink()
+            or run_root.resolve(strict=True) != expected_run_root
+            or environment.get("TASK41_P0_V18_SAVED_JZ_CANDIDATE") != "1"
+            or environment.get("TASK41_P0_V18_OUTPUT_DIRECTORY") != str(output_root)
+            or environment.get("TASK41_P0_CHECKER_SOURCE_SHA") != consumer_source_sha
+            or not checker_only or checker_snapshot_path is not None
+            or checker_snapshot_sha256 is not None
+        ):
+            raise ValueError("Task41 V18 saved-Jz service output, source marker, or route isolation differs")
+        if any((b0_evidence_audit_mode, b0_v9_saved_star_screen_mode,
+                b0_v9_failed_terminal_audit_mode, b0_saved_y_g_comparison_mode,
+                b0_v16_saved_vector_analysis_mode, b0_v17_selected_two_cell_mode,
+                b0_v14_saved_rhs_candidate_mode, b0_v8_saved_trace_star_audit_mode,
+                b0_v8_selected_trace_star_mode, b0_v11_candidate_report_replayed_read_only_mode)):
+            raise ValueError("Task41 V18 saved-Jz route cannot share another audit mode")
     if b0_v17_selected_two_cell_mode:
         _validate_task41_p0_v17_selector_scope(
             selector=True,
@@ -10827,6 +10965,8 @@ def _run_task41_p0_saved_output_service(
     saved_recorded_raw_bytes: int | None = None
     v16_authorized_input_paths: list[Path] | None = None
     v17_donor_authorized_input_paths: list[Path] | None = None
+    v18_prior_budget: dict[str, Any] | None = None
+    v18_raw_inventory: list[dict[str, Any]] | None = None
     if b0_v17_selected_two_cell_mode:
         if v17_manifest_path is None or v17_manifest_sha256 is None:
             raise ValueError("V17 saved-service route lost its hash-bound V16 manifest")
@@ -11426,6 +11566,7 @@ def _run_task41_p0_saved_output_service(
         and not b0_saved_y_g_comparison_mode
         and not b0_v16_saved_vector_analysis_mode
         and not b0_v17_selected_two_cell_mode
+        and not b0_v18_saved_jz_mode
     ):
         if checker_snapshot_path is None or checker_snapshot_sha256 is None:
             raise ValueError("checker-only service requires an explicitly hash-bound saved-output snapshot")
@@ -11502,6 +11643,18 @@ def _run_task41_p0_saved_output_service(
         ):
             raise ValueError("V17 selected replay requires disjoint bound inputs and a new numbered attempt")
         output_root.mkdir(parents=True, exist_ok=False)
+    elif b0_v18_saved_jz_mode:
+        if (
+            checker_snapshot_path is not None
+            or checker_snapshot_sha256 is not None
+            or output_root is None
+            or run_root is None
+            or output_root == run_root
+            or output_root.is_relative_to(run_root)
+            or run_root.is_relative_to(output_root)
+        ):
+            raise ValueError("V18 saved-Jz route requires a new numbered output disjoint from its V17 source")
+        output_root.parent.mkdir(parents=True, exist_ok=True)
     elif checker_snapshot_path is not None or checker_snapshot_sha256 is not None:
         raise ValueError("continuation service cannot accept a checker-only snapshot override")
     service_directory = output_root.with_name(output_root.name + ".service")
@@ -11513,6 +11666,15 @@ def _run_task41_p0_saved_output_service(
         assert v17_donor_authorized_input_paths is not None
         saved_bound_raw_paths.extend(v16_authorized_input_paths)
         saved_bound_raw_paths.extend(v17_donor_authorized_input_paths)
+    if b0_v18_saved_jz_mode:
+        v18_prior_budget = _task41_p0_v18_prior_evidence_accounting(repo_root=repo_root)
+        from src.runners.task41_p0_v18_saved_jz import stat_bound_raw_artifact_inventory
+
+        v18_raw_inventory = stat_bound_raw_artifact_inventory(repo_root=repo_root)
+        saved_bound_raw_paths.extend(Path(row["path"]) for row in v18_raw_inventory)
+        saved_recorded_raw_bytes = int(
+            v18_prior_budget["recorded_cumulative_raw_artifact_bytes"]
+        )
 
     def stat_output_tree(path: Path) -> int:
         if not path.exists():
@@ -11528,15 +11690,19 @@ def _run_task41_p0_saved_output_service(
         return total
 
     def stat_bound_raw_bytes(paths: Sequence[Path]) -> int:
-        sizes: dict[Path, int] = {}
+        sizes_by_inode: dict[tuple[int, int], int] = {}
         for raw_path in paths:
             path = raw_path.resolve(strict=True)
             if path.suffix.lower() not in {".npy", ".npz"}:
                 continue
             if not path.is_file() or not path.is_relative_to(results_root):
                 raise ValueError("saved-diagnostics raw evidence escaped the registered results tree")
-            sizes[path] = path.stat().st_size
-        return sum(sizes.values())
+            stat = path.stat()
+            identity = (int(stat.st_dev), int(stat.st_ino))
+            previous = sizes_by_inode.setdefault(identity, stat.st_size)
+            if previous != stat.st_size:
+                raise ValueError("saved-diagnostics hard-linked raw evidence has inconsistent sizes")
+        return sum(sizes_by_inode.values())
 
     def stat_only_b0_donor_arrays() -> tuple[list[Path], int, str]:
         """Bind donor raw bytes from the small frozen manifest without hashing array payloads."""
@@ -11607,6 +11773,7 @@ def _run_task41_p0_saved_output_service(
             TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
             TASK41_B0_V16_SAVED_VECTOR_SCOPE,
             TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
+            TASK41_B0_V18_SAVED_JZ_SCOPE,
             task41_raw_artifact_limit_bytes,
         )
 
@@ -11617,6 +11784,7 @@ def _run_task41_p0_saved_output_service(
             TASK41_B0_V14_SAVED_RHS_CANDIDATE_SCOPE,
             TASK41_B0_V16_SAVED_VECTOR_SCOPE,
             TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
+            TASK41_B0_V18_SAVED_JZ_SCOPE,
         ):
             raise ValueError("saved-diagnostics disk gate received a different execution scope")
         if saved_scope == TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE and not (
@@ -11630,12 +11798,15 @@ def _run_task41_p0_saved_output_service(
             raise ValueError("V16 saved-vector scope only admits its isolated distribution diagnostic")
         if saved_scope == TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE and not b0_v17_selected_two_cell_mode:
             raise ValueError("V17 two-cell scope only admits its isolated selected-cell replay")
+        if saved_scope == TASK41_B0_V18_SAVED_JZ_SCOPE and not b0_v18_saved_jz_mode:
+            raise ValueError("V18 saved-Jz scope only admits its isolated candidate/replay route")
         window_sha = str(contract.get("window", {}).get("sha256", ""))
         window_output_root = results_root / "task41_p0_saved_diagnostics_6h" / window_sha
         expected_name = (
             "v9_failed_terminal_audit" if b0_v9_failed_terminal_audit_mode
             else "saved_y_g_comparison" if b0_saved_y_g_comparison_mode
             else "saved_vector_distribution" if b0_v16_saved_vector_analysis_mode
+            else "selected_incident_replay" if b0_v18_saved_jz_mode
             else "selected_incident_replay" if b0_v17_selected_two_cell_mode
             else "selected_incident_replay"
             if b0_v8_selected_trace_star_metadata_only_mode
@@ -11678,7 +11849,20 @@ def _run_task41_p0_saved_output_service(
             recorded = existing + prior
         if recorded is None:
             raise ValueError("saved-diagnostics route lacks recorded cumulative raw evidence")
-        cumulative_before_new = max(recorded, stat_raw_bytes + donor_raw_bytes) + current_window_output_bytes
+        if b0_v18_saved_jz_mode:
+            if v18_prior_budget is None:
+                raise ValueError("V18 prior V17 accounting receipt was not bound")
+            cumulative_before_new = (
+                max(
+                    recorded,
+                    int(v18_prior_budget["bound_raw_artifact_bytes_stat_deduplicated"]),
+                    stat_raw_bytes + donor_raw_bytes,
+                )
+                + int(v18_prior_budget["window_output_tree_bytes_conservative"])
+                + current_window_output_bytes
+            )
+        else:
+            cumulative_before_new = max(recorded, stat_raw_bytes + donor_raw_bytes) + current_window_output_bytes
         free_bytes = shutil.disk_usage(window_output_root.parent if window_output_root.parent.exists() else results_root).free
         reserve = 0 if final else new_cap - current_window_output_bytes
         if cumulative_before_new + reserve > raw_cap:
@@ -11696,6 +11880,8 @@ def _run_task41_p0_saved_output_service(
             "cumulative_raw_artifact_limit_bytes": raw_cap,
             "free_space_bytes": free_bytes,
             "free_space_floor_bytes": floor,
+            "prior_window_accounting": v18_prior_budget if b0_v18_saved_jz_mode else None,
+            "bound_raw_inventory_count": len(v18_raw_inventory) if v18_raw_inventory is not None else None,
         }
     receipt_path = service_directory / "task41_p0_service_receipt.json"
     resource = contract["resources"]
@@ -11736,6 +11922,8 @@ def _run_task41_p0_saved_output_service(
             if b0_saved_y_g_comparison_mode
             else "saved_b0_v17_selected_two_cell_replay"
             if b0_v17_selected_two_cell_mode
+            else "saved_b0_v18_saved_jz_candidate"
+            if b0_v18_saved_jz_mode
             else "saved_b0_v16_saved_vector_analysis"
             if b0_v16_saved_vector_analysis_mode
             else "saved_b0_v9_failed_terminal_audit"
@@ -11865,6 +12053,21 @@ def _run_task41_p0_saved_output_service(
             selected_active_row=1_622_464,
             selected_original_row=5_218_672,
             selected_cells=[7873, 8014],
+            official_result=False,
+            scientific_qualified=False,
+            full_owner_unlocked=False,
+        )
+    elif b0_v18_saved_jz_mode:
+        record.update(
+            checker_source_sha=environment.get("TASK41_P0_CHECKER_SOURCE_SHA"),
+            v18_output_directory=str(output_root),
+            v18_prior_accounting=v18_prior_budget,
+            v18_bound_raw_inventory=v18_raw_inventory,
+            complete_jz_input_count=16,
+            selected_cells=[7873, 8014],
+            getrs_count=0,
+            factorization_count=0,
+            native_fe_action_count=0,
             official_result=False,
             scientific_qualified=False,
             full_owner_unlocked=False,
@@ -12291,6 +12494,184 @@ def _run_task41_p0_saved_output_service(
             except Exception as exc:
                 record["finalization_error"] = {"type": type(exc).__name__, "message": str(exc)}
                 record["result_classification"] = "V17_SELECTED_TWO_CELL_DIAGNOSTIC_INCOMPLETE"
+                result_code = 3
+            record["status"] = "completed" if result_code == 0 else "failed_raw_evidence_retained"
+            record["official_result"] = False
+            record["scientific_qualified"] = False
+            record["full_owner_unlocked"] = False
+            record["receipt_path"] = str(receipt_path)
+            _write_json_fsync(receipt_path, record)
+        return result_code
+    if b0_v18_saved_jz_mode:
+        result_code = 3
+        worker_ok = False
+        checker_ok = False
+        candidate_path = output_root / "task41_p0_v18_saved_jz_candidate.json"
+        replay_path = output_root / "task41_p0_v18_saved_jz_replay.json"
+        checker_result_path = output_root / "task41_p0_v18_independent_check.json"
+        worker_watchdog: Mapping[str, Any] | None = None
+        checker_watchdog: Mapping[str, Any] | None = None
+        candidate_payload: Mapping[str, Any] | None = None
+        replay_payload: Mapping[str, Any] | None = None
+        try:
+            from src.runners.task41_p0_v18_saved_jz import SOURCE_BINDINGS as V18_SOURCE_BINDINGS
+
+            if (
+                v18_prior_budget is None
+                or v18_raw_inventory is None
+                or not b0_v18_saved_jz_mode
+                or consumer_source_sha != environment.get("TASK41_P0_CHECKER_SOURCE_SHA")
+                or contract.get("source", {}).get("sha") != consumer_source_sha
+                or output_root.exists()
+                or output_root.is_symlink()
+            ):
+                raise ValueError("V18 service source or fixed saved-input inventory is incomplete")
+            record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget_check()
+            v18_pre_admission_path = service_directory / "task41_p0_v18_pre_admission.json"
+            v18_pre_admission = {
+                "schema": "task41.p0.v18.saved_jz_pre_admission.v1",
+                "consumer_contract_path": str(contract_path.resolve(strict=True)),
+                "consumer_contract_sha256": contract_sha,
+                "consumer_window_path": str(Path(window.path).resolve(strict=True)),
+                "consumer_window_sha256": window.sha256,
+                "output_directory": str(output_root.resolve()),
+                "prior_v17_accounting": v18_prior_budget,
+                "bound_raw_artifact_count": len(v18_raw_inventory),
+                "bound_raw_artifact_bytes_stat_deduplicated": record["saved_diagnostics_disk_budget"]["bound_raw_artifact_bytes_stat_deduplicated"],
+                "saved_diagnostics_disk_budget": record["saved_diagnostics_disk_budget"],
+                "factorization_count": 0,
+                "getrs_count": 0,
+                "native_fe_action_count": 0,
+                "official_result": False,
+                "global_qualified": False,
+            }
+            _write_json_fsync(v18_pre_admission_path, v18_pre_admission)
+            v18_pre_admission_sha256 = sha256_file(v18_pre_admission_path)
+            record.update(
+                v18_pre_admission_path=str(v18_pre_admission_path),
+                v18_pre_admission_sha256=v18_pre_admission_sha256,
+            )
+            worker_command = _task41_p0_v18_worker_command(
+                python=python,
+                output_directory=output_root,
+                contract_path=contract_path.resolve(strict=True),
+                contract_sha256=contract_sha,
+                window_path=Path(window.path).resolve(strict=True),
+                window_sha256=window.sha256,
+            )
+            worker_watchdog = supervise(
+                worker_command,
+                service_directory / "v18_saved_jz_worker_watchdog",
+                wall_seconds=window.cutoff_seconds,
+                phase_path=service_directory / "v18_saved_jz_worker_phase.json",
+                campaign_phase="numeric",
+                campaign_phase_authorization=None,
+                **common_watchdog,
+            )
+            candidate_payload = (
+                read_json_object(candidate_path, "V18 saved-Jz candidate")
+                if candidate_path.is_file() else None
+            )
+            replay_payload = (
+                read_json_object(replay_path, "V18 production-order replay")
+                if replay_path.is_file() else None
+            )
+            candidate_sha256 = sha256_file(candidate_path) if candidate_path.is_file() else None
+            replay_sha256 = sha256_file(replay_path) if replay_path.is_file() else None
+            worker_ok = bool(
+                candidate_sha256 and replay_sha256
+                and _task41_p0_v18_worker_completed(
+                    worker_watchdog, candidate_payload, replay_payload,
+                    contract_sha256=contract_sha, window_sha256=window.sha256,
+                )
+                and replay_payload.get("candidate_report_path") == str(candidate_path.resolve())
+                and replay_payload.get("candidate_report_sha256") == candidate_sha256
+            )
+            record.update(
+                v18_worker_command=worker_command,
+                v18_worker_watchdog=worker_watchdog,
+                v18_candidate_report_path=str(candidate_path),
+                v18_candidate_report_sha256=candidate_sha256,
+                v18_replay_report_path=str(replay_path),
+                v18_replay_report_sha256=replay_sha256,
+                v18_candidate_status=(candidate_payload.get("status") if candidate_payload else None),
+                v18_worker_completed=worker_ok,
+            )
+            if worker_ok:
+                checker_inputs = [
+                    candidate_path, replay_path, contract_path.resolve(strict=True),
+                    Path(window.path).resolve(strict=True),
+                    *((repo_root / rel).resolve(strict=True) for rel, _ in V18_SOURCE_BINDINGS.values()),
+                ]
+                checker_command = _task41_p0_v18_checker_command(
+                    python=python,
+                    candidate_path=candidate_path.resolve(strict=True),
+                    candidate_sha256=str(candidate_sha256),
+                    replay_path=replay_path.resolve(strict=True),
+                    replay_sha256=str(replay_sha256),
+                    contract_path=contract_path.resolve(strict=True),
+                    contract_sha256=contract_sha,
+                    window_path=Path(window.path).resolve(strict=True),
+                    window_sha256=window.sha256,
+                )
+                checker_authorization = _task41_p0_v18_checker_authorization(
+                    command=checker_command,
+                    input_paths=checker_inputs,
+                    window_sha256=window.sha256,
+                    contract_sha256=contract_sha,
+                    source_sha=consumer_source_sha,
+                    source_branch=contract["branch"],
+                    sha256_file=sha256_file,
+                )
+                record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget_check()
+                checker_watchdog = supervise(
+                    checker_command,
+                    service_directory / "v18_saved_jz_checker_watchdog",
+                    wall_seconds=window.closeout_seconds,
+                    phase_path=service_directory / "v18_saved_jz_checker_phase.json",
+                    campaign_phase="closeout",
+                    campaign_phase_authorization=checker_authorization,
+                    **common_watchdog,
+                )
+                checker_payload = (
+                    read_json_object(checker_result_path, "V18 independent Jz check")
+                    if checker_result_path.is_file() else None
+                )
+                checker_ok = _task41_p0_v18_checker_completed(checker_watchdog, checker_payload)
+                record.update(
+                    v18_checker_command=checker_command,
+                    v18_checker_authorization=checker_authorization,
+                    v18_checker_watchdog=checker_watchdog,
+                    v18_checker_result_path=str(checker_result_path),
+                    v18_checker_result_sha256=(
+                        sha256_file(checker_result_path) if checker_result_path.is_file() else None
+                    ),
+                    v18_independent_check_status=(
+                        checker_payload.get("status") if isinstance(checker_payload, Mapping) else None
+                    ),
+                    v18_candidate_supported=(
+                        checker_payload.get("candidate_supported")
+                        if isinstance(checker_payload, Mapping) else None
+                    ),
+                    v18_independent_check_completed=checker_ok,
+                )
+            result_code = 0 if worker_ok and checker_ok else 3
+            record.update(
+                required_checker_status="audit_completed" if checker_ok else "failed",
+                result_classification=(
+                    "V18_SAVED_JZ_AUDIT_COMPLETED"
+                    if result_code == 0 else "V18_SAVED_JZ_AUDIT_INCOMPLETE"
+                ),
+            )
+        except Exception as exc:
+            record["workflow_error"] = {"type": type(exc).__name__, "message": str(exc)}
+            result_code = 3
+        finally:
+            try:
+                record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget_check(final=True)
+            except Exception as exc:
+                record["finalization_error"] = {"type": type(exc).__name__, "message": str(exc)}
+                record["result_classification"] = "V18_SAVED_JZ_AUDIT_INCOMPLETE"
                 result_code = 3
             record["status"] = "completed" if result_code == 0 else "failed_raw_evidence_retained"
             record["official_result"] = False
@@ -15619,6 +16000,8 @@ def _run_task41_p0_service(
     repo_root: Path,
     v15_full_acceptance_selector: bool = False,
     v17_selected_two_cell_selector: bool = False,
+    v18_saved_jz_selector: bool = False,
+    v18_output_directory: Path | None = None,
 ) -> int:
     """Run one registered Task41 P0 case through the existing worker/watchdog path."""
     service_start_sample = clock_sample(include_boot_id=True)
@@ -15716,6 +16099,11 @@ def _run_task41_p0_service(
         os.environ.get("TASK41_P0_V17_SELECTED_TWO_CELL_REPLAY") == "1"
     ):
         raise ValueError("Task41 V17 Python selector and wrapper authorization marker differ")
+    b0_v18_saved_jz_mode = bool(v18_saved_jz_selector)
+    if b0_v18_saved_jz_mode != (
+        os.environ.get("TASK41_P0_V18_SAVED_JZ_CANDIDATE") == "1"
+    ):
+        raise ValueError("Task41 V18 Python selector and wrapper authorization marker differ")
     v16_manifest_path: Path | None = None
     v16_manifest_sha256: str | None = None
     b0_v4_geometry_pair_mode = False
@@ -15754,6 +16142,7 @@ def _run_task41_p0_service(
         or b0_saved_y_g_comparison_mode
         or b0_v16_saved_vector_analysis_mode
         or b0_v17_selected_two_cell_mode
+        or b0_v18_saved_jz_mode
     )
     continuation_run_root: Path | None = None
     continuation_output_root: Path | None = None
@@ -15835,6 +16224,22 @@ def _run_task41_p0_service(
             repo_root=repo_root,
         )
         continuation_run_root = v17_manifest_path.parent.resolve()
+    if b0_v18_saved_jz_mode:
+        if v18_output_directory is None:
+            raise ValueError("Task41 V18 route requires its explicit numbered output directory")
+        from src.runners.task41_p0_v18_saved_jz import SOURCE_BINDINGS as V18_SOURCE_BINDINGS
+        v18_v17_source_report = (repo_root / V18_SOURCE_BINDINGS["v17"][0]).resolve(strict=True)
+        results_root_v18 = (repo_root / "results" / str(contract["case"]["model_id"])).resolve(strict=True)
+        if not v18_v17_source_report.is_relative_to(results_root_v18):
+            raise ValueError("Task41 V18 fixed V17 source report escaped the registered results root")
+        continuation_run_root = v18_v17_source_report.parent.resolve(strict=True)
+        v18_output_raw = (
+            v18_output_directory if v18_output_directory.is_absolute()
+            else repo_root / v18_output_directory
+        )
+        if v18_output_raw.is_symlink():
+            raise ValueError("Task41 V18 output directory cannot be a symlink")
+        continuation_output_root = v18_output_raw.resolve()
     if b0_v9_saved_star_screen_mode:
         if (
             len(case_args) != 11
@@ -16295,6 +16700,13 @@ def _run_task41_p0_service(
         contract_window=contract_window,
         repo_root=repo_root,
     )
+    is_v18_saved_jz_candidate = _validate_task41_p0_v18_selector_scope(
+        selector=v18_saved_jz_selector,
+        case_id=case_id,
+        contract=contract,
+        contract_window=contract_window,
+        repo_root=repo_root,
+    )
     if b0_v16_saved_vector_analysis_mode != is_v16_saved_vector_analysis:
         raise ValueError(
             "Task41 V16 saved-vector analysis requires both its exact fixed contract and explicit service route"
@@ -16305,6 +16717,7 @@ def _run_task41_p0_service(
         or b0_saved_y_g_comparison_mode
         or b0_v16_saved_vector_analysis_mode
         or is_v17_selected_two_cell_replay
+        or is_v18_saved_jz_candidate
         or b0_v14_saved_rhs_candidate_mode
         or v15_full_acceptance_selector
         or b0_v8_selected_trace_star_metadata_only_mode
@@ -16375,6 +16788,7 @@ def _run_task41_p0_service(
             or b0_saved_y_g_comparison_mode
             or b0_v16_saved_vector_analysis_mode
             or b0_v17_selected_two_cell_mode
+            or b0_v18_saved_jz_mode
         ):
             if (
                 continuation_branch != contract["branch"]
@@ -17014,6 +17428,15 @@ def _run_task41_p0_service(
                 "TASK41_P0_V17_OUTPUT_DIRECTORY": str(continuation_output_root),
             }
         )
+    if b0_v18_saved_jz_mode:
+        assert continuation_output_root is not None
+        environment.update({
+            "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
+            "TASK41_P0_V18_SAVED_JZ_CANDIDATE": "1",
+            "TASK41_P0_V18_OUTPUT_DIRECTORY": str(continuation_output_root),
+            "TASK41_P0_CONSUMER_SOURCE_SHA": str(continuation_source_sha),
+            "TASK41_P0_CHECKER_SOURCE_SHA": str(checker_source_sha),
+        })
     if continuation_mode:
         environment.update({
             "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
@@ -17211,6 +17634,7 @@ def _run_task41_p0_service(
                 or b0_saved_y_g_comparison_mode
                 or b0_v16_saved_vector_analysis_mode
                 or b0_v17_selected_two_cell_mode
+                or b0_v18_saved_jz_mode
             ),
             checker_snapshot_path=checker_input_path,
             checker_snapshot_sha256=checker_input_sha256,
@@ -17220,6 +17644,7 @@ def _run_task41_p0_service(
             b0_saved_y_g_comparison_mode=b0_saved_y_g_comparison_mode,
             b0_v16_saved_vector_analysis_mode=b0_v16_saved_vector_analysis_mode,
             b0_v17_selected_two_cell_mode=b0_v17_selected_two_cell_mode,
+            b0_v18_saved_jz_mode=b0_v18_saved_jz_mode,
             v17_manifest_path=v17_manifest_path,
             v17_manifest_sha256=v17_manifest_sha256,
             v17_producer_binding=v17_producer_binding,
@@ -17679,6 +18104,160 @@ def _validate_task41_p0_v17_selector_scope(
     return exact_v17_scope
 
 
+def _validate_task41_p0_v18_selector_scope(
+    *, selector: bool, case_id: str, contract: Mapping[str, Any],
+    contract_window: Path, repo_root: Path,
+) -> bool:
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        TASK41_B0_V18_SAVED_JZ_SCOPE,
+        TASK41_B0_V18_SAVED_JZ_WINDOW_RELATIVE,
+        TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
+    )
+
+    window_path = Path(contract_window)
+    if not window_path.is_absolute():
+        window_path = Path(repo_root) / window_path
+    expected_strategy = {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v3",
+        "internal_rhs_strategy": TASK41_B0_V9_INTERNAL_RHS_STRATEGY,
+        "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        "refinement_max_steps": 2,
+        "jz_evaluation_strategy": "binary64_real_imag_fsum",
+    }
+    exact_scope = bool(
+        case_id == "B0"
+        and contract.get("execution_scope") == TASK41_B0_V18_SAVED_JZ_SCOPE
+        and window_path.resolve()
+        == (Path(repo_root) / TASK41_B0_V18_SAVED_JZ_WINDOW_RELATIVE).resolve()
+        and contract.get("numerical_strategy") == expected_strategy
+    )
+    if selector != exact_scope:
+        raise ValueError("Task41 V18 saved-Jz candidate requires its exact contract and explicit service selector")
+    return exact_scope
+
+
+def _task41_p0_v18_prior_evidence_accounting(*, repo_root: Path) -> dict[str, Any]:
+    """Read the exact V17 attempt07 receipt and conservatively recover prior raw/window bytes."""
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V17_PRIOR_CONTRACT_RELATIVE,
+        TASK41_B0_V17_PRIOR_CONTRACT_SHA256,
+        TASK41_B0_V17_PRIOR_SERVICE_RECEIPT_RELATIVE,
+        TASK41_B0_V17_PRIOR_SERVICE_RECEIPT_SHA256,
+        TASK41_B0_V17_PRIOR_SOURCE_SHA,
+        TASK41_B0_V17_PRIOR_WINDOW_SHA256,
+        TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
+        TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE,
+        TASK41_BRANCH,
+        TASK41_MODEL_ID,
+        TASK41_P0_V17_SELECTED_TWO_CELL_WORKER_REPORT_RELATIVE,
+        TASK41_P0_V17_SELECTED_TWO_CELL_WORKER_REPORT_SHA256,
+    )
+
+    root = repo_root.resolve(strict=True)
+    receipt_raw = root / TASK41_B0_V17_PRIOR_SERVICE_RECEIPT_RELATIVE
+    contract_raw = root / TASK41_B0_V17_PRIOR_CONTRACT_RELATIVE
+    window_raw = root / TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE
+    if (
+        receipt_raw.is_symlink()
+        or contract_raw.is_symlink()
+        or window_raw.is_symlink()
+    ):
+        raise ValueError("V18 prior V17 receipt, contract, or window cannot be a symlink")
+    receipt_path = receipt_raw.resolve(strict=True)
+    contract_path = contract_raw.resolve(strict=True)
+    window_path = window_raw.resolve(strict=True)
+    if (
+        _sha256_file(receipt_path) != TASK41_B0_V17_PRIOR_SERVICE_RECEIPT_SHA256
+        or _sha256_file(contract_path) != TASK41_B0_V17_PRIOR_CONTRACT_SHA256
+        or _sha256_file(window_path) != TASK41_B0_V17_PRIOR_WINDOW_SHA256
+    ):
+        raise ValueError("V18 prior V17 receipt, contract, or window hash differs")
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        producer_contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError("V18 prior V17 receipt/contract is unreadable") from exc
+    expected_worker_report = (root / TASK41_P0_V17_SELECTED_TWO_CELL_WORKER_REPORT_RELATIVE).resolve(strict=True)
+    expected_output_root = (
+        root / "results" / TASK41_MODEL_ID / "task41_p0_saved_diagnostics_6h"
+        / TASK41_B0_V17_PRIOR_WINDOW_SHA256 / "selected_incident_replay" / "attempt07"
+    ).resolve(strict=True)
+    expected_worker_sha = TASK41_P0_V17_SELECTED_TWO_CELL_WORKER_REPORT_SHA256
+    budget = receipt.get("saved_diagnostics_disk_budget") if isinstance(receipt, Mapping) else None
+    expected_strategy = {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v2",
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+        "refinement_strategy": TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+        "refinement_max_steps": 2,
+    }
+    if (
+        not isinstance(receipt, Mapping)
+        or receipt.get("schema") != "task41.p0.saved_output_service_receipt.v1"
+        or receipt.get("status") != "completed"
+        or receipt.get("mode") != "saved_b0_v17_selected_two_cell_replay"
+        or receipt.get("receipt_path") != str(receipt_path)
+        or receipt.get("contract_path") != str(contract_path)
+        or receipt.get("contract_sha256") != TASK41_B0_V17_PRIOR_CONTRACT_SHA256
+        or receipt.get("window_path") != str(window_path)
+        or receipt.get("window_sha256") != TASK41_B0_V17_PRIOR_WINDOW_SHA256
+        or receipt.get("consumer_branch") != TASK41_BRANCH
+        or receipt.get("consumer_source_sha") != TASK41_B0_V17_PRIOR_SOURCE_SHA
+        or receipt.get("checker_source_sha") != TASK41_B0_V17_PRIOR_SOURCE_SHA
+        or receipt.get("consumer_output_root") != str(expected_output_root)
+        or receipt.get("v17_worker_route") != "READ_ONLY_COMPLETED_PRODUCER_REPORT"
+        or receipt.get("v17_worker_report_path") != str(expected_worker_report)
+        or receipt.get("v17_worker_report_sha256") != expected_worker_sha
+        or receipt.get("v17_worker_completed") is not True
+        or receipt.get("v17_independent_check_completed") is not True
+        or receipt.get("required_checker_status") != "audit_completed"
+        or receipt.get("result_classification") != "V17_SELECTED_TWO_CELL_DIAGNOSTIC_COMPLETED"
+        or receipt.get("official_result") is not False
+        or receipt.get("scientific_qualified") is not False
+        or receipt.get("full_owner_unlocked") is not False
+        or not isinstance(budget, Mapping)
+        or budget.get("status") != "POST_WRITE_CHECKED"
+        or budget.get("cumulative_raw_artifact_limit_bytes") != 16 * 1024**3
+        or budget.get("free_space_floor_bytes") != 2 * 1024**3
+        or budget.get("window_wide_new_evidence_limit_bytes") != 128 * 1024**2
+        or producer_contract.get("case", {}).get("model_id") != TASK41_MODEL_ID
+        or producer_contract.get("source", {}).get("sha") != TASK41_B0_V17_PRIOR_SOURCE_SHA
+        or producer_contract.get("branch") != TASK41_BRANCH
+        or producer_contract.get("execution_scope") != TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE
+        or producer_contract.get("window", {}).get("sha256") != TASK41_B0_V17_PRIOR_WINDOW_SHA256
+        or producer_contract.get("window", {}).get("path") != TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE.as_posix()
+        or producer_contract.get("numerical_strategy") != expected_strategy
+    ):
+        raise ValueError("V18 prior V17 service receipt is not a successful same-scope/window accounting record")
+    recorded = budget.get("recorded_cumulative_raw_artifact_bytes")
+    bound = budget.get("bound_raw_artifact_bytes_stat_deduplicated")
+    window_recorded = budget.get("window_output_tree_bytes")
+    if any(type(value) is not int or value < 0 for value in (recorded, bound, window_recorded)):
+        raise ValueError("V18 prior V17 raw-byte accounting contains invalid counters")
+    prior_window_root = expected_output_root.parent
+    if prior_window_root.is_symlink() or not prior_window_root.is_dir():
+        raise ValueError("V18 prior V17 output window is absent or not a real directory")
+    actual_window_bytes = 0
+    for path in prior_window_root.rglob("*"):
+        if path.is_symlink():
+            raise ValueError("V18 prior V17 output window contains a symlink")
+        if path.is_file():
+            actual_window_bytes += path.stat().st_size
+    return {
+        "receipt_path": str(receipt_path),
+        "receipt_sha256": TASK41_B0_V17_PRIOR_SERVICE_RECEIPT_SHA256,
+        "contract_path": str(contract_path),
+        "contract_sha256": TASK41_B0_V17_PRIOR_CONTRACT_SHA256,
+        "window_path": str(window_path),
+        "window_sha256": TASK41_B0_V17_PRIOR_WINDOW_SHA256,
+        "recorded_cumulative_raw_artifact_bytes": recorded,
+        "bound_raw_artifact_bytes_stat_deduplicated": bound,
+        "window_output_tree_bytes_recorded": window_recorded,
+        "window_output_tree_bytes_stat": actual_window_bytes,
+        "window_output_tree_bytes_conservative": max(window_recorded, actual_window_bytes),
+    }
+
+
 def _parse_task41_p0_v17_service_args(
     case_args: list[str], *, repo_root: Path
 ) -> tuple[Path, str, Path, dict[str, Any] | None]:
@@ -17793,6 +18372,14 @@ def _extract_task41_p0_v17_selector(case_args: list[str]) -> tuple[list[str], bo
     return [item for item in case_args if item != token], count == 1
 
 
+def _extract_task41_p0_v18_selector(case_args: list[str]) -> tuple[list[str], bool]:
+    token = "--task41-p0-b0-v18-saved-jz-candidate"
+    count = case_args.count(token)
+    if count > 1:
+        raise ValueError("Task41 V18 saved-Jz selector may appear only once")
+    return [item for item in case_args if item != token], count == 1
+
+
 def run_service(
     *,
     unit: str,
@@ -17807,13 +18394,27 @@ def run_service(
     case_args, v17_selected_two_cell_selector = _extract_task41_p0_v17_selector(
         case_args
     )
+    case_args, v18_saved_jz_selector = _extract_task41_p0_v18_selector(case_args)
+    case_args, v18_output_directory = _extract_v29_path_arg(
+        case_args, "--v18-output-directory"
+    )
+    if v18_saved_jz_selector != (v18_output_directory is not None):
+        raise ValueError("Task41 V18 route requires its selector and one output directory together")
     v15_selector_token = "--task41-p0-b0-v15-full-acceptance"
     v15_selector_count = case_args.count(v15_selector_token)
     if v15_selector_count > 1:
         raise ValueError("Task41 V15 full-acceptance selector may appear only once")
     v15_full_acceptance_selector = v15_selector_count == 1
-    if v15_full_acceptance_selector and v17_selected_two_cell_selector:
-        raise ValueError("Task41 V15 and V17 selectors are mutually exclusive")
+    if sum((v15_full_acceptance_selector, v17_selected_two_cell_selector, v18_saved_jz_selector)) > 1:
+        raise ValueError("Task41 V15, V17, and V18 selectors are mutually exclusive")
+    if v18_saved_jz_selector and any(argument in {
+        "--task41-p0-saved-output-continuation", "--task41-p0-saved-output-checker-only",
+        "--task41-p0-saved-b0-evidence-audit", "--task41-p0-saved-b0-volume-only-attribution",
+        "--task41-p0-saved-b0-selected-trace-star-audit", "--task41-p0-saved-b0-v9-star-screen",
+        "--task41-p0-saved-b0-v9-failed-terminal-audit", "--task41-p0-saved-b0-y-g-comparison",
+        "--task41-p0-saved-b0-v16-vector-analysis", "--v14-saved-rhs-candidate",
+    } for argument in case_args):
+        raise ValueError("Task41 V18 saved-Jz candidate cannot be combined with another saved route")
     if v15_full_acceptance_selector:
         saved_routes = {
             "--task41-p0-saved-output-continuation",
@@ -17844,11 +18445,15 @@ def run_service(
             repo_root=repo_root,
             v15_full_acceptance_selector=v15_full_acceptance_selector,
             v17_selected_two_cell_selector=v17_selected_two_cell_selector,
+            v18_saved_jz_selector=v18_saved_jz_selector,
+            v18_output_directory=(Path(v18_output_directory) if v18_output_directory is not None else None),
         )
     if v15_full_acceptance_selector:
         raise ValueError("Task41 V15 full-acceptance selector requires its Task41 P0 execution contract")
     if v17_selected_two_cell_selector:
         raise ValueError("Task41 V17 selected-two-cell selector requires its Task41 P0 execution contract")
+    if v18_saved_jz_selector or v18_output_directory is not None:
+        raise ValueError("Task41 V18 saved-Jz selector requires its Task41 P0 execution contract")
     case_args, v29_contract_path = _extract_v29_path_arg(
         case_args, "--task40-v29-execution-contract"
     )

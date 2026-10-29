@@ -208,12 +208,75 @@ def _same_lu_binary64_compensated_residual(
         raise ValueError("same-LU compensated residual is not finite")
     return residual
 
+
+JZ_EVALUATION_BLAS = "blas"
+JZ_EVALUATION_BINARY64_REAL_IMAG_FSUM = "binary64_real_imag_fsum"
+_JZ_EVALUATION_STRATEGIES = {
+    JZ_EVALUATION_BLAS,
+    JZ_EVALUATION_BINARY64_REAL_IMAG_FSUM,
+}
+
+
+def evaluate_same_lu_internal_rhs_correction(
+    actual_trace_interior: np.ndarray,
+    solved: np.ndarray,
+    *,
+    strategy: str = JZ_EVALUATION_BLAS,
+) -> np.ndarray:
+    """Return the full ``-J z`` correction under an explicit evaluator.
+
+    ``blas`` preserves the historical matrix-vector expression. The opt-in
+    ``binary64_real_imag_fsum`` path rounds each real product to binary64,
+    feeds all ``2*n`` real products to one ``math.fsum`` per output component,
+    then applies the overall minus sign. Inputs are read-only borrowed arrays;
+    the candidate allocates only two reusable real row buffers and the output.
+    """
+
+    if not isinstance(strategy, str) or strategy not in _JZ_EVALUATION_STRATEGIES:
+        raise ValueError(f"unknown same-LU Jz evaluation strategy {strategy!r}")
+    matrix = np.asarray(actual_trace_interior, dtype=np.complex128)
+    vector = np.asarray(solved, dtype=np.complex128)
+    if matrix.ndim != 2 or vector.ndim != 1 or matrix.shape[1] != vector.size:
+        raise ValueError("same-LU Jz matrix/vector dimensions do not agree")
+    if strategy == JZ_EVALUATION_BLAS:
+        correction = -(matrix @ vector)
+    else:
+        if not np.isfinite(matrix).all() or not np.isfinite(vector).all():
+            raise ValueError("same-LU Jz inputs contain non-finite values")
+        row_count, column_count = matrix.shape
+        correction = np.empty(row_count, dtype=np.complex128)
+        real_terms = np.empty(2 * column_count, dtype=np.float64)
+        imag_terms = np.empty(2 * column_count, dtype=np.float64)
+        vector_real = vector.real
+        vector_imag = vector.imag
+        with np.errstate(over="ignore", invalid="ignore"):
+            for row in range(row_count):
+                row_real = matrix.real[row]
+                row_imag = matrix.imag[row]
+                np.multiply(row_real, vector_real, out=real_terms[0::2])
+                np.multiply(row_imag, vector_imag, out=real_terms[1::2])
+                np.negative(real_terms[1::2], out=real_terms[1::2])
+                np.multiply(row_real, vector_imag, out=imag_terms[0::2])
+                np.multiply(row_imag, vector_real, out=imag_terms[1::2])
+                if not np.isfinite(real_terms).all() or not np.isfinite(imag_terms).all():
+                    raise ValueError("same-LU Jz products are not finite")
+                try:
+                    real_sum = math.fsum(real_terms)
+                    imag_sum = math.fsum(imag_terms)
+                except (OverflowError, ValueError) as exc:
+                    raise ValueError("same-LU Jz sum is not finite") from exc
+                correction[row] = complex(-real_sum, -imag_sum)
+    if not np.isfinite(correction).all():
+        raise ValueError("same-LU internal RHS projection produced non-finite values")
+    return correction
+
 def project_internal_rhs_same_lu(
     factor: tuple[np.ndarray, np.ndarray],
     actual_trace_interior: np.ndarray,
     internal_rhs: np.ndarray,
     *,
     refinement_max_steps: int = 0,
+    jz_evaluation_strategy: str = JZ_EVALUATION_BLAS,
     actual_internal_matrix: np.ndarray | None = None,
     actual_internal_matrix_identity: object | None = None,
     factor_matrix_identity: object | None = None,
@@ -221,11 +284,13 @@ def project_internal_rhs_same_lu(
 ) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
     """Solve K z = b_i and return the actual z and -J z.
 
-    The ordinary default remains the historical one-GETRS route. The sole
-    opt-in candidate is refinement_max_steps=2; it requires the original
-    actual/oriented K and matching owner identity tokens for that matrix and
-    LU. A callback may persist bounded step records and the final returned
-    pair without retaining an owner-wide history here. For the opt-in path,
+    The ordinary defaults remain the historical one-GETRS solve and BLAS Jz
+    matvec. ``jz_evaluation_strategy`` is an independent explicit opt-in that
+    changes only the final full correction evaluation. The separate
+    ``refinement_max_steps=2`` candidate requires the original actual/oriented
+    K and matching owner identity tokens for that matrix and LU. A callback
+    may persist bounded refinement step records and the final returned pair
+    without retaining an owner-wide history here. For refinement,
     core_seconds excludes callback duration, which is reported separately.
     """
 
@@ -239,6 +304,13 @@ def project_internal_rhs_same_lu(
             "same-LU refinement limit must be disabled (0) or fixed at 2"
         )
     refinement_max_steps = int(refinement_max_steps)
+    if (
+        not isinstance(jz_evaluation_strategy, str)
+        or jz_evaluation_strategy not in _JZ_EVALUATION_STRATEGIES
+    ):
+        raise ValueError(
+            f"unknown same-LU Jz evaluation strategy {jz_evaluation_strategy!r}"
+        )
     if step_callback is not None and not callable(step_callback):
         raise TypeError("same-LU step callback must be callable")
     callback_seconds = 0.0
@@ -257,7 +329,10 @@ def project_internal_rhs_same_lu(
         raise ValueError("same-LU RHS/J dimensions do not agree")
     if not np.isfinite(rhs).all():
         raise ValueError("same-LU RHS contains non-finite values")
-    if refinement_max_steps and not np.isfinite(J).all():
+    if (
+        refinement_max_steps
+        or jz_evaluation_strategy == JZ_EVALUATION_BINARY64_REAL_IMAG_FSUM
+    ) and not np.isfinite(J).all():
         raise ValueError("same-LU J contains non-finite values")
 
     actual_K = None
@@ -320,6 +395,7 @@ def project_internal_rhs_same_lu(
             "nonzero_rhs": False,
             "getrs_seconds": 0.0,
             "j_matvec_seconds": 0.0,
+            "jz_evaluation_strategy": jz_evaluation_strategy,
             "core_seconds": float(perf_counter() - core_started),
         }
         if refinement_max_steps:
@@ -477,7 +553,9 @@ def project_internal_rhs_same_lu(
                 break
 
     started = perf_counter()
-    correction = -(J @ solved)
+    correction = evaluate_same_lu_internal_rhs_correction(
+        J, solved, strategy=jz_evaluation_strategy
+    )
     j_matvec_seconds = float(perf_counter() - started)
     if not np.isfinite(correction).all():
         raise ValueError("same-LU internal RHS projection produced non-finite values")
@@ -485,6 +563,7 @@ def project_internal_rhs_same_lu(
         "nonzero_rhs": True,
         "getrs_seconds": getrs_seconds,
         "j_matvec_seconds": j_matvec_seconds,
+        "jz_evaluation_strategy": jz_evaluation_strategy,
         "core_seconds": float(perf_counter() - core_started),
     }
     if refinement_max_steps:
@@ -810,6 +889,7 @@ class AssemblyTimeCondensedSystem:
     retained_trace_interior_by_class: Mapping[tuple[Any, ...], np.ndarray] | None = None
     internal_rhs_strategy: str = "stored_T"
     internal_rhs_refinement_max_steps: int = 0
+    jz_evaluation_strategy: str = JZ_EVALUATION_BLAS
     retained_actual_internal_matrix_by_class: Mapping[
         tuple[Any, ...], np.ndarray
     ] | None = None
@@ -825,6 +905,18 @@ class AssemblyTimeCondensedSystem:
     def __post_init__(self) -> None:
         if self.internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
             raise ValueError(f"unknown internal RHS strategy {self.internal_rhs_strategy!r}")
+        if (
+            not isinstance(self.jz_evaluation_strategy, str)
+            or self.jz_evaluation_strategy not in _JZ_EVALUATION_STRATEGIES
+        ):
+            raise ValueError(
+                f"unknown Jz evaluation strategy {self.jz_evaluation_strategy!r}"
+            )
+        if (
+            self.jz_evaluation_strategy != JZ_EVALUATION_BLAS
+            and self.internal_rhs_strategy != "same_lu_rhs_solve"
+        ):
+            raise ValueError("opt-in Jz evaluation requires same_lu_rhs_solve")
         if (
             isinstance(self.internal_rhs_refinement_max_steps, (bool, np.bool_))
             or not isinstance(
@@ -3430,6 +3522,7 @@ def build_unconstrained_assembly_time_condensation(
     retain_local_schur_for_matrix_free: bool = False,
     internal_rhs_strategy: str = "stored_T",
     internal_rhs_refinement_max_steps: int = 0,
+    jz_evaluation_strategy: str = JZ_EVALUATION_BLAS,
     share_identity_cache: bool = False,
     materialize_global_matrix: bool = True,
     compact_action_only_maps: bool = False,
@@ -3479,6 +3572,16 @@ def build_unconstrained_assembly_time_condensation(
     materialize_global_matrix = bool(materialize_global_matrix)
     if internal_rhs_strategy not in {"stored_T", "same_lu_rhs_solve"}:
         raise ValueError(f"unknown internal RHS strategy {internal_rhs_strategy!r}")
+    if (
+        not isinstance(jz_evaluation_strategy, str)
+        or jz_evaluation_strategy not in _JZ_EVALUATION_STRATEGIES
+    ):
+        raise ValueError(f"unknown Jz evaluation strategy {jz_evaluation_strategy!r}")
+    if (
+        jz_evaluation_strategy != JZ_EVALUATION_BLAS
+        and internal_rhs_strategy != "same_lu_rhs_solve"
+    ):
+        raise ValueError("opt-in Jz evaluation requires same_lu_rhs_solve")
     if (
         isinstance(internal_rhs_refinement_max_steps, (bool, np.bool_))
         or not isinstance(internal_rhs_refinement_max_steps, (int, np.integer))
@@ -4848,6 +4951,7 @@ def build_unconstrained_assembly_time_condensation(
         ),
         internal_rhs_strategy=internal_rhs_strategy,
         internal_rhs_refinement_max_steps=internal_rhs_refinement_max_steps,
+        jz_evaluation_strategy=jz_evaluation_strategy,
         retained_actual_internal_matrix_by_class=(
             MappingProxyType(actual_internal_matrix_cache)
             if retain_actual_internal_matrix_for_refinement
@@ -4956,6 +5060,7 @@ def build_unconstrained_assembly_time_condensation(
             "retained_local_schur_enabled": bool(retain_local_schur_for_matrix_free),
             "internal_rhs_strategy": internal_rhs_strategy,
             "internal_rhs_refinement_max_steps": internal_rhs_refinement_max_steps,
+            "jz_evaluation_strategy": jz_evaluation_strategy,
             "same_lu_rhs_refinement_strategy": (
                 "same_lu_binary64_products_real_imag_fsum"
                 if internal_rhs_refinement_max_steps
@@ -5221,7 +5326,12 @@ def condense_unconstrained_vector_to_active_trace(
                         f"same-LU RHS owner is missing class cache {cell.class_key!r}"
                     ) from exc
                 _solved, correction, _timing = project_internal_rhs_same_lu(
-                    factor, J, interior_values
+                    factor,
+                    J,
+                    interior_values,
+                    jz_evaluation_strategy=getattr(
+                        condensed, "jz_evaluation_strategy", JZ_EVALUATION_BLAS
+                    ),
                 )
             elif rhs_strategy == "stored_T":
                 correction = (
