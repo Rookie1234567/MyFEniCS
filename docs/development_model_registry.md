@@ -2562,3 +2562,8 @@ V26 面向原尺寸 `50×25×140 nm`、`0.7 nm`、`272×8×14` p6 三维非分�
 | 资源估算边界 | 旧载荷435.653172 GB + 新K估算90.72 GB = 派生526.373172 GB | 容量估算，不是RSS/cgroup实测或资源准入 |
 
 V14新状态与负边界见[response_v14](task41extra_phi90_p50x50_g17x20/response_v14.md)、[run index](task41extra_phi90_p50x50_g17x20/outcomes/run_index.json)与[V14 evidence index](task41extra_phi90_p50x50_g17x20/outcomes/v14_closeout/evidence_index.json)。
+
+
+## Task41extra Review V18：saved-Jz求值候选为 mixed 诊断（2026-10-29）
+
+对三个已有saved stars的16份完整Jz输入，以binary64实虚乘积加`math.fsum`比较求和策略，固定J、z和FE状态。12份final correction对原J/z参考的聚合L2改善，但V14_v8同一RHS列0的final d退化，checker分类`LOCAL_MIXED_NOT_QUALIFIED`。候选核心本批次约410倍慢于普通BLAS；不支持全域推论或ordinary default变更。没有新积分/LU/GETRS/native action、全域资格或official结果。仅保留为诊断负结果。见[response](task41extra_phi90_p50x50_g17x20/response_v18.md)、[compact](task41extra_phi90_p50x50_g17x20/outcomes/v18_closeout/v18_saved_jz_compact.json)和[evidence index](task41extra_phi90_p50x50_g17x20/outcomes/v18_closeout/evidence_index.json)。

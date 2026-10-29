@@ -1,3 +1,16 @@
+# V18 saved-Jz 收口验证与既有测试记录
+
+| 项目 | 结果 | 说明 |
+|---|---|---|
+| V18冻结源码定向测试 | 3 passed in 14.86 s；主控另独立重跑accounting regression为1 passed / 2 deselected in 0.23 s | qualified activation，source `ff22c0a78099e7e48e0c11127ce01e06ae1ac8cf`；两组分开记录 |
+| native ABI preflight | PASS：PETSc 3.25.6 complex128/int32、SLEPc 3.25.2、DOLFINx 0.10.0、MPI1/MPICH 5.0.1；receipt SHA `1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d` | 工作站ABI身份，不等于科学门通过 |
+| V18 service/checker | service exit0；checker完成但分类`LOCAL_MIXED_NOT_QUALIFIED` | 数值审核，不是pytest；全域和official资格false |
+| 本轮文档收口 | 没有重跑测试 | 无全仓pytest或CI声明 |
+
+见[response_v18](../response_v18.md)、[compact](v18_closeout/v18_saved_jz_compact.json)、[attempt index](v18_closeout/attempt_index.json)和[resource/window](v18_closeout/resource_compact.json)。以下是V17及更早测试历史。
+
+---
+
 # V17 两单元收口与既有测试记录
 
 | 项目 | 结果 | 说明 |

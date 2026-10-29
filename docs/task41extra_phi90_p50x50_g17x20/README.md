@@ -6,11 +6,11 @@
 
 ## 当前任务
 
-当前为V17两单元诊断收口：指定行1622464/原行5218672、cells7873/8014的attempt04执行有界producer并保存结果，attempt05–07只读checker复核，110个NPY数据完整；initial→final的两列局部变化可按高精度ΔΣJΔz与J乘法舍入闭合。此结论不外推全域；同单元native rank-1/scatter精确分解仍缺，原全域action仍FAIL，official/scientific qualification均false。attempt07未启动新worker/GETRS；200q、恢复、完整参考、target field或官方R/T/A均未运行。见[response_v17](response_v17.md)、[阶段摘要](outcomes/summary.md)、[compact](outcomes/v17_closeout/v17_two_cell_compact.json)、[证据索引](outcomes/v17_closeout/evidence_index.json)。
+当前为Review V18 saved-Jz候选收口：三个已有saved stars共16份完整432行Jz输入完成binary64实虚乘积＋`math.fsum`候选与生产次序replay，checker分类`LOCAL_MIXED_NOT_QUALIFIED`。16/16向量更符合指定参考、12份final correction聚合L2改善；但V14_v8重复RHS列0的final d退化，候选不获支持。无新积分、LU、GETRS或native action；full owner、200q、recovery、FGMRES、reference、target field和official R/T/A未运行。V17作为历史保留。见[response_v18](response_v18.md)、[summary](outcomes/summary.md)、[compact](outcomes/v18_closeout/v18_saved_jz_compact.json)、[attempt index](outcomes/v18_closeout/attempt_index.json)与[evidence index](outcomes/v18_closeout/evidence_index.json)。
 
 V6 的 `actual_qmetric_blocked_gram` 候选已构建 28,000 个 `mesh_actual_exact` 键；八个代表键的 raw/oriented 张量、K/G/J/L 与 R/T/S 局部筛查均通过 `1e-11`。候选完整两列作用的冻结分母相对误差为 `1.7183209126709868e-10` 和 `3.6180522433957604e-10`，超过原 `1e-11` 门；独立 saved-only checker 已完成并确认数据完整，但数值资格失败，`official_result=false`。按 Review V6 停在 full-action gate，不进入 200q、factor、KSP/FGMRES、完整场、A6 或 R/T/A。候选恢复也未通过 forward 门，且只做了初次恢复，没有耗尽三次修正额度。V3/V4/V5 均保留为各自历史阶段，不用 donor PASS 替代 V6 候选结果。
 
-本轮固定窗口 T0、截止、1.5 TiB task cap、64 GiB host reserve、零 task swap、16 GiB 证据上限、数值阈值与 ordinary solver default 均未更改；没有合并 master。
+V18使用用户单独批准的6小时saved-Jz窗口（总21,600秒、数值20,400秒、收口1,200秒），T0为`2026-10-29T00:50:15Z`；原合同资源/ABI/task swap0与数值阈值保持不变。候选不提升ordinary default；文档已由主控核对并集中收口，不合并master。
 
 完整规则见 **[task.md](task.md)**；分叉依据见 [branch_provenance.json](branch_provenance.json)。任务书第10节可直接交接Codex。A1 已完成新几何 13.5 nm 完整直接场并通过独立 checker；A出口已通过：A2保存场同离散比较与 checker-only retry3 PASS。attempt7 原 worker 的 `WORKER_FAILED` / `official_result=false` 作为历史保留；checker未重新组装FE算子。
 

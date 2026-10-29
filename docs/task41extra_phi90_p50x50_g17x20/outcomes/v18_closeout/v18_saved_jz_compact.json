@@ -1,0 +1,262 @@
+{
+  "schema": "task41.p0.v18.saved_jz_closeout.v1",
+  "review": "Task41extra Review V18",
+  "source": {
+    "branch": "task41extra_phi90_p50x50_g17x20",
+    "sha": "ff22c0a78099e7e48e0c11127ce01e06ae1ac8cf",
+    "result_base": "3d3cb9f07104ce3993b1269480081e5388df99c4"
+  },
+  "scope": {
+    "status": "COMPLETED_LOCAL_MIXED_NOT_QUALIFIED",
+    "source_stars": [
+      "v17_cells_7873_8014",
+      "v14_v11_cells_360_446",
+      "v14_v8_cells_23352_23493"
+    ],
+    "complete_jz_input_count": 16,
+    "complete_rows_per_input": 432,
+    "candidate_corrections": 16,
+    "initial_state_diagnostics": 4,
+    "final_state_inputs": 12,
+    "factorization_count": 0,
+    "getrs_count": 0,
+    "integration_count": 0,
+    "native_fe_action_count": 0,
+    "candidate_numerical_conformance": true,
+    "candidate_numerical_rejections": 0,
+    "candidate_supported": false,
+    "global_qualified": false,
+    "scientific_qualified": false,
+    "official_result": false,
+    "full_owner_unlocked": false,
+    "all_16_within_one_ulp_of_rounded_products_reference": true,
+    "all_16_complex_vector_l2_improved": true,
+    "final_input_component_error_regressions": 605
+  },
+  "full_jz_error_vs_80_digit_original_operand_reference": {
+    "definition": "Complex L2 over four complete 432-row inputs within each star/state group; compares candidate correction with Decimal multiplication/addition from stored binary64 J and z.",
+    "groups": [
+      {
+        "star": "v17",
+        "state": "initial",
+        "input_count": 4,
+        "baseline_aggregate_complex_l2": 1.5968130889621732e-09,
+        "candidate_aggregate_complex_l2": 1.2892915309757591e-10
+      },
+      {
+        "star": "v17",
+        "state": "final",
+        "input_count": 4,
+        "baseline_aggregate_complex_l2": 1.732334076773588e-09,
+        "candidate_aggregate_complex_l2": 1.2387772901642358e-10
+      },
+      {
+        "star": "v14_v11",
+        "state": "final",
+        "input_count": 4,
+        "baseline_aggregate_complex_l2": 1.3298375472431053e-09,
+        "candidate_aggregate_complex_l2": 1.174178358372588e-10
+      },
+      {
+        "star": "v14_v8",
+        "state": "final",
+        "input_count": 4,
+        "baseline_aggregate_complex_l2": 1.3099984998455842e-09,
+        "candidate_aggregate_complex_l2": 1.0534224063996923e-10
+      }
+    ],
+    "final_12_inputs_baseline_aggregate_complex_l2": 2.546673384084861e-09,
+    "final_12_inputs_candidate_aggregate_complex_l2": 2.0057324742353132e-10,
+    "final_12_inputs_candidate_max_real_component_abs_error": 1.7210904646424817e-11,
+    "final_12_inputs_candidate_max_imag_component_abs_error": 3.3043572308442904e-11,
+    "final_12_inputs_with_componentwise_regressions": 12,
+    "componentwise_regression_count": 605
+  },
+  "production_order_final_d": [
+    {
+      "star": "v17_cells_7873_8014",
+      "column": 0,
+      "baseline_d": [
+        8.312781574204564e-10,
+        1.546140993013978e-11
+      ],
+      "candidate_d": [
+        3.54702933691442e-10,
+        1.8189894035458565e-12
+      ],
+      "baseline_abs": 8.314219327161011e-10,
+      "candidate_abs": 3.547075977361716e-10,
+      "decision": "IMPROVED"
+    },
+    {
+      "star": "v17_cells_7873_8014",
+      "column": 1,
+      "baseline_d": [
+        2.0190782379359007e-10,
+        1.6625563148409128e-09
+      ],
+      "candidate_d": [
+        2.510205376893282e-10,
+        7.09405867382884e-10
+      ],
+      "baseline_abs": 1.674771706629432e-09,
+      "candidate_abs": 7.525078039589367e-10,
+      "decision": "IMPROVED"
+    },
+    {
+      "star": "v14_v11_cells_360_446",
+      "column": 0,
+      "baseline_d": [
+        2.0372681319713593e-10,
+        7.275957614183426e-12
+      ],
+      "candidate_d": [
+        1.637090463191271e-10,
+        5.638867150992155e-11
+      ],
+      "baseline_abs": 2.0385669960701343e-10,
+      "candidate_abs": 1.7314830094855662e-10,
+      "decision": "IMPROVED"
+    },
+    {
+      "star": "v14_v11_cells_360_446",
+      "column": 1,
+      "baseline_d": [
+        3.8808378732824167e-10,
+        -2.6239362072022487e-10
+      ],
+      "candidate_d": [
+        1.0614042977863392e-10,
+        -1.9691000219257404e-10
+      ],
+      "baseline_abs": 4.684649807421053e-10,
+      "candidate_abs": 2.2369474691434448e-10,
+      "decision": "IMPROVED"
+    },
+    {
+      "star": "v14_v8_cells_23352_23493",
+      "column": 0,
+      "baseline_d": [
+        4.001776687800884e-11,
+        7.776179700158536e-11
+      ],
+      "candidate_d": [
+        -1.000444171950221e-10,
+        -2.7284841053187847e-12
+      ],
+      "baseline_abs": 8.745466676409231e-11,
+      "candidate_abs": 1.0008161688044719e-10,
+      "decision": "DEGRADED",
+      "degradation": 1.262695011635488e-11,
+      "rhs_labels_j0_j3_are_duplicate": true
+    },
+    {
+      "star": "v14_v8_cells_23352_23493",
+      "column": 1,
+      "baseline_d": [
+        -1.3398282483478852e-10,
+        2.4693602718173224e-10
+      ],
+      "candidate_d": [
+        6.974398836234741e-11,
+        2.5019319949137753e-11
+      ],
+      "baseline_abs": 2.8094269677463915e-10,
+      "candidate_abs": 7.409581825855338e-11,
+      "decision": "IMPROVED",
+      "rhs_labels_j0_j3_are_duplicate": true
+    }
+  ],
+  "v17_main_star_signed_decomposition": {
+    "basis": "t=0 in the saved V17 main star; S_action=0 for this star only.",
+    "column_0": {
+      "D_local_native": [
+        2.754700497151028e-10,
+        -4.073884059221511e-11
+      ],
+      "D_fixed_solve": [
+        8.881552270307582e-11,
+        4.413658222521621e-11
+      ],
+      "D_J_evaluation_baseline": [
+        4.669925850022778e-10,
+        1.2063668297138686e-11
+      ],
+      "D_J_evaluation_candidate": [
+        -9.582638726736594e-12,
+        -1.5787522294552374e-12
+      ],
+      "epsilon_B_RHS": [
+        0.0,
+        0.0
+      ],
+      "epsilon_scatter_subtraction_abs_upper": 1e-39
+    },
+    "column_1": {
+      "D_local_native": [
+        2.383164095987485e-10,
+        5.509400994302056e-10
+      ],
+      "D_fixed_solve": [
+        5.937262761272505e-13,
+        1.7763104540615164e-10
+      ],
+      "D_J_evaluation_baseline": [
+        -3.7002312081285687e-11,
+        9.339851700045557e-10
+      ],
+      "D_J_evaluation_candidate": [
+        1.211040181445244e-11,
+        -1.916527745347319e-11
+      ],
+      "epsilon_B_RHS": [
+        0.0,
+        0.0
+      ],
+      "epsilon_scatter_subtraction_abs_upper": 1e-38
+    },
+    "independent_native_rank1_and_scatter_evidence": "NOT_SAVED"
+  },
+  "missing_evidence": "Same-cell independent native rank-1 local contributions plus original scatter-order/rounding for cells 7873/8014 and the original kernel, coordinates, and known input; V18 did not add integration or native action.",
+  "artifact_refs": {
+    "candidate_report": {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d4158d70782f9789a997ecadac073f9ea2e7be104dc789e66c0758d45aee113/selected_incident_replay/attempt02/task41_p0_v18_saved_jz_candidate.json",
+      "bytes": 145286,
+      "sha256": "76f1b7c27631bd5abba0fcca7245654dc426393fd8b78df5598f551ba97b9934"
+    },
+    "production_replay": {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d4158d70782f9789a997ecadac073f9ea2e7be104dc789e66c0758d45aee113/selected_incident_replay/attempt02/task41_p0_v18_saved_jz_replay.json",
+      "bytes": 26985,
+      "sha256": "c1f70d9c5a90a3f12a40d3ba045ba312756262cff69ad0e4e67880dd49a54dc7"
+    },
+    "independent_check": {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d4158d70782f9789a997ecadac073f9ea2e7be104dc789e66c0758d45aee113/selected_incident_replay/attempt02/task41_p0_v18_independent_check.json",
+      "bytes": 12866510,
+      "sha256": "b9a16e3027dbd1b2068e103a0d99d062507806a4b27be72ba6857b3c6ccb62d0"
+    },
+    "service_receipt": {
+      "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/3d4158d70782f9789a997ecadac073f9ea2e7be104dc789e66c0758d45aee113/selected_incident_replay/attempt02.service/task41_p0_service_receipt.json",
+      "bytes": 45966,
+      "sha256": "8a677a6f97e5649f63318f5e8713222b118efa4ce97cd2e825aa2bbb455f1963"
+    }
+  },
+  "execution_costs": {
+    "timing_source": "attempt02 saved production-order replay report; measured aggregates for 16 fixed saved inputs",
+    "ordinary_blas_jz_calls": 16,
+    "candidate_fsum_jz_calls": 16,
+    "ordinary_blas_jz_seconds": 0.003146932926028967,
+    "candidate_shared_jz_core_seconds": 1.291472651064396,
+    "candidate_to_blas_core_ratio_derived": 410.3909048656057,
+    "input_hash_load_and_full_j_extract_seconds": 0.6569277429953218,
+    "pinned_receipt_load_hash_seconds": 0.05130721814930439,
+    "replay_s_action_hash_load_seconds": 0.009106160141527653,
+    "production_order_scatter_seconds": 0.20432130387052894,
+    "candidate_array_and_report_save_seconds": 0.023218050599098206,
+    "replay_report_save_seconds": 0.001317011658102274,
+    "scope_note": "finite saved-input diagnostic; not a global workload prediction"
+  },
+  "scatter_and_roundoff": {
+    "this_replay_scatter_subtraction_decimal_remainder": "0E-39 (numeric zero)",
+    "independent_native_rank1_scatter_source": "NOT_SAVED; distinct source-evidence gap"
+  }
+}

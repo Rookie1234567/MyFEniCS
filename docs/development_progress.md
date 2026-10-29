@@ -1,3 +1,9 @@
+## Task41extra Review V18：保存Jz候选为 mixed，未获支持（2026-10-29）
+
+V17留下的固定J/z矩阵乘法末位疑问，在三个已有saved stars的16份432行输入上作有限验证。只把实虚乘积求和改为binary64乘积加`math.fsum`，J、z、积分和生产散射次序不变。16份correction更符合指定参考，12份final correction相对80位原J/z参考聚合L2由2.5466733841e-9降至2.0057324742e-10；但V14_v8重复RHS列0的final d退化1.2626950116e-11，checker裁定`LOCAL_MIXED_NOT_QUALIFIED`。16项候选核心合计1.29147s、普通BLAS0.003147s，本批约410倍慢，不外推全域。
+
+没有新积分、LU、GETRS或native action；候选不转为ordinary default，不解锁full owner或物理输出。同cell native rank-1/scatter来源仍缺，本包不追加计算。见[response_v18](task41extra_phi90_p50x50_g17x20/response_v18.md)、[compact](task41extra_phi90_p50x50_g17x20/outcomes/v18_closeout/v18_saved_jz_compact.json)和[evidence index](task41extra_phi90_p50x50_g17x20/outcomes/v18_closeout/evidence_index.json)。
+
 ## Task41extra V17：两单元initial→final诊断收口，全域action仍FAIL（2026-10-28）
 
 V17的attempt04先执行指定两单元producer（2个候选张量、2次LU、矩阵/向量RHS GETRS 6/12次），attempt05–07再复用保存producer输出做saved-only checker；专门复核active row 1622464（原始行5218672）关联的两个单元7873/8014。独立checker读取并验证110个NPY、75,253,856 B；数据完整且精确重现。`d=y-g`的两列initial→final变化可由高精度`ΣJ(z_final-z_initial)`与J矩阵乘法末位舍入变化闭合；scatter舍入、末端`y-g`相减舍入和局部/native `Ju-b_t,volume`变化均为0。这个结论只对所选行成立；exact同单元native rank-1/scatter分解仍缺失，不能说全域因果链已闭合。

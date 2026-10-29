@@ -1,0 +1,42 @@
+{
+  "adjacent_interval": {
+    "budget_seconds": 1621.392987219151,
+    "discrepancy_seconds": 2.3746397346258163e-05,
+    "elapsed_seconds": {
+      "boottime": 1621.3929634727538,
+      "monotonic": 1621.392987219151,
+      "utc": 1621.392963686
+    },
+    "policy": "conservative_realtime",
+    "policy_version": 1,
+    "tolerance_seconds": 16.21392987219151,
+    "utc_minus_monotonic_seconds": -2.3533151079391246e-05
+  },
+  "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+  "bootstrap_charged_seconds": 459.07346131,
+  "campaign_window_sha256": "3d4158d70782f9789a997ecadac073f9ea2e7be104dc789e66c0758d45aee113",
+  "cumulative_charged_seconds": 2887.9941856314645,
+  "cutoff_seconds": 20400.0,
+  "deadline_utc_ns": 1793256615000000000,
+  "label": "task41_v18_main_documentation_closeout",
+  "phase": "closeout",
+  "previous_sample": {
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "boottime": 3161276.46202526,
+    "monotonic": 3161276.461999902,
+    "utc_ns": 1793236281601158899
+  },
+  "sample": {
+    "boot_id": "fd8f4b00-1e17-46af-a6fa-da3a32dbeba3",
+    "boottime": 3162897.854988733,
+    "monotonic": 3162897.854987121,
+    "utc_ns": 1793237902994122585
+  },
+  "schema": "task40extra.review_v10_campaign_accounting.v1",
+  "sequence": 61,
+  "t0_utc_ns": 1793235015000000000,
+  "time_namespace_identity": {
+    "time": "time:[4026531834]",
+    "time_for_children": "time:[4026531834]"
+  }
+}

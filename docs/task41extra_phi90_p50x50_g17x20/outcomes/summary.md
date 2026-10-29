@@ -1,5 +1,20 @@
 # Task41 阶段结果
 
+## V18当前收口：完整Jz求值有限改善，但旧star末态退化（2026-10-29）
+
+V18对三个已保存star的16份完整432行Jz输入固定J和z，仅改变实虚乘积后的求和组织，不做新积分、LU、GETRS或native action。16/16份correction更接近指定乘积求和参考；12份final correction对80位原J/z参考的聚合L2由`2.5466733841e-9`降至`2.0057324742e-10`。但V14_v8重复RHS的列0 final d模由`8.7454666764e-11`升至`1.0008161688e-10`，checker据此裁定`LOCAL_MIXED_NOT_QUALIFIED`。
+
+| 范围/指标 | 实测结果 | baseline与身份 | 边界/证据 |
+|---|---|---|---|
+| 16份完整Jz | BLAS总0.003146933 s；fsum总1.291472651 s；输入hash/load/完整J提取0.656927743 s | 同一保存J/z，16次各自调用 | 候选核心本批约410.4倍慢，不外推全域，[compact](v18_closeout/v18_saved_jz_compact.json) |
+| 来源身份 | candidate报告145,286 B，SHA `76f1b7c2…97b9934`；16个432×450完整C-layout J，BLAS基线16/16复现 | measured saved paths/hash | checker原文留ignored results，[evidence index](v18_closeout/evidence_index.json) |
+| final correction | 12/12向量复数L2改善，聚合2.5466733841e-9 → 2.0057324742e-10 | 对原存储J/z的80位乘加参考 | checker记录605个局部分量回退，不等于final d改善 |
+| 三star final d | V17两列和V14_v11两列改善；V14_v8列0退化1.2626950116e-11 | 同一保存态普通BLAS final d | j0/j3是同一RHS，只记一项退化 |
+| 资源/总字节 | parent 62.540324 s，CPU71.259 s，cgroup207,638,528 B，swap0；保守累计15,694,682,876 B | campaign/service measured | [resource compact](v18_closeout/resource_compact.json)、[window](v18_closeout/window_snapshot.json) |
+| 决策与下一项 | `LOCAL_MIXED_NOT_QUALIFIED`；同cell native rank-1/scatter来源仍NOT_SAVED | measured checker与scope边界 | 本包不重跑，不解锁full owner/200q/recovery/FGMRES/reference/target/R/T/A |
+
+本次replay的scatter/subtraction Decimal余项为`0E-39`（数值0）；独立native rank-1/scatter来源仍未保存。完整解释见[response_v18](../response_v18.md)；V17及此前内容保留为历史。
+
 ## V17当前收口：指定两单元诊断闭合，完整action仍失败（2026-10-28）
 
 V17只追查 active row 1622464 / original row 5218672 的两个 incident cells 7873、8014 和两列保存数据。独立checker重读110个NPY（75,253,856 B），报告状态`LOCAL_REPLAY_COMPLETED`、数据完整、errors为空。这里的“闭合”仅指该行记录中 initial→final 的有符号复数恒等式闭合到80位Decimal误差；并非全域算子或物理量通过。

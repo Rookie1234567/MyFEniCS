@@ -1,0 +1,19 @@
+{
+  "schema": "task41.v18.main_readback.v1",
+  "scope": "read-only returned receipt/checker, no numerical recomputation",
+  "source": "ff22c0a78099e7e48e0c11127ce01e06ae1ac8cf",
+  "window_sha256": "3d4158d70782f9789a997ecadac073f9ea2e7be104dc789e66c0758d45aee113",
+  "service_receipt_sha256": "8a677a6f97e5649f63318f5e8713222b118efa4ce97cd2e825aa2bbb455f1963",
+  "independent_checker_sha256": "b9a16e3027dbd1b2068e103a0d99d062507806a4b27be72ba6857b3c6ccb62d0",
+  "audit_completed": true,
+  "candidate_status": "LOCAL_MIXED_NOT_QUALIFIED",
+  "candidate_supported": false,
+  "full_final_jz_l2_improved_count": 12,
+  "complete_jz_inputs": 16,
+  "worker_parent_seconds": 5.92448516190052,
+  "checker_parent_seconds": 55.059160763863474,
+  "max_sampled_stage_tree_rss_bytes": 326643712,
+  "task_swap_peak_bytes": 0,
+  "descendants_cleared": true,
+  "global_qualified": false
+}
