@@ -1005,3 +1005,48 @@ def test_cell_integral_type_uses_public_dolfinx_fem_namespace(monkeypatch: Any) 
     monkeypatch.setitem(sys.modules, "dolfinx.cpp.fem", cpp_fem)
 
     assert _dolfinx_cell_integral_type() is expected_cell_type
+
+
+def test_worker_from_import_closure_resolves_without_calling_worker() -> None:
+    import ast
+    import importlib
+    from pathlib import Path
+
+    worker_path = (
+        Path(__file__).resolve().parents[1]
+        / "runners"
+        / "task41_p0_v19_native_rank1.py"
+    )
+    tree = ast.parse(worker_path.read_text(encoding="utf-8"))
+    worker = next(
+        node for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "run_v19_native_rank1_worker"
+    )
+    imported: set[tuple[str, str]] = set()
+    for node in ast.walk(worker):
+        if not isinstance(node, ast.ImportFrom) or not node.module:
+            continue
+        module = importlib.import_module(node.module)
+        for alias in node.names:
+            if alias.name == "*":
+                continue
+            try:
+                getattr(module, alias.name)
+            except AttributeError:
+                importlib.import_module(f"{node.module}.{alias.name}")
+            imported.add((node.module, alias.name))
+
+    assert (
+        "src.runners.task41_p0_checker",
+        "TASK41_P0_B0_V3_VECTOR_INDEX_SHA256",
+    ) in imported
+    assert (
+        "src.solvers.hcurl_assembly_time_condensation",
+        "build_selected_volume_trace_star_metadata",
+    ) in imported
+
+    from src.runners.task41_p0_checker import TASK41_P0_B0_V3_VECTOR_INDEX_SHA256
+
+    assert TASK41_P0_B0_V3_VECTOR_INDEX_SHA256 == (
+        "332b9e5ed553916808cceccd92542b5086cbdbeaaa298d42d95d18916bb7ade3"
+    )

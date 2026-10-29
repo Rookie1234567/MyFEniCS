@@ -1441,7 +1441,7 @@ def run_v19_native_rank1_worker(
         TASK41_P0_B0_V16_TRACE_ROWS,
         TASK41_P0_B0_V16_STORAGE_ROWS,
         TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS,
-        TASK41_P0_B0_V16_V3_VECTOR_INDEX_SHA256,
+        TASK41_P0_B0_V3_VECTOR_INDEX_SHA256,
         TASK41_P0_B0_V17_SELECTED_METADATA_RELATIVE,
         TASK41_P0_B0_V17_SELECTED_METADATA_SHA256,
         TASK41_P0_B0_V17_SELECTED_ORIGINAL_ROW,
@@ -1462,7 +1462,7 @@ def run_v19_native_rank1_worker(
         require_task41_p0_contract,
         sha256_file as contract_sha256_file,
     )
-    from src.runners.task41_p0_v4_volume_only_audit import (
+    from src.solvers.hcurl_assembly_time_condensation import (
         build_selected_volume_trace_star_metadata,
     )
     from src.solvers.fullspace_same_mesh_hcurl_pmg_global import _build_same_mesh_levels
@@ -1539,7 +1539,7 @@ def run_v19_native_rank1_worker(
     )
     if (
         donor.get("manifest_sha256") != TASK41_P0_B0_V3_DONOR_MANIFEST_SHA256
-        or donor.get("source_index_sha256") != TASK41_P0_B0_V16_V3_VECTOR_INDEX_SHA256
+        or donor.get("source_index_sha256") != TASK41_P0_B0_V3_VECTOR_INDEX_SHA256
         or len(donor.get("columns", [])) != 2
     ):
         raise ValueError("V19 V3 donor manifest/index differs from the pinned V16 loader")
@@ -1582,7 +1582,7 @@ def run_v19_native_rank1_worker(
         "v16_saved_vector_manifest_sha256": TASK41_B0_V17_SAVED_VECTOR_MANIFEST_SHA256,
         "v16_selected_metadata_sha256": TASK41_P0_B0_V17_SELECTED_METADATA_SHA256,
         "v3_donor_manifest_sha256": TASK41_P0_B0_V3_DONOR_MANIFEST_SHA256,
-        "v3_vector_index_sha256": TASK41_P0_B0_V16_V3_VECTOR_INDEX_SHA256,
+        "v3_vector_index_sha256": TASK41_P0_B0_V3_VECTOR_INDEX_SHA256,
         "known_field_bindings": known_bindings,
         "resolved_config_sha256": contract["case"]["resolved_config_sha256"],
         "selected_cells": list(V19_SELECTED_CELLS),
