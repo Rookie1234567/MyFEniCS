@@ -1,0 +1,94 @@
+# D07C-Y3_M8: finite signed cutoff anchor/y-refinement, q81/q15 unchanged.
+schema_version = 1
+model_id = "si_block_phi90_50x50_17x20_h120"
+run_id = "task40para_phi90_0p7_D07C_Y3_M8_p6_direct_v1"
+comparison_group = "task40para_phi90_mesh_modes_direct"
+dimension = 3
+
+[geometry]
+geometry_kind = "rectangular_block_grating"
+period_x_nm = 50.0
+period_y_nm = 50.0
+z_min_nm = -10.0
+z_max_nm = 130.0
+interface_z_nm = 0.0
+air_height_nm = 130.0
+substrate_thickness_nm = 10.0
+grating_width_x_nm = 17.0
+grating_width_y_nm = 20.0
+grating_height_nm = 120.0
+
+[materials]
+n_air = [1.0, 0.0]
+mu_r = [1.0, 0.0]
+substrate_name = "Si / silicon"
+n_substrate = [0.9998851259969171, 0.000004325285938225562]
+grating_name = "Si / silicon"
+n_grating = [0.9998851259969171, 0.000004325285938225562]
+
+[incidence]
+wavelength_nm = 0.7
+grazing_angle_deg = 1.0
+azimuth_deg = 90.0
+polarization = "s"
+electric_amplitude = 1.0
+
+[discretization]
+nedelec_degree = 6
+visualization_degree = 6
+mesh_target_nm = 0.7
+mesh_cell_type = "hexahedron"
+mesh_spacing_mode = "boundary_fitted"
+assembly_backend = "standard_full"
+floquet_constraint_mode = "auto"
+mesh_axis_cell_counts = [6, 52, 6]
+mesh_axis_x_values = [0.0, 8.25, 16.5, 25.0, 33.5, 41.75, 50.0]
+mesh_axis_y_values = [0.0, 0.75, 1.5, 2.25, 3.0, 3.75, 4.5, 5.25, 6.0, 6.75, 7.5, 8.25, 9.0, 9.75, 10.5, 11.25, 12.0, 12.75, 13.5, 14.25, 15.0, 16.666666666666664, 18.333333333333332, 20.0, 21.666666666666668, 23.333333333333336, 25.0, 26.666666666666668, 28.333333333333336, 30.0, 31.666666666666668, 33.333333333333336, 35.0, 35.75, 36.5, 37.25, 38.0, 38.75, 39.5, 40.25, 41.0, 41.75, 42.5, 43.25, 44.0, 44.75, 45.5, 46.25, 47.0, 47.75, 48.5, 49.25, 50.0]
+mesh_axis_z_values = [-10.0, -5.0, 0.0, 60.0, 120.0, 125.0, 130.0]
+mesh_plan_id = "task40_phi90_d07c_y3_axes_v1"
+mesh_plan_sha256 = "449087709257617725425f84b0186ce0bc19b7b479b7e6cf45b78e7312081539"
+
+[boundary]
+use_floquet_x = true
+use_floquet_y = true
+vertical_boundary = "dtn_port"
+scattering_background = "layered"
+dtn_order_policy = "auto_propagating"
+dtn_assembly = "auxiliary"
+use_pml = false
+
+[method]
+kind = "full3d_direct"
+
+[solver]
+linear_solver = "direct"
+direct_solver_profile = "default"
+native_capacity_profile = "task40para_phi90_0p7_D07C_Y3_M8_p6_direct_v1"
+
+[execution]
+mpi_size = 1
+native_memory_policy = "interleave_nodes0_1"
+time_limit_mode = "none"
+warning_memory_gib = 64.0
+terminate_memory_gib = 128.0
+memory_limit_gb = 128.0
+require_zero_swap = false
+
+[output]
+results_root = "results"
+unique_output = true
+export_fields = true
+export_diffraction_orders = true
+export_canonical_vectors = false
+export_modal_amplitudes = true
+export_reference_planes = true
+reference_plane_z_nm = [10.0, 30.0, 60.0, 90.0, 110.0]
+sample_count_x = 40
+sample_count_y = 64
+diffraction_sample_count_x = 24
+diffraction_sample_count_y = 64
+top_probe_z_nm = 110.0
+bottom_probe_z_nm = 10.0
+probe_fraction = 0.75
+diffraction_order_max_m = 4
+diffraction_order_max_n = 8

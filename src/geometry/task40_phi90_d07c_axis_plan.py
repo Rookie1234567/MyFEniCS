@@ -18,6 +18,8 @@ D07C_CASE_SEGMENT_COUNTS = {
     "B": {"x": (2, 2, 2), "y": (10, 6, 10), "z": (2, 2, 2)},
     "Y1": {"x": (2, 2, 2), "y": (12, 6, 12), "z": (2, 2, 2)},
     "Y2": {"x": (2, 2, 2), "y": (10, 10, 10), "z": (2, 2, 2)},
+    # Exact bisection of every B y interval; x/z remain frozen.
+    "Y3": {"x": (2, 2, 2), "y": (20, 12, 20), "z": (2, 2, 2)},
 }
 
 def _uniform_segment(start: float, stop: float, cells: int) -> tuple[float, ...]:
@@ -60,6 +62,13 @@ def d07c_axis_plan(case: str) -> dict[str, object]:
         axis: _piecewise_axis(axis, D07C_CASE_SEGMENT_COUNTS["B"][axis])
         for axis in "xyz"
     }
+    if case == "Y3":
+        # Preserve every B coordinate bit-for-bit and insert its exact midpoint.
+        parent_y = parent_axes["y"]
+        axes["y"] = tuple(
+            value for left, right in pairwise(parent_y)
+            for value in (left, (left + right) / 2.0)
+        ) + (parent_y[-1],)
     hashes = {axis: _axis_digest(axes[axis]) for axis in "xyz"}
     parent_hashes = {axis: _axis_digest(parent_axes[axis]) for axis in "xyz"}
     changed = [axis for axis in "xyz" if hashes[axis] != parent_hashes[axis]]

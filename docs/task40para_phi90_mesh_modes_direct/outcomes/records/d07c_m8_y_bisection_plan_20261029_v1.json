@@ -1,0 +1,284 @@
+{
+  "schema": "task40.d07c.m8_y_bisection_plan.v1",
+  "status": "PREPARED_NOT_RUN",
+  "user_authority": "2026-10-29: continue mesh refinement to investigate near-unit reflectance; prior preference for economical modal truncation persists",
+  "sequence": [
+    "B_M8",
+    "Y3_M8 conditional on B_M8 validation and fresh"
+  ],
+  "mesh_plans": {
+    "B": {
+      "schema": "task40.phi90.d07c.axis_plan.v1",
+      "display_name": "D07C-B",
+      "case": "B",
+      "parent_case": "B",
+      "changed_axis": null,
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          10,
+          6,
+          10
+        ],
+        "z": [
+          2,
+          2,
+          2
+        ]
+      },
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          1.5,
+          3.0,
+          4.5,
+          6.0,
+          7.5,
+          9.0,
+          10.5,
+          12.0,
+          13.5,
+          15.0,
+          18.333333333333332,
+          21.666666666666668,
+          25.0,
+          28.333333333333336,
+          31.666666666666668,
+          35.0,
+          36.5,
+          38.0,
+          39.5,
+          41.0,
+          42.5,
+          44.0,
+          45.5,
+          47.0,
+          48.5,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          60.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        26,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "aa2a74d4601c89a8ef5f7ad94bbb19961ec058442307502c1c006dd792d77832",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "aa2a74d4601c89a8ef5f7ad94bbb19961ec058442307502c1c006dd792d77832",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "expected_global_cell_count": 936,
+      "expected_material_tag_counts": {
+        "1": 600,
+        "2": 312,
+        "3": 24
+      },
+      "static_geometry_only": {
+        "method": "independent_cell_midpoint_classification; not live mesh QA",
+        "strictly_increasing_axes": true,
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "minimum_edge_nm": 1.5,
+        "maximum_edge_nm": 60.0,
+        "maximum_cell_aspect_ratio": 40.0,
+        "minimum_cell_volume_nm3": 61.875,
+        "material_and_periodic_endpoints_preserved": true
+      },
+      "mesh_plan_id": "task40_phi90_d07c_b_axes_v1",
+      "mesh_plan_sha256": "c30ae6ff3e9814f3e4f802df2550dcdd7b57fe7386bd0883dab68fe34a413faa"
+    },
+    "Y3": {
+      "schema": "task40.phi90.d07c.axis_plan.v1",
+      "display_name": "D07C-Y3",
+      "case": "Y3",
+      "parent_case": "B",
+      "changed_axis": "y",
+      "segment_cell_counts": {
+        "x": [
+          2,
+          2,
+          2
+        ],
+        "y": [
+          20,
+          12,
+          20
+        ],
+        "z": [
+          2,
+          2,
+          2
+        ]
+      },
+      "axes_nm": {
+        "x": [
+          0.0,
+          8.25,
+          16.5,
+          25.0,
+          33.5,
+          41.75,
+          50.0
+        ],
+        "y": [
+          0.0,
+          0.75,
+          1.5,
+          2.25,
+          3.0,
+          3.75,
+          4.5,
+          5.25,
+          6.0,
+          6.75,
+          7.5,
+          8.25,
+          9.0,
+          9.75,
+          10.5,
+          11.25,
+          12.0,
+          12.75,
+          13.5,
+          14.25,
+          15.0,
+          16.666666666666664,
+          18.333333333333332,
+          20.0,
+          21.666666666666668,
+          23.333333333333336,
+          25.0,
+          26.666666666666668,
+          28.333333333333336,
+          30.0,
+          31.666666666666668,
+          33.333333333333336,
+          35.0,
+          35.75,
+          36.5,
+          37.25,
+          38.0,
+          38.75,
+          39.5,
+          40.25,
+          41.0,
+          41.75,
+          42.5,
+          43.25,
+          44.0,
+          44.75,
+          45.5,
+          46.25,
+          47.0,
+          47.75,
+          48.5,
+          49.25,
+          50.0
+        ],
+        "z": [
+          -10.0,
+          -5.0,
+          0.0,
+          60.0,
+          120.0,
+          125.0,
+          130.0
+        ]
+      },
+      "axis_cell_counts": [
+        6,
+        52,
+        6
+      ],
+      "axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "d63aaaaef278bbc4aeb27e873724ce2f10d3dd8e83a6100c03038adc09a251c6",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "parent_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "aa2a74d4601c89a8ef5f7ad94bbb19961ec058442307502c1c006dd792d77832",
+        "z": "4d422691813da5d536bb6b9366cb2a7f695171a4c8a80ac79a393c34ea50bea6"
+      },
+      "expected_global_cell_count": 1872,
+      "expected_material_tag_counts": {
+        "1": 1200,
+        "2": 624,
+        "3": 48
+      },
+      "static_geometry_only": {
+        "method": "independent_cell_midpoint_classification; not live mesh QA",
+        "strictly_increasing_axes": true,
+        "axis_aligned_cell_jacobian_determinant_positive": true,
+        "minimum_edge_nm": 0.75,
+        "maximum_edge_nm": 60.0,
+        "maximum_cell_aspect_ratio": 80.0,
+        "minimum_cell_volume_nm3": 30.9375,
+        "material_and_periodic_endpoints_preserved": true
+      },
+      "mesh_plan_id": "task40_phi90_d07c_y3_axes_v1",
+      "mesh_plan_sha256": "449087709257617725425f84b0186ce0bc19b7b479b7e6cf45b78e7312081539"
+    }
+  },
+  "mode_bounds": [
+    -8,
+    8,
+    -143,
+    1
+  ],
+  "mode_count": 9860,
+  "mode_sha256": "5524a412514e85d243665050d7bf0f272c7f1347da338b03e2fbda22d257b057",
+  "q_surface": 81,
+  "q_volume": 15,
+  "cutoff_relative_only": 1e-13,
+  "old_B_Y1_Y2_profile_facts_exactly_unchanged": true,
+  "tests": "17 passed in 22.11s; includes exact B-coordinate/midpoint preservation, inventory and formal worker payload",
+  "initial_test_failure": "Y3 uniformly regenerated midpoint differed from exact B midpoint by 7.1e-15 nm; planner corrected to bisect stored B endpoints exactly, strict array equality now passes",
+  "comparison": {
+    "global_abs": 1e-05,
+    "all_channels_R_T_abs": 1e-06,
+    "boundary_E_H_relative_L2": 0.0001,
+    "B_M8_reference": "completed B_M32 20261025T062144.846398Z; zero extend 9860 channels to all37700",
+    "Y3_M8_reference": "new B_M8; same window, physics, q and sample coordinates"
+  },
+  "execution": {
+    "systemd_only": true,
+    "serial": true,
+    "fresh_before_each": true,
+    "automatic_retry": false,
+    "host_floor_bytes": 68719476736,
+    "rss_cap": null,
+    "swap": "observe-only",
+    "PSS_USS": false,
+    "unknown_or_active_neighbor": "reject"
+  },
+  "decision_policy": "If B_M8 fails any comparison group, do not interpret new mesh differences under this window as qualified; reconsider a wider same-grid cutoff before Y3. If Y3 changes results, report measured changes without targeting a preferred R. Refinement does not guarantee accuracy; z/x and full DtN remain open.",
+  "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+  "sidewall": "NOT_MEASURED"
+}

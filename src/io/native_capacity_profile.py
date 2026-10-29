@@ -163,7 +163,7 @@ TASK40_PHI90_D5C_PROFILES = frozenset(
 # D07C is the separate 0.7 nm finite signed-window full-solve study.
 TASK40_PHI90_D07C_PROFILE_BY_CASE = {
     case: f"task40para_phi90_0p7_D07C_{case}_p6_direct_v1"
-    for case in ("B", "Y1", "Y2")
+    for case in ("B", "Y1", "Y2", "B_M8", "Y3_M8")
 }
 TASK40_PHI90_D07C_PROFILES = frozenset(
     TASK40_PHI90_D07C_PROFILE_BY_CASE.values()
@@ -1563,12 +1563,19 @@ def _task40_phi90_d07c_profile_facts(identity):
     from src.geometry.task40_phi90_d07c_axis_plan import D07C_AXIS_PLANS
 
     try:
-        case_name = next(
+        case_label = next(
             case for case, profile in TASK40_PHI90_D07C_PROFILE_BY_CASE.items()
             if profile == identity
         )
     except StopIteration as exc:
         raise ValueError(f"unsupported Task40 D07C profile: {identity}") from exc
+    case_name = case_label.removesuffix("_M8")
+    max_m = 8 if case_label.endswith("_M8") else 32
+    mode_count, mode_sha, propagating_count, power_count = {
+        32: (37700, "fad8f4be8404605d5e75cd6f19506890689e10f7d81367ef44aaadb9437e7873", 35784, 36744),
+        8: (9860, "5524a412514e85d243665050d7bf0f272c7f1347da338b03e2fbda22d257b057", 9664, 9764),
+    }[max_m]
+    omitted_auto_count = 64120 - propagating_count
     plan = D07C_AXIS_PLANS[case_name]
     counts = [int(value) for value in plan["axis_cell_counts"]]
     total_cells = int(plan["expected_global_cell_count"])
@@ -1576,40 +1583,36 @@ def _task40_phi90_d07c_profile_facts(identity):
     base = deepcopy(
         _task40_phi90_d13_profile_facts(TASK40_PHI90_D13_B_P6_DIRECT_PROFILE)
     )
-    operator_scope = f"task40_phi90_D07C_{case_name}_M32_Nminus143_to_1_finite"
-    signed_bounds = [-32, 32, -143, 1]
+    operator_scope = f"task40_phi90_D07C_{case_name}_M{max_m}_Nminus143_to_1_finite"
+    signed_bounds = [-max_m, max_m, -143, 1]
     evidence_keys = [
         [side, m, n, pol]
         for side in ("top", "bottom")
-        for m, n, pol in ((-32, -143, "p"), (0, 0, "s"), (32, 1, "p"))
+        for m, n, pol in ((-max_m, -143, "p"), (0, 0, "s"), (max_m, 1, "p"))
     ]
     mode_selection = {
         "schema": "task40.dtn-mode-selection.v1",
         "policy": "explicit_signed_rectangle_v1",
-        "reference_mode_label": "D07C_M32_Nminus143_to_1",
+        "reference_mode_label": f"D07C_M{max_m}_Nminus143_to_1",
         "parent_signed_bounds_mn": signed_bounds,
         "active_signed_bounds_mn": signed_bounds,
-        "parent_rectangle_max_abs_m_n": [32, 143],
-        "active_rectangle_max_abs_m_n": [32, 143],
+        "parent_rectangle_max_abs_m_n": [max_m, 143],
+        "active_rectangle_max_abs_m_n": [max_m, 143],
         "parent_inventory_scope": (
-            "D07C_finite_signed_rectangle_M[-32,32]_N[-143,1]_including_evanescent"
+            f"D07C_finite_signed_rectangle_M[-{max_m},{max_m}]_N[-143,1]_including_evanescent"
         ),
-        "expected_mode_count": 37700,
-        "expected_active_mode_count": 37700,
-        "expected_mode_sha256": (
-            "fad8f4be8404605d5e75cd6f19506890689e10f7d81367ef44aaadb9437e7873"
-        ),
-        "expected_active_mode_sha256": (
-            "fad8f4be8404605d5e75cd6f19506890689e10f7d81367ef44aaadb9437e7873"
-        ),
-        "expected_active_propagating_count": 35784,
-        "expected_active_power_carrying_count": 36744,
+        "expected_mode_count": mode_count,
+        "expected_active_mode_count": mode_count,
+        "expected_mode_sha256": mode_sha,
+        "expected_active_mode_sha256": mode_sha,
+        "expected_active_propagating_count": propagating_count,
+        "expected_active_power_carrying_count": power_count,
         "boundary_amplitude_scale_policy": "boundary_magnitude_scaled_r5_v1",
         "production_auto_inventory_signed_bounds_mn": [-71, 71, -142, 142],
         "auto_rectangle_candidate_key_count": 163020,
         "production_auto_inventory_mode_count": 64120,
         "production_auto_inventory_policy": "auto_propagating",
-        "omitted_auto_propagating_mode_count": 28336,
+        "omitted_auto_propagating_mode_count": omitted_auto_count,
         "separate_centered_audit_signed_bounds_mn": [-71, 71, -143, 143],
         "separate_centered_audit_mode_count": 164164,
         "separate_centered_audit_is_production_inventory": False,
@@ -1622,7 +1625,7 @@ def _task40_phi90_d07c_profile_facts(identity):
         wavelength_nm=0.7,
         allowed_mesh_targets_nm=[0.7],
         formal_runner="src.runners.p6_condensed_direct",
-        route=f"TASK40_PHI90_D07C_{case_name}_P6_CONDENSED_DIRECT_M32_Nminus143_to_1",
+        route=f"TASK40_PHI90_D07C_{case_name}_P6_CONDENSED_DIRECT_M{max_m}_Nminus143_to_1",
         operator_scope=operator_scope,
         full_dtn_status="FULL_DTN_NOT_VERIFIED",
     )
@@ -1708,7 +1711,7 @@ def _task40_phi90_d07c_profile_facts(identity):
     options["direct_factor_evidence"]["mode_keys"] = evidence_keys
     options["direct_factor_evidence"]["full_primal_projection_quadrature_degree"] = 81
     options["direct_factor_evidence"]["active_mode_scope"] = (
-        "D07C finite signed M[-32,32],N[-143,1]; not full auto inventory"
+        f"D07C finite signed M[-{max_m},{max_m}],N[-143,1]; not full auto inventory"
     )
     base["backend"].update(
         independent_residual="original_full_p6_A6_active_D07C_finite_signed_window_action",
@@ -1717,13 +1720,13 @@ def _task40_phi90_d07c_profile_facts(identity):
     )
     base["condensed_route"].update(
         name="task40_phi90_p6_exact_local_condensation_direct_d07c_v1",
-        operator_family="D07C_M32_Nminus143_to_1_finite_signed_rectangle",
+        operator_family=f"D07C_M{max_m}_Nminus143_to_1_finite_signed_rectangle",
         parent_mode_inventory=mode_selection["parent_inventory_scope"],
         active_mode_inventory="same_as_finite_signed_parent",
-        parent_mode_count=37700,
+        parent_mode_count=mode_count,
         parent_quadrature_degree=81,
         surface_quadrature_envelope_max_abs_m_n=[32, 143],
-        omitted_auto_propagating_mode_count=28336,
+        omitted_auto_propagating_mode_count=omitted_auto_count,
         operator_scope=operator_scope,
     )
     direct_route = base["campaign_authorization"]["direct_route"]
@@ -1732,10 +1735,10 @@ def _task40_phi90_d07c_profile_facts(identity):
         d07c_case=case_name,
         parent_signed_bounds_mn=signed_bounds,
         active_signed_bounds_mn=signed_bounds,
-        parent_rectangle_max_abs_m_n=[32, 143],
-        active_rectangle_max_abs_m_n=[32, 143],
-        parent_mode_count=37700,
-        active_mode_count=37700,
+        parent_rectangle_max_abs_m_n=[max_m, 143],
+        active_rectangle_max_abs_m_n=[max_m, 143],
+        parent_mode_count=mode_count,
+        active_mode_count=mode_count,
         parent_mode_sha256=mode_selection["expected_mode_sha256"],
         active_mode_sha256=mode_selection["expected_active_mode_sha256"],
         port_boundary_amplitude_scale_policy="boundary_magnitude_scaled_r5_v1",
@@ -1744,7 +1747,7 @@ def _task40_phi90_d07c_profile_facts(identity):
         surface_quadrature="explicit_D07C_q81; q161_independent_reference_only",
         volume_quadrature_degree=15,
         volume_quadrature_rule="default",
-        omitted_auto_propagating_mode_count=28336,
+        omitted_auto_propagating_mode_count=omitted_auto_count,
         mesh_plan_id=plan["mesh_plan_id"],
         mesh_plan_sha256=plan["mesh_plan_sha256"],
         expected_axis_sha256_le_f64=dict(plan["axis_sha256_le_f64"]),
@@ -1769,6 +1772,17 @@ def _task40_phi90_d07c_profile_facts(identity):
         "User-authorized three-case 0.7 nm D07C study using one fixed finite signed mode window; "
         "the excluded high-|m| propagating orders remain outside qualification."
     )
+    if max_m == 8:
+        base["campaign_authorization"]["source"] = (
+            "User-authorized 2026-10-29 0.7nm mesh refinement with economical modal truncation: "
+            "B_M8 is the same-grid cutoff anchor; Y3_M8 bisects B y only. "
+            "Each requires independent fresh admission and one systemd submission."
+        )
+        mode_selection["comparison_reference_signed_bounds_mn"] = [-32, 32, -143, 1]
+        mode_selection["comparison_reference_mode_sha256"] = (
+            "fad8f4be8404605d5e75cd6f19506890689e10f7d81367ef44aaadb9437e7873"
+        )
+        mode_selection["cutoff_validation_status"] = "REQUIRES_SAME_GRID_SOLVE_COMPARISON"
     base["operator_scope"] = operator_scope
     base["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"
     return base

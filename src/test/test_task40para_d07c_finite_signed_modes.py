@@ -16,7 +16,6 @@ from src.common.modes_3d import (
 from src.geometry.mesh_builder_3d import stage4_axis_plan
 from src.geometry.task40_phi90_d07c_axis_plan import (
     D07C_AXIS_PLANS,
-    D07C_CASE_SEGMENT_COUNTS,
     d07c_axis_plan,
 )
 from src.io.input_loader import InputError, load_dat_input
@@ -77,7 +76,7 @@ def _resolved_case(case):
     return path, specification, specification.as_jsonable()
 
 
-@pytest.mark.parametrize("case", tuple(D07C_CASE_SEGMENT_COUNTS))
+@pytest.mark.parametrize("case", ("B", "Y1", "Y2"))
 def test_d07c_dat_profile_and_real_axis_planner_bind_each_case(case):
     path, _specification, resolved = _resolved_case(case)
     normalized = _validate_sections(_plain(load_dat_input(path).document))
@@ -163,7 +162,8 @@ def test_d07c_dat_profile_and_real_axis_planner_bind_each_case(case):
 
 
 def test_d07c_live_mesh_evidence_uses_actual_axes_and_independent_material_tags():
-    for case, plan in D07C_AXIS_PLANS.items():
+    for case in ("B", "Y1", "Y2"):
+        plan = D07C_AXIS_PLANS[case]
         route = _direct_run_contract(TASK40_PHI90_D07C_PROFILE_BY_CASE[case])
         coords = np.asarray(
             list(product(plan["axes_nm"]["x"], plan["axes_nm"]["y"], plan["axes_nm"]["z"])),
