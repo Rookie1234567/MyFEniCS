@@ -1131,7 +1131,7 @@ def test_10_v21_pending_reader_recomputes_rebound_raw_packet(
         tmp_path, mixed_rhs=mixed_rhs
     )
     if mixed_rhs:
-        with pytest.raises(ValueError, match="saved raw-vector gates"):
+        with pytest.raises(ValueError, match="do not match the returned system"):
             comparison._validate_v21_pending_candidate(
                 candidate_root, record, {}, "a" * 64
             )
