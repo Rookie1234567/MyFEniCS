@@ -1,0 +1,7 @@
+{
+  "root_static_review": "Minimal D2 source review: saved metrics supply original J aggregates; independent rows and anchors retain unchanged tolerances; D1 preserved; all affected call sites updated. No project import or new numerical execution.",
+  "prelaunch_bug_caught": "New test source-label assertion misspelled Y6_SUMMARY_JSON as Y6_1_SUMMARY_JSON; caught by root before launch, corrected without extra slot.",
+  "D2_scope": "Three affected tests 9/10/11 in same worker, then both fixed q8/q10 derived values; no completed D1 order available to reuse.",
+  "no_old_source_or_tolerance_change": true,
+  "static_review_elapsed_seconds": "NOT_MEASURED"
+}

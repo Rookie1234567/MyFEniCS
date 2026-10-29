@@ -1,0 +1,23 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-7.4.4, pluggy-1.4.0 -- /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/fenics/Projects/NN-Lab-V2
+collecting ... collected 6 items
+
+src/test/test_task43_saved_r10_response.py::test_cells_bind_geometry_not_plan_row_and_freeze_degree_counts PASSED [ 16%]
+src/test/test_task43_saved_r10_response.py::test_response_decomposition_identity_and_location_rule PASSED [ 33%]
+src/test/test_task43_saved_r10_response.py::test_modal_j_replay_reproduces_612_channel_anchor PASSED [ 50%]
+src/test/test_task43_saved_r10_response.py::test_main_microfixture_writes_q8_q10_and_terminal PASSED [ 66%]
+src/test/test_task43_saved_r10_response.py::test_main_mid_write_failure_preserves_q8_and_marks_incomplete PASSED [ 83%]
+src/test/test_task43_saved_r10_response.py::test_terminal_refuses_incomplete_order PASSED [100%]
+
+==================================== PASSES ====================================
+- generated xml file: /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/tests.xml -
+=========================== short test summary info ============================
+PASSED src/test/test_task43_saved_r10_response.py::test_cells_bind_geometry_not_plan_row_and_freeze_degree_counts
+PASSED src/test/test_task43_saved_r10_response.py::test_response_decomposition_identity_and_location_rule
+PASSED src/test/test_task43_saved_r10_response.py::test_modal_j_replay_reproduces_612_channel_anchor
+PASSED src/test/test_task43_saved_r10_response.py::test_main_microfixture_writes_q8_q10_and_terminal
+PASSED src/test/test_task43_saved_r10_response.py::test_main_mid_write_failure_preserves_q8_and_marks_incomplete
+PASSED src/test/test_task43_saved_r10_response.py::test_terminal_refuses_incomplete_order
+============================== 6 passed in 2.97s ===============================

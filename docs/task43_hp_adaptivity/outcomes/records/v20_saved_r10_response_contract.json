@@ -4837,7 +4837,11 @@
       "src/test/test_task43_saved_r10_response.py::test_main_mid_write_failure_preserves_q8_and_marks_incomplete",
       "src/test/test_task43_saved_r10_response.py::test_terminal_refuses_incomplete_order"
     ],
-    "d2_selectors": []
+    "d2_selectors": [
+      "src/test/test_task43_saved_r10_response.py::test_modal_j_replay_reproduces_612_channel_anchor",
+      "src/test/test_task43_saved_r10_response.py::test_main_microfixture_writes_q8_q10_and_terminal",
+      "src/test/test_task43_saved_r10_response.py::test_main_mid_write_failure_preserves_q8_and_marks_incomplete"
+    ]
   },
   "input_lock": {
     "path": "docs/task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_sources/input_lock.json",

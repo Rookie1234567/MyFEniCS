@@ -1,0 +1,10 @@
+{
+  "decision": "ALLOW_ONE_FIXED_SLOT",
+  "stage": "T2",
+  "actual_head": "f0a45d395b404ca5b7601bbff7833a913092f7c6",
+  "contract_sha256": "e29a1d9d6a7a6856400cf5e4c9a5302d35ade039596f0aa62d43a8135574c7d3",
+  "authorization_review": "0c6158cb96b3ba320d5bd3282a3c18f64c5a08c9",
+  "reason": "Known fixture regex mismatch only; T1 six passes reused, failed seventh plus five interrupted NOT_RUN nodes completed by unique T2; runtime/resource/cleanup read and accepted in T1/root_decision.json",
+  "source_change": "one expected exception regex in test, checker unchanged",
+  "T1_whole_seconds": 8.491005773
+}

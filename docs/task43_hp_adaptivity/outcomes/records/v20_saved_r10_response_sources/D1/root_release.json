@@ -1,0 +1,21 @@
+{
+  "decision": "ALLOW_ONE_FIXED_SLOT",
+  "stage": "D1",
+  "actual_head": "f0a45d395b404ca5b7601bbff7833a913092f7c6",
+  "contract_sha256": "e29a1d9d6a7a6856400cf5e4c9a5302d35ade039596f0aa62d43a8135574c7d3",
+  "authorization_review": "0c6158cb96b3ba320d5bd3282a3c18f64c5a08c9",
+  "reason": {
+    "decision": "T_GATE_PASSED_LIMITED",
+    "evidence": "T1 six unchanged-node passes + T2 six passes; not a single final 12-node run",
+    "changed_test_functions": [
+      "test_cells_bind_geometry_not_plan_row_and_freeze_degree_counts"
+    ],
+    "root_read": "Full T2 283-line raw trace read including exit0; five get-affinity CPU1, zero setters/signals. All12 resource rows read, no vanished/unreadable, direct parent/tracer stable, all visible threads CPU1, task swap0, exit0/0/0, host processes cleared.",
+    "T1_failure_preserved": true,
+    "T1_whole_seconds": 8.491005773,
+    "T2_whole_seconds": 8.987010908,
+    "whole_total_seconds": 17.478016681,
+    "production_ABI_or_science_pass": false
+  },
+  "T2_root_decision_sha256": "743712badad1bc544655bdcd265ae2c70b31e99834ef2dda342af4123fdc53b5"
+}

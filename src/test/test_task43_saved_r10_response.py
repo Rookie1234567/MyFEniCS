@@ -191,6 +191,13 @@ def _modal_metrics() -> dict[str, Any]:
     }
 
 
+def _saved_modal_metrics(r_total: float = 0.0, r00_s: float = 0.0) -> dict[str, float]:
+    return {
+        "R_total": float(r_total), "T_total": 0.0,
+        "R00_s": float(r00_s), "R00_p": 0.0, "R00_total": float(r00_s),
+    }
+
+
 def _source_fixture(tmp_path: Path) -> tuple[dict[str, Any], dict[str, Path]]:
     cells = _cells()
     r9_plan_rows = [
@@ -227,9 +234,9 @@ def _source_fixture(tmp_path: Path) -> tuple[dict[str, Any], dict[str, Path]]:
     records = {
         "r9_plan": r9_plan,
         "r10_plan": r10_plan,
-        "r9_modal": {"orders": modal_rows},
-        "r10_modal": {"orders": modal_rows},
-        "y6_modal": {"orders": modal_rows},
+        "r9_modal": {"metrics": _saved_modal_metrics(), "orders": modal_rows},
+        "r10_modal": {"metrics": _saved_modal_metrics(), "orders": modal_rows},
+        "y6_modal": {"metrics": _saved_modal_metrics(), "orders": modal_rows},
         "r9_absorption": {"A_volume_total": 0.0},
         "r10_absorption": {"A_volume_total": 0.0},
         "y6_summary": {"official_result": {"volume_metrics": {"A_volume_total": 0.0}}},
@@ -266,6 +273,13 @@ def _source_fixture(tmp_path: Path) -> tuple[dict[str, Any], dict[str, Path]]:
         "epsilon_J": 0.1, "epsilon_G": 0.1, "delta_FE_historical": 8328,
     }
     return manifest, source_paths
+
+
+def _rewrite_fixture_source(
+    manifest: dict[str, Any], paths: dict[str, Path], role: str, record: dict[str, Any],
+) -> None:
+    path = _write_json(paths[role], record)
+    manifest["sources"][role]["sha256"] = _sha(path)
 
 
 def _archive_fixture(tmp_path: Path, order: int, label: str) -> dict[str, Any]:
@@ -445,7 +459,10 @@ def test_modal_j_replay_reproduces_612_channel_anchor(tmp_path: Path):
     for action in ("R9", "R10"):
         assert field[action]["J_replay"]["value"] == pytest.approx(bundle["anchors"][action]["J_infinity"]["value"])
         assert len(field[action]["J_replay"]["components"]) == 16
-    rows, replay = v20._modal_rows(bundle["modal"], bundle["anchors"], bundle["absorption"])
+        assert "HASH_BOUND_MODAL_JSON_METRICS" in field[action]["saved_modal_aggregate_source"]
+    rows, replay = v20._modal_rows(
+        bundle["modal"], bundle["anchors"], bundle["absorption"], bundle["saved_modal_power"]
+    )
     assert len(rows) == 612
     evanescent = next(row for row in rows if (row["side"], row["m"], row["n"], row["polarization"]) == ("top", 3, 5, "s"))
     assert (evanescent["R10_amplitude_real"] ** 2 + evanescent["R10_amplitude_imag"] ** 2) ** 0.5 > 0.0
@@ -458,10 +475,95 @@ def test_modal_j_replay_reproduces_612_channel_anchor(tmp_path: Path):
     anchors = copy.deepcopy(bundle["anchors"])
     for action, value in (("R9", 2.0e-6), ("R10", 3.0e-6)):
         anchors[action]["modal_and_power_metrics"]["maximum_individual_channel_power_ratio_absolute_difference"] = value
-    _, changed = v20._modal_rows(altered, anchors, bundle["absorption"])
+    _, changed = v20._modal_rows(
+        altered, anchors, bundle["absorption"], bundle["saved_modal_power"]
+    )
     assert changed["R9"]["channel_exceedance_count"] == 1
     assert changed["R10"]["channel_exceedance_count"] == 1
     assert changed["R9"]["channels_exceeding_threshold"][0]["absolute_difference"] == pytest.approx(2.0e-6)
+
+    ulp_manifest, ulp_paths = _source_fixture(tmp_path / "ulp")
+    saved_r9 = 0.2513585307019157
+    row_r9 = 0.2513585307019156
+    saved_y6 = 0.25135446618144197
+    row_y6 = 0.251354466181442
+    for role, saved_value, row_value in (
+        ("r9_modal", saved_r9, row_r9),
+        ("r10_modal", saved_r9, row_r9),
+        ("y6_modal", saved_y6, row_y6),
+    ):
+        modal_record = v20._json_file(ulp_paths[role])
+        zero_order = next(
+            row for row in modal_record["orders"]
+            if (row["side"], row["order_m"], row["order_n"], row["polarization"])
+            == ("top", 0, 0, "s")
+        )
+        zero_order["R"] = row_value
+        modal_record["metrics"] = _saved_modal_metrics(saved_value, saved_value)
+        _rewrite_fixture_source(ulp_manifest, ulp_paths, role, modal_record)
+
+    signed = {
+        "R_total": saved_r9 - saved_y6, "T_total": 0.0,
+        "R00_s": saved_r9 - saved_y6, "R00_p": 0.0,
+        "R00_total": saved_r9 - saved_y6, "A_volume": 0.0,
+    }
+    absolute = {key: abs(value) for key, value in signed.items()}
+
+    def bind_modal_j(case: dict[str, Any]) -> None:
+        for key, value in signed.items():
+            case["J_infinity"]["components"][f"power.{key}"] = (
+                value / v19.J_POWER_TOLERANCES[key]
+            )
+        components = case["J_infinity"]["components"]
+        case["J_infinity"]["witness"] = max(components, key=components.__getitem__)
+        case["J_infinity"]["value"] = components[case["J_infinity"]["witness"]]
+        case["modal_and_power_metrics"]["power_absolute_differences"] = absolute
+        case["modal_and_power_metrics"]["maximum_individual_channel_power_ratio_absolute_difference"] = 0.0
+
+    r9_comparison = v20._json_file(ulp_paths["r9_comparison"])
+    r9_candidate = r9_comparison["modal_and_power_metrics_vs_selection_reference"]["candidate"]
+    bind_modal_j({
+        "J_infinity": r9_comparison["J_infinity"]["candidate"],
+        "modal_and_power_metrics": r9_candidate,
+    })
+    _rewrite_fixture_source(ulp_manifest, ulp_paths, "r9_comparison", r9_comparison)
+
+    r10_comparison = v20._json_file(ulp_paths["r10_comparison"])
+    r10_comparison["field_metrics_vs_selection_reference"]["parent"] = copy.deepcopy(
+        r9_comparison["field_metrics_vs_selection_reference"]["candidate"]
+    )
+    r10_comparison["J_infinity"]["parent"] = copy.deepcopy(
+        r9_comparison["J_infinity"]["candidate"]
+    )
+    r10_comparison["modal_and_power_metrics_vs_selection_reference"]["parent"] = copy.deepcopy(
+        r9_candidate
+    )
+    bind_modal_j({
+        "J_infinity": r10_comparison["J_infinity"]["candidate"],
+        "modal_and_power_metrics": r10_comparison["modal_and_power_metrics_vs_selection_reference"]["candidate"],
+    })
+    _rewrite_fixture_source(ulp_manifest, ulp_paths, "r10_comparison", r10_comparison)
+
+    ulp_bundle = v20._load_source_bundle(
+        ulp_manifest, v20._source_paths(ulp_manifest, fixture=True), None, fixture=True,
+    )
+    ulp_arrays = _sample_arrays(2)
+    ulp_replay = v20._field_and_j_replay(
+        ulp_arrays, ulp_bundle, ulp_arrays["weights_nm3"], ulp_manifest["physics"],
+    )
+    expected_j_power = signed["R_total"] / v19.J_POWER_TOLERANCES["R_total"]
+    assert ulp_replay["R9"]["J_replay"]["components"]["power.R_total"] == expected_j_power
+    raw_r9 = v19._modal_aggregate(ulp_bundle["modal"]["R9"], ulp_bundle["absorption"]["R9"])["R_total"]
+    raw_y6 = v19._modal_aggregate(ulp_bundle["modal"]["Y6_1"], ulp_bundle["absorption"]["Y6_1"])["R_total"]
+    assert (raw_r9 - raw_y6) / v19.J_POWER_TOLERANCES["R_total"] != expected_j_power
+    _, ulp_modal_replay = v20._modal_rows(
+        ulp_bundle["modal"], ulp_bundle["anchors"], ulp_bundle["absorption"],
+        ulp_bundle["saved_modal_power"],
+    )
+    assert ulp_modal_replay["R9"]["signed_power_delta_vs_Y6_1"]["R_total"] == signed["R_total"]
+    row_metric_error = ulp_modal_replay["R9"]["row_sum_vs_saved_metrics_replay_errors"]["R9"]["R_total"]["absolute_error"]
+    assert row_metric_error == abs(row_r9 - saved_r9)
+    assert "Y6_SUMMARY_JSON" in ulp_modal_replay["R9"]["signed_aggregate_source"]
 
     wrong_reference = copy.deepcopy(manifest)
     wrong_source = copy.deepcopy(v20._json_file(paths["r10_comparison"]))

@@ -1,0 +1,580 @@
+{
+  "schema": "task43.v20.root_closeout.v1",
+  "source_head": "f0a45d395b404ca5b7601bbff7833a913092f7c6",
+  "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1",
+  "reviewer": "root",
+  "recorded_epoch_ns": 1793232093132760309,
+  "issues": [],
+  "vanished_samples_requiring_root_assessment": [],
+  "runtime_start": {
+    "activation_marker": "1",
+    "ancestors": [
+      {
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/watchdog --wall-seconds 269 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; exec taskse",
+        "pid": 3675799,
+        "ppid": 3675743,
+        "start_ticks": 315705865,
+        "state": "S"
+      },
+      {
+        "cmdline": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/launch/stage_launch.sh T2 --supervise 3157057541484818 ",
+        "pid": 3675743,
+        "ppid": 1,
+        "start_ticks": 315705755,
+        "state": "S"
+      }
+    ],
+    "cpu_affinity": [
+      1
+    ],
+    "numpy": "1.26.4",
+    "pid": 3675807,
+    "ppid": 3675799,
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "qualified_venv": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv",
+    "run_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1",
+    "stage": "T2",
+    "start_ticks": 315705941,
+    "state": "R",
+    "task_vmswap_kib": 0,
+    "thread_environment": {
+      "BLIS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "threads": [
+      {
+        "cpu_affinity": [
+          1
+        ],
+        "start_ticks": 315705941,
+        "state": "R",
+        "tid": 3675807
+      }
+    ],
+    "tracer": {
+      "cmdline": "strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/strace/sched python -u -m pytest -v -rA --maxfail=1 --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/tests.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/fixtures src/tes",
+      "pid": 3675813,
+      "ppid": 3675799,
+      "start_ticks": 315705946,
+      "state": "S"
+    },
+    "tracer_ancestor_chain": [
+      {
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/watchdog --wall-seconds 269 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; exec taskse",
+        "pid": 3675799,
+        "ppid": 3675743,
+        "start_ticks": 315705865,
+        "state": "S"
+      },
+      {
+        "cmdline": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/launch/stage_launch.sh T2 --supervise 3157057541484818 ",
+        "pid": 3675743,
+        "ppid": 1,
+        "start_ticks": 315705755,
+        "state": "S"
+      }
+    ],
+    "tracer_owned_by_watchdog": true,
+    "tracer_pid": 3675813,
+    "virtual_env": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv",
+    "watchdog": {
+      "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/watchdog --wall-seconds 269 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; exec taskse",
+      "pid": 3675799,
+      "ppid": 3675743,
+      "start_ticks": 315705865,
+      "state": "S"
+    },
+    "watchdog_is_direct_parent": true,
+    "watchdog_phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/watchdog/workflow_phase.json",
+    "watchdog_pid": 3675799,
+    "watchdog_start_ticks": 315705865
+  },
+  "runtime_end": {
+    "activation_marker": "1",
+    "ancestors": [
+      {
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/watchdog --wall-seconds 269 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; exec taskse",
+        "pid": 3675799,
+        "ppid": 3675743,
+        "start_ticks": 315705865,
+        "state": "S"
+      },
+      {
+        "cmdline": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/launch/stage_launch.sh T2 --supervise 3157057541484818 ",
+        "pid": 3675743,
+        "ppid": 1,
+        "start_ticks": 315705755,
+        "state": "S"
+      }
+    ],
+    "cpu_affinity": [
+      1
+    ],
+    "numpy": "1.26.4",
+    "pid": 3675807,
+    "ppid": 3675799,
+    "python": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python",
+    "qualified_venv": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv",
+    "run_root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1",
+    "stage": "T2",
+    "start_ticks": 315705941,
+    "state": "R",
+    "task_vmswap_kib": 0,
+    "thread_environment": {
+      "BLIS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "threads": [
+      {
+        "cpu_affinity": [
+          1
+        ],
+        "start_ticks": 315705941,
+        "state": "R",
+        "tid": 3675807
+      }
+    ],
+    "tracer": {
+      "cmdline": "strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/strace/sched python -u -m pytest -v -rA --maxfail=1 --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/tests.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/fixtures src/tes",
+      "pid": 3675813,
+      "ppid": 3675799,
+      "start_ticks": 315705946,
+      "state": "S"
+    },
+    "tracer_ancestor_chain": [
+      {
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/watchdog --wall-seconds 269 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; exec taskse",
+        "pid": 3675799,
+        "ppid": 3675743,
+        "start_ticks": 315705865,
+        "state": "S"
+      },
+      {
+        "cmdline": "bash /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/launch/stage_launch.sh T2 --supervise 3157057541484818 ",
+        "pid": 3675743,
+        "ppid": 1,
+        "start_ticks": 315705755,
+        "state": "S"
+      }
+    ],
+    "tracer_owned_by_watchdog": true,
+    "tracer_pid": 3675813,
+    "virtual_env": "/home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv",
+    "watchdog": {
+      "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/watchdog --wall-seconds 269 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; exec taskse",
+      "pid": 3675799,
+      "ppid": 3675743,
+      "start_ticks": 315705865,
+      "state": "S"
+    },
+    "watchdog_is_direct_parent": true,
+    "watchdog_phase_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/watchdog/workflow_phase.json",
+    "watchdog_pid": 3675799,
+    "watchdog_start_ticks": 315705865
+  },
+  "resource_samples": [
+    {
+      "elapsed_seconds": 0.4709055661223829,
+      "exit_code": null,
+      "rss_bytes": 54034432,
+      "swap_bytes": 0,
+      "vanished_pids": [],
+      "live_or_unreaped_children": [
+        3675807,
+        3675813
+      ]
+    },
+    {
+      "elapsed_seconds": 1.1928369128145278,
+      "exit_code": null,
+      "rss_bytes": 65277952,
+      "swap_bytes": 0,
+      "vanished_pids": [],
+      "live_or_unreaped_children": [
+        3675807,
+        3675813
+      ]
+    },
+    {
+      "elapsed_seconds": 1.903617158997804,
+      "exit_code": null,
+      "rss_bytes": 81666048,
+      "swap_bytes": 0,
+      "vanished_pids": [],
+      "live_or_unreaped_children": [
+        3675807,
+        3675813
+      ]
+    },
+    {
+      "elapsed_seconds": 2.6156710581853986,
+      "exit_code": null,
+      "rss_bytes": 94175232,
+      "swap_bytes": 0,
+      "vanished_pids": [],
+      "live_or_unreaped_children": [
+        3675807,
+        3675813
+      ]
+    },
+    {
+      "elapsed_seconds": 3.3149784822016954,
+      "exit_code": null,
+      "rss_bytes": 97718272,
+      "swap_bytes": 0,
+      "vanished_pids": [],
+      "live_or_unreaped_children": [
+        3675807,
+        3675813
+      ]
+    },
+    {
+      "elapsed_seconds": 4.048554133158177,
+      "exit_code": null,
+      "rss_bytes": 97738752,
+      "swap_bytes": 0,
+      "vanished_pids": [],
+      "live_or_unreaped_children": [
+        3675807,
+        3675813
+      ]
+    },
+    {
+      "elapsed_seconds": 4.758681614883244,
+      "exit_code": null,
+      "rss_bytes": 98615296,
+      "swap_bytes": 0,
+      "vanished_pids": [],
+      "live_or_unreaped_children": [
+        3675807,
+        3675813
+      ]
+    },
+    {
+      "elapsed_seconds": 5.368631590157747,
+      "exit_code": null,
+      "rss_bytes": 97587200,
+      "swap_bytes": 0,
+      "vanished_pids": [],
+      "live_or_unreaped_children": [
+        3675807,
+        3675813
+      ]
+    },
+    {
+      "elapsed_seconds": 5.746328386943787,
+      "exit_code": 0,
+      "rss_bytes": 38100992,
+      "swap_bytes": 0,
+      "vanished_pids": [],
+      "live_or_unreaped_children": []
+    },
+    {
+      "elapsed_seconds": 6.123357229866087,
+      "exit_code": 0,
+      "rss_bytes": 38100992,
+      "swap_bytes": 0,
+      "vanished_pids": [],
+      "live_or_unreaped_children": []
+    },
+    {
+      "elapsed_seconds": 6.49894602317363,
+      "exit_code": 0,
+      "rss_bytes": 38100992,
+      "swap_bytes": 0,
+      "vanished_pids": [],
+      "live_or_unreaped_children": []
+    },
+    {
+      "elapsed_seconds": 6.878284070175141,
+      "exit_code": 0,
+      "rss_bytes": 38100992,
+      "swap_bytes": 0,
+      "vanished_pids": [],
+      "live_or_unreaped_children": []
+    }
+  ],
+  "resources_sha256": "94c518f76c821f37bf68b40d216953291014370974386556c8c108cf366883f7",
+  "trace_files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_recovery1/strace/sched.3675807",
+      "sha256": "fc5e4798122d5dacc638f6cc81b2d9e308aeb2e3ea213cb03f0b07b5f1186b4b",
+      "lines": 283,
+      "tail": [
+        "1793232069.947648 +++ exited with 0 +++"
+      ]
+    }
+  ],
+  "all_nonstack_events": [
+    {
+      "file": "sched.3675807",
+      "line": 1,
+      "raw": "1793232066.092151 sched_getaffinity(0, 128, [1]) = 8",
+      "classification": "GET_CPU1"
+    },
+    {
+      "file": "sched.3675807",
+      "line": 125,
+      "raw": "1793232066.657251 sched_getaffinity(3675807, 8, [1]) = 8",
+      "classification": "GET_CPU1"
+    },
+    {
+      "file": "sched.3675807",
+      "line": 167,
+      "raw": "1793232066.668570 sched_getaffinity(0, 8, [1]) = 8",
+      "classification": "GET_CPU1"
+    },
+    {
+      "file": "sched.3675807",
+      "line": 209,
+      "raw": "1793232068.771005 sched_getaffinity(3675807, 8, [1]) = 8",
+      "classification": "GET_CPU1"
+    },
+    {
+      "file": "sched.3675807",
+      "line": 246,
+      "raw": "1793232068.782444 sched_getaffinity(0, 8, [1]) = 8",
+      "classification": "GET_CPU1"
+    },
+    {
+      "file": "sched.3675807",
+      "line": 283,
+      "raw": "1793232069.947648 +++ exited with 0 +++",
+      "classification": "EXIT_ZERO"
+    }
+  ],
+  "trace_lines_read": 283,
+  "stack_lines_read": 277,
+  "host_post_exit_checks": [
+    {
+      "pid": 3675807,
+      "start_ticks": 315705941,
+      "same_process_present": false
+    },
+    {
+      "pid": 3675799,
+      "start_ticks": 315705865,
+      "same_process_present": false
+    },
+    {
+      "pid": 3675813,
+      "start_ticks": 315705946,
+      "same_process_present": false
+    }
+  ],
+  "source_checks": [
+    {
+      "path": "benchmarks/__init__.py",
+      "sha256": "5678b6ce7ef13b9f82c7be455436f0e87d548acf436e13c7db995a2610142445",
+      "snapshot_sha256": "5678b6ce7ef13b9f82c7be455436f0e87d548acf436e13c7db995a2610142445",
+      "matches": true
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/__init__.py",
+      "sha256": "5e8806eae425d1f622bf4a4a18b2b300051ee4da84a6a1ea64abcb40bdbd1aab",
+      "snapshot_sha256": "5e8806eae425d1f622bf4a4a18b2b300051ee4da84a6a1ea64abcb40bdbd1aab",
+      "matches": true
+    },
+    {
+      "path": "src/__init__.py",
+      "sha256": "03b698bbb1fa349e86a99e29ccc436cd73f4fa9dc57d79e39bcdd6dddac4c021",
+      "snapshot_sha256": "03b698bbb1fa349e86a99e29ccc436cd73f4fa9dc57d79e39bcdd6dddac4c021",
+      "matches": true
+    },
+    {
+      "path": "src/test/__init__.py",
+      "sha256": "15d7dd22a4b3d1579eeb1ffe4d7109b2918f671e96734ef9857c069869910c85",
+      "snapshot_sha256": "15d7dd22a4b3d1579eeb1ffe4d7109b2918f671e96734ef9857c069869910c85",
+      "matches": true
+    },
+    {
+      "path": "src/io/__init__.py",
+      "sha256": "f527e4c988829c8724a19a084d65547479b0a019a8a973940679dc62b22bf5f8",
+      "snapshot_sha256": "f527e4c988829c8724a19a084d65547479b0a019a8a973940679dc62b22bf5f8",
+      "matches": true
+    },
+    {
+      "path": "src/runners/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "snapshot_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matches": true
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/analyze_saved_hp_response.py",
+      "sha256": "f1191f223e087a4d8d589e7a11a056e06e2c831a37ae2c5aa862c2da55868ca8",
+      "snapshot_sha256": "f1191f223e087a4d8d589e7a11a056e06e2c831a37ae2c5aa862c2da55868ca8",
+      "matches": true
+    },
+    {
+      "path": "benchmarks/task43_hp_adaptivity/analyze_saved_r10_response.py",
+      "sha256": "83f4b4661a16de42f5fd4195cf73e96df26eff4686eda8813f33558788b8f6e4",
+      "snapshot_sha256": "83f4b4661a16de42f5fd4195cf73e96df26eff4686eda8813f33558788b8f6e4",
+      "matches": true
+    },
+    {
+      "path": "src/test/test_task43_saved_r10_response.py",
+      "sha256": "c8b84dcb26f8da9ac7259a28de80dc4aab5e3d3e2ee2e40ad178f906ea650825",
+      "snapshot_sha256": "c8b84dcb26f8da9ac7259a28de80dc4aab5e3d3e2ee2e40ad178f906ea650825",
+      "matches": true
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_contract.json",
+      "sha256": "e29a1d9d6a7a6856400cf5e4c9a5302d35ade039596f0aa62d43a8135574c7d3",
+      "snapshot_sha256": "e29a1d9d6a7a6856400cf5e4c9a5302d35ade039596f0aa62d43a8135574c7d3",
+      "matches": true
+    },
+    {
+      "path": "docs/task43_hp_adaptivity/outcomes/records/v20_saved_r10_response_sources/input_lock.json",
+      "sha256": "c7682d78a35e43318140f661bb440c858e27b286982a4f9cd236293bd155a8b0",
+      "snapshot_sha256": "c7682d78a35e43318140f661bb440c858e27b286982a4f9cd236293bd155a8b0",
+      "matches": true
+    },
+    {
+      "path": "scripts/activate_task40_phi90_pord64.sh",
+      "sha256": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+      "snapshot_sha256": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+      "matches": true
+    },
+    {
+      "path": "benchmarks/subreaper_watchdog.py",
+      "sha256": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+      "snapshot_sha256": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+      "matches": true
+    },
+    {
+      "path": "benchmarks/task034_wsl_resources.py",
+      "sha256": "bf6d9a7d337ef4d77721d5e260f986937db2f58c8d06ef4dc9344d8798563653",
+      "snapshot_sha256": "bf6d9a7d337ef4d77721d5e260f986937db2f58c8d06ef4dc9344d8798563653",
+      "matches": true
+    },
+    {
+      "path": "benchmarks/task038_full3d_jit_staging.py",
+      "sha256": "4203bada08b59dfbea0f97c092307366b984484218e4bc68e113b49d2bc44295",
+      "snapshot_sha256": "4203bada08b59dfbea0f97c092307366b984484218e4bc68e113b49d2bc44295",
+      "matches": true
+    },
+    {
+      "path": "src/runners/workflow_timebase.py",
+      "sha256": "1327f64adce91535c9e35a42b213a7cfba7bffe0896e5631a041747f9a876eac",
+      "snapshot_sha256": "1327f64adce91535c9e35a42b213a7cfba7bffe0896e5631a041747f9a876eac",
+      "matches": true
+    },
+    {
+      "path": "src/io/native_capacity_profile.py",
+      "sha256": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+      "snapshot_sha256": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+      "matches": true
+    }
+  ],
+  "summary": {
+    "workflow_deadline_seconds": 269.0,
+    "solve_deadline_seconds": null,
+    "time_limit_mode": "bounded",
+    "resource_stop_policy": "legacy",
+    "rss_hard_limit_bytes": 8589934592,
+    "rss_warning_bytes": 7301444403,
+    "minimum_available_bytes": null,
+    "startup_headroom_bytes": null,
+    "swap_policy": "legacy_stop",
+    "global_swap_delta_policy": "observe_only",
+    "native_capacity_profile_identity": "task43_hp_adaptivity_resource_v1",
+    "native_capacity_profile_facts_sha256": "c9ef6d173968fd1c78d86eb66b78dd9720bde901f866f58281a4668f83c4b2e6",
+    "native_capacity_resource_facts": {
+      "resource_stop_policy": "legacy",
+      "absolute_cap_bytes": 206158430208,
+      "planning_cap_bytes": 206158430208,
+      "reserve_min_bytes": 68719476736,
+      "reserve_fraction": 0.15,
+      "effective_reserve_policy": "max(64GiB, 15% of effective total memory)",
+      "launch_cap_policy": "min(192GiB, 80% of effective total, effective available minus effective reserve)",
+      "planning_cap_policy": "min(192GiB, 75% of effective total, launch cap)",
+      "memavailable_runtime_policy": "stop_below_effective_reserve",
+      "rss_runtime_policy": "stop_at_launch_cap",
+      "require_zero_swap": true,
+      "swap_policy": "stop_on_nonzero_task_tree_VmSwap",
+      "global_swap_delta_policy": "observe_only",
+      "stop_on_global_swap": false,
+      "pss_sampling_policy": "disabled_by_profile",
+      "concurrent_neighbor_authorized": false,
+      "research_scope": "Task43 only; no Task39/40/41 profile alias"
+    },
+    "launch_memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 1870873243648,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 1870873243648,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "sampled_process_tree_pss_peak_bytes": null,
+    "cache_metadata_stable": true,
+    "classification": "COMPLETED",
+    "leader_exit_code": 0,
+    "descendants_cleared": true,
+    "remaining_child_pids": [],
+    "observed_child_pids": [
+      3675807,
+      3675813
+    ],
+    "sampled_process_tree_rss_peak_bytes": 98615296,
+    "sampled_process_tree_swap_peak_bytes": 0,
+    "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+    "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+    "global_swap_activity": {
+      "scope": "WSL-global diagnostic, not dedicated job",
+      "baseline": {
+        "pswpin_pages": 4250735,
+        "pswpout_pages": 7183007
+      },
+      "end": {
+        "pswpin_pages": 4250735,
+        "pswpout_pages": 7183007
+      },
+      "delta": {
+        "pswpin_pages": 0,
+        "pswpout_pages": 0
+      }
+    },
+    "job_swap_activity": "zero_supported_by_zero_global_activity",
+    "launch_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 1870873243648,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 1870873243648,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "samples": 12,
+    "elapsed_seconds": 6.956535715144128,
+    "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_state": "development_worktree; not formal PDE provenance"
+  },
+  "launcher_terminal": {
+    "stage": "T2",
+    "entry_elapsed_seconds": 8.987010908,
+    "whole_limit_seconds": 300,
+    "supervisor_exit_code": 0,
+    "watchdog_exit_code": 0,
+    "received_signal": null,
+    "qualification": "REQUIRES_ROOT_REVIEW",
+    "whole_limit_pass": true
+  },
+  "cache_limit": "No cache-path requested; empty metadata stamp does not establish shared-cache stability",
+  "classification": "NO_AUTOMATIC_QUALIFICATION_ROOT_READ_REQUIRED"
+}

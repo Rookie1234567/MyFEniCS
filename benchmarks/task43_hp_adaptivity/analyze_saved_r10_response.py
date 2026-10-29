@@ -90,6 +90,8 @@ J_FIELD_SCALE = 1.0e-4
 J_AMPLITUDE_TOL = v19.J_AMPLITUDE_TOLERANCE
 J_CHANNEL_TOL = v19.J_CHANNEL_POWER_TOLERANCE
 POWER_TOL = v19.J_POWER_TOLERANCES
+SAVED_MODAL_METRIC_FIELDS = ("R_total", "T_total", "R00_s", "R00_p", "R00_total")
+SAVED_MODAL_POWER_FIELDS = SAVED_MODAL_METRIC_FIELDS + ("A_volume",)
 REQUIRED_OUTPUTS = ("diagnostic", "cells_csv", "modes_612_csv")
 BASE_CELL_FIELDS = (
     "global_cell_id", "forest_root", "lower_nm", "upper_nm", "r9_p", "r10_p",
@@ -457,6 +459,26 @@ def _absorption(path: Path, *, reference: bool = False) -> float:
     return float(raw)
 
 
+def _saved_modal_power(
+    modal_record: dict[str, Any], absorption: float, label: str,
+) -> dict[str, float]:
+    metrics = modal_record.get("metrics")
+    if not isinstance(metrics, dict):
+        raise EvidenceError(f"{label} modal source lacks saved aggregate metrics")
+    values: dict[str, float] = {}
+    for field in SAVED_MODAL_METRIC_FIELDS:
+        raw = metrics.get(field)
+        if isinstance(raw, bool) or not isinstance(raw, (int, float)) or not math.isfinite(float(raw)):
+            raise EvidenceError(f"{label} modal source lacks finite saved {field}")
+        values[field] = float(raw)
+    values["A_volume"] = float(absorption)
+    v19._close(
+        values["R00_s"] + values["R00_p"], values["R00_total"],
+        f"{label}.saved_modal_metrics.R00_total",
+    )
+    return values
+
+
 def _candidate_anchor(comparison: dict[str, Any], label: str) -> dict[str, Any]:
     if comparison.get("selection_reference") != "Y6_1":
         raise EvidenceError(f"{label} comparison reference is not Y6_1")
@@ -498,14 +520,22 @@ def _load_source_bundle(
         _same_json(manifest["anchors"]["R10"], r10_anchor, "R10 comparison anchor")
     if r10_comp.get("parent_candidate_id") != r9_comp.get("candidate_id"):
         raise EvidenceError("R10 comparison parent is not the frozen R9 candidate")
-    r9_modal = v19.modal_inventory(_json_file(paths["r9_modal"]).get("orders", []))
-    r10_modal = v19.modal_inventory(_json_file(paths["r10_modal"]).get("orders", []))
-    y6_modal = v19.modal_inventory(_json_file(paths["y6_modal"]).get("orders", []))
+    r9_modal_record = _json_file(paths["r9_modal"])
+    r10_modal_record = _json_file(paths["r10_modal"])
+    y6_modal_record = _json_file(paths["y6_modal"])
+    r9_modal = v19.modal_inventory(r9_modal_record.get("orders", []))
+    r10_modal = v19.modal_inventory(r10_modal_record.get("orders", []))
+    y6_modal = v19.modal_inventory(y6_modal_record.get("orders", []))
     if any(len(modal) != 612 for modal in (r9_modal, r10_modal, y6_modal)):
         raise EvidenceError("R9/R10/Y6_1 modal inventory must contain 612 channels")
     r9_abs = _absorption(paths["r9_absorption"])
     r10_abs = _absorption(paths["r10_absorption"])
     y6_abs = _absorption(paths["y6_summary"], reference=True)
+    saved_modal_power = {
+        "R9": _saved_modal_power(r9_modal_record, r9_abs, "R9"),
+        "R10": _saved_modal_power(r10_modal_record, r10_abs, "R10"),
+        "Y6_1": _saved_modal_power(y6_modal_record, y6_abs, "Y6_1"),
+    }
     if not fixture:
         rejection = _json_file(paths["r10_rejection"])
         evidence = rejection.get("evidence", {})
@@ -527,6 +557,7 @@ def _load_source_bundle(
         "paths": paths, "cells": cells, "by_id": by_id, "z_edges": z_edges,
         "plans": {"R9": r9_plan, "R10": r10_plan},
         "modal": {"R9": r9_modal, "R10": r10_modal, "Y6_1": y6_modal},
+        "saved_modal_power": saved_modal_power,
         "absorption": {"R9": r9_abs, "R10": r10_abs, "Y6_1": y6_abs},
         "anchors": {"R9": r9_anchor, "R10": r10_anchor},
     }
@@ -889,15 +920,32 @@ def _rank_cells(
 def _modal_rows(
     modal: dict[str, dict[tuple[str, int, int, str], dict[str, Any]]],
     anchors: dict[str, Any], absorption: dict[str, float],
+    saved_modal_power: dict[str, dict[str, float]],
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     aggregate: dict[str, Any] = {}
     y6 = modal["Y6_1"]
-    y6_power = v19._modal_aggregate(y6, absorption["Y6_1"])
+    row_power = {
+        name: v19._modal_aggregate(modal[name], absorption[name])
+        for name in ("R9", "R10", "Y6_1")
+    }
+    row_replay_errors: dict[str, dict[str, dict[str, float]]] = {}
+    for name in ("R9", "R10", "Y6_1"):
+        if set(saved_modal_power[name]) != set(SAVED_MODAL_POWER_FIELDS):
+            raise EvidenceError(f"{name} saved modal metrics inventory is not the fixed six fields")
+        row_replay_errors[name] = {
+            field: v19._close(
+                row_power[name][field], saved_modal_power[name][field],
+                f"{name}.modal_rows_vs_saved_metrics.{field}",
+            )
+            for field in SAVED_MODAL_POWER_FIELDS
+        }
     channel_exceedances: dict[str, list[dict[str, Any]]] = {}
     for action in ("R9", "R10"):
-        current_power = v19._modal_aggregate(modal[action], absorption[action])
-        signed = {key: current_power[key] - y6_power[key] for key in current_power}
+        signed = {
+            key: saved_modal_power[action][key] - saved_modal_power["Y6_1"][key]
+            for key in SAVED_MODAL_POWER_FIELDS
+        }
         absolute_saved = anchors[action]["modal_and_power_metrics"].get("power_absolute_differences", {})
         if set(absolute_saved) != set(signed):
             raise EvidenceError(f"{action} saved modal aggregate inventory is not the fixed six fields")
@@ -930,6 +978,13 @@ def _modal_rows(
         )
         aggregate[action] = {
             "signed_power_delta_vs_Y6_1": signed,
+            "signed_aggregate_source": (
+                "HASH_BOUND_MODAL_JSON_METRICS_ACTION_MINUS_Y6_1; "
+                "A_VOLUME_FROM_HASH_BOUND_R9_R10_ABSORPTION_AND_Y6_SUMMARY_JSON"
+            ),
+            "row_sum_vs_saved_metrics_replay_errors": {
+                action: row_replay_errors[action], "Y6_1": row_replay_errors["Y6_1"],
+            },
             "absolute_power_delta_vs_saved_modal_anchor": {
                 key: abs(value) for key, value in signed.items()
             },
@@ -1209,7 +1264,7 @@ def _field_and_j_replay(
     output: dict[str, Any] = {}
     y6_modal = bundle["modal"]["Y6_1"]
     y6_abs = bundle["absorption"]["Y6_1"]
-    reference_power = v19._modal_aggregate(y6_modal, y6_abs)
+    reference_power = bundle["saved_modal_power"]["Y6_1"]
     for action, prefix in (("R9", "round9_p_up"), ("R10", "round10_p_up")):
         field_ratios, field_record = v19._field_replay(
             p5, arrays[f"{prefix}_E"], arrays[f"{prefix}_curl_E"],
@@ -1220,8 +1275,8 @@ def _field_and_j_replay(
         )
         candidate_modal = bundle["modal"][action]
         candidate_abs = bundle["absorption"][action]
-        action_power = v19._modal_aggregate(candidate_modal, candidate_abs)
-        signed = {key: action_power[key] - reference_power[key] for key in action_power}
+        action_power = bundle["saved_modal_power"][action]
+        signed = {key: action_power[key] - reference_power[key] for key in SAVED_MODAL_POWER_FIELDS}
         replay_case = {
             "signed_observables": {"aggregate_signed_candidate_minus_reference": signed},
             "J_infinity": bundle["anchors"][action]["J_infinity"],
@@ -1234,6 +1289,10 @@ def _field_and_j_replay(
             "field_relative_metrics": field_ratios,
             "field_replay": field_record,
             "J_replay": j_record,
+            "saved_modal_aggregate_source": (
+                "HASH_BOUND_MODAL_JSON_METRICS_ACTION_MINUS_Y6_1; "
+                "A_VOLUME_FROM_HASH_BOUND_R9_R10_ABSORPTION_AND_Y6_SUMMARY_JSON"
+            ),
         }
     return output
 
@@ -1329,7 +1388,9 @@ def _analyze_order(
                 for component, values in components.items()
             },
         }
-    modal_rows, modal_replay = _modal_rows(bundle["modal"], bundle["anchors"], bundle["absorption"])
+    modal_rows, modal_replay = _modal_rows(
+        bundle["modal"], bundle["anchors"], bundle["absorption"], bundle["saved_modal_power"]
+    )
     ranking = _rank_cells(ids, final_b10, q8_b10, q8_ids)
     owner_global_ids = np.asarray(owner_record.pop("point_owner_global_ids"), dtype=np.int64)
     owner_digest = hashlib.sha256(owner_global_ids.tobytes(order="C")).hexdigest()
