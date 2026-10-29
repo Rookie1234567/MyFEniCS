@@ -53,9 +53,9 @@ U1静态原文件hash核对另测3.251819592900574秒，人工读写、主控std
 
 U1 的主控记录见[新结果机器记录](outcomes/records/v20_user_recovery_results_v1.json)、[输入与证据索引](outcomes/records/v20_user_recovery_sources/U1/source_artifact_index.json)、[独立单元表复核](outcomes/records/v20_user_recovery_sources/U1/root_table_audit.json)、[独立标量复核](outcomes/records/v20_user_recovery_sources/U1/root_scalar_audit.json)、[U1终态](outcomes/records/v20_user_recovery_sources/U1/data/terminal.json)和[同 worker 测试 XML](outcomes/records/v20_user_recovery_sources/U1/tests.xml)。旧四槽失败账仍保存在[原 V20 结果记录](outcomes/records/v20_saved_r10_response_results_v1.json)，不覆盖、不拼接成通过。
 
-## V20 原四槽批次（历史失败账：T1/T2/D1/D2）
+## V20 原四槽历史失败账（仅记录T1/T2/D1/D2原批次，不含后续U1）
 
-本轮没有产生可审阅的完整 R10 场响应诊断。四个获准支持槽 T1、T2、D1、D2 均已调用并计费；受影响测试在 D2 再次遇到 fixture 错误后停止，D1 已读 q8 并到达 J 复现检查，但没有完成或落盘任何阶次；D2 两阶分析均 **NOT_RUN**。完整结果、剩余误差排名和位置提案均未生成。这不是 R10 数值响应的正面或负面结论，也没有新正式计算、采样或场恢复。
+本节只记录原四槽批次当时的终态；后续用户另行授权的U1见前文，不回写本账。本批次没有产生可审阅的完整 R10 场响应诊断。四个获准支持槽 T1、T2、D1、D2 均已调用并计费；受影响测试在 D2 再次遇到 fixture 错误后停止，D1 已读 q8 并到达 J 复现检查，但没有完成或落盘任何阶次；D2 两阶分析均 **NOT_RUN**。完整结果、剩余误差排名和位置提案均未生成。这不是 R10 数值响应的正面或负面结论，也没有新正式计算、采样或场恢复。
 
 ## 范围与固定输入
 

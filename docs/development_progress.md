@@ -1,6 +1,14 @@
-# Task43 当前收口（2026-10-29）：V20 U1保存场诊断完成，R10未获接受
+# Task43 当前收口（2026-10-29）：V21 R10_H67空间门通过，F1独立A6失败
 
-## V20 当前收口：用户追加授权的U1完成原场响应诊断
+## V21 当前结果：accepted9/R9保持，后续阶段未运行
+
+对被拒绝的R10诊断父态实施global67/root127单层h细化。S通过实际FE门：215叶、5次split、FE139,554=42,804 trace+96,750 interior；请求root127，材料闭包root129/130/131/160，balance/periodic闭包为0。F1在正式独立A6 raw residual门失败：2.1004005221911206e-8 > 1e-8。full-active与returned-condensed残差各自通过，normal correction=1且extra=0，但都不覆盖A6失败。F1没有合格primary，terminal为FAILED_OR_INCOMPLETE/official_result=false；Av、J/G、收益与合格R/T/A未知，C/F2/E1/E2均NOT_RUN。
+
+T1 16 pass/1断言文字失败（reader已正确拒绝混包），T2只重跑3个受影响节点并通过；T1/T2/S共3次支持调用whole312.099282032 s。F1一次formal的launcher入口至终态记账4,813.658310916 s，watchdog elapsed4,811.279815596 s；全轮阶段记账5,125.757592948 s。formal10/12、support3/7。F1采样RSS峰7,900,602,368 B、task VmSwap峰0；6,904资源样本、1,859 trace行。末端有一次worker vanished，随后四行无后代，属退出竞态，不能写零vanished。worker end source/input snapshot未到达，退出后hash核查单列；共享缓存监测列表为空，未证明其稳定。
+
+本轮F实际装配并求解一次；C未运行，没有新共同点采样/比较背景重建，没有holdout/control消费；不接受R10/H67、不授予自动后续运行或合并批准。完整数组包存在不代表primary过门。详见[Response V21](task43_hp_adaptivity/response_v21.md)、[结果记录](task43_hp_adaptivity/outcomes/records/v21_r10_h67_results_v1.json)和[来源目录](task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/)。
+
+## V20 历史收口：用户追加授权的U1完成原场响应诊断
 
 原T1/T2/D1/D2四槽失败全部保留后，用户明确要求“不是数值gate那就继续”，据此另记一次U1支持运行。U1同一受监管worker内3/3定向节点通过，并完成q8/q10的180单元、612通道后验分解；没有新PDE、场恢复、积分点采样或holdout/control消费。
 

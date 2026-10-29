@@ -1,0 +1,25 @@
+{
+  "actual_independent_fe_dofs": 139554,
+  "audit_sha256": "cad87eb07e637a0b30eabe0c8b65834b3e46ca4f060a0f76b60002573ac7c418",
+  "candidate_id": "v21_r10_h67",
+  "classification": "measured_actual_space_no_pde_solve",
+  "official_result": false,
+  "plan_sha256": "38739c012870e3a878aafb764951d771293285fa45d46f535aa078bc5c295fc3",
+  "schema": "task43.v21.stage-terminal.v1",
+  "selection_enabled": false,
+  "space_gate_checks": {
+    "actual_interior_rows_follow_split_count": true,
+    "actual_split_includes_request": true,
+    "all_leaf_degrees_inherit_p6": true,
+    "degree_plan_pass": true,
+    "entity_constraints_pass": true,
+    "exactly_one_requested_split": true,
+    "requested_root_is_actually_refined": true,
+    "requested_root_only": true,
+    "root_count_180": true,
+    "strict_fe_bounds": true
+  },
+  "stage": "S",
+  "status": "COMPLETE",
+  "transition_written": false
+}

@@ -1,0 +1,44 @@
+{
+  "scope": "root prelaunch static review, no native imports or fixtures executed",
+  "recorded_epoch_ns": 1793253943955668227,
+  "items": [
+    {
+      "kind": "static_implementation_issue",
+      "issue": "accepted9 plan path included nonexistent round1_candidates segment",
+      "correction": "use canonical round9_p_only_authority_attempt1 path"
+    },
+    {
+      "kind": "static_implementation_issue",
+      "issue": "V20 proposal role referenced q10 diagnostic instead of terminal science_summary.location_proposal",
+      "correction": "bind existing U1/data/terminal.json"
+    },
+    {
+      "kind": "static_implementation_issue",
+      "issue": "duplicate V21 endpoint elif block",
+      "correction": "remove unreachable duplicate"
+    },
+    {
+      "kind": "static_implementation_issue",
+      "issue": "require_snapshot_equal was missing in _run_impl scope",
+      "correction": "add local import"
+    },
+    {
+      "kind": "static_implementation_issue",
+      "issue": "actual-space audit return inserted after another function return",
+      "correction": "restore function-local return"
+    },
+    {
+      "kind": "static_test_scope_issue",
+      "issue": "initial writer fixture replaced shared writer, no full new main/observer path",
+      "status": "replacement tests in progress; no dynamic credit"
+    },
+    {
+      "kind": "static_mechanical_error",
+      "issue": "contract draft asserted nonexistent src/test/conftest.py",
+      "correction": "remove nonexistent source from manifest; failed command preserved in contract_draft_generation.json"
+    }
+  ],
+  "cost": "not_measured except separately recorded command durations",
+  "new_driver_calls": 0,
+  "new_formal_calls": 0
+}

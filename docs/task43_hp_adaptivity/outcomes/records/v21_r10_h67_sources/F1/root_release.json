@@ -1,0 +1,39 @@
+{
+  "decision": "ALLOW_ONE_FIXED_SLOT",
+  "stage": "F1",
+  "actual_head": "5796d78b642b58c0963ef47d181f70b96b728786",
+  "contract_sha256": "4340377a1c96edd3f5ebb0605e647b3569b026f7d8a9c0527902ef0b6c093f6b",
+  "authorization_review": "0dd5555f8795a68c7c9b1dc58387337d98fd76a5",
+  "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/formal/R10_H67_attempt1",
+  "products": {
+    "space_plan": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/plan_output/plans/v21_r10_h67.json",
+      "sha256": "38739c012870e3a878aafb764951d771293285fa45d46f535aa078bc5c295fc3"
+    },
+    "space_audit": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/plan_output/plans/v21_r10_h67.audit.json",
+      "sha256": "cad87eb07e637a0b30eabe0c8b65834b3e46ca4f060a0f76b60002573ac7c418"
+    },
+    "space_bundle": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/plan_output/plan_audit.json",
+      "sha256": "e9ade3a766eda3ffad2f3121bb607776c0c832c7583a06bb6161fc1174237ba8"
+    },
+    "space_terminal": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/stage_terminal.json",
+      "sha256": "7b51eef658471146c63aa455b8ea545915e6aca8b0d50f25e4ad33a6a3504cc3"
+    },
+    "space_watchdog": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/watchdog/summary.json",
+      "sha256": "67788a80e779ddea76d028d4ee7be6f4d3f20b01060fc4cdfd232abf48d51ccf"
+    },
+    "space_launcher": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/launcher_terminal.json",
+      "sha256": "25a8aabb17629250bd5016fb3c5dffc1cde5b3bdea90cc90e700f1538deba39f"
+    },
+    "space_root_audit": {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/root_independent_audit.json",
+      "sha256": "72d03f4ba8279f6e4ad6da69e112d7edeea0824cff5be85aa336e599e77e7af9"
+    }
+  },
+  "recorded_unix": 1793255804.3455784
+}

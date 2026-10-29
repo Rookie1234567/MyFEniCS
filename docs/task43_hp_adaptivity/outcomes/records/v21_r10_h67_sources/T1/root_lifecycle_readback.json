@@ -1,0 +1,1145 @@
+{
+  "schema": "task43.v21.root_lifecycle_readback.v1",
+  "actual_head": "535b23d6274b750ab8a8ffd55faf4048d93c1b2e",
+  "stage": "T1",
+  "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1",
+  "method": "root-authored stdlib parse of every resource row and every raw trace line incl stack frames and exit tail; no old auditor or native execution",
+  "issues": [],
+  "vanished_samples_for_manual_classification": [],
+  "source_mismatches": [],
+  "input_mismatches": [],
+  "resource_samples": 132,
+  "resource_first": {
+    "schema": "task038.v14.j3.process-sample.v1",
+    "root_pid": 3762181,
+    "stage": "workflow",
+    "timestamp_ns": 1793255099949909317,
+    "exit_code": null,
+    "members": [
+      {
+        "pid": 3762181,
+        "start_ticks": 318009342,
+        "ppid": 3762084,
+        "comm": "python",
+        "state": "R",
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/watchdog --wall-seconds 269 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; exec taskset -c 1 strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o \"$TASK43_V11_TRACE_PREFIX\" \"$@\" task43-v21-worker python -u -m pytest -v -rA --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/tests.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/fixtures src/test/test_task43_v21_r10_h67.py::test_00_v21_worker_runtime_identity_is_saved src/test/test_task43_v21_r10_h67.py::test_01_contract_reader_accepts_frozen_f1_root src/test/test_task43_v21_r10_h67.py::test_02_contract_reader_rejects_another_unique_root src/test/test_task43_v21_r10_h67.py::test_04_candidate_reader_binds_accepted9_and_rejected_r10 src/test/test_task43_v21_r10_h67.py::test_05_candidate_reader_rejects_promoting_rejected_r10 src/test/test_task43_v21_r10_h67.py::test_06_actual_s_builder_and_post_audit_gate_h67_with_p6_closure src/test/test_task43_v21_r10_h67.py::test_08_s_product_reader_requires_all_seven_qualified_artifacts src/test/test_task43_v21_r10_h67.py::test_09_s_product_reader_rejects_changed_product_bytes src/test/test_task43_v21_r10_h67.py::test_12_v21_f_main_reaches_real_observer_writer_and_terminal src/test/test_task43_v21_r10_h67.py::test_10_v21_pending_reader_recomputes_rebound_raw_packet src/test/test_task43_v21_r10_h67.py::test_11_v21_restore_accepts_consistent_packet_and_rejects_mixed_coefficients src/test/test_task43_v21_r10_h67.py::test_v21_actual_common_comparison src/test/test_task43_v21_r10_h67.py::test_v21_snapshot_requires_the_same_input_and_source_set",
+        "stage": "workflow",
+        "rss_bytes": 38109184,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793255099949360577,
+        "exit_code": null,
+        "cpu_seconds": 0.92,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 6991564,
+          "wchar": 0,
+          "syscr": 6743,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0,
+          "cancelled_write_bytes": 0
+        }
+      },
+      {
+        "pid": 3762187,
+        "start_ticks": 318009432,
+        "ppid": 3762181,
+        "comm": "python",
+        "state": "R",
+        "cmdline": "python -u -m pytest -v -rA --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/tests.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/fixtures src/test/test_task43_v21_r10_h67.py::test_00_v21_worker_runtime_identity_is_saved src/test/test_task43_v21_r10_h67.py::test_01_contract_reader_accepts_frozen_f1_root src/test/test_task43_v21_r10_h67.py::test_02_contract_reader_rejects_another_unique_root src/test/test_task43_v21_r10_h67.py::test_04_candidate_reader_binds_accepted9_and_rejected_r10 src/test/test_task43_v21_r10_h67.py::test_05_candidate_reader_rejects_promoting_rejected_r10 src/test/test_task43_v21_r10_h67.py::test_06_actual_s_builder_and_post_audit_gate_h67_with_p6_closure src/test/test_task43_v21_r10_h67.py::test_08_s_product_reader_requires_all_seven_qualified_artifacts src/test/test_task43_v21_r10_h67.py::test_09_s_product_reader_rejects_changed_product_bytes src/test/test_task43_v21_r10_h67.py::test_12_v21_f_main_reaches_real_observer_writer_and_terminal src/test/test_task43_v21_r10_h67.py::test_10_v21_pending_reader_recomputes_rebound_raw_packet src/test/test_task43_v21_r10_h67.py::test_11_v21_restore_accepts_consistent_packet_and_rejects_mixed_coefficients src/test/test_task43_v21_r10_h67.py::test_v21_actual_common_comparison src/test/test_task43_v21_r10_h67.py::test_v21_snapshot_requires_the_same_input_and_source_set",
+        "stage": "workflow",
+        "rss_bytes": 12505088,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793255099949636427,
+        "exit_code": null,
+        "cpu_seconds": 0.23,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 994504,
+          "wchar": 0,
+          "syscr": 141,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0,
+          "cancelled_write_bytes": 0
+        }
+      },
+      {
+        "pid": 3762192,
+        "start_ticks": 318009438,
+        "ppid": 3762181,
+        "comm": "strace",
+        "state": "S",
+        "cmdline": "strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/strace/sched python -u -m pytest -v -rA --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/tests.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/fixtures src/test/test_task43_v21_r10_h67.py::test_00_v21_worker_runtime_identity_is_saved src/test/test_task43_v21_r10_h67.py::test_01_contract_reader_accepts_frozen_f1_root src/test/test_task43_v21_r10_h67.py::test_02_contract_reader_rejects_another_unique_root src/test/test_task43_v21_r10_h67.py::test_04_candidate_reader_binds_accepted9_and_rejected_r10 src/test/test_task43_v21_r10_h67.py::test_05_candidate_reader_rejects_promoting_rejected_r10 src/test/test_task43_v21_r10_h67.py::test_06_actual_s_builder_and_post_audit_gate_h67_with_p6_closure src/test/test_task43_v21_r10_h67.py::test_08_s_product_reader_requires_all_seven_qualified_artifacts src/test/test_task43_v21_r10_h67.py::test_09_s_product_reader_rejects_changed_product_bytes src/test/test_task43_v21_r10_h67.py::test_12_v21_f_main_reaches_real_observer_writer_and_terminal src/test/test_task43_v21_r10_h67.py::test_10_v21_pending_reader_recomputes_rebound_raw_packet src/test/test_task43_v21_r10_h67.py::test_11_v21_restore_accepts_consistent_packet_and_rejects_mixed_coefficients src/test/test_task43_v21_r10_h67.py::test_v21_actual_common_comparison src/test/test_task43_v21_r10_h67.py::test_v21_snapshot_requires_the_same_input_and_source_set",
+        "stage": "workflow",
+        "rss_bytes": 2420736,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793255099949891461,
+        "exit_code": null,
+        "cpu_seconds": 0.01,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 0,
+          "wchar": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0,
+          "cancelled_write_bytes": 0
+        }
+      }
+    ],
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "all_status_readable": true,
+    "readability_retry_count": 0,
+    "compiler_descendant_count": 0,
+    "rss_bytes": 53035008,
+    "swap_bytes": 0,
+    "pss_sampled": false,
+    "pss_all_readable": null,
+    "pss_bytes": null,
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "resource_sample_cost": {
+      "wall_seconds": 0.1696589677594602,
+      "cpu_seconds": 0.08427987800000003
+    },
+    "node_memory_observation": {
+      "node0": {
+        "MemTotal_bytes": 1080832073728,
+        "MemFree_bytes": 201751334912
+      },
+      "node1": {
+        "MemTotal_bytes": 1082268311552,
+        "MemFree_bytes": 567966167040
+      },
+      "sampled_monotonic": 3180094.817281529,
+      "wall_seconds": 0.0026353676803410053,
+      "policy": "observe_only"
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1548873035776,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "elapsed_seconds": 0.5014886800199747,
+    "memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 1548873035776,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 1548873035776,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "worker_phase": {},
+    "launch_cap_bytes": 8589934592,
+    "rss_warning_bytes": 7301444403,
+    "warning": false,
+    "live_or_unreaped_children": [
+      3762187,
+      3762192
+    ]
+  },
+  "resource_last": {
+    "schema": "task038.v14.j3.process-sample.v1",
+    "root_pid": 3762181,
+    "stage": "workflow",
+    "timestamp_ns": 1793255191857836703,
+    "exit_code": 1,
+    "members": [
+      {
+        "pid": 3762181,
+        "start_ticks": 318009342,
+        "ppid": 3762084,
+        "comm": "python",
+        "state": "R",
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/watchdog --wall-seconds 269 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; exec taskset -c 1 strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o \"$TASK43_V11_TRACE_PREFIX\" \"$@\" task43-v21-worker python -u -m pytest -v -rA --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/tests.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/fixtures src/test/test_task43_v21_r10_h67.py::test_00_v21_worker_runtime_identity_is_saved src/test/test_task43_v21_r10_h67.py::test_01_contract_reader_accepts_frozen_f1_root src/test/test_task43_v21_r10_h67.py::test_02_contract_reader_rejects_another_unique_root src/test/test_task43_v21_r10_h67.py::test_04_candidate_reader_binds_accepted9_and_rejected_r10 src/test/test_task43_v21_r10_h67.py::test_05_candidate_reader_rejects_promoting_rejected_r10 src/test/test_task43_v21_r10_h67.py::test_06_actual_s_builder_and_post_audit_gate_h67_with_p6_closure src/test/test_task43_v21_r10_h67.py::test_08_s_product_reader_requires_all_seven_qualified_artifacts src/test/test_task43_v21_r10_h67.py::test_09_s_product_reader_rejects_changed_product_bytes src/test/test_task43_v21_r10_h67.py::test_12_v21_f_main_reaches_real_observer_writer_and_terminal src/test/test_task43_v21_r10_h67.py::test_10_v21_pending_reader_recomputes_rebound_raw_packet src/test/test_task43_v21_r10_h67.py::test_11_v21_restore_accepts_consistent_packet_and_rejects_mixed_coefficients src/test/test_task43_v21_r10_h67.py::test_v21_actual_common_comparison src/test/test_task43_v21_r10_h67.py::test_v21_snapshot_requires_the_same_input_and_source_set",
+        "stage": "workflow",
+        "rss_bytes": 38223872,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793255191857812734,
+        "exit_code": null,
+        "cpu_seconds": 30.75,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 397543482,
+          "wchar": 29547078,
+          "syscr": 679388,
+          "syscw": 6705,
+          "read_bytes": 0,
+          "write_bytes": 30367744,
+          "cancelled_write_bytes": 32768
+        }
+      }
+    ],
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "all_status_readable": true,
+    "readability_retry_count": 0,
+    "compiler_descendant_count": 0,
+    "rss_bytes": 38223872,
+    "swap_bytes": 0,
+    "pss_sampled": false,
+    "pss_all_readable": null,
+    "pss_bytes": null,
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "resource_sample_cost": {
+      "wall_seconds": 0.05021448899060488,
+      "cpu_seconds": 0.05020441200000292
+    },
+    "node_memory_observation": {
+      "node0": {
+        "MemTotal_bytes": 1080832073728,
+        "MemFree_bytes": 209440387072
+      },
+      "node1": {
+        "MemTotal_bytes": 1082268311552,
+        "MemFree_bytes": 568023068672
+      },
+      "sampled_monotonic": 3180185.179858095,
+      "wall_seconds": 0.00035188905894756317,
+      "policy": "observe_only"
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1557183029248,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "elapsed_seconds": 92.3975187256001,
+    "memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 1557183029248,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 1557183029248,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "worker_phase": {
+      "facts": {},
+      "phase": "postprocess",
+      "phase_started_monotonic": 3180176.904567857,
+      "stage": "postprocess_started",
+      "updated_monotonic": 3180176.904576027
+    },
+    "launch_cap_bytes": 8589934592,
+    "rss_warning_bytes": 7301444403,
+    "warning": false,
+    "live_or_unreaped_children": []
+  },
+  "observed_processes": [
+    {
+      "pid": 3762181,
+      "start_ticks": 318009342,
+      "ppids": [
+        3762084
+      ],
+      "comm": "python",
+      "max_cpu_seconds": 30.75
+    },
+    {
+      "pid": 3762187,
+      "start_ticks": 318009432,
+      "ppids": [
+        3762181
+      ],
+      "comm": "python",
+      "max_cpu_seconds": 58.04
+    },
+    {
+      "pid": 3762192,
+      "start_ticks": 318009438,
+      "ppids": [
+        3762181
+      ],
+      "comm": "strace",
+      "max_cpu_seconds": 2.78
+    },
+    {
+      "pid": 3762222,
+      "start_ticks": 318009780,
+      "ppids": [
+        3762187
+      ],
+      "comm": "orted",
+      "max_cpu_seconds": 0.36
+    }
+  ],
+  "trace_line_count": 4811,
+  "stack_frame_lines": 4682,
+  "trace_events": [
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1,
+      "raw": "1793255101.495404 sched_getaffinity(0, 128, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 125,
+      "raw": "1793255103.985432 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 214,
+      "raw": "1793255104.428953 sched_getaffinity(0, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 298,
+      "raw": "1793255104.453014 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 382,
+      "raw": "1793255104.466429 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 466,
+      "raw": "1793255104.478664 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 550,
+      "raw": "1793255104.491004 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 632,
+      "raw": "1793255104.508186 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 714,
+      "raw": "1793255104.523103 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 796,
+      "raw": "1793255104.539541 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 878,
+      "raw": "1793255104.554808 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 960,
+      "raw": "1793255104.589460 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1042,
+      "raw": "1793255111.904701 sched_getaffinity(0, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1079,
+      "raw": "1793255112.006286 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1116,
+      "raw": "1793255112.049488 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1151,
+      "raw": "1793255112.091234 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1186,
+      "raw": "1793255118.015701 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1221,
+      "raw": "1793255118.099246 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1256,
+      "raw": "1793255118.142237 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1291,
+      "raw": "1793255118.188106 sched_getaffinity(0, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1326,
+      "raw": "1793255118.242416 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1361,
+      "raw": "1793255118.284461 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1396,
+      "raw": "1793255118.305470 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1431,
+      "raw": "1793255118.328856 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1466,
+      "raw": "1793255118.344430 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1501,
+      "raw": "1793255118.354272 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1536,
+      "raw": "1793255118.413852 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3762269, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---",
+      "classification": "SIGCHLD_MATCHED_TRACED_EXIT",
+      "child": 3762269,
+      "status": 0
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1573,
+      "raw": "1793255118.443380 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1608,
+      "raw": "1793255118.458124 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1643,
+      "raw": "1793255118.467189 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1678,
+      "raw": "1793255118.482693 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1713,
+      "raw": "1793255118.492965 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1748,
+      "raw": "1793255118.501513 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1783,
+      "raw": "1793255118.515630 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1818,
+      "raw": "1793255118.527007 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1853,
+      "raw": "1793255118.535235 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1888,
+      "raw": "1793255118.566393 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1923,
+      "raw": "1793255118.614272 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1958,
+      "raw": "1793255118.657258 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 1993,
+      "raw": "1793255118.726720 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2028,
+      "raw": "1793255118.766345 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2063,
+      "raw": "1793255118.804556 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2098,
+      "raw": "1793255121.844549 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2133,
+      "raw": "1793255121.881398 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2168,
+      "raw": "1793255121.900181 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2203,
+      "raw": "1793255124.001549 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2238,
+      "raw": "1793255124.025453 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2273,
+      "raw": "1793255124.034843 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2308,
+      "raw": "1793255124.047305 sched_getaffinity(0, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2343,
+      "raw": "1793255124.061260 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2378,
+      "raw": "1793255124.070907 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2413,
+      "raw": "1793255124.079403 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2448,
+      "raw": "1793255124.098989 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2483,
+      "raw": "1793255124.113038 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2518,
+      "raw": "1793255124.122515 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2553,
+      "raw": "1793255124.180679 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=3762302, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---",
+      "classification": "SIGCHLD_MATCHED_TRACED_EXIT",
+      "child": 3762302,
+      "status": 0
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2588,
+      "raw": "1793255124.208612 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2623,
+      "raw": "1793255124.223065 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2658,
+      "raw": "1793255124.241508 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2693,
+      "raw": "1793255124.290192 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2728,
+      "raw": "1793255124.333894 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2763,
+      "raw": "1793255124.375493 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2798,
+      "raw": "1793255124.431748 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2833,
+      "raw": "1793255124.478224 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2868,
+      "raw": "1793255124.516308 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2903,
+      "raw": "1793255124.576621 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2938,
+      "raw": "1793255124.619278 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 2973,
+      "raw": "1793255124.661231 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3008,
+      "raw": "1793255124.724588 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3043,
+      "raw": "1793255124.745657 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3078,
+      "raw": "1793255124.755587 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3113,
+      "raw": "1793255133.438233 sched_getaffinity(0, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3148,
+      "raw": "1793255133.529981 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3183,
+      "raw": "1793255133.577259 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3218,
+      "raw": "1793255133.618888 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3253,
+      "raw": "1793255138.766823 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3288,
+      "raw": "1793255138.853464 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3323,
+      "raw": "1793255138.895379 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3358,
+      "raw": "1793255139.048239 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3393,
+      "raw": "1793255139.103337 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3428,
+      "raw": "1793255139.115184 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3463,
+      "raw": "1793255139.170530 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3498,
+      "raw": "1793255139.196366 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3533,
+      "raw": "1793255139.206516 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3568,
+      "raw": "1793255156.734055 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3603,
+      "raw": "1793255156.759224 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3638,
+      "raw": "1793255156.785422 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3673,
+      "raw": "1793255157.020903 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3708,
+      "raw": "1793255157.100475 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3743,
+      "raw": "1793255157.137884 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3778,
+      "raw": "1793255157.282157 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3813,
+      "raw": "1793255157.304897 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3848,
+      "raw": "1793255157.314586 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3883,
+      "raw": "1793255181.396335 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3918,
+      "raw": "1793255181.436786 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3953,
+      "raw": "1793255181.444034 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 3988,
+      "raw": "1793255181.597330 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4023,
+      "raw": "1793255181.607658 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4058,
+      "raw": "1793255181.614065 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4093,
+      "raw": "1793255181.947343 sched_getaffinity(0, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4128,
+      "raw": "1793255182.001014 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4163,
+      "raw": "1793255182.019850 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4198,
+      "raw": "1793255182.026930 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4233,
+      "raw": "1793255184.880246 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4268,
+      "raw": "1793255184.894872 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4303,
+      "raw": "1793255184.901362 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4338,
+      "raw": "1793255184.923056 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4373,
+      "raw": "1793255184.937746 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4408,
+      "raw": "1793255184.943450 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4443,
+      "raw": "1793255184.962732 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4478,
+      "raw": "1793255184.976984 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4513,
+      "raw": "1793255184.983210 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4548,
+      "raw": "1793255189.364363 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4583,
+      "raw": "1793255189.377869 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4618,
+      "raw": "1793255189.384004 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4653,
+      "raw": "1793255189.411381 sched_getaffinity(3762187, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4688,
+      "raw": "1793255189.425279 sched_getaffinity(3762225, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4723,
+      "raw": "1793255189.431101 sched_getaffinity(3762226, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762187,
+      "line_number": 4758,
+      "raw": "1793255190.552060 +++ exited with 1 +++",
+      "classification": "EXIT"
+    },
+    {
+      "pid_or_tid": 3762222,
+      "line_number": 1,
+      "raw": "1793255103.218520 sched_getaffinity(3762222, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762222,
+      "line_number": 19,
+      "raw": "1793255103.420601 sched_getaffinity(0, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762222,
+      "line_number": 33,
+      "raw": "1793255103.445019 sched_getaffinity(3762222, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3762222,
+      "line_number": 47,
+      "raw": "1793255190.564466 +++ exited with 0 +++",
+      "classification": "EXIT"
+    },
+    {
+      "pid_or_tid": 3762223,
+      "line_number": 1,
+      "raw": "1793255190.539915 +++ exited with 0 +++",
+      "classification": "EXIT"
+    },
+    {
+      "pid_or_tid": 3762224,
+      "line_number": 1,
+      "raw": "1793255190.548896 +++ exited with 0 +++",
+      "classification": "EXIT"
+    },
+    {
+      "pid_or_tid": 3762225,
+      "line_number": 1,
+      "raw": "1793255190.511875 +++ exited with 0 +++",
+      "classification": "EXIT"
+    },
+    {
+      "pid_or_tid": 3762226,
+      "line_number": 1,
+      "raw": "1793255190.506471 +++ exited with 0 +++",
+      "classification": "EXIT"
+    },
+    {
+      "pid_or_tid": 3762269,
+      "line_number": 1,
+      "raw": "1793255118.413316 +++ exited with 0 +++",
+      "classification": "EXIT"
+    },
+    {
+      "pid_or_tid": 3762302,
+      "line_number": 1,
+      "raw": "1793255124.180271 +++ exited with 0 +++",
+      "classification": "EXIT"
+    }
+  ],
+  "trace_files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/strace/sched.3762187",
+      "sha256": "a98b8868b580e1a94bb4778a406f4266218f971c1763fcc54e0f3c75b3ea65d0",
+      "lines": 4758
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/strace/sched.3762222",
+      "sha256": "49bd6935432c539852bc26ef330b756b4cb2913e310a6455ef7d44620b925eab",
+      "lines": 47
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/strace/sched.3762223",
+      "sha256": "14a00c0ee49fdc9f655cd47e1338906ad185199f7715508219943abbc7c43e20",
+      "lines": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/strace/sched.3762224",
+      "sha256": "c302538a99b109fdadb7df2494b15f3c95a16f4851f4b0cb4a4edc63720ae14b",
+      "lines": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/strace/sched.3762225",
+      "sha256": "130607aa4f4d67bbaa7116b97b7672590d01f4aebb8fa89d1f7e0ca62430fc62",
+      "lines": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/strace/sched.3762226",
+      "sha256": "58ba153f80d91fbbe67aa39757162b2d7b619802331c55d5be5c5061a5a8366c",
+      "lines": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/strace/sched.3762269",
+      "sha256": "520a8fe260b42ca7436a768e9c6b9f3d4428c62914a487b45912a33cffe650a8",
+      "lines": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/strace/sched.3762302",
+      "sha256": "1f5308a84a12ab655b28c6c03c9e495c26c03ca962abaf2e4836431e89519e48",
+      "lines": 1
+    }
+  ],
+  "rss_peak_bytes": 539205632,
+  "task_swap_peak_bytes": 0,
+  "global_swap": {
+    "scope": "WSL-global diagnostic, not dedicated job",
+    "baseline": {
+      "pswpin_pages": 4250737,
+      "pswpout_pages": 7183007
+    },
+    "end": {
+      "pswpin_pages": 4250737,
+      "pswpout_pages": 7183007
+    },
+    "delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    }
+  },
+  "watchdog_classification": "WORKER_FAILED",
+  "worker_exit_code": 1,
+  "outer": {
+    "stage": "T1",
+    "entry_elapsed_seconds": 95.217966388,
+    "whole_limit_seconds": 300,
+    "supervisor_exit_code": 2,
+    "watchdog_exit_code": 2,
+    "received_signal": null,
+    "qualification": "REQUIRES_ROOT_REVIEW",
+    "whole_limit_pass": true
+  },
+  "readback_seconds": 0.5408725328743458
+}

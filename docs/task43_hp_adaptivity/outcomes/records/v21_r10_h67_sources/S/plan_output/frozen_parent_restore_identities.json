@@ -1,0 +1,336 @@
+{
+  "classification": "existing_R10_and_Y6_1_coefficients_restored_without_PDE_solve",
+  "contract_sha256": "4340377a1c96edd3f5ebb0605e647b3569b026f7d8a9c0527902ef0b6c093f6b",
+  "fields": {
+    "R10": {
+      "candidate_id": "round10_p_up",
+      "mesh_identity": {
+        "mesh_cell_vertex_dofmap": {
+          "dtype": "<i4",
+          "sha256": "d4201beb24de1d89e2a7fd6bd266697fc84c9f7bc400ce1a7b84d742f8eec9b9",
+          "shape": [
+            1440
+          ]
+        },
+        "mesh_geometry_coordinates_nm": {
+          "dtype": "<f8",
+          "sha256": "957c09813c619b05d6c7a1392465f857fa5e1c228be020eb4a1b4ded7cc71598",
+          "shape": [
+            308,
+            3
+          ]
+        },
+        "mesh_geometry_dofmap": {
+          "dtype": "<i4",
+          "sha256": "b1e32e81beead7e01b564405a63e458353b19912ea4eca11cfbcce64d1e5b2e6",
+          "shape": [
+            180,
+            8
+          ]
+        },
+        "mesh_owned_cell_global_ids": {
+          "dtype": "<i8",
+          "sha256": "9422c248a5c23afc46d87ce8339a644d938174401a67403c2799c48b6f8ba508",
+          "shape": [
+            180
+          ]
+        },
+        "p6_function_space_cell_dofmap": {
+          "dtype": "<i4",
+          "sha256": "3709991448da37ed047e51c0d37a32fe5ac2ca05d7e1824bd3421444711b11ef",
+          "shape": [
+            180,
+            882
+          ]
+        },
+        "p6_ghost_global_dof_block_ids": {
+          "dtype": "<i8",
+          "sha256": "c19bf8aaa184a847cceed6722ac8c6086f916b027a4a9e9378ad0b3dfb219777",
+          "shape": [
+            0
+          ]
+        },
+        "p6_owned_global_dof_block_ids": {
+          "dtype": "<i8",
+          "sha256": "104ad379f862300d545bdea1e20f43a8a1eeebf9c305affbf10eaf383ed3fefb",
+          "shape": [
+            124530
+          ]
+        }
+      },
+      "plan_sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+      "record_sha256": "66d56c0644b5c8eb66d075a7898cdfa28024e3cc30834a08cd3d8b76e453968d",
+      "storage_sha256": "e1296a9b55ff6d29fde55bf545e44be737c4f5d534b12b69f1ded5f05a0a7eaf"
+    },
+    "Y6_1": {
+      "inventory_sha256": "8493acfd4485ef7c9b4c662708d7bac8df9934bf90dae550d8d392f59f630df0",
+      "label": "Y6_1",
+      "mesh_identity": {
+        "mesh_cell_vertex_dofmap": {
+          "dtype": "<i4",
+          "sha256": "6d0c88d5154cc7c10973ca53f7a94cb09b98cedea1b82b13e807de971735ba2c",
+          "shape": [
+            4608
+          ]
+        },
+        "mesh_geometry_coordinates_nm": {
+          "dtype": "<f8",
+          "sha256": "9da643a4285c69ec05b77890a96e9104943138174f8b55ead1f9853cea354666",
+          "shape": [
+            833,
+            3
+          ]
+        },
+        "mesh_geometry_dofmap": {
+          "dtype": "<i4",
+          "sha256": "6824c6d9dcf90fee7289dc045a79d73c0a4304b29e9ae90881e190210471fa0d",
+          "shape": [
+            576,
+            8
+          ]
+        },
+        "mesh_owned_cell_global_ids": {
+          "dtype": "<i8",
+          "sha256": "a1c8ac01ae6cf0f9467724bf5233560cf7314a6782f0b0a8cc84464652583e7a",
+          "shape": [
+            576
+          ]
+        },
+        "p6_function_space_cell_dofmap": {
+          "dtype": "<i4",
+          "sha256": "271cde30385f47a2903837ad488bd1e32f0a3a0c41b8f3e651ae6f3dcc2bfc55",
+          "shape": [
+            576,
+            882
+          ]
+        },
+        "p6_ghost_global_dof_block_ids": {
+          "dtype": "<i8",
+          "sha256": "c19bf8aaa184a847cceed6722ac8c6086f916b027a4a9e9378ad0b3dfb219777",
+          "shape": [
+            0
+          ]
+        },
+        "p6_owned_global_dof_block_ids": {
+          "dtype": "<i8",
+          "sha256": "1d1bb6d447592169c454b0463968f569bffa7a3e43e98366e6343b9d95d07270",
+          "shape": [
+            389832
+          ]
+        }
+      },
+      "recovered_bundle_sha256": "6c244fae7e246c171cef1f66ae3f1d607622c89da1f9cd4474e55908bfd6b6d4",
+      "resolved_config_sha256": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc",
+      "restore_identity_sha256": "ef77da1e68136e08b48dc0e352690f9c9fdcd132dcc2b765dcb12413b7cf3300"
+    }
+  },
+  "new_pde_solve": false,
+  "new_quadrature_sampling": false,
+  "operator_quadrature_and_cutoff": {
+    "current": {
+      "cutoff_policy": "scale_homogeneous_relative_only_v1",
+      "cutoff_relative_tolerance": 1e-13,
+      "surface_and_incident_degree": 28,
+      "volume_degree": 15,
+      "volume_rule": "default"
+    },
+    "expected": {
+      "cutoff_policy": "scale_homogeneous_relative_only_v1",
+      "cutoff_relative_tolerance": 1e-13,
+      "surface_and_incident_degree": 28,
+      "volume_degree": 15,
+      "volume_rule": "default"
+    },
+    "references": {
+      "Y6_1": {
+        "cutoff_policy": "scale_homogeneous_relative_only_v1",
+        "cutoff_relative_tolerance": 1e-13,
+        "surface_and_incident_degree": 28,
+        "volume_degree": 15,
+        "volume_rule": "default"
+      }
+    }
+  },
+  "schema": "task43.v21.r10_h67.parent-field-restoration.v1",
+  "shared_modal_physics": {
+    "boundary_phase_excluded_from_basis_identity": "Task43 uses boundary_magnitude_scaled_r5_v1 while historical modes use the unscaled Task40 gauge; comparison uses outgoing_amplitude_at_boundary instead.",
+    "maximum_absolute_complex_differences": {
+      "Y6_1": {
+        "alpha": 0.0,
+        "beta": 0.0,
+        "gamma": 0.0,
+        "kz": 0.0,
+        "refractive_index": 0.0
+      }
+    },
+    "physics_row_fields_checked": [
+      "alpha",
+      "gamma",
+      "beta",
+      "kz",
+      "refractive_index",
+      "direction",
+      "medium",
+      "vertical_sign",
+      "propagating",
+      "power_carrying"
+    ]
+  },
+  "shared_physics": {
+    "domain_volume_nm3": 350000.0,
+    "incident_g_norm_floor": 836.6600265340755,
+    "maximum_absolute_differences_by_case": {
+      "R10": {
+        "domain_z_bounds_nm": 0.0,
+        "eps_air": 0.0,
+        "eps_grating": 0.0,
+        "eps_substrate": 0.0,
+        "grating_box_nm": 0.0,
+        "incident_amplitude": 0.0,
+        "incident_angles_deg": 0.0,
+        "incident_e0_v_per_m": 0.0,
+        "incident_polarization": 0.0,
+        "incident_wavevector": 0.0,
+        "interface_z_nm": 0.0,
+        "k0_per_nm": 0.0,
+        "lambda0_nm": 0.0,
+        "layer_heights_nm": 0.0,
+        "magnetic_field_scale_a_per_m": 0.0,
+        "mu_r": 0.0,
+        "n_air": 0.0,
+        "n_grating": 0.0,
+        "n_substrate": 0.0,
+        "periods_nm": 0.0,
+        "physical_z_bounds_nm": 0.0
+      },
+      "Y6_1": {
+        "domain_z_bounds_nm": 0.0,
+        "eps_air": 0.0,
+        "eps_grating": 0.0,
+        "eps_substrate": 0.0,
+        "grating_box_nm": 0.0,
+        "incident_amplitude": 0.0,
+        "incident_angles_deg": 0.0,
+        "incident_e0_v_per_m": 0.0,
+        "incident_polarization": 0.0,
+        "incident_wavevector": 0.0,
+        "interface_z_nm": 0.0,
+        "k0_per_nm": 0.0,
+        "lambda0_nm": 0.0,
+        "layer_heights_nm": 0.0,
+        "magnetic_field_scale_a_per_m": 0.0,
+        "mu_r": 0.0,
+        "n_air": 0.0,
+        "n_grating": 0.0,
+        "n_substrate": 0.0,
+        "periods_nm": 0.0,
+        "physical_z_bounds_nm": 0.0
+      }
+    },
+    "mu_r_one_verified": true,
+    "n_air_one_verified": true,
+    "shared_identity": {
+      "exact": {
+        "electric_field_unit": "V/m",
+        "geometry_kind": "rectangular_block_grating",
+        "magnetic_field_unit": "A/m",
+        "polarization_kind": "s",
+        "scattering_background": "layered"
+      },
+      "numeric": {
+        "domain_z_bounds_nm": [
+          -10.0,
+          130.0
+        ],
+        "eps_air": [
+          1.0,
+          0.0
+        ],
+        "eps_grating": [
+          0.9980022690345409,
+          0.0036493427323206554
+        ],
+        "eps_substrate": [
+          0.9980022690345409,
+          0.0036493427323206554
+        ],
+        "grating_box_nm": [
+          16.5,
+          33.5,
+          15.0,
+          35.0,
+          0.0,
+          120.0
+        ],
+        "incident_amplitude": [
+          1.0,
+          0.0
+        ],
+        "incident_angles_deg": [
+          89.0,
+          90.0
+        ],
+        "incident_e0_v_per_m": [
+          1.0
+        ],
+        "incident_polarization": [
+          -1.0,
+          0.0,
+          6.123233995736766e-17,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "incident_wavevector": [
+          2.849448458307597e-17,
+          0.0,
+          0.465350247972149,
+          0.0,
+          -0.008122718792715951,
+          0.0
+        ],
+        "interface_z_nm": [
+          0.0
+        ],
+        "k0_per_nm": [
+          0.46542113386515455
+        ],
+        "lambda0_nm": [
+          13.5
+        ],
+        "layer_heights_nm": [
+          130.0,
+          10.0
+        ],
+        "magnetic_field_scale_a_per_m": [
+          0.002654418727984993
+        ],
+        "mu_r": [
+          1.0,
+          0.0
+        ],
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "n_grating": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "n_substrate": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "periods_nm": [
+          50.0,
+          50.0
+        ],
+        "physical_z_bounds_nm": [
+          -10.0,
+          130.0
+        ]
+      }
+    },
+    "unit_incident_plane_wave_verified": true
+  }
+}

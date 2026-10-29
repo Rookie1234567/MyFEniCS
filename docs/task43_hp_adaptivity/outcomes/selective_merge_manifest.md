@@ -1,6 +1,19 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V20 当前依赖组：U1 保存场诊断完成，无合并批准
+## V21 当前依赖组：H67研究候选A6门失败，无合并批准
+
+| 依赖组 | 本轮状态 | 合并/资格建议 |
+|---|---|---|
+| production numerical/core | 未将H67提升为接受态；R9/accepted9保持，F1独立A6失败 | 不改变production default或共享数值资格；不能以凝聚残差替代独立A6门 |
+| reusable runner/watchdog | F1生命周期被实际记录；watchdog whole门通过但worker因数值门失败 | 仅记录本次调用，不推断通用runner资格；共享缓存监测列表为空 |
+| checker/benchmark | T1 16/17（错误regex文字，reader正确拒绝混包），T2 3个受影响节点通过；S空间门通过；F1 A6未通过 | 研究路径保留失败；不登记合格primary，不启动C/F2/E |
+| compact evidence/docs | V21 response、结果JSON、source目录、S/F1终态及root审计 | 只收录可审的失败与空间实测；worker结束快照未到达与退出后hash核验分列 |
+| research-only | R10_H67单次局部h诊断及其入口/测试 | 不产出接受更新、DWR selector或收益判断；Av/J/G均未知 |
+| do-not-merge | 将中间R/T视作official、将42数组包完整性当primary通过、绕过A6门或自动调用后续槽 | 拒绝；F2/E1/E2/C按review §9.8未运行，当前无merge approval |
+
+支持T1/T2/S共3次、whole 312.099282032 s；F1 launcher-entry至终态记账4,813.658310916 s，watchdog elapsed 4,811.279815596 s。资源样本6,904，树RSS峰7,900,602,368 B、task VmSwap峰0；末端一次worker vanished后续四行无后代。root全流审计1,859 trace行。完整source/input绑定和后验哈希检查以[机器结果](records/v21_r10_h67_results_v1.json)及[来源目录](records/v21_r10_h67_sources/)为准。V20 U1及四槽历史保持原样，见下节。
+
+## V20 历史依赖组：U1 保存场诊断完成，无合并批准
 
 | 依赖组 | 本轮文件/行为 | 验证与审阅依赖 |
 |---|---|---|

@@ -1,0 +1,514 @@
+{
+  "schema": "task43.v21.r10_h67_results.v1",
+  "status": "CONTROLLED_NUMERICAL_STOP_F1_INDEPENDENT_A6",
+  "repository": "Rookie1234567/MyFEniCS",
+  "branch": "task43_hp_adaptivity",
+  "authorization_review": "0dd5555f8795a68c7c9b1dc58387337d98fd76a5",
+  "review_sha256": "bfcef46097624ee43e156a875b0399c394bdebde1c886dcf89067be4e2a9102b",
+  "reviewed_previous_delivery": "7471d7ad534889741edffc633ac01f43370988ae",
+  "implementation_commit": "535b23d6274b750ab8a8ffd55faf4048d93c1b2e",
+  "final_run_source_commit": "5796d78b642b58c0963ef47d181f70b96b728786",
+  "contract": {
+    "path": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_contract.json",
+    "sha256": "4340377a1c96edd3f5ebb0605e647b3569b026f7d8a9c0527902ef0b6c093f6b"
+  },
+  "stages": {
+    "T1": {
+      "actual_head": "535b23d6274b750ab8a8ffd55faf4048d93c1b2e",
+      "resource_samples": 132,
+      "trace_line_count": 4811,
+      "rss_peak_bytes": 539205632,
+      "task_swap_peak_bytes": 0,
+      "worker_exit_code": 1,
+      "watchdog_classification": "WORKER_FAILED",
+      "vanished_samples_for_manual_classification": [],
+      "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1",
+      "whole_seconds": 95.217966388,
+      "watchdog_exit_code": 2,
+      "supervisor_exit_code": 2,
+      "source_entries": 56,
+      "input_entries": 20,
+      "evidence": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/T1",
+      "test_nodes": [
+        {
+          "name": "test_00_v21_worker_runtime_identity_is_saved",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_01_contract_reader_accepts_frozen_f1_root",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_02_contract_reader_rejects_another_unique_root",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_04_candidate_reader_binds_accepted9_and_rejected_r10",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_05_candidate_reader_rejects_promoting_rejected_r10",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_06_actual_s_builder_and_post_audit_gate_h67_with_p6_closure",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_08_s_product_reader_requires_all_seven_qualified_artifacts",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_09_s_product_reader_rejects_changed_product_bytes",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_12_v21_f_main_reaches_real_observer_writer_and_terminal[False]",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_12_v21_f_main_reaches_real_observer_writer_and_terminal[True]",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_10_v21_pending_reader_recomputes_rebound_raw_packet[False]",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_10_v21_pending_reader_recomputes_rebound_raw_packet[True]",
+          "status": "FAILED"
+        },
+        {
+          "name": "test_11_v21_restore_accepts_consistent_packet_and_rejects_mixed_coefficients[False]",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_11_v21_restore_accepts_consistent_packet_and_rejects_mixed_coefficients[True]",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_v21_actual_common_comparison[None]",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_v21_actual_common_comparison[q10]",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_v21_snapshot_requires_the_same_input_and_source_set",
+          "status": "PASSED"
+        }
+      ],
+      "tests_sha256": "8ae6d62e9ebd2acb1a092918fc314fb30d7535dd72b7575fdb9a62446d88f043"
+    },
+    "T2": {
+      "actual_head": "5796d78b642b58c0963ef47d181f70b96b728786",
+      "resource_samples": 16,
+      "trace_line_count": 1237,
+      "rss_peak_bytes": 256839680,
+      "task_swap_peak_bytes": 0,
+      "worker_exit_code": 0,
+      "watchdog_classification": "COMPLETED",
+      "vanished_samples_for_manual_classification": [],
+      "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1",
+      "whole_seconds": 9.091490977,
+      "watchdog_exit_code": 0,
+      "supervisor_exit_code": 0,
+      "source_entries": 56,
+      "input_entries": 20,
+      "evidence": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/T2",
+      "test_nodes": [
+        {
+          "name": "test_00_v21_worker_runtime_identity_is_saved",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_10_v21_pending_reader_recomputes_rebound_raw_packet[False]",
+          "status": "PASSED"
+        },
+        {
+          "name": "test_10_v21_pending_reader_recomputes_rebound_raw_packet[True]",
+          "status": "PASSED"
+        }
+      ],
+      "tests_sha256": "456d2c31f0b8b99d634bed2d0a05c6127b0f56d4d06aa4f2518a13e5c63bec5c"
+    },
+    "S": {
+      "actual_head": "5796d78b642b58c0963ef47d181f70b96b728786",
+      "resource_samples": 413,
+      "trace_line_count": 1107,
+      "rss_peak_bytes": 1419935744,
+      "task_swap_peak_bytes": 0,
+      "worker_exit_code": 0,
+      "watchdog_classification": "COMPLETED",
+      "vanished_samples_for_manual_classification": [],
+      "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1",
+      "whole_seconds": 207.789824667,
+      "watchdog_exit_code": 0,
+      "supervisor_exit_code": 0,
+      "source_entries": 56,
+      "input_entries": 20,
+      "evidence": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S"
+    },
+    "F1": {
+      "actual_head": "5796d78b642b58c0963ef47d181f70b96b728786",
+      "resource_samples": 6904,
+      "trace_line_count": 1859,
+      "rss_peak_bytes": 7900602368,
+      "task_swap_peak_bytes": 0,
+      "worker_exit_code": 1,
+      "watchdog_classification": "WORKER_FAILED",
+      "vanished_samples_for_manual_classification": [
+        [
+          6900,
+          [
+            3766301
+          ]
+        ]
+      ],
+      "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/formal/R10_H67_attempt1",
+      "whole_seconds": 4813.658310916,
+      "watchdog_exit_code": 2,
+      "supervisor_exit_code": 2,
+      "source_entries": 56,
+      "input_entries": 20,
+      "evidence": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/F1"
+    }
+  },
+  "test_evidence": {
+    "distinct_nodes_covered": 17,
+    "history_reuse_nodes": 14,
+    "T2_retested_nodes": 3,
+    "single_final_17_node_batch": false,
+    "T1_failure": "Correct mixed-RHS rejection message did not match test regex; not a reader false acceptance",
+    "fix": "Only expected regex changed from saved raw-vector gates to do not match the returned system",
+    "production_bytes_same_between_T1_T2": true,
+    "final_test_sha256": "456d2c31f0b8b99d634bed2d0a05c6127b0f56d4d06aa4f2518a13e5c63bec5c"
+  },
+  "space": {
+    "parent": "REJECTED R10",
+    "accepted_state": "accepted9/R9 unchanged",
+    "requested_global_cell": 67,
+    "requested_forest_root": 127,
+    "box_nm": [
+      16.5,
+      10,
+      90,
+      33.5,
+      15,
+      120
+    ],
+    "requested_splits": 1,
+    "actual_splits": 5,
+    "forced_material_roots": [
+      129,
+      130,
+      131,
+      160
+    ],
+    "leaf_cells": 215,
+    "all_leaf_p": 6,
+    "independent_FE": 139554,
+    "Delta_FE_vs_R10": 20754,
+    "independent_trace": 42804,
+    "active_interior": 96750,
+    "carrier_rows": 151032,
+    "hanging_slaves": 5544,
+    "active_periodic_slaves": 5934,
+    "actual_carrier_Floquet_constraints": 5982,
+    "returned_rows_S_prediction": 43416,
+    "returned_rows_F_observed": 43416,
+    "NNZ_used_F": 37660296,
+    "NNZ_allocated_F": 45453492,
+    "interior_crosscheck": "81000 + 3150*5 = 96750",
+    "FE_gate": {
+      "lower_exclusive": 118800,
+      "upper_exclusive": 237600,
+      "pass": true
+    },
+    "source": "v21_r10_h67_sources/S/root_independent_audit.json"
+  },
+  "formal_admission": {
+    "pass": true,
+    "predicted_peak_bytes_upper": 19699155644.05567,
+    "predicted_work_seconds_upper": 6753.875029482975,
+    "work_limit_seconds": 6900,
+    "rss_limit_bytes": 34359738368,
+    "basis": [
+      {
+        "model": "R9",
+        "actual_FE": 110472,
+        "actual_returned_rows": 35964,
+        "watchdog_whole_seconds": 2878.9347875751555,
+        "solver_interval_seconds": 2855.742826420814,
+        "remaining_disjoint_workflow_seconds": 23.191961154341698,
+        "tree_RSS_peak_bytes": 6283513856,
+        "status": "COMPLETED",
+        "watchdog_source": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_up_attempt1/watchdog/summary.json",
+          "sha256": "afddc2298a1c357eafc1746fb01fbef20010026cd3174d35073cb5ef2317b6e4"
+        },
+        "solver_source": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_up_attempt1/run/solve/run_summary.json",
+          "sha256": "50133ad0d299f1c7ca154d750bb5ac26c4179ea006ad55d546fdaac275d67048"
+        },
+        "row_ratio": 1.2072072072072073,
+        "FE_ratio": 1.263252226808603,
+        "predicted_work_seconds": 5811.490415123306,
+        "predicted_peak_bytes": 18314548299.380898,
+        "scope": "historical measured resource calibration, not H67 measurements"
+      },
+      {
+        "model": "R10",
+        "actual_FE": 118800,
+        "actual_returned_rows": 38412,
+        "watchdog_whole_seconds": 2588.517399974633,
+        "solver_interval_seconds": 2561.818404408172,
+        "remaining_disjoint_workflow_seconds": 26.698995566461235,
+        "tree_RSS_peak_bytes": 6572441600,
+        "status": "COMPLETED",
+        "watchdog_source": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/watchdog/summary.json",
+          "sha256": "ad4675ae06ae2a1122c94812837a539da647d2062e8b88c257930e7c57286b4a"
+        },
+        "solver_source": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/run/solve/run_summary.json",
+          "sha256": "be445b030b8e39169fc800e4c53aae0f85fcf8800312d7538518df67891d6376"
+        },
+        "row_ratio": 1.1302717900656045,
+        "FE_ratio": 1.1746969696969698,
+        "predicted_work_seconds": 4290.041866818597,
+        "predicted_peak_bytes": 16792776515.078495,
+        "scope": "historical measured resource calibration, not H67 measurements"
+      },
+      {
+        "model": "H8",
+        "actual_FE": 116740,
+        "actual_returned_rows": 37402,
+        "watchdog_whole_seconds": 2174.3347835741006,
+        "solver_interval_seconds": 2174.3347835741006,
+        "remaining_disjoint_workflow_seconds": 0.0,
+        "tree_RSS_peak_bytes": 7309836288,
+        "status": "WORKER_FAILED",
+        "watchdog_source": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/watchdog/summary.json",
+          "sha256": "357f7d5d55d023613afa49c01dea4c6b69b82b9129d6e819b209808d4c8bd6ad"
+        },
+        "solver_source": null,
+        "row_ratio": 1.1607935404523821,
+        "FE_ratio": 1.1954257323967792,
+        "predicted_work_seconds": 3911.012480931934,
+        "predicted_peak_bytes": 19699155644.05567,
+        "scope": "H8 prior output failed; resource calibration only"
+      },
+      {
+        "model": "P8",
+        "actual_FE": 110722,
+        "actual_returned_rows": 36004,
+        "watchdog_whole_seconds": 3660.6983617502265,
+        "solver_interval_seconds": 2553.3956182152033,
+        "remaining_disjoint_workflow_seconds": 1107.3027435350232,
+        "tree_RSS_peak_bytes": 6338056192,
+        "status": "COMPLETED",
+        "watchdog_source": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/watchdog/summary.json",
+          "sha256": "d9009de40f41202cb33d20167d5e0645b04348d17ba7b56ccb622e4ab34824c0"
+        },
+        "solver_source": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run/solve/run_summary.json",
+          "sha256": "ee917cf51b286cae36f849b8b5a3e1d193338eff0cd821265dcc7b0c223912e9"
+        },
+        "row_ratio": 1.2058660148872347,
+        "FE_ratio": 1.260399920521667,
+        "predicted_work_seconds": 6753.875029482975,
+        "predicted_peak_bytes": 18432497853.13969,
+        "scope": "historical measured resource calibration, not H67 measurements"
+      }
+    ],
+    "model": "max across four prior runs: 1.15*(old solver elapsed*max(row_ratio^3,FE_ratio) + disjoint remaining whole*FE_ratio); memory=2*old sampled tree peak*max(row_ratio^2,FE_ratio)",
+    "uncertainty": "Engineering planning envelope, not a certified upper bound. Same q/R/p6 direct backend; local hanging constraints can change fill and timing. Entire solver is scaled cubically in returned rows and includes linear assembly/A6 costs; 15% additional time and 2x RSS reserve. Watchdog work/whole limits remain fixed; no OOM or extension authorized."
+  },
+  "primary": {
+    "status": "SAVED_42_ARRAYS_BUT_NUMERICALLY_UNQUALIFIED",
+    "sha256": "0ed1eada0a7d575ede4fdc8401371ffb2571a15c3b15c139ab5eabfda936beb5",
+    "qualified_endpoint": false,
+    "endpoint_record": null,
+    "numerical_gates": {
+      "independent_A6": {
+        "relative_residual": 2.1004005221911206e-08,
+        "residual_norm": 2.2197718044678094e-08,
+        "rhs_norm": 1.0568326283561202,
+        "root_scalar_quotient": 2.1004005221911206e-08,
+        "limit": 1e-08,
+        "numerical_gate_pass": false
+      },
+      "full_active_transformed": {
+        "active_interior_rows": 96750,
+        "independent_active_fe_dofs": 139554,
+        "independent_reduced_trace_rows": 42804,
+        "interior_metric": "Euclidean",
+        "raw_full_entity_map_rows": 151032,
+        "raw_trace_rows": 54282,
+        "reduced_trace_dtn_rows_including_auxiliary": 43416,
+        "relative_residual": 6.446061507221647e-13,
+        "residual_norm": 6.812408124146155e-13,
+        "rhs_norm": 1.0568326281891791,
+        "trace_metric": "saved same-pass Gram inverse action",
+        "root_scalar_quotient": 6.446061507221647e-13,
+        "limit": 1e-08,
+        "numerical_gate_pass": true
+      },
+      "returned_condensed": {
+        "relative_residual": 6.902765176289437e-13,
+        "residual_norm": 7.295067464183063e-13,
+        "rhs_norm": 1.0568326283561202,
+        "root_scalar_quotient": 6.902765176289437e-13,
+        "limit": 1e-09,
+        "numerical_gate_pass": true
+      }
+    },
+    "normal_correction": {
+      "after_relative_residual": 6.902765176289437e-13,
+      "before_relative_residual": 1.5364631556420623e-10,
+      "converged_reason": 4,
+      "rhs_identical": true
+    },
+    "normal_count": 1,
+    "extra_count": 0,
+    "source": "v21_r10_h67_sources/F1/primary_byte_inventory.json"
+  },
+  "scientific_result": {
+    "partial_modal": {
+      "status": "MEASURED_BEFORE_A6_REJECTION_NOT_QUALIFIED_ENDPOINT",
+      "row_count": 612,
+      "aggregate_checks": {
+        "R_total": {
+          "saved": 0.25135798908917745,
+          "root_table_sum": 0.25135798908917745,
+          "difference": 0.0
+        },
+        "T_total": {
+          "saved": 0.05712756085951156,
+          "root_table_sum": 0.057127560859511546,
+          "difference": -1.3877787807814457e-17
+        }
+      },
+      "R00_s": 0.25132515053870136,
+      "R00_p": 2.2560434643515318e-23,
+      "Av": "NOT_REACHED",
+      "energy_closure": "NOT_REACHED",
+      "J_G_q8_q10": "NOT_RUN"
+    },
+    "C": "NOT_RUN_BLOCKED_BY_A6",
+    "q8_q10": "NOT_RUN",
+    "J_G": "NOT_RUN",
+    "benefit_per_FE": "NOT_ESTABLISHED",
+    "sampling_classification": "NOT_REACHED",
+    "new_180_root_response_table": "NOT_RUN",
+    "accepted_update": false,
+    "transition10": false,
+    "underlying_A6_disagreement_cause": "UNKNOWN; no new component/parameter diagnosis authorized or run"
+  },
+  "lifecycle": {
+    "source": "v21_r10_h67_sources/F1/root_numerical_stop.json",
+    "F1_tail_vanished_classified": "line6900 worker exit race, worker exit1 and orted exit0 bound, next four samples watchdog only",
+    "worker_end_source_input_snapshots": "NOT_REACHED",
+    "root_post_exit_source_input_hashes": "56 source/contract and 20 input entries matched launch",
+    "cache_scope": "watchdog empty cache metadata stamp; no specific shared cache path monitored, so shared-cache stability is NOT_VERIFIED"
+  },
+  "quota": {
+    "support_calls": 3,
+    "support_limit": 7,
+    "support_whole_seconds": 312.099282032,
+    "support_whole_limit_seconds": 8700,
+    "formal_calls": 1,
+    "formal_limit": 2,
+    "formal_whole_seconds": 4813.658310916,
+    "formal_whole_limit_seconds": 14400,
+    "all_workflows_whole_seconds": 5125.757592948,
+    "historical_formal_before": 9,
+    "formal_envelope": 12,
+    "formal_after": 10,
+    "historical_final_slot": "SEALED",
+    "unused": [
+      "T3",
+      "F2",
+      "C",
+      "E1",
+      "E2"
+    ],
+    "F2_E_C": "NOT_ALLOWED_AFTER_THIS_NUMERICAL_HARD_FAILURE",
+    "workflows_are_disjoint": true,
+    "phase_and_watchdog_elapsed_not_added_again": true
+  },
+  "static_cost_scope": {
+    "F1_lifecycle_readback_seconds": 1.3856730270199478,
+    "F1_primary_byte_hash_seconds": 0.4737555840983987,
+    "F1_scalar_table_closeout_seconds": 0.5149478870444,
+    "earlier_measured_steps": "See preparation original records; mixed scopes not added to workflow cost",
+    "not_measured": [
+      "manual reading and code/doc editing",
+      "routine Git and path inspection",
+      "some static hashing and AST operations",
+      "draft correction and link review"
+    ],
+    "not_a_whole_session_wall": true
+  },
+  "local_failures_and_corrections": [
+    {
+      "stage": "prelaunch static",
+      "evidence": "v21_r10_h67_sources/preparation/root_static_review_findings.json",
+      "description": "ordinary path/control-flow/import/fixture-boundary findings fixed before first launch; no dynamic slot"
+    },
+    {
+      "stage": "T1",
+      "description": "regex assertion failure retained; T2 three affected nodes passed"
+    },
+    {
+      "stage": "root static read",
+      "description": "R10 timing inventory first queried under root_review; correct existing file was at round10_p_up_attempt1/solve_stage_timing_inventory.json; no driver or regenerated evidence"
+    },
+    {
+      "stage": "draft supervision",
+      "description": "Agent draft initially attributed T1 to geometry-box text; root corrected against actual XML/log to mixed-RHS regex before delivery"
+    },
+    {
+      "stage": "F1",
+      "description": "actual independent A6 numerical hard failure, no E/F2 retry"
+    },
+    {
+      "stage": "static evidence packaging",
+      "description": "First packaging call exited1 when requesting absent T2 watchdog/workflow_phase.json. T2 only ran runtime/raw-reader tests and did not create a ledger phase file. Index now lists unavailable optional files; copying resumes only already identical bytes. No stage shell or numerical run.",
+      "cost": "NOT_MEASURED"
+    },
+    {
+      "stage": "static evidence packaging resume",
+      "description": "Second call exited1 because the already-created T1 index lacked newly added empty optional-file list. Corrected generator to omit empty optional list, preserving the identical original T1 derived index; no original artifact altered.",
+      "cost": "NOT_MEASURED"
+    }
+  ],
+  "scope_qualification": {
+    "engineering": "17 distinct targeted nodes via immutable T1/T2 evidence plus real S; F numerical endpoint and real C unqualified",
+    "accuracy": "NOT_PASSED",
+    "space": "PARTIAL",
+    "selection": "PARTIAL",
+    "equal_accuracy_total_cost": "NOT_ESTABLISHED",
+    "iteration": "NOT_RUN / NOT_QUALIFIED",
+    "production_qualification": false,
+    "merge_approval": false
+  },
+  "locked": [
+    "A1/A2 retries",
+    "other models/seeds/p7/h+p",
+    "fresh baseline",
+    "independent reference/holdout campaign",
+    "cost campaign",
+    "iterative wiring",
+    "0.7 nm",
+    "NN/FTT",
+    "shared activation/ABI changes",
+    "environment rebuild",
+    "merge"
+  ],
+  "next_work": "No automatic new execution. Review numerical disagreement using preserved original evidence and specify any new bounded task before further computation."
+}

@@ -1,0 +1,134 @@
+{
+  "actual_leaf_catalog_sha256": "2b1e276988ddeba37b22d29ad1ac4106a2dd6f10768d9a8d520f03e6026f22f1",
+  "actual_leaf_count": 215,
+  "actual_mesh_identity": {
+    "axes_nm": [
+      [
+        0.0,
+        8.25,
+        16.5,
+        25.0,
+        33.5,
+        41.75,
+        50.0
+      ],
+      [
+        0.0,
+        5.0,
+        10.0,
+        12.5,
+        15.0,
+        17.5,
+        20.0,
+        25.0,
+        30.0,
+        35.0,
+        40.0,
+        45.0,
+        50.0
+      ],
+      [
+        -10.0,
+        0.0,
+        30.0,
+        60.0,
+        90.0,
+        105.0,
+        120.0,
+        125.0,
+        130.0
+      ]
+    ],
+    "axis_union_interval_counts_xyz": [
+      6,
+      12,
+      8
+    ],
+    "axis_union_interval_product_not_global_cell_count": true,
+    "axis_values_sha256": "cb73cf5dbc5e355a56379fa46772266cf91ea60d653d790d44fb66414c9cd61f",
+    "base_axis_values_sha256": "4661c6018b835407c69aa639721a6e4c23305ce34deb5849a650c40b90a7aea8",
+    "closure_split_counts": {
+      "balance": 0,
+      "material": 4,
+      "periodic": 0,
+      "user": 1
+    },
+    "geometry_profile": "candidate_initial180",
+    "global_cells": 215,
+    "hanging_patch_count": 19,
+    "leaf_catalog_sha256": "2b1e276988ddeba37b22d29ad1ac4106a2dd6f10768d9a8d520f03e6026f22f1",
+    "leaf_cell_count": 215,
+    "material_plane_alignment": {
+      "all_aligned": true,
+      "checked": {
+        "x": [
+          {
+            "aligned": true,
+            "name": "grating_x_min",
+            "value": 16.5
+          },
+          {
+            "aligned": true,
+            "name": "grating_x_max",
+            "value": 33.5
+          }
+        ],
+        "y": [
+          {
+            "aligned": true,
+            "name": "grating_y_min",
+            "value": 15.0
+          },
+          {
+            "aligned": true,
+            "name": "grating_y_max",
+            "value": 35.0
+          }
+        ],
+        "z": [
+          {
+            "aligned": true,
+            "name": "interface_z",
+            "value": 0.0
+          },
+          {
+            "aligned": true,
+            "name": "grating_z_max",
+            "value": 120.0
+          },
+          {
+            "aligned": true,
+            "name": "grating_z_min",
+            "value": 0.0
+          }
+        ]
+      },
+      "missing": []
+    },
+    "mesh_cell_type_resolved": "hexahedron",
+    "plan_sha256": "38739c012870e3a878aafb764951d771293285fa45d46f535aa078bc5c295fc3",
+    "root_catalog_sha256": "8b49201ee7f3f24fb1594a255f7477ce9653ffe4322e6de0ef9af57285f9d5f2",
+    "root_cell_count": 180,
+    "spacing_mode_resolved": "balanced_dyadic_local_h"
+  },
+  "actual_plan_sha256": "38739c012870e3a878aafb764951d771293285fa45d46f535aa078bc5c295fc3",
+  "actual_root_catalog_sha256": "8b49201ee7f3f24fb1594a255f7477ce9653ffe4322e6de0ef9af57285f9d5f2",
+  "checks": {
+    "mesh_catalog_matches_s": true,
+    "one_requested_h_root": true,
+    "p6_trace_and_interior": true,
+    "same_leaf_catalog": true,
+    "same_root_catalog": true,
+    "same_s_leaf_count": true,
+    "selection_and_transition_disabled": true,
+    "unique_180_root_parent": true
+  },
+  "expected_leaf_catalog_sha256": "2b1e276988ddeba37b22d29ad1ac4106a2dd6f10768d9a8d520f03e6026f22f1",
+  "expected_leaf_count": 215,
+  "expected_root_catalog_sha256": "8b49201ee7f3f24fb1594a255f7477ce9653ffe4322e6de0ef9af57285f9d5f2",
+  "pass": true,
+  "schema": "task43.v21.r10_h67.actual_f_space_audit.v1",
+  "selection_enabled": false,
+  "source_plan_sha256": "38739c012870e3a878aafb764951d771293285fa45d46f535aa078bc5c295fc3",
+  "transition_written": false
+}

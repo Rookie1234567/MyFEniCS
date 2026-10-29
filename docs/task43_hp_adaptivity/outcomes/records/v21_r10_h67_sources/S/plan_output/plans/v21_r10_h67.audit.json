@@ -1,0 +1,2196 @@
+{
+  "accepted_parent_transfer_audit": null,
+  "accepted_state_candidate_id": "round9_p_up",
+  "action": "h_refine",
+  "actual_geometry": {
+    "axis_union_interval_counts": [
+      6,
+      12,
+      8
+    ],
+    "global_cells": 215,
+    "mesh_box_catalog_sha256": "a6d4b1c2f8bd333627853a57454e543595a47d82836e6de2f07db4abf2a765f7",
+    "mesh_cell_type": "hexahedron"
+  },
+  "actual_independent_fe_gate": {
+    "actual": 139554,
+    "checks": {
+      "actual_interior_rows_follow_split_count": true,
+      "actual_split_includes_request": true,
+      "all_leaf_degrees_inherit_p6": true,
+      "degree_plan_pass": true,
+      "entity_constraints_pass": true,
+      "exactly_one_requested_split": true,
+      "requested_root_is_actually_refined": true,
+      "requested_root_only": true,
+      "root_count_180": true,
+      "strict_fe_bounds": true
+    },
+    "lower_exclusive": 118800,
+    "pass": true,
+    "upper_exclusive": 237600
+  },
+  "candidate_id": "v21_r10_h67",
+  "classification": "mesh_and_entity_closure_only_no_pde_solve",
+  "contract_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_contract.json",
+  "contract_sha256": "4340377a1c96edd3f5ebb0605e647b3569b026f7d8a9c0527902ef0b6c093f6b",
+  "degrees": {
+    "actual_p4_cell_count": 0,
+    "cell_interior_histogram": {
+      "p6": 215
+    },
+    "degree_plan_pass": true,
+    "distinct_physical_trace_degrees": [
+      6
+    ],
+    "entity_constraints_pass": true,
+    "entity_degree_plan_sha256": "7e90fd73f18e4e8cbcfeb416da12ef7f3f3e336dcdd9b32c88f079251229213c",
+    "entity_map_sha256": "8ef2640352901b5f53a8aa366ab9cd04c63cbb6bf367c30119bebba27bdb2633",
+    "maximum_trace_degree": 6,
+    "minimum_trace_degree": 6
+  },
+  "diagnostic_parent_candidate_id": "round10_p_up",
+  "dofs": {
+    "active_cell_interior_rows": 96750,
+    "active_fe_dof_gate_limit": null,
+    "active_fe_dof_gate_pass": true,
+    "active_fe_dof_gate_policy": "task43_hp_adaptivity_192gib_v1",
+    "added_independent_fe_dofs": 20754,
+    "independent_active_fe_dofs": 139554,
+    "independent_trace_rows": 42804,
+    "parent_independent_fe_dofs": 118800,
+    "raw_broken_active_fe_dofs_before_hanging_floquet_constraints": 151032
+  },
+  "forest": {
+    "actual_leaf_cell_count": 215,
+    "actual_one_level_root_splits": 5,
+    "axis_partition_interval_product_is_not_leaf_count": true,
+    "closure_split_counts": {
+      "balance": 0,
+      "material": 4,
+      "periodic": 0,
+      "user": 1
+    },
+    "forced_closure_h_splits": 4,
+    "hanging_patch_count": 19,
+    "leaf_catalog_sha256": "2b1e276988ddeba37b22d29ad1ac4106a2dd6f10768d9a8d520f03e6026f22f1",
+    "requested_h_root_splits": 1,
+    "root_cell_count": 180
+  },
+  "input_sha256_start": {
+    "accepted9_comparison": "ea169afd9bdcdc5f8722230f449a57d221e9e64982e9d34cf4075780d3f14d30",
+    "accepted9_plan": "9f8bbc8f90ae609822ac934311986f75d1648eba5b26b6a488647e9b94fd4947",
+    "accepted9_record": "5b6454d4234cf254536f1c1d4263c3e804ed508cdc644614649b592e818027ea",
+    "accepted9_selection": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9",
+    "accepted9_storage": "7a71623b15afea662956ecd6af89b1d08701631174d1a048d5320e7a3217b893",
+    "r10_absorption": "77ab9220fb19596506e532b205de205ed18ad5ba937e927ca68f8d31a5bb5ca8",
+    "r10_comparison": "3db50c67e871520398eee3c05219d4ef3090c360f5f2b4495e5fe31f3c70b3e0",
+    "r10_modal": "f7048a9ecad65db39faa688d9d4f0041099f2719e64e5ea2898e3dc793003450",
+    "r10_plan": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+    "r10_record": "66d56c0644b5c8eb66d075a7898cdfa28024e3cc30834a08cd3d8b76e453968d",
+    "r10_rejection": "168a1b02f92a08acf0b590340d8430edcbb511ea9a3b7c0adb69795a50077c51",
+    "r10_storage": "e1296a9b55ff6d29fde55bf545e44be737c4f5d534b12b69f1ded5f05a0a7eaf",
+    "round1_acceptance_contract": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+    "v20_proposal": "fc33d19769ded8dce1c03cea8592516bb59f3bba1fe84c649eea70761628fa4c",
+    "y6_absorption": "1323cb258e65e75ea5ae76bdb4c9d6d6d25c7465f486094dc22b7c7264e4bafc",
+    "y6_inventory": "8493acfd4485ef7c9b4c662708d7bac8df9934bf90dae550d8d392f59f630df0",
+    "y6_modal": "667871dbebed4319e23190173941e1cfd7d647b9bf1e99d2f9fbec4d4d6ae463",
+    "y6_recovered_bundle": "6c244fae7e246c171cef1f66ae3f1d607622c89da1f9cd4474e55908bfd6b6d4",
+    "y6_resolved_config": "57ad47a4a5ce221bf0e420b4faea084c0557bcd19de29b605e62d50a2bbaeedc",
+    "y6_restore_identity": "ef77da1e68136e08b48dc0e352690f9c9fdcd132dcc2b765dcb12413b7cf3300"
+  },
+  "parent_field_restoration_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/plan_output/frozen_parent_restore_identities.json",
+  "parent_field_restoration_sha256": "2047ecfd0046f814d4867249ad71199f9022a415193c688641506da747c62e79",
+  "parent_identity": {
+    "accepted_state": {
+      "candidate_id": "round9_p_up",
+      "selection_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round9_selection_transition9_v1.json",
+      "selection_sha256": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9",
+      "selection_status": "ACCEPTED",
+      "selection_unchanged": true
+    },
+    "diagnostic_parent": {
+      "accepted_selection_not_rewritten": true,
+      "candidate_id": "round10_p_up",
+      "independent_fe_dofs": 118800,
+      "plan_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/run/candidate_plan.json",
+      "plan_sha256": "7e8305e0d6117ceeb37e88eb715d98ab5212505a2410161f0b38aff5c7ed1826",
+      "record_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/run/task43_round1_candidate_record.json",
+      "record_sha256": "66d56c0644b5c8eb66d075a7898cdfa28024e3cc30834a08cd3d8b76e453968d",
+      "rejection_path": "/home/fenics/Projects/NN-Lab-V2/docs/task43_hp_adaptivity/outcomes/records/round10_rejected_candidate_v1.json",
+      "rejection_sha256": "168a1b02f92a08acf0b590340d8430edcbb511ea9a3b7c0adb69795a50077c51",
+      "selection_status": "REJECTED",
+      "storage_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/run/candidate_recovered_solution_storage.npz",
+      "storage_sha256": "e1296a9b55ff6d29fde55bf545e44be737c4f5d534b12b69f1ded5f05a0a7eaf"
+    },
+    "geometry_array_identities": {
+      "mesh_geometry_coordinates_nm": {
+        "dtype": "<f8",
+        "sha256": "957c09813c619b05d6c7a1392465f857fa5e1c228be020eb4a1b4ded7cc71598",
+        "shape": [
+          308,
+          3
+        ]
+      },
+      "mesh_geometry_dofmap": {
+        "dtype": "<i4",
+        "sha256": "b1e32e81beead7e01b564405a63e458353b19912ea4eca11cfbcce64d1e5b2e6",
+        "shape": [
+          180,
+          8
+        ]
+      },
+      "mesh_owned_cell_global_ids": {
+        "dtype": "<i8",
+        "sha256": "9422c248a5c23afc46d87ce8339a644d938174401a67403c2799c48b6f8ba508",
+        "shape": [
+          180
+        ]
+      }
+    },
+    "requested_h_seed": {
+      "box_nm": [
+        16.5,
+        10.0,
+        90.0,
+        33.5,
+        15.0,
+        120.0
+      ],
+      "forest_root_index": 127,
+      "global_cell_id": 67,
+      "maximum_level": 1,
+      "split": "one_level_1_to_8"
+    },
+    "schema": "task43.v21.r10_h67_diagnostic_parent.v1",
+    "selection_enabled": false,
+    "transition_written": false
+  },
+  "plan_and_authority_wall_seconds": 195.20515203103423,
+  "plan_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/plan_output/plans/v21_r10_h67.json",
+  "plan_sha256": "38739c012870e3a878aafb764951d771293285fa45d46f535aa078bc5c295fc3",
+  "r10_storage_geometry_array_identities": {
+    "mesh_geometry_coordinates_nm": {
+      "dtype": "<f8",
+      "sha256": "957c09813c619b05d6c7a1392465f857fa5e1c228be020eb4a1b4ded7cc71598",
+      "shape": [
+        308,
+        3
+      ]
+    },
+    "mesh_geometry_dofmap": {
+      "dtype": "<i4",
+      "sha256": "b1e32e81beead7e01b564405a63e458353b19912ea4eca11cfbcce64d1e5b2e6",
+      "shape": [
+        180,
+        8
+      ]
+    },
+    "mesh_owned_cell_global_ids": {
+      "dtype": "<i8",
+      "sha256": "9422c248a5c23afc46d87ce8339a644d938174401a67403c2799c48b6f8ba508",
+      "shape": [
+        180
+      ]
+    }
+  },
+  "reference_space_cache_capacity_audit": {
+    "build_cache_maxsize": 128,
+    "cache_after_authority": {
+      "currsize": 1,
+      "hits": 214,
+      "maxsize": 128,
+      "misses": 1
+    },
+    "cache_before_authority": {
+      "currsize": 0,
+      "hits": 0,
+      "maxsize": 128,
+      "misses": 0
+    },
+    "cache_delta_authority": {
+      "hits": 214,
+      "misses": 1
+    },
+    "capacity_contains_local_workset": true,
+    "local_maps_including_uniform_p6": 1,
+    "local_unique_cell_degree_map_count": 1,
+    "mpi_size": 1,
+    "rank": 0,
+    "scope": "per_rank_local_owned_cells"
+  },
+  "requested_box_nm": [
+    16.5,
+    10.0,
+    90.0,
+    33.5,
+    15.0,
+    120.0
+  ],
+  "requested_forest_root_index": 127,
+  "requested_global_cell_id": 67,
+  "schema": "task43.v21.r10_h67.space-audit.v1",
+  "selection_enabled": false,
+  "source_sha256_start": {
+    "benchmarks/subreaper_watchdog.py": "a2de2a359deba56fd6928ca3ebcb0f1347a3e7e3388c99fc9d43962f32ea2801",
+    "benchmarks/task43_hp_adaptivity/candidate_checkpoints.py": "7087c6636df45d51121157b5fff98d204f15516194b38f4f99f6f2b1af1b7902",
+    "benchmarks/task43_hp_adaptivity/candidate_records.py": "7f98eacb0aee5e8f3cc98c61620613d02e66c909844c2ab8e171008e1cee73aa",
+    "benchmarks/task43_hp_adaptivity/compare_initial_to_references.py": "c39d5577719ddf4a5bc22acba47d49028717a171fcbcbf2cb667341067d78a8e",
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "be2325def8a04bbd3f6bb376ce12bb0fc157d529792cf79c5127731b7490601a",
+    "benchmarks/task43_hp_adaptivity/compare_v2_endpoints.py": "4c16377b491a83424f8b21cb54c9e60f64dcd5bf6f6895f45fee6f11a083ce0c",
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "557e947eb5e22b07e4545c2a5056134aa758adc1a593ea61f398734493f38e6d",
+    "benchmarks/task43_hp_adaptivity/profile.py": "ddd315bcbe897be4856c42dc68ecbf7897dcf8fa836ef91985863bb6ae8afc2e",
+    "benchmarks/task43_hp_adaptivity/r10_h67_diagnostic.py": "a2f79a26c30fe31c30ca7726277749e87f6539cafd21c4e21760f51ea38d858d",
+    "benchmarks/task43_hp_adaptivity/reference_restore.py": "93a7170d92cacae9c9fd491637a22c676fb559d3f5a306812105888a6c0b4505",
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py": "7c90a40787860f7c4c035f375c9d2ab12ab2e561ea05a07faa13c8b6a3d57e24",
+    "benchmarks/task43_hp_adaptivity/sample_v2_legacy_r10_fields.py": "d1ad0a22a8e60147a0ccf3856a2c847b9ff3b74c34ec4bc04dc76c258a8d8ae9",
+    "docs/task43_hp_adaptivity/outcomes/records/v11_scientific_restart_contract.json": "6aadbf82a9c816e1e272b087aa2189435bb0163df1ed1b55a363295a773dadf1",
+    "docs/task43_hp_adaptivity/outcomes/records/v16_r9_p8_contract.json": "8305bc7bbef3dfc33145a9032a9ce7628b3648f43b4900a982c4b0528f38bc1b",
+    "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_contract.json": "4340377a1c96edd3f5ebb0605e647b3569b026f7d8a9c0527902ef0b6c093f6b",
+    "scripts/activate_task40_phi90_pord64.sh": "5da05d633b4e5ead69e6d8b582229f7239332d6e5055d1799531a59af78058b3",
+    "src/adaptivity/dyadic_hexa_broken_mesh.py": "1dc6aaeeb2a04001168b55f5b472624c4831ebb521d6f4aad53070287ba0524a",
+    "src/adaptivity/dyadic_hexa_refinement.py": "1650d9ac67afb576244586b1385bf50017d8f528bf6aa01f040058054935fbb9",
+    "src/adaptivity/exact_sequence_variable_p.py": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+    "src/adaptivity/hcurl_broken_cell_trace.py": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+    "src/adaptivity/hcurl_broken_trace_graph.py": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+    "src/adaptivity/physical_g_error.py": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+    "src/adaptivity/stage4_local_h.py": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+    "src/adaptivity/variable_p_degree_plan.py": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+    "src/adaptivity/variable_p_entity_map.py": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+    "src/adaptivity/variable_p_transfer.py": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+    "src/common/analytic_fields_3d.py": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+    "src/common/config_3d.py": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+    "src/common/modes_3d.py": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+    "src/constraints/floquet_3d.py": "cfa0953ba1b6fa60b1943be2f0f977413221857290df7ceee0747df811bca309",
+    "src/geometry/mesh_builder_3d.py": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+    "src/geometry/task43_hp_adaptivity_axis_plan.py": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+    "src/io/native_capacity_profile.py": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+    "src/postprocessing/diffraction_3d.py": "42d65299ce1cc8c2762dc1d3972ea04063b155bd8a58d4553c9ac9732213ce66",
+    "src/postprocessing/flat_layer_reference_3d.py": "ed6493bd2f13dccbcd85a8ef2edb6f6b07726ec6c41b82651525b386d44ec04a",
+    "src/postprocessing/physical_field_comparison.py": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+    "src/postprocessing/physical_field_sampling.py": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+    "src/postprocessing/postprocess_3d.py": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+    "src/postprocessing/rta_3d.py": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+    "src/runners/physical_intermediate.py": "f7c1cd79353911079fb17e9780afd588a5afc6d0efeccd81b4aed3b9c3c902a4",
+    "src/solvers/common_3d_case_flow.py": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+    "src/solvers/common_3d_fields.py": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+    "src/solvers/common_3d_forms.py": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+    "src/solvers/common_3d_postprocess.py": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+    "src/solvers/common_3d_solve.py": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+    "src/solvers/common_3d_utils.py": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+    "src/solvers/dtn_port_3d.py": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+    "src/solvers/hcurl_blocked_gram_tensor.py": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+    "src/solvers/hcurl_variable_p_assembly.py": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+    "src/solvers/hcurl_variable_p_local.py": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+    "src/solvers/hcurl_variable_p_reduction.py": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+    "src/solvers/independent_active_action.py": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+    "src/solvers/petsc_residual_correction.py": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+    "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb",
+    "src/test/test_task43_v11_scientific_restart.py": "c7ae026e40ac782652b17e87e7399eef541c139ff62900b20caf7ea59e34a236",
+    "src/test/test_task43_v21_r10_h67.py": "456d2c31f0b8b99d634bed2d0a05c6127b0f56d4d06aa4f2518a13e5c63bec5c"
+  },
+  "space_authority_detail": {
+    "actual_refined_root_ids": [
+      127,
+      129,
+      130,
+      131,
+      160
+    ],
+    "all_actual_leaves_inherit_parent_degree": true,
+    "floquet_periodic_relations": {
+      "periodic_slave_rows": 5934
+    },
+    "forced_closure_root_boxes": {
+      "129": [
+        0.0,
+        15.0,
+        90.0,
+        16.5,
+        20.0,
+        120.0
+      ],
+      "130": [
+        16.5,
+        15.0,
+        90.0,
+        33.5,
+        20.0,
+        120.0
+      ],
+      "131": [
+        33.5,
+        15.0,
+        90.0,
+        50.0,
+        20.0,
+        120.0
+      ],
+      "160": [
+        16.5,
+        15.0,
+        120.0,
+        33.5,
+        20.0,
+        130.0
+      ]
+    },
+    "forced_closure_root_degrees": {
+      "129": 6,
+      "130": 6,
+      "131": 6,
+      "160": 6
+    },
+    "forced_closure_root_ids": [
+      129,
+      130,
+      131,
+      160
+    ],
+    "hanging_or_floquet_slave_rows_globally_numbered": false,
+    "hanging_slave_rows": 5544,
+    "independent_cell_interior_rows": 96750,
+    "independent_fe_dofs": 139554,
+    "independent_trace_rows": 42804,
+    "leaf_inheritance_by_root": {
+      "0": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "1": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "10": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "100": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "101": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "102": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "103": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "104": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "105": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "106": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "107": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "108": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "109": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "11": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "110": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "111": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "112": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "113": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "114": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "115": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "116": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "117": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "118": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "119": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "12": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "120": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "121": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "122": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "123": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "124": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "125": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "126": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "127": {
+        "degree_counts": {
+          "p6": 8
+        },
+        "leaf_count": 8
+      },
+      "128": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "129": {
+        "degree_counts": {
+          "p6": 8
+        },
+        "leaf_count": 8
+      },
+      "13": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "130": {
+        "degree_counts": {
+          "p6": 8
+        },
+        "leaf_count": 8
+      },
+      "131": {
+        "degree_counts": {
+          "p6": 8
+        },
+        "leaf_count": 8
+      },
+      "132": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "133": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "134": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "135": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "136": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "137": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "138": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "139": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "14": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "140": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "141": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "142": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "143": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "144": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "145": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "146": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "147": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "148": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "149": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "15": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "150": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "151": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "152": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "153": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "154": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "155": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "156": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "157": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "158": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "159": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "16": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "160": {
+        "degree_counts": {
+          "p6": 8
+        },
+        "leaf_count": 8
+      },
+      "161": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "162": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "163": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "164": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "165": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "166": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "167": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "168": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "169": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "17": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "170": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "171": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "172": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "173": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "174": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "175": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "176": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "177": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "178": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "179": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "18": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "19": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "2": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "20": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "21": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "22": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "23": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "24": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "25": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "26": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "27": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "28": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "29": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "3": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "30": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "31": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "32": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "33": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "34": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "35": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "36": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "37": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "38": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "39": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "4": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "40": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "41": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "42": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "43": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "44": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "45": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "46": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "47": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "48": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "49": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "5": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "50": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "51": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "52": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "53": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "54": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "55": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "56": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "57": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "58": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "59": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "6": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "60": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "61": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "62": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "63": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "64": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "65": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "66": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "67": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "68": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "69": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "7": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "70": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "71": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "72": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "73": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "74": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "75": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "76": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "77": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "78": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "79": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "8": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "80": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "81": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "82": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "83": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "84": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "85": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "86": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "87": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "88": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "89": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "9": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "90": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "91": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "92": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "93": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "94": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "95": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "96": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "97": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "98": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      },
+      "99": {
+        "degree_counts": {
+          "p6": 1
+        },
+        "leaf_count": 1
+      }
+    },
+    "leaf_interior_degree_histogram": {
+      "p6": 215
+    },
+    "leaf_parent_degree_inheritance_by_root": {
+      "0": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "1": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "10": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "100": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "101": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "102": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "103": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "104": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "105": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "106": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "107": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "108": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "109": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "11": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "110": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "111": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "112": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "113": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "114": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "115": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "116": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "117": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "118": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "119": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "12": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "120": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "121": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "122": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "123": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "124": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "125": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "126": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "127": {
+        "leaf_count": 8,
+        "parent_degree": 6
+      },
+      "128": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "129": {
+        "leaf_count": 8,
+        "parent_degree": 6
+      },
+      "13": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "130": {
+        "leaf_count": 8,
+        "parent_degree": 6
+      },
+      "131": {
+        "leaf_count": 8,
+        "parent_degree": 6
+      },
+      "132": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "133": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "134": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "135": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "136": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "137": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "138": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "139": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "14": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "140": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "141": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "142": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "143": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "144": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "145": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "146": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "147": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "148": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "149": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "15": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "150": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "151": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "152": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "153": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "154": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "155": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "156": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "157": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "158": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "159": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "16": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "160": {
+        "leaf_count": 8,
+        "parent_degree": 6
+      },
+      "161": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "162": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "163": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "164": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "165": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "166": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "167": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "168": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "169": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "17": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "170": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "171": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "172": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "173": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "174": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "175": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "176": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "177": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "178": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "179": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "18": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "19": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "2": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "20": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "21": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "22": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "23": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "24": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "25": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "26": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "27": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "28": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "29": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "3": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "30": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "31": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "32": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "33": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "34": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "35": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "36": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "37": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "38": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "39": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "4": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "40": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "41": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "42": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "43": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "44": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "45": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "46": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "47": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "48": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "49": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "5": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "50": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "51": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "52": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "53": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "54": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "55": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "56": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "57": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "58": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "59": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "6": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "60": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "61": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "62": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "63": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "64": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "65": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "66": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "67": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "68": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "69": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "7": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "70": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "71": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "72": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "73": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "74": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "75": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "76": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "77": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "78": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "79": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "8": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "80": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "81": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "82": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "83": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "84": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "85": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "86": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "87": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "88": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "89": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "9": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "90": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "91": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "92": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "93": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "94": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "95": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "96": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "97": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "98": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      },
+      "99": {
+        "leaf_count": 1,
+        "parent_degree": 6
+      }
+    },
+    "p6_carrier": {
+      "active_entity_rows": 151032,
+      "container_degree": 6,
+      "full_p6_global_matrix_constructed": false,
+      "inactive_p6_rows": 0,
+      "uniform_p6_global_rows": 151032,
+      "uniform_p6_trace_rows": 54282
+    },
+    "predicted_returned_trace_dtn_rows": 43416,
+    "predicted_returned_trace_dtn_scope": "independent trace rows plus exactly 612 R13 modal rows",
+    "requested_root_boxes": {
+      "127": [
+        16.5,
+        10.0,
+        90.0,
+        33.5,
+        15.0,
+        120.0
+      ]
+    },
+    "requested_root_ids": [
+      127
+    ],
+    "requested_root_mesh_global_cell_ids": [],
+    "root_id_namespace": "forest_root_index; not the parent mesh global-cell ID",
+    "seed_child_degree_inheritance_pass": true,
+    "seed_child_degrees": [],
+    "seed_forest_root_index": null,
+    "seed_mesh_global_cell_id": null,
+    "seed_parent_degree": null,
+    "seed_root_box_nm": null
+  },
+  "total_audit_wall_seconds": 195.20892297523096,
+  "transition_written": false
+}

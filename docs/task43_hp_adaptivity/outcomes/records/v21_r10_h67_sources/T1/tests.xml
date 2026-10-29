@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="17" time="88.623" timestamp="2026-10-29T14:25:00.907968" hostname="fenics-ws01"><testcase classname="src.test.test_task43_v21_r10_h67" name="test_00_v21_worker_runtime_identity_is_saved" time="0.280" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_01_contract_reader_accepts_frozen_f1_root" time="0.075" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_02_contract_reader_rejects_another_unique_root" time="0.400" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_04_candidate_reader_binds_accepted9_and_rejected_r10" time="0.030" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_05_candidate_reader_rejects_promoting_rejected_r10" time="0.029" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_06_actual_s_builder_and_post_audit_gate_h67_with_p6_closure" time="2.890" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_08_s_product_reader_requires_all_seven_qualified_artifacts" time="0.052" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_09_s_product_reader_rejects_changed_product_bytes" time="0.042" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_12_v21_f_main_reaches_real_observer_writer_and_terminal[False]" time="6.285" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_12_v21_f_main_reaches_real_observer_writer_and_terminal[True]" time="7.164" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_10_v21_pending_reader_recomputes_rebound_raw_packet[False]" time="0.125" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_10_v21_pending_reader_recomputes_rebound_raw_packet[True]" time="0.136"><failure message="AssertionError: Regex pattern did not match.&#10; Regex: 'saved raw-vector gates'&#10; Input: 'V11 full-active reduced RHS/solution/residual do not match the returned system'">tmp_path = PosixPath('/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/fixtures/test_10_v21_pending_reader_rec1')
+mixed_rhs = True
+
+    @pytest.mark.parametrize("mixed_rhs", [False, True])
+    def test_10_v21_pending_reader_recomputes_rebound_raw_packet(
+        tmp_path, mixed_rhs
+    ):
+        from benchmarks.task43_hp_adaptivity import compare_round1_candidate as comparison
+    
+        candidate_root, record, _identity, _acceptance, _packet = _pending_candidate_fixture(
+            tmp_path, mixed_rhs=mixed_rhs
+        )
+        if mixed_rhs:
+            with pytest.raises(ValueError, match="saved raw-vector gates"):
+&gt;               comparison._validate_v21_pending_candidate(
+                    candidate_root, record, {}, "a" * 64
+                )
+
+src/test/test_task43_v21_r10_h67.py:1135: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+benchmarks/task43_hp_adaptivity/compare_round1_candidate.py:4832: in _validate_v21_pending_candidate
+    raw = _v11_raw_vector_gates(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+arrays = {'full_active_active_full_rhs': array([0.+0.j, 0.+0.j, 1.+0.j]), 'full_active_active_full_solution': array([0.+0.j, 0....       -0.-0.j, -0.-0.j, -0.-0.j, -0.-0.j, -0.-0.j, -0.-0.j, -0.-0.j,
+       -0.-0.j, -0.-0.j, -0.-0.j, -0.-0.j]), ...}
+
+    def _v11_raw_vector_gates(
+        arrays: Mapping[str, np.ndarray],
+        *,
+        active_trace_rows: int,
+        active_interior_rows: int,
+        independent_fe_dofs: int,
+        active_full_rows: int,
+        full_active_scope: Mapping[str, Any],
+        independent_a6_scope: Mapping[str, Any],
+        normal_correction_count: int,
+        normal_converged_reason: int,
+        normal_correction_status: str,
+        extra_correction_count: int,
+    ) -&gt; dict[str, Any]:
+        """Recompute A6, block-Gaussian full-active and returned-system residuals.
+    
+        The full-active trace norm uses its stored same-pass Gram inverse action.
+        Concatenating trace and interior vectors with an ordinary Euclidean norm is
+        incorrect for this constraint-induced dual norm.
+        """
+    
+        def vector(name: str) -&gt; np.ndarray:
+            if name not in arrays:
+                raise ValueError(f"V11 raw packet is missing {name}")
+            value = np.asarray(arrays[name], dtype=np.complex128)
+            if value.ndim != 1 or not np.isfinite(value).all():
+                raise ValueError(f"V11 raw vector {name} is not a finite one-dimensional array")
+            return value
+    
+        def euclidean_sq(value: np.ndarray) -&gt; float:
+            return float(np.vdot(value, value).real)
+    
+        def dual_trace_sq(value: np.ndarray, action: np.ndarray, *, name: str) -&gt; float:
+            if value.shape != action.shape:
+                raise ValueError(f"V11 {name} and saved Gram action have different shapes")
+            product = np.vdot(value, action)
+            if abs(float(product.imag)) &gt; 5.0e-11 * max(abs(float(product.real)), 1.0):
+                raise ValueError(f"V11 {name} Gram norm has a non-real inner product")
+            if float(product.real) &lt; -5.0e-11:
+                raise ValueError(f"V11 {name} Gram norm is negative")
+            return max(float(product.real), 0.0)
+    
+        a6_r_trace = vector(
+            "independent_A6_independent_active_residual_trace"
+        )
+        a6_r_interior = vector(
+            "independent_A6_independent_active_residual_cell_interior"
+        )
+        a6_r_modal = vector(
+            "independent_A6_independent_active_modal_lower_solver_gauge"
+        )
+        a6_b_trace = vector("independent_A6_independent_active_rhs_trace")
+        a6_b_interior = vector("independent_A6_independent_active_rhs_cell_interior")
+        a6_b_modal = vector(
+            "independent_A6_independent_active_modal_lower_solver_gauge_rhs"
+        )
+        if (
+            int(independent_a6_scope.get("trace_rows", -1)) != active_trace_rows
+            or int(independent_a6_scope.get("active_interior_rows", -1))
+            != active_interior_rows
+            or int(independent_a6_scope.get("modal_lower_rows", -1)) != 612
+        ):
+            raise ValueError("V11 independent A6 raw scope metadata differs from frozen R13 space")
+        if (
+            a6_r_trace.size != active_trace_rows
+            or a6_r_interior.size != active_interior_rows
+            or a6_r_modal.size != 612
+            or a6_b_modal.size != 612
+        ):
+            raise ValueError("V11 independent A6 residual row counts differ from active space")
+        if np.any(a6_b_modal != 0):
+            raise ValueError(
+                "V11 independent A6 modal lower solver gauge RHS must be exactly zero"
+            )
+        if a6_b_trace.shape != a6_r_trace.shape or a6_b_interior.shape != a6_r_interior.shape:
+            raise ValueError("V11 independent A6 RHS and residual layouts differ")
+        a6_residual_norm = float(
+            np.sqrt(euclidean_sq(a6_r_trace) + euclidean_sq(a6_r_interior) + euclidean_sq(a6_r_modal))
+        )
+        a6_rhs_norm = float(
+            np.sqrt(
+                euclidean_sq(a6_b_trace)
+                + euclidean_sq(a6_b_interior)
+                + euclidean_sq(a6_b_modal)
+            )
+        )
+        a6_relative = a6_residual_norm / max(a6_rhs_norm, np.finfo(float).tiny)
+        if active_trace_rows + active_interior_rows != independent_fe_dofs:
+            raise ValueError("V11 independent trace/interior rows do not equal independent FE DoFs")
+    
+        full_reduced_residual = vector(
+            "full_active_reduced_trace_dtn_residual_Ax_minus_b_owned"
+        )
+        full_residual_metric_action = vector(
+            "full_active_reduced_trace_dtn_residual_trace_metric_action"
+        )
+        full_reduced_rhs = vector("full_active_reduced_trace_dtn_rhs_owned")
+        full_reduced_solution = vector(
+            "full_active_reduced_trace_dtn_solution_owned"
+        )
+        full_rhs_metric_action = vector(
+            "full_active_reduced_trace_dtn_rhs_trace_metric_action"
+        )
+        full_active_rhs = vector("full_active_active_full_rhs")
+        full_active_solution = vector("full_active_active_full_solution")
+        full_interior_residual = vector(
+            "full_active_eliminated_active_interior_residual"
+        )
+        expected_active_rows = int(full_active_scope.get("active_full_rows", -1))
+        reduced_trace_dtn_rows = int(
+            full_active_scope.get("reduced_trace_dtn_rows", -1)
+        )
+        raw_trace_rows = expected_active_rows - active_interior_rows
+        if (
+            expected_active_rows != active_full_rows
+            or expected_active_rows &lt;= active_interior_rows
+            or raw_trace_rows &lt;= 0
+            or full_active_rhs.shape != (expected_active_rows,)
+            or full_active_solution.shape != (expected_active_rows,)
+            or full_interior_residual.shape != (expected_active_rows,)
+        ):
+            raise ValueError("V11 active-full raw vectors disagree with the full entity-map row scope")
+        if int(full_active_scope.get("mpi_size", -1)) != 1:
+            raise ValueError("V11 full-active raw scope must be captured on MPI1")
+        reduced_owned_range = full_active_scope.get("reduced_trace_dtn_owned_range")
+        if (
+            not isinstance(reduced_owned_range, (list, tuple))
+            or len(reduced_owned_range) != 2
+            or any(type(value) is not int for value in reduced_owned_range)
+            or tuple(reduced_owned_range) != (0, reduced_trace_dtn_rows)
+        ):
+            raise ValueError("V11 reduced trace/DtN raw scope is not the complete serial vector")
+        if (
+            reduced_trace_dtn_rows &lt; active_trace_rows
+            or reduced_trace_dtn_rows != active_trace_rows + 612
+            or full_reduced_residual.shape != (reduced_trace_dtn_rows,)
+            or full_reduced_rhs.shape != (reduced_trace_dtn_rows,)
+            or full_reduced_solution.shape != (reduced_trace_dtn_rows,)
+        ):
+            raise ValueError("V11 reduced trace/DtN vectors disagree with their saved raw scope")
+        # The independent trace is the reduced metric block. Raw active storage has
+        # a larger trace prefix: it contains unconstrained entity-map trace slots.
+        # The eliminated-interior residual is intentionally stored at full
+        # active-row length with zeros in those raw trace slots.
+        if np.any(full_interior_residual[:raw_trace_rows] != 0):
+            raise ValueError("V11 eliminated-interior residual is nonzero in raw trace slots")
+        stored_active_rhs = vector("recovered_active_full_rhs_owned")
+        stored_active_solution = vector("recovered_active_full_solution_owned")
+        if not np.array_equal(full_active_rhs, stored_active_rhs) or not np.array_equal(
+            full_active_solution, stored_active_solution
+        ):
+            raise ValueError("V11 raw active-full RHS/solution differ from saved recovered state")
+        if full_residual_metric_action.shape != (active_trace_rows,) or full_rhs_metric_action.shape != (active_trace_rows,):
+            raise ValueError("V11 saved trace Gram actions have the wrong row count")
+        full_residual_sq = (
+            dual_trace_sq(
+                full_reduced_residual[:active_trace_rows],
+                full_residual_metric_action,
+                name="full-active residual",
+            )
+            + euclidean_sq(full_reduced_residual[active_trace_rows:])
+            + euclidean_sq(full_interior_residual)
+        )
+        full_rhs_sq = (
+            dual_trace_sq(
+                full_reduced_rhs[:active_trace_rows],
+                full_rhs_metric_action,
+                name="full-active RHS",
+            )
+            + euclidean_sq(full_reduced_rhs[active_trace_rows:])
+            + euclidean_sq(full_active_rhs[raw_trace_rows:])
+        )
+        full_relative = float(np.sqrt(max(full_residual_sq, 0.0))) / max(
+            float(np.sqrt(max(full_rhs_sq, 0.0))), np.finfo(float).tiny
+        )
+    
+        condensed_rhs = vector("returned_trace_dtn_rhs")
+        condensed_solution = vector("returned_trace_dtn_solution")
+        condensed_residual = vector("returned_trace_dtn_b_minus_Ax")
+        if (
+            condensed_rhs.shape != (reduced_trace_dtn_rows,)
+            or condensed_solution.shape != (reduced_trace_dtn_rows,)
+            or condensed_residual.shape != (reduced_trace_dtn_rows,)
+        ):
+            raise ValueError("V11 returned condensed RHS, solution and residual layouts differ")
+        if (
+            not np.array_equal(full_reduced_rhs, condensed_rhs)
+            or not np.array_equal(full_reduced_solution, condensed_solution)
+            or not np.array_equal(full_reduced_residual, -condensed_residual)
+        ):
+&gt;           raise ValueError(
+                "V11 full-active reduced RHS/solution/residual do not match the returned system"
+            )
+E           ValueError: V11 full-active reduced RHS/solution/residual do not match the returned system
+
+benchmarks/task43_hp_adaptivity/h100_anchor.py:5667: ValueError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1/fixtures/test_10_v21_pending_reader_rec1')
+mixed_rhs = True
+
+    @pytest.mark.parametrize("mixed_rhs", [False, True])
+    def test_10_v21_pending_reader_recomputes_rebound_raw_packet(
+        tmp_path, mixed_rhs
+    ):
+        from benchmarks.task43_hp_adaptivity import compare_round1_candidate as comparison
+    
+        candidate_root, record, _identity, _acceptance, _packet = _pending_candidate_fixture(
+            tmp_path, mixed_rhs=mixed_rhs
+        )
+        if mixed_rhs:
+&gt;           with pytest.raises(ValueError, match="saved raw-vector gates"):
+E           AssertionError: Regex pattern did not match.
+E            Regex: 'saved raw-vector gates'
+E            Input: 'V11 full-active reduced RHS/solution/residual do not match the returned system'
+
+src/test/test_task43_v21_r10_h67.py:1134: AssertionError</failure></testcase><testcase classname="src.test.test_task43_v21_r10_h67" name="test_11_v21_restore_accepts_consistent_packet_and_rejects_mixed_coefficients[False]" time="0.084" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_11_v21_restore_accepts_consistent_packet_and_rejects_mixed_coefficients[True]" time="0.079" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_v21_actual_common_comparison[None]" time="48.524" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_v21_actual_common_comparison[q10]" time="7.837" /><testcase classname="src.test.test_task43_v21_r10_h67" name="test_v21_snapshot_requires_the_same_input_and_source_set" time="0.014" /></testsuite></testsuites>

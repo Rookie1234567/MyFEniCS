@@ -1,0 +1,30 @@
+{
+  "scope": "static AST/hash/bash -n/diff whitespace only; no test or driver",
+  "test_expanded_nodes": 17,
+  "selectors": [
+    "src/test/test_task43_v21_r10_h67.py::test_00_v21_worker_runtime_identity_is_saved",
+    "src/test/test_task43_v21_r10_h67.py::test_01_contract_reader_accepts_frozen_f1_root",
+    "src/test/test_task43_v21_r10_h67.py::test_02_contract_reader_rejects_another_unique_root",
+    "src/test/test_task43_v21_r10_h67.py::test_04_candidate_reader_binds_accepted9_and_rejected_r10",
+    "src/test/test_task43_v21_r10_h67.py::test_05_candidate_reader_rejects_promoting_rejected_r10",
+    "src/test/test_task43_v21_r10_h67.py::test_06_actual_s_builder_and_post_audit_gate_h67_with_p6_closure",
+    "src/test/test_task43_v21_r10_h67.py::test_08_s_product_reader_requires_all_seven_qualified_artifacts",
+    "src/test/test_task43_v21_r10_h67.py::test_09_s_product_reader_rejects_changed_product_bytes",
+    "src/test/test_task43_v21_r10_h67.py::test_12_v21_f_main_reaches_real_observer_writer_and_terminal",
+    "src/test/test_task43_v21_r10_h67.py::test_10_v21_pending_reader_recomputes_rebound_raw_packet",
+    "src/test/test_task43_v21_r10_h67.py::test_11_v21_restore_accepts_consistent_packet_and_rejects_mixed_coefficients",
+    "src/test/test_task43_v21_r10_h67.py::test_v21_actual_common_comparison",
+    "src/test/test_task43_v21_r10_h67.py::test_v21_snapshot_requires_the_same_input_and_source_set"
+  ],
+  "files": {
+    "benchmarks/task43_hp_adaptivity/h100_anchor.py": "557e947eb5e22b07e4545c2a5056134aa758adc1a593ea61f398734493f38e6d",
+    "benchmarks/task43_hp_adaptivity/round1_candidates.py": "7c90a40787860f7c4c035f375c9d2ab12ab2e561ea05a07faa13c8b6a3d57e24",
+    "benchmarks/task43_hp_adaptivity/compare_round1_candidate.py": "be2325def8a04bbd3f6bb376ce12bb0fc157d529792cf79c5127731b7490601a",
+    "benchmarks/task43_hp_adaptivity/r10_h67_diagnostic.py": "a2f79a26c30fe31c30ca7726277749e87f6539cafd21c4e21760f51ea38d858d",
+    "src/test/test_task43_v21_r10_h67.py": "8ae6d62e9ebd2acb1a092918fc314fb30d7535dd72b7575fdb9a62446d88f043"
+  },
+  "contract_sha256": "4340377a1c96edd3f5ebb0605e647b3569b026f7d8a9c0527902ef0b6c093f6b",
+  "elapsed_seconds": 0.334397304803133,
+  "new_driver_calls": 0,
+  "new_formal_calls": 0
+}

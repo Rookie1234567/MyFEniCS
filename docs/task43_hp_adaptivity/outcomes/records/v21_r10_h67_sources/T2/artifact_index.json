@@ -1,0 +1,104 @@
+{
+  "scope": "Explicit relevant artifacts only; snapshot file identities are in run_manifest; fixture directories and big arrays remain ignored",
+  "artifacts": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/run_manifest.json",
+      "sha256": "46188dfa3ae1cc6340d7c0e963fbda46b75ed63f37e005ce818713b3a749eb08",
+      "bytes": 18945,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/T2/run_manifest.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/root_release.json",
+      "sha256": "f15135ec537229e73ae17535f4e6a9621ba6c68abef16abb6ab88b6674bb1b01",
+      "bytes": 1090,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/T2/root_release.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/launcher_terminal.json",
+      "sha256": "5cfca20bdbdc0acf8d29c2bc94a7c1de76a2ce1aea938035dec27e4c0fc66b6f",
+      "bytes": 244,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/T2/launcher_terminal.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/supervisor_identity.json",
+      "sha256": "883ccfd16a5f417f249c0bb5fc2f6f277f631cfa4715ae8d861269f959f44aab",
+      "bytes": 54,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/T2/supervisor_identity.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/root_lifecycle_readback.json",
+      "sha256": "07d8d63d8287947cef025ed1c840ab08654a0aabc2b500d7f66bb09650bcb4e6",
+      "bytes": 17583,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/T2/root_lifecycle_readback.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/watchdog/summary.json",
+      "sha256": "5b048b7f4d06f9ca2d7702c852c4093994fc877265caa00bc1c1d0707676f7cd",
+      "bytes": 3539,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/T2/watchdog/summary.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/watchdog/worker.log",
+      "sha256": "75fccab88619cbcf34b9d1af68c414169c7b611de7452427ee3bdd837907e19b",
+      "bytes": 1340,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/T2/watchdog/worker.log"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/tests.xml",
+      "sha256": "1f99d304b2095cee5c6244121a1faae48dce53702932c50615f78783b55c71ef",
+      "bytes": 624,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/T2/tests.xml"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/runtime_identity.json",
+      "sha256": "59fc786609e1d2087cea36ea1ef8c29be5bf0d043be6d9d517366ec70cc7776b",
+      "bytes": 2439,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/T2/runtime_identity.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/watchdog/resources.jsonl",
+      "sha256": "74d8e846c724146e62b98eae376a0ec65a1ed7f82a9c5cb47ba7ea0ab24fd15c",
+      "bytes": 76194,
+      "git_copy": null
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/strace/sched.3763363",
+      "sha256": "efda1c14ba8e9e7f5dd517d97680f2dea4308cdcf7b982ee3ce9a3182b98a462",
+      "bytes": 78411,
+      "git_copy": null
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/strace/sched.3763368",
+      "sha256": "99fa43e28b5ba75730e4701abe12307071bd38b84680db9830cefa65a4d2d918",
+      "bytes": 3717,
+      "git_copy": null
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/strace/sched.3763369",
+      "sha256": "d1bfb0b401df8d91a290685d7e3ce897c22f94b46dc1723c3ecfb50bf83ef63f",
+      "bytes": 40,
+      "git_copy": null
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/strace/sched.3763370",
+      "sha256": "918eb0bb3aebd3e17acd1a69bd0cb4bc9c6193ca5aceb1ae2324df05d4f3c223",
+      "bytes": 40,
+      "git_copy": null
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/strace/sched.3763371",
+      "sha256": "c995ffae6176f2bffa7d0bfbd6c6e16ea30be65ff5eb1d8953568fd04ee7d0b6",
+      "bytes": 40,
+      "git_copy": null
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/strace/sched.3763372",
+      "sha256": "dbb1f0c4c8714540280f395fa44148828c1cc8b8a3c43fa1d2e10667cb7c2396",
+      "bytes": 40,
+      "git_copy": null
+    }
+  ],
+  "unavailable_optional_artifacts": [
+    "watchdog/workflow_phase.json"
+  ]
+}

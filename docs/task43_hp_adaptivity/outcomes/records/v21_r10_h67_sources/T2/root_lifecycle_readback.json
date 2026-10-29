@@ -1,0 +1,502 @@
+{
+  "schema": "task43.v21.root_lifecycle_readback.v1",
+  "actual_head": "5796d78b642b58c0963ef47d181f70b96b728786",
+  "stage": "T2",
+  "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1",
+  "method": "root-authored stdlib parse of every resource row and every raw trace line incl stack frames and exit tail; no old auditor or native execution",
+  "issues": [],
+  "vanished_samples_for_manual_classification": [],
+  "source_mismatches": [],
+  "input_mismatches": [],
+  "resource_samples": 16,
+  "resource_first": {
+    "schema": "task038.v14.j3.process-sample.v1",
+    "root_pid": 3763360,
+    "stage": "workflow",
+    "timestamp_ns": 1793255315214896979,
+    "exit_code": null,
+    "members": [
+      {
+        "pid": 3763360,
+        "start_ticks": 318030937,
+        "ppid": 3763265,
+        "comm": "python",
+        "state": "R",
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/watchdog --wall-seconds 270 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; exec taskset -c 1 strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o \"$TASK43_V11_TRACE_PREFIX\" \"$@\" task43-v21-worker python -u -m pytest -v -rA --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/tests.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/fixtures src/test/test_task43_v21_r10_h67.py::test_00_v21_worker_runtime_identity_is_saved src/test/test_task43_v21_r10_h67.py::test_10_v21_pending_reader_recomputes_rebound_raw_packet",
+        "stage": "workflow",
+        "rss_bytes": 38039552,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793255315214471696,
+        "exit_code": null,
+        "cpu_seconds": 0.47,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 7008951,
+          "wchar": 0,
+          "syscr": 6847,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0,
+          "cancelled_write_bytes": 0
+        }
+      },
+      {
+        "pid": 3763363,
+        "start_ticks": 318030979,
+        "ppid": 3763360,
+        "comm": "python",
+        "state": "R",
+        "cmdline": "python -u -m pytest -v -rA --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/tests.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/fixtures src/test/test_task43_v21_r10_h67.py::test_00_v21_worker_runtime_identity_is_saved src/test/test_task43_v21_r10_h67.py::test_10_v21_pending_reader_recomputes_rebound_raw_packet",
+        "stage": "workflow",
+        "rss_bytes": 15609856,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793255315214705175,
+        "exit_code": null,
+        "cpu_seconds": 0.12,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 1827400,
+          "wchar": 0,
+          "syscr": 219,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0,
+          "cancelled_write_bytes": 0
+        }
+      },
+      {
+        "pid": 3763367,
+        "start_ticks": 318030981,
+        "ppid": 3763360,
+        "comm": "strace",
+        "state": "S",
+        "cmdline": "strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/strace/sched python -u -m pytest -v -rA --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/tests.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/fixtures src/test/test_task43_v21_r10_h67.py::test_00_v21_worker_runtime_identity_is_saved src/test/test_task43_v21_r10_h67.py::test_10_v21_pending_reader_recomputes_rebound_raw_packet",
+        "stage": "workflow",
+        "rss_bytes": 2453504,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793255315214889645,
+        "exit_code": null,
+        "cpu_seconds": 0.01,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 0,
+          "wchar": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0,
+          "cancelled_write_bytes": 0
+        }
+      }
+    ],
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "all_status_readable": true,
+    "readability_retry_count": 0,
+    "compiler_descendant_count": 0,
+    "rss_bytes": 56102912,
+    "swap_bytes": 0,
+    "pss_sampled": false,
+    "pss_all_readable": null,
+    "pss_bytes": null,
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "resource_sample_cost": {
+      "wall_seconds": 0.10052281618118286,
+      "cpu_seconds": 0.05046981700000003
+    },
+    "node_memory_observation": {
+      "node0": {
+        "MemTotal_bytes": 1080832073728,
+        "MemFree_bytes": 209972371456
+      },
+      "node1": {
+        "MemTotal_bytes": 1082268311552,
+        "MemFree_bytes": 567991459840
+      },
+      "sampled_monotonic": 3180310.076961616,
+      "wall_seconds": 0.0008666729554533958,
+      "policy": "observe_only"
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1557160984576,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "elapsed_seconds": 0.2933485396206379,
+    "memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 1557160984576,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 1557160984576,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "worker_phase": {},
+    "launch_cap_bytes": 8589934592,
+    "rss_warning_bytes": 7301444403,
+    "warning": false,
+    "live_or_unreaped_children": [
+      3763363,
+      3763367
+    ]
+  },
+  "resource_last": {
+    "schema": "task038.v14.j3.process-sample.v1",
+    "root_pid": 3763360,
+    "stage": "workflow",
+    "timestamp_ns": 1793255322590654481,
+    "exit_code": 0,
+    "members": [
+      {
+        "pid": 3763360,
+        "start_ticks": 318030937,
+        "ppid": 3763265,
+        "comm": "python",
+        "state": "R",
+        "cmdline": "python -u -m benchmarks.subreaper_watchdog --directory /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/watchdog --wall-seconds 270 --interval 0.25 --grace-seconds 2 --phase-path /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/watchdog/workflow_phase.json -- bash -c set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; exec taskset -c 1 strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o \"$TASK43_V11_TRACE_PREFIX\" \"$@\" task43-v21-worker python -u -m pytest -v -rA --junitxml /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/tests.xml --basetemp /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/fixtures src/test/test_task43_v21_r10_h67.py::test_00_v21_worker_runtime_identity_is_saved src/test/test_task43_v21_r10_h67.py::test_10_v21_pending_reader_recomputes_rebound_raw_packet",
+        "stage": "workflow",
+        "rss_bytes": 38129664,
+        "pss_bytes": null,
+        "swap_bytes": 0,
+        "timestamp_ns": 1793255322590644998,
+        "exit_code": null,
+        "cpu_seconds": 2.55,
+        "affinity": [
+          1
+        ],
+        "io": {
+          "rchar": 74431663,
+          "wchar": 850974,
+          "syscr": 95337,
+          "syscw": 1611,
+          "read_bytes": 0,
+          "write_bytes": 1122304,
+          "cancelled_write_bytes": 188416
+        }
+      }
+    ],
+    "unreadable_pids": [],
+    "vanished_pids": [],
+    "all_status_readable": true,
+    "readability_retry_count": 0,
+    "compiler_descendant_count": 0,
+    "rss_bytes": 38129664,
+    "swap_bytes": 0,
+    "pss_sampled": false,
+    "pss_all_readable": null,
+    "pss_bytes": null,
+    "pss_sampling_policy": "disabled_by_profile",
+    "pss_status": "DISABLED_BY_PROFILE",
+    "resource_sample_cost": {
+      "wall_seconds": 0.041747994255274534,
+      "cpu_seconds": 0.04174767200000007
+    },
+    "node_memory_observation": {
+      "node0": {
+        "MemTotal_bytes": 1080832073728,
+        "MemFree_bytes": 209201418240
+      },
+      "node1": {
+        "MemTotal_bytes": 1082268311552,
+        "MemFree_bytes": 567996866560
+      },
+      "sampled_monotonic": 3180315.379244541,
+      "wall_seconds": 0.00047001801431179047,
+      "policy": "observe_only"
+    },
+    "resource_policy_observations": {
+      "process_tree_swap_bytes": 0,
+      "effective_available_bytes": 1555580637184,
+      "reserve_bytes": 324465057792,
+      "minimum_available_bytes": null,
+      "rss_gate_only": false
+    },
+    "elapsed_seconds": 7.6636919300071895,
+    "memory_envelope": {
+      "mem_total_bytes": 2163100385280,
+      "mem_available_bytes": 1555580637184,
+      "effective_total_bytes": 2163100385280,
+      "effective_available_bytes": 1555580637184,
+      "reserve_bytes": 324465057792,
+      "launch_cap_bytes": 8589934592,
+      "planning_cap_bytes": 8589934592,
+      "cgroup_limits": [],
+      "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+    },
+    "worker_phase": {},
+    "launch_cap_bytes": 8589934592,
+    "rss_warning_bytes": 7301444403,
+    "warning": false,
+    "live_or_unreaped_children": []
+  },
+  "observed_processes": [
+    {
+      "pid": 3763360,
+      "start_ticks": 318030937,
+      "ppids": [
+        3763265
+      ],
+      "comm": "python",
+      "max_cpu_seconds": 2.55
+    },
+    {
+      "pid": 3763363,
+      "start_ticks": 318030979,
+      "ppids": [
+        3763360
+      ],
+      "comm": "python",
+      "max_cpu_seconds": 3.55
+    },
+    {
+      "pid": 3763367,
+      "start_ticks": 318030981,
+      "ppids": [
+        3763360
+      ],
+      "comm": "strace",
+      "max_cpu_seconds": 0.59
+    },
+    {
+      "pid": 3763368,
+      "start_ticks": 318031069,
+      "ppids": [
+        3763363,
+        3763360
+      ],
+      "comm": "orted",
+      "max_cpu_seconds": 0.23
+    }
+  ],
+  "trace_line_count": 1237,
+  "stack_frame_lines": 1212,
+  "trace_events": [
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 1,
+      "raw": "1793255315.583366 sched_getaffinity(0, 128, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 125,
+      "raw": "1793255316.423739 sched_getaffinity(3763363, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 214,
+      "raw": "1793255316.720933 sched_getaffinity(0, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 298,
+      "raw": "1793255316.752561 sched_getaffinity(3763363, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 382,
+      "raw": "1793255316.770628 sched_getaffinity(3763371, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 466,
+      "raw": "1793255316.782007 sched_getaffinity(3763372, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 550,
+      "raw": "1793255316.790103 sched_getaffinity(3763363, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 632,
+      "raw": "1793255316.797846 sched_getaffinity(3763371, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 714,
+      "raw": "1793255316.805459 sched_getaffinity(3763372, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 796,
+      "raw": "1793255316.812420 sched_getaffinity(3763363, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 878,
+      "raw": "1793255316.820236 sched_getaffinity(3763371, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 960,
+      "raw": "1793255316.827508 sched_getaffinity(3763372, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 1042,
+      "raw": "1793255318.600082 sched_getaffinity(0, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 1079,
+      "raw": "1793255318.625840 sched_getaffinity(3763363, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 1116,
+      "raw": "1793255318.638439 sched_getaffinity(3763371, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 1151,
+      "raw": "1793255318.650249 sched_getaffinity(3763372, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763363,
+      "line_number": 1186,
+      "raw": "1793255320.981651 +++ exited with 0 +++",
+      "classification": "EXIT"
+    },
+    {
+      "pid_or_tid": 3763368,
+      "line_number": 1,
+      "raw": "1793255315.965972 sched_getaffinity(3763368, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763368,
+      "line_number": 19,
+      "raw": "1793255316.081396 sched_getaffinity(0, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763368,
+      "line_number": 33,
+      "raw": "1793255316.094154 sched_getaffinity(3763368, 8, [1]) = 8",
+      "classification": "CPU1_GETTER"
+    },
+    {
+      "pid_or_tid": 3763368,
+      "line_number": 47,
+      "raw": "1793255321.042219 +++ exited with 0 +++",
+      "classification": "EXIT"
+    },
+    {
+      "pid_or_tid": 3763369,
+      "line_number": 1,
+      "raw": "1793255320.973876 +++ exited with 0 +++",
+      "classification": "EXIT"
+    },
+    {
+      "pid_or_tid": 3763370,
+      "line_number": 1,
+      "raw": "1793255320.991243 +++ exited with 0 +++",
+      "classification": "EXIT"
+    },
+    {
+      "pid_or_tid": 3763371,
+      "line_number": 1,
+      "raw": "1793255320.770537 +++ exited with 0 +++",
+      "classification": "EXIT"
+    },
+    {
+      "pid_or_tid": 3763372,
+      "line_number": 1,
+      "raw": "1793255320.761015 +++ exited with 0 +++",
+      "classification": "EXIT"
+    }
+  ],
+  "trace_files": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/strace/sched.3763363",
+      "sha256": "efda1c14ba8e9e7f5dd517d97680f2dea4308cdcf7b982ee3ce9a3182b98a462",
+      "lines": 1186
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/strace/sched.3763368",
+      "sha256": "99fa43e28b5ba75730e4701abe12307071bd38b84680db9830cefa65a4d2d918",
+      "lines": 47
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/strace/sched.3763369",
+      "sha256": "d1bfb0b401df8d91a290685d7e3ce897c22f94b46dc1723c3ecfb50bf83ef63f",
+      "lines": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/strace/sched.3763370",
+      "sha256": "918eb0bb3aebd3e17acd1a69bd0cb4bc9c6193ca5aceb1ae2324df05d4f3c223",
+      "lines": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/strace/sched.3763371",
+      "sha256": "c995ffae6176f2bffa7d0bfbd6c6e16ea30be65ff5eb1d8953568fd04ee7d0b6",
+      "lines": 1
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1/strace/sched.3763372",
+      "sha256": "dbb1f0c4c8714540280f395fa44148828c1cc8b8a3c43fa1d2e10667cb7c2396",
+      "lines": 1
+    }
+  ],
+  "rss_peak_bytes": 256839680,
+  "task_swap_peak_bytes": 0,
+  "global_swap": {
+    "scope": "WSL-global diagnostic, not dedicated job",
+    "baseline": {
+      "pswpin_pages": 4250737,
+      "pswpout_pages": 7183007
+    },
+    "end": {
+      "pswpin_pages": 4250737,
+      "pswpout_pages": 7183007
+    },
+    "delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    }
+  },
+  "watchdog_classification": "COMPLETED",
+  "worker_exit_code": 0,
+  "outer": {
+    "stage": "T2",
+    "entry_elapsed_seconds": 9.091490977,
+    "whole_limit_seconds": 300,
+    "supervisor_exit_code": 0,
+    "watchdog_exit_code": 0,
+    "received_signal": null,
+    "qualification": "REQUIRES_ROOT_REVIEW",
+    "whole_limit_pass": true
+  },
+  "readback_seconds": 0.7994441771879792
+}

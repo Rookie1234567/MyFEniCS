@@ -1,6 +1,19 @@
-# Task43 结果：V20保存场诊断完成，R10仍未获接受
+# Task43 结果：V21 R10_H67未通过独立A6门；accepted9/R9保持
 
-## V20 当前结果：用户授权的 U1 完成既有场响应分解
+## V21 当前结果
+
+| 项目 | 实测/状态 | 说明 |
+|---|---|---|
+| 候选与空间 | R10_H67，global67/root127；215叶、split5；FE139,554=42,804 trace+96,750 interior | `118800 < FE < 237600`通过；材料闭包root129/130/131/160共4，balance/periodic为0；S预测returned rows43,416，F实测同值；ΔFE=20,754；NNZ used/allocated=37,660,296/45,453,492 |
+| F1独立A6 | **FAIL**：2.1004005221911206e-8 > 1e-8 | 唯一false primary gate；full-active 6.446061507221647e-13与returned-condensed 6.902765176289437e-13通过但不能替代A6 |
+| 修正过程 | normal correction 1次，1.5364631556420623e-10→6.902765176289437e-13；extra=0 | primary终态仍FAILED_OR_INCOMPLETE、official_result=false、无endpoint_record |
+| 官方输出与比较 | C、F2、E1、E2 NOT_RUN；Av/J/G/收益未知 | 失败前R_total/T_total仅中间文件；不能做正式比较或接受更新 |
+| 资源与生命周期 | watchdog elapsed 4,811.279815596 s；资源样本6,904；RSS峰7,900,602,368 B；VmSwap峰0 | 1,859 trace行；末端一个vanished worker后有4行无后代，属退出竞态；worker end snapshot未到达，退出后哈希复核单列 |
+| 次数与费用 | 支持3/7、formal10/12；支持whole312.099282032 s | launcher入口记账的F1为4,813.658310916 s，合计5,125.757592948 s；不与watchdog elapsed重复相加 |
+
+共享缓存监测列表为空，未验证共享缓存稳定。完整42数组文件存在不代表primary合格；终态为`official_result=false`。V20历史与本轮不同，不回写旧记录。证据：[Response V21](../response_v21.md)、[机器结果](records/v21_r10_h67_results_v1.json)、[来源证据](records/v21_r10_h67_sources/)。
+
+## V20 历史结果：用户授权的 U1 完成既有场响应分解
 
 用户在原四槽用尽后明确说“不是数值gate那就继续”，据此另行执行一次 U1 支持运行。U1 只读取此前保存的 R9、R10、Y6_1 场和已保存 q8/q10 点集，逐单元分解 R9→R10 的场差，不求解新场。通俗地说，J看最差的一个输出相对固定容差有多大，G把整个区域的 E 与旋度差汇总；二者描述不同对象，所以改善尺度不同本身不矛盾。
 

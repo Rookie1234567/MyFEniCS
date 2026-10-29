@@ -1,0 +1,84 @@
+{
+  "derived_excerpt_of": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/formal/R10_H67_attempt1/run/primary_raw_vector_audit.json",
+  "source_sha256": "a3bb3216efd9c94c30970214ba04fd5738e13558c53a4bf2db5111408006e112",
+  "omitted": "Duplicated S plan, source lists and full embedded packet metadata; immutable originals remain ignored",
+  "audit": {
+    "full_active_transformed": {
+      "active_interior_rows": 96750,
+      "independent_active_fe_dofs": 139554,
+      "independent_reduced_trace_rows": 42804,
+      "interior_metric": "Euclidean",
+      "raw_full_entity_map_rows": 151032,
+      "raw_trace_rows": 54282,
+      "reduced_trace_dtn_rows_including_auxiliary": 43416,
+      "relative_residual": 6.446061507221647e-13,
+      "residual_norm": 6.812408124146155e-13,
+      "rhs_norm": 1.0568326281891791,
+      "trace_metric": "saved same-pass Gram inverse action"
+    },
+    "gates": {
+      "extra_correction_count_zero": true,
+      "full_active_metric_raw_relative_le_1e-8": true,
+      "independent_A6_raw_relative_le_1e-8": false,
+      "normal_correction_exactly_once": true,
+      "normal_correction_positive_reason": true,
+      "normal_correction_raw_residual_strictly_decreased": true,
+      "returned_condensed_raw_relative_le_1e-9": true
+    },
+    "independent_A6": {
+      "relative_residual": 2.1004005221911206e-08,
+      "residual_norm": 2.2197718044678094e-08,
+      "rhs_norm": 1.0568326283561202
+    },
+    "normal_correction": {
+      "after_relative_residual": 6.902765176289437e-13,
+      "before_relative_residual": 1.5364631556420623e-10,
+      "converged_reason": 4,
+      "rhs_identical": true
+    },
+    "pass": false,
+    "returned_condensed": {
+      "relative_residual": 6.902765176289437e-13,
+      "residual_norm": 7.295067464183063e-13,
+      "rhs_norm": 1.0568326283561202
+    }
+  },
+  "gates": {
+    "extra_correction_count_zero": true,
+    "full_active_metric_raw_relative_le_1e-8": true,
+    "independent_A6_raw_relative_le_1e-8": false,
+    "normal_correction_exactly_once": true,
+    "normal_correction_positive_reason": true,
+    "normal_correction_raw_residual_strictly_decreased": true,
+    "returned_condensed_raw_relative_le_1e-9": true
+  },
+  "classification": "measured_R10_H67_primary_raw_vector_gate_nonofficial",
+  "identity": {
+    "candidate_identity": {
+      "acceptance_contract_sha256": "e589d7c980b4467fc21e13445c4af19202ea662cae9f7277f61e98a3e7702647",
+      "accepted_state_candidate_id": "round9_p_up",
+      "accepted_state_selection_sha256": "8307bbe843b0db0f95949f29de106e32ee6dff5f83bdd44bfd7a33c29c7404e9",
+      "accepted_state_selection_status": "ACCEPTED",
+      "action": "h_refine",
+      "adaptive_round_id": "v21",
+      "candidate_id": "v21_r10_h67",
+      "diagnostic_parent_record_sha256": "66d56c0644b5c8eb66d075a7898cdfa28024e3cc30834a08cd3d8b76e453968d",
+      "diagnostic_parent_storage_sha256": "e1296a9b55ff6d29fde55bf545e44be737c4f5d534b12b69f1ded5f05a0a7eaf",
+      "parent_candidate_id": "round10_p_up",
+      "parent_selection_status": "REJECTED",
+      "phase": "R10_H67",
+      "plan_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/plan_output/plans/v21_r10_h67.json",
+      "plan_sha256": "38739c012870e3a878aafb764951d771293285fa45d46f535aa078bc5c295fc3",
+      "run_plan_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/formal/R10_H67_attempt1/run/candidate_plan.json",
+      "selection_enabled": false,
+      "space_plan_sha256": "38739c012870e3a878aafb764951d771293285fa45d46f535aa078bc5c295fc3",
+      "transition_written": false,
+      "v21_contract_sha256": "4340377a1c96edd3f5ebb0605e647b3569b026f7d8a9c0527902ef0b6c093f6b",
+      "v21_stage": "F1"
+    },
+    "candidate_plan_sha256": "38739c012870e3a878aafb764951d771293285fa45d46f535aa078bc5c295fc3",
+    "contract_sha256": "4340377a1c96edd3f5ebb0605e647b3569b026f7d8a9c0527902ef0b6c093f6b",
+    "phase": "R10_H67"
+  },
+  "primary_npz_sha256": "0ed1eada0a7d575ede4fdc8401371ffb2571a15c3b15c139ab5eabfda936beb5"
+}

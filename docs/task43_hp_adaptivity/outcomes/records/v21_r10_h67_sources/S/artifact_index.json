@@ -1,0 +1,137 @@
+{
+  "scope": "Explicit relevant artifacts only; snapshot file identities are in run_manifest; fixture directories and big arrays remain ignored",
+  "artifacts": [
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/run_manifest.json",
+      "sha256": "826c2674a4f3b5fc8f759419ac12933be8dbd51b29014ec8176ab722602216a3",
+      "bytes": 18769,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S/run_manifest.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/root_release.json",
+      "sha256": "97635572abfb178d734c7d3375f752e375991e4c9b7ccad3c2551a72468a7643",
+      "bytes": 653,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S/root_release.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/launcher_terminal.json",
+      "sha256": "25a8aabb17629250bd5016fb3c5dffc1cde5b3bdea90cc90e700f1538deba39f",
+      "bytes": 246,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S/launcher_terminal.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/supervisor_identity.json",
+      "sha256": "97f0544019ff73d891f858ef8fa69cd8bba07598a1ca60af5aeaceb7556adf53",
+      "bytes": 54,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S/supervisor_identity.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/root_lifecycle_readback.json",
+      "sha256": "27b38ddb734c0463aa8f1d2b5b3b0164442335f0195860e9d830baa0afd8d65c",
+      "bytes": 28591,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S/root_lifecycle_readback.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/watchdog/summary.json",
+      "sha256": "67788a80e779ddea76d028d4ee7be6f4d3f20b01060fc4cdfd232abf48d51ccf",
+      "bytes": 3543,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S/watchdog/summary.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/watchdog/workflow_phase.json",
+      "sha256": "aca09f59383c5fc20401d15b9a4b6e02aee87f696b597f031fda2cac619f5a9c",
+      "bytes": 8565,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S/watchdog/workflow_phase.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/watchdog/worker.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S/watchdog/worker.log"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/stage_terminal.json",
+      "sha256": "7b51eef658471146c63aa455b8ea545915e6aca8b0d50f25e4ad33a6a3504cc3",
+      "bytes": 891,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S/stage_terminal.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/root_independent_audit.json",
+      "sha256": "72d03f4ba8279f6e4ad6da69e112d7edeea0824cff5be85aa336e599e77e7af9",
+      "bytes": 6604,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S/root_independent_audit.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/plan_output/plan_audit.json",
+      "sha256": "e9ade3a766eda3ffad2f3121bb607776c0c832c7583a06bb6161fc1174237ba8",
+      "bytes": 2781,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S/plan_output/plan_audit.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/plan_output/frozen_parent_restore_identities.json",
+      "sha256": "2047ecfd0046f814d4867249ad71199f9022a415193c688641506da747c62e79",
+      "bytes": 9348,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S/plan_output/frozen_parent_restore_identities.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/plan_output/plans/v21_r10_h67.json",
+      "sha256": "38739c012870e3a878aafb764951d771293285fa45d46f535aa078bc5c295fc3",
+      "bytes": 43508,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S/plan_output/plans/v21_r10_h67.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/plan_output/plans/v21_r10_h67.audit.json",
+      "sha256": "cad87eb07e637a0b30eabe0c8b65834b3e46ca4f060a0f76b60002573ac7c418",
+      "bytes": 50280,
+      "git_copy": "docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/S/plan_output/plans/v21_r10_h67.audit.json"
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/watchdog/resources.jsonl",
+      "sha256": "ccd8b909c858975c8db82248d095c84250f637e985a8303c7938b26d624b262c",
+      "bytes": 2230144,
+      "git_copy": null
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/strace/sched.3763933",
+      "sha256": "d95942efc50176c518e1f286be866bc8b1c23aff731e00f47cf68fb7fd7d37cc",
+      "bytes": 99887,
+      "git_copy": null
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/strace/sched.3763938",
+      "sha256": "3da50e9e129fcd9c663f5700e89e9a80a442450581109af6061b25b0dfd59a30",
+      "bytes": 3717,
+      "git_copy": null
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/strace/sched.3763940",
+      "sha256": "cd88a9e2361c81510b5bf0a76a67f6f3f781a70858e4e6ea73ac2f7829f9ce96",
+      "bytes": 40,
+      "git_copy": null
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/strace/sched.3763941",
+      "sha256": "d274ba4ef47c1668f60ca9034b99c630f5dc3102a0100791ca3fba7c620a9586",
+      "bytes": 40,
+      "git_copy": null
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/strace/sched.3763942",
+      "sha256": "769acb5cfe6381ff932c881be9c316bddb4590a05a39b7a58b133c763f3a2f7e",
+      "bytes": 40,
+      "git_copy": null
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/strace/sched.3763943",
+      "sha256": "5384378f158dc0d7639f6138d58cf9bce528156f5d0d7faac95a05ae6f7eebc6",
+      "bytes": 40,
+      "git_copy": null
+    },
+    {
+      "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/strace/sched.3763946",
+      "sha256": "3fbb6a81c6857f6dfbfff793a5a0ecaa8b043fcdbff6807095486fbfd27eee5d",
+      "bytes": 40,
+      "git_copy": null
+    }
+  ]
+}

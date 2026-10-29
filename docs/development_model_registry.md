@@ -1,6 +1,19 @@
-# Task43 模型总账：V20 U1保存场诊断完成，accepted9/R9不变
+# Task43 模型总账：V21 R10_H67未通过独立A6门，accepted9/R9不变
 
-## V20 当前模型：既有R9→R10响应已分解，R10仍未获接受
+## V21 当前模型：单次H67空间动作已审，primary未合格
+
+| 对象 | 实际结果 | 注册状态 |
+|---|---|---|
+| 父态与动作 | R9/accepted9保持；对拒绝态R10的global67/root127做单层h细化 | H67仅为诊断候选，不接受 |
+| 空间 | 215叶、split5；FE139,554=42,804 trace+96,750 interior；材料闭包4根 | `118800 < FE < 237600`通过；S预测returned rows43,416，F已实测同为43,416；ΔFE=20,754；NNZ used/allocated=37,660,296/45,453,492 |
+| 独立A6 | 2.1004005221911206e-8，限值1e-8 | F1失败；primary非official |
+| 其他残差与修正 | full-active 6.446061507221647e-13；returned-condensed 6.902765176289437e-13；normal 1次、extra0 | 这些通过值不覆盖A6失败 |
+| 端点/比较 | C、F2、E1、E2 NOT_RUN；Av/J/G与收益未知，H67对R10/Y6_1比较未运行 | 不形成接受更新或效率结论 |
+| 资源与计费 | F1 launcher记账4,813.658310916 s；watchdog elapsed4,811.279815596 s；RSS峰7,900,602,368 B；task VmSwap0 | formal10/12、support3/7；没有自动后续授权 |
+
+F1资源采样6,904行，trace1,859行；末端一次vanished样本后续四行无后代。worker end source/input快照未到达，退出后hash核查另行记录；不混作同一门。共享缓存监测列表为空。完整42数组原包不是合格primary的证明。机器证据见[结果记录](task43_hp_adaptivity/outcomes/records/v21_r10_h67_results_v1.json)及[来源目录](task43_hp_adaptivity/outcomes/records/v21_r10_h67_sources/)。
+
+## V20 历史模型：既有R9→R10响应已分解，R10仍未获接受
 
 没有新增模型或FE求解。诊断复用原180单元几何：R9为28p5/152p6，R10为180p6；历史FE分别110472/118800，差8328。R9仍accepted9，R10仍历史REJECTED；Y6_1仍是既有离散参考，未消费holdout/control。U1只重放已保存三场及q8/q10点，不是新的网格求解。
 

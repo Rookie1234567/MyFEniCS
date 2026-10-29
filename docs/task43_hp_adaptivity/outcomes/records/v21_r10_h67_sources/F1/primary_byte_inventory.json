@@ -1,0 +1,4770 @@
+{
+  "derived_excerpt_of": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/formal/R10_H67_attempt1/root_primary_byte_readback.json",
+  "source_sha256": "2e9de9f3e53b45d3c7d674ed74a916936bee4109e451b09adf942caf803f2cdd",
+  "omitted": "Duplicated S plan, source lists and full embedded packet metadata; immutable originals remain ignored",
+  "method": "stdlib ZIP/NPY header and raw byte hashes only; no NumPy, project import, norm, operator, field restoration or sampling",
+  "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/formal/R10_H67_attempt1/run/primary_state.npz",
+  "sha256": "0ed1eada0a7d575ede4fdc8401371ffb2571a15c3b15c139ab5eabfda936beb5",
+  "issues": [],
+  "members": {
+    "recovered_recovered_p6_local_coefficients": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          151032
+        ],
+        "sha256": "40d013a02fec5d92ac02118a7f5f3495fc2d61e828a9b194c9bb1630c7c3278f"
+      },
+      "payload_bytes": 2416512,
+      "payload_sha256": "caabf3caf5ff64f823f59d24f27f09e6b5e885c33cecc5e65637ab0af2a5a340",
+      "fortran_order": false
+    },
+    "recovered_recovered_p6_owned_coefficients": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          151032
+        ],
+        "sha256": "40d013a02fec5d92ac02118a7f5f3495fc2d61e828a9b194c9bb1630c7c3278f"
+      },
+      "payload_bytes": 2416512,
+      "payload_sha256": "caabf3caf5ff64f823f59d24f27f09e6b5e885c33cecc5e65637ab0af2a5a340",
+      "fortran_order": false
+    },
+    "recovered_mesh_geometry_coordinates_nm": {
+      "identity": {
+        "dtype": "<f8",
+        "shape": [
+          383,
+          3
+        ],
+        "sha256": "e172a09dcdebd34df516f974b7431257d27e4a2d9957941b0a1d27f804ff2bfb"
+      },
+      "payload_bytes": 9192,
+      "payload_sha256": "087977bb8ecae788908aecd501e0ff0a02524980a4a4d786fbce0d5e7d86403e",
+      "fortran_order": false
+    },
+    "recovered_mesh_geometry_dofmap": {
+      "identity": {
+        "dtype": "<i4",
+        "shape": [
+          215,
+          8
+        ],
+        "sha256": "20fa2c9e06aac4eba36ac11834b601b4301ceda325cb2d703698a788cc3f83ae"
+      },
+      "payload_bytes": 6880,
+      "payload_sha256": "10ece4e3792a43713e35ea62a025de2923f95b59c4f6350d26379aecfa3e97c9",
+      "fortran_order": false
+    },
+    "recovered_mesh_owned_cell_global_ids": {
+      "identity": {
+        "dtype": "<i8",
+        "shape": [
+          215
+        ],
+        "sha256": "bcbf95f8389deba603ffbdb4c76075120ae959059c715afb88e0ac4485e597d5"
+      },
+      "payload_bytes": 1720,
+      "payload_sha256": "33785bf1f884e96143653d3af41ab652a2dc561fd9af64a1a2fc2a368652a84b",
+      "fortran_order": false
+    },
+    "recovered_mesh_cell_vertex_dofmap": {
+      "identity": {
+        "dtype": "<i4",
+        "shape": [
+          1720
+        ],
+        "sha256": "80e1b1f258aa8f7931b148c0ef51be988a86bfe706c84dac2ae92cbb69b272f5"
+      },
+      "payload_bytes": 6880,
+      "payload_sha256": "10ece4e3792a43713e35ea62a025de2923f95b59c4f6350d26379aecfa3e97c9",
+      "fortran_order": false
+    },
+    "recovered_p6_function_space_dofmap": {
+      "identity": {
+        "dtype": "<i4",
+        "shape": [
+          215,
+          882
+        ],
+        "sha256": "5d32850947a1cb407265ebf7c2a191d29feb9e5fa6b9abb600a2d0b284e2a6ae"
+      },
+      "payload_bytes": 758520,
+      "payload_sha256": "f1e80ae0f2d1f515b839dc3f5ecef699f48513d8bb8d5dc134e17073a76ca178",
+      "fortran_order": false
+    },
+    "recovered_p6_owned_global_dof_block_ids": {
+      "identity": {
+        "dtype": "<i8",
+        "shape": [
+          151032
+        ],
+        "sha256": "d81751e68e18440048990df757c4584b10217b6b4c4f84bfb1849fd400fca3be"
+      },
+      "payload_bytes": 1208256,
+      "payload_sha256": "1819527032fe7b671f5fc97e10204c56b48a7f153703637a3b88c4c0e25cfabc",
+      "fortran_order": false
+    },
+    "recovered_p6_ghost_global_dof_block_ids": {
+      "identity": {
+        "dtype": "<i8",
+        "shape": [
+          0
+        ],
+        "sha256": "c19bf8aaa184a847cceed6722ac8c6086f916b027a4a9e9378ad0b3dfb219777"
+      },
+      "payload_bytes": 0,
+      "payload_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "fortran_order": false
+    },
+    "recovered_active_full_solution_owned": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          151032
+        ],
+        "sha256": "7f621e96771b8337b988da036d7f2377857e97864a77aee07d719342a75a5d55"
+      },
+      "payload_bytes": 2416512,
+      "payload_sha256": "df313bd361149db47977a666dc5b5b634016d8d638f050055dc417a3e8bef237",
+      "fortran_order": false
+    },
+    "recovered_active_full_rhs_owned": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          151032
+        ],
+        "sha256": "01224b6cc19e5a698a46c02585ae197b3882bebc34b9f2725e745ce1a333b0b8"
+      },
+      "payload_bytes": 2416512,
+      "payload_sha256": "4b91f7cced1f354f5841533f7de54a96af230befe7350fbc698885fb8b480ff8",
+      "fortran_order": false
+    },
+    "returned_trace_dtn_rhs": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          43416
+        ],
+        "sha256": "8d0c83fe28396740407c218a3fe180a12d69ea02f20e124709a1ed10d6b3e2eb"
+      },
+      "payload_bytes": 694656,
+      "payload_sha256": "94cd17109e5a5d56b7ead9ed0ed78670f09ec859cf57d2f7bb970a445a3ce159",
+      "fortran_order": false
+    },
+    "returned_trace_dtn_solution": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          43416
+        ],
+        "sha256": "270812b13d5bbe35938c57c42c1794553cd05448b776c68ea5d0164127838672"
+      },
+      "payload_bytes": 694656,
+      "payload_sha256": "f6ae5a639c596e1e7a6866adc26c330ff0279ae8bba86b78b91f6048654aa9a5",
+      "fortran_order": false
+    },
+    "returned_trace_dtn_b_minus_Ax": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          43416
+        ],
+        "sha256": "a03d2efcbd72eecd59466356c4ca977d53eb35f397716e5780356e108d77c657"
+      },
+      "payload_bytes": 694656,
+      "payload_sha256": "4a9465d9e601a06253f7514a0e59e4a7357326eafea7138e2579ce2bd83c6777",
+      "fortran_order": false
+    },
+    "full_active_reduced_trace_dtn_rhs_owned": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          43416
+        ],
+        "sha256": "8d0c83fe28396740407c218a3fe180a12d69ea02f20e124709a1ed10d6b3e2eb"
+      },
+      "payload_bytes": 694656,
+      "payload_sha256": "94cd17109e5a5d56b7ead9ed0ed78670f09ec859cf57d2f7bb970a445a3ce159",
+      "fortran_order": false
+    },
+    "full_active_reduced_trace_dtn_solution_owned": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          43416
+        ],
+        "sha256": "270812b13d5bbe35938c57c42c1794553cd05448b776c68ea5d0164127838672"
+      },
+      "payload_bytes": 694656,
+      "payload_sha256": "f6ae5a639c596e1e7a6866adc26c330ff0279ae8bba86b78b91f6048654aa9a5",
+      "fortran_order": false
+    },
+    "full_active_reduced_trace_dtn_residual_Ax_minus_b_owned": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          43416
+        ],
+        "sha256": "1c9737b70ea00356dbc9bb3198cc13c7a343ee37b81e577a138dc4ef07fe1df2"
+      },
+      "payload_bytes": 694656,
+      "payload_sha256": "2818753bed3bbc371ab3006ff7b7cf4af3950e187c01092425d914ee4636f14e",
+      "fortran_order": false
+    },
+    "full_active_reduced_trace_dtn_residual_trace_metric_action": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          42804
+        ],
+        "sha256": "f78baad860ebda2d78a4dee08e9d9edc07730465dc8b2de0eeadd6de8f5b1052"
+      },
+      "payload_bytes": 684864,
+      "payload_sha256": "489625622b0f337c5388b2a7d408d50e7cddb7a51efbf4b3d821b38c430f9499",
+      "fortran_order": false
+    },
+    "full_active_reduced_trace_dtn_rhs_trace_metric_action": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          42804
+        ],
+        "sha256": "5d8f321b37705b125cf323736d34fda0d6c425e760a0f80370e3cdb834edcc71"
+      },
+      "payload_bytes": 684864,
+      "payload_sha256": "7e8582c223a42f486f69c6c10555ac28d8b86cce7de89850660ec92213804938",
+      "fortran_order": false
+    },
+    "full_active_reduced_trace_dtn_solution_trace_metric_action": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          42804
+        ],
+        "sha256": "6d8b6ed091a7013d5c9fb7a524a5540d2959c8041bdd5644e864a02128038331"
+      },
+      "payload_bytes": 684864,
+      "payload_sha256": "9cee9ffb1b20064927ac54e8672601a15ec6ebfaf796cea103ac534f3e1cd4d0",
+      "fortran_order": false
+    },
+    "full_active_active_full_rhs": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          151032
+        ],
+        "sha256": "01224b6cc19e5a698a46c02585ae197b3882bebc34b9f2725e745ce1a333b0b8"
+      },
+      "payload_bytes": 2416512,
+      "payload_sha256": "4b91f7cced1f354f5841533f7de54a96af230befe7350fbc698885fb8b480ff8",
+      "fortran_order": false
+    },
+    "full_active_active_full_solution": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          151032
+        ],
+        "sha256": "7f621e96771b8337b988da036d7f2377857e97864a77aee07d719342a75a5d55"
+      },
+      "payload_bytes": 2416512,
+      "payload_sha256": "df313bd361149db47977a666dc5b5b634016d8d638f050055dc417a3e8bef237",
+      "fortran_order": false
+    },
+    "full_active_eliminated_active_interior_residual": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          151032
+        ],
+        "sha256": "2c44375e1499a5ad7fc4a002087ff0ea138f708790115699c5678a7ac0416803"
+      },
+      "payload_bytes": 2416512,
+      "payload_sha256": "4531f5329178bca8f5254618b41d2cdd2782571dde55cd35e20fa15383655c6c",
+      "fortran_order": false
+    },
+    "independent_A6_independent_active_residual_trace": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          42804
+        ],
+        "sha256": "be99dbb730aecd933cdbe1ca4a80685c652aee835f4990ca37654e6d4c5d4ca3"
+      },
+      "payload_bytes": 684864,
+      "payload_sha256": "fc14e4104d6ae4a5b12a53afb1228591619983dd3b2c2f1e3fe10762106c02ac",
+      "fortran_order": false
+    },
+    "independent_A6_independent_active_residual_cell_interior": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          96750
+        ],
+        "sha256": "a287517ac1325178efdfdd47b93cb47fcdd6750b6e48cf92b5be1ec98693a494"
+      },
+      "payload_bytes": 1548000,
+      "payload_sha256": "3751c1b978280f1fcc0568621964571a5a86a1e009bea643e5794f4de39127a0",
+      "fortran_order": false
+    },
+    "independent_A6_independent_active_rhs_trace": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          42804
+        ],
+        "sha256": "ff30436eaa84415a5fd6def6cf4c3f5a03a1d7d6705b56f6e8bd0a4503564507"
+      },
+      "payload_bytes": 684864,
+      "payload_sha256": "f95c5fd915c9794208b6a5edaae19b8023c5ddf8701c50004471829ab28b11b2",
+      "fortran_order": false
+    },
+    "independent_A6_independent_active_rhs_cell_interior": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          96750
+        ],
+        "sha256": "c41613267ca43a43868c9154deb2af6f8695587f30a4797319ffc89bf2e2b867"
+      },
+      "payload_bytes": 1548000,
+      "payload_sha256": "ee24e0a6399b036490cfd362076d6a733cd0dc0cbf64372f9780d0a37b659c41",
+      "fortran_order": false
+    },
+    "independent_A6_independent_active_volume_action_minus_rhs_trace": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          42804
+        ],
+        "sha256": "ebb6da46210b75c9d755a2fca8d681df52a294fa7c9bd59d9f1717aa7b005ea8"
+      },
+      "payload_bytes": 684864,
+      "payload_sha256": "d988e4cc00c87d06068825717a86f7a1d60c7a335362481a119b3efcb9d1ab93",
+      "fortran_order": false
+    },
+    "independent_A6_independent_active_volume_action_minus_rhs_cell_interior": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          96750
+        ],
+        "sha256": "a287517ac1325178efdfdd47b93cb47fcdd6750b6e48cf92b5be1ec98693a494"
+      },
+      "payload_bytes": 1548000,
+      "payload_sha256": "3751c1b978280f1fcc0568621964571a5a86a1e009bea643e5794f4de39127a0",
+      "fortran_order": false
+    },
+    "independent_A6_independent_active_incident_traction_trace": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          42804
+        ],
+        "sha256": "afdecc71912a0b83e9100caadaecdcdd168f6561abc01f1be224a1c19830a984"
+      },
+      "payload_bytes": 684864,
+      "payload_sha256": "9cb125cc30d7735fcbb950eeb58e4c60c192db63211b9994c109841748eed9cc",
+      "fortran_order": false
+    },
+    "independent_A6_independent_active_incident_traction_cell_interior": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          96750
+        ],
+        "sha256": "c41613267ca43a43868c9154deb2af6f8695587f30a4797319ffc89bf2e2b867"
+      },
+      "payload_bytes": 1548000,
+      "payload_sha256": "ee24e0a6399b036490cfd362076d6a733cd0dc0cbf64372f9780d0a37b659c41",
+      "fortran_order": false
+    },
+    "independent_A6_independent_active_port_upper_alpha_trace": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          42804
+        ],
+        "sha256": "d6eaec92f29cd80f5b3125bf0a15e0173ee3c106064122c36d7eac7c5c6dcb78"
+      },
+      "payload_bytes": 684864,
+      "payload_sha256": "8f440b5867e416eefab089be9f269f290005e72238bc426066def1085e9ef684",
+      "fortran_order": false
+    },
+    "independent_A6_independent_active_port_upper_incident_trace": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          42804
+        ],
+        "sha256": "c80f4e9a42bce7006916574c4fb0328cb69c5dad1b89e2c819e6b5398a995c17"
+      },
+      "payload_bytes": 684864,
+      "payload_sha256": "3c032ea45c79cd4f08fd266610ea6ab8b8650ac24a235919527f739b6ba1ee10",
+      "fortran_order": false
+    },
+    "independent_A6_independent_active_modal_lower_raw_original_equation": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          612
+        ],
+        "sha256": "232312a57c468c9a9d5820334b6c1e944ba9139bae1b83c47f4cdecf677a1c8b"
+      },
+      "payload_bytes": 9792,
+      "payload_sha256": "aa3a014375e9874f49454f5c5adbb83f1d15571e7e625507ddee859dfe9b2f1f",
+      "fortran_order": false
+    },
+    "independent_A6_independent_active_modal_lower_solver_gauge": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          612
+        ],
+        "sha256": "bd6f6cbca8a0a203099bbc3508a87e677edebc6c6d2ec4b89b847ab2762a2203"
+      },
+      "payload_bytes": 9792,
+      "payload_sha256": "2a5171b4461bd1921a4298c455adf031c88983583d2ecd93670bca0f773f40b1",
+      "fortran_order": false
+    },
+    "independent_A6_independent_active_modal_lower_solver_gauge_rhs": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          612
+        ],
+        "sha256": "ef5e0459c806ae6bde658aef1192ef54d50368f4a0c63085c3937c6aa00860a5"
+      },
+      "payload_bytes": 9792,
+      "payload_sha256": "b9823fb510bca6884b43f0003eaa962061e4c3ee5b87b5af48ba687fa882b4b8",
+      "fortran_order": false
+    },
+    "normal_before_normal_correction_rhs": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          43416
+        ],
+        "sha256": "8d0c83fe28396740407c218a3fe180a12d69ea02f20e124709a1ed10d6b3e2eb"
+      },
+      "payload_bytes": 694656,
+      "payload_sha256": "94cd17109e5a5d56b7ead9ed0ed78670f09ec859cf57d2f7bb970a445a3ce159",
+      "fortran_order": false
+    },
+    "normal_before_normal_correction_solution": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          43416
+        ],
+        "sha256": "ea87ce9ade85986fb58e62c0d41a8dd8c9930ec045c5320ea084d0b57c83135f"
+      },
+      "payload_bytes": 694656,
+      "payload_sha256": "cac6244b230d25435e747397736952272e631873fd414d5c36bcd3d87b1e3cf0",
+      "fortran_order": false
+    },
+    "normal_before_normal_correction_residual_b_minus_Ax": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          43416
+        ],
+        "sha256": "acb1163a2901f26b18e3124eb5e2e85f7937e07f94f279778172b47352596675"
+      },
+      "payload_bytes": 694656,
+      "payload_sha256": "5ec9f5c11a3850d8dde63bc17bf489d0a027b87fe56acc107b398f165429869f",
+      "fortran_order": false
+    },
+    "normal_after_normal_correction_rhs": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          43416
+        ],
+        "sha256": "8d0c83fe28396740407c218a3fe180a12d69ea02f20e124709a1ed10d6b3e2eb"
+      },
+      "payload_bytes": 694656,
+      "payload_sha256": "94cd17109e5a5d56b7ead9ed0ed78670f09ec859cf57d2f7bb970a445a3ce159",
+      "fortran_order": false
+    },
+    "normal_after_normal_correction_solution": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          43416
+        ],
+        "sha256": "270812b13d5bbe35938c57c42c1794553cd05448b776c68ea5d0164127838672"
+      },
+      "payload_bytes": 694656,
+      "payload_sha256": "f6ae5a639c596e1e7a6866adc26c330ff0279ae8bba86b78b91f6048654aa9a5",
+      "fortran_order": false
+    },
+    "normal_after_normal_correction_residual_b_minus_Ax": {
+      "identity": {
+        "dtype": "<c16",
+        "shape": [
+          43416
+        ],
+        "sha256": "a03d2efcbd72eecd59466356c4ca977d53eb35f397716e5780356e108d77c657"
+      },
+      "payload_bytes": 694656,
+      "payload_sha256": "4a9465d9e601a06253f7514a0e59e4a7357326eafea7138e2579ce2bd83c6777",
+      "fortran_order": false
+    }
+  },
+  "identity": {
+    "candidate_id": "v21_r10_h67",
+    "candidate_plan_sha256": "38739c012870e3a878aafb764951d771293285fa45d46f535aa078bc5c295fc3",
+    "contract_sha256": "4340377a1c96edd3f5ebb0605e647b3569b026f7d8a9c0527902ef0b6c093f6b",
+    "endpoint_identity": {
+      "actual_cfg": {
+        "air_height": 130.0,
+        "case_name": "task43_v21_r10_h67",
+        "cell_notch": null,
+        "custom_polarization": null,
+        "diffraction_bottom_probe_z": null,
+        "diffraction_compute_modal_diagnostic": false,
+        "diffraction_order_max_m": null,
+        "diffraction_order_max_n": null,
+        "diffraction_probe_fraction": 0.75,
+        "diffraction_rayleigh_tol": 1e-06,
+        "diffraction_sample_count_x": 32,
+        "diffraction_sample_count_y": 32,
+        "diffraction_top_probe_z": null,
+        "diffraction_zero_order_only": false,
+        "direct_release_base_after_augmentation": false,
+        "direct_release_solver_before_postprocess": false,
+        "divergence_penalty": 0.0,
+        "domain_z_max": 130.0,
+        "domain_z_min": -10.0,
+        "dtn_auxiliary_direct_projection_audit": false,
+        "dtn_auxiliary_direct_projection_tolerance": 1e-10,
+        "dtn_trace_alias_overlap_tolerance": 1e-08,
+        "dtn_y_invariant_n0_alias_preflight": false,
+        "electric_field_unit": "V/m",
+        "eps_air": [
+          1.0,
+          0.0
+        ],
+        "eps_grating": [
+          0.9980022690345409,
+          0.0036493427323206554
+        ],
+        "eps_r": [
+          1.0,
+          0.0
+        ],
+        "eps_substrate": [
+          0.9980022690345409,
+          0.0036493427323206554
+        ],
+        "floquet_constraint_mode": "auto",
+        "floquet_constraint_mode_requested": "auto",
+        "floquet_phase_x": [
+          1.0,
+          1.4247242291537984e-15
+        ],
+        "floquet_phase_y": [
+          -0.29019682129303004,
+          -0.9569669821427598
+        ],
+        "full3d_reference_export": false,
+        "full3d_reference_plane_z": [],
+        "full3d_reference_sample_count_x": 40,
+        "full3d_reference_sample_count_y": 20,
+        "geometry_kind": "rectangular_block_grating",
+        "grating_background_eps": [
+          1.0,
+          0.0
+        ],
+        "grating_bounds": {
+          "x_max": 33.5,
+          "x_min": 16.5,
+          "y_max": 35.0,
+          "y_min": 15.0,
+          "z_max": 120.0,
+          "z_min": 0.0
+        },
+        "grating_height": 120.0,
+        "grating_index": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "grating_material_label": "Si / silicon",
+        "grating_width_x": 17.0,
+        "grating_width_y": 20.0,
+        "incident_amplitude": [
+          1.0,
+          0.0
+        ],
+        "incident_e0_v_per_m": 1.0,
+        "incident_phi_deg": 90.0,
+        "incident_theta_deg": 89.0,
+        "interface_z": 0.0,
+        "k0": 0.46542113386515455,
+        "lambda0": 13.5,
+        "length_unit": "nm",
+        "magnetic_field_scale_A_per_m": 0.002654418727984993,
+        "magnetic_field_unit": "A/m",
+        "matrix_diagnostics_assemble_only": false,
+        "matrix_diagnostics_assemble_unconstrained": false,
+        "matrix_diagnostics_factorization_only": false,
+        "mesh_axis_cell_counts": [
+          3,
+          10,
+          6
+        ],
+        "mesh_axis_cell_counts_requested": [
+          3,
+          10,
+          6
+        ],
+        "mesh_axis_x_values": [
+          0.0,
+          16.5,
+          33.5,
+          50.0
+        ],
+        "mesh_axis_x_values_requested": [
+          0.0,
+          16.5,
+          33.5,
+          50.0
+        ],
+        "mesh_axis_y_values": [
+          0.0,
+          5.0,
+          10.0,
+          15.0,
+          20.0,
+          25.0,
+          30.0,
+          35.0,
+          40.0,
+          45.0,
+          50.0
+        ],
+        "mesh_axis_y_values_requested": [
+          0.0,
+          5.0,
+          10.0,
+          15.0,
+          20.0,
+          25.0,
+          30.0,
+          35.0,
+          40.0,
+          45.0,
+          50.0
+        ],
+        "mesh_axis_z_profile": null,
+        "mesh_axis_z_profile_requested": null,
+        "mesh_axis_z_values": [
+          -10.0,
+          0.0,
+          30.0,
+          60.0,
+          90.0,
+          120.0,
+          130.0
+        ],
+        "mesh_axis_z_values_requested": [
+          -10.0,
+          0.0,
+          30.0,
+          60.0,
+          90.0,
+          120.0,
+          130.0
+        ],
+        "mesh_cell_type": "hexahedron",
+        "mesh_cell_type_resolved": "hexahedron",
+        "mesh_cells": [
+          2,
+          2,
+          5
+        ],
+        "mesh_plan_id": "task43_hp_adaptivity_3x10x6_axes_v1",
+        "mesh_plan_sha256": "08c78cd927c6cd1dc268b9003a151178a5670f53a1940734f5761f3553eccdd0",
+        "mesh_refined_size": null,
+        "mesh_refined_size_resolved": 15.0,
+        "mesh_refinement_radius": null,
+        "mesh_refinement_radius_resolved": 30.0,
+        "mesh_spacing_mode": "boundary_fitted",
+        "mesh_spacing_mode_requested": "boundary_fitted",
+        "mesh_target_size": 30.0,
+        "mu_r": [
+          1.0,
+          0.0
+        ],
+        "n_air": [
+          1.0,
+          0.0
+        ],
+        "n_grating": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "n_substrate": [
+          0.999002304859,
+          0.00182649365
+        ],
+        "nedelec_degree": 6,
+        "nedelec_fixed_trace_contract": "uniform_n1curl",
+        "nedelec_fixed_trace_enabled": false,
+        "nedelec_interior_degree": null,
+        "nedelec_interior_degree_resolved": 6,
+        "nedelec_trace_degree": null,
+        "nedelec_trace_degree_resolved": 6,
+        "omega": 1.3952974572658171e+17,
+        "period_x": 50.0,
+        "period_y": 50.0,
+        "petsc_direct_solver_profile": "default",
+        "petsc_extra_options": {
+          "pc_factor_mat_solver_type": "mumps"
+        },
+        "petsc_ksp_view": false,
+        "petsc_log_view": false,
+        "physical_z_max": 130.0,
+        "physical_z_min": -10.0,
+        "pml_alpha": 5.0,
+        "pml_bottom_thickness": 0.0,
+        "pml_top_thickness": 0.0,
+        "polarization": [
+          [
+            -1.0,
+            0.0
+          ],
+          [
+            6.123233995736766e-17,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "polarization_kind": "s",
+        "propagation_direction": [
+          6.122301397540666e-17,
+          0.9998476951563913,
+          -0.017452406437283376
+        ],
+        "reporting_diffraction_order_max_m": null,
+        "reporting_diffraction_order_max_n": null,
+        "scattering_background": "layered",
+        "stage4_assembly_time_cell_static_condensation": true,
+        "stage4_boundary_model": "dtn_port",
+        "stage4_cell_static_condensation": true,
+        "stage4_dtn_assembly": "auxiliary",
+        "stage4_dtn_order_policy": "explicit_rectangle",
+        "stage4_floquet_slave_elimination": true,
+        "stage4_full3d_assembly_backend": "assembly_time_variable_p_condensed",
+        "stage4_local_h_refinement_plan": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/formal/R10_H67_attempt1/run/candidate_plan.json",
+        "stage4_pml_outer_bc": "natural",
+        "stage4_preserve_structured_input_partition": false,
+        "stage4_variable_p_active_fe_dof_gate_policy": "task43_hp_adaptivity_192gib_v1",
+        "stage4_variable_p_cell_degree_plan": null,
+        "stage4_variable_p_geometry_identity_policy": "raw_unrounded",
+        "stage_case": "stage4_block_grating",
+        "substrate_material_label": "Si / silicon",
+        "substrate_thickness": 10.0,
+        "tags": {
+          "air": 1,
+          "bottom_pml": 5,
+          "grating": 3,
+          "substrate": 2,
+          "top_pml": 4,
+          "x_max": 12,
+          "x_min": 11,
+          "y_max": 14,
+          "y_min": 13,
+          "z_max": 16,
+          "z_min": 15
+        },
+        "unique_output": false,
+        "use_floquet_xy": true,
+        "use_pml": false,
+        "validation_role": "numerical_sanity_only",
+        "visualization_degree": 6,
+        "wavevector": [
+          [
+            2.849448458307597e-17,
+            0.0
+          ],
+          [
+            0.465350247972149,
+            0.0
+          ],
+          [
+            -0.008122718792715951,
+            0.0
+          ]
+        ],
+        "x_max": 50.0,
+        "x_min": 0.0,
+        "y_max": 50.0,
+        "y_min": 0.0,
+        "z_max": 130.0,
+        "z_min": -10.0
+      },
+      "contract_sha256": "4340377a1c96edd3f5ebb0605e647b3569b026f7d8a9c0527902ef0b6c093f6b",
+      "numerical_controls": {
+        "A_volume_resolved_rule": {
+          "degree": 15,
+          "form_metadata_sources": [
+            "src/solvers/common_3d_forms.py",
+            "src/postprocessing/rta_3d.py"
+          ],
+          "quadrature_rule": "default"
+        },
+        "active_degree_plan_sha256": "7e90fd73f18e4e8cbcfeb416da12ef7f3f3e336dcdd9b32c88f079251229213c",
+        "assembly_backend": "assembly_time_variable_p_condensed",
+        "candidate_plan_sha256": "38739c012870e3a878aafb764951d771293285fa45d46f535aa078bc5c295fc3",
+        "extra_correction_count": 0,
+        "factor_solver": "mumps",
+        "independent_active_fe_dofs": 139554,
+        "modal_selection": {
+          "count": 612,
+          "max_abs_m": 4,
+          "max_abs_n": 8,
+          "mode_inventory_sha256": "f17dda1c16d135cf1f4cf00da20fe68cf2d3a5531524f185ec9c1356b7aa779b",
+          "ordered_keys_sha256": "854e0302db798e534f4cb7698a2dd3a6b28f3d247002a5c0c033319ea1a50eb2",
+          "policy": "explicit_rectangle"
+        },
+        "normal_correction_count": 1,
+        "phase": "R10_H67",
+        "quadrature_degree": {
+          "incident": 28,
+          "ports": 28,
+          "volume": 15
+        }
+      },
+      "numerical_controls_sha256": "05cb2023cafaf905ebc0f26ebb53633743ce70e3cd85acf9057d4d212b7c32ef",
+      "physical_configuration": {
+        "discretization_identity": {
+          "payload": {
+            "active_degree_plan_sha256": "7e90fd73f18e4e8cbcfeb416da12ef7f3f3e336dcdd9b32c88f079251229213c",
+            "actual_axis_values_nm": {
+              "x": [
+                0.0,
+                8.25,
+                16.5,
+                25.0,
+                33.5,
+                41.75,
+                50.0
+              ],
+              "y": [
+                0.0,
+                5.0,
+                10.0,
+                12.5,
+                15.0,
+                17.5,
+                20.0,
+                25.0,
+                30.0,
+                35.0,
+                40.0,
+                45.0,
+                50.0
+              ],
+              "z": [
+                -10.0,
+                0.0,
+                30.0,
+                60.0,
+                90.0,
+                105.0,
+                120.0,
+                125.0,
+                130.0
+              ]
+            },
+            "candidate_plan_sha256": "38739c012870e3a878aafb764951d771293285fa45d46f535aa078bc5c295fc3",
+            "schema": "task43.v2.discretization_identity.v1"
+          },
+          "schema": "task43.v2.discretization_identity.v1",
+          "sha256": "3de65ca61623d82b08ce416769d6b88863e4e3eef2fef42c407267595777d95f"
+        },
+        "excluded_numerical_controls": [
+          "volume/incident/port quadrature degrees",
+          "DtN rectangle and derived outgoing mode inventory",
+          "direct solver and preconditioner controls",
+          "case name and output paths"
+        ],
+        "payload": {
+          "resolved_physics": {
+            "air_height": 130.0,
+            "domain_z_max": 130.0,
+            "domain_z_min": -10.0,
+            "electric_field_unit": "V/m",
+            "eps_air": [
+              1.0,
+              0.0
+            ],
+            "eps_grating": [
+              0.9980022690345409,
+              0.0036493427323206554
+            ],
+            "eps_r": [
+              1.0,
+              0.0
+            ],
+            "eps_substrate": [
+              0.9980022690345409,
+              0.0036493427323206554
+            ],
+            "floquet_phase_x": [
+              1.0,
+              1.4247242291537984e-15
+            ],
+            "floquet_phase_y": [
+              -0.29019682129303004,
+              -0.9569669821427598
+            ],
+            "geometry_kind": "rectangular_block_grating",
+            "grating_background_eps": [
+              1.0,
+              0.0
+            ],
+            "grating_bounds": {
+              "x_max": 33.5,
+              "x_min": 16.5,
+              "y_max": 35.0,
+              "y_min": 15.0,
+              "z_max": 120.0,
+              "z_min": 0.0
+            },
+            "grating_height": 120.0,
+            "grating_index": [
+              0.999002304859,
+              0.00182649365
+            ],
+            "grating_width_x": 17.0,
+            "grating_width_y": 20.0,
+            "incident_amplitude": [
+              1.0,
+              0.0
+            ],
+            "incident_e0_v_per_m": 1.0,
+            "incident_phi_deg": 90.0,
+            "incident_theta_deg": 89.0,
+            "interface_z": 0.0,
+            "k0": 0.46542113386515455,
+            "lambda0": 13.5,
+            "magnetic_field_scale_A_per_m": 0.002654418727984993,
+            "magnetic_field_unit": "A/m",
+            "mesh_cell_type_resolved": "hexahedron",
+            "mu_r": [
+              1.0,
+              0.0
+            ],
+            "n_air": [
+              1.0,
+              0.0
+            ],
+            "n_grating": [
+              0.999002304859,
+              0.00182649365
+            ],
+            "n_substrate": [
+              0.999002304859,
+              0.00182649365
+            ],
+            "period_x": 50.0,
+            "period_y": 50.0,
+            "physical_z_max": 130.0,
+            "physical_z_min": -10.0,
+            "pml_alpha": 5.0,
+            "pml_bottom_thickness": 0.0,
+            "pml_top_thickness": 0.0,
+            "polarization": [
+              [
+                -1.0,
+                0.0
+              ],
+              [
+                6.123233995736766e-17,
+                0.0
+              ],
+              [
+                0.0,
+                0.0
+              ]
+            ],
+            "polarization_kind": "s",
+            "propagation_direction": [
+              6.122301397540666e-17,
+              0.9998476951563913,
+              -0.017452406437283376
+            ],
+            "scattering_background": "layered",
+            "stage4_boundary_model": "dtn_port",
+            "stage4_pml_outer_bc": "natural",
+            "substrate_thickness": 10.0,
+            "use_floquet_xy": true,
+            "use_pml": false,
+            "wavevector": [
+              [
+                2.849448458307597e-17,
+                0.0
+              ],
+              [
+                0.465350247972149,
+                0.0
+              ],
+              [
+                -0.008122718792715951,
+                0.0
+              ]
+            ]
+          },
+          "schema": "task43.v2.shared_physical_configuration.v1"
+        },
+        "schema": "task43.v2.shared_physical_configuration.v1",
+        "sha256": "2c8ea31ad16fa4ce3bf6ca91da5f2f8dd6c1f215c3fc7f41deba06fad08a1b1f"
+      },
+      "schema": "task43.v21.r10_h67.endpoint_identity.v1"
+    },
+    "extra_correction_count": 0,
+    "independent_A6_raw_vector_scope": {
+      "active_interior_rows": 96750,
+      "method": "same-pass original volume/incident/port action after actual entity/Floquet projection, with active interiors and raw plus solver-gauge modal lower rows retained",
+      "modal_lower_rows": 612,
+      "norm_definition": "Euclidean norm of the independently assembled trace residual, active-interior residual, and normalized modal-gauge rows; the original unnormalized modal rows are also retained separately",
+      "trace_rows": 42804
+    },
+    "independent_active_fe_dofs": 139554,
+    "normal_correction_audit": {
+      "corrected_condensed_relative_to_rhs": 6.902765176289402e-13,
+      "corrected_condensed_residual_norm": 7.295067464183036e-13,
+      "correction_ksp": {
+        "converged_reason": 4,
+        "iterations": 1,
+        "residual_norm": 0.0
+      },
+      "correction_norm": 6.501034007383568e-09,
+      "correction_relative_to_solution": 1.2219821783849395e-11,
+      "elapsed_seconds": 26.391864113043994,
+      "initial_condensed_relative_to_rhs": 1.536463155642056e-10,
+      "initial_condensed_residual_norm": 1.6237843951495348e-10,
+      "ksp_operator_replaced": false,
+      "matrix_or_rhs_reassembled": false,
+      "method": "same_ksp_single_residual_correction",
+      "original_primal_ksp": {
+        "converged_reason": 4,
+        "iterations": 1,
+        "ksp_type": "preonly",
+        "pc_type": "lu",
+        "residual_norm": 0.0
+      },
+      "requested": true,
+      "rhs_norm": 1.0568326283561216,
+      "solution_updated": true,
+      "source_identity": {
+        "implementation": "src.solvers.petsc_residual_correction.single_petsc_residual_correction_in_place"
+      },
+      "status": "passed"
+    },
+    "normal_correction_count": 1,
+    "ordered_mode_count": 612,
+    "ordered_mode_keys": [
+      [
+        "top",
+        -4,
+        -8,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        -8,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        -7,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        -7,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        -6,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        -6,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        -5,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        -5,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        -4,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        -4,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        -3,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        -3,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        -2,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        -2,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        -1,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        -1,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        0,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        0,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        1,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        1,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        2,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        2,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        3,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        3,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        4,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        4,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        5,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        5,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        6,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        6,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        7,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        7,
+        "p"
+      ],
+      [
+        "top",
+        -4,
+        8,
+        "s"
+      ],
+      [
+        "top",
+        -4,
+        8,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        -8,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        -8,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        -7,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        -7,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        -6,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        -6,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        -5,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        -5,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        -4,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        -4,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        -3,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        -3,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        -2,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        -2,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        -1,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        -1,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        0,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        0,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        1,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        1,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        2,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        2,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        3,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        3,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        4,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        4,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        5,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        5,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        6,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        6,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        7,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        7,
+        "p"
+      ],
+      [
+        "top",
+        -3,
+        8,
+        "s"
+      ],
+      [
+        "top",
+        -3,
+        8,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        -8,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        -8,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        -7,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        -7,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        -6,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        -6,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        -5,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        -5,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        -4,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        -4,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        -3,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        -3,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        -2,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        -2,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        -1,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        -1,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        0,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        0,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        1,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        1,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        2,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        2,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        3,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        3,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        4,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        4,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        5,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        5,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        6,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        6,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        7,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        7,
+        "p"
+      ],
+      [
+        "top",
+        -2,
+        8,
+        "s"
+      ],
+      [
+        "top",
+        -2,
+        8,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        -8,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        -8,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        -7,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        -7,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        -6,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        -6,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        -5,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        -5,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        -4,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        -4,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        -3,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        -3,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        -2,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        -2,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        -1,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        -1,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        0,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        0,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        1,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        1,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        2,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        2,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        3,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        3,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        4,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        4,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        5,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        5,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        6,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        6,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        7,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        7,
+        "p"
+      ],
+      [
+        "top",
+        -1,
+        8,
+        "s"
+      ],
+      [
+        "top",
+        -1,
+        8,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        -8,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        -8,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        -7,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        -7,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        -6,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        -6,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        -5,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        -5,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        -4,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        -4,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        -3,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        -3,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        -2,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        -2,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        -1,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        -1,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        0,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        0,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        1,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        1,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        2,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        2,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        3,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        3,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        4,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        4,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        5,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        5,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        6,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        6,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        7,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        7,
+        "p"
+      ],
+      [
+        "top",
+        0,
+        8,
+        "s"
+      ],
+      [
+        "top",
+        0,
+        8,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        -8,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        -8,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        -7,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        -7,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        -6,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        -6,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        -5,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        -5,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        -4,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        -4,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        -3,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        -3,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        -2,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        -2,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        -1,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        -1,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        0,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        0,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        1,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        1,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        2,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        2,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        3,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        3,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        4,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        4,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        5,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        5,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        6,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        6,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        7,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        7,
+        "p"
+      ],
+      [
+        "top",
+        1,
+        8,
+        "s"
+      ],
+      [
+        "top",
+        1,
+        8,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        -8,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        -8,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        -7,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        -7,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        -6,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        -6,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        -5,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        -5,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        -4,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        -4,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        -3,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        -3,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        -2,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        -2,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        -1,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        -1,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        0,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        0,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        1,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        1,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        2,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        2,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        3,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        3,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        4,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        4,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        5,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        5,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        6,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        6,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        7,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        7,
+        "p"
+      ],
+      [
+        "top",
+        2,
+        8,
+        "s"
+      ],
+      [
+        "top",
+        2,
+        8,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        -8,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        -8,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        -7,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        -7,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        -6,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        -6,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        -5,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        -5,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        -4,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        -4,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        -3,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        -3,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        -2,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        -2,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        -1,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        -1,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        0,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        0,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        1,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        1,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        2,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        2,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        3,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        3,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        4,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        4,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        5,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        5,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        6,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        6,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        7,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        7,
+        "p"
+      ],
+      [
+        "top",
+        3,
+        8,
+        "s"
+      ],
+      [
+        "top",
+        3,
+        8,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        -8,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        -8,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        -7,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        -7,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        -6,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        -6,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        -5,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        -5,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        -4,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        -4,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        -3,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        -3,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        -2,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        -2,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        -1,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        -1,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        0,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        0,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        1,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        1,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        2,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        2,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        3,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        3,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        4,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        4,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        5,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        5,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        6,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        6,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        7,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        7,
+        "p"
+      ],
+      [
+        "top",
+        4,
+        8,
+        "s"
+      ],
+      [
+        "top",
+        4,
+        8,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        -8,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        -8,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        -7,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        -7,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        -6,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        -6,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        -5,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        -5,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        -4,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        -4,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        -3,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        -3,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        -2,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        -2,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        -1,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        -1,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        0,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        0,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        1,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        1,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        2,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        2,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        3,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        3,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        4,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        4,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        5,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        5,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        6,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        6,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        7,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        7,
+        "p"
+      ],
+      [
+        "bottom",
+        -4,
+        8,
+        "s"
+      ],
+      [
+        "bottom",
+        -4,
+        8,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        -8,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        -8,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        -7,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        -7,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        -6,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        -6,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        -5,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        -5,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        -4,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        -4,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        -3,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        -3,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        -2,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        -2,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        -1,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        -1,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        0,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        0,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        1,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        1,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        2,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        2,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        3,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        3,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        4,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        4,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        5,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        5,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        6,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        6,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        7,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        7,
+        "p"
+      ],
+      [
+        "bottom",
+        -3,
+        8,
+        "s"
+      ],
+      [
+        "bottom",
+        -3,
+        8,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        -8,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        -8,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        -7,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        -7,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        -6,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        -6,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        -5,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        -5,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        -4,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        -4,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        -3,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        -3,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        -2,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        -2,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        -1,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        -1,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        0,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        0,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        1,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        1,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        2,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        2,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        3,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        3,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        4,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        4,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        5,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        5,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        6,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        6,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        7,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        7,
+        "p"
+      ],
+      [
+        "bottom",
+        -2,
+        8,
+        "s"
+      ],
+      [
+        "bottom",
+        -2,
+        8,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        -8,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        -8,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        -7,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        -7,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        -6,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        -6,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        -5,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        -5,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        -4,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        -4,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        -3,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        -3,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        -2,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        -2,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        -1,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        -1,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        0,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        0,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        1,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        1,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        2,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        2,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        3,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        3,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        4,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        4,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        5,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        5,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        6,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        6,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        7,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        7,
+        "p"
+      ],
+      [
+        "bottom",
+        -1,
+        8,
+        "s"
+      ],
+      [
+        "bottom",
+        -1,
+        8,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        -8,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        -8,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        -7,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        -7,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        -6,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        -6,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        -5,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        -5,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        -4,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        -4,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        -3,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        -3,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        -2,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        -2,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        -1,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        -1,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        0,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        0,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        1,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        1,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        2,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        2,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        3,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        3,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        4,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        4,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        5,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        5,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        6,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        6,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        7,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        7,
+        "p"
+      ],
+      [
+        "bottom",
+        0,
+        8,
+        "s"
+      ],
+      [
+        "bottom",
+        0,
+        8,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        -8,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        -8,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        -7,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        -7,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        -6,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        -6,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        -5,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        -5,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        -4,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        -4,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        -3,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        -3,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        -2,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        -2,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        -1,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        -1,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        0,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        0,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        1,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        1,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        2,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        2,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        3,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        3,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        4,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        4,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        5,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        5,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        6,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        6,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        7,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        7,
+        "p"
+      ],
+      [
+        "bottom",
+        1,
+        8,
+        "s"
+      ],
+      [
+        "bottom",
+        1,
+        8,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        -8,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        -8,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        -7,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        -7,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        -6,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        -6,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        -5,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        -5,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        -4,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        -4,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        -3,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        -3,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        -2,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        -2,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        -1,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        -1,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        0,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        0,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        1,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        1,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        2,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        2,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        3,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        3,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        4,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        4,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        5,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        5,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        6,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        6,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        7,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        7,
+        "p"
+      ],
+      [
+        "bottom",
+        2,
+        8,
+        "s"
+      ],
+      [
+        "bottom",
+        2,
+        8,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        -8,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        -8,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        -7,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        -7,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        -6,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        -6,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        -5,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        -5,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        -4,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        -4,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        -3,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        -3,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        -2,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        -2,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        -1,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        -1,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        0,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        0,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        1,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        1,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        2,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        2,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        3,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        3,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        4,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        4,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        5,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        5,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        6,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        6,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        7,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        7,
+        "p"
+      ],
+      [
+        "bottom",
+        3,
+        8,
+        "s"
+      ],
+      [
+        "bottom",
+        3,
+        8,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        -8,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        -8,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        -7,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        -7,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        -6,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        -6,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        -5,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        -5,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        -4,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        -4,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        -3,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        -3,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        -2,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        -2,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        -1,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        -1,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        0,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        0,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        1,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        1,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        2,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        2,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        3,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        3,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        4,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        4,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        5,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        5,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        6,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        6,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        7,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        7,
+        "p"
+      ],
+      [
+        "bottom",
+        4,
+        8,
+        "s"
+      ],
+      [
+        "bottom",
+        4,
+        8,
+        "p"
+      ]
+    ],
+    "phase": "R10_H67",
+    "raw_full_active_scope": {
+      "active_full_rows": 151032,
+      "active_interior_rows": 96750,
+      "full_operator_norm_definition": "sqrt(constraint-dual reduced-trace norm^2 + eliminated-interior Euclidean norm^2); do not take a plain concatenated Euclidean norm",
+      "independent_active_fe_dofs": 139554,
+      "independent_reduced_trace_rows": 42804,
+      "method": "same-pass exact block-Gaussian transformed residual; reduced trace/DtN residual is retained in its constraint-induced dual coordinates, while eliminated active-interior rows are retained in active-cell coordinates",
+      "mpi_size": 1,
+      "raw_trace_rows": 54282,
+      "reduced_trace_dtn_owned_range": [
+        0,
+        43416
+      ],
+      "reduced_trace_dtn_rows": 43416,
+      "trace_metric_action_definition": "same-pass Gram inverse action for dual residual/RHS and Gram action for primal solution; vdot(trace, action) plus auxiliary Euclidean contribution reproduces each reduced norm squared"
+    },
+    "stage": "F1"
+  },
+  "readback_seconds": 0.4737555840983987
+}

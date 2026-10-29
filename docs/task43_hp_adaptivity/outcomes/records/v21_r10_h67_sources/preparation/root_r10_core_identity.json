@@ -1,0 +1,219 @@
+{
+  "scope": "Static file bytes only; no project import/native/array read",
+  "historical_source_head": "fbbb3fa61a38a3a4845dcf4f16a3cdf3e96d2507",
+  "current_review_head": "0dd5555f8795a68c7c9b1dc58387337d98fd76a5",
+  "rows": [
+    {
+      "path": "src/adaptivity/exact_sequence_variable_p.py",
+      "historical_sha256": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+      "current_sha256": "fd14f0cd54e30f81835bd1fedf6181eb5406a77def767a9362aaf9102b08dd56",
+      "unchanged": true
+    },
+    {
+      "path": "src/adaptivity/hcurl_broken_cell_trace.py",
+      "historical_sha256": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+      "current_sha256": "a643cd43ad74194f493984123ed67d75c2f99536ba784e9b31c213ae02c5cb50",
+      "unchanged": true
+    },
+    {
+      "path": "src/adaptivity/hcurl_broken_trace_graph.py",
+      "historical_sha256": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+      "current_sha256": "dd2a710a192bf4f5e5c947ada00aef5cbb6e927cdc4a96f630530a0c791ab53d",
+      "unchanged": true
+    },
+    {
+      "path": "src/adaptivity/physical_g_error.py",
+      "historical_sha256": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+      "current_sha256": "378a5ee98fc30bb50c8318569f254fb65583d90b39926fa7b49370bc824caea7",
+      "unchanged": true
+    },
+    {
+      "path": "src/adaptivity/stage4_local_h.py",
+      "historical_sha256": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+      "current_sha256": "26b8b89aadb28152142e6e9663f3ce3d0f9bb5f15e4b23bfe949b0734509f05f",
+      "unchanged": true
+    },
+    {
+      "path": "src/adaptivity/variable_p_degree_plan.py",
+      "historical_sha256": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+      "current_sha256": "56d38952bbd70f9e83e64d73b84503bfefb8d6bf7a42b03d7336c8328d51de6d",
+      "unchanged": true
+    },
+    {
+      "path": "src/adaptivity/variable_p_entity_map.py",
+      "historical_sha256": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+      "current_sha256": "9cf224368fc87d8204236ae9b656a5fef26af2e0a1c0826c245258cf0b44fdd7",
+      "unchanged": true
+    },
+    {
+      "path": "src/adaptivity/variable_p_transfer.py",
+      "historical_sha256": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+      "current_sha256": "7b9b9f5f1424baeff42737f476c003142518b125b577a3a8ea527e4f44fc15dc",
+      "unchanged": true
+    },
+    {
+      "path": "src/common/analytic_fields_3d.py",
+      "historical_sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "current_sha256": "6c8d76385a057f8b11b2a25c9de1fc354ecfcfd179603b97017df8a885eacd49",
+      "unchanged": true
+    },
+    {
+      "path": "src/common/config_3d.py",
+      "historical_sha256": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+      "current_sha256": "21eaa63ff0dd1f155461889a3e399e959f09562ae907a3901c373ba904347747",
+      "unchanged": true
+    },
+    {
+      "path": "src/common/modes_3d.py",
+      "historical_sha256": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+      "current_sha256": "b9afdfb38f65cc7937911b90bccdb127e03831ee059f30e06a5daa05c0e7e92d",
+      "unchanged": true
+    },
+    {
+      "path": "src/constraints/floquet_3d.py",
+      "historical_sha256": "cfa0953ba1b6fa60b1943be2f0f977413221857290df7ceee0747df811bca309",
+      "current_sha256": "cfa0953ba1b6fa60b1943be2f0f977413221857290df7ceee0747df811bca309",
+      "unchanged": true
+    },
+    {
+      "path": "src/geometry/mesh_builder_3d.py",
+      "historical_sha256": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+      "current_sha256": "9427205f2db78f93d75964e9fa1e7f4f208d189272e1bef13e1a73ab00979aa2",
+      "unchanged": true
+    },
+    {
+      "path": "src/geometry/task43_hp_adaptivity_axis_plan.py",
+      "historical_sha256": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+      "current_sha256": "c2bd1f461cc1c1ac6d254b2d81a3f6c4ab2d57a5ba7177fc42d5e8777cdd7a83",
+      "unchanged": true
+    },
+    {
+      "path": "src/io/native_capacity_profile.py",
+      "historical_sha256": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+      "current_sha256": "ecd05e631b80cc8a06d1acdc84ad1d1906241ea16edb5d11e685cb5293c611c2",
+      "unchanged": true
+    },
+    {
+      "path": "src/postprocessing/diffraction_3d.py",
+      "historical_sha256": "42d65299ce1cc8c2762dc1d3972ea04063b155bd8a58d4553c9ac9732213ce66",
+      "current_sha256": "42d65299ce1cc8c2762dc1d3972ea04063b155bd8a58d4553c9ac9732213ce66",
+      "unchanged": true
+    },
+    {
+      "path": "src/postprocessing/flat_layer_reference_3d.py",
+      "historical_sha256": "ed6493bd2f13dccbcd85a8ef2edb6f6b07726ec6c41b82651525b386d44ec04a",
+      "current_sha256": "ed6493bd2f13dccbcd85a8ef2edb6f6b07726ec6c41b82651525b386d44ec04a",
+      "unchanged": true
+    },
+    {
+      "path": "src/postprocessing/physical_field_comparison.py",
+      "historical_sha256": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+      "current_sha256": "1c667a2848fa23effcf24dd2ffbf428df7ea66cb01fc9b61bae71a6480b234a6",
+      "unchanged": true
+    },
+    {
+      "path": "src/postprocessing/physical_field_sampling.py",
+      "historical_sha256": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+      "current_sha256": "b4ec80ec4eeecd7c6a5eb6e9929dc0cd412906c0b21d2cf01763c08c619833bd",
+      "unchanged": true
+    },
+    {
+      "path": "src/postprocessing/postprocess_3d.py",
+      "historical_sha256": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+      "current_sha256": "7d8ef82a7599b2d62a9ad556a1dee63d2bf893dece08268703ab383b0780263c",
+      "unchanged": true
+    },
+    {
+      "path": "src/postprocessing/rta_3d.py",
+      "historical_sha256": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+      "current_sha256": "cb5ff2a00c5652e07a6c825a127b4a526a3a0f65391da91aae734c3012af9154",
+      "unchanged": true
+    },
+    {
+      "path": "src/solvers/common_3d_case_flow.py",
+      "historical_sha256": "f6646d69a0c4bc6a1e2f45a6ba1f072d0ba734032da735db054e125c317ce999",
+      "current_sha256": "6dc2aa02c84beb079532666f79bbd1156a9e7cc8490b9a049b23fe413115a0d5",
+      "unchanged": false
+    },
+    {
+      "path": "src/solvers/common_3d_fields.py",
+      "historical_sha256": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "current_sha256": "ea214955eefdfaf837c0651b8f8bc397727a253f62c03195529d211f17f9d889",
+      "unchanged": true
+    },
+    {
+      "path": "src/solvers/common_3d_forms.py",
+      "historical_sha256": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+      "current_sha256": "0083d6435291d6b1f3e78dc129ac9fb1f4d0ec201de9475abf911de35e82e2bf",
+      "unchanged": true
+    },
+    {
+      "path": "src/solvers/common_3d_postprocess.py",
+      "historical_sha256": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+      "current_sha256": "0e82f855d2b3b5d1f54ec50b4d9a5ca5e587793279424e1f82114de27076a19a",
+      "unchanged": true
+    },
+    {
+      "path": "src/solvers/common_3d_solve.py",
+      "historical_sha256": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+      "current_sha256": "3387643de8ad05abaf85c180e8a793910d38a6370d9cec674d28d3bbfd387172",
+      "unchanged": true
+    },
+    {
+      "path": "src/solvers/common_3d_utils.py",
+      "historical_sha256": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+      "current_sha256": "4d321a64428ca99076d1266c62983070db88a2498a6bda9bea5953d5cd202fc8",
+      "unchanged": true
+    },
+    {
+      "path": "src/solvers/dtn_port_3d.py",
+      "historical_sha256": "c298be94bc1a9b870cfddac0cd9a37d4fcfad881387da7d126d7b3d554875dd7",
+      "current_sha256": "5306e2d24bbdb15b1169755a38d322a5bb9a62fc356a8857e3664d51a3edff7a",
+      "unchanged": false
+    },
+    {
+      "path": "src/solvers/hcurl_blocked_gram_tensor.py",
+      "historical_sha256": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+      "current_sha256": "c5522913ee1d66091a0b5fcee6f715bcacf0be16340b194925fbbe19993635b7",
+      "unchanged": true
+    },
+    {
+      "path": "src/solvers/hcurl_variable_p_assembly.py",
+      "historical_sha256": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+      "current_sha256": "808b5d71a77c5669f9a2f374b2215a50a8605517e75e04d0c07e644b96f4210c",
+      "unchanged": true
+    },
+    {
+      "path": "src/solvers/hcurl_variable_p_local.py",
+      "historical_sha256": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "current_sha256": "d36962475c3deea024b312596d7d3304997b91afbeecb9022597f8746c6cf3e8",
+      "unchanged": true
+    },
+    {
+      "path": "src/solvers/hcurl_variable_p_reduction.py",
+      "historical_sha256": "32343f7501772437fca3c33c0524977fb2659a6177dce66e7b787db51d846e99",
+      "current_sha256": "6a7cb48bf2724b8276343a3cd43f53c1be5a2b248ef0436d1699ed59114aa47a",
+      "unchanged": false
+    },
+    {
+      "path": "src/solvers/independent_active_action.py",
+      "historical_sha256": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+      "current_sha256": "f1ba797b79240d885c061ed9588207eafe7f39350a1f64bd4d85b4c078b8a11a",
+      "unchanged": true
+    },
+    {
+      "path": "src/solvers/petsc_residual_correction.py",
+      "historical_sha256": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+      "current_sha256": "e1d8a67d96cec566ac544402030fbde0cc2b5e87020eb05dc01195b18d614c4f",
+      "unchanged": true
+    },
+    {
+      "path": "src/solvers/solve_maxwell_3d_stage_4b_block_grating.py",
+      "historical_sha256": "97276baa03fb9ba9713418ff98be081a433960bf6f1d06d4037768c91054f6b8",
+      "current_sha256": "6045c0a77920564fb1ebb1c118433dfc7ea72352a08bfb0638ca98211304d5bb",
+      "unchanged": false
+    }
+  ],
+  "measured_seconds": 0.061551788821816444,
+  "root_static_read_assessment": "Four changed source files add opt-in capture of existing normal-correction vectors, independent-A6 raw vectors and the already-computed Gram actions, threading the flag through stage/case functions. Reviewed diff does not alter matrix, material, constraint or solve mathematics. This is a source inspection, not a new numerical equivalence test; historical R10 running HEAD remains unchanged."
+}

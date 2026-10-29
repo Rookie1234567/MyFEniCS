@@ -1,0 +1,141 @@
+{
+  "status": "QUALIFIED_FOR_F1",
+  "checks": {
+    "source": true,
+    "input": true,
+    "trace": true,
+    "resource": true,
+    "cleanup": true
+  },
+  "formal_admission": {
+    "pass": true,
+    "predicted_peak_bytes_upper": 19699155644.05567,
+    "predicted_work_seconds_upper": 6753.875029482975,
+    "work_limit_seconds": 6900,
+    "rss_limit_bytes": 34359738368,
+    "basis": [
+      {
+        "model": "R9",
+        "actual_FE": 110472,
+        "actual_returned_rows": 35964,
+        "watchdog_whole_seconds": 2878.9347875751555,
+        "solver_interval_seconds": 2855.742826420814,
+        "remaining_disjoint_workflow_seconds": 23.191961154341698,
+        "tree_RSS_peak_bytes": 6283513856,
+        "status": "COMPLETED",
+        "watchdog_source": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_up_attempt1/watchdog/summary.json",
+          "sha256": "afddc2298a1c357eafc1746fb01fbef20010026cd3174d35073cb5ef2317b6e4"
+        },
+        "solver_source": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round9_p_up_attempt1/run/solve/run_summary.json",
+          "sha256": "50133ad0d299f1c7ca154d750bb5ac26c4179ea006ad55d546fdaac275d67048"
+        },
+        "row_ratio": 1.2072072072072073,
+        "FE_ratio": 1.263252226808603,
+        "predicted_work_seconds": 5811.490415123306,
+        "predicted_peak_bytes": 18314548299.380898,
+        "scope": "historical measured resource calibration, not H67 measurements"
+      },
+      {
+        "model": "R10",
+        "actual_FE": 118800,
+        "actual_returned_rows": 38412,
+        "watchdog_whole_seconds": 2588.517399974633,
+        "solver_interval_seconds": 2561.818404408172,
+        "remaining_disjoint_workflow_seconds": 26.698995566461235,
+        "tree_RSS_peak_bytes": 6572441600,
+        "status": "COMPLETED",
+        "watchdog_source": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/watchdog/summary.json",
+          "sha256": "ad4675ae06ae2a1122c94812837a539da647d2062e8b88c257930e7c57286b4a"
+        },
+        "solver_source": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/round10_p_up_attempt1/run/solve/run_summary.json",
+          "sha256": "be445b030b8e39169fc800e4c53aae0f85fcf8800312d7538518df67891d6376"
+        },
+        "row_ratio": 1.1302717900656045,
+        "FE_ratio": 1.1746969696969698,
+        "predicted_work_seconds": 4290.041866818597,
+        "predicted_peak_bytes": 16792776515.078495,
+        "scope": "historical measured resource calibration, not H67 measurements"
+      },
+      {
+        "model": "H8",
+        "actual_FE": 116740,
+        "actual_returned_rows": 37402,
+        "watchdog_whole_seconds": 2174.3347835741006,
+        "solver_interval_seconds": 2174.3347835741006,
+        "remaining_disjoint_workflow_seconds": 0.0,
+        "tree_RSS_peak_bytes": 7309836288,
+        "status": "WORKER_FAILED",
+        "watchdog_source": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v11_science/formal/R9_H8_attempt1/watchdog/summary.json",
+          "sha256": "357f7d5d55d023613afa49c01dea4c6b69b82b9129d6e819b209808d4c8bd6ad"
+        },
+        "solver_source": null,
+        "row_ratio": 1.1607935404523821,
+        "FE_ratio": 1.1954257323967792,
+        "predicted_work_seconds": 3911.012480931934,
+        "predicted_peak_bytes": 19699155644.05567,
+        "scope": "H8 prior output failed; resource calibration only"
+      },
+      {
+        "model": "P8",
+        "actual_FE": 110722,
+        "actual_returned_rows": 36004,
+        "watchdog_whole_seconds": 3660.6983617502265,
+        "solver_interval_seconds": 2553.3956182152033,
+        "remaining_disjoint_workflow_seconds": 1107.3027435350232,
+        "tree_RSS_peak_bytes": 6338056192,
+        "status": "COMPLETED",
+        "watchdog_source": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/watchdog/summary.json",
+          "sha256": "d9009de40f41202cb33d20167d5e0645b04348d17ba7b56ccb622e4ab34824c0"
+        },
+        "solver_source": {
+          "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v16_p8/formal/v18_R9_P8_attempt1/run/solve/run_summary.json",
+          "sha256": "ee917cf51b286cae36f849b8b5a3e1d193338eff0cd821265dcc7b0c223912e9"
+        },
+        "row_ratio": 1.2058660148872347,
+        "FE_ratio": 1.260399920521667,
+        "predicted_work_seconds": 6753.875029482975,
+        "predicted_peak_bytes": 18432497853.13969,
+        "scope": "historical measured resource calibration, not H67 measurements"
+      }
+    ],
+    "model": "max across four prior runs: 1.15*(old solver elapsed*max(row_ratio^3,FE_ratio) + disjoint remaining whole*FE_ratio); memory=2*old sampled tree peak*max(row_ratio^2,FE_ratio)",
+    "uncertainty": "Engineering planning envelope, not a certified upper bound. Same q/R/p6 direct backend; local hanging constraints can change fill and timing. Entire solver is scaled cubically in returned rows and includes linear assembly/A6 costs; 15% additional time and 2x RSS reserve. Watchdog work/whole limits remain fixed; no OOM or extension authorized."
+  },
+  "actual_FE": 139554,
+  "independent_trace_rows": 42804,
+  "active_interior_rows": 96750,
+  "new_FE": 20754,
+  "actual_leaves": 215,
+  "actual_splits": 5,
+  "closure_roots": [
+    129,
+    130,
+    131,
+    160
+  ],
+  "closure_reason": "All four forced splits are material closure: actual aggregate material=4 and balance=periodic=0; no per-event causal trace beyond the existing forest audit",
+  "carrier": {
+    "active_entity_rows": 151032,
+    "container_degree": 6,
+    "full_p6_global_matrix_constructed": false,
+    "inactive_p6_rows": 0,
+    "uniform_p6_global_rows": 151032,
+    "uniform_p6_trace_rows": 54282
+  },
+  "hanging_slave_rows": 5544,
+  "periodic": {
+    "periodic_slave_rows": 5934
+  },
+  "predicted_returned_rows": 43416,
+  "lifecycle_sha256": "27b38ddb734c0463aa8f1d2b5b3b0164442335f0195860e9d830baa0afd8d65c",
+  "restoration_sha256": "2047ecfd0046f814d4867249ad71199f9022a415193c688641506da747c62e79",
+  "audit_sha256": "cad87eb07e637a0b30eabe0c8b65834b3e46ca4f060a0f76b60002573ac7c418",
+  "root_review": "root checked full source/input snapshots, all resource/trace lines via stdlib parser and non-stack event lines directly, all 180 inheritance records with independent scalar assertions; old field arrays restored/checked by S, not independently FE-restored again by root",
+  "recorded_unix": 1793255804.2795124
+}

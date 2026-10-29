@@ -1,0 +1,128 @@
+{
+  "status": "QUALIFIED_FOR_S_ONLY",
+  "actual_head": "5796d78b642b58c0963ef47d181f70b96b728786",
+  "contract_sha256": "4340377a1c96edd3f5ebb0605e647b3569b026f7d8a9c0527902ef0b6c093f6b",
+  "authorization_review": "0dd5555f8795a68c7c9b1dc58387337d98fd76a5",
+  "batches": [
+    {
+      "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1",
+      "xml_sha256": "cf885d7fc364391bd673679a7ddf92c33887ab16ead67059d62d8fcb3eb7bca3",
+      "lifecycle_sha256": "09ac72ae621462bae38daad1048d78d57344a1737e1c1c074f120cae011f8da5",
+      "nodes": [
+        {
+          "name": "test_00_v21_worker_runtime_identity_is_saved",
+          "outcome": "PASSED",
+          "seconds": 0.28
+        },
+        {
+          "name": "test_01_contract_reader_accepts_frozen_f1_root",
+          "outcome": "PASSED",
+          "seconds": 0.075
+        },
+        {
+          "name": "test_02_contract_reader_rejects_another_unique_root",
+          "outcome": "PASSED",
+          "seconds": 0.4
+        },
+        {
+          "name": "test_04_candidate_reader_binds_accepted9_and_rejected_r10",
+          "outcome": "PASSED",
+          "seconds": 0.03
+        },
+        {
+          "name": "test_05_candidate_reader_rejects_promoting_rejected_r10",
+          "outcome": "PASSED",
+          "seconds": 0.029
+        },
+        {
+          "name": "test_06_actual_s_builder_and_post_audit_gate_h67_with_p6_closure",
+          "outcome": "PASSED",
+          "seconds": 2.89
+        },
+        {
+          "name": "test_08_s_product_reader_requires_all_seven_qualified_artifacts",
+          "outcome": "PASSED",
+          "seconds": 0.052
+        },
+        {
+          "name": "test_09_s_product_reader_rejects_changed_product_bytes",
+          "outcome": "PASSED",
+          "seconds": 0.042
+        },
+        {
+          "name": "test_12_v21_f_main_reaches_real_observer_writer_and_terminal[False]",
+          "outcome": "PASSED",
+          "seconds": 6.285
+        },
+        {
+          "name": "test_12_v21_f_main_reaches_real_observer_writer_and_terminal[True]",
+          "outcome": "PASSED",
+          "seconds": 7.164
+        },
+        {
+          "name": "test_10_v21_pending_reader_recomputes_rebound_raw_packet[False]",
+          "outcome": "PASSED",
+          "seconds": 0.125
+        },
+        {
+          "name": "test_10_v21_pending_reader_recomputes_rebound_raw_packet[True]",
+          "outcome": "FAILED",
+          "seconds": 0.136
+        },
+        {
+          "name": "test_11_v21_restore_accepts_consistent_packet_and_rejects_mixed_coefficients[False]",
+          "outcome": "PASSED",
+          "seconds": 0.084
+        },
+        {
+          "name": "test_11_v21_restore_accepts_consistent_packet_and_rejects_mixed_coefficients[True]",
+          "outcome": "PASSED",
+          "seconds": 0.079
+        },
+        {
+          "name": "test_v21_actual_common_comparison[None]",
+          "outcome": "PASSED",
+          "seconds": 48.524
+        },
+        {
+          "name": "test_v21_actual_common_comparison[q10]",
+          "outcome": "PASSED",
+          "seconds": 7.837
+        },
+        {
+          "name": "test_v21_snapshot_requires_the_same_input_and_source_set",
+          "outcome": "PASSED",
+          "seconds": 0.014
+        }
+      ],
+      "source_head": "535b23d6274b750ab8a8ffd55faf4048d93c1b2e"
+    },
+    {
+      "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_recovery1",
+      "xml_sha256": "1f99d304b2095cee5c6244121a1faae48dce53702932c50615f78783b55c71ef",
+      "lifecycle_sha256": "07d8d63d8287947cef025ed1c840ab08654a0aabc2b500d7f66bb09650bcb4e6",
+      "nodes": [
+        {
+          "name": "test_00_v21_worker_runtime_identity_is_saved",
+          "outcome": "PASSED",
+          "seconds": 0.072
+        },
+        {
+          "name": "test_10_v21_pending_reader_recomputes_rebound_raw_packet[False]",
+          "outcome": "PASSED",
+          "seconds": 0.173
+        },
+        {
+          "name": "test_10_v21_pending_reader_recomputes_rebound_raw_packet[True]",
+          "outcome": "PASSED",
+          "seconds": 0.043
+        }
+      ],
+      "source_head": "5796d78b642b58c0963ef47d181f70b96b728786"
+    }
+  ],
+  "test_scope": "T1 16 passed/1 failed; T2 runtime plus valid/mixed raw pair 3 passed. No single final 17-item batch claimed. Production source bytes unchanged between T1/T2; only failed negative assertion regex changed.",
+  "support_calls_used": 2,
+  "support_whole_seconds": 104.30945736499999,
+  "formal_calls_used": 0
+}

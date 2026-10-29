@@ -1,6 +1,10 @@
 # Task43：面向三维 Maxwell 的自适应 h/p 网格
 
-## V20 当前收口：U1保存场诊断完成，R10仍被拒绝
+## V21 当前收口：R10_H67空间门通过，F1独立A6门失败
+
+V21对拒绝态R10的global67/root127执行一次单层h细化。S通过空间门（215叶、FE139,554），F1独立A6 raw relative residual=`2.1004005221911206e-8`超过`1e-8`，因此没有合格primary；C/F2/E1/E2均NOT_RUN，accepted9/R9不变。J/G/Av和收益均未知。F1 launcher入口至终态4,813.658310916秒，watchdog elapsed 4,811.279815596秒；资源/退出边界及单个退出竞态见[Response V21](response_v21.md)。机器结果和精简来源见[结果记录](outcomes/records/v21_r10_h67_results_v1.json)及[来源目录](outcomes/records/v21_r10_h67_sources/)。没有后续自动授权或合并批准。
+
+## V20 历史收口：U1保存场诊断完成，R10仍被拒绝
 
 用户在原四槽T1/T2/D1/D2结束后明确要求“不是数值gate那就继续”，因此单独追加一次U1支持诊断。它只分析已有R9、R10、Y6_1场和q8/q10点集，没有新PDE、场恢复或采样。J从4.065061945224269降到2.837172688008316，方向改善超过冻结可分辨尺度；但R10的`R00_s`差仍为2.837172688008316e-6，大于1e-6，J仍大于1。全域G的改善约8.4129e-6，小于冻结尺度εG=9.0882e-6。
 
@@ -66,7 +70,7 @@ P5 whole=1,134.8697960400023 s、RSS采样峰1,621,196,800 B、swap0、退出0/0
 | 执行分支 | `task43_hp_adaptivity` |
 | 建立日期 | 2026-10-22 |
 | 源码基线 | `task40para_phi90_mesh_modes_direct@405e3aff42ac421a4c99315df1ed9b96941ecbe4` |
-| 当前状态 | V18：P8求解与q8/q10比较完成，FE110722（+250），J4.020864574738603>1，改善不足εJ；formal9/10，旧末槽封存。见[Response V18](response_v18.md)。 |
+| 当前状态 | V21：H67空间FE139554（较R10 +20754）；F1独立A6残差2.1004005221911206e-8超过1e-8；C未运行，formal10/12，旧末槽封存。见[Response V21](response_v21.md)。 |
 | 第一目标 | 在新 phi90、50×50 nm 周期、17×20 nm 光栅模型上，建立实际求解验真的局部 h/p 闭环 |
 | 第一验证波长 | 13.5 nm；小规模 direct 作数值核验 |
 | 后续方向 | 自适应空间的迭代接线；通过前置条件后做一个 0.7 nm 缩比 pilot |
@@ -75,7 +79,9 @@ P5 whole=1,134.8697960400023 s、RSS采样峰1,621,196,800 B、swap0、退出0/0
 
 ## 阅读入口
 
-**当前交付是[Response V20](response_v20.md)：在原四槽失败账之外，用户明确授权的U1完成保存场响应诊断；方向有改善，但绝对精度和冻结G可分辨门仍未通过。** [U1机器结果](outcomes/records/v20_user_recovery_results_v1.json)及[U1证据索引](outcomes/records/v20_user_recovery_sources/U1/source_artifact_index.json)记录真实运行；V20原四槽与更早V17的失败分别保留。没有新PDE、R10状态迁移、自动后续运行或合并批准。
+当前交付为[Response V21](response_v21.md)、[V21机器结果](outcomes/records/v21_r10_h67_results_v1.json)和[来源索引](outcomes/records/v21_r10_h67_sources/README.md)。固定H67已实际求解，但独立A6门失败；不得据中间输出授予科学或合并资格。
+
+**历史V20交付是[Response V20](response_v20.md)：在原四槽失败账之外，用户明确授权的U1完成保存场响应诊断；方向有改善，但绝对精度和冻结G可分辨门仍未通过。** [U1机器结果](outcomes/records/v20_user_recovery_results_v1.json)及[U1证据索引](outcomes/records/v20_user_recovery_sources/U1/source_artifact_index.json)记录真实运行；V20原四槽与更早V17的失败分别保留。没有新PDE、R10状态迁移、自动后续运行或合并批准。
 
 上一轮[V10正式review](review_report_v10.md)已验收有限静态整改；原执行依据为[正式V9 review第9节](review_report_v9.md)，V10当轮未新增运行。其交付见[Response V10](response_v10.md)、[静态纠正记录](outcomes/records/v10_static_evidence_correction_v1.json)及[纠正版依赖表](outcomes/records/v10_static_evidence_sources/corrected/direct_needed_edge_map_corrected.json)。原V9派生表保留原字节；三个边界的12个字段更正在新文件中。V11/V12/V13有限工程证据与受控停止见[Response V11](response_v11.md)、[Response V12](response_v12.md)和[Response V13](response_v13.md)；没有新增正式 PDE 结果或合并许可。
 
@@ -93,6 +99,8 @@ P5 whole=1,134.8697960400023 s、RSS采样峰1,621,196,800 B、swap0、退出0/0
 - 旧 Task35d/e 数值核心按函数与依赖选择性复用；dot 的新 hp 报告是设计证据，其中未同步的外部源码不冒充可直接继承的实现。
 
 ## 最终结果入口
+
+- [V21执行回应](response_v21.md)、[V21机器结果](outcomes/records/v21_r10_h67_results_v1.json)、[V21来源索引](outcomes/records/v21_r10_h67_sources/README.md)
 
 - [V20 U1执行回应](response_v20.md)、[U1机器结果](outcomes/records/v20_user_recovery_results_v1.json)、[U1来源索引](outcomes/records/v20_user_recovery_sources/U1/source_artifact_index.json)、[V20原四槽机器失败账](outcomes/records/v20_saved_r10_response_results_v1.json)
 - [V17执行回应](response_v17.md)、[V17机器结果](outcomes/records/v17_r9_p8_scientific_results_v1.json)、[V17轻量来源索引](outcomes/records/v17_r9_p8_sources/README.md)

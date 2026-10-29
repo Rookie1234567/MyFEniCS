@@ -1,0 +1,16 @@
+{
+  "decision": "ALLOW_ONE_FIXED_SLOT",
+  "stage": "T1",
+  "actual_head": "535b23d6274b750ab8a8ffd55faf4048d93c1b2e",
+  "contract_sha256": "4340377a1c96edd3f5ebb0605e647b3569b026f7d8a9c0527902ef0b6c093f6b",
+  "authorization_review": "0dd5555f8795a68c7c9b1dc58387337d98fd76a5",
+  "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/targeted_attempt1",
+  "root_prelaunch_review": {
+    "static_ast_and_diff": true,
+    "inputs_20_bound": true,
+    "expanded_test_nodes": 17,
+    "native_or_driver_before_launch": 0,
+    "scope": "T1 only; expensive FE/solver boundaries replaced in fixtures, real tested readers/writer/main/partition retained"
+  },
+  "recorded_unix": 1793255093.4367018
+}

@@ -1,0 +1,13 @@
+{
+  "decision": "ALLOW_ONE_FIXED_SLOT",
+  "stage": "S",
+  "actual_head": "5796d78b642b58c0963ef47d181f70b96b728786",
+  "contract_sha256": "4340377a1c96edd3f5ebb0605e647b3569b026f7d8a9c0527902ef0b6c093f6b",
+  "authorization_review": "0dd5555f8795a68c7c9b1dc58387337d98fd76a5",
+  "root": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1",
+  "T_qualification": {
+    "path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/preparation/T_qualification.json",
+    "sha256": "5979b22a9d580f17a3075fc0af6a4ddd74c6839b031ded90aa1f7f7fcbf23400"
+  },
+  "recorded_unix": 1793255390.8688796
+}

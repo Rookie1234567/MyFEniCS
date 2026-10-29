@@ -1,0 +1,99 @@
+{
+  "actual_closure_root_indices": [
+    129,
+    130,
+    131,
+    160
+  ],
+  "actual_closure_roots": [
+    {
+      "box_nm": [
+        0.0,
+        15.0,
+        90.0,
+        16.5,
+        20.0,
+        120.0
+      ],
+      "forest_root_index": 129,
+      "inherited_degree": 6,
+      "reason_classification": "actual_forest_conformity_closure"
+    },
+    {
+      "box_nm": [
+        16.5,
+        15.0,
+        90.0,
+        33.5,
+        20.0,
+        120.0
+      ],
+      "forest_root_index": 130,
+      "inherited_degree": 6,
+      "reason_classification": "actual_forest_conformity_closure"
+    },
+    {
+      "box_nm": [
+        33.5,
+        15.0,
+        90.0,
+        50.0,
+        20.0,
+        120.0
+      ],
+      "forest_root_index": 131,
+      "inherited_degree": 6,
+      "reason_classification": "actual_forest_conformity_closure"
+    },
+    {
+      "box_nm": [
+        16.5,
+        15.0,
+        120.0,
+        33.5,
+        20.0,
+        130.0
+      ],
+      "forest_root_index": 160,
+      "inherited_degree": 6,
+      "reason_classification": "actual_forest_conformity_closure"
+    }
+  ],
+  "actual_independent_fe_dofs": 139554,
+  "actual_one_level_root_splits": 5,
+  "actual_space_gate": {
+    "actual": 139554,
+    "checks": {
+      "actual_interior_rows_follow_split_count": true,
+      "actual_split_includes_request": true,
+      "all_leaf_degrees_inherit_p6": true,
+      "degree_plan_pass": true,
+      "entity_constraints_pass": true,
+      "exactly_one_requested_split": true,
+      "requested_root_is_actually_refined": true,
+      "requested_root_only": true,
+      "root_count_180": true,
+      "strict_fe_bounds": true
+    },
+    "lower_exclusive": 118800,
+    "pass": true,
+    "upper_exclusive": 237600
+  },
+  "audit_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/plan_output/plans/v21_r10_h67.audit.json",
+  "audit_sha256": "cad87eb07e637a0b30eabe0c8b65834b3e46ca4f060a0f76b60002573ac7c418",
+  "candidate_id": "v21_r10_h67",
+  "classification": "measured_actual_space_no_pde_solve",
+  "contract_sha256": "4340377a1c96edd3f5ebb0605e647b3569b026f7d8a9c0527902ef0b6c093f6b",
+  "expected_active_cell_interior_rows_from_split_count": 96750,
+  "factorization_performed": false,
+  "official_result": false,
+  "pde_matrix_constructed": false,
+  "plan_path": "/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v21_r10_h67/support/space_attempt1/plan_output/plans/v21_r10_h67.json",
+  "plan_sha256": "38739c012870e3a878aafb764951d771293285fa45d46f535aa078bc5c295fc3",
+  "requested_forest_root_index": 127,
+  "requested_global_cell_id": 67,
+  "schema": "task43.v21.r10_h67.plan-audit-bundle.v1",
+  "selection_enabled": false,
+  "solve_performed": false,
+  "transition_written": false
+}
