@@ -1,6 +1,21 @@
 # Task43 选择性合并清单（待外部审阅）
 
-## V19 当前依赖组：保存数组研究诊断完成，无合并批准
+## V20 当前依赖组：研究检查器未完整验证，无合并资格
+
+| 依赖组 | 本轮文件/行为 | 验证与审阅依赖 |
+|---|---|---|
+| production numerical/core | 无变更；无新PDE | 不提升任何生产默认或科学资格 |
+| reusable runner/watchdog | 共享watchdog/activation不变；仅任务内短launch/snapshot归档 | 4槽CPU/父链/资源/清理实证，不外推通用资格 |
+| checker/benchmark | 新analyze_saved_r10_response.py；依赖未改的V19 helper、固定旧输入和V20合同 | T1/T2局部通过；D1保存功率口径修复后，D2 fixture失败，最终完整路径未合格 |
+| compact evidence/docs | response_v20、机器结果、180项静态几何映射、4槽失败/资源/trace摘录及原件hash | 先核原件/费用/身份，再审修复；不存在两阶科学表可验收 |
+| research-only | checker、小测试、合同和薄launch | 保持研究路径；最终fixture静态修补NOT_RUN，未来需明确新支持授权 |
+| do-not-merge | ignored大NPZ/完整资源流、未验证研究代码的生产提升、整分支 | 无merge approval；禁止accepted10/新h计划/新PDE推断 |
+
+本轮支持4/4，whole合计71.744198859秒；最大采样树RSS443715584 B，CPU1、六线程变量1、task swap0，终态与清理已核。新增PDE、场恢复、新采样和holdout/control数组消费均为0。正式账仍9/10、末槽封存；空间/选择PARTIAL，精度NOT_PASSED，同精度全过程成本NOT_ESTABLISHED，迭代NOT_RUN/NOT_QUALIFIED。没有合并批准。
+
+建议审阅顺序是输入与权限→普通错误及主控遗漏→已修fixture/检查器→后续验证任务，不是获准合入顺序。D2实际运行HEAD为d71f92a604f60990d585e62c9e8f3513629dbae5；交付后改过的fixture字节没有动态证据，见[记录](records/v20_saved_r10_response_results_v1.json)与[回应](../response_v20.md)。
+
+## V19 历史依赖组：保存数组研究诊断完成，无合并批准
 
 | 依赖组 | 本轮变更及依赖 | 验证／建议审查顺序 |
 |---|---|---|

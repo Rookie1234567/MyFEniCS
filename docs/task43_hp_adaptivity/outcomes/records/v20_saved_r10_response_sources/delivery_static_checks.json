@@ -1,0 +1,15 @@
+{
+  "schema": "task43.v20.delivery_static_checks.v1",
+  "checks": {
+    "evidence_json_parsed": 47,
+    "indexed_files_hash_verified_before_this_record": 73,
+    "new_markdown_relative_links": "EXIST",
+    "new_python_AST": "PARSED_NO_IMPORT",
+    "changed_current_docs_and_fixture_diff_check": "PASS",
+    "old_reviews_contracts_failures_core": "UNCHANGED_FROM_REVIEW_BASE",
+    "new_pytest_or_array_execution": 0
+  },
+  "format_exception": "Unchanged raw T1/D2 pytest logs/XML preserve trailing whitespace exactly; not trimmed for git diff-check",
+  "current_GitHub_rendered_view": "NOT_VERIFIED",
+  "wall_seconds": "NOT_MEASURED"
+}

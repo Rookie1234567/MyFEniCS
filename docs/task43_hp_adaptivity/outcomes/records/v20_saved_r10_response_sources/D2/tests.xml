@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.886" timestamp="2026-10-29T08:11:00.178371" hostname="fenics-ws01"><testcase classname="src.test.test_task43_saved_r10_response" name="test_modal_j_replay_reproduces_612_channel_anchor" time="0.461"><failure message="benchmarks.task43_hp_adaptivity.analyze_saved_hp_response.EvidenceError: recomputed J witness differs from saved comparison">tmp_path = PosixPath('/home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/decomposition_recovery1/fixtures/test_modal_j_replay_reproduces0')
+
+    def test_modal_j_replay_reproduces_612_channel_anchor(tmp_path: Path):
+        manifest, paths = _source_fixture(tmp_path)
+        bundle = v20._load_source_bundle(manifest, paths, None, fixture=True)
+        arrays = _sample_arrays(2)
+        field = v20._field_and_j_replay(arrays, bundle, arrays["weights_nm3"], manifest["physics"])
+        for action in ("R9", "R10"):
+            assert field[action]["J_replay"]["value"] == pytest.approx(bundle["anchors"][action]["J_infinity"]["value"])
+            assert len(field[action]["J_replay"]["components"]) == 16
+            assert "HASH_BOUND_MODAL_JSON_METRICS" in field[action]["saved_modal_aggregate_source"]
+        rows, replay = v20._modal_rows(
+            bundle["modal"], bundle["anchors"], bundle["absorption"], bundle["saved_modal_power"]
+        )
+        assert len(rows) == 612
+        evanescent = next(row for row in rows if (row["side"], row["m"], row["n"], row["polarization"]) == ("top", 3, 5, "s"))
+        assert (evanescent["R10_amplitude_real"] ** 2 + evanescent["R10_amplitude_imag"] ** 2) ** 0.5 &gt; 0.0
+        assert evanescent["R10_power_ratio"] == 0.0
+    
+        altered = copy.deepcopy(bundle["modal"])
+        key = ("top", 3, 5, "s")
+        altered["R9"][key]["power_ratio"] = 2.0e-6
+        altered["R10"][key]["power_ratio"] = 3.0e-6
+        anchors = copy.deepcopy(bundle["anchors"])
+        for action, value in (("R9", 2.0e-6), ("R10", 3.0e-6)):
+            anchors[action]["modal_and_power_metrics"]["maximum_individual_channel_power_ratio_absolute_difference"] = value
+        _, changed = v20._modal_rows(
+            altered, anchors, bundle["absorption"], bundle["saved_modal_power"]
+        )
+        assert changed["R9"]["channel_exceedance_count"] == 1
+        assert changed["R10"]["channel_exceedance_count"] == 1
+        assert changed["R9"]["channels_exceeding_threshold"][0]["absolute_difference"] == pytest.approx(2.0e-6)
+    
+        ulp_manifest, ulp_paths = _source_fixture(tmp_path / "ulp")
+        saved_r9 = 0.2513585307019157
+        row_r9 = 0.2513585307019156
+        saved_y6 = 0.25135446618144197
+        row_y6 = 0.251354466181442
+        for role, saved_value, row_value in (
+            ("r9_modal", saved_r9, row_r9),
+            ("r10_modal", saved_r9, row_r9),
+            ("y6_modal", saved_y6, row_y6),
+        ):
+            modal_record = v20._json_file(ulp_paths[role])
+            zero_order = next(
+                row for row in modal_record["orders"]
+                if (row["side"], row["order_m"], row["order_n"], row["polarization"])
+                == ("top", 0, 0, "s")
+            )
+            zero_order["R"] = row_value
+            modal_record["metrics"] = _saved_modal_metrics(saved_value, saved_value)
+            _rewrite_fixture_source(ulp_manifest, ulp_paths, role, modal_record)
+    
+        signed = {
+            "R_total": saved_r9 - saved_y6, "T_total": 0.0,
+            "R00_s": saved_r9 - saved_y6, "R00_p": 0.0,
+            "R00_total": saved_r9 - saved_y6, "A_volume": 0.0,
+        }
+        absolute = {key: abs(value) for key, value in signed.items()}
+    
+        def bind_modal_j(case: dict[str, Any]) -&gt; None:
+            for key, value in signed.items():
+                case["J_infinity"]["components"][f"power.{key}"] = (
+                    value / v19.J_POWER_TOLERANCES[key]
+                )
+            components = case["J_infinity"]["components"]
+            case["J_infinity"]["witness"] = max(components, key=components.__getitem__)
+            case["J_infinity"]["value"] = components[case["J_infinity"]["witness"]]
+            case["modal_and_power_metrics"]["power_absolute_differences"] = absolute
+            case["modal_and_power_metrics"]["maximum_individual_channel_power_ratio_absolute_difference"] = 0.0
+    
+        r9_comparison = v20._json_file(ulp_paths["r9_comparison"])
+        r9_candidate = r9_comparison["modal_and_power_metrics_vs_selection_reference"]["candidate"]
+        bind_modal_j({
+            "J_infinity": r9_comparison["J_infinity"]["candidate"],
+            "modal_and_power_metrics": r9_candidate,
+        })
+        _rewrite_fixture_source(ulp_manifest, ulp_paths, "r9_comparison", r9_comparison)
+    
+        r10_comparison = v20._json_file(ulp_paths["r10_comparison"])
+        r10_comparison["field_metrics_vs_selection_reference"]["parent"] = copy.deepcopy(
+            r9_comparison["field_metrics_vs_selection_reference"]["candidate"]
+        )
+        r10_comparison["J_infinity"]["parent"] = copy.deepcopy(
+            r9_comparison["J_infinity"]["candidate"]
+        )
+        r10_comparison["modal_and_power_metrics_vs_selection_reference"]["parent"] = copy.deepcopy(
+            r9_candidate
+        )
+        bind_modal_j({
+            "J_infinity": r10_comparison["J_infinity"]["candidate"],
+            "modal_and_power_metrics": r10_comparison["modal_and_power_metrics_vs_selection_reference"]["candidate"],
+        })
+        _rewrite_fixture_source(ulp_manifest, ulp_paths, "r10_comparison", r10_comparison)
+    
+        ulp_bundle = v20._load_source_bundle(
+            ulp_manifest, v20._source_paths(ulp_manifest, fixture=True), None, fixture=True,
+        )
+        ulp_arrays = _sample_arrays(2)
+&gt;       ulp_replay = v20._field_and_j_replay(
+            ulp_arrays, ulp_bundle, ulp_arrays["weights_nm3"], ulp_manifest["physics"],
+        )
+
+src/test/test_task43_saved_r10_response.py:551: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+benchmarks/task43_hp_adaptivity/analyze_saved_r10_response.py:1284: in _field_and_j_replay
+    j_record = v19._replay_j(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+p5 = {'Y6_1_E': array([[0.+0.j, 0.+0.j, 0.+0.j],
+       [0.+0.j, 0.+0.j, 0.+0.j],
+       [0.+0.j, 0.+0.j, 0.+0.j],
+       [...1.25,  1.25,  1.25,  1.25,  1.25,  1.25,  1.25,  1.25, 16.25,
+       16.25, 16.25, 16.25, 16.25, 16.25, 16.25, 16.25])}
+action_e = array([[1.+0.j, 0.+0.j, 0.+0.j],
+       [1.+0.j, 0.+0.j, 0.+0.j],
+       [1.+0.j, 0.+0.j, 0.+0.j],
+       [1.+0.j, 0.+...j, 0.+0.j, 0.+0.j],
+       [1.+0.j, 0.+0.j, 0.+0.j],
+       [1.+0.j, 0.+0.j, 0.+0.j],
+       [1.+0.j, 0.+0.j, 0.+0.j]])
+action_curl = array([[0.+0.j, 0.+0.j, 0.+0.j],
+       [0.+0.j, 0.+0.j, 0.+0.j],
+       [0.+0.j, 0.+0.j, 0.+0.j],
+       [0.+0.j, 0.+...j, 0.+0.j, 0.+0.j],
+       [0.+0.j, 0.+0.j, 0.+0.j],
+       [0.+0.j, 0.+0.j, 0.+0.j],
+       [0.+0.j, 0.+0.j, 0.+0.j]])
+action_modal = {('bottom', -4, -8, 'p'): {'R': 0.0, 'T': 0.0, 'modal_power_code_units': 0.0, 'order_m': -4, ...}, ('bottom', -4, -8, ...er_m': -4, ...}, ('bottom', -4, -7, 's'): {'R': 0.0, 'T': 0.0, 'modal_power_code_units': 0.0, 'order_m': -4, ...}, ...}
+reference_modal = {('bottom', -4, -8, 'p'): {'R': 0.0, 'T': 0.0, 'modal_power_code_units': 0.0, 'order_m': -4, ...}, ('bottom', -4, -8, ...er_m': -4, ...}, ('bottom', -4, -7, 's'): {'R': 0.0, 'T': 0.0, 'modal_power_code_units': 0.0, 'order_m': -4, ...}, ...}
+action_abs = 0.0, reference_abs = 0.0
+comparison_case = {'J_infinity': {'components': {'amplitude.bottom_p': 0.0, 'amplitude.bottom_s': 0.0, 'amplitude.top_p': 0.0, 'amplitud..._reference': {'A_volume': 0.0, 'R00_p': 0.0, 'R00_s': 4.064520473745503e-06, 'R00_total': 4.064520473745503e-06, ...}}}
+reference_power = {'A_volume': 0.0, 'R00_p': 0.0, 'R00_s': 0.25135446618144197, 'R00_total': 0.25135446618144197, ...}
+field_ratios = {'E_scattered_code': 11.832159566199232, 'E_total_code': 11.832159566199232, 'G': 11.832159566199232, 'H_scattered_A_per_m': 0.0, ...}
+
+    def _replay_j(
+        p5: dict[str, np.ndarray], action_e: np.ndarray, action_curl: np.ndarray,
+        action_modal: dict[tuple[str, int, int, str], dict[str, Any]],
+        reference_modal: dict[tuple[str, int, int, str], dict[str, Any]],
+        action_abs: float, reference_abs: float, comparison_case: dict[str, Any],
+        reference_power: dict[str, Any], field_ratios: dict[str, float],
+    ) -&gt; dict[str, Any]:
+        action_power = _modal_aggregate(action_modal, action_abs)
+        ref_power = _modal_aggregate(reference_modal, reference_abs)
+        channel_diffs = {
+            key: float(action_modal[key]["power_ratio"]) - float(reference_modal[key]["power_ratio"])
+            for key in CHANNEL_KEYS
+        }
+        saved_power_delta = {
+            key: float(value) for key, value in comparison_case["signed_observables"]
+            ["aggregate_signed_candidate_minus_reference"].items()
+        }
+        if set(saved_power_delta) != set(action_power):
+            raise EvidenceError("saved aggregate power inventory differs from the fixed J observables")
+        direct_power_delta = {key: action_power[key] - ref_power[key] for key in action_power}
+        direct_aggregate_replay = {
+            key: _close(direct_power_delta[key], saved_power_delta[key], f"modal_sum.{key}")
+            for key in direct_power_delta
+        }
+        power_delta = saved_power_delta
+        components = {
+            f"power.{key}": _component_scale(f"power.{key}", value)
+            for key, value in power_delta.items()
+        }
+        components["power.max_individual_channel"] = max(abs(v) for v in channel_diffs.values()) / J_CHANNEL_POWER_TOLERANCE
+        groups: dict[str, list[float]] = {}
+        for key in CHANNEL_KEYS:
+            side, _, _, pol = key
+            amp_delta = _complex_pair(action_modal[key], "outgoing_amplitude_at_boundary") - _complex_pair(reference_modal[key], "outgoing_amplitude_at_boundary")
+            groups.setdefault(f"{side}_{pol}", []).append(abs(amp_delta) ** 2)
+        for group, squared in groups.items():
+            components[f"amplitude.{group}"] = math.sqrt(math.fsum(squared)) / J_AMPLITUDE_TOLERANCE
+        field_to_j = {
+            "E_total_code": "field.E_total_code",
+            "E_scattered_code": "field.E_scattered_code",
+            "H_total_A_per_m": "field.H_total_A_per_m",
+            "H_scattered_A_per_m": "field.H_scattered_A_per_m",
+            "G": "field.G",
+        }
+        for metric, output_key in field_to_j.items():
+            components[output_key] = float(field_ratios[metric]) / 1.0e-4
+        saved_components = comparison_case["J_infinity"]["components"]
+        if set(components) != set(saved_components):
+            raise EvidenceError("recomputed J component inventory differs from saved comparison")
+        replay = {key: _close(components[key], float(saved_components[key]), f"J.{key}") for key in components}
+        witness = max(components, key=components.__getitem__)
+        saved_j = comparison_case["J_infinity"]
+        if witness != saved_j["witness"]:
+&gt;           raise EvidenceError("recomputed J witness differs from saved comparison")
+E           benchmarks.task43_hp_adaptivity.analyze_saved_hp_response.EvidenceError: recomputed J witness differs from saved comparison
+
+benchmarks/task43_hp_adaptivity/analyze_saved_hp_response.py:1135: EvidenceError</failure></testcase></testsuite></testsuites>

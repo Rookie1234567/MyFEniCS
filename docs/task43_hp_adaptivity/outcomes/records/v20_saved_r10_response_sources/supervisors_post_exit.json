@@ -1,0 +1,41 @@
+{
+  "recorded_epoch_ns": 1793233039328271803,
+  "host_visible_checks": [
+    {
+      "stage": "T1",
+      "identity": {
+        "pid": 3674713,
+        "ppid": 1,
+        "start_ticks": 315688270
+      },
+      "same_process_present": false
+    },
+    {
+      "stage": "T2",
+      "identity": {
+        "pid": 3675743,
+        "ppid": 1,
+        "start_ticks": 315705755
+      },
+      "same_process_present": false
+    },
+    {
+      "stage": "D1",
+      "identity": {
+        "pid": 3676070,
+        "ppid": 1,
+        "start_ticks": 315712303
+      },
+      "same_process_present": false
+    },
+    {
+      "stage": "D2",
+      "identity": {
+        "pid": 3678129,
+        "ppid": 1,
+        "start_ticks": 315764361
+      },
+      "same_process_present": false
+    }
+  ]
+}

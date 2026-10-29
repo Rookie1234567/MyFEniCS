@@ -1,0 +1,11 @@
+{
+  "failures": [
+    {
+      "action": "D2 root excerpt copy",
+      "failure": "FileNotFoundError: fixture ulp/r9_comparison.json; actual path contains sources/",
+      "effect": "No output or run produced; corrected only static JSON path",
+      "cost": "NOT_MEASURED"
+    }
+  ],
+  "no_dynamic_retry": true
+}

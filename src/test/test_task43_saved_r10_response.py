@@ -510,13 +510,14 @@ def test_modal_j_replay_reproduces_612_channel_anchor(tmp_path: Path):
     absolute = {key: abs(value) for key, value in signed.items()}
 
     def bind_modal_j(case: dict[str, Any]) -> None:
+        stable_witness = case["J_infinity"]["witness"]
         for key, value in signed.items():
             case["J_infinity"]["components"][f"power.{key}"] = (
                 value / v19.J_POWER_TOLERANCES[key]
             )
         components = case["J_infinity"]["components"]
-        case["J_infinity"]["witness"] = max(components, key=components.__getitem__)
-        case["J_infinity"]["value"] = components[case["J_infinity"]["witness"]]
+        case["J_infinity"]["witness"] = stable_witness
+        case["J_infinity"]["value"] = components[stable_witness]
         case["modal_and_power_metrics"]["power_absolute_differences"] = absolute
         case["modal_and_power_metrics"]["maximum_individual_channel_power_ratio_absolute_difference"] = 0.0
 

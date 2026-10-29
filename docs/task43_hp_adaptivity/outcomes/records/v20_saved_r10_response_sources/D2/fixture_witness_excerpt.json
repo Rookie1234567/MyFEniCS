@@ -1,0 +1,13 @@
+{
+  "path": "benchmarks/artifacts/task43/v20_saved_r10_response/support/decomposition_recovery1/fixtures/test_modal_j_replay_reproduces0/ulp/sources/r9_comparison.json",
+  "sha256": "304587ba1c2644940964b8395fc56d6a617990c111b0b6df11bdeb5ee3042e4a",
+  "saved_witness": "field.E_scattered_code",
+  "equal_max_components": [
+    "field.E_scattered_code",
+    "field.E_total_code",
+    "field.G"
+  ],
+  "value": 118321.59566199232,
+  "actual_fixed_replay_first": "field.E_total_code",
+  "cause": "bind_modal_j recomputed max after sorted-key JSON round-trip; tie order now chose E_scattered before E_total. Real _replay_j uses fixed field insertion order. This is fixture construction error, not a measured scientific gate failure."
+}

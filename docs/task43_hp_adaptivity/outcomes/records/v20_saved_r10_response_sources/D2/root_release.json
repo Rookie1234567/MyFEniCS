@@ -1,0 +1,11 @@
+{
+  "decision": "ALLOW_ONE_FIXED_SLOT",
+  "stage": "D2",
+  "actual_head": "d71f92a604f60990d585e62c9e8f3513629dbae5",
+  "contract_sha256": "d087e39b058d718f01da7dbd3df0b7c44b2f458c67b2535a8f10dc6c21f43efd",
+  "authorization_review": "0c6158cb96b3ba320d5bd3282a3c18f64c5a08c9",
+  "reason": "D1 ordinary checker saved aggregate vs resummed powers source bug; root read full final trace/resources and verified input hashes; same-worker nodes9/10/11 then both orders, no tolerance change",
+  "D1_decision_sha256": "6363b5a3c762fc99aafc8ad0c85d8aa4fdf0c6975020e85539ddc697f73550ce",
+  "prior_support_calls": 3,
+  "prior_whole_seconds": 57.281584424
+}

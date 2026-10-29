@@ -1,0 +1,11 @@
+{
+  "scope": "test fixture only; no shared checker/math change",
+  "cause": "JSON sorted-key tie-order witness mismatch",
+  "fix": "Keep original synthetic fixture witness rather than reselect max from a reordered dict; updated power components remain below tied field maximum",
+  "source_test_at_D2": "9f9ded5cc5ab672d1e1b10b07aa25fc12fe28cb3b1f5f60d3f7f8a7120cff481",
+  "source_test_at_delivery": "e72ecce24f57e4b11f9632b47383008407139515e98a2a3f92a34d8dc8d2f0ed",
+  "validation": "AST_PARSED_ONLY; PYTEST_NOT_RUN; no new slot authorized",
+  "static_review": "main read exact diff and synthetic failure JSON; no probe/project import",
+  "root_accountability": "Missed fixture tie-order dependence before D2. Earlier label typo fixed statically before D2.",
+  "elapsed_seconds": "NOT_MEASURED"
+}
