@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+# Task43 V21: one fixed R10_H67 slot, never advance another stage.
+set -euo pipefail
+repo=/home/fenics/Projects/NN-Lab-V2
+prefix="$repo/benchmarks/artifacts/task43/v21_r10_h67"
+contract="$repo/docs/task43_hp_adaptivity/outcomes/records/v21_r10_h67_contract.json"
+stage=${1:?fixed stage required}
+case "$stage" in
+  T1) relative=support/targeted_attempt1; work=270; whole=300 ;;
+  T2) relative=support/targeted_recovery1; work=270; whole=300 ;;
+  T3) relative=support/targeted_recovery2; work=270; whole=300 ;;
+  S) relative=support/space_attempt1; work=1740; whole=1800 ;;
+  F1) relative=formal/R10_H67_attempt1; work=6900; whole=7200 ;;
+  F2) relative=formal/R10_H67_attempt2; work=6900; whole=7200 ;;
+  C) relative=support/comparison_attempt1; work=2340; whole=2400 ;;
+  E1) relative=support/engineering_recovery1; work=1740; whole=1800 ;;
+  E2) relative=support/engineering_recovery2; work=1740; whole=1800 ;;
+  *) exit 64 ;;
+esac
+root="$prefix/$relative"
+cap=8589934592
+[[ "$stage" != F1 && "$stage" != F2 ]] || cap=34359738368
+if [[ ${2:-} != --supervise ]]; then
+  started=$(python3 -c 'import time; print(time.monotonic_ns())')
+  for p in "$repo/benchmarks" "$repo/benchmarks/artifacts" "$repo/benchmarks/artifacts/task43" "$prefix" "$(dirname "$root")" "$root"; do
+    [[ ! -L "$p" ]] || { echo "REFUSED symlink: $p" >&2; exit 90; }
+  done
+  [[ ! -e "$root" ]] || { echo "REFUSED existing unique root: $root" >&2; exit 90; }
+  mkdir -p -- "$(dirname "$root")"
+  mkdir -- "$root"
+  printf '%s\n' "$started" > "$root/invocation_monotonic_ns.txt"
+  nohup setsid env --default-signal=INT --default-signal=TERM --default-signal=HUP taskset -c 1 bash "$prefix/launch/stage_launch.sh" "$stage" --supervise "$started" > "$root/supervisor.log" 2>&1 < /dev/null &
+  printf 'V21 %s launched supervisor PID=%s root=%s\n' "$stage" "$!" "$root"
+  exit 0
+fi
+started=${3:?original invocation time required}
+watchdog_pid=
+watchdog_ticks=
+watchdog_code=
+received_signal=
+waited=0
+proc_ticks() { python3 - "$1" <<'PY'
+import pathlib,sys
+print(pathlib.Path('/proc/'+sys.argv[1]+'/stat').read_text().rsplit(')',1)[1].split()[19])
+PY
+}
+finish() {
+  code=$?
+  trap - EXIT TERM INT HUP
+  set +e
+  if [[ -n "$watchdog_pid" && "$waited" == 0 ]]; then
+    actual=$(proc_ticks "$watchdog_pid" 2>/dev/null)
+    if [[ "$actual" == "$watchdog_ticks" ]]; then kill -TERM "$watchdog_pid"; fi
+    wait "$watchdog_pid"; watchdog_code=$?; waited=1
+  fi
+  python3 - "$root" "$stage" "$started" "$whole" "$code" "$watchdog_code" "$received_signal" <<'PY'
+import json,os,pathlib,sys,time
+r=pathlib.Path(sys.argv[1]); elapsed=(time.monotonic_ns()-int(sys.argv[3]))/1e9
+d=dict(stage=sys.argv[2],entry_elapsed_seconds=elapsed,whole_limit_seconds=int(sys.argv[4]),
+       supervisor_exit_code=int(sys.argv[5]),watchdog_exit_code=int(sys.argv[6]) if sys.argv[6] else None,
+       received_signal=sys.argv[7] or None,qualification='REQUIRES_ROOT_REVIEW',whole_limit_pass=elapsed<=int(sys.argv[4]))
+p=r/'launcher_terminal.json'; t=p.with_suffix('.tmp');t.write_text(json.dumps(d,indent=2)+'\n');os.replace(t,p)
+PY
+  exit "$code"
+}
+trap finish EXIT
+trap 'received_signal=TERM; exit 143' TERM
+trap 'received_signal=INT; exit 130' INT
+trap 'received_signal=HUP; exit 129' HUP
+cd "$repo"
+python3 - "$root/supervisor_identity.json" "$BASHPID" <<'PY'
+import json,os,pathlib,sys
+p=pathlib.Path(sys.argv[1]); pid=int(sys.argv[2]);s=pathlib.Path(f'/proc/{pid}/stat').read_text().rsplit(')',1)[1].split()
+p.write_text(json.dumps(dict(pid=pid,ppid=int(s[1]),start_ticks=int(s[19])))+'\n')
+PY
+[[ $(git branch --show-current) == task43_hp_adaptivity ]]
+git status --porcelain=v1 --untracked-files=all > "$root/source_status.txt"
+git diff --binary HEAD > "$root/source_diff.patch"
+[[ ! -s "$root/source_status.txt" ]]
+source scripts/activate_task40_phi90_pord64.sh
+export PHYSICAL_NATIVE_CAPACITY=task43_hp_adaptivity_resource_v1
+export PHYSICAL_NATIVE_NODE_CAP_BYTES="$cap"
+export TASK43_V21_RUN_ROOT="$root" TASK43_V21_STAGE="$stage"
+export TASK43_V11_ATTEMPT_ROOT="$root" TASK43_V11_TRACE_PREFIX="$root/strace/sched"
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
+export BLIS_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1
+case "$stage" in
+  T1|T2|T3)
+    mapfile -t selectors < <(python3 - "$contract" "$stage" "$prefix" <<'PYSELECT'
+import json,sys,pathlib
+c=json.load(open(sys.argv[1]))
+if sys.argv[2]=='T1': selectors=c['tests']['selectors']
+else: selectors=json.loads((pathlib.Path(sys.argv[3])/'preparation'/f'{sys.argv[2]}_root_release.json').read_text())['selectors']
+print('\n'.join(selectors))
+PYSELECT
+)
+    limit=6; [[ "$stage" != T1 ]] || limit=20
+    (( ${#selectors[@]} > 0 && ${#selectors[@]} <= limit ))
+    argv=(python -u -m pytest -v -rA --junitxml "$root/tests.xml" --basetemp "$root/fixtures" "${selectors[@]}") ;;
+  *) argv=(python -u -m benchmarks.task43_hp_adaptivity.r10_h67_diagnostic --contract "$contract" --stage "$stage" --stage-root "$root") ;;
+esac
+wrapper='set -euo pipefail; export HWLOC_COMPONENTS=-x86 OMPI_MCA_pml=ob1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1; exec taskset -c 1 strace -D -ff -ttt -k -e trace=sched_setaffinity,sched_getaffinity -o "$TASK43_V11_TRACE_PREFIX" "$@"'
+mkdir -- "$root/strace"
+python3 "$prefix/launch/snapshot.py" "$root" "$stage" "$contract" "$wrapper" "${argv[@]}"
+elapsed=$(( ($(python3 -c 'import time; print(time.monotonic_ns())') - started) / 1000000000 ))
+remaining=$((work - elapsed))
+(( remaining > 0 ))
+taskset -c 1 python -u -m benchmarks.subreaper_watchdog --directory "$root/watchdog" \
+  --wall-seconds "$remaining" --interval 0.25 --grace-seconds 2 \
+  --phase-path "$root/watchdog/workflow_phase.json" -- \
+  bash -c "$wrapper" task43-v21-worker "${argv[@]}" > "$root/watchdog_stdout.json" 2> "$root/watchdog_stderr.txt" &
+watchdog_pid=$!
+watchdog_ticks=$(proc_ticks "$watchdog_pid")
+set +e
+wait "$watchdog_pid"
+watchdog_code=$?
+waited=1
+set -e
+printf '%s\n' "$watchdog_code" > "$root/watchdog_exit_code.txt"
+exit "$watchdog_code"

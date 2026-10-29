@@ -558,6 +558,367 @@ def _validate_accepted_candidate_inputs(
     return plan, plan_sha, identity
 
 
+def _load_v21_h67_f_context(
+    *,
+    contract_path: Path,
+    stage: str,
+    stage_root: Path,
+    run_root: Path,
+    candidate_plan_path: Path,
+) -> tuple[dict[str, Any], str, dict[str, Any], dict[str, str], dict[str, str]]:
+    """Bind F1/F2 to the completed V21 S authority without accepted-parent routing."""
+
+    from benchmarks.task43_hp_adaptivity.r10_h67_diagnostic import (
+        input_snapshot,
+        load_contract,
+        require_snapshot_equal,
+        slot_root,
+        source_snapshot,
+    )
+
+    contract, contract_sha256 = load_contract(
+        contract_path, stage=stage, stage_root=stage_root
+    )
+    expected_root = slot_root(contract, stage) / "run"
+    if Path(run_root).resolve() != expected_root.resolve():
+        raise ValueError("V21 H67 formal run root differs from the selected fixed stage")
+    expected_plan = (
+        slot_root(contract, "S")
+        / "plan_output/plans/v21_r10_h67.json"
+    )
+    if Path(candidate_plan_path).resolve() != expected_plan.resolve():
+        raise ValueError("V21 H67 formal stage must consume the unique S plan")
+
+    source_before = source_snapshot(contract)
+    inputs_before = input_snapshot(contract)
+    release_path = Path(stage_root) / "root_release.json"
+    if release_path.is_symlink() or not release_path.is_file():
+        raise FileNotFoundError("V21 formal stage lacks its root-reviewed release")
+    release = json.loads(release_path.read_text(encoding="utf-8"))
+    if (
+        release.get("decision") != "ALLOW_ONE_FIXED_SLOT"
+        or release.get("stage") != stage
+        or release.get("contract_sha256") != contract_sha256
+        or Path(str(release.get("root", ""))).resolve() != Path(stage_root).resolve()
+    ):
+        raise ValueError("V21 formal root release does not authorize this stage")
+
+    product_paths = {
+        "space_plan": slot_root(contract, "S")
+        / "plan_output/plans/v21_r10_h67.json",
+        "space_audit": slot_root(contract, "S")
+        / "plan_output/plans/v21_r10_h67.audit.json",
+        "space_bundle": slot_root(contract, "S") / "plan_output/plan_audit.json",
+        "space_terminal": slot_root(contract, "S") / "stage_terminal.json",
+        "space_root_audit": slot_root(contract, "S") / "root_independent_audit.json",
+    }
+    products = release.get("products")
+    expected_product_keys = {
+        "space_plan",
+        "space_audit",
+        "space_bundle",
+        "space_terminal",
+        "space_watchdog",
+        "space_launcher",
+        "space_root_audit",
+    }
+    if not isinstance(products, Mapping) or set(products) != expected_product_keys:
+        raise ValueError("V21 F root release does not bind the complete S product set")
+    normalized_products: dict[str, dict[str, str]] = {}
+    space_root_resolved = slot_root(contract, "S").resolve()
+    for name, product in products.items():
+        if not isinstance(product, Mapping) or set(product) != {"path", "sha256"}:
+            raise ValueError(f"V21 F release product {name} must bind path and SHA256")
+        product_path = Path(str(product["path"]))
+        if not product_path.is_absolute() or product_path.is_symlink() or not product_path.is_file():
+            raise FileNotFoundError(f"V21 F release product is missing or unsafe: {name}")
+        resolved_product = product_path.resolve()
+        if resolved_product != space_root_resolved and space_root_resolved not in resolved_product.parents:
+            raise ValueError(f"V21 F release product escapes the completed S root: {name}")
+        if name in product_paths and resolved_product != product_paths[name].resolve():
+            raise ValueError(f"V21 F release product path differs from the fixed S path: {name}")
+        digest = _sha256_file(resolved_product)
+        if digest != product["sha256"]:
+            raise ValueError(f"V21 completed S product changed before F: {name}")
+        normalized_products[name] = {"path": str(resolved_product), "sha256": digest}
+    root_audit = json.loads(
+        Path(normalized_products["space_root_audit"]["path"]).read_text(encoding="utf-8")
+    )
+    admission = root_audit.get("formal_admission")
+    root_checks = root_audit.get("checks")
+    if (
+        root_audit.get("status") != "QUALIFIED_FOR_F1"
+        or not isinstance(admission, Mapping)
+        or admission.get("pass") is not True
+        or not isinstance(root_checks, Mapping)
+        or set(root_checks) != {"source", "input", "trace", "resource", "cleanup"}
+        or any(value is not True for value in root_checks.values())
+    ):
+        raise ValueError("V21 S root audit did not qualify this formal stage")
+
+    space_root = slot_root(contract, "S")
+    space_release_path = space_root / "root_release.json"
+    space_terminal_path = space_root / "stage_terminal.json"
+    space_bundle_path = space_root / "plan_output/plan_audit.json"
+    space_audit_path = space_root / "plan_output/plans/v21_r10_h67.audit.json"
+    for path in (
+        space_release_path,
+        space_terminal_path,
+        space_bundle_path,
+        space_audit_path,
+        expected_plan,
+    ):
+        if path.is_symlink() or not path.is_file():
+            raise FileNotFoundError(f"V21 H67 F source is missing or symlinked: {path}")
+    space_release = json.loads(space_release_path.read_text(encoding="utf-8"))
+    terminal = json.loads(space_terminal_path.read_text(encoding="utf-8"))
+    bundle = json.loads(space_bundle_path.read_text(encoding="utf-8"))
+    audit = json.loads(space_audit_path.read_text(encoding="utf-8"))
+    plan = json.loads(expected_plan.read_text(encoding="utf-8"))
+    plan_sha256 = _sha256_file(expected_plan)
+    audit_sha256 = _sha256_file(space_audit_path)
+    if (
+        space_release.get("decision") != "ALLOW_ONE_FIXED_SLOT"
+        or space_release.get("stage") != "S"
+        or space_release.get("contract_sha256") != contract_sha256
+        or terminal.get("stage") != "S"
+        or terminal.get("status") != "COMPLETE"
+        or terminal.get("candidate_id") != "v21_r10_h67"
+        or terminal.get("plan_sha256") != plan_sha256
+        or terminal.get("audit_sha256") != audit_sha256
+        or bundle.get("candidate_id") != "v21_r10_h67"
+        or bundle.get("contract_sha256") != contract_sha256
+        or bundle.get("plan_sha256") != plan_sha256
+        or bundle.get("audit_sha256") != audit_sha256
+        or bundle.get("actual_space_gate", {}).get("pass") is not True
+        or audit.get("actual_independent_fe_gate", {}).get("pass") is not True
+        or audit.get("selection_enabled") is not False
+        or audit.get("transition_written") is not False
+        or plan.get("selection_enabled") is not False
+        or plan.get("transition_written") is not False
+    ):
+        raise ValueError("V21 H67 S terminal, plan, bundle and audit are inconsistent")
+    candidate = plan.get("task43_candidate", {})
+    provenance = candidate.get("provenance", {})
+    seed = provenance.get("requested_h_seed", {})
+    if (
+        candidate.get("candidate_id") != "v21_r10_h67"
+        or candidate.get("action") != "h_refine"
+        or seed.get("global_cell_id") != 67
+        or seed.get("forest_root_index") != 127
+        or seed.get("box_nm") != [16.5, 10.0, 90.0, 33.5, 15.0, 120.0]
+        or seed.get("split") != "one_level_1_to_8"
+        or seed.get("maximum_level") != 1
+        or provenance.get("diagnostic_parent", {}).get("selection_status")
+        != "REJECTED"
+        or provenance.get("accepted_state", {}).get("selection_status")
+        != "ACCEPTED"
+        or provenance.get("selection_enabled") is not False
+        or provenance.get("transition_written") is not False
+    ):
+        raise ValueError("V21 H67 S plan does not preserve the frozen rejected-parent action")
+    source_binding = {
+        "stage": stage,
+        "contract_path": str(Path(contract_path).resolve()),
+        "contract_sha256": contract_sha256,
+        "acceptance_contract_path": str(
+            (Path(__file__).resolve().parents[2]
+             / contract["inputs"]["round1_acceptance_contract"]["path"]).resolve()
+        ),
+        "acceptance_contract_sha256": str(
+            contract["inputs"]["round1_acceptance_contract"]["sha256"]
+        ),
+        "run_root": str(Path(run_root).resolve()),
+        "space_root": str(space_root.resolve()),
+        "space_plan_path": str(expected_plan.resolve()),
+        "space_plan_sha256": plan_sha256,
+        "space_audit_path": str(space_audit_path.resolve()),
+        "space_audit_sha256": audit_sha256,
+        "space_bundle_path": str(space_bundle_path.resolve()),
+        "space_bundle_sha256": _sha256_file(space_bundle_path),
+        "space_terminal_path": str(space_terminal_path.resolve()),
+        "space_terminal_sha256": _sha256_file(space_terminal_path),
+        "space_actual_independent_fe_dofs": int(
+            bundle["actual_independent_fe_dofs"]
+        ),
+        "space_dofs": dict(audit["dofs"]),
+        "space_detail": dict(audit["space_authority_detail"]),
+        "space_forest": dict(audit["forest"]),
+        "space_degree_audit": dict(audit["degrees"]),
+        "space_root_catalog_sha256": plan["expected_forest"]["root_catalog_sha256"],
+        "space_leaf_catalog_sha256": plan["expected_forest"]["leaf_catalog_sha256"],
+        "space_products": normalized_products,
+        "space_root_audit": root_audit,
+        "selection_enabled": False,
+        "transition_written": False,
+    }
+    return contract, contract_sha256, source_binding, source_before, inputs_before
+
+
+def _validate_v21_h67_candidate_inputs(
+    *,
+    candidate_plan_path: Path,
+    candidate_id: str,
+    acceptance_contract_path: Path,
+    v21_source_binding: Mapping[str, Any],
+) -> tuple[dict[str, Any], str, dict[str, Any]]:
+    """Bind one pending H67 plan to S while keeping R10 explicitly diagnostic."""
+
+    plan_path = Path(candidate_plan_path).resolve()
+    expected_plan = Path(str(v21_source_binding["space_plan_path"])).resolve()
+    if plan_path != expected_plan or candidate_id != "v21_r10_h67":
+        raise ValueError("V21 candidate identity or plan path differs from S")
+    if _sha256_file(plan_path) != v21_source_binding["space_plan_sha256"]:
+        raise ValueError("V21 candidate plan bytes differ from completed S")
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    candidate = plan.get("task43_candidate", {})
+    provenance = candidate.get("provenance", {})
+    accepted = provenance.get("accepted_state", {})
+    diagnostic = provenance.get("diagnostic_parent", {})
+    if (
+        candidate.get("candidate_id") != candidate_id
+        or candidate.get("action") != "h_refine"
+        or plan.get("cell_interior_degree") != 6
+        or plan.get("trace_degree") != 6
+        or plan.get("variable_trace_from_cell_degrees") is not True
+        or len(plan.get("cell_interior_degrees", []))
+        != int(plan.get("expected_forest", {}).get("leaf_cell_count", -1))
+        or accepted.get("candidate_id") != "round9_p_up"
+        or accepted.get("selection_status") != "ACCEPTED"
+        or diagnostic.get("candidate_id") != "round10_p_up"
+        or diagnostic.get("selection_status") != "REJECTED"
+        or provenance.get("selection_enabled") is not False
+        or provenance.get("transition_written") is not False
+    ):
+        raise ValueError("V21 candidate plan does not preserve accepted9 and rejected R10 roles")
+    acceptance_path = Path(acceptance_contract_path).resolve()
+    if not acceptance_path.is_file() or acceptance_path.is_symlink():
+        raise FileNotFoundError("V21 round-one acceptance contract is missing or symlinked")
+    acceptance_sha = _sha256_file(acceptance_path)
+    if (
+        acceptance_path != Path(str(v21_source_binding["acceptance_contract_path"])).resolve()
+        or acceptance_sha != str(v21_source_binding.get("acceptance_contract_sha256", ""))
+    ):
+        raise ValueError("V21 acceptance contract differs from its frozen source role")
+    if provenance.get("acceptance_contract_sha256") not in (None, acceptance_sha):
+        raise ValueError("V21 plan carries a different round-one contract hash")
+    identity = {
+        "candidate_id": candidate_id,
+        "action": "h_refine",
+        "plan_path": str(plan_path),
+        "plan_sha256": str(v21_source_binding["space_plan_sha256"]),
+        "parent_candidate_id": "round10_p_up",
+        "parent_selection_status": "REJECTED",
+        "accepted_state_candidate_id": "round9_p_up",
+        "accepted_state_selection_status": "ACCEPTED",
+        "diagnostic_parent_record_sha256": diagnostic.get("record_sha256"),
+        "diagnostic_parent_storage_sha256": diagnostic.get("storage_sha256"),
+        "accepted_state_selection_sha256": accepted.get("selection_sha256"),
+        "acceptance_contract_sha256": acceptance_sha,
+        "v21_contract_sha256": v21_source_binding["contract_sha256"],
+        "space_plan_sha256": v21_source_binding["space_plan_sha256"],
+        "selection_enabled": False,
+        "transition_written": False,
+    }
+    return plan, str(v21_source_binding["space_plan_sha256"]), identity
+
+
+def _v21_h67_actual_space_audit(
+    *,
+    plan: Mapping[str, Any],
+    plan_identity: Mapping[str, Any],
+    actual_mesh_identity: Mapping[str, Any],
+    source_binding: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Require F's resolved mesh catalogs to equal the reviewed S authority."""
+
+    expected_forest = source_binding.get("space_forest", {})
+    expected_leaf_count = int(expected_forest.get("actual_leaf_cell_count", -1))
+    checks = {
+        "unique_180_root_parent": int(plan_identity.get("root_cell_count", -1)) == 180,
+        "same_s_leaf_count": int(plan_identity.get("leaf_cell_count", -1))
+        == expected_leaf_count,
+        "same_root_catalog": plan_identity.get("root_catalog_sha256")
+        == source_binding.get("space_root_catalog_sha256"),
+        "same_leaf_catalog": plan_identity.get("leaf_catalog_sha256")
+        == source_binding.get("space_leaf_catalog_sha256"),
+        "one_requested_h_root": int(plan_identity.get("marked_root_count", -1)) == 1,
+        "p6_trace_and_interior": int(plan.get("trace_degree", -1)) == 6
+        and int(plan.get("cell_interior_degree", -1)) == 6
+        and plan.get("variable_trace_from_cell_degrees") is True,
+        "selection_and_transition_disabled": plan.get("selection_enabled") is False
+        and plan.get("transition_written") is False,
+        "mesh_catalog_matches_s": actual_mesh_identity.get("root_catalog_sha256")
+        == source_binding.get("space_root_catalog_sha256")
+        and actual_mesh_identity.get("leaf_catalog_sha256")
+        == source_binding.get("space_leaf_catalog_sha256"),
+    }
+    return {
+        "schema": "task43.v21.r10_h67.actual_f_space_audit.v1",
+        "source_plan_sha256": source_binding.get("space_plan_sha256"),
+        "actual_plan_sha256": plan_identity.get("plan_sha256"),
+        "expected_root_catalog_sha256": source_binding.get(
+            "space_root_catalog_sha256"
+        ),
+        "actual_root_catalog_sha256": plan_identity.get("root_catalog_sha256"),
+        "expected_leaf_catalog_sha256": source_binding.get(
+            "space_leaf_catalog_sha256"
+        ),
+        "actual_leaf_catalog_sha256": plan_identity.get("leaf_catalog_sha256"),
+        "expected_leaf_count": expected_leaf_count,
+        "actual_leaf_count": int(plan_identity.get("leaf_cell_count", -1)),
+        "actual_mesh_identity": dict(actual_mesh_identity),
+        "checks": checks,
+        "pass": all(checks.values()),
+        "selection_enabled": False,
+        "transition_written": False,
+    }
+
+
+def _verify_v21_h67_space_products(
+    source_binding: Mapping[str, Any],
+) -> dict[str, dict[str, str]]:
+    products = source_binding.get("space_products")
+    expected = {
+        "space_plan",
+        "space_audit",
+        "space_bundle",
+        "space_terminal",
+        "space_watchdog",
+        "space_launcher",
+        "space_root_audit",
+    }
+    if not isinstance(products, Mapping) or set(products) != expected:
+        raise ValueError("V21 H67 F source binding lacks the exact seven S products")
+    verified: dict[str, dict[str, str]] = {}
+    for role, item in products.items():
+        if not isinstance(item, Mapping) or set(item) != {"path", "sha256"}:
+            raise ValueError(f"V21 H67 S product binding is malformed: {role}")
+        path = Path(str(item["path"]))
+        if path.is_symlink() or not path.is_file():
+            raise FileNotFoundError(f"V21 H67 S product disappeared: {role}")
+        resolved = path.resolve()
+        digest = _sha256_file(resolved)
+        if digest != item["sha256"]:
+            raise ValueError(f"V21 H67 S product changed during F: {role}")
+        verified[role] = {"path": str(resolved), "sha256": digest}
+    root_audit = json.loads(
+        Path(verified["space_root_audit"]["path"]).read_text(encoding="utf-8")
+    )
+    admission = root_audit.get("formal_admission")
+    root_checks = root_audit.get("checks")
+    if (
+        root_audit.get("status") != "QUALIFIED_FOR_F1"
+        or not isinstance(admission, Mapping)
+        or admission.get("pass") is not True
+        or not isinstance(root_checks, Mapping)
+        or set(root_checks) != {"source", "input", "trace", "resource", "cleanup"}
+        or any(value is not True for value in root_checks.values())
+    ):
+        raise ValueError("V21 H67 S root audit lost formal F1 admission")
+    return verified
+
+
 def _sha256_json(value: Any) -> str:
     encoded = json.dumps(
         value, sort_keys=True, separators=(",", ":"), allow_nan=False
@@ -883,10 +1244,13 @@ def _v11_primary_case_output_serialization(
     primary_phase: str | None,
     captured: dict[str, Any],
     v16_p8: bool = False,
+    v21_h67: bool = False,
 ):
     """Keep the shared writer and bind primary raw arrays to their saved packet."""
 
-    if primary_phase != "R9_H8" and not (v16_p8 and primary_phase == "R9_P8"):
+    if primary_phase != "R9_H8" and not (
+        v16_p8 and primary_phase == "R9_P8"
+    ) and not (v21_h67 and primary_phase == "R10_H67"):
         yield
         return
     original_writer = _common_3d_case_flow._write_case_outputs
@@ -895,7 +1259,11 @@ def _v11_primary_case_output_serialization(
     def write_v11_safe_case_outputs(out_dir, summary, log_lines, comm):
         if Path(out_dir).resolve() != expected_solve_root:
             return original_writer(out_dir, summary, log_lines, comm)
-        packet_key = "v16_p8_primary_packet" if v16_p8 else "v11_primary_packet"
+        packet_key = (
+            "v16_p8_primary_packet"
+            if v16_p8
+            else "v11_primary_packet"
+        )
         packet_record = captured.get(packet_key)
         if not isinstance(packet_record, Mapping):
             raise ValueError("primary shared summary write preceded its raw packet")
@@ -919,7 +1287,11 @@ def _v11_primary_case_output_serialization(
                                 storage_label=(
                                     "task43.v16.p8.primary_state.npz"
                                     if v16_p8
-                                    else "task43.v11.primary_state.npz"
+                                    else (
+                                        "task43.v21.r10_h67.primary_state.npz"
+                                        if v21_h67
+                                        else "task43.v11.primary_state.npz"
+                                    )
                                 ),
                             )
                             replacement_cache[id(item)] = reference
@@ -1190,6 +1562,122 @@ def _write_v16_p8_primary_terminal(
             "continuation_all_false": True,
         },
     )
+
+
+def _write_v21_h67_terminal(
+    run_root: Path,
+    *,
+    stage: str,
+    status: str,
+    contract_path: Path,
+    contract_sha256: str,
+    candidate_identity: Mapping[str, Any] | None,
+    candidate_plan_sha256: str | None,
+    source_identity: Mapping[str, Any],
+    gates: Mapping[str, Any] | None = None,
+    primary_packet: Mapping[str, Any] | None = None,
+    endpoint_path: Path | None = None,
+    space_source_binding: Mapping[str, Any] | None = None,
+    source_sha256_start: Mapping[str, str] | None = None,
+    source_sha256_end: Mapping[str, str] | None = None,
+    input_sha256_start: Mapping[str, str] | None = None,
+    input_sha256_end: Mapping[str, str] | None = None,
+    error: BaseException | str | None = None,
+) -> dict[str, Any]:
+    """Write V21's own F terminal while reusing the established raw packet."""
+
+    if stage not in {"F1", "F2"}:
+        raise ValueError(f"unsupported V21 H67 formal stage {stage!r}")
+    path = Path(run_root) / f"v21_{stage.lower()}_terminal.json"
+    if path.exists():
+        raise FileExistsError(f"refusing to replace V21 terminal {path}")
+    endpoint = Path(endpoint_path) if endpoint_path is not None else None
+    packet = dict(primary_packet) if isinstance(primary_packet, Mapping) else None
+    if status == "SOLVED_PENDING_POSTPROCESS":
+        if not isinstance(gates, Mapping) or gates.get("pass") is not True:
+            raise ValueError("V21 success terminal requires all endpoint gates to pass")
+        if endpoint is None or not endpoint.is_file() or packet is None:
+            raise ValueError("V21 success terminal requires endpoint and raw primary packet")
+        packet_path = Path(str(packet.get("npz_path", "")))
+        if (
+            not packet_path.is_file()
+            or _sha256_file(packet_path) != packet.get("npz_sha256")
+        ):
+            raise ValueError("V21 success terminal primary packet bytes are not bound")
+    error_text = None
+    if error is not None:
+        error_text = (
+            f"{type(error).__name__}: {error}"
+            if isinstance(error, BaseException)
+            else str(error)
+        )
+    terminal = {
+        "schema": "task43.v21.r10_h67.stage-terminal.v1",
+        "stage": stage,
+        "phase": "R10_H67",
+        "status": status,
+        "classification": (
+            "measured_nonofficial_h67_primary_pending_postprocess"
+            if status == "SOLVED_PENDING_POSTPROCESS"
+            else "failed_or_incomplete_nonofficial_h67_primary"
+        ),
+        "contract": {"path": str(Path(contract_path).resolve()), "sha256": contract_sha256},
+        "candidate_id": "v21_r10_h67",
+        "candidate_identity": (
+            dict(candidate_identity) if isinstance(candidate_identity, Mapping) else None
+        ),
+        "candidate_plan_sha256": candidate_plan_sha256,
+        "primary_packet": packet,
+        "endpoint_record": (
+            {
+                "path": str(endpoint.resolve()),
+                "sha256": _sha256_file(endpoint),
+            }
+            if endpoint is not None and endpoint.is_file()
+            else None
+        ),
+        "space_source_binding": (
+            dict(space_source_binding)
+            if isinstance(space_source_binding, Mapping)
+            else None
+        ),
+        "source_identity": dict(source_identity),
+        "source_sha256_start": dict(source_sha256_start or {}),
+        "source_sha256_end": dict(source_sha256_end or {}),
+        "input_sha256_start": dict(input_sha256_start or {}),
+        "input_sha256_end": dict(input_sha256_end or {}),
+        "gates": dict(gates or {}),
+        "official_result": False,
+        "selection_enabled": False,
+        "transition_written": False,
+        "error": error_text,
+    }
+    result = write_atomic_json(path, terminal, refuse_overwrite=True)
+    if status != "SOLVED_PENDING_POSTPROCESS":
+        endpoint_record_path = Path(run_root) / "task43_round1_candidate_record.json"
+        if endpoint_record_path.is_file():
+            record = json.loads(endpoint_record_path.read_text(encoding="utf-8"))
+            if isinstance(record, dict):
+                record["legacy_pre_demote_status"] = record.get("status")
+                record["status"] = "FAILED_OR_INCOMPLETE"
+                record["classification"] = "partial_nonofficial_v21_r10_h67_endpoint"
+                record["official_result"] = False
+                record["selection_eligible"] = False
+                record["selection_candidate"] = False
+                record["candidate_selected"] = False
+                record["continuation_all_false"] = True
+                record["pass"] = False
+                record["v21_failure_terminal"] = {
+                    "path": str(path.resolve()),
+                    "sha256": result["sha256"],
+                }
+                if isinstance(record.get("solver"), dict):
+                    record["solver"]["official_result"] = False
+                if isinstance(record.get("gates"), dict):
+                    record["gates"]["pass"] = False
+                    record["gates"]["status"] = "failed_or_incomplete"
+                write_atomic_json(endpoint_record_path, record, refuse_overwrite=False)
+    return result
 
 
 @contextmanager
@@ -4055,7 +4543,7 @@ def _verify_v12_p2_source_binding(
 
 
 def _v11_phase_definition(contract: Mapping[str, Any], phase: str) -> Mapping[str, Any]:
-    phase_map = {"A1_q3": "P3", "R9_H8": "P4"}
+    phase_map = {"A1_q3": "P3", "R9_H8": "P4", "R10_H67": "P4"}
     if phase not in phase_map:
         raise ValueError(f"unsupported V11 primary phase {phase!r}")
     entry = contract.get("phases", {}).get(phase_map[phase])
@@ -5308,12 +5796,14 @@ def _persist_v11_raw_gate_before_postprocessing(
     audit: Mapping[str, Any],
     identity: Mapping[str, Any],
     on_pass=None,
+    schema: str = "task43.v11.primary_raw_vector_audit_checkpoint.v1",
+    classification: str = "measured_primary_raw_vector_gate_nonofficial",
 ) -> dict[str, Any]:
     """Durably record primary residual gates before any high-risk field work."""
 
     record = {
-        "schema": "task43.v11.primary_raw_vector_audit_checkpoint.v1",
-        "classification": "measured_primary_raw_vector_gate_nonofficial",
+        "schema": schema,
+        "classification": classification,
         "identity": dict(identity),
         "audit": dict(audit),
         "gates": dict(audit.get("gates", {})),
@@ -5462,7 +5952,7 @@ def _v11_endpoint_identity(
 ) -> dict[str, Any]:
     """Record V11's actual physics and controls without reusing the old q profile."""
 
-    if phase not in {"A1_q3", "R9_H8"}:
+    if phase not in {"A1_q3", "R9_H8", "R10_H67"}:
         raise ValueError(f"unsupported V11 endpoint identity phase {phase!r}")
     mode_inventory = [_mode_identity(mode) for mode in modes]
     mode_keys = [
@@ -5517,7 +6007,11 @@ def _v11_endpoint_identity(
         "extra_correction_count": 0,
     }
     return {
-        "schema": "task43.v11.primary_endpoint_identity.v1",
+        "schema": (
+            "task43.v21.r10_h67.endpoint_identity.v1"
+            if phase == "R10_H67"
+            else "task43.v11.primary_endpoint_identity.v1"
+        ),
         "contract_sha256": contract_sha256,
         "physical_configuration": physical,
         "numerical_controls": controls,
@@ -6334,11 +6828,27 @@ def _record_v16_p8_identity_checkpoint(
     return current
 
 
+def _record_v21_h67_identity_checkpoint(
+    *, baseline: Mapping[str, Any], workflow_ledger: WorkflowLedger | None, checkpoint: str
+) -> dict[str, Any]:
+    current = _require_v11_watchdog_worker_identity(
+        require_unused_phase_file=False,
+        expected_identity=baseline,
+    )
+    if workflow_ledger is not None:
+        workflow_ledger.marker(
+            "task43_v21_r10_h67_worker_identity_checkpoint",
+            {"checkpoint": checkpoint, "identity": current},
+        )
+    return current
+
+
 @contextmanager
 def _v11_solver_progress_identity_guard(
     *,
     baseline: Mapping[str, Any],
     workflow_ledger: WorkflowLedger | None,
+    identity_recorder=None,
 ):
     """Add identity checks around existing solver progress boundaries only."""
 
@@ -6362,7 +6872,8 @@ def _v11_solver_progress_identity_guard(
         stage = kwargs.get("stage")
         status = kwargs.get("status")
         if stage in checkpoint_stages:
-            _record_v11_identity_checkpoint(
+            recorder = identity_recorder or _record_v11_identity_checkpoint
+            recorder(
                 baseline=baseline,
                 workflow_ledger=workflow_ledger,
                 checkpoint=f"{stage}:{status}",
@@ -6884,6 +7395,13 @@ def _run_impl(
     v16_p8_contract_sha256: str | None = None,
     v16_p8_source_binding: Mapping[str, Any] | None = None,
     v16_p8_initial_worker_identity: Mapping[str, Any] | None = None,
+    v21_h67_contract_path: Path | None = None,
+    v21_h67_contract_sha256: str | None = None,
+    v21_h67_stage: str | None = None,
+    v21_h67_source_binding: Mapping[str, Any] | None = None,
+    v21_h67_source_snapshot: Mapping[str, str] | None = None,
+    v21_h67_input_snapshot: Mapping[str, str] | None = None,
+    v21_h67_initial_worker_identity: Mapping[str, Any] | None = None,
     _failure_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     comm = MPI.COMM_WORLD
@@ -6893,12 +7411,85 @@ def _run_impl(
     candidate_case = case == _ROUND1_CANDIDATE_CASE
     v2_diagnostic = v2_diagnostic_phase is not None
     v16_p8_diagnostic = v16_p8_contract_path is not None
+    v21_h67_diagnostic = v21_h67_contract_path is not None
     v11_diagnostic = v11_primary_diagnostic_phase is not None
-    primary_raw_diagnostic = v11_diagnostic or v16_p8_diagnostic
+    primary_raw_diagnostic = (
+        v11_diagnostic or v16_p8_diagnostic or v21_h67_diagnostic
+    )
+    identity_checkpoint_recorder = (
+        _record_v21_h67_identity_checkpoint
+        if v21_h67_diagnostic
+        else (
+            _record_v16_p8_identity_checkpoint
+            if v16_p8_diagnostic
+            else _record_v11_identity_checkpoint
+        )
+    )
     v11_contract: dict[str, Any] | None = None
     if primary_raw_diagnostic and (v2_diagnostic or v3_failure_evidence_enabled):
         raise ValueError("V11 primary diagnostics cannot be combined with V2/V3 modes")
-    if v16_p8_diagnostic:
+    if v21_h67_diagnostic:
+        if (
+            v21_h67_contract_sha256 is None
+            or v21_h67_stage not in {"F1", "F2"}
+            or not isinstance(v21_h67_source_binding, Mapping)
+            or not isinstance(v21_h67_source_snapshot, Mapping)
+            or not isinstance(v21_h67_input_snapshot, Mapping)
+            or not isinstance(v21_h67_initial_worker_identity, Mapping)
+            or v11_diagnostic
+            or v16_p8_diagnostic
+            or v2_diagnostic
+            or v3_failure_evidence_enabled
+            or not candidate_case
+            or candidate_id != "v21_r10_h67"
+            or candidate_parent_selection_record is not None
+            or not same_lu_solve_residual_correction_enabled
+            or same_lu_tightening_enabled
+            or direct_factor_backend != "mumps"
+            or reference_run_root is not None
+            or parallel_reference_run_root is not None
+        ):
+            raise ValueError("V21 H67 formal diagnostic controls are incomplete or mixed")
+        from benchmarks.task43_hp_adaptivity.r10_h67_diagnostic import (
+            load_contract as load_v21_contract,
+            source_snapshot as v21_source_snapshot,
+            input_snapshot as v21_input_snapshot,
+            require_snapshot_equal,
+        )
+
+        v21_h67_contract, actual_v21_sha = load_v21_contract(
+            v21_h67_contract_path,
+            stage=v21_h67_stage,
+            stage_root=Path(run_root).parent,
+        )
+        if actual_v21_sha != v21_h67_contract_sha256:
+            raise ValueError("V21 contract bytes changed between CLI validation and run")
+        if (
+            dict(v21_source_snapshot(v21_h67_contract))
+            != dict(v21_h67_source_snapshot)
+            or dict(v21_input_snapshot(v21_h67_contract))
+            != dict(v21_h67_input_snapshot)
+        ):
+            raise ValueError("V21 source/input identity changed before the F worker began")
+        v11_primary_diagnostic_phase = "R10_H67"
+        v11_contract_path = Path(v21_h67_contract_path)
+        v11_contract_sha256 = v21_h67_contract_sha256
+        v11_initial_worker_identity = dict(v21_h67_initial_worker_identity)
+        v11_contract = {
+            "phases": {
+                "P4": {
+                    "phase": "R10_H67",
+                    "quadrature": {
+                        "volume": 15,
+                        "incident_and_port": 28,
+                        "modes": "R13",
+                        "count": 612,
+                    },
+                }
+            }
+        }
+        v11_diagnostic = True
+    elif v16_p8_diagnostic:
         if (
             v11_diagnostic
             or v16_p8_contract_sha256 is None
@@ -7114,6 +7705,29 @@ def _run_impl(
                 separators=(",", ":"),
             )
         ),
+        None if v21_h67_contract_path is None else str(v21_h67_contract_path.resolve()),
+        v21_h67_contract_sha256,
+        v21_h67_stage,
+        (
+            None if v21_h67_source_binding is None else json.dumps(
+                dict(v21_h67_source_binding), sort_keys=True, separators=(",", ":")
+            )
+        ),
+        (
+            None if v21_h67_source_snapshot is None else json.dumps(
+                dict(v21_h67_source_snapshot), sort_keys=True, separators=(",", ":")
+            )
+        ),
+        (
+            None if v21_h67_input_snapshot is None else json.dumps(
+                dict(v21_h67_input_snapshot), sort_keys=True, separators=(",", ":")
+            )
+        ),
+        (
+            None if v21_h67_initial_worker_identity is None else json.dumps(
+                dict(v21_h67_initial_worker_identity), sort_keys=True, separators=(",", ":")
+            )
+        ),
     )
     root_contracts = comm.allgather(root_contract)
     if any(contract != root_contracts[0] for contract in root_contracts[1:]):
@@ -7142,6 +7756,16 @@ def _run_impl(
             if v16_p8_source_binding is None
             else dict(v16_p8_source_binding)
         )
+        if v21_h67_diagnostic:
+            _failure_context["phase"] = "R10_H67"
+            _failure_context["v21_h67_contract_binding"] = {
+                "path": str(v21_h67_contract_path),
+                "sha256": v21_h67_contract_sha256,
+                "stage": v21_h67_stage,
+                "source_binding": dict(v21_h67_source_binding or {}),
+                "source_sha256_start": dict(v21_h67_source_snapshot or {}),
+                "input_sha256_start": dict(v21_h67_input_snapshot or {}),
+            }
     reference_run_root = (
         None if root_contract[1] is None else Path(root_contract[1])
     )
@@ -7192,8 +7816,26 @@ def _run_impl(
     v16_p8_source_binding = (
         None if root_contract[25] is None else json.loads(root_contract[25])
     )
+    v21_h67_contract_path = (
+        None if root_contract[26] is None else Path(root_contract[26])
+    )
+    v21_h67_contract_sha256 = root_contract[27]
+    v21_h67_stage = root_contract[28]
+    v21_h67_source_binding = (
+        None if root_contract[29] is None else json.loads(root_contract[29])
+    )
+    v21_h67_source_snapshot = (
+        None if root_contract[30] is None else json.loads(root_contract[30])
+    )
+    v21_h67_input_snapshot = (
+        None if root_contract[31] is None else json.loads(root_contract[31])
+    )
+    v21_h67_initial_worker_identity = (
+        None if root_contract[32] is None else json.loads(root_contract[32])
+    )
     v2_diagnostic = v2_diagnostic_phase is not None
     v16_p8_diagnostic = v16_p8_source_binding is not None
+    v21_h67_diagnostic = v21_h67_contract_path is not None
     if v16_p8_diagnostic:
         v16_p8_contract_path = v11_contract_path
         v16_p8_contract_sha256 = str(v11_contract_sha256)
@@ -7201,7 +7843,9 @@ def _run_impl(
     v11_diagnostic = (
         v11_primary_diagnostic_phase is not None and not v16_p8_diagnostic
     )
-    primary_raw_diagnostic = v11_diagnostic or v16_p8_diagnostic
+    primary_raw_diagnostic = (
+        v11_diagnostic or v16_p8_diagnostic or v21_h67_diagnostic
+    )
     v2_contract = (
         _load_v2_diagnostic_contract(v2_contract_path, str(v2_contract_sha256))
         if v2_diagnostic
@@ -7234,9 +7878,14 @@ def _run_impl(
         )
         v11_workflow_ledger.set_phase("preflight")
         v11_workflow_ledger.marker(
-            "task43_v11_primary_worker_identity_bound", watchdog_identity
+            (
+                "task43_v21_r10_h67_worker_identity_bound"
+                if v21_h67_diagnostic
+                else "task43_v11_primary_worker_identity_bound"
+            ),
+            watchdog_identity,
         )
-        _record_v11_identity_checkpoint(
+        identity_checkpoint_recorder(
             baseline=watchdog_identity,
             workflow_ledger=v11_workflow_ledger,
             checkpoint="preflight_ledger_created",
@@ -7265,7 +7914,20 @@ def _run_impl(
     if candidate_case:
         if any(value is None for value in (candidate_plan_path, candidate_id, candidate_acceptance_contract)):
             raise ValueError("candidate case requires plan, ID and frozen acceptance contract")
-        if candidate_parent_selection_record is None:
+        if v21_h67_diagnostic:
+            if not isinstance(v21_h67_source_binding, Mapping):
+                raise ValueError("V21 candidate inputs lack the completed S binding")
+            (
+                candidate_plan,
+                candidate_plan_sha256,
+                candidate_identity,
+            ) = _validate_v21_h67_candidate_inputs(
+                candidate_plan_path=candidate_plan_path,
+                candidate_id=str(candidate_id),
+                acceptance_contract_path=candidate_acceptance_contract,
+                v21_source_binding=v21_h67_source_binding,
+            )
+        elif candidate_parent_selection_record is None:
             if any(value is None for value in (candidate_parent_run_root, candidate_tightening_run_root, candidate_marking_record)):
                 raise ValueError("round-one candidate case requires its frozen initial inputs")
             (
@@ -7315,7 +7977,20 @@ def _run_impl(
             != _V2_ACCEPTANCE_SHA256
         ):
             raise ValueError("V2 A1 candidate does not match the frozen R10 lineage")
-        if v11_diagnostic:
+        if v11_diagnostic and v21_h67_diagnostic:
+            if (
+                candidate_plan_sha256
+                != v21_h67_source_binding.get("space_plan_sha256")
+                or candidate_identity.get("v21_contract_sha256")
+                != v21_h67_contract_sha256
+                or candidate_identity.get("parent_selection_status") != "REJECTED"
+            ):
+                raise ValueError("V21 candidate does not bind the completed H67 S state")
+            candidate_identity["phase"] = "R10_H67"
+            candidate_identity["v21_stage"] = v21_h67_stage
+            candidate_identity["selection_enabled"] = False
+            candidate_identity["transition_written"] = False
+        elif v11_diagnostic:
             assert v11_contract is not None
             phase_entry = _v11_phase_definition(
                 v11_contract, str(v11_primary_diagnostic_phase)
@@ -7404,6 +8079,7 @@ def _run_impl(
             )
         if _failure_context is not None:
             _failure_context["candidate_identity"] = candidate_identity
+            _failure_context["candidate_plan_sha256"] = candidate_plan_sha256
 
     v2_reference_data = None
     if v2_diagnostic_phase == "A1_q":
@@ -7527,7 +8203,7 @@ def _run_impl(
         source_identity["v3_watchdog_worker_identity"] = (
             _require_v3_watchdog_worker_identity(require_unused_phase_file=False)
         )
-    if v11_diagnostic:
+    if v11_diagnostic and not v21_h67_diagnostic:
         assert v11_contract_path is not None and v11_contract_sha256 is not None
         assert v11_primary_diagnostic_phase is not None
         source_identity["v11_primary_contract"] = {
@@ -7546,6 +8222,20 @@ def _run_impl(
                 expected_identity=v11_watchdog_identity,
             )
         )
+    if v21_h67_diagnostic:
+        source_identity["v21_r10_h67"] = {
+            "stage": v21_h67_stage,
+            "phase": "R10_H67",
+            "contract_path": str(v21_h67_contract_path.resolve()),
+            "contract_sha256": v21_h67_contract_sha256,
+            "space_source_binding": dict(v21_h67_source_binding or {}),
+            "source_sha256_start": dict(v21_h67_source_snapshot or {}),
+            "input_sha256_start": dict(v21_h67_input_snapshot or {}),
+            "watchdog_worker_identity": _require_v11_watchdog_worker_identity(
+                require_unused_phase_file=False,
+                expected_identity=v11_watchdog_identity,
+            ),
+        }
     if v16_p8_diagnostic:
         assert v16_p8_contract_path is not None and v16_p8_contract_sha256 is not None
         assert isinstance(v16_p8_source_binding, Mapping)
@@ -7607,11 +8297,7 @@ def _run_impl(
     if workflow_ledger is not None:
         workflow_ledger.set_phase("mesh_setup")
     if primary_raw_diagnostic:
-        identity_checkpoint = (
-            _record_v16_p8_identity_checkpoint
-            if v16_p8_diagnostic
-            else _record_v11_identity_checkpoint
-        )
+        identity_checkpoint = identity_checkpoint_recorder
         identity_checkpoint(
             baseline=v11_watchdog_identity,
             workflow_ledger=v11_workflow_ledger,
@@ -7630,11 +8316,7 @@ def _run_impl(
     if v3_workflow_ledger is not None:
         v3_workflow_ledger.marker("task43_v3_a1_mesh_setup_complete", {})
     if v11_workflow_ledger is not None:
-        identity_checkpoint = (
-            _record_v16_p8_identity_checkpoint
-            if v16_p8_diagnostic
-            else _record_v11_identity_checkpoint
-        )
+        identity_checkpoint = identity_checkpoint_recorder
         identity_checkpoint(
             baseline=v11_watchdog_identity,
             workflow_ledger=v11_workflow_ledger,
@@ -7654,6 +8336,7 @@ def _run_impl(
     local_h_plan_identity = None
     v11_p4_actual_space_audit = None
     v16_p8_preassembly_audit = None
+    v21_h67_preassembly_audit = None
     if kind == "empty_h_active_p3":
         if candidate_case:
             assert candidate_plan is not None
@@ -7786,6 +8469,35 @@ def _run_impl(
                     "V16 R9_P8 actual trace/interior/constraint/carrier authority "
                     "differs from selected S source"
                 )
+        if v21_h67_diagnostic:
+            assert isinstance(candidate_plan, Mapping)
+            assert isinstance(v21_h67_source_binding, Mapping)
+            v21_h67_preassembly_audit = _v21_h67_actual_space_audit(
+                plan=candidate_plan,
+                plan_identity=local_h_plan_identity,
+                actual_mesh_identity=actual_mesh_identity,
+                source_binding=v21_h67_source_binding,
+            )
+            space_error = None
+            if comm.rank == 0:
+                try:
+                    write_atomic_json(
+                        run_root / "v21_actual_space_audit.json",
+                        v21_h67_preassembly_audit,
+                        refuse_overwrite=True,
+                    )
+                except (OSError, TypeError, ValueError) as exc:
+                    space_error = f"{type(exc).__name__}: {exc}"
+            space_error = comm.bcast(space_error, root=0)
+            if space_error is not None:
+                raise RuntimeError(f"V21 H67 actual space audit write failed: {space_error}")
+            if not v21_h67_preassembly_audit["pass"]:
+                raise ValueError("V21 F actual mesh identity differs from the completed S authority")
+            identity_checkpoint_recorder(
+                baseline=v11_watchdog_identity,
+                workflow_ledger=v11_workflow_ledger,
+                checkpoint="f_preassembly_actual_space_authority",
+            )
         if v11_diagnostic and v11_primary_diagnostic_phase == "R9_H8":
             assert v11_contract is not None
             assert candidate_plan_sha256 is not None
@@ -7849,6 +8561,8 @@ def _run_impl(
         captured["v11_p4_preassembly_space_audit"] = v11_p4_actual_space_audit
     if v16_p8_preassembly_audit is not None:
         captured["v16_p8_preassembly_space_audit"] = v16_p8_preassembly_audit
+    if v21_h67_preassembly_audit is not None:
+        captured["v21_h67_preassembly_space_audit"] = v21_h67_preassembly_audit
     if _failure_context is not None:
         _failure_context["captured"] = captured
 
@@ -8012,11 +8726,7 @@ def _run_impl(
             captured["mode_count"] = live_mode_count
             captured["ordered_mode_keys"] = live_mode_keys
         if primary_raw_diagnostic:
-            identity_checkpoint = (
-                _record_v16_p8_identity_checkpoint
-                if v16_p8_diagnostic
-                else _record_v11_identity_checkpoint
-            )
+            identity_checkpoint = identity_checkpoint_recorder
             identity_checkpoint(
                 baseline=v11_watchdog_identity,
                 workflow_ledger=v11_workflow_ledger,
@@ -8469,6 +9179,38 @@ def _run_impl(
                         "official_result": False,
                         "passed": False,
                     }
+                if v21_h67_diagnostic:
+                    primary_packet_identity = {
+                        "phase": "R10_H67",
+                        "stage": v21_h67_stage,
+                        "contract_sha256": v21_h67_contract_sha256,
+                        "candidate_id": "v21_r10_h67",
+                        "source_identity": source_identity,
+                        "candidate_identity": candidate_identity,
+                        "candidate_plan_sha256": candidate_plan_sha256,
+                        "space_source_binding": dict(v21_h67_source_binding or {}),
+                        "endpoint_identity": captured.get("v11_endpoint_identity"),
+                        "pre_validation_checkpoint": captured.get(
+                            "pre_validation_checkpoint"
+                        ),
+                        "normal_correction_audit": _plain_nested_containers(
+                            normal_audit
+                        ),
+                        "normal_correction_count": int(
+                            view.primal_solver_telemetry["normal_correction_count"]
+                        ),
+                        "extra_correction_count": 0,
+                        "independent_active_fe_dofs": int(
+                            storage_metadata["independent_active_fe_dofs"]
+                        ),
+                        "raw_full_active_scope": full_scope_record,
+                        "independent_A6_raw_vector_scope": dict(a6_scope),
+                        "raw_vector_gate_status": "pending_independent_recomputation",
+                        "ordered_mode_keys": captured["ordered_mode_keys"],
+                        "ordered_mode_count": int(captured["mode_count"]),
+                        "official_result": False,
+                        "passed": False,
+                    }
                 packet_record = None
                 packet_error = None
                 if comm.rank == 0:
@@ -8482,6 +9224,15 @@ def _run_impl(
                                 identity=primary_packet_identity,
                             )
                             captured["v16_p8_primary_packet"] = packet_record
+                        elif v21_h67_diagnostic:
+                            packet_record = write_atomic_npz(
+                                run_root / "primary_state.npz",
+                                packet_arrays,
+                                schema="task43.v21.r10_h67.primary_state.v1",
+                                classification="measured_R10_H67_primary_not_official",
+                                identity=primary_packet_identity,
+                            )
+                            captured["v11_primary_packet"] = packet_record
                         else:
                             packet_record = write_v11_primary_packet(
                                 run_root / "primary_state.npz",
@@ -8496,7 +9247,11 @@ def _run_impl(
                     (packet_record, packet_error), root=0
                 )
                 if packet_error is not None:
-                    label = "V16 R9_P8" if v16_p8_diagnostic else "V11 primary"
+                    label = (
+                        "V16 R9_P8"
+                        if v16_p8_diagnostic
+                        else ("V21 R10_H67" if v21_h67_diagnostic else "V11 primary")
+                    )
                     raise RuntimeError(f"{label} raw packet write failed: {packet_error}")
                 captured[
                     "v16_p8_primary_packet" if v16_p8_diagnostic else "v11_primary_packet"
@@ -8560,6 +9315,16 @@ def _run_impl(
                             on_pass=lambda: capture_primary_fields(
                                 capture_v3_samples=False
                             ),
+                        schema=(
+                            "task43.v21.r10_h67.primary_raw_vector_audit_checkpoint.v1"
+                            if v21_h67_diagnostic
+                            else "task43.v11.primary_raw_vector_audit_checkpoint.v1"
+                        ),
+                        classification=(
+                            "measured_R10_H67_primary_raw_vector_gate_nonofficial"
+                            if v21_h67_diagnostic
+                            else "measured_primary_raw_vector_gate_nonofficial"
+                        ),
                         )
                     except RuntimeError:
                         captured["v11_primary_raw_gate_checkpoint"] = {
@@ -8842,6 +9607,11 @@ def _run_impl(
             identity_guard = _v11_solver_progress_identity_guard(
                 baseline=v11_watchdog_identity,
                 workflow_ledger=v11_workflow_ledger,
+                identity_recorder=(
+                    _record_v21_h67_identity_checkpoint
+                    if v21_h67_diagnostic
+                    else _record_v11_identity_checkpoint
+                ),
             )
         else:
             identity_guard = nullcontext()
@@ -8851,13 +9621,14 @@ def _run_impl(
                 primary_phase=v11_primary_diagnostic_phase,
                 captured=captured,
                 v16_p8=v16_p8_diagnostic,
+                v21_h67=v21_h67_diagnostic,
             )
             if primary_raw_diagnostic
             else nullcontext()
         )
         absorption_form_guard = (
             _v16_p8_actual_absorption_forms(captured, cfg)
-            if v16_p8_diagnostic
+            if v16_p8_diagnostic or v21_h67_diagnostic
             else nullcontext()
         )
         with identity_guard, case_output_guard, absorption_form_guard:
@@ -8882,6 +9653,18 @@ def _run_impl(
                 raise ValueError("V16 R9_P8 shared writer did not retain its safe summary copy")
             summary = dict(summary)
             captured["v16_p8_absorption_form_audit"] = (
+                _validate_v16_p8_actual_absorption_forms(
+                    captured.get("v16_p8_actual_absorption_form_metadata", []), cfg
+                )
+            )
+        if v21_h67_diagnostic:
+            summary = captured.pop("v16_p8_json_safe_solver_summary", None)
+            if not isinstance(summary, Mapping):
+                summary = captured.pop("v11_primary_json_safe_solver_summary", None)
+            if not isinstance(summary, Mapping):
+                raise ValueError("V21 H67 shared writer did not retain its safe summary copy")
+            summary = dict(summary)
+            captured["v21_h67_absorption_form_audit"] = (
                 _validate_v16_p8_actual_absorption_forms(
                     captured.get("v16_p8_actual_absorption_form_metadata", []), cfg
                 )
@@ -9775,6 +10558,181 @@ def _run_impl(
                 if not p8_gates["pass"]:
                     post_error = f"V16 R9_P8 endpoint gates failed; see {record_path}"
                 write_atomic_json(record_path, _plain_nested_containers(record))
+            elif v21_h67_diagnostic:
+                raw_gate_audit = captured.get("v11_primary_raw_gate_audit")
+                primary_packet = captured.get("v11_primary_packet")
+                endpoint_identity = captured.get("v11_endpoint_identity")
+                absorption_audit = captured.get("v21_h67_absorption_form_audit")
+                preassembly_audit = captured.get("v21_h67_preassembly_space_audit")
+                if not all(
+                    isinstance(value, Mapping)
+                    for value in (
+                        raw_gate_audit,
+                        primary_packet,
+                        endpoint_identity,
+                        absorption_audit,
+                        preassembly_audit,
+                        v21_h67_source_binding,
+                        v21_h67_contract,
+                    )
+                ):
+                    raise ValueError("V21 H67 endpoint lacks its contract, space, raw, packet or Av binding")
+                _v2_validated_rows(
+                    port_payload,
+                    label="V21 R10_H67 primary",
+                    expected=R13_MODE_KEYS,
+                )
+                actual_fe = int(storage_metadata["independent_active_fe_dofs"])
+                root_audit = v21_h67_source_binding["space_root_audit"]
+                expected_fe = int(
+                    v21_h67_source_binding["space_actual_independent_fe_dofs"]
+                )
+                source_end, input_end = require_snapshot_equal(
+                    v21_h67_contract,
+                    source_before=v21_h67_source_snapshot or {},
+                    input_before=v21_h67_input_snapshot or {},
+                )
+                products_end = _verify_v21_h67_space_products(
+                    v21_h67_source_binding
+                )
+                products_start = v21_h67_source_binding.get("space_products", {})
+                packet_identity = primary_packet.get("identity", {})
+                packet_gates = raw_gate_audit.get("gates", {})
+                v21_gates = dict(gates)
+                v21_gates["ordinary_case_gates_pass"] = gates.get("pass") is True
+                for name, value in packet_gates.items():
+                    v21_gates[f"primary_raw_{name}"] = value is True
+                v21_gates.update(
+                    {
+                        "primary_packet_phase_and_contract_bound": (
+                            packet_identity.get("phase") == "R10_H67"
+                            and packet_identity.get("contract_sha256")
+                            == v21_h67_contract_sha256
+                            and packet_identity.get("candidate_id")
+                            == "v21_r10_h67"
+                        ),
+                        "strict_FE_between_parent_and_p5_control": (
+                            118800 < actual_fe < 237600
+                        ),
+                        "primary_FE_matches_completed_S": actual_fe == expected_fe,
+                        "actual_mesh_matches_S_space_authority": (
+                            preassembly_audit.get("pass") is True
+                        ),
+                        "S_products_unchanged_through_F": (
+                            products_end == products_start
+                        ),
+                        "source_and_input_snapshots_unchanged": (
+                            source_end == dict(v21_h67_source_snapshot or {})
+                            and input_end == dict(v21_h67_input_snapshot or {})
+                        ),
+                        "one_normal_zero_extra_corrections": (
+                            packet_identity.get("normal_correction_count") == 1
+                            and packet_identity.get("extra_correction_count") == 0
+                        ),
+                        "actual_factor_backend_is_mumps": (
+                            actual_factor_backend == "mumps"
+                            and actual_live_factor_backend == "mumps"
+                        ),
+                        "actual_R10_H67_absorption_forms_observed": (
+                            absorption_audit.get("status")
+                            == "actual_forms_observed"
+                        ),
+                        "accepted9_and_rejected_R10_roles_preserved": (
+                            candidate_identity.get("accepted_state_candidate_id")
+                            == "round9_p_up"
+                            and candidate_identity.get(
+                                "accepted_state_selection_status"
+                            )
+                            == "ACCEPTED"
+                            and candidate_identity.get("parent_candidate_id")
+                            == "round10_p_up"
+                            and candidate_identity.get("parent_selection_status")
+                            == "REJECTED"
+                        ),
+                        "selection_and_transition_disabled": (
+                            candidate_identity.get("selection_enabled") is False
+                            and candidate_identity.get("transition_written") is False
+                        ),
+                        "S_root_audit_passed": (
+                            root_audit.get("status") == "QUALIFIED_FOR_F1"
+                            and root_audit.get("formal_admission", {}).get("pass")
+                            is True
+                        ),
+                    }
+                )
+                v21_gates["pass"] = all(
+                    value is True
+                    for key, value in v21_gates.items()
+                    if key not in {"pass", "status"}
+                )
+                v21_gates["status"] = "passed" if v21_gates["pass"] else "failed"
+                record.update(
+                    {
+                        "schema": "task43.v21.r10_h67.primary-endpoint.v1",
+                        "classification": "measured_nonofficial_r10_h67_primary_pending_postprocess",
+                        "phase": "R10_H67",
+                        "stage": v21_h67_stage,
+                        "status": (
+                            "SOLVED_PENDING_POSTPROCESS"
+                            if v21_gates["pass"]
+                            else "FAILED"
+                        ),
+                        "candidate_id": "v21_r10_h67",
+                        "contract": {
+                            "path": str(v21_h67_contract_path.resolve()),
+                            "sha256": v21_h67_contract_sha256,
+                        },
+                        "candidate_plan_sha256": candidate_plan_sha256,
+                        "space_source_binding": dict(v21_h67_source_binding),
+                        "endpoint_controls": v11_phase_controls,
+                        "endpoint_identity": endpoint_identity,
+                        "primary_packet": primary_packet,
+                        "primary_raw_vector_audit": raw_gate_audit,
+                        "primary_raw_vector_audit_checkpoint": captured.get(
+                            "v11_primary_raw_gate_checkpoint"
+                        ),
+                        "preassembly_space_audit": preassembly_audit,
+                        "actual_absorption_form_audit": absorption_audit,
+                        "independent_active_fe_dofs": actual_fe,
+                        "source_sha256_start": dict(v21_h67_source_snapshot or {}),
+                        "source_sha256_end": source_end,
+                        "input_sha256_start": dict(v21_h67_input_snapshot or {}),
+                        "input_sha256_end": input_end,
+                        "S_products_sha256_end": products_end,
+                        "official_result": False,
+                        "selection_status": "diagnostic_only_no_transition_authorized",
+                        "selection_eligible": False,
+                        "selection_candidate": False,
+                        "candidate_selected": False,
+                        "selection_enabled": False,
+                        "transition_written": False,
+                        "continuation_all_false": True,
+                        "continuation": {
+                            "same_group_R": False,
+                            "A1_R": False,
+                            "A2_q": False,
+                            "A2_R": False,
+                            "B": False,
+                            "C": False,
+                            "E1": False,
+                            "E2": False,
+                        },
+                        "gates": v21_gates,
+                        "pass": bool(v21_gates["pass"]),
+                    }
+                )
+                record["solver"]["official_result"] = False
+                record["solver"]["official_result_scope"] = (
+                    "nonofficial V21 R10_H67 endpoint; comparison, engineering review and any transition remain separate"
+                )
+                task43_gated_official_result = False
+                gates = v21_gates
+                captured["v21_h67_source_sha256_end"] = source_end
+                captured["v21_h67_input_sha256_end"] = input_end
+                captured["v21_h67_space_products_end"] = products_end
+                if not v21_gates["pass"]:
+                    post_error = f"V21 R10_H67 endpoint gates failed; see {record_path}"
+                write_atomic_json(record_path, _plain_nested_containers(record))
             else:
                 record_path.write_text(
                     json.dumps(
@@ -9859,7 +10817,76 @@ def _run_impl(
         workflow_ledger=workflow_ledger,
         total_wall_seconds=time.perf_counter() - started,
     )
-    if v11_diagnostic:
+    if v21_h67_diagnostic:
+        terminal_error = None
+        if comm.rank == 0:
+            try:
+                if not isinstance(candidate_identity, Mapping):
+                    raise ValueError("V21 success terminal lacks candidate identity")
+                if not isinstance(captured.get("v11_primary_packet"), Mapping):
+                    raise ValueError("V21 success terminal lacks its primary raw packet")
+                if not isinstance(v21_h67_contract, Mapping):
+                    raise ValueError("V21 success terminal lacks its loaded contract")
+                endpoint_path = run_root / "task43_round1_candidate_record.json"
+                endpoint = json.loads(endpoint_path.read_text(encoding="utf-8"))
+                if endpoint.get("gates", {}).get("pass") is not True:
+                    raise ValueError("V21 success terminal endpoint gates are not all passing")
+                source_end, input_end = require_snapshot_equal(
+                    v21_h67_contract,
+                    source_before=v21_h67_source_snapshot or {},
+                    input_before=v21_h67_input_snapshot or {},
+                )
+                products_end = _verify_v21_h67_space_products(
+                    v21_h67_source_binding or {}
+                )
+                if products_end != (v21_h67_source_binding or {}).get(
+                    "space_products"
+                ):
+                    raise RuntimeError("V21 S products changed before F terminal publication")
+                captured["v21_h67_source_sha256_end"] = source_end
+                captured["v21_h67_input_sha256_end"] = input_end
+                captured["v21_h67_space_products_end"] = products_end
+                terminal = _write_v21_h67_terminal(
+                    run_root,
+                    stage=str(v21_h67_stage),
+                    status="SOLVED_PENDING_POSTPROCESS",
+                    contract_path=Path(v21_h67_contract_path),
+                    contract_sha256=str(v21_h67_contract_sha256),
+                    candidate_identity=candidate_identity,
+                    candidate_plan_sha256=str(candidate_plan_sha256),
+                    source_identity=source_identity,
+                    gates=endpoint["gates"],
+                    primary_packet=captured["v11_primary_packet"],
+                    endpoint_path=endpoint_path,
+                    space_source_binding=v21_h67_source_binding,
+                    source_sha256_start=v21_h67_source_snapshot,
+                    source_sha256_end=source_end,
+                    input_sha256_start=v21_h67_input_snapshot,
+                    input_sha256_end=input_end,
+                )
+                if v11_workflow_ledger is not None:
+                    _record_v21_h67_identity_checkpoint(
+                        baseline=v11_watchdog_identity,
+                        workflow_ledger=v11_workflow_ledger,
+                        checkpoint="v21_primary_terminal_written",
+                    )
+                    v11_workflow_ledger.marker(
+                        "task43_v21_r10_h67_primary_solved_pending_postprocess",
+                        {
+                            "terminal_path": terminal["path"],
+                            "terminal_sha256": terminal["sha256"],
+                            "endpoint_record_sha256": _sha256_file(endpoint_path),
+                            "phase": "R10_H67",
+                            "stage": v21_h67_stage,
+                            "status": "SOLVED_PENDING_POSTPROCESS",
+                        },
+                    )
+            except BaseException as exc:  # noqa: BLE001
+                terminal_error = f"{type(exc).__name__}: {exc}"
+        terminal_error = comm.bcast(terminal_error, root=0)
+        if terminal_error is not None:
+            raise RuntimeError(f"V21 R10_H67 successful terminal write failed: {terminal_error}")
+    if v11_diagnostic and not v21_h67_diagnostic:
         terminal_error = None
         if comm.rank == 0:
             try:
@@ -9969,6 +10996,7 @@ def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
     v3_enabled = bool(arguments.get("v3_failure_evidence_enabled", False))
     v11_enabled = arguments.get("v11_primary_diagnostic_phase") is not None
     v16_p8_enabled = arguments.get("v16_p8_contract_path") is not None
+    v21_h67_enabled = arguments.get("v21_h67_contract_path") is not None
     context: dict[str, Any] = {
         "run_root": arguments.get("run_root"),
         "run_root_acquired": False,
@@ -9985,6 +11013,16 @@ def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
         }
         if v16_p8_enabled
         else None,
+        "v21_h67_contract_binding": {
+            "path": str(arguments["v21_h67_contract_path"]),
+            "sha256": arguments.get("v21_h67_contract_sha256"),
+            "stage": arguments.get("v21_h67_stage"),
+            "source_binding": dict(arguments.get("v21_h67_source_binding") or {}),
+            "source_sha256_start": dict(arguments.get("v21_h67_source_snapshot") or {}),
+            "input_sha256_start": dict(arguments.get("v21_h67_input_snapshot") or {}),
+        }
+        if v21_h67_enabled
+        else None,
     }
     kwargs["_failure_context"] = context
     try:
@@ -9993,6 +11031,40 @@ def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
         workflow_ledger = context.get("workflow_ledger")
         run_root = context.get("run_root")
         terminal_record = None
+        if (
+            v21_h67_enabled
+            and context.get("run_root_acquired") is True
+            and run_root is not None
+            and Path(run_root).is_dir()
+            and MPI.COMM_WORLD.rank == 0
+        ):
+            try:
+                binding = context.get("v21_h67_contract_binding") or {}
+                terminal_record = _write_v21_h67_terminal(
+                    Path(run_root),
+                    stage=str(binding.get("stage")),
+                    status="FAILED_OR_INCOMPLETE",
+                    contract_path=Path(str(binding.get("path"))),
+                    contract_sha256=str(binding.get("sha256")),
+                    candidate_identity=context.get("candidate_identity"),
+                    candidate_plan_sha256=context.get("candidate_plan_sha256"),
+                    source_identity=context.get("source_identity") or {},
+                    primary_packet=(context.get("captured") or {}).get(
+                        "v11_primary_packet"
+                    ),
+                    endpoint_path=Path(run_root) / "task43_round1_candidate_record.json",
+                    space_source_binding=binding.get("source_binding"),
+                    source_sha256_start=binding.get("source_sha256_start"),
+                    input_sha256_start=binding.get("input_sha256_start"),
+                    error=error,
+                )
+            except BaseException as terminal_error:  # noqa: BLE001
+                print(
+                    "failed to persist V21 H67 failure terminal after escaped error: "
+                    f"{type(terminal_error).__name__}: {terminal_error}",
+                    file=sys.stderr,
+                    flush=True,
+                )
         if (
             v11_enabled
             and context.get("run_root_acquired") is True
@@ -10123,6 +11195,25 @@ def _run_with_v3_failure_terminal(run_impl, *args, **kwargs) -> dict[str, Any]:
                     file=sys.stderr,
                     flush=True,
                 )
+        if v21_h67_enabled and workflow_ledger is not None:
+            try:
+                workflow_ledger.marker(
+                    "task43_v21_r10_h67_failed",
+                    {
+                        "previous_stage": workflow_ledger.last_stage,
+                        "exception_type": type(error).__name__,
+                        "exception_message": str(error),
+                        "terminal_reference": terminal_record,
+                    },
+                    allow_stop=True,
+                )
+            except BaseException as ledger_error:  # noqa: BLE001
+                print(
+                    "failed to persist V21 R10_H67 workflow failure marker: "
+                    f"{type(ledger_error).__name__}: {ledger_error}",
+                    file=sys.stderr,
+                    flush=True,
+                )
         raise
 
 
@@ -10155,6 +11246,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--execution-recovery-manifest", type=Path)
     parser.add_argument("--paired-p8-contract", type=Path)
     parser.add_argument("--p8-execution-recovery-binding", type=Path)
+    parser.add_argument("--v21-r10-h67-contract", type=Path)
+    parser.add_argument("--v21-r10-h67-stage", choices=("F1", "F2"))
     parser.add_argument(
         "--v3-failure-evidence",
         action="store_true",
@@ -10207,6 +11300,8 @@ def main(argv: list[str] | None = None) -> int:
                     args.primary_diagnostic_contract,
                     args.execution_recovery_manifest,
                     args.p8_execution_recovery_binding,
+                    args.v21_r10_h67_contract,
+                    args.v21_r10_h67_stage,
                     args.v3_contract,
                     args.v3_plan,
                 )
@@ -10241,6 +11336,7 @@ def main(argv: list[str] | None = None) -> int:
     is_mpi2 = args.case == "empty_h_active_p3_mpi2"
     v2_diagnostic = args.v2_diagnostic_phase is not None
     v16_p8_diagnostic = args.primary_diagnostic_phase == "R9_P8"
+    v21_h67_diagnostic = args.v21_r10_h67_contract is not None
     v11_diagnostic = (
         args.primary_diagnostic_phase is not None and not v16_p8_diagnostic
     )
@@ -10249,6 +11345,62 @@ def main(argv: list[str] | None = None) -> int:
     v16_p8_contract_sha256 = None
     v16_p8_source_binding = None
     v16_p8_worker_identity = None
+    v21_h67_contract = None
+    v21_h67_contract_sha256 = None
+    v21_h67_source_binding = None
+    v21_h67_source_snapshot = None
+    v21_h67_input_snapshot = None
+    v21_h67_worker_identity = None
+    if (args.v21_r10_h67_contract is None) != (args.v21_r10_h67_stage is None):
+        parser.error("V21 R10_H67 requires both --v21-r10-h67-contract and --v21-r10-h67-stage")
+    if v21_h67_diagnostic:
+        if (
+            not is_candidate
+            or v2_diagnostic
+            or args.v3_failure_evidence
+            or v11_diagnostic
+            or v16_p8_diagnostic
+            or args.primary_diagnostic_contract is not None
+            or args.execution_recovery_manifest is not None
+            or args.paired_p8_contract is not None
+            or args.p8_execution_recovery_binding is not None
+            or args.same_lu_tightening
+            or not args.same_lu_solve_residual_correction
+            or args.direct_factor_backend != "mumps"
+            or args.reference_run_root is not None
+            or args.parallel_reference_run_root is not None
+            or args.candidate_parent_selection_record is not None
+            or any(
+                value is not None
+                for value in (
+                    args.candidate_parent_run_root,
+                    args.candidate_tightening_run_root,
+                    args.candidate_marking_record,
+                )
+            )
+        ):
+            parser.error(
+                "V21 R10_H67 is an isolated accepted-state candidate route with one normal correction, zero extra corrections and MUMPS"
+            )
+        try:
+            (
+                v21_h67_contract,
+                v21_h67_contract_sha256,
+                v21_h67_source_binding,
+                v21_h67_source_snapshot,
+                v21_h67_input_snapshot,
+            ) = _load_v21_h67_f_context(
+                contract_path=args.v21_r10_h67_contract,
+                stage=str(args.v21_r10_h67_stage),
+                stage_root=args.run_root.parent,
+                run_root=args.run_root,
+                candidate_plan_path=args.candidate_plan,
+            )
+            v21_h67_worker_identity = _require_v11_watchdog_worker_identity()
+        except (OSError, json.JSONDecodeError, KeyError, RuntimeError, TypeError, ValueError) as exc:
+            parser.error(f"V21 R10_H67 contract or worker identity is invalid: {exc}")
+    elif args.v21_r10_h67_stage is not None:
+        parser.error("--v21-r10-h67-stage requires --v21-r10-h67-contract")
     if v16_p8_diagnostic:
         if args.paired_p8_contract is None:
             parser.error("R9_P8 requires --paired-p8-contract")
@@ -10515,8 +11667,13 @@ def main(argv: list[str] | None = None) -> int:
             "candidate case requires --candidate-plan, --candidate-id and "
             "--candidate-acceptance-contract"
         )
-    if is_candidate and args.candidate_parent_selection_record is None and any(
+    if (
+        is_candidate
+        and not v21_h67_diagnostic
+        and args.candidate_parent_selection_record is None
+        and any(
         value is None for value in round1_candidate_arguments
+        )
     ):
         parser.error("round-one candidate requires the initial parent/tightening/marking inputs")
     if is_candidate and args.candidate_parent_selection_record is not None and any(
@@ -10601,6 +11758,13 @@ def main(argv: list[str] | None = None) -> int:
         v16_p8_contract_sha256=v16_p8_contract_sha256,
         v16_p8_source_binding=v16_p8_source_binding,
         v16_p8_initial_worker_identity=v16_p8_worker_identity,
+        v21_h67_contract_path=args.v21_r10_h67_contract,
+        v21_h67_contract_sha256=v21_h67_contract_sha256,
+        v21_h67_stage=args.v21_r10_h67_stage,
+        v21_h67_source_binding=v21_h67_source_binding,
+        v21_h67_source_snapshot=v21_h67_source_snapshot,
+        v21_h67_input_snapshot=v21_h67_input_snapshot,
+        v21_h67_initial_worker_identity=v21_h67_worker_identity,
     )
     if comm.rank == 0:
         print(

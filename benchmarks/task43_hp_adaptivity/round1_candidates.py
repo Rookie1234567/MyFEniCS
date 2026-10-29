@@ -3883,6 +3883,566 @@ def _v11_actual_space_gate(
     return gate
 
 
+def _v21_h67_parent_seed_mapping(cell_ids, geometry_dofmap, coordinates, root_boxes):
+    """Locate the frozen global cell in saved parent geometry, before renumbering."""
+    boxes_by_global_id = {}
+    for index, global_id in enumerate(cell_ids):
+        vertices = coordinates[geometry_dofmap[index], :]
+        box = tuple(float(value) for value in (*vertices.min(axis=0), *vertices.max(axis=0)))
+        if int(global_id) in boxes_by_global_id:
+            raise ValueError("V21 R10 storage repeats a global cell ID")
+        boxes_by_global_id[int(global_id)] = box
+    if (len(root_boxes) != 180 or len(boxes_by_global_id) != 180
+            or set(boxes_by_global_id.values()) != set(root_boxes)):
+        raise ValueError("V21 R10 saved geometry does not map exactly to 180 roots")
+    requested_box = boxes_by_global_id.get(67)
+    if requested_box != (16.5, 10.0, 90.0, 33.5, 15.0, 120.0):
+        raise ValueError("V21 R10 global67 box differs from the frozen H67 location")
+    roots = [index for index, box in enumerate(root_boxes) if tuple(box) == requested_box]
+    if roots != [127]:
+        raise ValueError("V21 R10 global67 does not map uniquely to forest root127")
+    return requested_box, roots
+
+
+def _run_v21_r10_h67_space_plan(args, *, comm: MPI.Intracomm) -> None:
+    """Build and audit H67 from the rejected R10 diagnostic parent only."""
+    from benchmarks.task43_hp_adaptivity.r10_h67_diagnostic import (
+        input_snapshot,
+        load_contract,
+        require_snapshot_equal,
+        slot_root,
+        source_snapshot,
+    )
+
+    # The thin diagnostic validates the CLI stage/root pair.  This legacy
+    # entry receives only the plan-output path, so load the immutable contract
+    # first and then compare that path to its unique S root.
+    contract, contract_sha256 = load_contract(args.r10_h67_contract)
+    if comm.size != 1:
+        raise ValueError("V21 R10_H67 space plan is qualified for MPI1 only")
+    if (
+        args.accepted_parent_selection_record is not None
+        or args.primary_diagnostic_contract is not None
+        or args.execution_recovery_manifest is not None
+        or args.paired_p8_contract is not None
+        or args.p8_execution_recovery_binding is not None
+        or args.skip_parent_transfer
+        or args.round_id != "round1"
+    ):
+        raise ValueError("V21 plan mode rejects accepted-state and legacy plan inputs")
+
+    stage_root = slot_root(contract, "S")
+    output_root = stage_root / "plan_output"
+    if args.output_root.resolve() != output_root.resolve():
+        raise ValueError("V21 plan output must be inside the unique S root")
+    if not stage_root.is_dir() or stage_root.is_symlink():
+        raise ValueError("V21 S root must be precreated by its frozen launch shell")
+    if output_root.exists():
+        raise FileExistsError(f"refusing to reuse V21 plan output: {output_root}")
+
+    runtime = _check_v11_runtime_envelope(comm)
+    worker = runtime["v11_watchdog_worker_identity"]
+    _require_v11_watchdog_worker_identity(expected_identity=worker)
+    source_before = source_snapshot(contract)
+    input_before = input_snapshot(contract)
+    if input_before != {
+        role: str(item["sha256"]) for role, item in contract["inputs"].items()
+    }:
+        raise RuntimeError("V21 input bytes differ from their frozen contract")
+
+    def role_path(role: str) -> Path:
+        return ROOT / str(contract["inputs"][role]["path"])
+
+    output_root.mkdir(parents=False, exist_ok=False)
+    ledger = WorkflowLedger(stage_root, Path(worker["phase_path"]))
+    ledger.set_phase("preflight")
+    ledger.marker(
+        "task43_v21_r10_h67_worker_bound",
+        {
+            "worker_identity": worker,
+            "runtime_environment": runtime,
+            "contract_sha256": contract_sha256,
+            "source_sha256_start": source_before,
+            "input_sha256_start": input_before,
+            "pde_matrix_constructed": False,
+            "factorization_performed": False,
+            "solve_performed": False,
+            "selection_transition_written": False,
+        },
+    )
+
+    selection_path = role_path("accepted9_selection")
+    selection = json.loads(selection_path.read_text(encoding="utf-8"))
+    selected = selection.get("selected_candidate", {})
+    if (
+        selection.get("status") != "accepted"
+        or selected.get("candidate_id") != "round9_p_up"
+        or selected.get("independent_FE_dofs") != 110472
+    ):
+        raise ValueError("V21 accepted state is not the frozen accepted9 selection")
+
+    accepted9_plan_path = role_path("accepted9_plan")
+    accepted9_record_path = role_path("accepted9_record")
+    accepted9_storage_path = role_path("accepted9_storage")
+    accepted9_comparison_path = role_path("accepted9_comparison")
+    accepted9_plan = json.loads(accepted9_plan_path.read_text(encoding="utf-8"))
+    accepted9_record = json.loads(accepted9_record_path.read_text(encoding="utf-8"))
+    accepted9_identity = accepted9_record.get("candidate_identity", {})
+    accepted9_storage_identity = accepted9_record.get("recovered_solution_storage", {})
+    accepted9_selected = selection.get("selected_candidate", {})
+    if (
+        accepted9_plan.get("task43_candidate", {}).get("candidate_id") != "round9_p_up"
+        or accepted9_record.get("schema") != "task43.round1_candidate_solve.v1"
+        or accepted9_record.get("gates", {}).get("pass") is not True
+        or accepted9_identity.get("candidate_id") != "round9_p_up"
+        or accepted9_identity.get("plan_sha256") != _sha256_file(accepted9_plan_path)
+        or accepted9_storage_identity.get("sha256") != _sha256_file(accepted9_storage_path)
+        or accepted9_selected.get("candidate_id") != "round9_p_up"
+        or accepted9_selected.get("plan_sha256") != _sha256_file(accepted9_plan_path)
+        or accepted9_selected.get("record_sha256") != _sha256_file(accepted9_record_path)
+        or accepted9_selected.get("storage_sha256") != _sha256_file(accepted9_storage_path)
+        or accepted9_selected.get("comparison_record_sha256")
+        != _sha256_file(accepted9_comparison_path)
+        or _sha256_file(accepted9_comparison_path)
+        != contract["inputs"]["accepted9_comparison"]["sha256"]
+    ):
+        raise ValueError("V21 accepted9 ancestry files are not mutually bound")
+
+    rejection_path = role_path("r10_rejection")
+    rejection = json.loads(rejection_path.read_text(encoding="utf-8"))
+    if (
+        rejection.get("schema") != "task43.rejected-candidate-closeout.v1"
+        or rejection.get("scientific_candidate_id") != "round10_p_up"
+        or not str(rejection.get("status", "")).startswith("REJECTED_")
+        or rejection.get("transition10_created") is not False
+        or rejection.get("last_accepted_state", {}).get("candidate_id") != "round9_p_up"
+        or rejection.get("last_accepted_state", {}).get("selection_sha256")
+        != _sha256_file(selection_path)
+    ):
+        raise ValueError("V21 R10 diagnostic parent is not the frozen rejected state")
+
+    r10_plan_path = role_path("r10_plan")
+    r10_record_path = role_path("r10_record")
+    r10_storage_path = role_path("r10_storage")
+    r10_plan = json.loads(r10_plan_path.read_text(encoding="utf-8"))
+    r10_record = json.loads(r10_record_path.read_text(encoding="utf-8"))
+    r10_identity = r10_record.get("candidate_identity", {})
+    storage_identity = r10_record.get("recovered_solution_storage", {})
+    if (
+        r10_plan.get("task43_candidate", {}).get("candidate_id") != "round10_p_up"
+        or r10_plan.get("task43_candidate", {}).get("action") != "p_up"
+        or r10_plan.get("marked_root_boxes") != []
+        or r10_plan.get("maximum_level") != 1
+        or r10_plan.get("expected_forest", {}).get("root_cell_count") != 180
+        or r10_plan.get("expected_forest", {}).get("leaf_cell_count") != 180
+        or r10_record.get("schema") != "task43.round1_candidate_solve.v1"
+        or r10_identity.get("candidate_id") != "round10_p_up"
+        or r10_identity.get("action") != "p_up"
+        or r10_identity.get("parent_candidate_id") != "round9_p_up"
+        or r10_identity.get("accepted_parent_selection_sha256") != _sha256_file(selection_path)
+        or r10_identity.get("parent_plan_sha256") != _sha256_file(accepted9_plan_path)
+        or r10_identity.get("parent_case_record_sha256") != _sha256_file(accepted9_record_path)
+        or r10_identity.get("parent_recovered_storage_sha256") != _sha256_file(accepted9_storage_path)
+        or r10_identity.get("parent_comparison_record_sha256")
+        != _sha256_file(accepted9_comparison_path)
+        or r10_identity.get("plan_sha256") != _sha256_file(r10_plan_path)
+        or r10_identity.get("run_plan_path") != str(r10_plan_path.resolve())
+        or r10_identity.get("acceptance_contract_sha256")
+        != contract["inputs"]["round1_acceptance_contract"]["sha256"]
+        or storage_identity.get("sha256") != contract["inputs"]["r10_storage"]["sha256"]
+        or storage_identity.get("file") != str(r10_storage_path.resolve())
+        or storage_identity.get("independent_active_fe_dofs") != 118800
+        or storage_identity.get("active_cell_interior_rows") != 81000
+        or storage_identity.get("independent_trace_rows") != 37800
+    ):
+        raise ValueError("V21 R10 plan/record/storage parent identity is inconsistent")
+
+    rejection_path = role_path("r10_rejection")
+    rejection_sha256 = _sha256_file(rejection_path)
+    comparison_path = role_path("r10_comparison")
+    modal_path = role_path("r10_modal")
+    absorption_path = role_path("r10_absorption")
+    if (
+        rejection.get("comparison_sha256") not in (None, _sha256_file(comparison_path))
+        or r10_record.get("power", {}).get("channel_rows_sha256") != _sha256_file(modal_path)
+        or not isinstance(json.loads(absorption_path.read_text(encoding="utf-8")), Mapping)
+    ):
+        raise ValueError("V21 rejected R10 comparison/modal/absorption bytes are inconsistent")
+
+    # Rebuild the two frozen fields through their existing readers.  The R10
+    # candidate remains an official historical solve record; its REJECTED
+    # selection outcome is deliberately not passed to the accepted-state
+    # reader.  Y6_1 is restored by the existing inventory-bound reference path.
+    ledger.set_phase("restore_frozen_fields")
+    r10_restore_root = output_root / "restore_r10"
+    r10_restore_root.mkdir()
+    r10_restored = candidate_comparator._restore_candidate(
+        r10_record_path.parent,
+        r10_restore_root,
+    )
+    if (
+        r10_restored.get("candidate_id") != "round10_p_up"
+        or r10_restored.get("record", {}).get("candidate_identity", {}).get("candidate_id")
+        != "round10_p_up"
+    ):
+        raise ValueError("V21 R10 field restoration returned another candidate")
+
+    y6_restore_identity_path = role_path("y6_restore_identity")
+    y6_restore_record = json.loads(y6_restore_identity_path.read_text(encoding="utf-8"))
+    y6_inventory_path = role_path("y6_inventory")
+    y6_inventory = json.loads(y6_inventory_path.read_text(encoding="utf-8"))
+    y6_entries = [
+        item for item in y6_inventory.get("cases", [])
+        if item.get("label") == "Y6_1"
+    ]
+    y6_case_root = y6_restore_identity_path.parent
+    if (
+        len(y6_entries) != 1
+        or y6_entries[0].get("directory") != y6_restore_record.get("source_directory")
+        or y6_restore_record.get("label") != "Y6_1"
+        or y6_restore_record.get("status")
+        != "RESTORATION_IDENTITY_PASS_NOT_TASK43_QUALIFIED"
+        or y6_restore_record.get("recovered_bundle", {}).get("sha256")
+        != _sha256_file(role_path("y6_recovered_bundle"))
+        or y6_restore_record.get("input_artifacts", {}).get("resolved_config.json", {}).get("sha256")
+        != _sha256_file(role_path("y6_resolved_config"))
+        or y6_restore_record.get("input_artifacts", {}).get(
+            "numerical_output/dtn_port_diffraction_orders_3d.json", {}
+        ).get("sha256") != _sha256_file(role_path("y6_modal"))
+        or _sha256_file(role_path("y6_absorption"))
+        != contract["inputs"]["y6_absorption"]["sha256"]
+    ):
+        raise ValueError("V21 Y6_1 inventory/restore inputs are not mutually bound")
+    y6_restore_output = output_root / "restore_y6"
+    y6_restore_output.mkdir()
+    y6_restored = candidate_comparator._restore_case_fields(
+        "Y6_1",
+        y6_restore_output,
+    )
+    if y6_restored.get("label") != "Y6_1":
+        raise ValueError("V21 Y6_1 restoration returned another reference")
+
+    frozen_cases = {"R10": r10_restored, "Y6_1": y6_restored}
+    frozen_physics = candidate_comparator.base._validate_common_physics(
+        frozen_cases, labels=("R10", "Y6_1")
+    )
+    frozen_modes = candidate_comparator.base._validate_mode_physics(
+        frozen_cases, labels=("R10", "Y6_1")
+    )
+    frozen_operator_rules = candidate_comparator.base._validate_recorded_quadrature_and_cutoff(
+        frozen_cases, labels=("R10", "Y6_1")
+    )
+
+    frozen_restore_identities = {
+        "R10": {
+            "candidate_id": r10_restored["candidate_id"],
+            "plan_sha256": r10_restored["plan_sha256"],
+            "storage_sha256": r10_restored["storage_sha256"],
+            "record_sha256": _sha256_file(r10_record_path),
+            "mesh_identity": r10_restored["mesh_identity"],
+        },
+        "Y6_1": {
+            "label": y6_restored["label"],
+            "restore_identity_sha256": _sha256_file(y6_restore_identity_path),
+            "resolved_config_sha256": _sha256_file(role_path("y6_resolved_config")),
+            "recovered_bundle_sha256": _sha256_file(role_path("y6_recovered_bundle")),
+            "inventory_sha256": _sha256_file(y6_inventory_path),
+            "mesh_identity": y6_restored["mesh_identity"],
+        },
+    }
+    write_atomic_json(
+        output_root / "frozen_parent_restore_identities.json",
+        {
+            "schema": "task43.v21.r10_h67.parent-field-restoration.v1",
+            "contract_sha256": contract_sha256,
+            "classification": "existing_R10_and_Y6_1_coefficients_restored_without_PDE_solve",
+            "fields": frozen_restore_identities,
+            "shared_physics": frozen_physics,
+            "shared_modal_physics": frozen_modes,
+            "operator_quadrature_and_cutoff": frozen_operator_rules,
+            "new_pde_solve": False,
+            "new_quadrature_sampling": False,
+        },
+    )
+
+    # The frozen R10 solution was restored through its existing reader above.
+    # The S space check separately reads only the saved mesh/global-cell maps.
+    geometry_keys = (
+        "mesh_owned_cell_global_ids",
+        "mesh_geometry_dofmap",
+        "mesh_geometry_coordinates_nm",
+    )
+    with np.load(r10_storage_path, allow_pickle=False) as storage:
+        if any(name not in storage for name in geometry_keys):
+            raise ValueError("V21 R10 storage lacks saved mesh/global-cell arrays")
+        cell_ids = np.asarray(storage[geometry_keys[0]], dtype=np.int64)
+        geometry_dofmap = np.asarray(storage[geometry_keys[1]], dtype=np.int64)
+        coordinates = np.asarray(storage[geometry_keys[2]], dtype=np.float64)
+        geometry_identities = {
+            name: _v16_array_identity(np.asarray(storage[name]))
+            for name in geometry_keys
+        }
+    recorded_arrays = storage_identity.get("arrays", {})
+    for name, identity in geometry_identities.items():
+        if recorded_arrays.get(name) != identity:
+            raise ValueError(f"V21 R10 storage geometry identity changed: {name}")
+    if (
+        cell_ids.shape != (180,)
+        or geometry_dofmap.shape != (180, 8)
+        or coordinates.shape != (308, 3)
+        or not np.isfinite(coordinates).all()
+        or np.unique(cell_ids).size != 180
+        or np.any(geometry_dofmap < 0)
+        or np.any(geometry_dofmap >= coordinates.shape[0])
+    ):
+        raise ValueError("V21 R10 saved geometry has invalid shape or nonfinite values")
+
+    cfg = _h100_config(
+        kind="empty_h_active_p3",
+        case_name="task43_v21_r10_h67_space_mpi1",
+        geometry_profile="initial_180",
+    )
+    parent_forest = _build_forest(
+        cfg,
+        comm_size=1,
+        marked_root_boxes=(),
+        maximum_level=1,
+        allow_no_refinement=True,
+    )
+    parent_boxes = set(parent_forest.root_boxes)
+    requested_global_id = 67
+    requested_box, root_matches = _v21_h67_parent_seed_mapping(
+        cell_ids, geometry_dofmap, coordinates, parent_forest.root_boxes
+    )
+
+    parent_degree_by_box: dict[tuple[float, ...], int] = {}
+    for row in r10_plan.get("cell_interior_degrees", []):
+        box = tuple(map(float, (*row["lower"], *row["upper"])))
+        if box in parent_degree_by_box:
+            raise ValueError("V21 R10 plan repeats a parent degree box")
+        parent_degree_by_box[box] = int(row["degree"])
+    if parent_degree_by_box != {box: 6 for box in parent_boxes}:
+        raise ValueError("V21 R10 parent is not the full p6 root state")
+
+    provenance = {
+        "schema": "task43.v21.r10_h67_diagnostic_parent.v1",
+        "accepted_state": {
+            "candidate_id": "round9_p_up",
+            "selection_status": "ACCEPTED",
+            "selection_path": str(selection_path.resolve()),
+            "selection_sha256": _sha256_file(selection_path),
+            "selection_unchanged": True,
+        },
+        "diagnostic_parent": {
+            "candidate_id": "round10_p_up",
+            "selection_status": "REJECTED",
+            "plan_path": str(r10_plan_path.resolve()),
+            "plan_sha256": _sha256_file(r10_plan_path),
+            "record_path": str(r10_record_path.resolve()),
+            "record_sha256": _sha256_file(r10_record_path),
+            "rejection_path": str(rejection_path.resolve()),
+            "rejection_sha256": _sha256_file(rejection_path),
+            "storage_path": str(r10_storage_path.resolve()),
+            "storage_sha256": _sha256_file(r10_storage_path),
+            "independent_fe_dofs": 118800,
+            "accepted_selection_not_rewritten": True,
+        },
+        "requested_h_seed": {
+            "global_cell_id": requested_global_id,
+            "forest_root_index": root_matches[0],
+            "box_nm": list(requested_box),
+            "split": "one_level_1_to_8",
+            "maximum_level": 1,
+        },
+        "selection_enabled": False,
+        "transition_written": False,
+        "geometry_array_identities": geometry_identities,
+    }
+    candidate_forest = _build_forest(
+        cfg,
+        comm_size=comm.size,
+        marked_root_boxes=(requested_box,),
+        maximum_level=1,
+        allow_no_refinement=False,
+    )
+    parent_degree_by_root = {
+        root_id: parent_degree_by_box[tuple(map(float, box))]
+        for root_id, box in enumerate(candidate_forest.root_boxes)
+    }
+    candidate_leaf_degrees = {
+        leaf.box: parent_degree_by_root[int(leaf.key.root)]
+        for leaf in candidate_forest.leaves
+    }
+    plan = stage4_local_h_refinement_plan_payload(
+        cfg,
+        (requested_box,),
+        comm_size=comm.size,
+        trace_degree=6,
+        cell_interior_degree=6,
+        provenance=provenance,
+        cell_interior_degree_overrides=candidate_leaf_degrees,
+        variable_trace_from_cell_degrees=True,
+        allow_no_refinement=False,
+    )
+    plan["task43_candidate"] = {
+        "candidate_id": "v21_r10_h67",
+        "action": "h_refine",
+        "action_description": "one_r10_p6_h_split_at_global67_root127_without_selection_transition",
+        "provenance": provenance,
+    }
+    plan["selection_enabled"] = False
+    plan["transition_written"] = False
+
+    plan_path = output_root / "plans/v21_r10_h67.json"
+    plan_path.parent.mkdir(parents=True, exist_ok=False)
+    write_atomic_json(plan_path, plan)
+    ledger.set_phase("mesh_setup")
+    audit = _audit_plan(
+        cfg,
+        plan_path=plan_path,
+        candidate_id="v21_r10_h67",
+        comm=comm,
+        parent_independent_fe_dofs=118800,
+        parent_root_degree_by_box={box: 6 for box in parent_boxes},
+        audit_parent_transfer=False,
+    )
+    actual_fe = int(audit["dofs"]["independent_active_fe_dofs"])
+    forest_audit = audit["forest"]
+    actual_split_count = int(forest_audit["actual_one_level_root_splits"])
+    expected_interior_rows = 81000 + 3150 * actual_split_count
+    closure_root_ids = list(
+        audit["space_authority_detail"]["forced_closure_root_ids"]
+    )
+    closure_root_records = [
+        {
+            "forest_root_index": int(root_id),
+            "box_nm": audit["space_authority_detail"][
+                "forced_closure_root_boxes"
+            ][str(root_id)],
+            "inherited_degree": audit["space_authority_detail"][
+                "forced_closure_root_degrees"
+            ][str(root_id)],
+            "reason_classification": "actual_forest_conformity_closure",
+        }
+        for root_id in closure_root_ids
+    ]
+    gate_checks = {
+        "requested_root_only": audit["space_authority_detail"]["requested_root_ids"] == [127],
+        "root_count_180": forest_audit["root_cell_count"] == 180,
+        "exactly_one_requested_split": forest_audit["requested_h_root_splits"] == 1,
+        "actual_split_includes_request": forest_audit["actual_one_level_root_splits"] >= 1,
+        "requested_root_is_actually_refined": 127
+        in audit["space_authority_detail"]["actual_refined_root_ids"],
+        "strict_fe_bounds": 118800 < actual_fe < 237600,
+        "actual_interior_rows_follow_split_count": int(
+            audit["dofs"]["active_cell_interior_rows"]
+        ) == expected_interior_rows,
+        "all_leaf_degrees_inherit_p6": audit["degrees"]["cell_interior_histogram"]
+        == {"p6": forest_audit["actual_leaf_cell_count"]},
+        "degree_plan_pass": audit["degrees"]["degree_plan_pass"] is True,
+        "entity_constraints_pass": audit["degrees"]["entity_constraints_pass"] is True,
+    }
+    space_gate_pass = all(gate_checks.values())
+    audit.update(
+        {
+            "schema": "task43.v21.r10_h67.space-audit.v1",
+            "contract_path": str(Path(args.r10_h67_contract).resolve()),
+            "contract_sha256": contract_sha256,
+            "requested_global_cell_id": 67,
+            "requested_forest_root_index": 127,
+            "requested_box_nm": list(requested_box),
+            "accepted_state_candidate_id": "round9_p_up",
+            "diagnostic_parent_candidate_id": "round10_p_up",
+            "selection_enabled": False,
+            "transition_written": False,
+            "parent_field_restoration_path": str(
+                (output_root / "frozen_parent_restore_identities.json").resolve()
+            ),
+            "parent_field_restoration_sha256": _sha256_file(
+                output_root / "frozen_parent_restore_identities.json"
+            ),
+            "actual_independent_fe_gate": {
+                "lower_exclusive": 118800,
+                "actual": actual_fe,
+                "upper_exclusive": 237600,
+                "checks": gate_checks,
+                "pass": space_gate_pass,
+            },
+            "r10_storage_geometry_array_identities": geometry_identities,
+            "source_sha256_start": source_before,
+            "input_sha256_start": input_before,
+        }
+    )
+    audit_path = output_root / "plans/v21_r10_h67.audit.json"
+    write_atomic_json(audit_path, audit)
+    bundle = {
+        "schema": "task43.v21.r10_h67.plan-audit-bundle.v1",
+        "classification": "measured_actual_space_no_pde_solve",
+        "candidate_id": "v21_r10_h67",
+        "plan_path": str(plan_path.resolve()),
+        "plan_sha256": _sha256_file(plan_path),
+        "audit_path": str(audit_path.resolve()),
+        "audit_sha256": _sha256_file(audit_path),
+        "contract_sha256": contract_sha256,
+        "actual_independent_fe_dofs": actual_fe,
+        "actual_space_gate": audit["actual_independent_fe_gate"],
+        "requested_global_cell_id": 67,
+        "requested_forest_root_index": 127,
+        "actual_closure_root_indices": audit["space_authority_detail"]["forced_closure_root_ids"],
+            "actual_closure_roots": closure_root_records,
+            "actual_one_level_root_splits": actual_split_count,
+            "expected_active_cell_interior_rows_from_split_count": expected_interior_rows,
+        "pde_matrix_constructed": False,
+        "factorization_performed": False,
+        "solve_performed": False,
+        "official_result": False,
+        "selection_enabled": False,
+        "transition_written": False,
+    }
+    write_atomic_json(output_root / "plan_audit.json", bundle)
+    _require_v11_watchdog_worker_identity(
+        expected_identity=worker, require_unused_phase_file=False
+    )
+    source_after = source_snapshot(contract)
+    _, input_after = require_snapshot_equal(
+        contract, source_before=source_before, input_before=input_before
+    )
+    if source_after != source_before or input_after != input_before:
+        raise RuntimeError("V21 source/input identity changed during the S authority")
+    ledger.marker(
+        "task43_v21_r10_h67_space_complete",
+        {
+            "plan_sha256": bundle["plan_sha256"],
+            "audit_sha256": bundle["audit_sha256"],
+            "actual_independent_fe_dofs": actual_fe,
+            "source_sha256_end": source_after,
+            "input_sha256_end": input_after,
+            "selection_transition_written": False,
+        },
+    )
+    terminal = {
+        "schema": "task43.v21.stage-terminal.v1",
+        "stage": "S",
+        "status": "COMPLETE" if space_gate_pass else "FAILED",
+        "classification": (
+            "measured_actual_space_no_pde_solve"
+            if space_gate_pass
+            else "measured_space_gate_failed_no_pde_solve"
+        ),
+        "candidate_id": "v21_r10_h67",
+        "plan_sha256": bundle["plan_sha256"],
+        "audit_sha256": bundle["audit_sha256"],
+        "actual_independent_fe_dofs": actual_fe,
+        "space_gate_checks": gate_checks,
+        "official_result": False,
+        "selection_enabled": False,
+        "transition_written": False,
+    }
+    write_atomic_json(stage_root / "stage_terminal.json", terminal)
+    if not space_gate_pass:
+        raise RuntimeError("V21 H67 actual space or frozen FE gate failed; measured audit preserved")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--parent-run", type=Path, default=DEFAULT_PARENT_RUN)
@@ -3894,6 +4454,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--execution-recovery-manifest", type=Path)
     parser.add_argument("--paired-p8-contract", type=Path)
     parser.add_argument("--p8-execution-recovery-binding", type=Path)
+    parser.add_argument("--r10-h67-contract", type=Path)
     parser.add_argument(
         "--skip-parent-transfer",
         action="store_true",
@@ -3907,6 +4468,37 @@ def main(argv: list[str] | None = None) -> int:
     comm = MPI.COMM_WORLD
     if comm.size != 1:
         parser.error("candidate plan audit is qualified here for MPI1 only")
+    if args.r10_h67_contract is not None:
+        try:
+            _run_v21_r10_h67_space_plan(args, comm=comm)
+        except (OSError, json.JSONDecodeError, KeyError, RuntimeError, TypeError, ValueError) as exc:
+            try:
+                from benchmarks.task43_hp_adaptivity.r10_h67_diagnostic import (
+                    load_contract as _load_v21_contract,
+                    slot_root as _v21_slot_root,
+                )
+
+                _contract, _ = _load_v21_contract(args.r10_h67_contract, verify_inputs=False)
+                _stage_root = _v21_slot_root(_contract, "S")
+                _terminal = _stage_root / "stage_terminal.json"
+                if _stage_root.is_dir() and not _stage_root.is_symlink() and not _terminal.exists():
+                    write_atomic_json(
+                        _terminal,
+                        {
+                            "schema": "task43.v21.stage-terminal.v1",
+                            "stage": "S",
+                            "status": "FAILED",
+                            "classification": "measured_or_partial_no_pde_solve",
+                            "error": f"{type(exc).__name__}: {exc}",
+                            "official_result": False,
+                            "selection_enabled": False,
+                            "transition_written": False,
+                        },
+                    )
+            except (OSError, json.JSONDecodeError, KeyError, RuntimeError, TypeError, ValueError):
+                pass
+            parser.error(f"V21 R10_H67 space contract or authority failed: {exc}")
+        return 0
     if args.paired_p8_contract is not None:
         if (
             args.primary_diagnostic_contract is not None

@@ -1118,10 +1118,16 @@ def _restore_candidate(
     v11_contract: dict[str, Any] | None = None,
     v11_contract_sha256: str | None = None,
     v12_recovery_binding: dict[str, Any] | None = None,
+    v21_contract: dict[str, Any] | None = None,
+    v21_contract_sha256: str | None = None,
 ) -> dict[str, Any]:
     record_path = candidate_run_root / "task43_round1_candidate_record.json"
     record = _json(record_path)
-    if v11_contract is None:
+    if v21_contract is not None:
+        if v11_contract is not None or not v21_contract_sha256:
+            raise ValueError("V21 restore cannot mix old pending contracts")
+        _validate_v21_pending_candidate(candidate_run_root, record, v21_contract, v21_contract_sha256)
+    elif v11_contract is None:
         if record.get("schema") != "task43.round1_candidate_solve.v1":
             raise ValueError("candidate record has an unexpected schema")
         if record.get("gates", {}).get("pass") is not True:
@@ -1155,7 +1161,7 @@ def _restore_candidate(
 
     # Round-one candidates are bound to the frozen initial perturbation. Later
     # candidates are checked against an already accepted parent by the caller.
-    if not identity.get("accepted_parent_selection_sha256"):
+    if v21_contract is None and not identity.get("accepted_parent_selection_sha256"):
         _validate_round1_candidate_inputs(
             candidate_plan_path=plan_path,
             candidate_id=candidate_id,
@@ -1216,11 +1222,11 @@ def _restore_candidate(
                 name: np.asarray(storage[name]).copy()
                 for name in (*expected_key_by_identity.values(), "recovered_p6_local_coefficients")
             }
-            if v11_contract is not None
+            if v11_contract is not None or v21_contract is not None
             else {}
         )
     restoration_binding = None
-    if v11_contract is not None:
+    if v11_contract is not None or v21_contract is not None:
         packet_path = candidate_run_root / "primary_state.npz"
         with np.load(packet_path, allow_pickle=False) as packet_archive:
             packet_key = "recovered_recovered_p6_local_coefficients"
@@ -1255,8 +1261,8 @@ def _restore_candidate(
         )
         packet_coefficients_identity = _checkpoint_array_identity(packet_coefficients)
         restoration_binding = {
-            "p2_source_id": v12_recovery_binding["p2_source_id"],
-            "recovery_manifest_sha256": v12_recovery_binding["manifest_sha256"],
+            "p2_source_id": v12_recovery_binding["p2_source_id"] if v12_recovery_binding else "V21_S",
+            "recovery_manifest_sha256": v12_recovery_binding["manifest_sha256"] if v12_recovery_binding else None,
             "primary_packet_path": str(packet_path.resolve()),
             "primary_packet_sha256": _sha256_file(packet_path),
             "primary_array_key": packet_key,
@@ -1291,7 +1297,7 @@ def _restore_candidate(
         "mesh_identity": {name: base._array_identity(values) for name, values in actual_arrays.items()},
         "storage_sha256": storage_identity["sha256"],
         "plan_sha256": plan_sha,
-        "v12_restoration_binding": restoration_binding,
+        ("v21_restoration_binding" if v21_contract is not None else "v12_restoration_binding"): restoration_binding,
     }
 
 
@@ -4749,7 +4755,289 @@ def compare_v16_p8_paired(
         raise
 
 
-def main() -> int:
+def _v21_product_snapshot(stage_root: Path, contract_sha256: str) -> dict[str, str]:
+    """Read the root-reviewed S/F product set before and after C consumption."""
+    release = _json(stage_root / "root_release.json")
+    if (release.get("decision") != "ALLOW_ONE_FIXED_SLOT"
+            or release.get("stage") != "C"
+            or release.get("contract_sha256") != contract_sha256):
+        raise ValueError("V21 C lacks its explicit root-reviewed release")
+    products = release.get("products", {})
+    required = {"space_plan", "space_audit", "formal_terminal", "formal_record",
+                "primary_packet", "primary_raw_audit", "formal_storage", "formal_plan",
+                "formal_modal", "formal_absorption", "formal_watchdog", "formal_launcher"}
+    if not required <= set(products):
+        raise ValueError("V21 C release omits mandatory S/F products")
+    result = {}
+    for name, item in products.items():
+        path = Path(item["path"])
+        if not path.is_file() or path.is_symlink() or _sha256_file(path) != item["sha256"]:
+            raise ValueError(f"V21 C source product changed: {name}")
+        result[str(path.resolve())] = item["sha256"]
+    return result
+
+
+def _validate_v21_pending_candidate(candidate_root, record, contract, contract_sha256):
+    """Validate a nonofficial new primary, independently of old accepted readers."""
+    terminal = _json(candidate_root / "v21_f1_terminal.json")
+    plan_sha = _sha256_file(candidate_root / "candidate_plan.json")
+    packet_path = candidate_root / "primary_state.npz"
+    if (terminal.get("status") != "SOLVED_PENDING_POSTPROCESS"
+            or terminal.get("candidate_id") != "v21_r10_h67"
+            or terminal.get("contract", {}).get("sha256") != contract_sha256
+            or terminal.get("candidate_plan_sha256") != plan_sha
+            or terminal.get("primary_packet", {}).get("npz_sha256") != _sha256_file(packet_path)
+            or Path(terminal.get("primary_packet", {}).get("npz_path", "")).resolve() != packet_path.resolve()
+            or terminal.get("endpoint_record", {}).get("sha256") != _sha256_file(candidate_root / "task43_round1_candidate_record.json")
+            or record.get("candidate_identity", {}).get("candidate_id") != "v21_r10_h67"
+            or record.get("gates", {}).get("pass") is not True
+            or record.get("solver", {}).get("official_result") is not False):
+        raise ValueError("V21 pending endpoint/primary/plan identity is not qualified")
+    watchdog = _json(candidate_root.parent / "watchdog/summary.json")
+    launcher = _json(candidate_root.parent / "launcher_terminal.json")
+    if (watchdog.get("classification") != "COMPLETED"
+            or watchdog.get("leader_exit_code") != 0
+            or watchdog.get("descendants_cleared") is not True
+            or watchdog.get("remaining_child_pids") != []
+            or launcher.get("supervisor_exit_code") != 0
+            or launcher.get("watchdog_exit_code") != 0
+            or launcher.get("whole_limit_pass") is not True
+            or launcher.get("received_signal") is not None):
+        raise ValueError("V21 pending endpoint lacks a complete F lifecycle")
+    with np.load(packet_path, allow_pickle=False) as archive:
+        embedded = json.loads(np.asarray(archive["__task43_record_json__"], dtype=np.uint8).tobytes())
+        arrays = {name: np.asarray(archive[name]).copy() for name in archive.files
+                  if name != "__task43_record_json__"}
+    packet_record = terminal["primary_packet"]
+    if (embedded.get("schema") != "task43.v21.r10_h67.primary_state.v1"
+            or embedded.get("official_result") is not False
+            or embedded.get("passed") is not False
+            or any(packet_record.get(key) != value for key, value in embedded.items())):
+        raise ValueError("V21 primary embedded metadata differs from its terminal packet")
+    if set(arrays) != set(embedded.get("arrays", {})):
+        raise ValueError("V21 primary array inventory differs")
+    for name, value in arrays.items():
+        if _checkpoint_array_identity(value) != embedded["arrays"][name]:
+            raise ValueError(f"V21 primary array identity differs: {name}")
+    identity = embedded["identity"]
+    if (identity.get("contract_sha256") != contract_sha256
+            or identity.get("phase") != "R10_H67"
+            or identity.get("candidate_plan_sha256") != plan_sha
+            or identity.get("candidate_identity") != record["candidate_identity"]):
+        raise ValueError("V21 primary has another contract or phase")
+    normal = identity.get("normal_correction_audit", {})
+    storage = record["recovered_solution_storage"]
+    if identity.get("independent_active_fe_dofs") != storage["independent_active_fe_dofs"]:
+        raise ValueError("V21 primary FE identity differs from recovery storage")
+    raw = _v11_raw_vector_gates(
+        arrays, active_trace_rows=int(storage["active_trace_rows"]),
+        active_interior_rows=int(storage["active_cell_interior_rows"]),
+        independent_fe_dofs=int(storage["independent_active_fe_dofs"]),
+        active_full_rows=int(identity["raw_full_active_scope"]["active_full_rows"]),
+        full_active_scope=identity["raw_full_active_scope"],
+        independent_a6_scope=identity["independent_A6_raw_vector_scope"],
+        normal_correction_count=int(identity["normal_correction_count"]),
+        normal_converged_reason=int(normal["correction_ksp"]["converged_reason"]),
+        normal_correction_status=str(normal["status"]), extra_correction_count=int(identity.get("extra_correction_count", -1)),
+    )
+    if raw.get("pass") is not True:
+        raise ValueError("V21 restored primary failed saved raw-vector gates")
+    return raw
+
+
+def _v21_root_responses(samples, weights, owner_roots, root_boxes, closure_roots, k0):
+    """Bin the existing squared G difference and action cross-term by R10 roots."""
+    if len(root_boxes) != 180 or owner_roots.shape != weights.shape:
+        raise ValueError("V21 response requires 180 parent roots and one owner per point")
+    before = np.zeros_like(weights)
+    after = np.zeros_like(weights)
+    action_sq = np.zeros_like(weights)
+    correlation = np.zeros_like(weights)
+    for name, scale in (("E", 1.0), ("curl_E", k0)):
+        error = (samples["Y6_1"][name] - samples["R10"][name]) / scale
+        action = (samples["R10_H67"][name] - samples["R10"][name]) / scale
+        before += weights * np.sum(np.abs(error)**2, axis=1)
+        after += weights * np.sum(np.abs(error-action)**2, axis=1)
+        action_sq += weights * np.sum(np.abs(action)**2, axis=1)
+        correlation += 2*weights*np.sum((np.conj(error)*action).real, axis=1)
+    arrays = {"before_G_squared": before, "after_G_squared": after,
+              "action_G_squared": action_sq, "twice_error_action_inner_product": correlation,
+              "net_improvement_G_squared": before-after}
+    if not np.allclose(before-after, correlation-action_sq, rtol=2e-9, atol=1e-19):
+        raise ValueError("V21 local response G-square identity does not close")
+    rows = []
+    for root, box in enumerate(root_boxes):
+        mask = owner_roots == root
+        row = {"forest_root": root, "lower_nm": list(box[:3]), "upper_nm": list(box[3:]),
+               "region": "requested" if root == 127 else "closure" if root in closure_roots else "rest",
+               "point_count": int(mask.sum())}
+        row.update({key: float(value[mask].sum()) for key, value in arrays.items()})
+        rows.append(row)
+    groups = {}
+    for group in ("requested", "closure", "rest"):
+        selected = [row for row in rows if row["region"] == group]
+        groups[group] = {key: sum(row[key] for row in selected) for key in arrays}
+        groups[group]["positive_net_improvement"] = sum(max(row["net_improvement_G_squared"], 0) for row in selected)
+        groups[group]["negative_net_improvement"] = sum(min(row["net_improvement_G_squared"], 0) for row in selected)
+    return {"cells": rows, "groups": groups,
+            "totals": {key: float(value.sum()) for key, value in arrays.items()},
+            "normalization": "Unnormalized integral of |delta E|^2 + |delta curl_E/k0|^2 with nm^3 weights; divide by the squared reference/incident G denominator to obtain contributions to dimensionless G^2",
+            "interpretation": "Local squared field-difference integral, not local R00 error or DWR"}
+
+
+def compare_v21_h67(contract_path: Path, output_root: Path, candidate_run_root: Path):
+    """One new three-field common partition; reuse the existing restore/metric kernels."""
+    from benchmarks.task43_hp_adaptivity.r10_h67_diagnostic import (
+        load_contract, slot_root, source_snapshot, input_snapshot, require_snapshot_equal,
+    )
+    contract, contract_sha = load_contract(contract_path)
+    stage_root = slot_root(contract, "C")
+    if output_root.resolve() != (stage_root / "comparison").resolve():
+        raise ValueError("V21 C output must be its unique comparison directory")
+    if candidate_run_root.resolve() != (slot_root(contract, "F1") / "run").resolve():
+        raise ValueError("V21 C only consumes its explicitly qualified H67")
+    if output_root.exists():
+        raise FileExistsError("V21 C refuses existing comparison output")
+    runtime = _check_v11_runtime_envelope(MPI.COMM_WORLD)
+    worker = runtime["v11_watchdog_worker_identity"]
+    products_before = _v21_product_snapshot(stage_root, contract_sha)
+    source_before, inputs_before = source_snapshot(contract), input_snapshot(contract)
+    output_root.mkdir(parents=False)
+    ledger = WorkflowLedger(stage_root, Path(worker["phase_path"]))
+    ledger.set_phase("postprocess")
+    write_atomic_json(stage_root / "runtime_start.json", runtime)
+    completed = {}
+    results = {}
+    try:
+        r10_root = (ROOT / contract["inputs"]["r10_record"]["path"]).parent
+        cases = {
+            "R10": _restore_candidate(r10_root, output_root / "restore_R10"),
+            "R10_H67": _restore_candidate(candidate_run_root, output_root / "restore_H67",
+                                           v21_contract=contract, v21_contract_sha256=contract_sha),
+            "Y6_1": _restore_case_fields("Y6_1", output_root),
+        }
+        for label, case in cases.items():
+            case["label"] = label
+        labels = tuple(cases)
+        base._validate_common_physics(cases, labels=labels)
+        base._validate_mode_physics(cases, labels=labels)
+        base._validate_recorded_quadrature_and_cutoff(cases, labels=("R10", "Y6_1"))
+        old_controls, new_controls = (cases[label]["record"]["numerical_controls"] for label in ("R10", "R10_H67"))
+        for key in ("volume_quadrature_degree", "incident_and_port_quadrature_degree", "volume_quadrature_rule", "sparse_cutoff_policy", "sparse_cutoff_relative_tolerance", "ordered_mode_count", "port_amplitude_scale_policy"):
+            if old_controls[key] != new_controls[key]:
+                raise ValueError(f"V21 H67 control differs from R10: {key}")
+        mode_physics = {label: _post_selection_full_mode_physics(case) for label, case in cases.items()}
+        modal_table = {}
+        for label, case in cases.items():
+            keys, amps, rows = base._modal_identity(case["mode_payload"], label)
+            if len(keys) != 612 or len(set(keys)) != 612:
+                raise ValueError("V21 requires all 612 unique channels")
+            modal_table[label] = {"keys": keys, "rows": rows, "power": case["power"]}
+        write_atomic_json(output_root / "all612_modal.json", modal_table)
+        old_fe, new_fe = (int(cases[label]["record"]["recovered_solution_storage"]["independent_active_fe_dofs"]) for label in ("R10", "R10_H67"))
+        if old_fe != 118800 or not old_fe < new_fe < 237600:
+            raise ValueError("V21 comparison FE does not satisfy frozen bounds")
+        root_boxes = cases["R10"]["mesh_data"].local_h_context.forest.root_boxes
+        space_release = _json(stage_root / "root_release.json")["products"]
+        space_audit = _json(Path(space_release["space_audit"]["path"]))
+        if (space_audit["dofs"]["independent_active_fe_dofs"] != new_fe
+                or _sha256_file(candidate_run_root / "candidate_plan.json") != space_release["space_plan"]["sha256"]):
+            raise ValueError("V21 F geometry/FE identity differs from S products")
+        forest = cases["R10_H67"]["mesh_data"].local_h_context.forest
+        split_roots = {int(cell.key.root) for cell in forest.leaves if int(cell.key.level) > 0}
+        closure = split_roots - {127}
+        for order in (8, 10):
+            quadrature = build_common_volume_quadrature([case["axes"] for case in cases.values()], gauss_order=order)
+            points, weights = np.asarray(quadrature.points_nm), np.asarray(quadrature.weights_nm3)
+            if (not np.isfinite(points).all() or not np.isfinite(weights).all()
+                    or np.any(weights <= 0) or abs(float(weights.sum())-350000) > 1e-8):
+                raise ValueError("V21 common quadrature domain/weights invalid")
+            # Actual mesh axis union includes every child and material plane.
+            for axis_index, axis in enumerate(quadrature.axis_breakpoints_nm):
+                for case in cases.values():
+                    if not all(np.any(np.isclose(axis, edge, rtol=0, atol=1e-12)) for edge in case["axes"][axis_index]):
+                        raise ValueError("V21 common partition omits an actual leaf boundary")
+            samples, owners = {}, {}
+            for label, case in cases.items():
+                samples[label] = _sample_field(case, points)
+                if not all(np.isfinite(a).all() for a in samples[label].values()):
+                    raise ValueError(f"V21 nonfinite {label} samples")
+                ids, slots = base._cell_slot_for_points(case["mesh_data"].mesh, case["axes"], points)
+                if slots.shape != weights.shape or np.any(slots < 0) or np.any(slots >= len(ids)):
+                    raise ValueError("V21 sampled owners are invalid")
+                owners[label] = {"cell_global_ids": ids, "point_cell_local_slots": slots, "point_cell_global_ids": ids[slots]}
+                _require_v11_watchdog_worker_identity(expected_identity=worker, require_unused_phase_file=False)
+            arrays = {"points_nm": points, "weights_nm3": weights,
+                      **{f"{label}_{key}": value for label, fields in samples.items() for key, value in fields.items()},
+                      **{f"{label}_{key}": value for label, fields in owners.items() for key, value in fields.items()}}
+            saved = write_atomic_npz(output_root / f"shared_q{order}.npz", arrays,
+                schema="task43.v21.common_samples.v1", classification="measured_nonofficial",
+                identity={"contract_sha256": contract_sha, "quadrature_order": order,
+                          "rule_sha256": quadrature.rule_sha256, "axis_breakpoints_nm": [a.tolist() for a in quadrature.axis_breakpoints_nm],
+                          "sample_count": len(weights), "partition_box_count": quadrature.partition_box_count})
+            completed[f"q{order}"] = saved
+            metrics = {}
+            for label in ("R10", "R10_H67"):
+                modal = base._modal_comparison(cases["Y6_1"], cases[label])
+                fields = base._field_metrics(samples["Y6_1"], samples[label], points, weights, cases["Y6_1"]["cfg"])
+                metrics[label] = {"modal": modal, "field": fields, "J_infinity": _j_infinity(modal, fields),
+                                  "G": fields["G"]["relative_with_incident_floor"],
+                                  "signed_observables": _v11_signed_mode_differences(cases["Y6_1"], cases[label])}
+                components = metrics[label]["J_infinity"]["components"]
+                metrics[label]["absolute_output_gate"] = {
+                    "pass": all(value <= 1.0 for value in components.values()),
+                    "scaled_limit": 1.0,
+                    "failed_components": {key: value for key, value in components.items() if value > 1.0},
+                    "scope": "fixed Y6_1 discrete reference; not independent continuum accuracy",
+                }
+            owner_roots = np.full(len(weights), -1, dtype=np.int64)
+            for index, box in enumerate(root_boxes):
+                mask = np.all((points > np.asarray(box[:3])) & (points < np.asarray(box[3:])), axis=1)
+                if np.any(owner_roots[mask] != -1):
+                    raise ValueError("V21 parent boxes overlap at quadrature points")
+                owner_roots[mask] = index
+            if np.any(owner_roots < 0):
+                raise ValueError("V21 parent boxes do not cover every quadrature point")
+            response = _v21_root_responses(samples, weights, owner_roots, root_boxes, closure, float(cases["Y6_1"]["cfg"].k0))
+            for label, key in (("R10", "before_G_squared"), ("R10_H67", "after_G_squared")):
+                expected = metrics[label]["field"]["G"]["difference_g_norm"] ** 2
+                if not np.isclose(response["totals"][key], expected, rtol=2e-12, atol=1e-18):
+                    raise ValueError("V21 root table does not reproduce global G difference")
+            classification = _v11_fixed_h_classification(j_r9=metrics["R10"]["J_infinity"]["value"], j_h=metrics["R10_H67"]["J_infinity"]["value"], eta_r9=metrics["R10"]["G"], eta_h=metrics["R10_H67"]["G"], epsilon_j=0.12716416232413652, epsilon_g=9.088158796603444e-6)
+            classification.update(Delta_FE=new_fe-old_fe, Delta_J_per_added_FE=classification["Delta_J"]/(new_fe-old_fe), Delta_G_per_added_FE=classification["Delta_G"]/(new_fe-old_fe))
+            results[f"q{order}"] = {"metrics": metrics, "classification": classification, "root_responses": response, "samples": saved}
+            write_atomic_json(output_root / f"q{order}_results.json", results[f"q{order}"])
+            del arrays, samples, owners
+        require_snapshot_equal(contract, source_before=source_before, input_before=inputs_before)
+        if _v21_product_snapshot(stage_root, contract_sha) != products_before:
+            raise ValueError("V21 S/F product set changed during comparison")
+        _require_v11_watchdog_worker_identity(expected_identity=worker, require_unused_phase_file=False)
+        order_classes = [results[key]["classification"] for key in ("q8", "q10")]
+        classification = (
+            "POSITIVE_FIXED_REFERENCE_OUTPUT_RESPONSE"
+            if all(value["positive_condition_pass"] for value in order_classes)
+            else "NEGATIVE_OR_TRADEOFF_RESPONSE"
+            if any(value["negative_or_tradeoff_condition_pass"] for value in order_classes)
+            else "NO_CLEAR_OUTPUT_GAIN_AT_FROZEN_SCALE"
+        )
+        final = {"schema": "task43.v21.comparison.v1", "status": "COMPLETE_DIAGNOSTIC_NOT_ACCEPTANCE",
+                 "classification": classification,
+                 "contract_sha256": contract_sha, "actual_FE": new_fe, "Delta_FE": new_fe-old_fe,
+                 "results": results, "mode_physics": mode_physics, "actual_closure_roots": sorted(closure),
+                 "case_identities": {label: {"mesh_identity": case["mesh_identity"], "storage_sha256": case.get("storage_sha256"), "primary_restore": case.get("v21_restoration_binding")} for label, case in cases.items()},
+                 "sampling_sensitivity_unresolved": results["q8"]["classification"]["classification"] != results["q10"]["classification"]["classification"],
+                 "source_sha256": source_before, "input_sha256": inputs_before, "products": products_before,
+                 "selection_enabled": False, "transition_written": False, "official_result": False}
+        write_atomic_json(output_root / "comparison.json", final)
+        write_atomic_json(stage_root / "runtime_end.json", {"worker_identity": worker, "identity_end": _require_v11_watchdog_worker_identity(expected_identity=worker, require_unused_phase_file=False)})
+        ledger.set_phase("complete")
+        return final
+    except BaseException as error:
+        write_atomic_json(output_root / "failure.json", {"status": "FAILED", "error": f"{type(error).__name__}: {error}", "completed_samples": completed, "completed_results": results, "official_result": False, "selection_enabled": False})
+        raise
+
+
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--candidate-run-root", type=Path)
     parser.add_argument("--attempt-id", required=True)
@@ -4763,7 +5051,22 @@ def main() -> int:
     parser.add_argument("--paired-p8-contract", type=Path)
     parser.add_argument("--p8-execution-recovery-binding", type=Path)
     parser.add_argument("--p8-comparison-recovery-binding", type=Path)
-    args = parser.parse_args()
+    parser.add_argument("--v21-r10-h67-contract", type=Path)
+    parser.add_argument("--output-root", type=Path)
+    args = parser.parse_args(argv)
+    if args.v21_r10_h67_contract is not None:
+        if (args.candidate_run_root is None or args.output_root is None
+                or args.attempt_id != "v21_r10_h67_comparison_attempt1"
+                or any(getattr(args, key) is not None for key in (
+                    "accepted_parent_selection_record", "post_selection_record", "assets_manifest",
+                    "validation_reference_root", "diagnostic_contract", "execution_recovery_manifest",
+                    "saved_primary_recovery_binding", "paired_p8_contract", "p8_execution_recovery_binding",
+                    "p8_comparison_recovery_binding"))):
+            parser.error("V21 C requires only its fixed diagnostic inputs")
+        compare_v21_h67(args.v21_r10_h67_contract, args.output_root, args.candidate_run_root)
+        return 0
+    if args.output_root is not None:
+        parser.error("explicit output-root is only for V21 C")
     if not args.attempt_id or Path(args.attempt_id).name != args.attempt_id:
         parser.error("--attempt-id must be one path component")
     if args.paired_p8_contract is not None:
