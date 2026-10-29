@@ -18141,6 +18141,7 @@ def _validate_task41_p0_v18_selector_scope(
 def _task41_p0_v18_prior_evidence_accounting(*, repo_root: Path) -> dict[str, Any]:
     """Read the exact V17 attempt07 receipt and conservatively recover prior raw/window bytes."""
     from src.runners.task41_p0_contract import (
+        TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
         TASK41_B0_V17_PRIOR_CONTRACT_RELATIVE,
         TASK41_B0_V17_PRIOR_CONTRACT_SHA256,
         TASK41_B0_V17_PRIOR_SERVICE_RECEIPT_RELATIVE,

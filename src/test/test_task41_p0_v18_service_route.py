@@ -481,3 +481,100 @@ def test_v18_service_entry_reaches_output_symlink_guard_before_contract_load(
             v18_saved_jz_selector=True,
             v18_output_directory=output_link,
         )
+
+
+
+def test_v18_prior_evidence_accounting_reads_pinned_parent_fixture(
+    tmp_path: Path, monkeypatch: Any,
+) -> None:
+    root = tmp_path / "repo"
+    model_root = root / "results" / contract_module.TASK41_MODEL_ID
+    model_root.mkdir(parents=True)
+    contract_rel = Path("benchmarks/fixture/v17_contract.json")
+    window_rel = Path("benchmarks/fixture/v17_window.json")
+    receipt_rel = Path("benchmarks/fixture/v17_receipt.json")
+    report_rel = Path("results") / contract_module.TASK41_MODEL_ID / "fixture" / "v17_worker.json"
+    window_path, window_sha = _write_json(root / window_rel, {"schema": "fixture.window.v1"})
+    source_sha = "b" * 40
+    expected_output = (
+        model_root / "task41_p0_saved_diagnostics_6h" / window_sha
+        / "selected_incident_replay" / "attempt07"
+    )
+    expected_output.mkdir(parents=True)
+    service_dir = expected_output.with_name("attempt07.service")
+    service_dir.mkdir()
+    report_path = root / report_rel
+    report_path.parent.mkdir(parents=True)
+    report_path.write_text("{}\n", encoding="utf-8")
+    contract_path, contract_sha = _write_json(root / contract_rel, {
+        "case": {"model_id": contract_module.TASK41_MODEL_ID},
+        "source": {"sha": source_sha},
+        "branch": contract_module.TASK41_BRANCH,
+        "execution_scope": contract_module.TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
+        "window": {
+            "sha256": window_sha,
+            "path": window_rel.as_posix(),
+        },
+        "numerical_strategy": {
+            "schema": "task41.p0.b0.internal_rhs_strategy.v2",
+            "internal_rhs_strategy": "same_lu_rhs_solve",
+            "refinement_strategy": contract_module.TASK41_B0_V14_RHS_REFINEMENT_STRATEGY,
+            "refinement_max_steps": 2,
+        },
+    })
+    receipt_path = root / receipt_rel
+    budget = {
+        "status": "POST_WRITE_CHECKED",
+        "recorded_cumulative_raw_artifact_bytes": 17,
+        "bound_raw_artifact_bytes_stat_deduplicated": 23,
+        "window_output_tree_bytes": 31,
+        "cumulative_raw_artifact_limit_bytes": 16 * 1024**3,
+        "free_space_floor_bytes": 2 * 1024**3,
+        "window_wide_new_evidence_limit_bytes": 128 * 1024**2,
+    }
+    _write_json(receipt_path, {
+        "schema": "task41.p0.saved_output_service_receipt.v1",
+        "status": "completed",
+        "mode": "saved_b0_v17_selected_two_cell_replay",
+        "receipt_path": str(receipt_path.resolve()),
+        "contract_path": str(contract_path.resolve()),
+        "contract_sha256": contract_sha,
+        "window_path": str(window_path.resolve()),
+        "window_sha256": window_sha,
+        "consumer_branch": contract_module.TASK41_BRANCH,
+        "consumer_source_sha": source_sha,
+        "checker_source_sha": source_sha,
+        "consumer_output_root": str(expected_output.resolve()),
+        "v17_worker_route": "READ_ONLY_COMPLETED_PRODUCER_REPORT",
+        "v17_worker_report_path": str(report_path.resolve()),
+        "v17_worker_report_sha256": _sha(report_path),
+        "v17_worker_completed": True,
+        "v17_independent_check_completed": True,
+        "required_checker_status": "audit_completed",
+        "result_classification": "V17_SELECTED_TWO_CELL_DIAGNOSTIC_COMPLETED",
+        "official_result": False,
+        "scientific_qualified": False,
+        "full_owner_unlocked": False,
+        "saved_diagnostics_disk_budget": budget,
+    })
+    monkeypatch.setattr(contract_module, "TASK41_B0_V17_PRIOR_CONTRACT_RELATIVE", contract_rel)
+    monkeypatch.setattr(contract_module, "TASK41_B0_V17_PRIOR_CONTRACT_SHA256", contract_sha)
+    monkeypatch.setattr(contract_module, "TASK41_B0_V17_PRIOR_SERVICE_RECEIPT_RELATIVE", receipt_rel)
+    monkeypatch.setattr(contract_module, "TASK41_B0_V17_PRIOR_SERVICE_RECEIPT_SHA256", _sha(receipt_path))
+    monkeypatch.setattr(contract_module, "TASK41_B0_V17_PRIOR_SOURCE_SHA", source_sha)
+    monkeypatch.setattr(contract_module, "TASK41_B0_V17_PRIOR_WINDOW_SHA256", window_sha)
+    monkeypatch.setattr(contract_module, "TASK41_B0_V17_SELECTED_TWO_CELL_WINDOW_RELATIVE", window_rel)
+    monkeypatch.setattr(contract_module, "TASK41_P0_V17_SELECTED_TWO_CELL_WORKER_REPORT_RELATIVE", report_rel)
+    monkeypatch.setattr(contract_module, "TASK41_P0_V17_SELECTED_TWO_CELL_WORKER_REPORT_SHA256", _sha(report_path))
+
+    result = workflow._task41_p0_v18_prior_evidence_accounting(repo_root=root)
+
+    actual_window_bytes = sum(path.stat().st_size for path in expected_output.parent.rglob("*") if path.is_file())
+    assert result["recorded_cumulative_raw_artifact_bytes"] == 17
+    assert result["bound_raw_artifact_bytes_stat_deduplicated"] == 23
+    assert result["window_output_tree_bytes_recorded"] == 31
+    assert result["window_output_tree_bytes_stat"] == actual_window_bytes
+    assert result["window_output_tree_bytes_conservative"] == max(31, actual_window_bytes)
+    assert result["receipt_sha256"] == _sha(receipt_path)
+    assert result["contract_sha256"] == contract_sha
+    assert result["window_sha256"] == window_sha
