@@ -9,12 +9,14 @@ from typing import Any
 
 import numpy as np
 
+from src.runners import task41_p0_v19_native_rank1 as native_rank1
 from src.runners.task41_p0_v4_volume_only_audit import _persist_array
 from src.runners.task41_p0_v19_native_rank1 import (
     _TERM_ARRAY_FIELDS,
     _archive_identity_and_refs,
     _array_identity,
     _destroy_split_action_on_exit,
+    _ffcx_form_code_identity,
     _json_sha256,
     _native_action_identity,
     _prepare_v19_saved_input_checkpoint,
@@ -132,7 +134,7 @@ class _FakeCompiledForm:
         cells: tuple[int, int] = (0, 1),
         *,
         module_file: str | None = None,
-        code: tuple[str, ...] = ("void fixture_ffcx_kernel(void) {}",),
+        code: tuple[Any, ...] = ("void fixture_ffcx_kernel(void) {}",),
     ) -> None:
         self.kernel_calls: list[dict[str, Any]] = []
         first, second = cells
@@ -156,7 +158,11 @@ class _FakeCompiledForm:
             ],
         )
         self.module = SimpleNamespace(
-            ffi=_FakeFFI(), __name__="fixture_ffcx_module", __file__=module_file
+            ffi=_FakeFFI(),
+            __name__="fixture_ffcx_module",
+            # All synthetic compiled forms need a hashable module artifact;
+            # cache-hit fixtures pass a basename-matched temporary .so instead.
+            __file__=module_file if module_file is not None else __file__,
         )
         self.code = code
 
@@ -289,6 +295,62 @@ def test_native_kernel_identity_binds_ufl_code_module_jit_abi_and_integrals(
         compiled=compiled, abi_identity={"fixture_abi": "different-stack"}
     )
     assert abi_changed["identity_sha256"] != module_changed["identity_sha256"]
+
+
+def test_ffcx_cache_hit_identity_binds_paired_module_and_c_source(
+    tmp_path: Any, monkeypatch: Any,
+) -> None:
+    module_path = tmp_path / "fixture_ffcx_module.abi3.so"
+    source_path = tmp_path / "fixture_ffcx_module.c"
+    module_path.write_bytes(b"synthetic compiled module")
+    source_path.write_bytes(b"synthetic FFCx C source")
+    compiled = _FakeCompiledForm(module_file=str(module_path), code=(None, None))
+
+    identity = _fake_native_action_identity(compiled=compiled)
+
+    assert identity["compiled_module"]["module_file_status"] == "HASHED"
+    assert identity["ffcx_generated_code_status"] == "CACHE_HIT_CODE_NOT_RETURNED"
+    assert identity["ffcx_generated_code_sha256"] is None
+    source_identity = identity["ffcx_generated_c_source_identity"]
+    assert source_identity["c_source_status"] == "HASHED_FROM_FFCX_CACHE"
+    assert source_identity["module_path"] == str(module_path)
+    assert source_identity["c_source_path"] == str(source_path)
+    assert source_identity["c_source_bytes"] == source_path.stat().st_size > 0
+    assert source_identity["c_source_sha256"] == _sha256(source_path)
+
+    with np.testing.assert_raises_regex(TypeError, "unsupported value"):
+        _ffcx_form_code_identity((None, "partial source"), compiled.module)
+
+    source_path.unlink()
+    with np.testing.assert_raises_regex(ValueError, "C source is missing"):
+        _fake_native_action_identity(compiled=compiled)
+
+    source_path.write_bytes(b"")
+    with np.testing.assert_raises_regex(ValueError, "C source is empty"):
+        _fake_native_action_identity(compiled=compiled)
+
+    different_module = tmp_path / "different_ffcx_module.abi3.so"
+    different_module.write_bytes(b"synthetic compiled module")
+    with np.testing.assert_raises_regex(ValueError, "basename differs"):
+        _fake_native_action_identity(
+            compiled=_FakeCompiledForm(
+                module_file=str(different_module), code=(None, None)
+            )
+        )
+
+    source_path.write_bytes(b"nonempty source for module hash gate")
+    monkeypatch.setattr(
+        native_rank1,
+        "_module_artifact_identity",
+        lambda _module: {
+            "module_name": "fixture_ffcx_module",
+            "module_file": str(module_path),
+            "module_file_sha256": None,
+            "module_file_status": "UNAVAILABLE",
+        },
+    )
+    with np.testing.assert_raises_regex(ValueError, "compiled module artifact cannot be hashed"):
+        _fake_native_action_identity(compiled=compiled)
 
 
 def test_native_integral_inventory_change_fails_before_pack_or_kernel() -> None:

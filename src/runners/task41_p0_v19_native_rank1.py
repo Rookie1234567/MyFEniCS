@@ -352,6 +352,71 @@ def _module_artifact_identity(module: Any) -> dict[str, Any]:
         }
 
 
+def _module_c_source_identity(module: Any) -> dict[str, Any]:
+    """Hash the C source paired with an FFCx cache-hit module, without compiling it."""
+    module_name = getattr(module, "__name__", None)
+    raw_module_path = getattr(module, "__file__", None)
+    if (
+        not isinstance(module_name, str)
+        or not module_name
+        or Path(module_name).name != module_name
+        or not isinstance(raw_module_path, str)
+        or not raw_module_path
+    ):
+        raise ValueError("V19 FFCx cache-hit module identity is unavailable")
+    module_path = Path(raw_module_path)
+    if module_path.is_symlink():
+        raise ValueError("V19 FFCx cache-hit module cannot be a symlink")
+    try:
+        resolved_module_path = module_path.resolve(strict=True)
+    except OSError as exc:
+        raise ValueError("V19 FFCx cache-hit module path is unavailable") from exc
+    if (
+        not resolved_module_path.is_file()
+        or not resolved_module_path.name.startswith(f"{module_name}.")
+    ):
+        raise ValueError("V19 FFCx module basename differs from its cache identity")
+    source_path = resolved_module_path.parent / f"{module_name}.c"
+    if source_path.is_symlink() or not source_path.is_file():
+        raise ValueError("V19 FFCx cache-hit C source is missing or a symlink")
+    resolved_source_path = source_path.resolve(strict=True)
+    if resolved_source_path.parent != resolved_module_path.parent:
+        raise ValueError("V19 FFCx C source is outside its compiled-module cache directory")
+    try:
+        source_bytes = int(resolved_source_path.stat().st_size)
+        source_sha256 = sha256_file(resolved_source_path)
+    except OSError as exc:
+        raise ValueError("V19 FFCx cache-hit C source cannot be hashed") from exc
+    if source_bytes <= 0:
+        raise ValueError("V19 FFCx cache-hit C source is empty")
+    return {
+        "module_name": module_name,
+        "module_path": str(resolved_module_path),
+        "c_source_path": str(resolved_source_path),
+        "c_source_bytes": source_bytes,
+        "c_source_sha256": source_sha256,
+        "c_source_status": "HASHED_FROM_FFCX_CACHE",
+    }
+
+
+def _ffcx_form_code_identity(code: Any, module: Any) -> dict[str, Any]:
+    """Distinguish returned generated code from FFCx's explicit cache-hit sentinel."""
+    if type(code) is tuple and len(code) == 2 and code[0] is None and code[1] is None:
+        return {
+            "status": "CACHE_HIT_CODE_NOT_RETURNED",
+            "canonical_code_sha256": None,
+            "c_source_identity": _module_c_source_identity(module),
+        }
+    canonical_code = _canonical_form_code(code)
+    if canonical_code == [] or canonical_code == "":
+        raise ValueError("V19 compiled Form returned empty generated C code")
+    return {
+        "status": "CODE_RETURNED",
+        "canonical_code_sha256": _json_sha256(canonical_code),
+        "c_source_identity": None,
+    }
+
+
 def _native_action_identity(
     action: Any,
     *,
@@ -379,15 +444,22 @@ def _native_action_identity(
     code = getattr(compiled_form, "code", None)
     if code is None:
         raise ValueError(f"V19 {component} compiled Form does not expose generated C code")
-    canonical_code = _canonical_form_code(code)
-    if canonical_code == [] or canonical_code == "":
-        raise ValueError(f"V19 {component} compiled Form generated C code is empty")
+    generated_code_identity = _ffcx_form_code_identity(code, compiled_form.module)
+    compiled_module_identity = _module_artifact_identity(compiled_form.module)
+    if (
+        compiled_module_identity.get("module_file_status") != "HASHED"
+        or not isinstance(compiled_module_identity.get("module_file_sha256"), str)
+        or len(compiled_module_identity["module_file_sha256"]) != 64
+    ):
+        raise ValueError(f"V19 {component} compiled module artifact cannot be hashed")
     identity = {
         "component": component,
         "ufl_signatures": signatures,
         "ufl_signatures_sha256": _json_sha256(signatures),
-        "ffcx_generated_code_sha256": _json_sha256(canonical_code),
-        "compiled_module": _module_artifact_identity(compiled_form.module),
+        "ffcx_generated_code_status": generated_code_identity["status"],
+        "ffcx_generated_code_sha256": generated_code_identity["canonical_code_sha256"],
+        "ffcx_generated_c_source_identity": generated_code_identity["c_source_identity"],
+        "compiled_module": compiled_module_identity,
         "jit_options": dict(getattr(action, "_jit_options", {}) or {}),
         "abi_identity": dict(abi_identity),
         "integral_inventory": _compiled_integral_inventory(

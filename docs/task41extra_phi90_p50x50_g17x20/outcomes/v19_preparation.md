@@ -132,3 +132,9 @@ prepare 产出的真实 service 命令绑定 B0 DAT、当前 source 的执行合
 ## 同窗 NPY 文件/载荷口径修复
 
 服务 `myfenics-case-20261029T073557-3782505.service` 在 FE 前 known-field layout 校验退出。真实两列 NPY 文件均为296,016,512 B，数组载荷296,016,384 B，mmap offset128 B；旧校验错误地要求文件大小等于数组载荷。原 donor loader 的文件SHA/size与header校验保持，新 layout 明确核验shape×itemsize、payload及offset+payload=file bytes，active/original映射不变。抽出的FE前checkpoint helper由真实worker调用，坏shape/dtype/file size/map在写checkpoint前拒绝。主控在本机资格化WSL activation下验证 **1 passed / 0.71 s**，未调用FE或native。执行者误用工作站独立prefix要求判断本机环境不可用的记录不作为真实ABI失败；主控实际preflight为complex128/int32且项目`.venv`。旧失败和成本保留，原窗口不刷新。
+
+## 同窗 FFCx cache-hit 身份修复
+
+服务 `myfenics-case-20261029T074947-3786283.service` 已通过原保存输入/layout，完成mesh/maps与form准备；在记录 `Form.code` 身份时失败，未pack或执行rank-1核，checker未运行。worker约85.49 s，tree RSS峰3,137,302,528 B、watchdog cgroup峰3,152,048,128 B，task swap峰0；systemd独立MemoryPeak口径另存，不能与watchdog混称。读取工作站已安装FFCx源码确认缓存命中合法返回 `(None,None)`。新分支仅接受该精确sentinel，并绑定非空配对C源码、module路径及真实哈希，返回源码与缓存源码哈希口径明确分开；partial-None、缺C、错module、无法hash仍拒绝。checker同步独立校验序列化身份。
+
+主控首次两文件定向测试23 passed/5 failed（1.46 s）：旧fake模块无文件，触发新HASHED门。补synthetic fixture真实可hash文件后最终 **28 passed / 4.18 s**；生产门未放宽。执行者沙箱MPI socket preflight受限未启动pytest，主控使用已资格环境和许可的本地socket运行验证，不重装环境。旧失败、窗口和成本保持；本修复无数学变化。

@@ -51,6 +51,85 @@ def _read_json(path: Path, *, maximum_bytes: int, label: str) -> dict[str, Any]:
     return value
 
 
+def _validate_native_capture_identity(run_identity: Mapping[str, Any]) -> None:
+    """Independently validate the worker's serialized FFCx/module identity."""
+    native = run_identity.get("native_capture_identity")
+    if not isinstance(native, Mapping) or native.get("schema") != (
+        "task41.p0.v19.native_capture_identity.v1"
+    ):
+        raise ValueError("V19 run identity omits the native capture identity")
+    native_unsigned = dict(native)
+    native_digest = native_unsigned.pop("identity_sha256", None)
+    if native_digest != _json_hash(native_unsigned):
+        raise ValueError("V19 native capture identity checksum is invalid")
+    components = native.get("component_identities")
+    if not isinstance(components, Mapping) or set(components) != {"curl", "material_mass"}:
+        raise ValueError("V19 native capture component identities are incomplete")
+    if not isinstance(native.get("abi_identity"), Mapping):
+        raise ValueError("V19 native capture ABI identity is missing")
+
+    for component in ("curl", "material_mass"):
+        identity = components[component]
+        if not isinstance(identity, Mapping) or identity.get("component") != component:
+            raise ValueError(f"V19 {component} native action identity is malformed")
+        unsigned = dict(identity)
+        digest = unsigned.pop("identity_sha256", None)
+        if digest != _json_hash(unsigned):
+            raise ValueError(f"V19 {component} native action identity checksum is invalid")
+
+        module = identity.get("compiled_module")
+        if not isinstance(module, Mapping):
+            raise ValueError(f"V19 {component} compiled module identity is missing")
+        module_name = module.get("module_name")
+        module_path = module.get("module_file")
+        if (
+            module.get("module_file_status") != "HASHED"
+            or not isinstance(module_name, str)
+            or not module_name
+            or not isinstance(module_path, str)
+            or not Path(module_path).is_absolute()
+            or not Path(module_path).name.startswith(f"{module_name}.")
+            or not isinstance(module.get("module_file_sha256"), str)
+            or _HEX64.fullmatch(module["module_file_sha256"]) is None
+        ):
+            raise ValueError(f"V19 {component} compiled module artifact is not hash-bound")
+
+        code_status = identity.get("ffcx_generated_code_status")
+        code_digest = identity.get("ffcx_generated_code_sha256")
+        c_source = identity.get("ffcx_generated_c_source_identity")
+        if code_status == "CODE_RETURNED":
+            if (
+                not isinstance(code_digest, str)
+                or _HEX64.fullmatch(code_digest) is None
+                or c_source is not None
+            ):
+                raise ValueError(f"V19 {component} returned-code identity is malformed")
+            continue
+        if code_status != "CACHE_HIT_CODE_NOT_RETURNED" or code_digest is not None:
+            raise ValueError(f"V19 {component} FFCx code status is invalid")
+        if not isinstance(c_source, Mapping):
+            raise ValueError(f"V19 {component} cache-hit C-source identity is missing")
+        source_path = c_source.get("c_source_path")
+        source_bytes = c_source.get("c_source_bytes")
+        if (
+            set(c_source) != {
+                "module_name", "module_path", "c_source_path", "c_source_bytes",
+                "c_source_sha256", "c_source_status",
+            }
+            or c_source.get("c_source_status") != "HASHED_FROM_FFCX_CACHE"
+            or c_source.get("module_name") != module_name
+            or c_source.get("module_path") != module_path
+            or not isinstance(source_path, str)
+            or not Path(source_path).is_absolute()
+            or Path(source_path) != Path(module_path).with_name(f"{module_name}.c")
+            or type(source_bytes) is not int
+            or source_bytes <= 0
+            or not isinstance(c_source.get("c_source_sha256"), str)
+            or _HEX64.fullmatch(c_source["c_source_sha256"]) is None
+        ):
+            raise ValueError(f"V19 {component} cache-hit C-source identity is malformed")
+
+
 def _term_key(component: str, column: int, cell: int, integral: int) -> str:
     return f"{component}_col{column}_cell{cell}_integral{integral:03d}"
 
@@ -181,6 +260,7 @@ def _read_progress(output_directory: Path, receipt: Mapping[str, Any]) -> dict[s
         or not isinstance(progress.get("terms"), Mapping)
     ):
         raise ValueError("V19 progress checkpoint identity differs from the receipt")
+    _validate_native_capture_identity(identity)
     return progress
 
 

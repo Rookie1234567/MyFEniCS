@@ -17,10 +17,64 @@ def _identity_with_digest(identity: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def _cache_hit_run_identity() -> dict[str, Any]:
+    components: dict[str, Any] = {}
+    for component in ("curl", "material_mass"):
+        module_name = f"fixture_{component}_ffcx"
+        module_file = f"/ffcx-cache/{module_name}.cpython-312-x86_64-linux-gnu.so"
+        component_identity: dict[str, Any] = {
+            "component": component,
+            "ffcx_generated_code_status": "CACHE_HIT_CODE_NOT_RETURNED",
+            "ffcx_generated_code_sha256": None,
+            "ffcx_generated_c_source_identity": {
+                "module_name": module_name,
+                "module_path": module_file,
+                "c_source_path": f"/ffcx-cache/{module_name}.c",
+                "c_source_bytes": 128,
+                "c_source_sha256": "3" * 64,
+                "c_source_status": "HASHED_FROM_FFCX_CACHE",
+            },
+            "compiled_module": {
+                "module_name": module_name,
+                "module_file": module_file,
+                "module_file_sha256": "4" * 64,
+                "module_file_status": "HASHED",
+            },
+            "ufl_signatures": {"bilinear": "fixture", "rank1_action": "fixture"},
+            "jit_options": {},
+            "abi_identity": {"fixture": "abi"},
+            "integral_inventory": {"fixture": component},
+        }
+        component_identity["identity_sha256"] = checker._json_hash(component_identity)
+        components[component] = component_identity
+    native_identity: dict[str, Any] = {
+        "schema": "task41.p0.v19.native_capture_identity.v1",
+        "abi_identity": {"fixture": "abi"},
+        "component_identities": components,
+    }
+    native_identity["identity_sha256"] = checker._json_hash(native_identity)
+    return {
+        "source_sha256": "1" * 64,
+        "window_sha256": "2" * 64,
+        "native_capture_identity": native_identity,
+    }
+
+
+def _refresh_native_identity_hashes(run_identity: dict[str, Any]) -> None:
+    native = run_identity["native_capture_identity"]
+    for identity in native["component_identities"].values():
+        unsigned = {key: value for key, value in identity.items() if key != "identity_sha256"}
+        identity["identity_sha256"] = checker._json_hash(unsigned)
+    unsigned_native = {
+        key: value for key, value in native.items() if key != "identity_sha256"
+    }
+    native["identity_sha256"] = checker._json_hash(unsigned_native)
+
+
 def _bundle(root: Path) -> tuple[dict[str, Any], dict[str, Any], dict[tuple[str, int], list[tuple[int, int, int, int]]]]:
     term_directory = root / "native_rank1_terms"
     term_directory.mkdir(parents=True)
-    run_identity = {"source_sha256": "1" * 64, "window_sha256": "2" * 64}
+    run_identity = _cache_hit_run_identity()
     inventory: dict[str, Any] = {}
     capture_rows: list[dict[str, Any]] = []
     progress_terms: dict[str, Any] = {}
@@ -132,6 +186,35 @@ def _bundle(root: Path) -> tuple[dict[str, Any], dict[str, Any], dict[tuple[str,
         "terms": progress_terms,
     }
     return receipt, progress, checker._expected_terms(receipt)
+
+
+def test_checker_validates_returned_code_and_ffcx_cache_hit_identities() -> None:
+    identity = _cache_hit_run_identity()
+    checker._validate_native_capture_identity(identity)
+
+    returned_code = json.loads(json.dumps(identity))
+    for component in returned_code["native_capture_identity"]["component_identities"].values():
+        component["ffcx_generated_code_status"] = "CODE_RETURNED"
+        component["ffcx_generated_code_sha256"] = "5" * 64
+        component["ffcx_generated_c_source_identity"] = None
+    _refresh_native_identity_hashes(returned_code)
+    checker._validate_native_capture_identity(returned_code)
+
+    bad_module = json.loads(json.dumps(identity))
+    bad_module["native_capture_identity"]["component_identities"]["curl"][
+        "compiled_module"
+    ]["module_file_status"] = "UNAVAILABLE"
+    _refresh_native_identity_hashes(bad_module)
+    with np.testing.assert_raises_regex(ValueError, "compiled module artifact"):
+        checker._validate_native_capture_identity(bad_module)
+
+    bad_source = json.loads(json.dumps(identity))
+    bad_source["native_capture_identity"]["component_identities"]["curl"][
+        "ffcx_generated_c_source_identity"
+    ]["c_source_bytes"] = 0
+    _refresh_native_identity_hashes(bad_source)
+    with np.testing.assert_raises_regex(ValueError, "cache-hit C-source identity"):
+        checker._validate_native_capture_identity(bad_source)
 
 
 def test_independent_checker_compares_tag_and_permutation_with_v17_identity() -> None:
