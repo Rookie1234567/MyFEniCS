@@ -1,6 +1,23 @@
 # Task41 阶段结果
 
-## V18当前收口：完整Jz求值有限改善，但旧star末态退化（2026-10-29）
+## V19 当前结果：两单元 native rank-1 来源审计完成，全域 action 仍未获资格（2026-10-29）
+
+本任务的对象是 p6 三维 Maxwell 有限元模型。V19 只在原始行 5,218,672 所关联的 cells 7,873、8,014 上，对两列已知输入保存 curl 与 material-mass 的 native rank-1 单元贡献，并由只读 checker 将贡献按原顺序归因到已保存的 volume RHS。此诊断用于判断旧局部矩阵作用与重新计算积分项之间的差值出现在装配前还是装配后；它不构成完整方程求解，也不改变生产求解器。
+
+| 项目 | 实际结果 | 解释与边界 | 证据 |
+|---|---|---|---|
+| 身份与输入 | frozen source `12718ec898588eb94a7cd0f9d747dd21f8da9231`；window SHA `c73baa18…945350`；T0 `2026-10-29T06:58:54.288229236Z` | 两列、两格、curl/material_mass；MPI1 | [response](../response_v19.md)、[compact](v19_closeout/v19_selected_native_rank1_compact.json) |
+| native 绑定 | 8/8 项保存；target row 与两格共 900 个 internal rows 在两列上逐位匹配 saved volume RHS | checker `BOUND_SELECTED_TARGET_AND_900_INTERNAL_ROWS`；b_alpha=[0,0] | [evidence index](v19_closeout/evidence_index.json) |
+| 三段误差归因 | A−Q 为主要差值；Q−b_replay 较小；binding 两列为 0；80/100 位 Decimal closure 为零 | 只说明选中行记录可闭合，不能判断 A 或 Q 哪一边有误；表格显示值有截断 | [response](../response_v19.md) |
+| 行范围限制 | 所选 target/internal rows 不触及 MPC slave/master；MPI1 ghost rows=0 | 不外推到其他行或非平凡 MPC | [compact](v19_closeout/v19_selected_native_rank1_compact.json) |
+| 全域资格 | 继承 V15 的完整 action 相对误差约 `5.7625744836e-11` / `1.2123684644e-10`，均高于 `1e-11`；V19 不重算该门 | checker 的 `original_action_source` 保留了过时 V9 标签；真实数值来自 V15；full owner、official result 均未解锁 | [response](../response_v19.md)、[run index](run_index.json) |
+| 资源与窗口 | worker/checker tree RSS 峰 `4,010,008,576` / `226,971,648 B`；同 unit cgroup 峰 `3,522,281,472 B`；task swap 0 | planned working-set 16 GiB、累计 raw artifact cap 16 GiB、task cgroup cap 1.5 TiB 是三种不同限制；账本 seq204 服务收口快照 `4,352.710821 s`，seq205 文档收口快照 `5,727.804737 s`；后续发布成本未计，均非最终成本或当前余额 | [compact](v19_closeout/v19_selected_native_rank1_compact.json)、[attempt index](v19_closeout/attempt_index.json) |
+| 工程验证 / 负结果 | 定向 native-rank1 与 checker：`28 passed in 4.18 s`；四次服务失败和两次 pre-worker 工程失败均保留 | 后两项耗时 UNKNOWN；无全域 action、LU/GETRS、recovery、200q、FGMRES、完整场、A6 或 official R/T/A | [test summary](test_summary.md)、[attempt index](v19_closeout/attempt_index.json) |
+| 下一项窄证据 | 同两格、同实际积分列表和原两列 RHS 的 FFCx rank-2 curl/material_mass local action，或关键 rank-1 integral intermediate | 用于区分 stored local matrix application 与 rank-1 evaluation；本包未生成，也未做 LU/GETRS | [response](../response_v19.md) |
+
+V19 为 `AUDIT_COMPLETED_DATA_COMPLETE_LOCAL_NATIVE_DIAGNOSTIC_ONLY`，不是数值求解通过。所选行上的误差恒等式闭合不能消除继承的全域 FAIL；ordinary default 与 scientific qualification 均未改变。科学源码已冻结并推送；本轮结果文档留待主控集中收口。原始大文件继续留在工作站 ignored artifact 目录，Git 中仅维护 compact 与 hash 索引。
+
+## V18 历史收口：完整 Jz 求值有限改善，但旧 star 末态退化（2026-10-29）
 
 V18对三个已保存star的16份完整432行Jz输入固定J和z，仅改变实虚乘积后的求和组织，不做新积分、LU、GETRS或native action。16/16份correction更接近指定乘积求和参考；12份final correction对80位原J/z参考的聚合L2由`2.5466733841e-9`降至`2.0057324742e-10`。但V14_v8重复RHS的列0 final d模由`8.7454666764e-11`升至`1.0008161688e-10`，checker据此裁定`LOCAL_MIXED_NOT_QUALIFIED`。
 

@@ -1,3 +1,18 @@
+# Task41extra V19 最终定向测试记录
+
+| 验证项 | 命令范围 / 环境 | 结果 | 边界 |
+|---|---|---|---|
+| Native rank-1 与只读 checker | `src/test/test_task41_p0_v19_native_rank1.py`、`src/test/test_task41_p0_v19_checker.py`；最终 frozen source `12718ec898588eb94a7cd0f9d747dd21f8da9231`，资格化 activation | **28 passed in 4.18 s** | 合成 fixture 与 checker 规则验证；不表示全域数值门通过 |
+| 本机 WSL 测试 ABI | qualified activation | PETSc 3.19.6 complex128/int32、SLEPc 3.19.2、DOLFINx 0.10.0.post2、mpi4py/Open MPI 4.1.6 同栈 preflight PASS | 这是本机定向测试环境，不是工作站正式运行环境 |
+| 工作站正式 capture ABI | service ABI receipt `1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d` | PETSc 3.25.6 complex128/int32、SLEPc 3.25.2、DOLFINx 0.10、MPICH 5.0.1，MPI1 | 这是 `myfenics-case-20261029T080936-3792255.service` 的 native workstation preflight |
+| 实际 V19 capture | 两个 selected cells、两列、curl/material_mass | 8 项 rank-1 native 贡献已保存，checker `AUDIT_COMPLETED_DATA_COMPLETE` | 这是实际局部诊断，不是完整 FE/PDE solve；无 rank-2、LU、GETRS、full action 或 full owner |
+
+主控另对成功 attempt 的 evidence index 做了独立远端回验：10 个清单文件与 8 个 NPZ 共 18/18 项的字节数和 SHA-256 均匹配；service 已为 inactive/dead、MainPID=0、Result=success，远端 frozen HEAD 为 `12718ec898588eb94a7cd0f9d747dd21f8da9231`。这项是只读证据身份核验，不是新的数值运行。
+
+此前 V19 准备阶段的合并批次 `23 passed / 5 failed` 是历史测试结果；修正 module-hash fixture 后，以上最终两文件命令 28 项全过。该旧失败不被覆盖。没有运行全仓 pytest、Ruff 或新增完整数值求解。原有测试历史从下方继续保留。
+
+---
+
 # V18 saved-Jz 收口验证与既有测试记录
 
 | 项目 | 结果 | 说明 |

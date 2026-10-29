@@ -1,8 +1,8 @@
-# Task41 Review V19 准备记录
+# Task41 Review V19 准备与执行记录
 
-**当前状态（2026-10-29）：V19 合成 service/checker 路由及历史证据账本定向验证完成；尚无新数值证据。** 本记录只记录 Review V19 的准备状态，不创建 window、authorization、T0 或正式 attempt。
+**当前状态（2026-10-29）：V19 selected-native-rank1 capture 与只读 checker 已完成，分类 `AUDIT_COMPLETED_DATA_COMPLETE_LOCAL_NATIVE_DIAGNOSTIC_ONLY`。** 固定窗口和授权已实际使用；success unit 为 `myfenics-case-20261029T080936-3792255.service`。本轮有 8 项所选 rank-1 native 积分记录，未做完整 FE/PDE 求解、rank-2、LU/GETRS、full owner 或 official result。详见 [response](../response_v19.md)、[compact](v19_closeout/v19_selected_native_rank1_compact.json)、[attempt index](v19_closeout/attempt_index.json)、[evidence index](v19_closeout/evidence_index.json)。下面“范围与冻结身份”及其后的早期段落是执行前的准备记录；其中“尚未批准/没有数值证据”等描述是当时状态，已被本段和后续真实 capture 记录更新。
 
-## 范围与冻结身份
+## 范围与冻结身份（执行前记录）
 
 - 唯一当前范围：Review V19 两个单元（cells 7873、8014）、原 known 两列的独立 native rank-1 与原 scatter/MPC/组件合并来源。禁止扩展到 rank-2、LU、GETRS、恢复、全域 native action、200q 或 FGMRES。
 - canonical 分支：`task41extra_phi90_p50x50_g17x20`；准备 base：`bb4649a1f7569a1438ba6268d23b792bbc6d7892`；冻结提交由主控提交后回读登记。
@@ -25,7 +25,7 @@
 - 当时尚未完成真实 CLI/service/router、worker loader/serialization、只读 checker/接续三项定向回归；后续进展见下方日期记录。
 - 未启动正式服务、未调用 V19 native capture、未重跑或重建任何已保存数值输入；未 commit/push。
 
-## 2026-10-29 V19 service/checker 路由收口
+## 2026-10-29 V19 service/checker 路由收口（真实 capture 前的状态）
 
 - 修复 V19 合同 raw-artifact cap 的精确 scope 识别；watchdog 对输入路径与 SHA 做有序成对去重，并拒绝同一路径的冲突 SHA。service 的 checker 失败状态保留 `READ_ONLY_RECEIPT_BOUND`，worker 已完成时保留 `CAPTURE_COMPLETED`。
 - V18 既有账本按原始来源区分执行源码 `ff22c0a78099e7e48e0c11127ce01e06ae1ac8cf` 与窗口 entry source `880fea2fca11f575b1234c6e1bb64442d70f30f7`；固定窗口 SHA `3d4158d70782f9789a997ecadac073f9ea2e7be104dc789e66c0758d45aee113`。UTC 纳秒字段以 `_utc_ns` 等值核验，不因格式精度不同误判。

@@ -1,3 +1,17 @@
+## Task41extra Review V19：两单元 native rank-1 来源诊断（2026-10-29）
+
+| 登记项 | V19 状态 |
+|---|---|
+| 模型 / 执行身份 | Task41extra B0，0.7 nm p6 Full3D Maxwell；分支 `task41extra_phi90_p50x50_g17x20`；frozen source `12718ec898588eb94a7cd0f9d747dd21f8da9231` |
+| 方法 / 所解决的问题 | 对 original row 5,218,672 的 cells 7,873/8,014 与两列原 known RHS，捕获 curl/material-mass 共 8 个 native rank-1 积分贡献；独立 checker 将局部矩阵作用差、装配次序差和 RHS 绑定差分开，定位差异是否发生在选中行的装配前后 |
+| 结果 | `AUDIT_COMPLETED_DATA_COMPLETE_LOCAL_NATIVE_DIAGNOSTIC_ONLY`；target 与 900 internal rows 两列逐位绑定；三段有符号账在 Decimal 80/100 位闭合。A−Q 是主要差值，但不能判定哪条路径有误 |
+| 全域资格 / production | 继承 V15 的 full action `5.7625744836e-11` / `1.2123684644e-10` 对 `1e-11` 仍 FAIL；V19 未重算 full action，`official_result=false`、full owner 未解锁、ordinary default 不变 |
+| 行与资源边界 | 所选行不触及 MPC slave/master，MPI1 ghost rows=0；计划工作集16 GiB、累计raw artifact cap 16 GiB、task cgroup cap 1.5 TiB 各自分开；不外推到其他行或非平凡 MPC |
+| 冻结 / 证据 | source 已由主控冻结并推送；[V19 response](task41extra_phi90_p50x50_g17x20/response_v19.md)、[summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)、[compact](task41extra_phi90_p50x50_g17x20/outcomes/v19_closeout/v19_selected_native_rank1_compact.json)、[attempt ledger](task41extra_phi90_p50x50_g17x20/outcomes/v19_closeout/attempt_index.json)、[raw evidence index](task41extra_phi90_p50x50_g17x20/outcomes/v19_closeout/evidence_index.json) |
+| 后续最小证据 | 同两格、同实际积分列表和两列 RHS 的 FFCx rank-2 local action，或关键 rank-1 积分中间量；不包括 LU/GETRS，尚未运行 |
+
+此登记仅覆盖所选局部诊断。历史 producer identity 为 UNKNOWN，因而它不是旧 action 的 bitwise replay；完整 PDE 求解、200q、recovery、FGMRES、完整场、A6 与 official R/T/A 都未运行。文档收口账 seq205 为截至 `2026-10-29T08:34:22.092927537Z` 的快照 `5,727.804736941959 s`；后续发布成本未记账，不作为最终 campaign 成本或当前余额。
+
 ## Task41extra V16：完整余差分布与旧star终态绑定（2026-10-27）
 
 在0.7nm、50×50×140nm、phi90、p6/28,000-cell/64,120-mode既有保存数据上：两列Δy=0，变化只在g的trace；原action仍5.7625744836e-11 / 1.21236846436e-10，对1e-11失败。57个互斥MPC incident类别中，tag1/perm0/两incident类别占约71.07%/71.11%剩余能量；两旧star类别仅1.85%/1.83%。其y/g各自精确绑定V15，无新GETRS。最大行1622464→original5218672，cells7873/8014数值块缺失，下一步仅提出完整两cell补证，尚未授权重建。

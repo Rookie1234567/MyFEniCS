@@ -1,0 +1,220 @@
+{
+  "schema": "task41.p0.v19.evidence_index.v1",
+  "task_id": "task41extra_phi90_p50x50_g17x20",
+  "review": "V19",
+  "source_sha": "12718ec898588eb94a7cd0f9d747dd21f8da9231",
+  "raw_host": "fenics-ws:/home/fenics/Projects/laptop_share",
+  "raw_artifacts_retained_in_place": true,
+  "no_large_raw_file_copied_into_git": true,
+  "execution_window": {
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v19_selected_native_rank1_6h.json",
+    "bytes": 2119,
+    "sha256": "c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350"
+  },
+  "contract": {
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_12718ec898588eb94a7cd0f9d747dd21f8da9231_v19_selected_native_rank1_6h.json",
+    "bytes": 6875,
+    "sha256": "41dfb466225b878de873422d2881aa71cd5aba3b81bc6ad0de73aac29e64d6e0"
+  },
+  "campaign_ledger": {
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v19_service_end_ledger_sequence204.jsonl",
+    "bytes": 241373,
+    "sha256": "7da21e780783a81ad8c0635599ea0c9343376323ba1aed303dcbba0fb2a51c13",
+    "rows": 205,
+    "last_sequence": 204,
+    "last_label": "watchdog_end",
+    "last_sample_utc": "2026-10-29T08:11:26.999012Z",
+    "charged_seconds_as_of_last_sample": 4352.710821151959,
+    "accounting_is_final_for_documentation_or_publication": false,
+    "original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v19_selected_native_rank1_6h.jsonl",
+    "accounting_role": "immutable_service_end_snapshot_sequence_204"
+  },
+  "attempt_root": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01",
+  "successful_unit": {
+    "unit": "myfenics-case-20261029T080936-3792255.service",
+    "invocation_id": "725c548de9bc4a4cb56a2cebe4d1d5ef",
+    "service_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01.service-myfenics-case-20261029T080936-3792255",
+    "systemd_terminal_event": {
+      "timestamp_utc": "2026-10-29T08:11:27.058940Z",
+      "message": "Consumed 2min 3.235s CPU time, 2.1G memory peak, 0B memory swap peak.",
+      "note": "Parent wall estimate uses this journal event timestamp minus the receipt service_started_sample.utc_ns."
+    },
+    "files": [
+      {
+        "role": "service_receipt",
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01.service-myfenics-case-20261029T080936-3792255/task41_p0_service_receipt.json",
+        "bytes": 47102,
+        "sha256": "1c908a4b074f22a1f1d8bce9ec8940261a3a0e12379911c7daf51286ac264094"
+      },
+      {
+        "role": "independent_checker_report",
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01.service-myfenics-case-20261029T080936-3792255/task41_p0_v19_independent_check.json",
+        "bytes": 23683,
+        "sha256": "daf2c52201476e39ed1885f98026807420752262e66a4fb9bb9475427929a193"
+      },
+      {
+        "role": "worker_receipt",
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01/task41_p0_v19_native_rank1_worker_41dfb466225b878de873422d2881aa71cd5aba3b81bc6ad0de73aac29e64d6e0.json",
+        "bytes": 319723,
+        "sha256": "db49dad577ac8f6c05a4e6dfe7aa81a90b5b0ffc4788538f7b2caec95d03e4cb"
+      },
+      {
+        "role": "saved_progress_checkpoint",
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01/task41_p0_v19_native_rank1_progress.json",
+        "bytes": 76974,
+        "sha256": "d6f9d88039d7fdc8106db0e99ece2af1f368015b86a9379181e9c4e8f1f8da63"
+      },
+      {
+        "role": "worker_watchdog_summary",
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01.service-myfenics-case-20261029T080936-3792255/v19_native_rank1_worker_watchdog/summary.json",
+        "bytes": 11561,
+        "sha256": "c8b61cb6f6d8500a92dad67490c9fc9727147516a7589d7bbb08dc84c3422b05"
+      },
+      {
+        "role": "worker_watchdog_log",
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01.service-myfenics-case-20261029T080936-3792255/v19_native_rank1_worker_watchdog/worker.log",
+        "bytes": 3123,
+        "sha256": "d6c8f76639260884ae6fc3ef8755f2b86d5c95a65722d628ecc438065eb26296"
+      },
+      {
+        "role": "worker_watchdog_resources",
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01.service-myfenics-case-20261029T080936-3792255/v19_native_rank1_worker_watchdog/resources.jsonl",
+        "bytes": 711694,
+        "sha256": "7229927cd953234a677c07f5ba020ffe9b220133f42cd8f991377d49f34ab4c6"
+      },
+      {
+        "role": "checker_watchdog_summary",
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01.service-myfenics-case-20261029T080936-3792255/v19_native_rank1_checker_watchdog/summary.json",
+        "bytes": 14314,
+        "sha256": "563ec20438114faa4d2d9d596ec96ed710386adea5d660d6875419d5b1c8d202"
+      },
+      {
+        "role": "checker_watchdog_log",
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01.service-myfenics-case-20261029T080936-3792255/v19_native_rank1_checker_watchdog/worker.log",
+        "bytes": 24697,
+        "sha256": "a49a64d8bef27b6d58e178aee7b2917a01656ec2b9b875958fec2570b8bc6e9f"
+      },
+      {
+        "role": "checker_watchdog_resources",
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01.service-myfenics-case-20261029T080936-3792255/v19_native_rank1_checker_watchdog/resources.jsonl",
+        "bytes": 101284,
+        "sha256": "0f3ec09f3e9ed26aee6ddb1116d4c57f7ea9c0481b0b6989825b960961cb1791"
+      }
+    ],
+    "term_archives": [
+      {
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01/native_rank1_terms/curl_col0_cell7873_integral000.npz",
+        "bytes": 66200,
+        "sha256": "839e9e64c24037a915ae1ad6cf0e37d593c43c097e08d77fdd897040ddbcb309"
+      },
+      {
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01/native_rank1_terms/curl_col0_cell8014_integral000.npz",
+        "bytes": 66200,
+        "sha256": "6cd4269e866fc839a3a9406399a9d425669c3fdbee2b904922085845ac0f965c"
+      },
+      {
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01/native_rank1_terms/curl_col1_cell7873_integral000.npz",
+        "bytes": 66200,
+        "sha256": "ed6ac064f02bb7d5b529f6120ab766579e3cecd3a16e62088a6e9a789f918c11"
+      },
+      {
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01/native_rank1_terms/curl_col1_cell8014_integral000.npz",
+        "bytes": 66200,
+        "sha256": "a206a14fc656af6e97056dd0e94943278b446369cccca8d3e8a2bf74103ef38e"
+      },
+      {
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01/native_rank1_terms/material_mass_col0_cell7873_integral000.npz",
+        "bytes": 66236,
+        "sha256": "b588d5023c727a056458dd5bba2ed952ea5baad40987dc9815b20223c208eb67"
+      },
+      {
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01/native_rank1_terms/material_mass_col0_cell8014_integral000.npz",
+        "bytes": 66236,
+        "sha256": "17389e99c3967100113607fe2e24071cae77d797c25173806846d509ceea37c0"
+      },
+      {
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01/native_rank1_terms/material_mass_col1_cell7873_integral000.npz",
+        "bytes": 66236,
+        "sha256": "62d8260a44abcaa83d15a8a049c9dd6213784bfc8504325b9bc3e625b380dc5b"
+      },
+      {
+        "path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01/native_rank1_terms/material_mass_col1_cell8014_integral000.npz",
+        "bytes": 66236,
+        "sha256": "e7180f2ad930d7b60911eccf3a963b2b2bb0be1dd6842ab000d524c36bf85d05"
+      }
+    ]
+  },
+  "failed_attempt_receipts": [
+    {
+      "unit": "myfenics-case-20261029T072200-3777733.service",
+      "receipt_path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01.service-myfenics-case-20261029T072200-3777733/task41_p0_service_receipt.json",
+      "receipt_bytes": 26172,
+      "receipt_sha256": "9914ed6c89962e462aa5a551e44e01c75f8980073e9d2a335d1104d9852ffb52",
+      "worker_log_sha256": "edf0f0bec906a9639e28283f7631b1859595e35747543d6706e466a7f4be8641",
+      "worker_summary_sha256": "f387fd6029318c87f2ca113eed785c3b88b0c473a247e4b1928413427d3e2e53"
+    },
+    {
+      "unit": "myfenics-case-20261029T073009-3780685.service",
+      "receipt_path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01.service-myfenics-case-20261029T073009-3780685/task41_p0_service_receipt.json",
+      "receipt_bytes": 26164,
+      "receipt_sha256": "c8d14136931541a27cfd269591a92962dd56316b093d43b1d2673e2a480a4d1c",
+      "worker_log_sha256": "9acadce41337897a3f8e0651d828ec0d6fb78bf72f33dab61438edda5f7ccc57",
+      "worker_summary_sha256": "190c83783c40baf2438eee91509331aac936a5bb02bfaeaf6d7c6702a96c8bb9"
+    },
+    {
+      "unit": "myfenics-case-20261029T073557-3782505.service",
+      "receipt_path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01.service-myfenics-case-20261029T073557-3782505/task41_p0_service_receipt.json",
+      "receipt_bytes": 26166,
+      "receipt_sha256": "c91602568cdb3b1c5b93b9e6f4dfb34e3aff9710fba8270f15eb17b0f057a181",
+      "worker_log_sha256": "c0678bc09c1edee6e3537659d3f7120c9803fbfafca3f91fc1c300a6940afa66",
+      "worker_summary_sha256": "74fc2fae1971a7bd94a602408ea99d653d73d4b3dc8afdfc76af9c8f37b29951"
+    },
+    {
+      "unit": "myfenics-case-20261029T074947-3786283.service",
+      "receipt_path": "results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01.service-myfenics-case-20261029T074947-3786283/task41_p0_service_receipt.json",
+      "receipt_bytes": 26193,
+      "receipt_sha256": "c0caa6f1ea56d271d4b2346a027914e087ca21c3d2d2c9ea896c2ff9854b933f",
+      "worker_log_sha256": "c10f7047877bc4a988387fd3c98bea79062b1e9ff9701920d3d00cdecb30789a",
+      "worker_summary_sha256": "1a7c5c5ee7aff07b0bc62687ea99e61d3906a724a8c4d56efde62d7ea8666656"
+    }
+  ],
+  "other_engineering_events": [
+    {
+      "event": "prepare rejected mutually exclusive legacy and named-instance options before writing",
+      "scientific_worker_started": false,
+      "output_written": false,
+      "separate_elapsed_cost": "UNKNOWN_NOT_MEASURED"
+    },
+    {
+      "unit": "myfenics-case-20261029T070552-3773295.service",
+      "event": "inner wrapper shell exited at set-u because task41_v19_checker_only was not initialized",
+      "scientific_worker_started": false,
+      "separate_elapsed_cost": "UNKNOWN_NOT_MEASURED"
+    }
+  ],
+  "not_copied": [
+    "large V3/V16 donor data and full arrays",
+    "PSS arrays because PSS sampling was disabled by profile",
+    "systemd journal as a file; terminal event timestamp and message are recorded above"
+  ],
+  "current_campaign_ledger": {
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v19_selected_native_rank1_6h.jsonl",
+    "bytes": 242595,
+    "sha256": "6634b616a62080f8a3f2a3d845b1c982bf51542afeb231f731db4cb67a570e3f",
+    "rows": 206,
+    "last_sequence": 205,
+    "last_label": "closeout",
+    "last_sample_utc": "2026-10-29T08:34:22.092927537Z",
+    "charged_seconds_as_of_last_sample": 5727.804736941959,
+    "accounting_is_final_for_publication": false,
+    "note": "Campaign.observe(closeout) snapshot; later publication cost remains unaccounted, so this is not final campaign cost or a current remaining-balance report."
+  },
+  "prepublication_closeout_snapshot": {
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v19_controller_closeout_prepublication.json",
+    "bytes": 2882,
+    "sha256": "656a99d887e2cdbcd82137fde0117411d101ed4934ea0185f0fe06d2f011f17d",
+    "as_of_utc": "2026-10-29T08:34:22.092927537Z",
+    "ledger_sequence": 205,
+    "cumulative_charged_seconds_as_of_snapshot": 5727.804736941959
+  }
+}

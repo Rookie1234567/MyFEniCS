@@ -1,3 +1,24 @@
+## Task41extra Review V19：两单元 native rank-1 来源审计完成，全域 FAIL 仍保留（2026-10-29）
+
+**问题与基线。** Task41extra 的 0.7 nm p6 三维 Maxwell 候选在 V15 的两列 full native action 误差仍为约 `5.7625744836e-11` 与 `1.2123684644e-10`，高于 `1e-11` 限值；V16–V18 对保存向量和指定行做了局部归因，但缺少同一 incident cells 的 native rank-1 积分贡献，无法判断差异来自局部矩阵作用还是其后的装配次序。V19 的目标是给这一条有限行证据补上可复核来源，不重跑完整候选。
+
+**方法。** 在同一个原始 volume RHS、两列 known input、cells 7873/8014 与实际积分列表上，重新调用 curl 和 material-mass 的 rank-1 native integral，保存 8 项局部贡献。随后 checker 复读保存输入，按原顺序执行局部项合并和 selected-row scatter/binding，并分别报告 A−Q（候选存储局部矩阵作用与新积分项）、Q−b_replay（装配/顺序）、b_replay−b_saved（对已保存 RHS 的绑定）三段有符号差。这样能把观察到的差异放在装配前后比较；但局部贡献不是完整 global action，也不能单独证明哪一个数值路径正确。
+
+**结果与负结果。** Checker 为 `AUDIT_COMPLETED_DATA_COMPLETE`，8/8 项都落盘；原始目标行和两格 900 个 internal rows 在两列均逐位匹配 saved volume RHS。三段复数账在 Decimal 80/100 位闭合；A−Q 是主要项，Q−b_replay 较小，binding 为零。所选行不触及 MPC slave/master，MPI1 ghost rows=0，结论不外推到其他行或非平凡 MPC。原 producer kernel 历史身份仍 UNKNOWN，因此不是旧 action 的 bitwise replay。Checker 原始字段 `original_action_source` 留有过时 V9 标签；V15 的原始 FAIL 值仍按原证据报告。V19 不重算 full action，故完整全域 FAIL、`official_result=false` 与未解锁 full owner 仍保持。
+
+| 项目 | 实际值 | 解释 / 证据 |
+|---|---|---|
+| frozen source / 窗口 | `12718ec898588eb94a7cd0f9d747dd21f8da9231`；window SHA `c73baa18…945350`；T0 `2026-10-29T06:58:54.288229236Z` | source 已由主控冻结并推送；本轮文档待主控集中收口 |
+| service | `myfenics-case-20261029T080936-3792255.service`，systemd success/exit 0，descendants cleared | 单次 parent wall 估计 109.385499 s；window service+closeout 计费 109.112458 s，口径不同，不相加 |
+| 资源 | worker/checker tree RSS 峰 4,010,008,576 / 226,971,648 B；同 unit cgroup 峰 3,522,281,472 B；task swap 0 | PSS disabled；host swap delta 不归因到 task |
+| 存储 / 内存约束 | planned working-set ceiling 16 GiB；cumulative raw-artifact cap 16 GiB；task cgroup cap 1.5 TiB、swap max 0 | 三种限制分开报告；receipt 写后检查 `POST_WRITE_CHECKED`，可用空间 1,974,225,555,456 B，高于 2 GiB floor |
+| 窗口账 | seq204 service-closeout 快照 4,352.710821 s（08:11:26.999012Z）；seq205 文档收口快照 5,727.804737 s（08:34:22.092927537Z） | 后续发布成本未入账；均非最终 campaign cost 或 current balance |
+| 工程测试 | V19 native-rank1 + checker 两文件 28 passed / 4.18 s | qualified activation；不等同 FE/PDE 数值通过 |
+
+**工程失败与成本边界。** 四次失败 service 尝试的日志和 receipt 都保留；另外一次 prepare 参数冲突在写入前拒绝，以及 `myfenics-case-20261029T070552-3773295.service` 的内层 `set -u` wrapper 失败，均未启动科学 worker，独立耗时为 UNKNOWN。ledger snapshot 包含此前准备、失败尝试和收口，但不把 parent/watchdog 子时钟重复相加。
+
+**决定与下一步。** V19 只收口 selected native rank-1 诊断，不修改 ordinary default、不批准 full owner 或后续科学阶段。若主控分配下一步，精确缺项是同两格、相同实际积分清单和两列原始 RHS 的 FFCx rank-2 curl/material-mass local action（每格矩阵供两列复用），或可定位 rank-1 积分阶段的关键中间量；该证据用于区分已存局部矩阵作用与 rank-1 求值。本轮没有 LU/GETRS、rank-2、full owner、200q、recovery、FGMRES、完整场、A6 或 official R/T/A。完整数值、hash 与原始证据入口见 [V19 response](task41extra_phi90_p50x50_g17x20/response_v19.md)、[summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)、[compact](task41extra_phi90_p50x50_g17x20/outcomes/v19_closeout/v19_selected_native_rank1_compact.json)、[attempt ledger](task41extra_phi90_p50x50_g17x20/outcomes/v19_closeout/attempt_index.json) 和 [evidence index](task41extra_phi90_p50x50_g17x20/outcomes/v19_closeout/evidence_index.json)。
+
 ## Task41extra Review V18：保存Jz候选为 mixed，未获支持（2026-10-29）
 
 V17留下的固定J/z矩阵乘法末位疑问，在三个已有saved stars的16份432行输入上作有限验证。只把实虚乘积求和改为binary64乘积加`math.fsum`，J、z、积分和生产散射次序不变。16份correction更符合指定参考，12份final correction相对80位原J/z参考聚合L2由2.5466733841e-9降至2.0057324742e-10；但V14_v8重复RHS列0的final d退化1.2626950116e-11，checker裁定`LOCAL_MIXED_NOT_QUALIFIED`。16项候选核心合计1.29147s、普通BLAS0.003147s，本批约410倍慢，不外推全域。

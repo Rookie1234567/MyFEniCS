@@ -1,0 +1,363 @@
+{
+  "schema": "task41.p0.v19.selected_native_rank1_closeout.v1",
+  "task_id": "task41extra_phi90_p50x50_g17x20",
+  "review": "V19",
+  "classification": "V19_SELECTED_NATIVE_RANK1_AUDIT_COMPLETED_DATA_COMPLETE_LOCAL_NATIVE_DIAGNOSTIC_ONLY",
+  "source": {
+    "branch": "task41extra_phi90_p50x50_g17x20",
+    "sha": "12718ec898588eb94a7cd0f9d747dd21f8da9231",
+    "parent": "ba7acb08967d14aa678871b38d0b92165a326419"
+  },
+  "contract": {
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_contract_source_12718ec898588eb94a7cd0f9d747dd21f8da9231_v19_selected_native_rank1_6h.json",
+    "sha256": "41dfb466225b878de873422d2881aa71cd5aba3b81bc6ad0de73aac29e64d6e0"
+  },
+  "input": {
+    "path": "/home/fenics/Projects/laptop_share/input/task41extra_phi90_p50x50_g17x20/b0_p6_07nm_iterative.dat",
+    "sha256": "a0c45d0475bd2b41d2d19589831086468a62f39fdca5b74734b62751df1485c1"
+  },
+  "window": {
+    "path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/execution_window_v19_selected_native_rank1_6h.json",
+    "sha256": "c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350",
+    "authorization_sha256": "dfaffa831c55f4fe0deb544aac6e3eb50f824e498c4be3ba4bd1cf7937fe9a42",
+    "t0_utc": "2026-10-29T06:58:54.288229236Z",
+    "total_seconds": 21600,
+    "numerical_cutoff_seconds": 20400,
+    "closeout_reserve_seconds": 1200,
+    "bootstrap_charged_seconds": 363.996104227,
+    "campaign_ledger_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v19_service_end_ledger_sequence204.jsonl",
+    "campaign_ledger_sha256": "7da21e780783a81ad8c0635599ea0c9343376323ba1aed303dcbba0fb2a51c13",
+    "cumulative_charged_seconds_as_of_last_ledger_sample": 4352.710821151959,
+    "last_ledger_sample_utc": "2026-10-29T08:11:26.999012Z",
+    "last_ledger_sequence": 204,
+    "last_ledger_label": "watchdog_end",
+    "accounting_status": "SEQ205_DOCUMENTATION_CLOSEOUT_SNAPSHOT; later publication cost is not yet accounted; do not infer current remaining balance or final campaign cost",
+    "campaign_ledger_original_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v19_selected_native_rank1_6h.jsonl",
+    "service_end_snapshot": {
+      "as_of_utc": "2026-10-29T08:11:26.999012Z",
+      "ledger_sequence": 204,
+      "cumulative_charged_seconds": 4352.710821151959,
+      "snapshot_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v19_service_end_ledger_sequence204.jsonl",
+      "snapshot_sha256": "7da21e780783a81ad8c0635599ea0c9343376323ba1aed303dcbba0fb2a51c13"
+    },
+    "documentation_closeout_snapshot": {
+      "as_of_utc": "2026-10-29T08:34:22.092927537Z",
+      "ledger_sequence": 205,
+      "cumulative_charged_seconds": 5727.804736941959,
+      "current_ledger_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/campaign_accounting_v19_selected_native_rank1_6h.jsonl",
+      "current_ledger_bytes": 242595,
+      "current_ledger_sha256": "6634b616a62080f8a3f2a3d845b1c982bf51542afeb231f731db4cb67a570e3f",
+      "snapshot_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task41extra_phi90_p50x50_g17x20/p0_b0_controller/v19_controller_closeout_prepublication.json",
+      "snapshot_bytes": 2882,
+      "snapshot_sha256": "656a99d887e2cdbcd82137fde0117411d101ed4934ea0185f0fe06d2f011f17d",
+      "later_publication_cost": "NOT_YET_ACCOUNTED; not final campaign cost or current remaining balance"
+    }
+  },
+  "execution": {
+    "unit": "myfenics-case-20261029T080936-3792255.service",
+    "invocation_id": "725c548de9bc4a4cb56a2cebe4d1d5ef",
+    "attempt_root": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01",
+    "service_output_directory": "/home/fenics/Projects/laptop_share/results/task41extra_phi90_p50x50_g17x20/task41_p0_saved_diagnostics_6h/c73baa18cf2bdc599e45d5fa19592ffccdb4680907c7145fdd9d031c54945350/selected_incident_replay/attempt01.service-myfenics-case-20261029T080936-3792255",
+    "service_receipt_sha256": "1c908a4b074f22a1f1d8bce9ec8940261a3a0e12379911c7daf51286ac264094",
+    "checker_report_sha256": "daf2c52201476e39ed1885f98026807420752262e66a4fb9bb9475427929a193",
+    "service_status": "completed",
+    "systemd_result": "success",
+    "systemd_exit_code": 0,
+    "descendants_cleared": true,
+    "abi_receipt_sha256": "1c4277c83a0ac6daf02197086264b9e5b337caee1b33d7cc1dd22a7dfcefe57d",
+    "abi_preflight": {
+      "scalar_type": "complex128",
+      "integer_type": "int32",
+      "mpi_size": 1
+    }
+  },
+  "scope": {
+    "kind": "saved_native_rank1_two_cell_diagnostic_only",
+    "active_row": 1622464,
+    "original_full_storage_row": 5218672,
+    "cells": [
+      7873,
+      8014
+    ],
+    "columns": [
+      0,
+      1
+    ],
+    "components": [
+      "curl",
+      "material_mass"
+    ],
+    "selected_native_kernel_calls": 8,
+    "persisted_terms": 8,
+    "expected_calls_from_integral_lists": 8,
+    "new_rank2_kernel_outputs": 0,
+    "new_factorizations": 0,
+    "new_getrs": 0,
+    "new_full_native_action": false,
+    "full_owner_unlocked": false,
+    "official_result": false,
+    "scientific_qualified": false,
+    "ordinary_default_changed": false,
+    "selected_rows_touch_mpc_slave_or_master": false,
+    "mpi1_ghost_rows": 0,
+    "boundary_note": "This selected-row evidence does not generalize to nontrivial MPC or ghost-row behavior elsewhere."
+  },
+  "checker": {
+    "status": "AUDIT_COMPLETED_DATA_COMPLETE",
+    "audit_completed": true,
+    "data_complete": true,
+    "errors": [],
+    "native_binding_status": "BOUND_SELECTED_TARGET_AND_900_INTERNAL_ROWS",
+    "native_binding_reason": "EXACT_SELECTED_ROWS_MATCH",
+    "target_bitwise_matches_saved_volume_rhs": [
+      true,
+      true
+    ],
+    "internal_rows_bitwise_match_saved_volume_rhs_per_column": [
+      900,
+      900
+    ],
+    "b_alpha_binary64_per_column": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ]
+    ],
+    "historical_producer_bitwise_replay": false,
+    "native_reconstruction_interpretation": "RECONSTRUCTED_SELECTED_NATIVE_ACTION_NOT_HISTORICAL_BITWISE_REPLAY",
+    "original_action_status": "FAIL",
+    "original_action_source_literal": "Task41 Review V19 §1; inherited V9 full-action result",
+    "original_action_source_note": "The checker field is a stale historical label. Latest inherited full-action FAIL values are from V15, approximately 5.7625744836e-11 and 1.2123684644e-10 against 1e-11. Preserve checker bytes."
+  },
+  "signed_decomposition": {
+    "complex_pair_convention": [
+      "real",
+      "imag"
+    ],
+    "precision_is_diagnostic_decimal_encoding_of_binary64_inputs": true,
+    "columns": [
+      {
+        "column": 0,
+        "A_minus_Q_local_rank1": [
+          "2.718320709080110767776330117002520445061611852979249878923237221297476429171524614503E-10",
+          "-3.16438935744858299318238985931368539946063206380485994770221077135308185290796245681E-11"
+        ],
+        "Q_minus_b_replay_native_assembly": [
+          "3.63797880709171295166015625E-12",
+          "-9.094947017729282379150390625E-12"
+        ],
+        "b_replay_minus_b_saved_binding": [
+          "0E-32",
+          "0E-36"
+        ],
+        "closure_80": [
+          "0E-74",
+          "0E-74"
+        ],
+        "closure_100": [
+          "0E-94",
+          "0E-94"
+        ],
+        "cell_component_target_contributions_decimal80": [
+          {
+            "cell": 7873,
+            "component": "curl",
+            "real": "37215.5375901565930689685046672821044921875",
+            "imag": "23412.02439783080262714065611362457275390625"
+          },
+          {
+            "cell": 8014,
+            "component": "curl",
+            "real": "11782.37709562397139961831271648406982421875",
+            "imag": "7256.01935802765001426450908184051513671875"
+          },
+          {
+            "cell": 7873,
+            "component": "material_mass",
+            "real": "-194899.145923645235598087310791015625",
+            "imag": "-122615.764599755741073749959468841552734375"
+          },
+          {
+            "cell": 8014,
+            "component": "material_mass",
+            "real": "-20205.90137146101915277540683746337890625",
+            "imag": "-12444.745387904136805445887148380279541015625"
+          }
+        ],
+        "assembly_segment_subterms_decimal80": {
+          "curl_exact_sum_minus_original_order_scatter": [
+            "3.63797880709171295166015625E-12",
+            "0E-38"
+          ],
+          "material_mass_exact_sum_minus_original_order_scatter": [
+            "0E-35",
+            "-9.094947017729282379150390625E-12"
+          ],
+          "component_merge": [
+            "0E-35",
+            "0E-36"
+          ]
+        }
+      },
+      {
+        "column": 1,
+        "A_minus_Q_local_rank1": [
+          "2.565063036342070681137814990662287720220399179125242308576762778702523570828475385496E-10",
+          "5.436641418160221535552660234005040890123223705958499757846474442594952858343049229004E-10"
+        ],
+        "Q_minus_b_replay_native_assembly": [
+          "-1.818989403545856475830078125E-11",
+          "7.2759576141834259033203125E-12"
+        ],
+        "b_replay_minus_b_saved_binding": [
+          "0E-32",
+          "0E-31"
+        ],
+        "closure_80": [
+          "0E-74",
+          "0E-74"
+        ],
+        "closure_100": [
+          "0E-94",
+          "0E-94"
+        ],
+        "cell_component_target_contributions_decimal80": [
+          {
+            "cell": 7873,
+            "component": "curl",
+            "real": "-51019.0507824825835996307432651519775390625",
+            "imag": "74431.075180313186137937009334564208984375"
+          },
+          {
+            "cell": 8014,
+            "component": "curl",
+            "real": "-16308.73483322023457731120288372039794921875",
+            "imag": "23564.7541912479427992366254329681396484375"
+          },
+          {
+            "cell": 7873,
+            "component": "material_mass",
+            "real": "267182.527247534017078578472137451171875",
+            "imag": "-389798.29184729047119617462158203125"
+          },
+          {
+            "cell": 8014,
+            "component": "material_mass",
+            "real": "27967.0573550179251469671726226806640625",
+            "imag": "-40411.8027429220383055508136749267578125"
+          }
+        ],
+        "assembly_segment_subterms_decimal80": {
+          "curl_exact_sum_minus_original_order_scatter": [
+            "-3.63797880709171295166015625E-12",
+            "7.2759576141834259033203125E-12"
+          ],
+          "material_mass_exact_sum_minus_original_order_scatter": [
+            "0E-34",
+            "0E-34"
+          ],
+          "component_merge": [
+            "-1.4551915228366851806640625E-11",
+            "0E-34"
+          ]
+        }
+      }
+    ],
+    "interpretation": "A_minus_Q is the larger segment in these captured rows; this points to the pre-assembly local/rank-1 comparison but does not establish which path is wrong. Do not add signed-component norm ratios."
+  },
+  "resources": {
+    "service_parent_wall_seconds": 109.38549884,
+    "service_parent_wall_measurement": "difference between receipt service_started_sample.utc_ns and systemd journal terminal event timestamp; receipt has no direct service elapsed scalar",
+    "campaign_charged_service_and_closeout_seconds": 109.112458338034,
+    "parent_worker_supervise_seconds": 95.24862798396498,
+    "parent_checker_supervise_seconds": 12.461594686843455,
+    "worker_watchdog_elapsed_seconds": 95.06070511694998,
+    "checker_watchdog_elapsed_seconds": 12.086509821936488,
+    "worker_process_tree_rss_peak_bytes": 4010008576,
+    "checker_process_tree_rss_peak_bytes": 226971648,
+    "same_unit_cgroup_memory_peak_bytes": 3522281472,
+    "task_swap_peak_bytes": 0,
+    "global_swap_delta_pages_worker": {
+      "pswpin": 0,
+      "pswpout": 0
+    },
+    "global_swap_delta_pages_checker": {
+      "pswpin": 0,
+      "pswpout": 0
+    },
+    "pss": null,
+    "descendants_cleared": true,
+    "parent_and_stage_seconds_are_not_additive": true,
+    "pss_status": "DISABLED_BY_PROFILE"
+  },
+  "budget": {
+    "host_reserve_bytes": 68719476736,
+    "task_reserve_bytes": 0,
+    "memory_swap_max_bytes": 0,
+    "new_evidence_bytes": 608262,
+    "new_evidence_limit_bytes": 16777216,
+    "term_npz_bytes_sum": 529744,
+    "cumulative_raw_artifact_limit_bytes": 17179869184,
+    "planned_working_set_max_bytes": 17179869184,
+    "planned_working_set_is_not_measured_peak": true,
+    "free_space_floor_bytes": 2147483648,
+    "task_cgroup_memory_cap_bytes": 1649267441664,
+    "resource_ceiling_scopes": {
+      "planned_working_set_max_bytes": 17179869184,
+      "planned_working_set_is_measured_peak": false,
+      "cumulative_raw_artifact_limit_bytes": 17179869184,
+      "task_cgroup_memory_cap_bytes": 1649267441664,
+      "memory_swap_max_bytes": 0,
+      "note": "The two 16 GiB limits are distinct: one is a planned working-set ceiling, the other a cumulative raw-artifact cap; neither is the 1.5 TiB task cgroup cap."
+    },
+    "postwrite_disk_budget": {
+      "status": "POST_WRITE_CHECKED",
+      "current_invocation_bytes": 1864510,
+      "window_output_tree_bytes": 3008821,
+      "window_output_tree_bytes_conservative": 91688351,
+      "recorded_cumulative_raw_artifact_bytes": 15603033504,
+      "prior_window_accounting_v18_compact_cumulative_evidence_bytes": 15694682876,
+      "cumulative_raw_artifact_limit_bytes": 17179869184,
+      "window_wide_new_evidence_limit_bytes": 16777216,
+      "free_space_bytes": 1974225555456,
+      "free_space_floor_bytes": 2147483648,
+      "scopes_are_distinct": true
+    }
+  },
+  "tests": {
+    "qualified_activation": true,
+    "test_files": [
+      "src/test/test_task41_p0_v19_native_rank1.py",
+      "src/test/test_task41_p0_v19_checker.py"
+    ],
+    "result": "28 passed in 4.18 s",
+    "test_result_source_sha": "12718ec898588eb94a7cd0f9d747dd21f8da9231"
+  },
+  "not_run": [
+    "new rank-2 kernel outputs",
+    "factorization",
+    "GETRS",
+    "full native action",
+    "full owner",
+    "200q",
+    "recovery",
+    "FGMRES",
+    "full field",
+    "independent A6 residual",
+    "official R/T/A and A_volume",
+    "Original FFCx rank-2 local action for curl/material_mass on cells 7873/8014 with both original known RHS columns, or the key rank-1 integral intermediate needed to distinguish stored local-matrix application from rank-1 evaluation; no LU/GETRS was run."
+  ],
+  "historical_limitations": [
+    "Pinned V3 closeout does not contain the original historical producer kernel identity.",
+    "Checker original_action_source literal is retained unchanged; its V9 label is stale while latest inherited FAIL values are cited from V15.",
+    "No production numerical core/default was changed by this diagnostic.",
+    "No commit or push was performed by the executing worker.",
+    "Selected target/internal rows do not touch MPC slave/master rows; MPI1 ghost rows are zero. Do not generalize beyond this selection."
+  ],
+  "evidence_index": "v19_closeout/evidence_index.json",
+  "attempt_index": "v19_closeout/attempt_index.json"
+}

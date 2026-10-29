@@ -6,7 +6,7 @@
 
 ## 当前任务
 
-当前为Review V18 saved-Jz候选收口：三个已有saved stars共16份完整432行Jz输入完成binary64实虚乘积＋`math.fsum`候选与生产次序replay，checker分类`LOCAL_MIXED_NOT_QUALIFIED`。16/16向量更符合指定参考、12份final correction聚合L2改善；但V14_v8重复RHS列0的final d退化，候选不获支持。无新积分、LU、GETRS或native action；full owner、200q、recovery、FGMRES、reference、target field和official R/T/A未运行。V17作为历史保留。见[response_v18](response_v18.md)、[summary](outcomes/summary.md)、[compact](outcomes/v18_closeout/v18_saved_jz_compact.json)、[attempt index](outcomes/v18_closeout/attempt_index.json)与[evidence index](outcomes/v18_closeout/evidence_index.json)。
+当前为Review V19 两单元 native rank-1 来源审计收口：在原始行 5,218,672 对应的 cells 7,873、8,014 上，对两列输入捕获并保存 curl/material-mass 共 8 项积分贡献；只读 checker 将它们与目标及 900 个 internal rows 的 saved volume RHS 逐位绑定，三段有符号误差账在 Decimal 80/100 位闭合。此结果只限选中行；所选行不触及 MPC slave/master，MPI1 ghost rows=0。继承的 V15 全域 action 仍为 FAIL（约 5.7625744836e-11 / 1.2123684644e-10，对限值 1e-11），V19 没有重算或解锁 full owner、official result、200q、recovery、FGMRES、完整场、A6 或 R/T/A。定向测试为 28 passed / 4.18 s。见 [response_v19](response_v19.md)、[summary](outcomes/summary.md)、[compact](outcomes/v19_closeout/v19_selected_native_rank1_compact.json)、[attempt index](outcomes/v19_closeout/attempt_index.json) 与 [evidence index](outcomes/v19_closeout/evidence_index.json)。V18 及更早内容保留为历史记录。
 
 V6 的 `actual_qmetric_blocked_gram` 候选已构建 28,000 个 `mesh_actual_exact` 键；八个代表键的 raw/oriented 张量、K/G/J/L 与 R/T/S 局部筛查均通过 `1e-11`。候选完整两列作用的冻结分母相对误差为 `1.7183209126709868e-10` 和 `3.6180522433957604e-10`，超过原 `1e-11` 门；独立 saved-only checker 已完成并确认数据完整，但数值资格失败，`official_result=false`。按 Review V6 停在 full-action gate，不进入 200q、factor、KSP/FGMRES、完整场、A6 或 R/T/A。候选恢复也未通过 forward 门，且只做了初次恢复，没有耗尽三次修正额度。V3/V4/V5 均保留为各自历史阶段，不用 donor PASS 替代 V6 候选结果。
 
