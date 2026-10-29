@@ -339,16 +339,9 @@ class FullspaceMpcFormAction:
             raise ValueError("local component application is unavailable")
         apply_started = time.perf_counter()
         source_values = np.asarray(source.getArray(readonly=True))
-        if source_values.size != self._owned_rows:
-            raise RuntimeError("action source has an incompatible owned layout")
         coefficient = self._coefficient
         input_mpc_started = time.perf_counter()
-        coefficient.x.array[: self._owned_rows] = source_values
-        coefficient.x.scatter_forward()
-        if self._mpc is not None:
-            self._mpc.homogenize(coefficient)
-            self._mpc.backsubstitution(coefficient)
-            coefficient.x.scatter_forward()
+        self._prepare_action_source(source_values)
         timing = self._audit["timing_cumulative"]
         timing["input_mpc_seconds"] += time.perf_counter() - input_mpc_started
 
@@ -377,15 +370,7 @@ class FullspaceMpcFormAction:
             del packed_coefficients
             timing["volume_seconds"] += time.perf_counter() - volume_started
             restriction_started = time.perf_counter()
-            if self._mpc is not None:
-                np.take(raw, self._flat_slave_indices, out=self._constraint_work)
-                np.multiply(
-                    self._constraint_work,
-                    self._conjugated_master_coefficients,
-                    out=self._constraint_work,
-                )
-                np.add.at(raw, self._master_indices, self._constraint_work)
-                raw[self._slave_indices] = 0.0
+            self._apply_mpc_restriction_to_local(raw)
             timing["restriction_rh_seconds"] += time.perf_counter() - restriction_started
 
         ghost_started = time.perf_counter()
@@ -421,6 +406,74 @@ class FullspaceMpcFormAction:
         self._audit["per_apply_bounded_temporary_bytes"] = (packed_bytes
             if self._local_kernel is None else self._local_kernel.audit["temporary_budget_bytes"])
         return self._output_vector
+
+    def _prepare_action_source(self, source_values: np.ndarray) -> None:
+        """Apply the same input scatter and finalized MPC recovery as ``apply``."""
+        source_values = np.asarray(source_values)
+        if (
+            source_values.dtype != np.dtype(np.complex128)
+            or source_values.shape != (self._owned_rows,)
+        ):
+            raise RuntimeError("action source has an incompatible owned complex128 layout")
+        coefficient = self._coefficient
+        coefficient.x.array[: self._owned_rows] = source_values
+        coefficient.x.scatter_forward()
+        if self._mpc is not None:
+            self._mpc.homogenize(coefficient)
+            self._mpc.backsubstitution(coefficient)
+            coefficient.x.scatter_forward()
+
+    def _apply_mpc_restriction_to_local(self, raw: np.ndarray) -> None:
+        """Apply the production restriction transpose to a local vector in order."""
+        if self._destroyed:
+            raise RuntimeError("full-space action has been destroyed")
+        if self._mpc is None:
+            return
+        values = np.asarray(raw)
+        if values.dtype != np.dtype(np.complex128) or values.shape != (
+            self._owned_rows + self._ghost_rows,
+        ):
+            raise RuntimeError("MPC restriction input has an incompatible local layout")
+        np.take(values, self._flat_slave_indices, out=self._constraint_work)
+        np.multiply(
+            self._constraint_work,
+            self._conjugated_master_coefficients,
+            out=self._constraint_work,
+        )
+        np.add.at(values, self._master_indices, self._constraint_work)
+        values[self._slave_indices] = 0.0
+
+    def capture_selected_rank1_cell_terms(
+        self,
+        source_values: np.ndarray,
+        capture_callback: Any,
+        **capture_arguments: Any,
+    ) -> Any:
+        """Capture selected native cell terms without assembling a global vector.
+
+        The action owns the compiled rank-1 form, coefficient Function, packed
+        constants and DOLFINx coefficient packer. Only the caller's bounded
+        selected-cell callback receives them. Custom local-kernel overrides
+        are rejected because they are not the donor's native FFCx route.
+        """
+        if self._destroyed or self._action_form is None:
+            raise RuntimeError("native cell capture requires a live assembled-form action")
+        if self._local_kernel is not None:
+            raise ValueError("native cell capture cannot use a local-kernel override")
+        if not callable(capture_callback):
+            raise TypeError("native cell capture callback must be callable")
+        started = time.perf_counter()
+        self._prepare_action_source(source_values)
+        self._audit["timing_cumulative"]["input_mpc_seconds"] += (
+            time.perf_counter() - started
+        )
+        return capture_callback(
+            self._action_form,
+            self._function_space,
+            constants=self._constants,
+            pack_coefficients=self._pack_coefficients,
+            **capture_arguments,
+        )
 
     def mult(
         self,

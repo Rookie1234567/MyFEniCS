@@ -14,6 +14,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import time
 import tomllib
 from typing import Any, Callable, Mapping, Sequence
 
@@ -9979,6 +9980,146 @@ def _task41_p0_v17_checker_authorization(
     }
 
 
+def _task41_p0_v19_worker_command(
+    *, python: str, repo_root: Path, output_directory: Path,
+    contract_path: Path, contract_sha256: str, budget_context: Path,
+    budget_context_sha256: str,
+) -> list[str]:
+    return [
+        python, "-m", "src.runners.task41_p0_v19_native_rank1",
+        "--repo-root", str(repo_root),
+        "--output-dir", str(output_directory),
+        "--contract-path", str(contract_path),
+        "--contract-sha256", contract_sha256,
+        "--budget-context", str(budget_context),
+        "--budget-context-sha256", budget_context_sha256,
+    ]
+
+
+def _task41_p0_v19_checker_command(
+    *, python: str, repo_root: Path, output_directory: Path,
+    receipt_path: Path, receipt_sha256: str,
+    producer_contract_path: Path, producer_contract_sha256: str,
+    contract_path: Path, contract_sha256: str, window_sha256: str,
+    service_directory: Path, report_path: Path,
+    progress_sha256: str | None,
+) -> list[str]:
+    command = [
+        python, "-m", "src.runners.task41_p0_v19_checker",
+        "--repo-root", str(repo_root),
+        "--output-dir", str(output_directory),
+        "--receipt-path", str(receipt_path),
+        "--receipt-sha256", receipt_sha256,
+        "--producer-contract-path", str(producer_contract_path),
+        "--producer-contract-sha256", producer_contract_sha256,
+        "--consumer-contract-path", str(contract_path),
+        "--contract-sha256", contract_sha256,
+        "--window-sha256", window_sha256,
+        "--service-directory", str(service_directory),
+        "--report-path", str(report_path),
+    ]
+    if progress_sha256 is not None:
+        command.extend(["--progress-sha256", progress_sha256])
+    return command
+
+
+def _task41_p0_v19_worker_completed(
+    watchdog: Mapping[str, Any], payload: Any,
+    *, contract_sha256: str, window_sha256: str,
+) -> bool:
+    timing_fields = {
+        "mesh_construction_seconds",
+        "fresh_map_validation_seconds",
+        "form_jit_action_construction_seconds",
+        "coefficient_table_packing_seconds",
+        "selected_coefficient_row_packing_seconds",
+        "kernel_execution_seconds",
+        "direction_transform_seconds",
+        "term_archive_save_seconds",
+    }
+    timings = payload.get("stage_timings_seconds") if isinstance(payload, Mapping) else None
+    worker_elapsed = (
+        payload.get("worker_function_elapsed_seconds_pre_receipt_write")
+        if isinstance(payload, Mapping) else None
+    )
+    timings_valid = bool(
+        isinstance(timings, Mapping)
+        and set(timings) == timing_fields
+        and all(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            and float(value) >= 0.0
+            for value in timings.values()
+        )
+        and isinstance(worker_elapsed, (int, float))
+        and not isinstance(worker_elapsed, bool)
+        and math.isfinite(float(worker_elapsed))
+        and float(worker_elapsed) >= 0.0
+    )
+    return bool(
+        watchdog.get("classification") == "COMPLETED"
+        and watchdog.get("leader_exit_code") == 0
+        and isinstance(payload, Mapping)
+        and payload.get("schema") == "task41.p0.v19.selected_native_rank1_worker_receipt.v1"
+        and payload.get("status") == "COMPLETED_LOCAL_NATIVE_RANK1_CAPTURE"
+        and payload.get("consumer_contract_sha256") == contract_sha256
+        and payload.get("consumer_window_sha256") == window_sha256
+        and payload.get("rank2_kernel_outputs") == 0
+        and payload.get("factorizations") == 0
+        and payload.get("getrs") == 0
+        and payload.get("full_native_action") is False
+        and payload.get("official_result") is False
+        and payload.get("scientific_qualified") is False
+        and payload.get("full_owner_unlocked") is False
+        and timings_valid
+    )
+
+
+def _task41_p0_v19_checker_completed(
+    watchdog: Mapping[str, Any], payload: Any,
+) -> bool:
+    return bool(
+        watchdog.get("classification") == "COMPLETED"
+        and watchdog.get("leader_exit_code") == 0
+        and isinstance(payload, Mapping)
+        and payload.get("schema") == "task41.p0.v19.native_rank1_independent_audit.v1"
+        and payload.get("audit_completed") is True
+        and type(payload.get("data_complete")) is bool
+        and payload.get("native_binding_status") in {
+            "BOUND_SELECTED_TARGET_AND_900_INTERNAL_ROWS", "NATIVE_REPLAY_UNBOUND"
+        }
+        and payload.get("official_result") is False
+        and payload.get("scientific_qualified") is False
+        and payload.get("full_owner_unlocked") is False
+    )
+
+
+def _task41_p0_v19_checker_authorization(
+    *, command: Sequence[str], input_paths: Sequence[Path],
+    window_sha256: str, contract_sha256: str, source_sha: str,
+    source_branch: str, sha256_file: Callable[[Path], str],
+) -> dict[str, Any]:
+    canonical_paths = list(dict.fromkeys(path.resolve(strict=True) for path in input_paths))
+    return {
+        "schema": "task41.p0.closeout_checker_authorization.v1",
+        "phase": "closeout",
+        "purpose": "registered_read_only_required_checker",
+        "checker_kind": "task41_p0_b0_v19_native_rank1_checker",
+        "command_sha256": hashlib.sha256(
+            json.dumps(list(command), separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        ).hexdigest(),
+        "input_paths": [str(path) for path in canonical_paths],
+        "input_sha256s": [sha256_file(path) for path in canonical_paths],
+        "expected_channel_count": None,
+        "campaign_window_sha256": window_sha256,
+        "task41_contract_sha256": contract_sha256,
+        "source_sha": source_sha,
+        "source_branch": source_branch,
+        "source_clean": True,
+    }
+
+
 def _task41_p0_v18_worker_command(
     *, python: str, output_directory: Path, contract_path: Path,
     contract_sha256: str, window_path: Path, window_sha256: str,
@@ -10310,6 +10451,10 @@ def _run_task41_p0_saved_output_service(
     b0_v16_saved_vector_analysis_mode: bool = False,
     b0_v17_selected_two_cell_mode: bool = False,
     b0_v18_saved_jz_mode: bool = False,
+    b0_v19_native_rank1_mode: bool = False,
+    v19_checker_only: bool = False,
+    v19_receipt_sha256: str | None = None,
+    v19_receipt_path: Path | None = None,
     v17_manifest_path: Path | None = None,
     v17_manifest_sha256: str | None = None,
     v17_producer_binding: Mapping[str, Any] | None = None,
@@ -10967,6 +11112,8 @@ def _run_task41_p0_saved_output_service(
     v17_donor_authorized_input_paths: list[Path] | None = None
     v18_prior_budget: dict[str, Any] | None = None
     v18_raw_inventory: list[dict[str, Any]] | None = None
+    v19_prior_budget: dict[str, Any] | None = None
+    v19_raw_inventory: list[dict[str, Any]] | None = None
     if b0_v17_selected_two_cell_mode:
         if v17_manifest_path is None or v17_manifest_sha256 is None:
             raise ValueError("V17 saved-service route lost its hash-bound V16 manifest")
@@ -11567,6 +11714,7 @@ def _run_task41_p0_saved_output_service(
         and not b0_v16_saved_vector_analysis_mode
         and not b0_v17_selected_two_cell_mode
         and not b0_v18_saved_jz_mode
+        and not b0_v19_native_rank1_mode
     ):
         if checker_snapshot_path is None or checker_snapshot_sha256 is None:
             raise ValueError("checker-only service requires an explicitly hash-bound saved-output snapshot")
@@ -11655,9 +11803,32 @@ def _run_task41_p0_saved_output_service(
         ):
             raise ValueError("V18 saved-Jz route requires a new numbered output disjoint from its V17 source")
         output_root.parent.mkdir(parents=True, exist_ok=True)
+    elif b0_v19_native_rank1_mode:
+        if (
+            checker_snapshot_path is not None
+            or checker_snapshot_sha256 is not None
+            or output_root is None
+            or run_root is None
+            or output_root == run_root
+            or output_root.is_relative_to(run_root)
+            or run_root.is_relative_to(output_root)
+            or (v19_checker_only and not output_root.is_dir())
+            or (v19_checker_only and (v19_receipt_sha256 is None or v19_receipt_path is None))
+            or (not v19_checker_only and (v19_receipt_sha256 is not None or v19_receipt_path is not None))
+        ):
+            raise ValueError("V19 service requires its exact attempt and explicit checker-only receipt binding")
+        if output_root.is_symlink():
+            raise ValueError("V19 output attempt cannot be a symlink")
+        output_root.parent.mkdir(parents=True, exist_ok=True)
+        if not v19_checker_only:
+            output_root.mkdir(exist_ok=True)
     elif checker_snapshot_path is not None or checker_snapshot_sha256 is not None:
         raise ValueError("continuation service cannot accept a checker-only snapshot override")
-    service_directory = output_root.with_name(output_root.name + ".service")
+    if b0_v19_native_rank1_mode:
+        service_label = unit.removesuffix(".service")
+        service_directory = output_root.with_name(output_root.name + ".service-" + service_label)
+    else:
+        service_directory = output_root.with_name(output_root.name + ".service")
     service_directory.mkdir(parents=True, exist_ok=False)
     saved_diagnostics_budget: dict[str, Any] | None = None
     saved_bound_raw_paths: list[Path] = []
@@ -11674,6 +11845,15 @@ def _run_task41_p0_saved_output_service(
         saved_bound_raw_paths.extend(Path(row["path"]) for row in v18_raw_inventory)
         saved_recorded_raw_bytes = int(
             v18_prior_budget["recorded_cumulative_raw_artifact_bytes"]
+        )
+    if b0_v19_native_rank1_mode:
+        v19_prior_budget = _task41_p0_v19_prior_evidence_accounting(repo_root=repo_root)
+        from src.runners.task41_p0_v18_saved_jz import stat_bound_raw_artifact_inventory
+
+        v19_raw_inventory = stat_bound_raw_artifact_inventory(repo_root=repo_root)
+        saved_bound_raw_paths.extend(Path(row["path"]) for row in v19_raw_inventory)
+        saved_recorded_raw_bytes = int(
+            v19_prior_budget["recorded_cumulative_raw_artifact_bytes"]
         )
 
     def stat_output_tree(path: Path) -> int:
@@ -11774,6 +11954,7 @@ def _run_task41_p0_saved_output_service(
             TASK41_B0_V16_SAVED_VECTOR_SCOPE,
             TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
             TASK41_B0_V18_SAVED_JZ_SCOPE,
+            TASK41_B0_V19_NATIVE_RANK1_SCOPE,
             task41_raw_artifact_limit_bytes,
         )
 
@@ -11785,6 +11966,7 @@ def _run_task41_p0_saved_output_service(
             TASK41_B0_V16_SAVED_VECTOR_SCOPE,
             TASK41_B0_V17_SELECTED_TWO_CELL_SCOPE,
             TASK41_B0_V18_SAVED_JZ_SCOPE,
+            TASK41_B0_V19_NATIVE_RANK1_SCOPE,
         ):
             raise ValueError("saved-diagnostics disk gate received a different execution scope")
         if saved_scope == TASK41_B0_V12_CANDIDATE_REPLAY_SCOPE and not (
@@ -11800,6 +11982,8 @@ def _run_task41_p0_saved_output_service(
             raise ValueError("V17 two-cell scope only admits its isolated selected-cell replay")
         if saved_scope == TASK41_B0_V18_SAVED_JZ_SCOPE and not b0_v18_saved_jz_mode:
             raise ValueError("V18 saved-Jz scope only admits its isolated candidate/replay route")
+        if saved_scope == TASK41_B0_V19_NATIVE_RANK1_SCOPE and not b0_v19_native_rank1_mode:
+            raise ValueError("V19 native-rank1 scope only admits its isolated selected-term route")
         window_sha = str(contract.get("window", {}).get("sha256", ""))
         window_output_root = results_root / "task41_p0_saved_diagnostics_6h" / window_sha
         expected_name = (
@@ -11808,6 +11992,7 @@ def _run_task41_p0_saved_output_service(
             else "saved_vector_distribution" if b0_v16_saved_vector_analysis_mode
             else "selected_incident_replay" if b0_v18_saved_jz_mode
             else "selected_incident_replay" if b0_v17_selected_two_cell_mode
+            else "selected_incident_replay" if b0_v19_native_rank1_mode
             else "selected_incident_replay"
             if b0_v8_selected_trace_star_metadata_only_mode
             or b0_v8_selected_trace_star_candidate_replay_mode
@@ -11849,16 +12034,17 @@ def _run_task41_p0_saved_output_service(
             recorded = existing + prior
         if recorded is None:
             raise ValueError("saved-diagnostics route lacks recorded cumulative raw evidence")
-        if b0_v18_saved_jz_mode:
-            if v18_prior_budget is None:
-                raise ValueError("V18 prior V17 accounting receipt was not bound")
+        if b0_v18_saved_jz_mode or b0_v19_native_rank1_mode:
+            prior_budget = v19_prior_budget if b0_v19_native_rank1_mode else v18_prior_budget
+            if prior_budget is None:
+                raise ValueError("V18 prior evidence accounting receipt was not bound")
             cumulative_before_new = (
                 max(
                     recorded,
-                    int(v18_prior_budget["bound_raw_artifact_bytes_stat_deduplicated"]),
+                    int(prior_budget["bound_raw_artifact_bytes_stat_deduplicated"]),
                     stat_raw_bytes + donor_raw_bytes,
                 )
-                + int(v18_prior_budget["window_output_tree_bytes_conservative"])
+                + int(prior_budget["window_output_tree_bytes_conservative"])
                 + current_window_output_bytes
             )
         else:
@@ -11880,8 +12066,14 @@ def _run_task41_p0_saved_output_service(
             "cumulative_raw_artifact_limit_bytes": raw_cap,
             "free_space_bytes": free_bytes,
             "free_space_floor_bytes": floor,
-            "prior_window_accounting": v18_prior_budget if b0_v18_saved_jz_mode else None,
-            "bound_raw_inventory_count": len(v18_raw_inventory) if v18_raw_inventory is not None else None,
+            "prior_window_accounting": (
+                v19_prior_budget if b0_v19_native_rank1_mode
+                else v18_prior_budget if b0_v18_saved_jz_mode else None
+            ),
+            "bound_raw_inventory_count": (
+                len(v19_raw_inventory) if v19_raw_inventory is not None
+                else len(v18_raw_inventory) if v18_raw_inventory is not None else None
+            ),
         }
     receipt_path = service_directory / "task41_p0_service_receipt.json"
     resource = contract["resources"]
@@ -12217,6 +12409,367 @@ def _run_task41_p0_saved_output_service(
         "campaign_accounting_path": window.accounting_path,
         "worker_environment": environment,
     }
+    if b0_v19_native_rank1_mode:
+        result_code = 3
+        worker_ok = False
+        checker_ok = False
+        worker_watchdog: Mapping[str, Any] | None = None
+        checker_watchdog: Mapping[str, Any] | None = None
+        worker_payload: Mapping[str, Any] | None = None
+        checker_payload: Mapping[str, Any] | None = None
+        receipt_ready = False
+        capture_seconds = 0.0
+        independent_check_seconds = 0.0
+        worker_receipt_path = (
+            Path(v19_receipt_path)
+            if v19_checker_only and v19_receipt_path is not None
+            else output_root / f"task41_p0_v19_native_rank1_worker_{contract_sha}.json"
+        )
+        checker_result_path = service_directory / "task41_p0_v19_independent_check.json"
+        try:
+            from src.runners.task41_p0_contract import TASK41_B0_V19_NATIVE_RANK1_SCOPE
+            from src.runners.task41_p0_v19_native_rank1 import (
+                SOURCE_BINDINGS as V19_SOURCE_BINDINGS,
+            )
+
+            if (
+                contract.get("execution_scope") != TASK41_B0_V19_NATIVE_RANK1_SCOPE
+                or consumer_source_sha != environment.get("TASK41_P0_CHECKER_SOURCE_SHA")
+                or contract.get("source", {}).get("sha") != consumer_source_sha
+                or environment.get("TASK41_P0_V19_NATIVE_RANK1") != "1"
+                or environment.get("TASK41_P0_V19_OUTPUT_DIRECTORY") != str(output_root)
+                or output_root.parent.name != "selected_incident_replay"
+                or re.fullmatch(r"attempt[0-9]{2,}", output_root.name) is None
+            ):
+                raise ValueError("V19 service source, scope, or attempt binding differs")
+            record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget_check()
+            if not v19_checker_only:
+                if v19_prior_budget is None or v19_raw_inventory is None:
+                    raise ValueError("V19 service lacks the prior raw/window accounting binding")
+                budget_context_path = service_directory / "task41_p0_v19_disk_budget_context.json"
+                budget_context = {
+                    "schema": "task41.p0.v19.disk_budget_context.v1",
+                    "contract_sha256": contract_sha,
+                    "window_sha256": window.sha256,
+                    "output_directory": str(output_root.resolve(strict=True)),
+                    "service_directory": str(service_directory.resolve(strict=True)),
+                    "window_output_root": str(output_root.parent.parent.resolve(strict=True)),
+                    "results_root": str(results_root.resolve(strict=True)),
+                    "bound_raw_artifact_inventory": v19_raw_inventory,
+                    "recorded_cumulative_raw_artifact_bytes": int(
+                        v19_prior_budget["recorded_cumulative_raw_artifact_bytes"]
+                    ),
+                    "prior_window_output_bytes": int(
+                        v19_prior_budget["window_output_tree_bytes_conservative"]
+                    ),
+                }
+                _write_json_fsync(budget_context_path, budget_context)
+                budget_context_sha256 = sha256_file(budget_context_path)
+                worker_command = _task41_p0_v19_worker_command(
+                    python=python,
+                    repo_root=repo_root,
+                    output_directory=output_root,
+                    contract_path=contract_path.resolve(strict=True),
+                    contract_sha256=contract_sha,
+                    budget_context=budget_context_path.resolve(strict=True),
+                    budget_context_sha256=budget_context_sha256,
+                )
+                started = time.perf_counter()
+                worker_watchdog = supervise(
+                    worker_command,
+                    service_directory / "v19_native_rank1_worker_watchdog",
+                    wall_seconds=window.cutoff_seconds,
+                    phase_path=service_directory / "v19_native_rank1_worker_phase.json",
+                    campaign_phase="numeric",
+                    campaign_phase_authorization=None,
+                    **common_watchdog,
+                )
+                capture_seconds = time.perf_counter() - started
+                worker_payload = (
+                    read_json_object(worker_receipt_path, "V19 worker receipt")
+                    if worker_receipt_path.is_file() and not worker_receipt_path.is_symlink()
+                    else None
+                )
+                worker_ok = _task41_p0_v19_worker_completed(
+                    worker_watchdog,
+                    worker_payload,
+                    contract_sha256=contract_sha,
+                    window_sha256=window.sha256,
+                )
+                record.update(
+                    v19_worker_command=worker_command,
+                    v19_worker_watchdog=worker_watchdog,
+                    v19_worker_report_path=str(worker_receipt_path),
+                    v19_worker_report_sha256=(
+                        sha256_file(worker_receipt_path) if worker_receipt_path.is_file() else None
+                    ),
+                    v19_worker_status=(
+                        worker_payload.get("status") if isinstance(worker_payload, Mapping) else None
+                    ),
+                    v19_worker_completed=worker_ok,
+                    v19_worker_elapsed_seconds=capture_seconds,
+                    v19_parent_worker_supervise_elapsed_seconds=capture_seconds,
+                    v19_disk_budget_context_path=str(budget_context_path),
+                    v19_disk_budget_context_sha256=budget_context_sha256,
+                )
+            else:
+                receipt_name = re.fullmatch(
+                    r"task41_p0_v19_native_rank1_worker_([0-9a-f]{64})\.json",
+                    worker_receipt_path.name,
+                )
+                if (
+                    environment.get("TASK41_P0_V19_CHECKER_ONLY") != "1"
+                    or environment.get("TASK41_P0_V19_RECEIPT_SHA256") != v19_receipt_sha256
+                    or v19_receipt_sha256 is None
+                    or worker_receipt_path.is_symlink()
+                    or not worker_receipt_path.is_absolute()
+                    or not worker_receipt_path.is_file()
+                    or sha256_file(worker_receipt_path) != v19_receipt_sha256
+                    or receipt_name is None
+                    or worker_receipt_path.resolve(strict=True).parent != output_root.resolve(strict=True)
+                    or environment.get("TASK41_P0_V19_RECEIPT_PATH") != str(worker_receipt_path)
+                ):
+                    raise ValueError("V19 read-only checker receipt path or external SHA differs")
+                worker_payload = read_json_object(worker_receipt_path, "V19 externally bound worker receipt")
+                producer_contract_sha256 = receipt_name.group(1)
+                producer_contract_path = Path(
+                    str(worker_payload.get("consumer_contract_path", ""))
+                )
+                if (
+                    not producer_contract_path.is_absolute()
+                    or producer_contract_path.is_symlink()
+                    or producer_contract_path.resolve(strict=True).parent
+                    != contract_path.resolve(strict=True).parent
+                    or re.fullmatch(
+                        r"execution_contract_source_[0-9a-f]{40}_v19_selected_native_rank1_6h\.json",
+                        producer_contract_path.name,
+                    ) is None
+                ):
+                    raise ValueError("V19 producer contract path escaped the registered controller")
+                producer_contract = read_json_object(
+                    producer_contract_path, "V19 original producer contract"
+                )
+                if (
+                    worker_payload.get("consumer_contract_sha256") != producer_contract_sha256
+                    or sha256_file(producer_contract_path) != producer_contract_sha256
+                    or producer_contract.get("source", {}).get("sha")
+                    != worker_payload.get("consumer_source_sha")
+                ):
+                    raise ValueError("V19 original producer contract/source binding differs")
+                record.update(
+                    v19_worker_route="READ_ONLY_EXISTING_RECEIPT",
+                    v19_worker_report_path=str(worker_receipt_path),
+                    v19_worker_report_sha256=v19_receipt_sha256,
+                    v19_worker_status=worker_payload.get("status"),
+                    v19_worker_completed=(
+                        worker_payload.get("schema")
+                        == "task41.p0.v19.selected_native_rank1_worker_receipt.v1"
+                        and worker_payload.get("status") == "COMPLETED_LOCAL_NATIVE_RANK1_CAPTURE"
+                        and worker_payload.get("consumer_window_sha256") == window.sha256
+                        and worker_payload.get("run_identity", {}).get("execution_scope")
+                        == contract.get("execution_scope")
+                    ),
+                    v19_producer_contract_path=str(producer_contract_path),
+                    v19_producer_contract_sha256=producer_contract_sha256,
+                    v19_worker_elapsed_seconds=0.0,
+                )
+            receipt_sha256 = (
+                v19_receipt_sha256 if v19_checker_only
+                else sha256_file(worker_receipt_path)
+                if worker_receipt_path.is_file() and not worker_receipt_path.is_symlink()
+                else None
+            )
+            receipt_ready = bool(
+                receipt_sha256
+                and isinstance(worker_payload, Mapping)
+                and worker_payload.get("schema")
+                == "task41.p0.v19.selected_native_rank1_worker_receipt.v1"
+                and worker_payload.get("status") == "COMPLETED_LOCAL_NATIVE_RANK1_CAPTURE"
+                and worker_payload.get("consumer_window_sha256") == window.sha256
+                and worker_payload.get("run_identity", {}).get("execution_scope")
+                == contract.get("execution_scope")
+                and isinstance(worker_payload.get("consumer_source_sha"), str)
+                and re.fullmatch(r"[0-9a-f]{40}", str(worker_payload["consumer_source_sha"])) is not None
+            )
+            if receipt_ready:
+                producer_contract_sha256 = str(
+                    worker_payload.get("consumer_contract_sha256", "")
+                )
+                producer_contract_path = Path(
+                    str(worker_payload.get("consumer_contract_path", ""))
+                )
+                if (
+                    re.fullmatch(r"[0-9a-f]{64}", producer_contract_sha256) is None
+                    or not producer_contract_path.is_absolute()
+                    or producer_contract_path.is_symlink()
+                    or not producer_contract_path.is_file()
+                    or sha256_file(producer_contract_path) != producer_contract_sha256
+                ):
+                    raise ValueError("V19 receipt producer contract path/SHA is not intact")
+                progress_path = output_root / "task41_p0_v19_native_rank1_progress.json"
+                progress_sha256 = (
+                    sha256_file(progress_path)
+                    if progress_path.is_file() and not progress_path.is_symlink()
+                    else None
+                )
+                checker_command = _task41_p0_v19_checker_command(
+                    python=python,
+                    repo_root=repo_root,
+                    output_directory=output_root,
+                    receipt_path=worker_receipt_path.resolve(strict=True),
+                    receipt_sha256=str(receipt_sha256),
+                    producer_contract_path=producer_contract_path.resolve(strict=True),
+                    producer_contract_sha256=producer_contract_sha256,
+                    contract_path=contract_path.resolve(strict=True),
+                    contract_sha256=contract_sha,
+                    window_sha256=window.sha256,
+                    service_directory=service_directory,
+                    report_path=checker_result_path,
+                    progress_sha256=progress_sha256,
+                )
+                checker_inputs = [
+                    contract_path.resolve(strict=True),
+                    Path(window.path).resolve(strict=True),
+                    worker_receipt_path.resolve(strict=True),
+                    producer_contract_path.resolve(strict=True),
+                    *(
+                        [progress_path.resolve(strict=True)]
+                        if progress_sha256 is not None else []
+                    ),
+                    *((repo_root / relative).resolve(strict=True)
+                      for relative, _digest in V19_SOURCE_BINDINGS.values()),
+                ]
+                checker_authorization = _task41_p0_v19_checker_authorization(
+                    command=checker_command,
+                    input_paths=checker_inputs,
+                    window_sha256=window.sha256,
+                    contract_sha256=contract_sha,
+                    source_sha=consumer_source_sha,
+                    source_branch=contract["branch"],
+                    sha256_file=sha256_file,
+                )
+                record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget_check()
+                started = time.perf_counter()
+                checker_environment = {
+                    **environment,
+                    "TASK41_P0_V19_CHECKER_ONLY": "1",
+                    "TASK41_P0_V19_RECEIPT_SHA256": str(receipt_sha256),
+                    "TASK41_P0_V19_RECEIPT_PATH": str(
+                        worker_receipt_path.resolve(strict=True)
+                    ),
+                }
+                checker_watchdog_options = {
+                    **common_watchdog,
+                    "worker_environment": checker_environment,
+                }
+                checker_watchdog = supervise(
+                    checker_command,
+                    service_directory / "v19_native_rank1_checker_watchdog",
+                    wall_seconds=window.closeout_seconds,
+                    phase_path=service_directory / "v19_native_rank1_checker_phase.json",
+                    campaign_phase="closeout",
+                    campaign_phase_authorization=checker_authorization,
+                    **checker_watchdog_options,
+                )
+                independent_check_seconds = time.perf_counter() - started
+                checker_payload = (
+                    read_json_object(checker_result_path, "V19 independent rank-1 check")
+                    if checker_result_path.is_file() and not checker_result_path.is_symlink()
+                    else None
+                )
+                checker_ok = _task41_p0_v19_checker_completed(checker_watchdog, checker_payload)
+                record.update(
+                    v19_checker_command=checker_command,
+                    v19_checker_authorization=checker_authorization,
+                    v19_checker_watchdog=checker_watchdog,
+                    v19_checker_result_path=str(checker_result_path),
+                    v19_checker_result_sha256=(
+                        sha256_file(checker_result_path) if checker_result_path.is_file() else None
+                    ),
+                    v19_independent_check_completed=checker_ok,
+                    v19_checker_elapsed_seconds=independent_check_seconds,
+                    v19_parent_checker_supervise_elapsed_seconds=independent_check_seconds,
+                    v19_checker_audit_status=(
+                        checker_payload.get("status") if isinstance(checker_payload, Mapping) else None
+                    ),
+                    v19_data_complete=(
+                        checker_payload.get("data_complete")
+                        if isinstance(checker_payload, Mapping) else None
+                    ),
+                    v19_native_binding_status=(
+                        checker_payload.get("native_binding_status")
+                        if isinstance(checker_payload, Mapping) else None
+                    ),
+                )
+            else:
+                record.update(
+                    v19_independent_check_completed=False,
+                    v19_checker_status="not_run_no_externally_bound_complete_receipt",
+                    v19_checker_elapsed_seconds=0.0,
+                )
+            result_code = 0 if checker_ok and (v19_checker_only or worker_ok) else 3
+            record.update(
+                required_checker_status="audit_completed" if checker_ok else "failed",
+                v19_capture_status=(
+                    "CAPTURE_COMPLETED" if worker_ok
+                    else "READ_ONLY_RECEIPT_BOUND" if v19_checker_only and receipt_ready
+                    else "INCOMPLETE"
+                ),
+                v19_audit_status=(
+                    "AUDIT_COMPLETED" if checker_ok else "AUDIT_INCOMPLETE"
+                ),
+                v19_result_classification=(
+                    "V19_SELECTED_NATIVE_RANK1_AUDIT_COMPLETED"
+                    if result_code == 0
+                    else "V19_SELECTED_NATIVE_RANK1_AUDIT_INCOMPLETE"
+                ),
+                v19_audit_completed=checker_ok,
+                official_result=False,
+                scientific_qualified=False,
+                full_owner_unlocked=False,
+                result_classification=(
+                    "V19_SELECTED_NATIVE_RANK1_AUDIT_COMPLETED"
+                    if result_code == 0
+                    else "V19_SELECTED_NATIVE_RANK1_AUDIT_INCOMPLETE"
+                ),
+            )
+        except Exception as exc:
+            record["workflow_error"] = {"type": type(exc).__name__, "message": str(exc)}
+            record.update(
+                v19_capture_status=(
+                    "CAPTURE_COMPLETED" if worker_ok
+                    else "READ_ONLY_RECEIPT_BOUND" if v19_checker_only and receipt_ready
+                    else "INCOMPLETE"
+                ),
+                v19_audit_status="AUDIT_INCOMPLETE",
+                v19_audit_completed=False,
+                v19_result_classification="V19_SELECTED_NATIVE_RANK1_AUDIT_INCOMPLETE",
+                result_classification="V19_SELECTED_NATIVE_RANK1_AUDIT_INCOMPLETE",
+                official_result=False,
+                scientific_qualified=False,
+                full_owner_unlocked=False,
+            )
+            result_code = 3
+        finally:
+            try:
+                record["saved_diagnostics_disk_budget"] = saved_diagnostics_budget_check(
+                    final=True
+                )
+            except Exception as exc:
+                record["finalization_error"] = {"type": type(exc).__name__, "message": str(exc)}
+                record["v19_audit_status"] = "AUDIT_INCOMPLETE"
+                record["v19_audit_completed"] = False
+                record["v19_result_classification"] = "V19_SELECTED_NATIVE_RANK1_AUDIT_INCOMPLETE"
+                record["result_classification"] = "V19_SELECTED_NATIVE_RANK1_AUDIT_INCOMPLETE"
+                result_code = 3
+            record["status"] = "completed" if result_code == 0 else "failed_raw_evidence_retained"
+            record["official_result"] = False
+            record["scientific_qualified"] = False
+            record["full_owner_unlocked"] = False
+            record["receipt_path"] = str(receipt_path)
+            _write_json_fsync(receipt_path, record)
+        return result_code
+
     if b0_v17_selected_two_cell_mode:
         result_code = 3
         worker_ok = False
@@ -16002,6 +16555,11 @@ def _run_task41_p0_service(
     v17_selected_two_cell_selector: bool = False,
     v18_saved_jz_selector: bool = False,
     v18_output_directory: Path | None = None,
+    v19_native_rank1_selector: bool = False,
+    v19_output_directory: Path | None = None,
+    v19_checker_only: bool = False,
+    v19_receipt_sha256: str | None = None,
+    v19_receipt_path: Path | None = None,
 ) -> int:
     """Run one registered Task41 P0 case through the existing worker/watchdog path."""
     service_start_sample = clock_sample(include_boot_id=True)
@@ -16105,6 +16663,20 @@ def _run_task41_p0_service(
         os.environ.get("TASK41_P0_V18_SAVED_JZ_CANDIDATE") == "1"
     ):
         raise ValueError("Task41 V18 Python selector and wrapper authorization marker differ")
+    b0_v19_native_rank1_mode = bool(v19_native_rank1_selector)
+    if b0_v19_native_rank1_mode != (
+        os.environ.get("TASK41_P0_V19_NATIVE_RANK1") == "1"
+    ):
+        raise ValueError("Task41 V19 Python selector and wrapper authorization marker differ")
+    if v19_checker_only != (os.environ.get("TASK41_P0_V19_CHECKER_ONLY") == "1"):
+        raise ValueError("Task41 V19 checker-only selector and wrapper marker differ")
+    if (
+        v19_checker_only
+        != (os.environ.get("TASK41_P0_V19_RECEIPT_SHA256") == (v19_receipt_sha256 or ""))
+        or v19_checker_only
+        != (os.environ.get("TASK41_P0_V19_RECEIPT_PATH") == str(v19_receipt_path or ""))
+    ):
+        raise ValueError("Task41 V19 checker-only receipt path/SHA differs from wrapper markers")
     v16_manifest_path: Path | None = None
     v16_manifest_sha256: str | None = None
     b0_v4_geometry_pair_mode = False
@@ -16144,6 +16716,7 @@ def _run_task41_p0_service(
         or b0_v16_saved_vector_analysis_mode
         or b0_v17_selected_two_cell_mode
         or b0_v18_saved_jz_mode
+        or b0_v19_native_rank1_mode
     )
     continuation_run_root: Path | None = None
     continuation_output_root: Path | None = None
@@ -16241,6 +16814,22 @@ def _run_task41_p0_service(
         if v18_output_raw.is_symlink():
             raise ValueError("Task41 V18 output directory cannot be a symlink")
         continuation_output_root = v18_output_raw.resolve()
+    if b0_v19_native_rank1_mode:
+        if v19_output_directory is None:
+            raise ValueError("Task41 V19 route requires its explicit numbered output directory")
+        from src.runners.task41_p0_v19_native_rank1 import SOURCE_BINDINGS as V19_SOURCE_BINDINGS
+        v19_source_report = (repo_root / V19_SOURCE_BINDINGS["v17_report"][0]).resolve(strict=True)
+        results_root_v19 = (repo_root / "results" / TASK41_MODEL_ID).resolve(strict=True)
+        if not v19_source_report.is_relative_to(results_root_v19):
+            raise ValueError("Task41 V19 fixed V17 report escaped the registered results root")
+        continuation_run_root = v19_source_report.parent.resolve(strict=True)
+        v19_output_raw = (
+            v19_output_directory if v19_output_directory.is_absolute()
+            else repo_root / v19_output_directory
+        )
+        if v19_output_raw.is_symlink():
+            raise ValueError("Task41 V19 output directory cannot be a symlink")
+        continuation_output_root = v19_output_raw.resolve()
     if b0_v9_saved_star_screen_mode:
         if (
             len(case_args) != 11
@@ -16708,6 +17297,13 @@ def _run_task41_p0_service(
         contract_window=contract_window,
         repo_root=repo_root,
     )
+    is_v19_native_rank1 = _validate_task41_p0_v19_selector_scope(
+        selector=v19_native_rank1_selector,
+        case_id=case_id,
+        contract=contract,
+        contract_window=contract_window,
+        repo_root=repo_root,
+    )
     if b0_v16_saved_vector_analysis_mode != is_v16_saved_vector_analysis:
         raise ValueError(
             "Task41 V16 saved-vector analysis requires both its exact fixed contract and explicit service route"
@@ -16719,6 +17315,7 @@ def _run_task41_p0_service(
         or b0_v16_saved_vector_analysis_mode
         or is_v17_selected_two_cell_replay
         or is_v18_saved_jz_candidate
+        or is_v19_native_rank1
         or b0_v14_saved_rhs_candidate_mode
         or v15_full_acceptance_selector
         or b0_v8_selected_trace_star_metadata_only_mode
@@ -16790,6 +17387,7 @@ def _run_task41_p0_service(
             or b0_v16_saved_vector_analysis_mode
             or b0_v17_selected_two_cell_mode
             or b0_v18_saved_jz_mode
+            or b0_v19_native_rank1_mode
         ):
             if (
                 continuation_branch != contract["branch"]
@@ -17438,6 +18036,24 @@ def _run_task41_p0_service(
             "TASK41_P0_CONSUMER_SOURCE_SHA": str(continuation_source_sha),
             "TASK41_P0_CHECKER_SOURCE_SHA": str(checker_source_sha),
         })
+    if b0_v19_native_rank1_mode:
+        assert continuation_output_root is not None
+        environment.update({
+            "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
+            "TASK41_P0_V19_NATIVE_RANK1": "1",
+            "TASK41_P0_V19_OUTPUT_DIRECTORY": str(continuation_output_root),
+            "TASK41_P0_CONSUMER_SOURCE_SHA": str(continuation_source_sha),
+            "TASK41_P0_CHECKER_SOURCE_SHA": str(checker_source_sha),
+        })
+        if v19_checker_only:
+            assert v19_receipt_sha256 is not None and v19_receipt_path is not None
+            environment["TASK41_P0_V19_CHECKER_ONLY"] = "1"
+            environment["TASK41_P0_V19_RECEIPT_SHA256"] = v19_receipt_sha256
+            environment["TASK41_P0_V19_RECEIPT_PATH"] = str(v19_receipt_path)
+        else:
+            environment.pop("TASK41_P0_V19_CHECKER_ONLY", None)
+            environment.pop("TASK41_P0_V19_RECEIPT_SHA256", None)
+            environment.pop("TASK41_P0_V19_RECEIPT_PATH", None)
     if continuation_mode:
         environment.update({
             "TASK41_P0_SAVED_OUTPUT_CONTINUATION": "1",
@@ -17636,6 +18252,7 @@ def _run_task41_p0_service(
                 or b0_v16_saved_vector_analysis_mode
                 or b0_v17_selected_two_cell_mode
                 or b0_v18_saved_jz_mode
+                or b0_v19_native_rank1_mode
             ),
             checker_snapshot_path=checker_input_path,
             checker_snapshot_sha256=checker_input_sha256,
@@ -17646,6 +18263,10 @@ def _run_task41_p0_service(
             b0_v16_saved_vector_analysis_mode=b0_v16_saved_vector_analysis_mode,
             b0_v17_selected_two_cell_mode=b0_v17_selected_two_cell_mode,
             b0_v18_saved_jz_mode=b0_v18_saved_jz_mode,
+            b0_v19_native_rank1_mode=b0_v19_native_rank1_mode,
+            v19_checker_only=v19_checker_only,
+            v19_receipt_sha256=v19_receipt_sha256,
+            v19_receipt_path=v19_receipt_path,
             v17_manifest_path=v17_manifest_path,
             v17_manifest_sha256=v17_manifest_sha256,
             v17_producer_binding=v17_producer_binding,
@@ -18138,6 +18759,36 @@ def _validate_task41_p0_v18_selector_scope(
     return exact_scope
 
 
+def _validate_task41_p0_v19_selector_scope(
+    *, selector: bool, case_id: str, contract: Mapping[str, Any],
+    contract_window: Path, repo_root: Path,
+) -> bool:
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V19_NATIVE_RANK1_SCOPE,
+        TASK41_B0_V19_NATIVE_RANK1_WINDOW_RELATIVE,
+    )
+
+    window_path = Path(contract_window)
+    if not window_path.is_absolute():
+        window_path = Path(repo_root) / window_path
+    expected_strategy = {
+        "schema": "task41.p0.b0.internal_rhs_strategy.v1",
+        "internal_rhs_strategy": "same_lu_rhs_solve",
+    }
+    exact_scope = bool(
+        case_id == "B0"
+        and contract.get("execution_scope") == TASK41_B0_V19_NATIVE_RANK1_SCOPE
+        and window_path.resolve()
+        == (Path(repo_root) / TASK41_B0_V19_NATIVE_RANK1_WINDOW_RELATIVE).resolve()
+        and contract.get("numerical_strategy") == expected_strategy
+    )
+    if selector != exact_scope:
+        raise ValueError(
+            "Task41 V19 native-rank1 route requires its exact contract and explicit service selector"
+        )
+    return exact_scope
+
+
 def _task41_p0_v18_prior_evidence_accounting(*, repo_root: Path) -> dict[str, Any]:
     """Read the exact V17 attempt07 receipt and conservatively recover prior raw/window bytes."""
     from src.runners.task41_p0_contract import (
@@ -18257,6 +18908,267 @@ def _task41_p0_v18_prior_evidence_accounting(*, repo_root: Path) -> dict[str, An
         "window_output_tree_bytes_recorded": window_recorded,
         "window_output_tree_bytes_stat": actual_window_bytes,
         "window_output_tree_bytes_conservative": max(window_recorded, actual_window_bytes),
+    }
+
+
+_TASK41_P0_V19_PRIOR_V18_RESOURCE_COMPACT_RELATIVE = Path(
+    "docs/task41extra_phi90_p50x50_g17x20/outcomes/v18_closeout/resource_compact.json"
+)
+_TASK41_P0_V19_PRIOR_V18_RESOURCE_COMPACT_SHA256 = (
+    "6a984dcd37ead5d2a1c1a7f76f870d113cb2d993648cabb7c3cf90e61ae12506"
+)
+_TASK41_P0_V19_PRIOR_V18_CONTRACT_SHA256 = (
+    "fca6cb2ad0c6d8591b1087cff50ff0d11e8bcb025b82cd5fdea17b83bb12f380"
+)
+_TASK41_P0_V19_PRIOR_V18_SERVICE_RECEIPT_SHA256 = (
+    "8a677a6f97e5649f63318f5e8713222b118efa4ce97cd2e825aa2bbb455f1963"
+)
+_TASK41_P0_V19_PRIOR_V18_SERVICE_RECEIPT_BYTES = 45_966
+_TASK41_P0_V19_PRIOR_V18_WINDOW_SHA256 = (
+    "3d4158d70782f9789a997ecadac073f9ea2e7be104dc789e66c0758d45aee113"
+)
+_TASK41_P0_V19_PRIOR_V18_SOURCE_SHA = "ff22c0a78099e7e48e0c11127ce01e06ae1ac8cf"
+_TASK41_P0_V19_PRIOR_V18_WINDOW_ENTRY_SOURCE_SHA = (
+    "880fea2fca11f575b1234c6e1bb64442d70f30f7"
+)
+
+
+def _task41_p0_v19_prior_evidence_accounting(*, repo_root: Path) -> dict[str, Any]:
+    """Bind V19's prior-byte gate to V18's receipt, compact records, and actual outputs.
+
+    The earlier V18 gate remains unchanged. V19 adds the V18 attempt output tree to
+    the already-counted V17 tree, while retaining the V18 receipt's cumulative raw
+    tally as the raw baseline. The same raw inventory is never added a second time.
+    """
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V18_SAVED_JZ_SCOPE,
+        TASK41_B0_V18_SAVED_JZ_WINDOW_RELATIVE,
+        TASK41_BRANCH,
+        TASK41_MODEL_ID,
+    )
+    from src.runners.task40_v10_campaign import _utc_ns
+    from src.runners.task41_p0_v19_native_rank1 import SOURCE_BINDINGS as V19_SOURCE_BINDINGS
+
+    root = repo_root.resolve(strict=True)
+    prior_v17 = _task41_p0_v18_prior_evidence_accounting(repo_root=root)
+    compact_relative, compact_sha = V19_SOURCE_BINDINGS["v18_compact"]
+    compact_raw = root / compact_relative
+    resource_raw = root / _TASK41_P0_V19_PRIOR_V18_RESOURCE_COMPACT_RELATIVE
+    v18_window_sha = _TASK41_P0_V19_PRIOR_V18_WINDOW_SHA256
+    v18_source_sha = _TASK41_P0_V19_PRIOR_V18_SOURCE_SHA
+    from src.runners.task41_p0_contract import TASK41_B0_CONTROLLER_RELATIVE
+
+    v18_contract_relative = TASK41_B0_CONTROLLER_RELATIVE / (
+        f"execution_contract_source_{v18_source_sha}_v18_saved_jz_candidate_6h.json"
+    )
+    v18_contract_raw = root / v18_contract_relative
+    v18_window_raw = root / TASK41_B0_V18_SAVED_JZ_WINDOW_RELATIVE
+    if any(path.is_symlink() for path in (
+        compact_raw, resource_raw, v18_contract_raw, v18_window_raw,
+    )):
+        raise ValueError("V19 prior V18 compact, contract, or window cannot be a symlink")
+    compact_path = compact_raw.resolve(strict=True)
+    resource_path = resource_raw.resolve(strict=True)
+    contract_path = v18_contract_raw.resolve(strict=True)
+    window_path = v18_window_raw.resolve(strict=True)
+    if (
+        _sha256_file(compact_path) != compact_sha
+        or _sha256_file(resource_path) != _TASK41_P0_V19_PRIOR_V18_RESOURCE_COMPACT_SHA256
+        or _sha256_file(contract_path) != _TASK41_P0_V19_PRIOR_V18_CONTRACT_SHA256
+        or _sha256_file(window_path) != v18_window_sha
+    ):
+        raise ValueError("V19 prior V18 compact, resource, contract, or window hash differs")
+    try:
+        compact = json.loads(compact_path.read_text(encoding="utf-8"))
+        resource_compact = json.loads(resource_path.read_text(encoding="utf-8"))
+        producer_contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError("V19 prior V18 compact or contract is unreadable") from exc
+    receipt_ref = (
+        compact.get("artifact_refs", {}).get("service_receipt")
+        if isinstance(compact, Mapping) else None
+    )
+    expected_receipt_relative = Path(
+        Path("results") / TASK41_MODEL_ID
+        / "task41_p0_saved_diagnostics_6h" / v18_window_sha
+        / "selected_incident_replay" / "attempt02.service"
+        / "task41_p0_service_receipt.json"
+    )
+    if (
+        not isinstance(compact, Mapping)
+        or compact.get("schema") != "task41.p0.v18.saved_jz_closeout.v1"
+        or compact.get("source", {}).get("branch") != TASK41_BRANCH
+        or compact.get("source", {}).get("sha") != v18_source_sha
+        or compact.get("scope", {}).get("status") != "COMPLETED_LOCAL_MIXED_NOT_QUALIFIED"
+        or compact.get("scope", {}).get("official_result") is not False
+        or compact.get("scope", {}).get("scientific_qualified") is not False
+        or not isinstance(receipt_ref, Mapping)
+        or receipt_ref.get("path") != expected_receipt_relative.as_posix()
+        or receipt_ref.get("sha256") != _TASK41_P0_V19_PRIOR_V18_SERVICE_RECEIPT_SHA256
+        or receipt_ref.get("bytes") != _TASK41_P0_V19_PRIOR_V18_SERVICE_RECEIPT_BYTES
+        or not isinstance(resource_compact, Mapping)
+        or resource_compact.get("schema") != "task41.p0.v18.resource_compact.v1"
+        or resource_compact.get("source_sha") != v18_source_sha
+        or resource_compact.get("window_sha256") != v18_window_sha
+        or resource_compact.get("attempt") != "attempt02"
+        or resource_compact.get("exit", {}).get("classification")
+        != "V18_SAVED_JZ_AUDIT_COMPLETED"
+        or producer_contract.get("branch") != TASK41_BRANCH
+        or producer_contract.get("source", {}).get("sha") != v18_source_sha
+        or producer_contract.get("execution_scope") != TASK41_B0_V18_SAVED_JZ_SCOPE
+        or producer_contract.get("window", {}).get("sha256") != v18_window_sha
+        or producer_contract.get("window", {}).get("path")
+        != TASK41_B0_V18_SAVED_JZ_WINDOW_RELATIVE.as_posix()
+    ):
+        raise ValueError("V19 prior V18 compact/resource/contract identity differs")
+
+    receipt_relative = Path(str(receipt_ref["path"]))
+    receipt_raw = root / receipt_relative
+    if receipt_raw.is_symlink():
+        raise ValueError("V19 prior V18 service receipt cannot be a symlink")
+    receipt_path = receipt_raw.resolve(strict=True)
+    if _sha256_file(receipt_path) != _TASK41_P0_V19_PRIOR_V18_SERVICE_RECEIPT_SHA256:
+        raise ValueError("V19 prior V18 service receipt SHA-256 differs")
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        v18_window = json.loads(window_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError("V19 prior V18 receipt/window is unreadable") from exc
+    expected_window_times = tuple(
+        _utc_ns(value)
+        for value in (
+            "2026-10-29T00:50:15.000000000Z",
+            "2026-10-29T06:30:15.000000000Z",
+            "2026-10-29T06:50:15.000000000Z",
+        )
+    )
+    try:
+        actual_window_times = (
+            tuple(
+                _utc_ns(v18_window.get(key))
+                for key in ("t0_utc", "numerical_deadline_utc", "deadline_utc")
+            )
+            if isinstance(v18_window, Mapping)
+            else ()
+        )
+    except (TypeError, ValueError):
+        actual_window_times = ()
+
+    expected_v18_output = (
+        root / "results" / TASK41_MODEL_ID / "task41_p0_saved_diagnostics_6h"
+        / v18_window_sha / "selected_incident_replay" / "attempt02"
+    ).resolve(strict=True)
+    budget = receipt.get("saved_diagnostics_disk_budget") if isinstance(receipt, Mapping) else None
+    receipt_prior = budget.get("prior_window_accounting") if isinstance(budget, Mapping) else None
+    disk = resource_compact.get("disk_and_evidence")
+    formula = disk.get("cumulative_evidence_formula_bytes") if isinstance(disk, Mapping) else None
+    if (
+        not isinstance(receipt, Mapping)
+        or receipt.get("schema") != "task41.p0.saved_output_service_receipt.v1"
+        or receipt.get("status") != "completed"
+        or receipt.get("mode") != "saved_b0_v18_saved_jz_candidate"
+        or receipt.get("receipt_path") != str(receipt_path)
+        or receipt.get("contract_path") != str(contract_path)
+        or receipt.get("contract_sha256") != _TASK41_P0_V19_PRIOR_V18_CONTRACT_SHA256
+        or receipt.get("window_path") != str(window_path)
+        or receipt.get("window_sha256") != v18_window_sha
+        or receipt.get("consumer_branch") != TASK41_BRANCH
+        or receipt.get("consumer_source_sha") != v18_source_sha
+        or receipt.get("checker_source_sha") != v18_source_sha
+        or receipt.get("consumer_output_root") != str(expected_v18_output)
+        or receipt.get("result_classification") != "V18_SAVED_JZ_AUDIT_COMPLETED"
+        or receipt.get("v18_worker_completed") is not True
+        or receipt.get("v18_independent_check_completed") is not True
+        or receipt.get("official_result") is not False
+        or receipt.get("scientific_qualified") is not False
+        or receipt.get("full_owner_unlocked") is not False
+        or not isinstance(budget, Mapping)
+        or budget.get("status") != "POST_WRITE_CHECKED"
+        or not isinstance(receipt_prior, Mapping)
+        or not isinstance(disk, Mapping)
+        or not isinstance(formula, Mapping)
+        or not isinstance(v18_window, Mapping)
+        or v18_window.get("schema") != "task41.p0.execution_window.v1"
+        or v18_window.get("task_id") != TASK41_MODEL_ID
+        or v18_window.get("scope") != TASK41_B0_V18_SAVED_JZ_SCOPE
+        or v18_window.get("source_sha") != _TASK41_P0_V19_PRIOR_V18_WINDOW_ENTRY_SOURCE_SHA
+        or actual_window_times != expected_window_times
+    ):
+        raise ValueError("V19 prior V18 service receipt is not a successful bound record")
+
+    recorded = budget.get("recorded_cumulative_raw_artifact_bytes")
+    bound = budget.get("bound_raw_artifact_bytes_stat_deduplicated")
+    v18_tree_recorded = budget.get("window_output_tree_bytes")
+    v18_invocation_recorded = disk.get("current_invocation_output_tree_bytes")
+    v17_tree_compact = disk.get("prior_window_output_tree_conservative_bytes")
+    compact_recorded = disk.get("recorded_cumulative_raw_artifact_bytes")
+    if any(type(value) is not int or value < 0 for value in (
+        recorded, bound, v18_tree_recorded, v18_invocation_recorded,
+        v17_tree_compact, compact_recorded,
+    )) or recorded != compact_recorded:
+        raise ValueError("V19 prior V18 receipt/compact byte counters are malformed or inconsistent")
+    v17_tree_at_v18_closeout = receipt_prior.get("window_output_tree_bytes_conservative")
+    if type(v17_tree_at_v18_closeout) is not int or v17_tree_compact != v17_tree_at_v18_closeout:
+        raise ValueError("V19 V18 compact does not match the V17 byte count recorded at V18 closeout")
+    for key in (
+        "receipt_path", "receipt_sha256", "contract_path", "contract_sha256",
+        "window_path", "window_sha256", "recorded_cumulative_raw_artifact_bytes",
+        "bound_raw_artifact_bytes_stat_deduplicated", "window_output_tree_bytes_recorded",
+    ):
+        if receipt_prior.get(key) != prior_v17.get(key):
+            raise ValueError("V19 V18 service receipt prior-window binding differs from V17 receipt")
+    if (
+        formula.get("recorded_cumulative_raw_artifact_bytes") != recorded
+        or formula.get("prior_window_output_tree_conservative_bytes") != v17_tree_compact
+        or formula.get("current_invocation_output_tree_bytes") != v18_invocation_recorded
+    ):
+        raise ValueError("V19 prior V18 resource compact formula does not match its receipt")
+
+    v18_window_root = expected_v18_output.parent.parent
+    if v18_window_root.is_symlink() or not v18_window_root.is_dir():
+        raise ValueError("V19 prior V18 output window is absent or not a real directory")
+    actual_v18_tree_bytes = 0
+    for item in v18_window_root.rglob("*"):
+        if item.is_symlink():
+            raise ValueError("V19 prior V18 output tree contains a symlink")
+        if item.is_file():
+            actual_v18_tree_bytes += item.stat().st_size
+    conservative_v18_tree = max(
+        v18_tree_recorded, v18_invocation_recorded, actual_v18_tree_bytes
+    )
+    conservative_prior_v17_tree = max(
+        v17_tree_at_v18_closeout,
+        prior_v17["window_output_tree_bytes_conservative"],
+    )
+    conservative_prior_windows = conservative_prior_v17_tree + conservative_v18_tree
+    cumulative_recorded = disk.get("cumulative_evidence_conservative_bytes")
+    expected_compact_cumulative = recorded + v17_tree_compact + v18_invocation_recorded
+    if (
+        type(cumulative_recorded) is not int
+        or cumulative_recorded != expected_compact_cumulative
+    ):
+        raise ValueError("V19 V18 resource compact cumulative evidence formula is inconsistent")
+    return {
+        "v17_prior_accounting": prior_v17,
+        "v18_compact_path": str(compact_path),
+        "v18_compact_sha256": compact_sha,
+        "v18_resource_compact_path": str(resource_path),
+        "v18_resource_compact_sha256": _TASK41_P0_V19_PRIOR_V18_RESOURCE_COMPACT_SHA256,
+        "v18_service_receipt_path": str(receipt_path),
+        "v18_service_receipt_sha256": _TASK41_P0_V19_PRIOR_V18_SERVICE_RECEIPT_SHA256,
+        "v18_contract_path": str(contract_path),
+        "v18_contract_sha256": _TASK41_P0_V19_PRIOR_V18_CONTRACT_SHA256,
+        "v18_window_path": str(window_path),
+        "v18_window_sha256": v18_window_sha,
+        "recorded_cumulative_raw_artifact_bytes": recorded,
+        "bound_raw_artifact_bytes_stat_deduplicated": max(
+            bound, prior_v17["bound_raw_artifact_bytes_stat_deduplicated"]
+        ),
+        "v18_window_output_tree_bytes_recorded": v18_tree_recorded,
+        "v18_window_output_tree_bytes_stat": actual_v18_tree_bytes,
+        "v18_window_output_tree_bytes_conservative": conservative_v18_tree,
+        "window_output_tree_bytes_conservative": conservative_prior_windows,
+        "v18_compact_cumulative_evidence_bytes": cumulative_recorded,
     }
 
 
@@ -18382,6 +19294,56 @@ def _extract_task41_p0_v18_selector(case_args: list[str]) -> tuple[list[str], bo
     return [item for item in case_args if item != token], count == 1
 
 
+def _extract_task41_p0_v19_selector(case_args: list[str]) -> tuple[list[str], bool]:
+    token = "--task41-p0-b0-v19-native-rank1"
+    count = case_args.count(token)
+    if count > 1:
+        raise ValueError("Task41 V19 native-rank1 selector may appear only once")
+    return [item for item in case_args if item != token], count == 1
+
+
+def _extract_task41_p0_v19_checker_only_args(
+    case_args: list[str],
+) -> tuple[list[str], bool, str | None, str | None]:
+    token = "--task41-p0-b0-v19-checker-only"
+    count = case_args.count(token)
+    if count > 1:
+        raise ValueError("Task41 V19 checker-only selector may appear only once")
+    cleaned = [item for item in case_args if item != token]
+    sha_flag = "--v19-receipt-sha256"
+    sha_values: list[str] = []
+    index = 0
+    remaining: list[str] = []
+    while index < len(cleaned):
+        value = cleaned[index]
+        if value == sha_flag:
+            if index + 1 >= len(cleaned):
+                raise ValueError("V19 checker-only receipt SHA flag requires one value")
+            sha_values.append(cleaned[index + 1])
+            index += 2
+            continue
+        if value.startswith(sha_flag + "="):
+            sha_values.append(value.split("=", 1)[1])
+            index += 1
+            continue
+        remaining.append(value)
+        index += 1
+    if len(sha_values) > 1:
+        raise ValueError("V19 checker-only receipt SHA may appear only once")
+    selected = count == 1
+    digest = sha_values[0] if sha_values else None
+    path_args, receipt_path = _extract_v29_path_arg(remaining, "--v19-receipt-path")
+    if (selected and (digest is None or receipt_path is None)) or (
+        not selected and (digest is not None or receipt_path is not None)
+    ):
+        raise ValueError("V19 checker-only mode requires its externally supplied receipt path and SHA")
+    if digest is not None and re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+        raise ValueError("V19 checker-only receipt SHA is malformed")
+    if receipt_path is not None and not Path(receipt_path).is_absolute():
+        raise ValueError("V19 checker-only receipt path must be absolute")
+    return path_args, selected, digest, receipt_path
+
+
 def run_service(
     *,
     unit: str,
@@ -18402,13 +19364,32 @@ def run_service(
     )
     if v18_saved_jz_selector != (v18_output_directory is not None):
         raise ValueError("Task41 V18 route requires its selector and one output directory together")
+    case_args, v19_native_rank1_selector = _extract_task41_p0_v19_selector(case_args)
+    case_args, v19_output_directory = _extract_v29_path_arg(
+        case_args, "--v19-output-directory"
+    )
+    case_args, v19_checker_only, v19_receipt_sha256, v19_receipt_path = (
+        _extract_task41_p0_v19_checker_only_args(case_args)
+    )
+    if v19_native_rank1_selector != (v19_output_directory is not None):
+        raise ValueError("Task41 V19 route requires its selector and one output directory together")
+    if v19_checker_only and not v19_native_rank1_selector:
+        raise ValueError("Task41 V19 checker-only mode requires the V19 native-rank1 selector")
     v15_selector_token = "--task41-p0-b0-v15-full-acceptance"
     v15_selector_count = case_args.count(v15_selector_token)
     if v15_selector_count > 1:
         raise ValueError("Task41 V15 full-acceptance selector may appear only once")
     v15_full_acceptance_selector = v15_selector_count == 1
-    if sum((v15_full_acceptance_selector, v17_selected_two_cell_selector, v18_saved_jz_selector)) > 1:
-        raise ValueError("Task41 V15, V17, and V18 selectors are mutually exclusive")
+    if sum((v15_full_acceptance_selector, v17_selected_two_cell_selector, v18_saved_jz_selector, v19_native_rank1_selector)) > 1:
+        raise ValueError("Task41 V15, V17, V18, and V19 selectors are mutually exclusive")
+    if v19_native_rank1_selector and any(argument in {
+        "--task41-p0-saved-output-continuation", "--task41-p0-saved-output-checker-only",
+        "--task41-p0-saved-b0-evidence-audit", "--task41-p0-saved-b0-volume-only-attribution",
+        "--task41-p0-saved-b0-selected-trace-star-audit", "--task41-p0-saved-b0-v9-star-screen",
+        "--task41-p0-saved-b0-v9-failed-terminal-audit", "--task41-p0-saved-b0-y-g-comparison",
+        "--task41-p0-saved-b0-v16-vector-analysis", "--v14-saved-rhs-candidate",
+    } for argument in case_args):
+        raise ValueError("Task41 V19 native-rank1 route cannot be combined with another saved route")
     if v18_saved_jz_selector and any(argument in {
         "--task41-p0-saved-output-continuation", "--task41-p0-saved-output-checker-only",
         "--task41-p0-saved-b0-evidence-audit", "--task41-p0-saved-b0-volume-only-attribution",
@@ -18449,6 +19430,11 @@ def run_service(
             v17_selected_two_cell_selector=v17_selected_two_cell_selector,
             v18_saved_jz_selector=v18_saved_jz_selector,
             v18_output_directory=(Path(v18_output_directory) if v18_output_directory is not None else None),
+            v19_native_rank1_selector=v19_native_rank1_selector,
+            v19_output_directory=(Path(v19_output_directory) if v19_output_directory is not None else None),
+            v19_checker_only=v19_checker_only,
+            v19_receipt_sha256=v19_receipt_sha256,
+            v19_receipt_path=(Path(v19_receipt_path) if v19_receipt_path else None),
         )
     if v15_full_acceptance_selector:
         raise ValueError("Task41 V15 full-acceptance selector requires its Task41 P0 execution contract")
@@ -18456,6 +19442,8 @@ def run_service(
         raise ValueError("Task41 V17 selected-two-cell selector requires its Task41 P0 execution contract")
     if v18_saved_jz_selector or v18_output_directory is not None:
         raise ValueError("Task41 V18 saved-Jz selector requires its Task41 P0 execution contract")
+    if v19_native_rank1_selector or v19_output_directory is not None:
+        raise ValueError("Task41 V19 native-rank1 selector requires its Task41 P0 execution contract")
     case_args, v29_contract_path = _extract_v29_path_arg(
         case_args, "--task40-v29-execution-contract"
     )

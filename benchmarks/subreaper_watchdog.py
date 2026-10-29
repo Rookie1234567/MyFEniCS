@@ -599,6 +599,224 @@ def _validate_task41_p0_v18_saved_jz_checker_command(
     return input_paths
 
 
+def _validate_task41_p0_v19_native_rank1_checker_command(
+    *, argv: list[str], root: Path, expected_python: Path,
+    contract: dict[str, Any], contract_file: Path, contract_sha: str,
+    campaign: Any, authorization: dict[str, Any], environment: dict[str, str],
+) -> list[str]:
+    """Admit only the hash-bound V19 read-only receipt recheck command."""
+    from src.runners.task41_p0_contract import (
+        TASK41_B0_V19_NATIVE_RANK1_SCOPE,
+        TASK41_B0_V19_NATIVE_RANK1_WINDOW_RELATIVE,
+        TASK41_MODEL_ID,
+        require_task41_p0_contract,
+        task41_case_id_for_run_id,
+    )
+    from src.runners.task41_p0_v19_native_rank1 import SOURCE_BINDINGS
+
+    prefix = ["-m", "src.runners.task41_p0_v19_checker"]
+    required_flags = [
+        "--repo-root", "--output-dir", "--receipt-path", "--receipt-sha256",
+        "--producer-contract-path", "--producer-contract-sha256",
+        "--consumer-contract-path", "--contract-sha256", "--window-sha256",
+        "--service-directory", "--report-path",
+    ]
+    optional_progress = ["--progress-sha256"]
+    if (
+        Path(argv[0]).resolve() != expected_python
+        or argv[1:3] != prefix
+        or authorization.get("expected_channel_count") is not None
+    ):
+        raise ValueError("V19 closeout command is not the registered qualified checker")
+    tokens = argv[3:]
+    expected_token_count = 2 * len(required_flags)
+    if len(tokens) not in {expected_token_count, expected_token_count + 2}:
+        raise ValueError("V19 checker arguments do not match the closed command schema")
+    flags = tokens[::2]
+    values = tokens[1::2]
+    if flags[:len(required_flags)] != required_flags or (
+        len(flags) == len(required_flags) + 1 and flags[-1] != optional_progress[0]
+    ):
+        raise ValueError("V19 checker arguments do not match the closed command schema")
+    options = dict(zip(flags, values, strict=True))
+    if any(not value for value in options.values()):
+        raise ValueError("V19 checker command contains an empty argument")
+    forbidden_markers = (
+        "TASK41_P0_V17_SELECTED_TWO_CELL_REPLAY",
+        "TASK41_P0_V18_SAVED_JZ_CANDIDATE",
+        "TASK41_P0_V16_SAVED_VECTOR_ANALYSIS",
+        "TASK41_P0_B0_SAVED_Y_G_COMPARISON",
+        "TASK41_P0_V9_FAILED_TERMINAL_AUDIT",
+        "TASK41_P0_SAVED_B0_EVIDENCE_AUDIT",
+        "TASK41_P0_B0_V9_SAVED_STAR_SCREEN",
+        "TASK41_P0_SAVED_OUTPUT_CHECKER_ONLY",
+    )
+    if (
+        environment.get("TASK41_P0_V19_NATIVE_RANK1") != "1"
+        or environment.get("TASK41_P0_V19_CHECKER_ONLY") != "1"
+        or environment.get("TASK41_P0_V19_RECEIPT_SHA256") != options["--receipt-sha256"]
+        or environment.get("TASK41_P0_V19_RECEIPT_PATH") != options["--receipt-path"]
+        or environment.get("TASK41_P0_SAVED_OUTPUT_CONTINUATION") != "1"
+        or any(environment.get(name) is not None for name in forbidden_markers)
+        or environment.get("TASK41_P0_CONSUMER_SOURCE_SHA") != authorization.get("source_sha")
+        or environment.get("TASK41_P0_CHECKER_SOURCE_SHA") != authorization.get("source_sha")
+        or environment.get("TASK41_P0_V19_OUTPUT_DIRECTORY") != options["--output-dir"]
+        or authorization.get("source_sha") != contract.get("source", {}).get("sha")
+        or authorization.get("source_branch") != contract.get("branch")
+    ):
+        raise ValueError("V19 checker is not bound to its isolated current-source B0 service route")
+
+    from src.runners.task41_p0_contract import _git
+
+    case = contract.get("case")
+    window = contract.get("window")
+    if (
+        not isinstance(case, dict)
+        or case.get("model_id") != TASK41_MODEL_ID
+        or task41_case_id_for_run_id(str(case.get("run_id", ""))) != "B0"
+        or contract.get("execution_scope") != TASK41_B0_V19_NATIVE_RANK1_SCOPE
+        or contract.get("numerical_strategy", {}).get("internal_rhs_strategy") != "same_lu_rhs_solve"
+        or not isinstance(window, dict)
+        or window.get("path") != TASK41_B0_V19_NATIVE_RANK1_WINDOW_RELATIVE.as_posix()
+        or window.get("sha256") != campaign.sha256
+        or window.get("sha256") != authorization.get("campaign_window_sha256")
+        or (root / str(window.get("path"))).resolve(strict=True) != campaign.path.resolve(strict=True)
+        or options["--repo-root"] != str(root)
+        or Path(options["--repo-root"]).resolve(strict=True) != root
+        or options["--consumer-contract-path"] != str(contract_file)
+        or Path(options["--consumer-contract-path"]).is_symlink()
+        or Path(options["--consumer-contract-path"]).resolve(strict=True) != contract_file
+        or options["--contract-sha256"] != contract_sha
+        or environment.get("TASK41_P0_CONTRACT_PATH") != str(contract_file)
+        or environment.get("TASK41_P0_CONTRACT_SHA256") != contract_sha
+        or options["--window-sha256"] != campaign.sha256
+        or _git(root, "rev-parse", "HEAD") != authorization.get("source_sha")
+        or _git(root, "branch", "--show-current") != authorization.get("source_branch")
+    ):
+        raise ValueError("V19 checker contract/window/current-source binding differs")
+    current_contract, actual_sha = require_task41_p0_contract(
+        contract_file, expected_sha256=contract_sha, current_root=root,
+        require_clean_source=True, check_current_source=True, case_id="B0",
+    )
+    if actual_sha != contract_sha or current_contract != contract:
+        raise ValueError("V19 checker contract changed after service admission")
+
+    output_root = Path(options["--output-dir"])
+    receipt_path = Path(options["--receipt-path"])
+    producer_contract_path = Path(options["--producer-contract-path"])
+    report_path = Path(options["--report-path"])
+    service_root = Path(options["--service-directory"])
+    producer_sha = options["--producer-contract-sha256"]
+    receipt_sha = options["--receipt-sha256"]
+    if (
+        output_root.is_symlink() or receipt_path.is_symlink()
+        or producer_contract_path.is_symlink() or service_root.is_symlink()
+        or not output_root.is_absolute() or not receipt_path.is_absolute()
+        or not producer_contract_path.is_absolute() or not service_root.is_absolute()
+        or re.fullmatch(r"[0-9a-f]{64}", producer_sha) is None
+        or re.fullmatch(r"[0-9a-f]{64}", receipt_sha) is None
+    ):
+        raise ValueError("V19 receipt/service paths or producer identities are malformed")
+    output_root = output_root.resolve(strict=True)
+    receipt_path = receipt_path.resolve(strict=True)
+    producer_contract_path = producer_contract_path.resolve(strict=True)
+    service_root = service_root.resolve(strict=True)
+    results_root = (root / "results" / TASK41_MODEL_ID).resolve(strict=True)
+    expected_report = service_root / "task41_p0_v19_independent_check.json"
+    if (
+        output_root.parent.name != "selected_incident_replay"
+        or re.fullmatch(r"attempt[0-9]{2,}", output_root.name) is None
+        or not output_root.is_relative_to(results_root)
+        or receipt_path.parent != output_root
+        or receipt_path.name != f"task41_p0_v19_native_rank1_worker_{producer_sha}.json"
+        or not producer_contract_path.is_relative_to(root)
+        or service_root.parent != output_root.parent
+        or not service_root.name.startswith(output_root.name + ".service-")
+        or report_path.resolve(strict=False) != expected_report
+        or expected_report.exists() or expected_report.is_symlink()
+        or _sha256_file(receipt_path) != receipt_sha
+        or _sha256_file(producer_contract_path) != producer_sha
+    ):
+        raise ValueError("V19 read-only receipt, producer contract, or report path binding differs")
+
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        producer_contract = json.loads(producer_contract_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError("V19 producer receipt or contract is unreadable") from exc
+    if (
+        not isinstance(receipt, dict) or not isinstance(producer_contract, dict)
+        or producer_contract.get("source", {}).get("sha") != receipt.get("consumer_source_sha")
+        or producer_contract.get("window", {}).get("sha256") != campaign.sha256
+        or producer_contract.get("window", {}).get("path") != window.get("path")
+        or producer_contract.get("execution_scope") != TASK41_B0_V19_NATIVE_RANK1_SCOPE
+        or producer_contract.get("resources") != contract.get("resources")
+        or receipt.get("consumer_contract_path") != str(producer_contract_path)
+        or receipt.get("consumer_contract_sha256") != producer_sha
+        or receipt.get("consumer_window_sha256") != campaign.sha256
+        or receipt.get("run_identity", {}).get("execution_scope") != TASK41_B0_V19_NATIVE_RANK1_SCOPE
+    ):
+        raise ValueError("V19 producer receipt is not bound to the prior same-window/scope contract")
+    producer_contract_loaded, producer_digest = require_task41_p0_contract(
+        producer_contract_path, expected_sha256=producer_sha, current_root=root,
+        require_clean_source=False, check_current_source=False, case_id="B0",
+    )
+    if producer_digest != producer_sha or producer_contract_loaded != producer_contract:
+        raise ValueError("V19 producer contract identity differs from its receipt")
+
+    from src.runners.task41_p0_contract import TASK41_B0_V19_NATIVE_RANK1_SCOPE
+    from src.runners.task41_p0_v19_native_rank1 import SOURCE_BINDINGS
+
+    expected_inputs = [contract_file, campaign.path.resolve(strict=True), receipt_path, producer_contract_path]
+    expected_hashes = [contract_sha, campaign.sha256, receipt_sha, producer_sha]
+    for relative, digest in SOURCE_BINDINGS.values():
+        source_path = (root / relative).resolve(strict=True)
+        if _sha256_file(source_path) != digest:
+            raise ValueError("V19 pinned source report SHA differs from its registered binding")
+        expected_inputs.append(source_path)
+        expected_hashes.append(digest)
+    progress_path = output_root / "task41_p0_v19_native_rank1_progress.json"
+    if progress_path.is_file() and not progress_path.is_symlink():
+        progress_sha = options.get("--progress-sha256")
+        if (
+            not isinstance(progress_sha, str)
+            or re.fullmatch(r"[0-9a-f]{64}", progress_sha) is None
+            or _sha256_file(progress_path) != progress_sha
+        ):
+            raise ValueError("V19 checker progress checkpoint differs from its admitted hash")
+        expected_inputs.insert(4, progress_path.resolve(strict=True))
+        expected_hashes.insert(4, progress_sha)
+    elif "--progress-sha256" in options:
+        raise ValueError("V19 checker named a missing progress checkpoint")
+    unique_inputs: list[Path] = []
+    unique_hashes: list[str] = []
+    hashes_by_input: dict[Path, str] = {}
+    for input_path, expected_hash in zip(expected_inputs, expected_hashes, strict=True):
+        canonical_input = input_path.resolve(strict=True)
+        prior_hash = hashes_by_input.get(canonical_input)
+        if prior_hash is not None:
+            if prior_hash != expected_hash:
+                raise ValueError("V19 checker input path has conflicting registered hashes")
+            continue
+        hashes_by_input[canonical_input] = expected_hash
+        unique_inputs.append(canonical_input)
+        unique_hashes.append(expected_hash)
+    expected_inputs = unique_inputs
+    expected_hashes = unique_hashes
+    authorized_paths = authorization.get("input_paths")
+    authorized_hashes = authorization.get("input_sha256s")
+    if (
+        authorized_paths != [str(path) for path in expected_inputs]
+        or not isinstance(authorized_hashes, list)
+        or len(authorized_hashes) != len(expected_inputs)
+        or any(re.fullmatch(r"[0-9a-f]{64}", str(value)) is None for value in authorized_hashes)
+        or authorized_hashes != expected_hashes
+        or any(_sha256_file(path) != digest for path, digest in zip(expected_inputs, authorized_hashes, strict=True))
+    ):
+        raise ValueError("V19 checker command inputs differ from exact hash-bound receipt/source set")
+    return [str(path) for path in expected_inputs]
+
+
 def _validate_campaign_closeout_authorization(
     *,
     command: list[str],
@@ -767,6 +985,7 @@ def _validate_campaign_closeout_authorization(
         'task41_p0_b0_saved_y_g_comparison_checker',
         'task41_p0_b0_v17_selected_two_cell_checker',
         'task41_p0_b0_v18_saved_jz_checker',
+        'task41_p0_b0_v19_native_rank1_checker',
         'task41_p0_b0_v15_terminal_checker',
         'task41_p0_v11_selected_cell_saved_array_checker',
         'task41_p0_v13_saved_adjoint_diagnostic_independent_check',
@@ -841,6 +1060,18 @@ def _validate_campaign_closeout_authorization(
             input_paths = _validate_task41_p0_v18_saved_jz_checker_command(
                 argv=argv,
                 root=Path.cwd().resolve(),
+                expected_python=expected_python,
+                contract=contract,
+                contract_file=contract_file,
+                contract_sha=str(contract_sha),
+                campaign=campaign,
+                authorization=authorization,
+                environment=environment,
+            )
+        elif checker_kind == 'task41_p0_b0_v19_native_rank1_checker':
+            input_paths = _validate_task41_p0_v19_native_rank1_checker_command(
+                argv=argv,
+                root=root,
                 expected_python=expected_python,
                 contract=contract,
                 contract_file=contract_file,

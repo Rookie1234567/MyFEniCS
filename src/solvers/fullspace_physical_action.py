@@ -69,6 +69,52 @@ class FullspaceSplitVolumeAction:
         self._apply_count += 1
         return curl_result
 
+    def capture_selected_rank1_cell_terms(
+        self,
+        source_values: Any,
+        capture_callback: Any,
+        *,
+        selected_cells: tuple[int, ...],
+        column: int,
+        integral_type_cell: Any,
+        **capture_arguments: Any,
+    ) -> Mapping[str, Any]:
+        """Capture curl then mass cell terms using each owned action's input path.
+
+        This diagnostic does not call either component's global vector
+        assembly. Each component independently prepares its source and applies
+        the same finalized MPC input map as ``apply``; the caller keeps the two
+        outputs separate and combines them in the established curl-then-mass
+        order.
+        """
+        if self._destroyed:
+            raise RuntimeError("split volume action has been destroyed")
+        records: dict[str, Any] = {}
+        for component, action in (
+            ("curl", self._curl_action),
+            ("material_mass", self._mass_action),
+        ):
+            if action._local_kernel is not None:
+                raise ValueError(
+                    f"V19 native capture rejects {component} local-kernel override"
+                )
+            records[component] = action.capture_selected_rank1_cell_terms(
+                source_values,
+                capture_callback,
+                selected_cells=selected_cells,
+                component=component,
+                column=column,
+                integral_type_cell=integral_type_cell,
+                **capture_arguments,
+            )
+        return {
+            "schema": "task038.split_volume_selected_rank1_capture.v1",
+            "component_order": ["curl", "material_mass"],
+            "combine_semantics": "curl_result.axpy(1, mass_result)",
+            "global_vector_assembly_performed": False,
+            "components": records,
+        }
+
     @property
     def component_actions(self) -> Mapping[str, Any]:
         """Borrow the split actions for independent component audits."""

@@ -61,6 +61,14 @@ task41_v17_selected_two_cell=0
 task41_v17_selected_two_cell_count=0
 task41_v18_saved_jz=0
 task41_v18_saved_jz_count=0
+task41_v19_native_rank1=0
+task41_v19_native_rank1_count=0
+task41_v19_checker_only=0
+task41_v19_checker_only_count=0
+task41_v19_receipt_sha_count=0
+task41_v19_receipt_sha=""
+task41_v19_receipt_path_count=0
+task41_v19_receipt_path=""
 task41_v15_full_acceptance=0
 task41_v15_full_acceptance_count=0
 task41_saved_b0_v16_analysis_count=0
@@ -174,6 +182,34 @@ for ((index = 0; index < ${#args[@]}; index++)); do
             task41_v18_saved_jz=1
             ((task41_v18_saved_jz_count += 1))
             ;;
+        --task41-p0-b0-v19-native-rank1)
+            task41_v19_native_rank1=1
+            ((task41_v19_native_rank1_count += 1))
+            ;;
+        --task41-p0-b0-v19-checker-only)
+            task41_v19_checker_only=1
+            ((task41_v19_checker_only_count += 1))
+            ;;
+        --v19-receipt-sha256)
+            ((index + 1 < ${#args[@]})) || { echo "V19 receipt SHA flag needs one value" >&2; exit 2; }
+            task41_v19_receipt_sha="${args[index + 1]}"
+            ((task41_v19_receipt_sha_count += 1))
+            ((index += 1))
+            ;;
+        --v19-receipt-sha256=*)
+            task41_v19_receipt_sha="${arg#*=}"
+            ((task41_v19_receipt_sha_count += 1))
+            ;;
+        --v19-receipt-path)
+            ((index + 1 < ${#args[@]})) || { echo "V19 receipt path flag needs one value" >&2; exit 2; }
+            task41_v19_receipt_path="${args[index + 1]}"
+            ((task41_v19_receipt_path_count += 1))
+            ((index += 1))
+            ;;
+        --v19-receipt-path=*)
+            task41_v19_receipt_path="${arg#*=}"
+            ((task41_v19_receipt_path_count += 1))
+            ;;
     esac
 done
 v29_campaign=0
@@ -277,6 +313,34 @@ if (( task41_v18_saved_jz_count > 1 )); then
     echo "Task41 V18 saved-Jz selector may appear only once" >&2
     exit 2
 fi
+if (( task41_v19_native_rank1_count > 1 )); then
+    echo "Task41 V19 native-rank1 selector may appear only once" >&2
+    exit 2
+fi
+if (( task41_v19_checker_only_count > 1 || task41_v19_receipt_sha_count > 1 || task41_v19_receipt_path_count > 1 )); then
+    echo "Task41 V19 checker-only selector, receipt path, and SHA may appear only once" >&2
+    exit 2
+fi
+if (( task41_v19_checker_only != (task41_v19_receipt_sha_count == 1 && task41_v19_receipt_path_count == 1) )); then
+    echo "Task41 V19 checker-only mode requires externally supplied receipt path and SHA" >&2
+    exit 2
+fi
+if (( task41_v19_checker_only && !task41_v19_native_rank1 )); then
+    echo "Task41 V19 checker-only mode requires the V19 native-rank1 selector" >&2
+    exit 2
+fi
+if (( task41_v19_receipt_sha_count == 1 )) && [[ ! "$task41_v19_receipt_sha" =~ ^[0-9a-f]{64}$ ]]; then
+    echo "Task41 V19 receipt SHA must be 64 lowercase hexadecimal characters" >&2
+    exit 2
+fi
+if (( task41_v19_receipt_path_count == 1 )) && [[ "$task41_v19_receipt_path" != /* ]]; then
+    echo "Task41 V19 receipt path must be absolute" >&2
+    exit 2
+fi
+if (( task41_v19_native_rank1 && (task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit || task41_saved_b0_v9_star_screen || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis || task41_v15_full_acceptance || task41_v17_selected_two_cell || task41_v18_saved_jz) )); then
+    echo "Task41 V19 native-rank1 route cannot be combined with another Task41 execution route" >&2
+    exit 2
+fi
 if (( task41_v18_saved_jz && (task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit || task41_saved_b0_v9_star_screen || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis || task41_v15_full_acceptance || task41_v17_selected_two_cell) )); then
     echo "Task41 V18 saved-Jz candidate cannot be combined with another Task41 execution route" >&2
     exit 2
@@ -297,7 +361,7 @@ if (( task41_v15_full_acceptance && (task41_saved_output_continuation || task41_
     echo "Task41 V15 full acceptance cannot be combined with saved-output routes" >&2
     exit 2
 fi
-if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit || task41_saved_b0_v9_star_screen || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis || task41_v15_full_acceptance || task41_v17_selected_two_cell || task41_v18_saved_jz )) && (( task41_contract_count != 1 )); then
+if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_evidence_audit || task41_saved_b0_v9_star_screen || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis || task41_v15_full_acceptance || task41_v17_selected_two_cell || task41_v18_saved_jz || task41_v19_native_rank1 )) && (( task41_contract_count != 1 )); then
     echo "Task41 saved audit/output modes require exactly one Task41 P0 execution contract" >&2
     exit 2
 fi
@@ -311,7 +375,7 @@ if (( task41_contract_count != 0 )); then
         exit 2
     fi
     [[ "$task41_contract" == /* ]] || task41_contract="$repo_root/$task41_contract"
-    if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis || task41_v15_full_acceptance || task41_v17_selected_two_cell || task41_v18_saved_jz )); then
+    if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis || task41_v15_full_acceptance || task41_v17_selected_two_cell || task41_v18_saved_jz || task41_v19_native_rank1 )); then
         if ! task41_values_text="$(cd -- "$repo_root" && python3 -m src.runners.task41_p0_contract \
             --launcher-values --contract "$task41_contract" --saved-output-continuation)"; then
             exit 2
@@ -401,6 +465,7 @@ task41_saved_b0_v16_analysis=0
 task41_v15_full_acceptance=0
 task41_v17_selected_two_cell=0
 task41_v18_saved_jz=0
+task41_v19_native_rank1=0
 for arg in "${args[@]}"; do
     if [[ "$arg" == --task41-p0-saved-output-continuation ]]; then
         task41_saved_output_continuation=1
@@ -420,14 +485,16 @@ for arg in "${args[@]}"; do
         task41_v17_selected_two_cell=1
     elif [[ "$arg" == --task41-p0-b0-v18-saved-jz-candidate ]]; then
         task41_v18_saved_jz=1
+    elif [[ "$arg" == --task41-p0-b0-v19-native-rank1 ]]; then
+        task41_v19_native_rank1=1
     fi
 done
 if (( task41_v15_full_acceptance && (task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis) )); then
     echo "Task41 V15 full acceptance cannot be combined with saved-output routes" >&2
     exit 2
 fi
-unset TASK41_P0_V15_FULL_ACCEPTANCE TASK41_P0_V15_OUTPUT_DIRECTORY TASK41_P0_V17_SELECTED_TWO_CELL_REPLAY TASK41_P0_V18_SAVED_JZ_CANDIDATE
-if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis || task41_v15_full_acceptance || task41_v17_selected_two_cell || task41_v18_saved_jz )); then
+unset TASK41_P0_V15_FULL_ACCEPTANCE TASK41_P0_V15_OUTPUT_DIRECTORY TASK41_P0_V17_SELECTED_TWO_CELL_REPLAY TASK41_P0_V18_SAVED_JZ_CANDIDATE TASK41_P0_V19_NATIVE_RANK1 TASK41_P0_V19_OUTPUT_DIRECTORY TASK41_P0_V19_CHECKER_ONLY TASK41_P0_V19_RECEIPT_SHA256 TASK41_P0_V19_RECEIPT_PATH
+if (( task41_saved_output_continuation || task41_saved_output_checker_only || task41_saved_b0_v9_failed_terminal_audit || task41_saved_b0_y_g_comparison || task41_saved_b0_v14_candidate || task41_saved_b0_v16_analysis || task41_v15_full_acceptance || task41_v17_selected_two_cell || task41_v18_saved_jz || task41_v19_native_rank1 )); then
     mapfile -t values < <(python3 -m src.runners.task41_p0_contract \
         --launcher-values --contract "$task41_contract" --saved-output-continuation)
 else
@@ -455,6 +522,14 @@ if (( task41_v17_selected_two_cell )); then
 fi
 if (( task41_v18_saved_jz )); then
     export TASK41_P0_V18_SAVED_JZ_CANDIDATE=1
+fi
+if (( task41_v19_native_rank1 )); then
+    export TASK41_P0_V19_NATIVE_RANK1=1
+fi
+if (( task41_v19_checker_only )); then
+    export TASK41_P0_V19_CHECKER_ONLY=1
+    export TASK41_P0_V19_RECEIPT_SHA256="$task41_v19_receipt_sha"
+    export TASK41_P0_V19_RECEIPT_PATH="$task41_v19_receipt_path"
 fi
 exec "${values[1]}/bin/python" scripts/task40_v20_service_workflow.py run-service \
     --unit "$unit" --runtime-prefix "${values[1]}" \
