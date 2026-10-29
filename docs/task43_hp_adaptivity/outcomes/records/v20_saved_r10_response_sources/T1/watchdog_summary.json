@@ -1,0 +1,91 @@
+{
+  "workflow_deadline_seconds": 270.0,
+  "solve_deadline_seconds": null,
+  "time_limit_mode": "bounded",
+  "resource_stop_policy": "legacy",
+  "rss_hard_limit_bytes": 8589934592,
+  "rss_warning_bytes": 7301444403,
+  "minimum_available_bytes": null,
+  "startup_headroom_bytes": null,
+  "swap_policy": "legacy_stop",
+  "global_swap_delta_policy": "observe_only",
+  "native_capacity_profile_identity": "task43_hp_adaptivity_resource_v1",
+  "native_capacity_profile_facts_sha256": "c9ef6d173968fd1c78d86eb66b78dd9720bde901f866f58281a4668f83c4b2e6",
+  "native_capacity_resource_facts": {
+    "resource_stop_policy": "legacy",
+    "absolute_cap_bytes": 206158430208,
+    "planning_cap_bytes": 206158430208,
+    "reserve_min_bytes": 68719476736,
+    "reserve_fraction": 0.15,
+    "effective_reserve_policy": "max(64GiB, 15% of effective total memory)",
+    "launch_cap_policy": "min(192GiB, 80% of effective total, effective available minus effective reserve)",
+    "planning_cap_policy": "min(192GiB, 75% of effective total, launch cap)",
+    "memavailable_runtime_policy": "stop_below_effective_reserve",
+    "rss_runtime_policy": "stop_at_launch_cap",
+    "require_zero_swap": true,
+    "swap_policy": "stop_on_nonzero_task_tree_VmSwap",
+    "global_swap_delta_policy": "observe_only",
+    "stop_on_global_swap": false,
+    "pss_sampling_policy": "disabled_by_profile",
+    "concurrent_neighbor_authorized": false,
+    "research_scope": "Task43 only; no Task39/40/41 profile alias"
+  },
+  "launch_memory_envelope": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 1878312206336,
+    "effective_total_bytes": 2163100385280,
+    "effective_available_bytes": 1878312206336,
+    "reserve_bytes": 324465057792,
+    "launch_cap_bytes": 8589934592,
+    "planning_cap_bytes": 8589934592,
+    "cgroup_limits": [],
+    "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+  },
+  "pss_sampling_policy": "disabled_by_profile",
+  "pss_status": "DISABLED_BY_PROFILE",
+  "sampled_process_tree_pss_peak_bytes": null,
+  "cache_metadata_stable": true,
+  "classification": "WORKER_FAILED",
+  "leader_exit_code": 1,
+  "descendants_cleared": true,
+  "remaining_child_pids": [],
+  "observed_child_pids": [
+    3674773,
+    3674777
+  ],
+  "sampled_process_tree_rss_peak_bytes": 103112704,
+  "sampled_process_tree_swap_peak_bytes": 0,
+  "memory_scope": "dedicated subreaper parent plus all descendants; sampled simultaneous RSS",
+  "swap_scope": "same process tree sampled VmSwap; no global swap attribution",
+  "global_swap_activity": {
+    "scope": "WSL-global diagnostic, not dedicated job",
+    "baseline": {
+      "pswpin_pages": 4250735,
+      "pswpout_pages": 7183007
+    },
+    "end": {
+      "pswpin_pages": 4250735,
+      "pswpout_pages": 7183007
+    },
+    "delta": {
+      "pswpin_pages": 0,
+      "pswpout_pages": 0
+    }
+  },
+  "job_swap_activity": "zero_supported_by_zero_global_activity",
+  "launch_envelope": {
+    "mem_total_bytes": 2163100385280,
+    "mem_available_bytes": 1878312206336,
+    "effective_total_bytes": 2163100385280,
+    "effective_available_bytes": 1878312206336,
+    "reserve_bytes": 324465057792,
+    "launch_cap_bytes": 8589934592,
+    "planning_cap_bytes": 8589934592,
+    "cgroup_limits": [],
+    "resource_profile_identity": "task43_hp_adaptivity_resource_v1"
+  },
+  "samples": 11,
+  "elapsed_seconds": 6.693723961245269,
+  "cache_metadata_stamp": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "source_state": "development_worktree; not formal PDE provenance"
+}

@@ -4829,7 +4829,14 @@
       "src/test/test_task43_saved_r10_response.py::test_main_mid_write_failure_preserves_q8_and_marks_incomplete",
       "src/test/test_task43_saved_r10_response.py::test_terminal_refuses_incomplete_order"
     ],
-    "recovery_selectors": [],
+    "recovery_selectors": [
+      "src/test/test_task43_saved_r10_response.py::test_cells_bind_geometry_not_plan_row_and_freeze_degree_counts",
+      "src/test/test_task43_saved_r10_response.py::test_response_decomposition_identity_and_location_rule",
+      "src/test/test_task43_saved_r10_response.py::test_modal_j_replay_reproduces_612_channel_anchor",
+      "src/test/test_task43_saved_r10_response.py::test_main_microfixture_writes_q8_q10_and_terminal",
+      "src/test/test_task43_saved_r10_response.py::test_main_mid_write_failure_preserves_q8_and_marks_incomplete",
+      "src/test/test_task43_saved_r10_response.py::test_terminal_refuses_incomplete_order"
+    ],
     "d2_selectors": []
   },
   "input_lock": {

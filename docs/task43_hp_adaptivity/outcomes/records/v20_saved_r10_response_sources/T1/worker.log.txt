@@ -1,0 +1,102 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-7.4.4, pluggy-1.4.0 -- /home/fenics/Projects/Maxwell3D-Lab/task39extra_para_workstation_capacity/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/fenics/Projects/NN-Lab-V2
+collecting ... collected 12 items
+
+src/test/test_task43_saved_r10_response.py::test_contract_loader_and_static_bundle_bind_actual_sources PASSED [  8%]
+src/test/test_task43_saved_r10_response.py::test_contract_rejects_duplicate_source_hash PASSED [ 16%]
+src/test/test_task43_saved_r10_response.py::test_contract_rejects_slot_and_launch_conflicts PASSED [ 25%]
+src/test/test_task43_saved_r10_response.py::test_npz_loader_reads_only_allowlisted_members PASSED [ 33%]
+src/test/test_task43_saved_r10_response.py::test_half_open_owner_mapping_and_weight_checks PASSED [ 41%]
+src/test/test_task43_saved_r10_response.py::test_owner_rejects_duplicate_hole_and_wrong_weight PASSED [ 50%]
+src/test/test_task43_saved_r10_response.py::test_cells_bind_geometry_not_plan_row_and_freeze_degree_counts FAILED [ 58%]
+
+=================================== FAILURES ===================================
+________ test_cells_bind_geometry_not_plan_row_and_freeze_degree_counts ________
+
+    def test_cells_bind_geometry_not_plan_row_and_freeze_degree_counts():
+        cells = _cells()
+        r9 = {"cell_interior_degrees": [
+            {"lower": cell["lower"], "upper": cell["upper"], "degree": cell["r9_p"]}
+            for cell in cells
+        ]}
+        r10 = {"cell_interior_degrees": [
+            {"lower": cell["lower"], "upper": cell["upper"], "degree": cell["r10_p"]}
+            for cell in reversed(cells)
+        ]}
+        mapped, by_id, _ = v20._validate_plan_cells(cells, r9, r10, fixture=True)
+        assert [row["global_cell_id"] for row in mapped] == [0, 1]
+        assert by_id[0]["r10_p"] == 6 and by_id[1]["r10_p"] == 6
+        wrong = copy.deepcopy(r10)
+        wrong["cell_interior_degrees"][0]["lower"] = [0.25, 0.0, 0.0]
+        with pytest.raises(v20.EvidenceError, match="geometry box"):
+>           v20._validate_plan_cells(cells, r9, wrong, fixture=True)
+
+src/test/test_task43_saved_r10_response.py:409: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cells = [{'forest_root': 4, 'global_cell_id': 0, 'lower': [0.0, 0.0, -10.0], 'r10_p': 6, ...}, {'forest_root': 34, 'global_cell_id': 1, 'lower': [0.0, 0.0, 0.0], 'r10_p': 6, ...}]
+r9_plan = {'cell_interior_degrees': [{'degree': 5, 'lower': [0.0, 0.0, -10.0], 'upper': [1.0, 1.0, 0.0]}, {'degree': 6, 'lower': [0.0, 0.0, 0.0], 'upper': [1.0, 1.0, 130.0]}]}
+r10_plan = {'cell_interior_degrees': [{'degree': 6, 'lower': [0.25, 0.0, 0.0], 'upper': [1.0, 1.0, 130.0]}, {'degree': 6, 'lower': [0.0, 0.0, -10.0], 'upper': [1.0, 1.0, 0.0]}]}
+
+    def _validate_plan_cells(
+        cells: list[dict[str, Any]], r9_plan: dict[str, Any], r10_plan: dict[str, Any],
+        *, fixture: bool = False,
+    ) -> tuple[list[dict[str, Any]], dict[int, int], list[float]]:
+        """Bind degrees by geometry, never by plan row index."""
+        r9_map = _plan_geometry_map(r9_plan, "R9")
+        r10_map = _plan_geometry_map(r10_plan, "R10")
+        if len(r9_map) != len(cells) or len(r10_map) != len(cells):
+            raise EvidenceError("R9/R10 plan boxes do not cover the frozen cells exactly")
+        ids: set[int] = set()
+        roots: set[int] = set()
+        keys: set[tuple[float, ...]] = set()
+        for cell in cells:
+            gid, root = int(cell["global_cell_id"]), int(cell["forest_root"])
+            key = _geometry_key(cell["lower"], cell["upper"])
+            if gid in ids or root in roots or key in keys:
+                raise EvidenceError("cell IDs, roots, and boxes must each be unique")
+            ids.add(gid); roots.add(root); keys.add(key)
+            p9, p10 = r9_map.get(key), r10_map.get(key)
+            if p9 != int(cell["r9_p"]) or p10 != int(cell["r10_p"]):
+>               raise EvidenceError(f"global cell {gid} degree map disagrees with its geometric plan box")
+E               benchmarks.task43_hp_adaptivity.analyze_saved_r10_response.EvidenceError: global cell 1 degree map disagrees with its geometric plan box
+
+benchmarks/task43_hp_adaptivity/analyze_saved_r10_response.py:376: EvidenceError
+
+During handling of the above exception, another exception occurred:
+
+    def test_cells_bind_geometry_not_plan_row_and_freeze_degree_counts():
+        cells = _cells()
+        r9 = {"cell_interior_degrees": [
+            {"lower": cell["lower"], "upper": cell["upper"], "degree": cell["r9_p"]}
+            for cell in cells
+        ]}
+        r10 = {"cell_interior_degrees": [
+            {"lower": cell["lower"], "upper": cell["upper"], "degree": cell["r10_p"]}
+            for cell in reversed(cells)
+        ]}
+        mapped, by_id, _ = v20._validate_plan_cells(cells, r9, r10, fixture=True)
+        assert [row["global_cell_id"] for row in mapped] == [0, 1]
+        assert by_id[0]["r10_p"] == 6 and by_id[1]["r10_p"] == 6
+        wrong = copy.deepcopy(r10)
+        wrong["cell_interior_degrees"][0]["lower"] = [0.25, 0.0, 0.0]
+>       with pytest.raises(v20.EvidenceError, match="geometry box"):
+E       AssertionError: Regex pattern did not match.
+E        Regex: 'geometry box'
+E        Input: 'global cell 1 degree map disagrees with its geometric plan box'
+
+src/test/test_task43_saved_r10_response.py:408: AssertionError
+==================================== PASSES ====================================
+- generated xml file: /home/fenics/Projects/NN-Lab-V2/benchmarks/artifacts/task43/v20_saved_r10_response/support/targeted_attempt1/tests.xml -
+=========================== short test summary info ============================
+PASSED src/test/test_task43_saved_r10_response.py::test_contract_loader_and_static_bundle_bind_actual_sources
+PASSED src/test/test_task43_saved_r10_response.py::test_contract_rejects_duplicate_source_hash
+PASSED src/test/test_task43_saved_r10_response.py::test_contract_rejects_slot_and_launch_conflicts
+PASSED src/test/test_task43_saved_r10_response.py::test_npz_loader_reads_only_allowlisted_members
+PASSED src/test/test_task43_saved_r10_response.py::test_half_open_owner_mapping_and_weight_checks
+PASSED src/test/test_task43_saved_r10_response.py::test_owner_rejects_duplicate_hole_and_wrong_weight
+FAILED src/test/test_task43_saved_r10_response.py::test_cells_bind_geometry_not_plan_row_and_freeze_degree_counts
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+========================= 1 failed, 6 passed in 2.29s ==========================

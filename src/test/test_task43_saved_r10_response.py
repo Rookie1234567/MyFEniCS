@@ -405,7 +405,7 @@ def test_cells_bind_geometry_not_plan_row_and_freeze_degree_counts():
     assert by_id[0]["r10_p"] == 6 and by_id[1]["r10_p"] == 6
     wrong = copy.deepcopy(r10)
     wrong["cell_interior_degrees"][0]["lower"] = [0.25, 0.0, 0.0]
-    with pytest.raises(v20.EvidenceError, match="geometry box"):
+    with pytest.raises(v20.EvidenceError, match="geometric plan box"):
         v20._validate_plan_cells(cells, r9, wrong, fixture=True)
 
 

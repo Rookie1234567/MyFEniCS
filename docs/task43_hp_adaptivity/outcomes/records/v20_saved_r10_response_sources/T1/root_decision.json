@@ -1,0 +1,15 @@
+{
+  "classification": "ORDINARY_FIXTURE_EXPECTED_EXCEPTION_REGEX_MISMATCH",
+  "tests": {
+    "passed": 6,
+    "failed": 1,
+    "not_run": 5
+  },
+  "root_audit": "Full 267-line raw trace (including final exit1) read by root; all five sched_getaffinity calls CPU1, no setters/signals; exit1 classified as known pytest assertion. Watchdog/supervisor exit2 classified worker failed. Runtime identities stable, 11 resource rows task swap0/all affinities CPU1/limits respected, host worker/tracer/watchdog cleared. No unknown signal/resource/identity violation.",
+  "recovery": "Only failed node7 plus maxfail-interrupted not-yet-run nodes8-12 in T2; passed first6 not rerun. Checker unchanged.",
+  "whole_seconds": 8.491005773,
+  "rss_peak_bytes": 103112704,
+  "source_HEAD": "ffad22627b773f424b68251f70a3f6a1efbbc343",
+  "wall_root_read": "NOT_MEASURED",
+  "format_check": "git diff --cached --check flags original pytest traceback trailing spaces in raw tests.xml and worker.log.txt; raw evidence intentionally preserved byte-for-byte. Code/contract checks pass; not a dynamic failure."
+}
