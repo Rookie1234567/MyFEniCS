@@ -17,11 +17,11 @@ from src.runners.task41_p0_v19_native_rank1 import (
     _destroy_split_action_on_exit,
     _json_sha256,
     _native_action_identity,
+    _prepare_v19_saved_input_checkpoint,
     _receipt_term_bindings,
     _verify_existing_receipt_matches_fresh,
     _V19_RECEIPT_IDENTITY_FIELDS,
     _validate_fresh_cell_direction,
-    _validate_v19_saved_vector_layout,
     _v19_read_state,
     _write_term_archive,
     capture_selected_rank1_cell_terms,
@@ -316,43 +316,101 @@ def test_native_integral_inventory_change_fails_before_pack_or_kernel() -> None:
     assert not compiled.kernel_calls
 
 
-def test_saved_vector_loader_layout_closes_two_columns_and_trace_rows() -> None:
+def test_saved_vector_loader_layout_closes_npy_header_and_pre_mesh_checkpoint(
+    tmp_path: Any,
+) -> None:
     active_rows = np.asarray([10, 11, 12], dtype=np.int64)
-    bindings = {
-        str(column): {
-            "shape": [4], "dtype": np.dtype(np.complex128).str, "bytes": 64
+    bindings: dict[str, dict[str, Any]] = {}
+    columns: list[dict[str, Any]] = []
+    for column in (0, 1):
+        source_path = tmp_path / f"known_field_col{column}.npy"
+        np.save(
+            source_path,
+            np.arange(4, dtype=np.complex128) + column * 1j,
+            allow_pickle=False,
+        )
+        known_field = np.load(source_path, mmap_mode="r", allow_pickle=False)
+        assert isinstance(known_field, np.memmap)
+        bindings[str(column)] = {
+            "shape": list(known_field.shape),
+            "dtype": known_field.dtype.str,
+            "bytes": source_path.stat().st_size,
+            "payload_bytes": known_field.nbytes,
+            "npy_data_offset": known_field.offset,
         }
-        for column in (0, 1)
-    }
-    columns = [
-        {
+        assert source_path.stat().st_size == known_field.nbytes + known_field.offset
+        columns.append({
             "column": column,
             "active_original_rows": active_rows.copy(),
-            "known_field": np.arange(4, dtype=np.complex128) + column * 1j,
-        }
-        for column in (0, 1)
-    ]
-    result = _validate_v19_saved_vector_layout(
-        columns,
-        bindings,
+            "known_field": known_field,
+        })
+
+    base_identity = {
+        "run_id": "fixture-v19",
+        "fixed_window_sha256": "a" * 64,
+        "known_field_bindings": bindings,
+    }
+    current_binding = {
+        "contract_sha256": "b" * 64,
+        "consumer_source_sha": "c" * 40,
+        "fixed_window_sha256": "a" * 64,
+    }
+    progress_path = tmp_path / "task41_p0_v19_native_rank1_progress.json"
+    result, state = _prepare_v19_saved_input_checkpoint(
+        donor={"columns": columns},
+        known_bindings=bindings,
         trace_rows=3,
         storage_rows=4,
         selected_row=1,
         selected_original_row=11,
+        base_run_identity=base_identity,
+        current_binding=current_binding,
+        progress_path=progress_path,
     )
     assert np.array_equal(result, active_rows)
+    saved_state = json.loads(progress_path.read_text(encoding="utf-8"))
+    assert saved_state == state
+    assert saved_state["run_identity"] == base_identity
+    assert saved_state["consumer_execution_bindings"] == [current_binding]
 
-    broken = [dict(record) for record in columns]
-    broken[1]["active_original_rows"] = np.asarray([10, 99, 12], dtype=np.int64)
+    bad_map_path = tmp_path / "bad_map" / "progress.json"
+    broken_columns = [dict(record) for record in columns]
+    broken_columns[1]["active_original_rows"] = np.asarray([10, 99, 12], dtype=np.int64)
     with np.testing.assert_raises_regex(ValueError, "active/original row map differs"):
-        _validate_v19_saved_vector_layout(
-            broken,
-            bindings,
+        _prepare_v19_saved_input_checkpoint(
+            donor={"columns": broken_columns},
+            known_bindings=bindings,
             trace_rows=3,
             storage_rows=4,
             selected_row=1,
             selected_original_row=11,
+            base_run_identity=base_identity,
+            current_binding=current_binding,
+            progress_path=bad_map_path,
         )
+    assert not bad_map_path.exists()
+
+    for key, bad_value in (
+        ("bytes", bindings["0"]["bytes"] + 1),
+        ("shape", [5]),
+        ("dtype", np.dtype(np.complex64).str),
+    ):
+        bad_bindings = copy.deepcopy(bindings)
+        bad_bindings["0"][key] = bad_value
+        bad_path = tmp_path / f"bad_{key}.json"
+        with np.testing.assert_raises_regex(ValueError, "known field column 0 layout differs"):
+            _prepare_v19_saved_input_checkpoint(
+                donor={"columns": columns},
+                known_bindings=bad_bindings,
+                trace_rows=3,
+                storage_rows=4,
+                selected_row=1,
+                selected_original_row=11,
+                base_run_identity=base_identity,
+                current_binding=current_binding,
+                progress_path=bad_path,
+            )
+        assert not bad_path.exists()
 
 
 def test_saved_progress_with_terms_requires_frozen_native_identity(tmp_path: Any) -> None:

@@ -128,3 +128,7 @@ prepare 产出的真实 service 命令绑定 B0 DAT、当前 source 的执行合
 ## 同窗 worker 导入闭包修复
 
 服务 `myfenics-case-20261029T073009-3780685.service` 在导入未定义的 `TASK41_P0_B0_V16_V3_VECTOR_INDEX_SHA256` 时退出，无 FE/native 产品。修正为既有 `TASK41_P0_B0_V3_VECTOR_INDEX_SHA256`，真实 index SHA `332b9e5ed553916808cceccd92542b5086cbdbeaaa298d42d95d18916bb7ade3` 不变。imports-only 闭包检查同时发现 metadata helper 的错误模块路径，改为其真实定义模块 `src.solvers.hcurl_assembly_time_condensation`；无数学变化。worker 全部 from-import 与公开 enum 两项定向回归 **2 passed / 0.99 s**，不运行 worker/FE。旧失败回执保留，窗口不刷新。
+
+## 同窗 NPY 文件/载荷口径修复
+
+服务 `myfenics-case-20261029T073557-3782505.service` 在 FE 前 known-field layout 校验退出。真实两列 NPY 文件均为296,016,512 B，数组载荷296,016,384 B，mmap offset128 B；旧校验错误地要求文件大小等于数组载荷。原 donor loader 的文件SHA/size与header校验保持，新 layout 明确核验shape×itemsize、payload及offset+payload=file bytes，active/original映射不变。抽出的FE前checkpoint helper由真实worker调用，坏shape/dtype/file size/map在写checkpoint前拒绝。主控在本机资格化WSL activation下验证 **1 passed / 0.71 s**，未调用FE或native。执行者误用工作站独立prefix要求判断本机环境不可用的记录不作为真实ABI失败；主控实际preflight为complex128/int32且项目`.venv`。旧失败和成本保留，原窗口不刷新。

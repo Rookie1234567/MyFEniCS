@@ -435,13 +435,24 @@ def _validate_v19_saved_vector_layout(
         binding = known_bindings[str(column)]
         bound_shape = tuple(int(value) for value in binding.get("shape", ()))
         bound_dtype = np.dtype(binding.get("dtype"))
-        expected_bytes = int(binding.get("bytes", -1))
+        expected_file_bytes = int(binding.get("bytes", -1))
+        expected_payload_bytes = int(binding.get("payload_bytes", -1))
+        npy_data_offset = int(binding.get("npy_data_offset", -1))
+        # The upstream loader pins the full NPY file; payload bytes exclude its header.
+        shape_payload_bytes = (
+            int(np.prod(bound_shape, dtype=np.int64)) * bound_dtype.itemsize
+            if all(value >= 0 for value in bound_shape)
+            else -1
+        )
         if (
             values.shape != (int(storage_rows),)
             or values.dtype != np.dtype(np.complex128)
             or bound_shape != values.shape
             or bound_dtype != values.dtype
-            or expected_bytes != values.nbytes
+            or expected_payload_bytes != int(values.nbytes)
+            or expected_payload_bytes != shape_payload_bytes
+            or npy_data_offset <= 0
+            or expected_file_bytes != npy_data_offset + expected_payload_bytes
         ):
             raise ValueError(f"V19 original known field column {column} layout differs")
     if not np.array_equal(active_maps[0], active_maps[1]):
@@ -1213,6 +1224,38 @@ def _checkpoint_progress(path: Path, state: Mapping[str, Any]) -> None:
     _disk_gate(path.parent)
 
 
+def _prepare_v19_saved_input_checkpoint(
+    *,
+    donor: Mapping[str, Any],
+    known_bindings: Mapping[str, Mapping[str, Any]],
+    trace_rows: int,
+    storage_rows: int,
+    selected_row: int,
+    selected_original_row: int,
+    base_run_identity: Mapping[str, Any],
+    current_binding: Mapping[str, Any],
+    progress_path: Path,
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Close pinned saved vectors and checkpoint identity before constructing a mesh."""
+    columns = donor.get("columns")
+    if not isinstance(columns, (list, tuple)):
+        raise ValueError("V19 saved-vector loader did not return ordered source columns")
+    active_rows = _validate_v19_saved_vector_layout(
+        columns,
+        known_bindings,
+        trace_rows=trace_rows,
+        storage_rows=storage_rows,
+        selected_row=selected_row,
+        selected_original_row=selected_original_row,
+    )
+    state = _v19_read_state(progress_path, base_run_identity)
+    bindings = state["consumer_execution_bindings"]
+    if current_binding not in bindings:
+        bindings.append(dict(current_binding))
+    _checkpoint_progress(progress_path, state)
+    return active_rows, state
+
+
 def _validate_output_location(root: Path, output_directory: Path, window_sha256: str) -> Path:
     if output_directory.is_symlink():
         raise ValueError("V19 output directory cannot be a symlink")
@@ -1553,24 +1596,25 @@ def run_v19_native_rank1_worker(
         raise ValueError("V19 V3 donor resolved configuration differs from the frozen case")
     config_value = json.loads(resolved_config_path.read_text(encoding="utf-8"))
     cfg = simulation_config_3d_from_normalized(config_value)
-    known_bindings = {
-        str(column): {
-            "filename": TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS[column]["known_field"][0],
-            "sha256": TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS[column]["known_field"][1],
-            "bytes": TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS[column]["known_field"][2],
-            "dtype": TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS[column]["known_field"][3],
-            "shape": TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS[column]["known_field"][4],
+    known_bindings: dict[str, dict[str, Any]] = {}
+    for column in V19_COLUMNS:
+        filename, digest, file_bytes, dtype_name, shape = (
+            TASK41_P0_B0_V16_V3_ATTEMPT01_SOURCE_BINDINGS[column]["known_field"]
+        )
+        known_field = donor["columns"][column]["known_field"]
+        if not isinstance(known_field, np.memmap):
+            raise ValueError(f"V19 original known field column {column} is not mmap-backed")
+        dtype = np.dtype(dtype_name)
+        payload_bytes = int(np.prod(shape, dtype=np.int64)) * dtype.itemsize
+        known_bindings[str(column)] = {
+            "filename": filename,
+            "sha256": digest,
+            "bytes": file_bytes,
+            "dtype": dtype_name,
+            "shape": shape,
+            "payload_bytes": payload_bytes,
+            "npy_data_offset": int(known_field.offset),
         }
-        for column in V19_COLUMNS
-    }
-    active_rows = _validate_v19_saved_vector_layout(
-        donor["columns"],
-        known_bindings,
-        trace_rows=TASK41_P0_B0_V16_TRACE_ROWS,
-        storage_rows=TASK41_P0_B0_V16_STORAGE_ROWS,
-        selected_row=TASK41_P0_B0_V17_SELECTED_ROW,
-        selected_original_row=TASK41_P0_B0_V17_SELECTED_ORIGINAL_ROW,
-    )
 
     base_run_identity = {
         "task_id": TASK41_MODEL_ID,
@@ -1590,16 +1634,23 @@ def run_v19_native_rank1_worker(
     }
     receipt_path = output_root / f"task41_p0_v19_native_rank1_worker_{contract_digest}.json"
     progress_path = _v19_state_path(output_root)
-    state = _v19_read_state(progress_path, base_run_identity)
     current_binding = {
         "contract_path": str(raw_contract_path.resolve(strict=True)),
         "contract_sha256": contract_digest,
         "consumer_source_sha": consumer_source_sha,
         "fixed_window_sha256": fixed_window.sha256,
     }
-    if current_binding not in state["consumer_execution_bindings"]:
-        state["consumer_execution_bindings"].append(current_binding)
-    _checkpoint_progress(progress_path, state)
+    active_rows, state = _prepare_v19_saved_input_checkpoint(
+        donor=donor,
+        known_bindings=known_bindings,
+        trace_rows=TASK41_P0_B0_V16_TRACE_ROWS,
+        storage_rows=TASK41_P0_B0_V16_STORAGE_ROWS,
+        selected_row=TASK41_P0_B0_V17_SELECTED_ROW,
+        selected_original_row=TASK41_P0_B0_V17_SELECTED_ORIGINAL_ROW,
+        base_run_identity=base_run_identity,
+        current_binding=current_binding,
+        progress_path=progress_path,
+    )
     terms_directory = output_root / "native_rank1_terms"
     if terms_directory.is_symlink():
         raise ValueError("V19 term archive directory cannot be a symlink")
