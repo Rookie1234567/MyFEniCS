@@ -45,6 +45,10 @@ def _probe_document(tmp_path):
             "petsc_int_type": "<class 'numpy.int32'>",
             "mpi_library_version": "Open MPI test",
             "mpi_size": 1,
+            "task44_runtime_controls": {
+                "openmpi_pml": "ob1",
+                "hwloc_components": "-x86",
+            },
             "module_paths": {
                 "petsc4py": "/tmp/petsc4py/__init__.py",
                 "slepc4py": "/tmp/slepc4py/__init__.py",
@@ -102,6 +106,27 @@ def test_isolated_runtime_probe_rejects_mpi_or_abi_mismatch_even_with_updated_di
     )
 
     with pytest.raises(RuntimeError, match="native environment gate failed"):
+        _validate_runtime_probe(
+            document,
+            repo_root=tmp_path,
+            input_path=input_path,
+            expected_source=source,
+        )
+
+
+def test_isolated_runtime_probe_rejects_unqualified_task44_controls_even_with_updated_digest(
+    tmp_path,
+):
+    document, input_path, source = _probe_document(tmp_path)
+    document["environment"]["native_complex_identity"]["task44_runtime_controls"] = {
+        "openmpi_pml": None,
+        "hwloc_components": "-x86",
+    }
+    document["facts_sha256"] = _runtime_facts_digest(
+        document["source"], document["input"], document["environment"]
+    )
+
+    with pytest.raises(RuntimeError, match="runtime controls gate failed"):
         _validate_runtime_probe(
             document,
             repo_root=tmp_path,

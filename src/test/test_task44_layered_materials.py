@@ -252,6 +252,7 @@ def test_native_runtime_identity_does_not_require_task44_root_and_overrides_stal
     assert identity["qualified_activation"] == "MYFENICS_NATIVE_COMPLEX_ENV=1"
     assert identity["runtime_profile"] == "native_linux_complex"
     assert identity["native_complex_identity"]["task_root"] is None
+    assert identity["native_complex_identity"]["task44_runtime_controls"] is None
 
 
 def test_task44_service_root_binding_accepts_only_its_real_worktree(tmp_path):

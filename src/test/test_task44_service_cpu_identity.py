@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 import scripts.task44_service_startup as startup
+from scripts.task44_native_service import _require_task44_cpu
 
 
 def _cgroup(tmp_path: Path, pid: int) -> Path:
@@ -20,6 +23,13 @@ def _identity(pid: int, start_ticks: int) -> dict[str, object]:
         "start_ticks": start_ticks,
         "command_line": f"python worker-for-{pid}",
     }
+
+
+def test_task44_formal_affinity_is_qualified_for_cpu_zero_only():
+    _require_task44_cpu({0})
+
+    with pytest.raises(RuntimeError, match="requires exactly CPU0"):
+        _require_task44_cpu({8})
 
 
 def test_process_identity_records_parent_and_state(tmp_path):

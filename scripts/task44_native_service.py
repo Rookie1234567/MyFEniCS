@@ -21,6 +21,11 @@ INITIAL_CAP_BYTES = 128 * GIB
 JOB_BUFFER_BYTES = 8 * GIB
 BRANCH = "task44_sixlayer_surrogate_0p7nm"
 RUNTIME_PROBE_SCHEMA = "task44_isolated_runtime_facts_v1"
+TASK44_MPI_CPU = 0
+TASK44_RUNTIME_CONTROLS = {
+    "openmpi_pml": "ob1",
+    "hwloc_components": "-x86",
+}
 _THREAD_VARIABLES = (
     "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
     "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS", "BLIS_NUM_THREADS",
@@ -136,13 +141,21 @@ def _parse_cpu_list(value: str) -> set[int]:
     return result
 
 
+def _require_task44_cpu(cpu_affinity: set[int]) -> None:
+    if cpu_affinity != {TASK44_MPI_CPU}:
+        raise RuntimeError(
+            "this Task44 workstation qualification requires exactly CPU0 for its one-rank MPI run"
+        )
+
+
 def _pid_start_ticks(pid: int) -> int:
     stat = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
     return int(stat[stat.rfind(")") + 2 :].split()[19])
 
 
 def _write_service_identity(
-    unit: str, repo_root: Path, expected_cpus: set[int], cap_bytes: int
+    unit: str, repo_root: Path, expected_cpus: set[int], cap_bytes: int,
+    native_environment: Mapping[str, Any],
 ) -> dict[str, Any]:
     from benchmarks.task034_wsl_resources import current_cgroup_path
 
@@ -167,6 +180,17 @@ def _write_service_identity(
         or expected_cgroup.resolve(strict=True) != own_cgroup.resolve(strict=True)
     ):
         raise RuntimeError(f"Task44 service process identity does not match its unit: {facts}")
+    native = native_environment.get("native_complex_identity")
+    probe = native_environment.get("isolated_runtime_probe")
+    if (
+        not isinstance(native, dict)
+        or native.get("task44_runtime_controls") != TASK44_RUNTIME_CONTROLS
+        or not isinstance(probe, dict)
+        or probe.get("exit_code") != 0
+        or not isinstance(probe.get("facts_sha256"), str)
+        or not re.fullmatch(r"[0-9a-f]{64}", probe["facts_sha256"])
+    ):
+        raise RuntimeError("Task44 service identity is missing its qualified isolated ABI probe receipt")
     receipt = {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "service_unit": unit,
@@ -182,6 +206,12 @@ def _write_service_identity(
         "cpu_affinity": sorted(expected_cpus),
         "actual_process_cpu_affinity": sorted(own_cpus),
         "working_directory": str(repo_root),
+        "isolated_runtime_probe": {
+            "exit_code": probe["exit_code"],
+            "facts_sha256": probe["facts_sha256"],
+            "module_paths": native["module_paths"],
+            "runtime_controls": native["task44_runtime_controls"],
+        },
     }
     path = repo_root / "benchmarks/artifacts/task44_native_services" / unit / "service_identity.json"
     _atomic_write_json(path, receipt)
@@ -311,7 +341,7 @@ def _validate_runtime_probe(
     native = environment["native_complex_identity"]
     if not isinstance(native, dict) or set(native) != {
         "activation_marker", "task_root", "petsc_scalar_type", "petsc_int_type",
-        "mpi_library_version", "mpi_size", "module_paths",
+        "mpi_library_version", "mpi_size", "task44_runtime_controls", "module_paths",
     }:
         raise RuntimeError("isolated Task44 runtime probe native ABI facts are incomplete")
     module_paths = native["module_paths"]
@@ -333,14 +363,22 @@ def _validate_runtime_probe(
                for path in module_paths.values())
     ):
         raise RuntimeError("isolated Task44 runtime probe native environment gate failed")
+    if native["task44_runtime_controls"] != TASK44_RUNTIME_CONTROLS:
+        raise RuntimeError("isolated Task44 runtime probe runtime controls gate failed")
     expected_digest = _runtime_facts_digest(source, input_facts, environment)
     if document["facts_sha256"] != expected_digest:
         raise RuntimeError("isolated Task44 runtime probe facts digest does not match")
     return source, input_facts, environment
 
 
-def _runtime_probe(input_path: Path, repo_root: Path, expected_source_sha: str) -> dict[str, Any]:
+def _runtime_probe(
+    input_path: Path, repo_root: Path, expected_source_sha: str,
+    cpu_affinity: set[int],
+) -> dict[str, Any]:
     verify_task44_root(repo_root, os.environ)
+    _require_task44_cpu(cpu_affinity)
+    if set(os.sched_getaffinity(0)) != cpu_affinity:
+        raise RuntimeError("isolated Task44 runtime probe must inherit the exact CPU0 service affinity")
     source = _source_facts(repo_root)
     if source["source_sha"] != expected_source_sha:
         raise RuntimeError("Task44 source SHA changed before isolated runtime probe")
@@ -396,12 +434,17 @@ def _isolated_runtime_facts(
         document = json.loads(completed.stdout)
     except json.JSONDecodeError as exc:
         raise RuntimeError("isolated Task44 runtime probe did not return JSON") from exc
-    return _validate_runtime_probe(
+    source_facts, input_facts, environment = _validate_runtime_probe(
         document,
         repo_root=repo_root,
         input_path=resolved_input,
         expected_source=source,
     )
+    environment["isolated_runtime_probe"] = {
+        "exit_code": completed.returncode,
+        "facts_sha256": document["facts_sha256"],
+    }
+    return source_facts, input_facts, environment
 
 
 def _admission_facts(cap_bytes: int, max_concurrent: int) -> dict[str, Any]:
@@ -530,6 +573,9 @@ def preflight(
 ) -> dict[str, Any]:
     repo_root = Path(__file__).resolve().parents[1]
     verify_task44_root(repo_root, os.environ)
+    _require_task44_cpu(cpu_affinity)
+    if set(os.sched_getaffinity(0)) != cpu_affinity:
+        raise RuntimeError("Task44 preflight process must be pinned to exactly CPU0")
     from src.runners.task038_launcher import _environment_identity
 
     environment = _environment_identity()
@@ -538,8 +584,8 @@ def preflight(
     native = environment.get("native_complex_identity") or {}
     if "complex128" not in str(native.get("petsc_scalar_type")) or native.get("mpi_size") != 1:
         raise RuntimeError("Task44 requires complex128 PETSc and a one-rank native MPI identity")
-    if not cpu_affinity or not cpu_affinity.issubset(os.sched_getaffinity(0)):
-        raise RuntimeError("selected Task44 CPU affinity is empty or outside the current allowed CPU set")
+    if native.get("task44_runtime_controls") != TASK44_RUNTIME_CONTROLS:
+        raise RuntimeError("Task44 activation is missing the qualified hwloc/Open MPI runtime controls")
     source = _source_facts(repo_root)
     inputs = _input_facts(input_path, repo_root)
     neighbors = _numerical_processes()
@@ -567,11 +613,16 @@ def run_service(
 ) -> int:
     repo_root = Path(__file__).resolve().parents[1]
     verify_task44_root(repo_root, os.environ)
+    _require_task44_cpu(cpu_affinity)
+    if set(os.sched_getaffinity(0)) != cpu_affinity:
+        raise RuntimeError("Task44 service process is not pinned to exactly CPU0")
     source = _source_facts(repo_root)
     source, inputs, native_environment = _isolated_runtime_facts(
         input_path, repo_root, source, cpu_affinity
     )
-    identity = _write_service_identity(unit, repo_root, cpu_affinity, cap_bytes)
+    identity = _write_service_identity(
+        unit, repo_root, cpu_affinity, cap_bytes, native_environment
+    )
     guard = _exact_service_guard(unit, cap_bytes, max_concurrent, cpu_affinity)
     if guard["stop"]:
         raise RuntimeError(f"Task44 exact-service startup gate failed: {guard}")
@@ -673,6 +724,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.input,
                 Path(__file__).resolve().parents[1],
                 args.expected_source_sha,
+                cpu_affinity,
             )
             print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
             return 0

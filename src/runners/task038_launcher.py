@@ -176,6 +176,14 @@ def _environment_identity() -> dict[str, Any]:
             "petsc_int_type": str(PETSc.IntType),
             "mpi_library_version": MPI.Get_library_version().strip(),
             "mpi_size": int(MPI.COMM_WORLD.size),
+            "task44_runtime_controls": (
+                {
+                    "openmpi_pml": os.environ.get("OMPI_MCA_pml"),
+                    "hwloc_components": os.environ.get("HWLOC_COMPONENTS"),
+                }
+                if task_root
+                else None
+            ),
             "module_paths": {
                 "petsc4py": os.path.realpath(petsc4py_file),
                 "slepc4py": os.path.realpath(slepc4py_file),

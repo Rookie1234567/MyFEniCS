@@ -46,6 +46,11 @@ export MKL_NUM_THREADS=1
 export VECLIB_MAXIMUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 export BLIS_NUM_THREADS=1
+# Task44 is qualified for one MPI rank. Keep the Linux hwloc backend while
+# avoiding x86 discovery's temporary rebinding across host CPUs; use Open MPI's
+# OB1 point-to-point layer for this local MPI1 execution.
+export HWLOC_COMPONENTS=-x86
+export OMPI_MCA_pml=ob1
 unset _MYFENICS_WSL_QUALIFIED_ACTIVATION
 export MYFENICS_NATIVE_COMPLEX_ENV=1
 export MYFENICS_TASK44_ROOT="${_task44_root}"

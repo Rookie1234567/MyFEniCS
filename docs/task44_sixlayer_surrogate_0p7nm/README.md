@@ -31,6 +31,12 @@
 
 开始前的只读宿主快照：`MemTotal=2,163,100,385,280 B`、`MemAvailable=2,120,353,783,808 B`、宿主 swap 已用 `955,203,584 B`。这是 `free -b` 的宿主快照，不是任务 cgroup 余量或任务峰值；当前命令进程视图只显示本会话，未证明邻任务为空。正式准入必须重新采集宿主、邻任务和服务 cgroup 数据。Task44 worktree 通过 [`scripts/activate_task44_native.sh`](../../scripts/activate_task44_native.sh) 复用母仓已资格化 ABI venv，并将源码导入路径与 JIT 缓存隔离到本任务；轻量 ABI preflight 已通过：Python 位于母仓 `.venv`，PETSc 3.19.6 `complex128` / `int32`，SLEPc 3.19.2，OpenMPI 4.1.6，MPI size 1；petsc4py、slepc4py、DOLFINx、Basix、mpi4py 与 dolfinx_mpc 均可从同一原生 ABI 导入。该检查仅验证软件栈，不代表 PDE 资格。
 
+### 本工作站的 MPI 启动核资格
+
+启动排查确认了两个独立的临时绑核来源。Open MPI 4.1.6 默认使用的 hwloc x86 拓扑探测会逐个探查宿主 CPU，并在探测时短暂改变当前进程的 affinity；Task44 activation 因此只在本任务设置 `HWLOC_COMPONENTS=-x86`，保留 Linux 拓扑后端并跳过这段 x86 探测。其次，DOLFINx 导入会沿 ADIOS2/libfabric 依赖加载 PSM 库，其初始化构造函数会短暂请求 CPU0 再恢复原 affinity。`OMPI_MCA_pml=ob1` 固定本任务单 rank 的本地 Open MPI 通信路径，但不会卸载这条库依赖或消除 PSM 构造函数。
+
+完整 ABI 导入在 CPU0 affinity 下通过，PETSc 为 `complex128`、MPI size 为 1；观测到的 PSM affinity 系统调用请求均为 `[0]`。因此当前 Task44 服务和其 ABI preflight 都必须精确绑定 CPU0。该结果只资格化这台工作站上的 CPU0/MPI1 启动路径，不能外推到其他 CPU、MPI rank 数或主机。每个正式样本启动前须重新采集 CPU 忙碌率及邻任务 affinity/进程，确认 CPU0 当前空闲且没有邻任务声明使用它；若检查不通过，就保留未运行状态，不得抢占或强行启动。启动脚本把 preflight 进程和 systemd 服务都绑到经检查的 CPU0，服务身份及 isolated ABI receipt 会记录实际 affinity 和两个 runtime control 值。
+
 ## 冻结物理与数值合同
 
 | 项目 | 固定条件 |
@@ -58,4 +64,4 @@
 4. 每场正式 PDE 前冻结输入、源码 SHA、材料表、网格/DtN 精度对照、单样本初始 128 GiB cap、service/cgroup 与资源硬门；运行期间按真实进度和资源情况继续，不使用原 30 分钟到点强停。
 5. 完成代表点与精度资格后，根据实测单样本成本、已有独立样本上限和数值证据推进训练点、GP、开发验证与盲测；数据/GP 资格分别判定，不受原 12 小时窗口约束。
 
-当前阶段：材料 receipt、六层输入、Task44 启动器和针对性修复已在执行分支实现。凝聚 kernel 数量假设已撤回，相关测试观察保留为未资格记录；standard_full 的层吸收、A–D 网格检查、超时边界和 subreaper 停止/清理测试继续执行。定向测试和原生 systemd 服务 smoke 通过并提交后，再从实际 Ubuntu 主机读取新鲜的 CPU、邻任务、内存及 cgroup 状态，绑定单个经核验的 CPU 与 128 GiB / 零 swap 的专属服务，启动首个正式样本 A。smoke 只执行公共 runner 的 `--dry-run`，不组装或求解有限元系统。正式运行采用共享 subreaper watchdog 的 `observe_only` 时间策略：继续记录运行时间，但不因时钟停止 PDE；动态内存、祖先 cgroup、零 swap 和精确服务身份仍由硬门控制。
+当前阶段：材料 receipt、六层输入、Task44 启动器和针对性修复已在执行分支实现。凝聚 kernel 数量假设已撤回，相关测试观察保留为未资格记录；standard_full 的层吸收、A–D 网格检查、超时边界和 subreaper 停止/清理测试继续执行。定向测试和原生 systemd 服务 smoke 通过并提交后，每次正式运行前都从实际 Ubuntu 主机重新读取 CPU、邻任务、内存及 cgroup 状态；仅在 CPU0 仍空闲、无邻任务 affinity 冲突且动态资源门通过时，才启动绑定 CPU0、128 GiB / 零 swap 的专属服务。smoke 只执行公共 runner 的 `--dry-run`，不组装或求解有限元系统。正式运行采用共享 subreaper watchdog 的 `observe_only` 时间策略：继续记录运行时间，但不因时钟停止 PDE；动态内存、祖先 cgroup、零 swap 和精确服务身份仍由硬门控制。

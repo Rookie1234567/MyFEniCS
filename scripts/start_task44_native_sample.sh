@@ -39,7 +39,7 @@ if [[ -e "$artifact_dir" ]]; then
     exit 2
 fi
 mkdir -p "$artifact_dir"
-python "$repo_root/scripts/task44_native_service.py" \
+taskset -c "$cpu_set" python "$repo_root/scripts/task44_native_service.py" \
     --preflight --input "$input_path" --unit "$unit" \
     --cpu-affinity "$cpu_set" --max-concurrent "$max_concurrent" \
     --cap-bytes "$cap_bytes" | tee "$artifact_dir/preflight.json"
