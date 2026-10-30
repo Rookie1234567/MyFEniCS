@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -19,6 +20,11 @@ HOST_RESERVE_BYTES = 384 * GIB
 INITIAL_CAP_BYTES = 128 * GIB
 JOB_BUFFER_BYTES = 8 * GIB
 BRANCH = "task44_sixlayer_surrogate_0p7nm"
+RUNTIME_PROBE_SCHEMA = "task44_isolated_runtime_facts_v1"
+_THREAD_VARIABLES = (
+    "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+    "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS", "BLIS_NUM_THREADS",
+)
 
 
 
@@ -233,11 +239,7 @@ def _input_facts(path: Path, repo_root: Path) -> dict[str, Any]:
         or execution.get("timeout_seconds") != 0
     ):
         raise RuntimeError("input does not satisfy the six-layer, MPI1, no-timeout Task44 contract")
-    thread_variables = (
-        "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
-        "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS", "BLIS_NUM_THREADS",
-    )
-    threads = {name: os.environ.get(name) for name in thread_variables}
+    threads = {name: os.environ.get(name) for name in _THREAD_VARIABLES}
     if any(value != "1" for value in threads.values()):
         raise RuntimeError(f"Task44 requires every math thread count to be 1: {threads}")
     return {
@@ -250,6 +252,156 @@ def _input_facts(path: Path, repo_root: Path) -> dict[str, Any]:
         "timeout_seconds": execution["timeout_seconds"],
         "thread_controls": threads,
     }
+
+
+def _runtime_facts_digest(source: Mapping[str, Any], input_facts: Mapping[str, Any],
+                          environment: Mapping[str, Any]) -> str:
+    payload = json.dumps(
+        {"source": source, "input": input_facts, "environment": environment},
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _validate_runtime_probe(
+    document: Any,
+    *,
+    repo_root: Path,
+    input_path: Path,
+    expected_source: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    if not isinstance(document, dict) or set(document) != {
+        "schema", "facts_sha256", "source", "input", "environment",
+    }:
+        raise RuntimeError("isolated Task44 runtime probe returned an invalid document")
+    source = document["source"]
+    input_facts = document["input"]
+    environment = document["environment"]
+    if document["schema"] != RUNTIME_PROBE_SCHEMA:
+        raise RuntimeError("isolated Task44 runtime probe schema is unsupported")
+    if source != dict(expected_source):
+        raise RuntimeError("isolated Task44 runtime probe source identity changed")
+    if not isinstance(input_facts, dict) or set(input_facts) != {
+        "path", "sha256", "model_id", "run_id", "layer_count", "mpi_size",
+        "timeout_seconds", "thread_controls",
+    }:
+        raise RuntimeError("isolated Task44 runtime probe input facts are incomplete")
+    resolved_input = input_path.resolve(strict=True)
+    resolved_input.relative_to(repo_root.resolve(strict=True))
+    input_sha = hashlib.sha256(resolved_input.read_bytes()).hexdigest()
+    if (
+        input_facts["path"] != str(resolved_input)
+        or input_facts["sha256"] != input_sha
+        or input_facts["model_id"] != "task44_sixlayer_0p7nm"
+        or input_facts["layer_count"] != 6
+        or input_facts["mpi_size"] != 1
+        or input_facts["timeout_seconds"] != 0
+        or input_facts["thread_controls"] != dict.fromkeys(_THREAD_VARIABLES, "1")
+        or not isinstance(input_facts["run_id"], str)
+        or not input_facts["run_id"]
+    ):
+        raise RuntimeError("isolated Task44 runtime probe input binding failed")
+    if not isinstance(environment, dict) or set(environment) != {
+        "python_executable", "platform", "qualified_activation", "runtime_profile",
+        "native_complex_identity",
+    }:
+        raise RuntimeError("isolated Task44 runtime probe environment facts are incomplete")
+    native = environment["native_complex_identity"]
+    if not isinstance(native, dict) or set(native) != {
+        "activation_marker", "task_root", "petsc_scalar_type", "petsc_int_type",
+        "mpi_library_version", "mpi_size", "module_paths",
+    }:
+        raise RuntimeError("isolated Task44 runtime probe native ABI facts are incomplete")
+    module_paths = native["module_paths"]
+    if not isinstance(module_paths, dict) or set(module_paths) != {
+        "petsc4py", "slepc4py", "dolfinx", "basix",
+    }:
+        raise RuntimeError("isolated Task44 runtime probe module paths are incomplete")
+    if (
+        environment["python_executable"] != os.path.abspath(sys.executable)
+        or environment["qualified_activation"] != "MYFENICS_NATIVE_COMPLEX_ENV=1"
+        or environment["runtime_profile"] != "native_linux_complex"
+        or native["activation_marker"] != "MYFENICS_NATIVE_COMPLEX_ENV=1"
+        or native["task_root"] != str(repo_root.resolve(strict=True))
+        or "complex128" not in str(native["petsc_scalar_type"])
+        or not native["petsc_int_type"]
+        or not native["mpi_library_version"]
+        or native["mpi_size"] != 1
+        or any(not isinstance(path, str) or not Path(path).is_absolute()
+               for path in module_paths.values())
+    ):
+        raise RuntimeError("isolated Task44 runtime probe native environment gate failed")
+    expected_digest = _runtime_facts_digest(source, input_facts, environment)
+    if document["facts_sha256"] != expected_digest:
+        raise RuntimeError("isolated Task44 runtime probe facts digest does not match")
+    return source, input_facts, environment
+
+
+def _runtime_probe(input_path: Path, repo_root: Path, expected_source_sha: str) -> dict[str, Any]:
+    verify_task44_root(repo_root, os.environ)
+    source = _source_facts(repo_root)
+    if source["source_sha"] != expected_source_sha:
+        raise RuntimeError("Task44 source SHA changed before isolated runtime probe")
+    inputs = _input_facts(input_path, repo_root)
+    from src.runners.task038_launcher import _environment_identity
+
+    environment = _environment_identity()
+    document = {
+        "schema": RUNTIME_PROBE_SCHEMA,
+        "source": source,
+        "input": inputs,
+        "environment": environment,
+    }
+    document["facts_sha256"] = _runtime_facts_digest(source, inputs, environment)
+    return document
+
+
+def _direct_children(pid: int) -> list[int]:
+    try:
+        content = Path(f"/proc/{pid}/task/{pid}/children").read_text(encoding="ascii")
+    except OSError as exc:
+        raise RuntimeError(f"cannot verify Task44 service child ownership: {exc}") from exc
+    return [int(value) for value in content.split()]
+
+
+def _isolated_runtime_facts(
+    input_path: Path, repo_root: Path, source: Mapping[str, Any], cpu_affinity: set[int]
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    resolved_input = input_path.resolve(strict=True)
+    cpu_text = ",".join(str(cpu) for cpu in sorted(cpu_affinity))
+    command = [
+        sys.executable,
+        str(Path(__file__).resolve()),
+        "--input", str(resolved_input),
+        "--unit", "task44-runtime-probe.service",
+        "--cpu-affinity", cpu_text,
+        "--runtime-probe",
+        "--expected-source-sha", str(source["source_sha"]),
+    ]
+    try:
+        completed = subprocess.run(
+            command, cwd=repo_root, check=True, capture_output=True, text=True
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        detail = getattr(exc, "stderr", "")
+        raise RuntimeError(f"isolated Task44 runtime probe failed: {detail or exc}") from exc
+    lingering = _direct_children(os.getpid())
+    if lingering:
+        raise RuntimeError(
+            f"isolated Task44 runtime probe left child processes in the supervisor: {lingering}"
+        )
+    try:
+        document = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("isolated Task44 runtime probe did not return JSON") from exc
+    return _validate_runtime_probe(
+        document,
+        repo_root=repo_root,
+        input_path=resolved_input,
+        expected_source=source,
+    )
 
 
 def _admission_facts(cap_bytes: int, max_concurrent: int) -> dict[str, Any]:
@@ -429,7 +581,9 @@ def run_service(
     repo_root = Path(__file__).resolve().parents[1]
     verify_task44_root(repo_root, os.environ)
     source = _source_facts(repo_root)
-    inputs = _input_facts(input_path, repo_root)
+    source, inputs, native_environment = _isolated_runtime_facts(
+        input_path, repo_root, source, cpu_affinity
+    )
     identity = _write_service_identity(unit, repo_root, cpu_affinity, cap_bytes)
     guard = _exact_service_guard(unit, cap_bytes, max_concurrent, cpu_affinity)
     if guard["stop"]:
@@ -439,7 +593,6 @@ def run_service(
         supervise,
     )
     from src.runners.physical_v14_budget import V14_TIME_POLICY_OBSERVE_ONLY
-    from src.runners.task038_launcher import _environment_identity
 
     artifacts = repo_root / "benchmarks/artifacts/task44_native_services" / unit
     watchdog_directory = artifacts / "watchdog"
@@ -485,7 +638,7 @@ def run_service(
             "input_path": inputs["path"],
             "input_sha256": inputs["sha256"],
             "execution_mode": "public_runner_dry_run_smoke" if smoke else "public_runner_full3d",
-            "native_environment": _environment_identity(),
+            "native_environment": native_environment,
             "time_policy": "observe_only; no wall-time termination",
         },
     )
@@ -517,6 +670,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--cap-bytes", type=int, default=INITIAL_CAP_BYTES)
     parser.add_argument("--preflight", action="store_true")
     parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--runtime-probe", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--expected-source-sha", help=argparse.SUPPRESS)
     return parser
 
 
@@ -524,6 +679,16 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         cpu_affinity = _parse_cpu_list(args.cpu_affinity)
+        if args.runtime_probe:
+            if args.preflight or args.smoke or not args.expected_source_sha:
+                raise RuntimeError("isolated Task44 runtime probe arguments are invalid")
+            result = _runtime_probe(
+                args.input,
+                Path(__file__).resolve().parents[1],
+                args.expected_source_sha,
+            )
+            print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
+            return 0
         if args.preflight:
             result = preflight(
                 args.input, max_concurrent=args.max_concurrent, cap_bytes=args.cap_bytes,
