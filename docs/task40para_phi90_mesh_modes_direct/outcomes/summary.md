@@ -139,3 +139,11 @@ R14 不据此证明 continuum/full-DtN 收敛：新增模式没有 R13 逐模解
 ## 2026-10-23：D15-Y3 有限 R13 模态截断 K1–K4
 
 用户授权的四个独立 p6-direct 场（`m,n∈[-K,K]`，K=1..4；36/100/196/324 modes）均自然完成并各自通过 condensed/A6/energy 单场门。与原 D15-Y3 有限 612-mode R13 比较时，K1 的总量和逐通道门有超限，K4 的 R 通道略超限；K2/K3 的总量与全通道 R/T 门通过，但四场的边界复振幅和同坐标 E/H 样本均超过 `1e-4`，所以四个候选都没有同时通过完整三组比较门。完整记录见[模态截断 response](response_d15_y3_modal_truncations_20261023.md)、[机器 JSON](records/d15_y3_modal_truncation_comparison_20261022_v1.json)和[全612键CSV](records/d15_y3_modal_truncation_all_612_20261022_v1.csv)。此结论仅针对有限 R13 Y3 参照，不表示 full DtN；canonical sidewall 仍 `NOT_MEASURED`。
+
+## 2026-10-31：D07C G3 M8/N96 静态准备
+
+用户追加授权准备同一 G3 网格上的有限模态扩展：沿用已完成的 G3 M8/N64 输入、物理与轴，signed 窗口由 `m=-8…8,n=-64…1` 扩至 `m=-8…8,n=-96…1`。正式 production inventory 得到 6,664 keys（6,536 propagating、6,602 power-carrying）；N64 keys 是 N96 有序子集，新增 2,176 个 `n=-96…-65` keys。N96 仍只覆盖有限矩形；自动传播库存有 64,120 modes，其中 57,584 未被该窗口覆盖。q81 surface、q15/default volume、relative-only cutoff 与 p6 direct 路线固定。
+
+N64 参照 run `20261030T132407.592584Z` 自然结束且单场门通过，source `3a0676dd47c7729fa279d74b114aaf2125ec8072`；其峰值整树 RSS 为 `378,244,096,000 B`、task swap 0。该资源事实仅描述 N64，不推算 N96 容量。N96 的 resolved config SHA 为 `49368696418a6e6a52ced944bfb8006aebf869b6ecbb5fa5468cd9baa0d9940f`；轴、模式、父运行身份及门见[静态计划](records/d07c_g3_m8_n96_static_case_plan_v1.json)和[准备说明](response_d07c_g3_m8_n96_preparation_20261031.md)。
+
+生产 loader/runner/inventory/manifest-worker focused batch 为 `25 passed in 39.39 s`；相关 Ruff、compileall、diff-check 通过。此阶段未 fresh、未创建新 FE mesh/carrier/matrix/factor/solve，未启动 FE。当前等待主审审核静态执行包；Task41 若仍活动，按用户选择等待其自然清场，production guard 默认拒绝未知或重复 solver，不授权并行例外。比较门为 global `1e-5`、全 N96 signed 通道 R/T `1e-6`、复边界及同坐标 E/H `1e-4`（无 phase fit）；即使有限 N64/N96 对照通过，也不构成 full-DtN 或完整自动传播库存资格。`FULL_DTN_NOT_VERIFIED`、canonical sidewall `NOT_MEASURED` 保持。

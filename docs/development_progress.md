@@ -2961,3 +2961,7 @@ Y2→Y3同策略比较的总R差`8.7031e-10`、总T差`9.6121e-11`、A_volume差
 **方法与结果。** 读取既有三个正式 run 的小型 summary、mode 输出及同坐标保存样本；分析 JSON 对 Y5-1→Y6-1、Y5-1→Y6-2、Y6-1→Y6-2 全部覆盖 global R/T/A、全612通道逐模 R/T、边界复幅和同坐标复 E/H（不做相位拟合）。三对均通过既定 `1e-5 / 1e-6 / 1e-4` 三组比较门，最大 E/H 相对差 `1.2510e-6/9.2654e-6`。peak RSS 分别是 `21.436/26.919/24.496 GB`，按同一 process-tree simultaneous RSS；不跨场相加。详细身份与结果见[Task40 Y5/Y6 comparison](task40para_phi90_mesh_modes_direct/outcomes/records/d15_y5_1_y6_siblings_saved_output_comparison_20261021_v1.json)。
 
 **决策和边界。** 停止继续加密 y，暂以 Y5-1 作工程候选；z=6 格仍未被证明充分。已静态绑定一个只改变 z 的候选：从 Y5-1 实际 x/y 轴哈希出发，z 从 `[-10,0,30,60,90,120,130]` 改为 `[-10,0,20,40,60,80,100,120,130]`，总 `[6,14,8]` / 672 cells，静态 midpoint tags `516/84/72`。这是非嵌套 z 计划，不是 live QA、FE 或数值结果。精确 axes/hash/lineage 见[response](task40para_phi90_mesh_modes_direct/outcomes/response_d15_y5_z_refinement_static_20261021.md)与[静态 JSON](task40para_phi90_mesh_modes_direct/outcomes/records/d15_y5_1_z_refinement_static_plan_v1.json)。`FULL_DTN_NOT_VERIFIED`、canonical sidewall `NOT_MEASURED` 与 `AUTHORITY_LIMITED` 仍有效；fresh/运行须待独立包审。
+
+## 2026-10-31：Task40 D07C G3 M8/N96 静态准备
+
+新增显式 N96 signed-window profile、DAT、formal loader/runner/inventory/manifest-worker 测试及静态计划。production inventory 为 6,664 modes（6,536 propagating，6,602 power-carrying），N64 的 4,488 keys 是有序子集，新增 2,176 个 `n=-96…-65` keys；q81 surface、q15/default volume、relative-only cutoff、P6 direct 和原门保持。focused tests `25 passed in 39.39 s`，新测试 Ruff、相关 compileall 与 `git diff --check` 通过。当前仅做静态准备；尚未 fresh 或启动 N96 FE，待主审审核。

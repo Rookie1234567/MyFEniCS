@@ -165,7 +165,7 @@ TASK40_PHI90_D07C_PROFILE_BY_CASE = {
     case: f"task40para_phi90_0p7_D07C_{case}_p6_direct_v1"
     for case in (
         "B", "Y1", "Y2", "B_M8", "Y3_M8", "G2_M8", "G3_M8",
-        "G3_M8_N64",
+        "G3_M8_N64", "G3_M8_N96",
     )
 }
 TASK40_PHI90_D07C_PROFILES = frozenset(
@@ -1574,7 +1574,10 @@ def _task40_phi90_d07c_profile_facts(identity):
         raise ValueError(f"unsupported Task40 D07C profile: {identity}") from exc
     case_name = case_label.split("_M", maxsplit=1)[0]
     max_m = 8 if "_M8" in case_label else 32
-    n_min, n_max = (-64, 1) if case_label == "G3_M8_N64" else (-143, 1)
+    n_min, n_max = {
+        "G3_M8_N64": (-64, 1),
+        "G3_M8_N96": (-96, 1),
+    }.get(case_label, (-143, 1))
     n_abs_max = max(abs(n_min), abs(n_max))
     mode_facts = {
         (32, -143, 1): (
@@ -1594,6 +1597,12 @@ def _task40_phi90_d07c_profile_facts(identity):
             "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0",
             4360,
             4426,
+        ),
+        (8, -96, 1): (
+            6664,
+            "f044d5183d9f106bfff3e9d312e6aef9e7a205ab42b961655c4415a6afab949d",
+            6536,
+            6602,
         ),
     }
     mode_count, mode_sha, propagating_count, power_count = mode_facts[
@@ -1798,7 +1807,7 @@ def _task40_phi90_d07c_profile_facts(identity):
         "User-authorized three-case 0.7 nm D07C study using one fixed finite signed mode window; "
         "the excluded high-|m| propagating orders remain outside qualification."
     )
-    if max_m == 8 and case_label != "G3_M8_N64":
+    if max_m == 8 and case_label not in {"G3_M8_N64", "G3_M8_N96"}:
         base["campaign_authorization"]["source"] = (
             "User-authorized 2026-10-29 0.7nm mesh refinement with economical modal truncation: "
             "B_M8 is the same-grid cutoff anchor; Y3_M8 bisects B y only. "
@@ -1809,7 +1818,7 @@ def _task40_phi90_d07c_profile_facts(identity):
             "fad8f4be8404605d5e75cd6f19506890689e10f7d81367ef44aaadb9437e7873"
         )
         mode_selection["cutoff_validation_status"] = "REQUIRES_SAME_GRID_SOLVE_COMPARISON"
-    if case_name in {"G2", "G3"} and case_label != "G3_M8_N64":
+    if case_name in {"G2", "G3"} and case_label not in {"G3_M8_N64", "G3_M8_N96"}:
         options["directional_mesh_comparison"]["changed_axes"] = ["y", "z"]
         base["campaign_authorization"]["source"] = (
             "User-authorized 2026-10-29 G2 first and conditional G3, M8/q81/q15 fixed; "
@@ -1858,6 +1867,50 @@ def _task40_phi90_d07c_profile_facts(identity):
             "modal cutoff relative to G2_M8; compare with same-mesh G3_M8 to isolate cutoff only. "
             "The omitted finite-parent tail and all excluded high-|m| propagating orders remain "
             "outside qualification; FULL_DTN_NOT_VERIFIED."
+        )
+    elif case_label == "G3_M8_N96":
+        options["directional_mesh_comparison"].update(
+            display_name="D07C-G3-M8-N96",
+            changed_axes=["y", "z"],
+            changed_axes_vs_mesh_reference=[],
+            mode_window=window_label,
+            modal_window="M[-8,8],N[-96,1]",
+            same_mesh_modal_reference_case="G3_M8_N64",
+            same_mesh_modal_reference_bounds_mn=[-8, 8, -64, 1],
+            same_mesh_modal_reference_sha256=(
+                "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0"
+            ),
+            mesh_comparison_reference_case="G3_M8_N64",
+            mesh_comparison_reference_axis_hashes=deepcopy(
+                D07C_AXIS_PLANS["G3"]["axis_sha256_le_f64"]
+            ),
+            joint_mesh_and_cutoff_change=False,
+        )
+        mode_selection.update(
+            comparison_reference_signed_bounds_mn=[-8, 8, -64, 1],
+            comparison_reference_mode_sha256=(
+                "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0"
+            ),
+            same_mesh_modal_reference_case="G3_M8_N64",
+            same_mesh_modal_reference_mode_count=4488,
+            same_mesh_modal_reference_mode_sha256=(
+                "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0"
+            ),
+            added_mode_count_vs_n64=mode_count - 4488,
+            added_signed_n_band_mn=[-8, 8, -96, -65],
+            omitted_from_same_mesh_M8_Nminus143_to1_mode_count=9860 - mode_count,
+            omitted_from_same_mesh_M8_Nminus143_to1_propagating_count=9664 - propagating_count,
+            omitted_from_same_mesh_M8_Nminus143_to1_power_carrying_count=9764 - power_count,
+            cutoff_validation_status=(
+                "FINITE_M8_N96_EXTENSION_DIAGNOSTIC_NOT_CONVERGENCE_QUALIFICATION"
+            ),
+        )
+        base["campaign_authorization"]["source"] = (
+            "User-authorized same-G3-grid D07C modal extension from N64 to N96: only the "
+            "negative-n lower bound changes from -64 to -96; M[-8,8], G3 axes, q81/q15, "
+            "P6 direct route, sparse cutoff and all single-run gates stay fixed. The N64 "
+            "ordered signed keys are a subset of this N96 inventory. The finite rectangle "
+            "still excludes high-|m| propagating modes and is not full-DtN or convergence qualification."
         )
     base["operator_scope"] = operator_scope
     base["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"

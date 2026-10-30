@@ -1,0 +1,178 @@
+{
+  "artifact_scope": {
+    "case_specific_launch_package": "pending clean freeze",
+    "limitations": [
+      "FULL_DTN_NOT_VERIFIED",
+      "high-|m| propagating auto modes excluded",
+      "canonical sidewall NOT_MEASURED"
+    ],
+    "mesh_factor_carrier_or_solve_created_during_preparation": false,
+    "new_FEs_started": 0,
+    "source_solver_math_changed": false
+  },
+  "authority": "one new D07C case G3 M8/N96; no FE start before main technical review and a new fresh PASS",
+  "comparison_gates": {
+    "boundary_complex_and_same_coordinate_E_H_relative_L2_max": 0.0001,
+    "comparison_pair": "G3_M8_N64 vs G3_M8_N96; N64 keys subset N96; missing/added signed channels reported explicitly",
+    "global_R_T_A_balance_A_volume_absolute_max": 1e-05,
+    "per_mode_R_T_absolute_max_all_active_and_power_carrying": 1e-06,
+    "phase_fit": false
+  },
+  "files": {
+    "focused_test_source_sha256": "cdcbf6fb02283f8381530ea15541567d19df4aa563bad5cc6ec969673de276f9",
+    "input_file_sha256": "bb2d9300568d68b1959370a899d85bcad2a94ec0c6dcd46f31eed048327aaba6",
+    "input_path": "/home/fenics/Projects/Maxwell3D-Phi90/input/task40para_phi90_mesh_modes_direct/d07c_g3_m8_nminus96_to1_p6_direct.dat",
+    "input_sha256": "bb2d9300568d68b1959370a899d85bcad2a94ec0c6dcd46f31eed048327aaba6",
+    "native_capacity_profile_source_sha256": "28c036cbffd991cb80862f65b31f7fea7effc2a79bf2eea6b6944c3824880ac9"
+  },
+  "identity": {
+    "comparison_group": "task40para_phi90_mesh_modes_direct",
+    "method": "full3d_direct",
+    "model_id": "si_block_phi90_50x50_17x20_h120",
+    "output_parent_absent_at_plan": true,
+    "physical_model_sha256": "8614e125acda5e11c6c00ef4152e944cd3af09a14760e1d4338f4e1bf87b0631",
+    "profile_identity": "task40para_phi90_0p7_D07C_G3_M8_N96_p6_direct_v1",
+    "resolved_config_sha256": "49368696418a6e6a52ced944bfb8006aebf869b6ecbb5fa5468cd9baa0d9940f",
+    "resolved_output_parent_absolute": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N96_p6_direct_v1__full3d_direct__mpi1__Mna",
+    "run_id": "task40para_phi90_0p7_D07C_G3_M8_N96_p6_direct_v1"
+  },
+  "mesh": {
+    "axis_cell_counts": [
+      6,
+      100,
+      8
+    ],
+    "axis_sha256_le_f64": {
+      "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+      "y": "538a217db2639320447c691a4d5cf79437c84bea4ffea119df6ba2702a2c676c",
+      "z": "b603d8672fe0097d827859e5b4cab92ad139ba71427d4f75fa421bbd8bc25501"
+    },
+    "cross_mesh_fe_reuse": false,
+    "global_cell_count": 4800,
+    "lineage_parent_run_id": "task40para_phi90_0p7_D07C_G3_M8_N64_p6_direct_v1",
+    "live_axis_qa_source": "completed G3 N64 run mesh_evidence; N96 new run must independently repeat live mesh QA",
+    "material_tag_counts": {
+      "1": 3280,
+      "2": 1200,
+      "3": 320
+    },
+    "mesh_parent_case": "G3",
+    "parent_run_path": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N64_p6_direct_v1__full3d_direct__mpi1__Mna/20261030T132407.592584Z",
+    "same_live_g3_mesh_as_n64": true
+  },
+  "modal_inventory": {
+    "auto_inventory_mode_count": 64120,
+    "auto_propagating_omitted_count": 57584,
+    "bounds_mn": [
+      -8,
+      8,
+      -96,
+      1
+    ],
+    "finite_parent_status": "FULL_DTN_NOT_VERIFIED",
+    "mode_count": 6664,
+    "mode_sha256": "f044d5183d9f106bfff3e9d312e6aef9e7a205ab42b961655c4415a6afab949d",
+    "polarizations": [
+      "s",
+      "p"
+    ],
+    "ports": [
+      "top",
+      "bottom"
+    ],
+    "power_carrying_count_including_lossy_nonpropagating": 6602,
+    "propagating_count": 6536,
+    "q81_vs_q161_same_fixed_surface_rule": "q81 production, q161 reference only",
+    "same_mesh_M8_N143_finite_parent": {
+      "count": 9860,
+      "omitted_mode_count": 3196,
+      "omitted_power_carrying_count": 3162,
+      "omitted_propagating_count": 3128,
+      "sha256": "5524a412514e85d243665050d7bf0f272c7f1347da338b03e2fbda22d257b057"
+    },
+    "selection_policy": "explicit_signed_rectangle_v1",
+    "volume_quadrature": {
+      "authority": "live_FFCx_Basix_p6_volume_form_degree_metadata",
+      "degree": 15,
+      "rule": "default"
+    }
+  },
+  "parent_run": {
+    "active_A6_relative": 3.655244736924708e-09,
+    "condensed_relative": 7.019688508589285e-12,
+    "descendants_cleared": true,
+    "direct_summary_sha256": "cd2ea69d1f69020d348dde3ba9843c9e4fecccdbcbb881ed0cc10b26a671f70c",
+    "elapsed_seconds": 20069.34301966289,
+    "input_sha256": "70d60efef816b44831e8a22f63c4d587748221a295ad20ea68686472e58b7ef5",
+    "manifest_sha256": "c6b85dbc87c0c7ec2aeba6a1eed8b374cfb31b9ac54f67c1bb86c65e0421f7ed",
+    "physical_model_sha256": "8614e125acda5e11c6c00ef4152e944cd3af09a14760e1d4338f4e1bf87b0631",
+    "remaining_child_pids": [],
+    "resolved_config_sha256": "f44208b0825729fc13b2113fe18d1a054305e0e753aa1e35621e706e113474f4",
+    "resource_classification": "COMPLETED",
+    "result_classification": "worker_exit0",
+    "run_status": "finished",
+    "run_summary_sha256": "5b77b2c741d993b3c5bf0af02b05ced4b9f94e47ab81c85b5d0d052404aa626d",
+    "single_field_gate_passed": true,
+    "source_sha": "3a0676dd47c7729fa279d74b114aaf2125ec8072",
+    "task_swap_peak_bytes": 0,
+    "tree_rss_peak_bytes": 378244096000
+  },
+  "resource_and_execution": {
+    "CPU_parent": 9,
+    "CPU_worker": 24,
+    "MPI_size": 1,
+    "NUMA_worker": "interleave 0-1",
+    "PSS_USS_sampling": "disabled",
+    "Restart": "no",
+    "automatic_retry": false,
+    "concurrent_neighbor_authorized": false,
+    "direct_FE_exec": false,
+    "fixed_RSS_cap_bytes": null,
+    "fresh_admission": "production locked host-floor and active/unknown solver scan; wait for Task41 natural clear if present",
+    "math_threads": 1,
+    "minimum_available_bytes": 68719476736,
+    "resource_stop_policy": "host_available_floor_v1",
+    "swap": "observe_only",
+    "systemd_only": true
+  },
+  "same_mesh_N64_extension": {
+    "added_keys_all_power_carrying": true,
+    "added_keys_all_propagating": true,
+    "added_signed_band_mn": [
+      -8,
+      8,
+      -96,
+      -65
+    ],
+    "cutoff_accuracy_status": "not_run",
+    "new_added_mode_count": 2176,
+    "ordered_signed_key_subset": true,
+    "reference_bounds_mn": [
+      -8,
+      8,
+      -64,
+      1
+    ],
+    "reference_case": "G3_M8_N64",
+    "reference_input_sha256": "70d60efef816b44831e8a22f63c4d587748221a295ad20ea68686472e58b7ef5",
+    "reference_mode_count": 4488,
+    "reference_mode_sha256": "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0",
+    "reference_physical_model_sha256": "8614e125acda5e11c6c00ef4152e944cd3af09a14760e1d4338f4e1bf87b0631",
+    "reference_resolved_config_sha256": "f44208b0825729fc13b2113fe18d1a054305e0e753aa1e35621e706e113474f4",
+    "reference_source_sha": "3a0676dd47c7729fa279d74b114aaf2125ec8072"
+  },
+  "schema": "task40.d07c.g3_m8_n96_static_case_plan.v1",
+  "single_run_gates": {
+    "active_rectangle_A6_relative_max": 1e-06,
+    "condensed_relative_max": 1e-09,
+    "energy_balance_and_volume_abs_max": 1e-05,
+    "same_factor_correction_solves_max": 2,
+    "same_factor_symbolic_numeric": "1/1"
+  },
+  "source_binding": {
+    "new_clean_source_commit": "to_be_bound_in_external_review_package_after_commit",
+    "parent_clean_source_sha": "3a0676dd47c7729fa279d74b114aaf2125ec8072",
+    "worktree_clean_at_freeze": false
+  },
+  "status": "PREPARED_FOR_MAIN_REVIEW_NOT_RUN"
+}

@@ -48,3 +48,7 @@ K1–K4（`m,n∈[-K,K]`）四个独立完整场已运行；与原有限 R13/612
 ### 2026-10-24 D5C y-only continuation
 
 在原 12 个 D5C 案例完成后，用户追加 Y6/Y7，并仅在三项指定比较未全部通过时追加 Y8。三者都直接以 D5C-B 为网格父；Y5 仅作比较参照。轴、hash、静态标签和条件顺序见[追加计划](outcomes/records/d5c_y6_y7_y8_static_axis_plan_20261024_v1.json)与[执行记录](outcomes/response_d5c_y6_y7_y8_20261024.md)。这一续行不改历史 12 场的输入、结果或原计划。
+
+## 2026-10-31 D07C G3 M8/N96 静态准备
+
+在已完成 G3 M8/N64 同一网格上，用户授权准备有限窗口 `m=-8…8,n=-96…1` 的 N96 扩展；生产枚举为 6,664 modes（6,536 propagating、6,602 power-carrying），新增 2,176 个 `n=-96…-65` keys。surface q81、volume q15/default 与 relative-only p6 direct 路线不变。定向验证为 25 passed；本阶段未 fresh、未启动 FE。静态计划与限制见[outcomes summary](outcomes/summary.md)和[静态计划](outcomes/records/d07c_g3_m8_n96_static_case_plan_v1.json)。执行须主审审核后独立 fresh；若 Task41 仍运行，按用户选择等待自然清场，且不享受并行例外。有限窗口不是 full DtN，canonical sidewall 仍为 `NOT_MEASURED`。
