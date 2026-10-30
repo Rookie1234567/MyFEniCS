@@ -1,0 +1,81 @@
+{
+  "schema": "task44-A-v2-single-sample-result.v1",
+  "status": "SINGLE_SAMPLE_NUMERICAL_RESOURCE_PASS_PENDING_GENERATOR_QUALIFICATION",
+  "sample": "A",
+  "producer_sample_id": "qualification_A_v2",
+  "thicknesses_nm": [
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5
+  ],
+  "wavelength_nm": 0.7,
+  "p": 6,
+  "cells": 144,
+  "full_FE_dofs": 99894,
+  "independent_trace_rows": 29808,
+  "modes": 836,
+  "augmented_rows": 30644,
+  "outputs": {
+    "A_balance": 0.01615105727720101,
+    "A_volume": 0.016151056388443802,
+    "R00_p": 1.6455579109699502e-22,
+    "R00_s": 0.10376600614550635,
+    "R00_total": 0.10376600614550635,
+    "R_total": 0.10376673823980287,
+    "T_total": 0.8800822044829961
+  },
+  "full_original_FE_aux_relative_residual": 2.2418297912515152e-07,
+  "energy_defect": -8.887571789628623e-10,
+  "supervisor_wall_seconds": 1428.1576347050013,
+  "sampled_simultaneous_tree_peak_bytes": 6597210112,
+  "resource_samples": 5679,
+  "cleanup_verified": true,
+  "zero_swap_independently_verified": true,
+  "raw_classes": 14,
+  "raw_native_evaluations": 14,
+  "raw_cache_hits": 0,
+  "raw_kernel_seconds": 1059.5834646700005,
+  "oriented_schur_classes": 21,
+  "cost_scope": "23.80 minute full cold run including JIT, raw kernels, checkpoints, factor/solve, original RR, absorption, outputs, and final identity gates. Earlier failed A cost is separate, not erased.",
+  "executed_local_commit": "1d5fdc819519bcf10bfd14e915732d1f2d1e119c",
+  "public_scientific_source_commit": "61b49fd4d54f62d24b603d48e4445c32c4b1072c",
+  "execution_working_source_sha256": "1f373f8f4f84f8a94a9fc3edbcd6837473d7e0582a422debf7537998c7d9c0a8",
+  "generator_recipe_sha256": "ab4981aed9490b56ee6002c59ac3d6c3874f9a9029b0acde3f4ffa06674b8c22",
+  "exact_FE_source_closure_sha256": "455bae75b11acf26013bc9194dfdd385decd984bb59701a2fc6d292af308d8f2",
+  "evidence": [
+    {
+      "label": "run_summary",
+      "bytes": 3968,
+      "sha256": "7638939d44101e742b33f3843ca40aac8c37baf2ee477168dda66b624750d7eb"
+    },
+    {
+      "label": "supervisor_summary",
+      "bytes": 2774,
+      "sha256": "b773aed7c34cdede3936665e8e2687386ef3235faedde7b979e28d215e3c20b2"
+    },
+    {
+      "label": "independent_review",
+      "bytes": 3513,
+      "sha256": "c146db4cae95e9eb32c58d1f573cd0b7b699bca275e5d6de36d979a86226ac95"
+    },
+    {
+      "label": "full_original_residual",
+      "bytes": 270580,
+      "sha256": "5d7b8e67b24d5287973919ad16436faabd97e75ffde09277f22a0dd2fc4ba528"
+    },
+    {
+      "label": "explicit_volume_absorption",
+      "bytes": 5028,
+      "sha256": "8615b7fbd8d345cb781f8c9950daa490f9e4e125538ed2892f4ca89458a3fcb7"
+    }
+  ],
+  "limitations": [
+    "No representative refinement/DtN/top-plane comparisons yet.",
+    "No generator qualification, training labels, surrogate accuracy or general mesh convergence claim.",
+    "Application sampled resource monitoring is not a cgroup quota.",
+    "Old A_v1 admission failure retained with its full cost."
+  ]
+}

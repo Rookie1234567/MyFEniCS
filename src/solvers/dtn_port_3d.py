@@ -4747,8 +4747,8 @@ def _solve_stage4_dtn_port_total_field_impl(
         from .full_augmented_residual import original_augmented_residual
         full_rows=int(V.dofmap.index_map.size_global*V.dofmap.index_map_bs)
         vector_budget=16*(15*full_rows+4*n_aux)
-        admit("original_full_augmented_residual",256*2**20+vector_budget,
-              estimate_basis={"native_rank1_JIT_reserve_bytes":256*2**20,
+        admit("original_full_augmented_residual",2560*2**20+vector_budget,
+              estimate_basis={"native_rank1_JIT_reserve_bytes":2560*2**20,
                 "complex128_vector_slots":15,"full_FE_rows":full_rows,"auxiliary_slots":4,
                 "vectors_include":"3 PETSc action/rhs/incident, x, 2 surface, C/ell/D/products, residual/fullrhs and one-member readback",
                 "factor_still_live_and_counted":True,"no_full_global_matrix":True})
