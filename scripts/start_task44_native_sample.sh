@@ -70,7 +70,11 @@ systemd-run --user --no-block --expand-environment=no \
 for _ in {1..30}; do
     state="$(systemctl --user show --value --property=ActiveState "$unit" 2>/dev/null || true)"
     case "$state" in
-        active) break ;;
+        active)
+            if [[ -f "$artifact_dir/service_identity.json" ]]; then
+                break
+            fi
+            ;;
         failed|inactive)
             if [[ -f "$artifact_dir/service_identity.json" && -f "$artifact_dir/service_summary.json" ]]; then
                 python - "$artifact_dir/service_identity.json" "$artifact_dir/service_summary.json" "$unit" "$cap_bytes" "$cpu_set" <<'PY'
@@ -103,6 +107,10 @@ print(json.dumps({"startup_identity": identity, "completed_summary": summary}, s
 PY
                 exit 0
             fi
+            systemctl --user show "$unit" --no-pager \
+                -p ActiveState -p SubState -p MainPID -p InvocationID -p ControlGroup \
+                -p MemoryMax -p MemorySwapMax -p CPUAffinity >&2 || true
+            journalctl --user -u "$unit" --no-pager -n 40 >&2 || true
             cat "$artifact_dir/service.log" >&2 2>/dev/null || true
             echo "Task44 service entered state $state before saving its startup identity" >&2
             exit 1
@@ -110,9 +118,16 @@ PY
     esac
     sleep 1
 done
-if [[ "$state" != active ]]; then
+if [[ "$state" != active || ! -f "$artifact_dir/service_identity.json" ]]; then
+    systemctl --user show "$unit" --no-pager \
+        -p ActiveState -p SubState -p MainPID -p InvocationID -p ControlGroup \
+        -p MemoryMax -p MemorySwapMax -p CPUAffinity >&2 || true
+    journalctl --user -u "$unit" --no-pager -n 40 >&2 || true
     cat "$artifact_dir/service.log" >&2 2>/dev/null || true
-    echo "Task44 service did not become active" >&2
+    if [[ "$state" == active ]]; then
+        systemctl --user stop "$unit" || true
+    fi
+    echo "Task44 service did not become active and save its startup identity" >&2
     exit 1
 fi
 
