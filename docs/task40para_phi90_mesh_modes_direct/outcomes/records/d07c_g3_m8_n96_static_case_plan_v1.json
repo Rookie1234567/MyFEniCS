@@ -32,7 +32,7 @@
     "output_parent_absent_at_plan": true,
     "physical_model_sha256": "8614e125acda5e11c6c00ef4152e944cd3af09a14760e1d4338f4e1bf87b0631",
     "profile_identity": "task40para_phi90_0p7_D07C_G3_M8_N96_p6_direct_v1",
-    "resolved_config_sha256": "49368696418a6e6a52ced944bfb8006aebf869b6ecbb5fa5468cd9baa0d9940f",
+    "resolved_config_sha256": "bc34850af2f6e5c82edcaf34a52dc80183494b751699820285414571efc64026",
     "resolved_output_parent_absolute": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N96_p6_direct_v1__full3d_direct__mpi1__Mna",
     "run_id": "task40para_phi90_0p7_D07C_G3_M8_N96_p6_direct_v1"
   },
@@ -170,6 +170,7 @@
     "same_factor_symbolic_numeric": "1/1"
   },
   "source_binding": {
+    "metadata_correction_note": "Final formal resolved hash bc34850af2f6e5c82edcaf34a52dc80183494b751699820285414571efc64026 supersedes pre-correction 49368696418a6e6a52ced944bfb8006aebf869b6ecbb5fa5468cd9baa0d9940f; the only source metadata change was same-grid changed_axes=[] for N96.",
     "new_clean_source_commit": "to_be_bound_in_external_review_package_after_commit",
     "parent_clean_source_sha": "3a0676dd47c7729fa279d74b114aaf2125ec8072",
     "worktree_clean_at_freeze": false
