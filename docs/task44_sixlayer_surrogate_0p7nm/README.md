@@ -35,7 +35,7 @@
 
 启动排查确认了两个独立的临时绑核来源。Open MPI 4.1.6 默认使用的 hwloc x86 拓扑探测会逐个探查宿主 CPU，并在探测时短暂改变当前进程的 affinity；Task44 activation 因此只在本任务设置 `HWLOC_COMPONENTS=-x86`，保留 Linux 拓扑后端并跳过这段 x86 探测。其次，DOLFINx 导入会沿 ADIOS2/libfabric 依赖加载 PSM 库，其初始化构造函数会短暂请求 CPU0 再恢复原 affinity。`OMPI_MCA_pml=ob1` 固定本任务单 rank 的本地 Open MPI 通信路径，但不会卸载这条库依赖或消除 PSM 构造函数。
 
-完整 ABI 导入在 CPU0 affinity 下通过，PETSc 为 `complex128`、MPI size 为 1；观测到的 PSM affinity 系统调用请求均为 `[0]`。因此当前 Task44 服务和其 ABI preflight 都必须精确绑定 CPU0。该结果只资格化这台工作站上的 CPU0/MPI1 启动路径，不能外推到其他 CPU、MPI rank 数或主机。每个正式样本启动前须重新采集 CPU 忙碌率及邻任务 affinity/进程，确认 CPU0 当前空闲且没有邻任务声明使用它；若检查不通过，就保留未运行状态，不得抢占或强行启动。启动脚本把 preflight 进程和 systemd 服务都绑到经检查的 CPU0，服务身份及 isolated ABI receipt 会记录实际 affinity 和两个 runtime control 值。
+完整 ABI 导入在 CPU0 affinity 下通过，PETSc 为 `complex128`、MPI size 为 1；观测到的 PSM affinity 系统调用请求均为 `[0]`。因此当前 Task44 服务和其 ABI preflight 都必须精确绑定 CPU0。该结果只资格化这台工作站上的 CPU0/MPI1 启动路径，不能外推到其他 CPU、MPI rank 数或主机。每个正式样本启动前须重新采集 CPU 忙碌率及邻任务 affinity/进程；依据 2026-10-31 用户授权，唯一允许共享的邻居是身份字段全部匹配的 Metrology 监督进程 PID `3893658`，其存在时须标记 `performance_not_isolated=true`。其他数值进程的 CPU0 窄 affinity claim 或主机资源门失败仍会阻止启动。启动脚本把 preflight 进程和 systemd 服务都绑到经检查的 CPU0，服务身份及 isolated ABI receipt 会记录实际 affinity 和两个 runtime control 值。
 
 ## 冻结物理与数值合同
 
