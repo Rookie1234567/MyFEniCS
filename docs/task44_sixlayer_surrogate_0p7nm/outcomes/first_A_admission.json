@@ -1,0 +1,90 @@
+{
+  "schema": "task44-first-A-controlled-admission-result.v1",
+  "sample": "A",
+  "thicknesses_nm": [
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5
+  ],
+  "executed_local_commit": "a022a542beb8342a61fe765d8ca275d5e912e37b",
+  "public_scientific_source_mapping": "c7a77365b7d48849788571055401c369073c64c3",
+  "public_mapping_scope": "63 byte-exact files; two material-test receipt presentation redactions, not full Git tree equality",
+  "status": "RESOURCE_ADMISSION_REJECTED_BEFORE_NUMERIC_NOT_A_TRAINING_LABEL",
+  "supervisor_status": "CHILD_FAILED",
+  "stop_reason": null,
+  "cleanup_verified": true,
+  "child_exit_code": 1,
+  "total_seconds": 1242.5665967129999,
+  "sampled_tree_peak_bytes": 3168022528,
+  "resource_samples": 4941,
+  "original_error": "RuntimeError('TASK44_STAGE_RESOURCE_ADMISSION_FAILED:mumps_numeric')",
+  "matrix": {
+    "scope": "independent trace+DtN auxiliary Schur system",
+    "raw_fe_dofs": 99894,
+    "trace_rows": 29808,
+    "aux_rows": 836,
+    "rows": 30644,
+    "stored_nnz": 25977356,
+    "allocated_nnz": 32093684
+  },
+  "symbolic_INFOG": {
+    "1": 0,
+    "2": 0,
+    "3": 112666760,
+    "4": 352528,
+    "16": 4388,
+    "17": 4388,
+    "26": 1234,
+    "27": 1234
+  },
+  "controls": {
+    "14": 100,
+    "24": 1,
+    "35": 0,
+    "22": 0
+  },
+  "numeric_factorizations": 0,
+  "original_policy": {
+    "future_bytes": 9044435456,
+    "live_bytes": 1819619328,
+    "independent_margin_bytes": 536870912,
+    "effective_cap_bytes": 7803170816
+  },
+  "R_T_R00_Av": null,
+  "full_original_residual": null,
+  "public_notes": [
+    "The old two-times estimate was conservative policy, not measured numeric RSS or a proof of infeasibility.",
+    "INFOG16 is the in-core estimate including ICNTL14; INFOG26 is OOC diagnostic only when ICNTL22=0.",
+    "The old progress global_F_materialized flag was a generic anticipated-path label; explicit symbolic API and numeric admission prove zero numeric factorizations.",
+    "Original complete execution records and failure remain retained; no raw tensor or binary A/b checkpoint was produced in this first run."
+  ],
+  "original_evidence_hashes": {
+    "supervisor_summary": {
+      "bytes": 2771,
+      "sha256": "f23e01a7de87a3d748ec99cd300ff11c63e6cddbd14863ee227b7c9beef85e09"
+    },
+    "child_result": {
+      "bytes": 613,
+      "sha256": "58902cf524de52747dc90c6bfc274a03cf13628e3f12d3bbe7af3a32dcb49bbe"
+    },
+    "symbolic_preflight": {
+      "bytes": 4911,
+      "sha256": "d06d5b130a2f193a3ed30e719d838b48175373bbf4d9762357438fa739f072bc"
+    },
+    "independent_review": {
+      "bytes": 2595,
+      "sha256": "701b7cd4cd69e480b1b94bf3d79568cd4bd92095a17601c397fc021890aa4bca"
+    },
+    "memory_semantics_review": {
+      "bytes": 1875,
+      "sha256": "97fab7b2029f739fbddefc66e3bbfb94424493c1392bf0bab2423780a5b5bcff"
+    }
+  },
+  "manual_sources": [
+    "https://mumps-solver.org/doc/userguide_5.8.2.pdf",
+    "https://raw.githubusercontent.com/petsc/petsc/v3.25.6/src/mat/impls/aij/mpi/mumps/impl/imumps.c"
+  ]
+}

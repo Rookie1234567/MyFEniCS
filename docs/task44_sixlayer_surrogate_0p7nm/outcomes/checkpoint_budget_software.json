@@ -1,0 +1,77 @@
+{
+  "schema": "task44-checkpoint-budget-software-summary.v1",
+  "status": "SOFTWARE_CONTROLS_PASS_NOT_P6_OR_PDE",
+  "prefix_v1": {
+    "status": "FAILED_RETAINED",
+    "error": "TypeError: float() argument must be a string or a real number, not complex (mu_r=1+0j)",
+    "elapsed_seconds": 5.022915810999621,
+    "peak_rss_bytes": 314679296,
+    "cleanup_verified": true
+  },
+  "prefix_v2": {
+    "status": "PASS",
+    "elapsed_seconds": 5.023582125999383,
+    "peak_rss_bytes": 315805696,
+    "cleanup_verified": true,
+    "cold_warm_same_kernel_exact": true,
+    "cold_compute_calls": 1,
+    "binary_every_row_bitwise_equal_to_live_matrix": true,
+    "binary_canonical_row_sha256": "fa929af5faf098d04eb29fde221144ac4c5cbff67012e2865819c6ce5977bb6f",
+    "full_p6_or_PDE_qualification": false
+  },
+  "software_controls": {
+    "synthetic_checkpoint_tests": 19,
+    "budget_and_mu_tests": 8,
+    "budget_and_mu_elapsed_seconds": 0.2580110330000025,
+    "passed": true
+  },
+  "evidence": [
+    {
+      "file": "prefix_v1_result",
+      "bytes": 308,
+      "sha256": "3240eb9055bfe45b4db0782d6f2d66811ac5ece5226c9b30daa48bdda787cb90"
+    },
+    {
+      "file": "prefix_v2_result",
+      "bytes": 5652,
+      "sha256": "d074975d6469f1dca8f914ef4cb52a4fa2f142ba15c0f9887b409865b887f222"
+    },
+    {
+      "file": "prefix_v2_independent_review",
+      "bytes": 1441,
+      "sha256": "a06ae7dae80a7885ee3b8421579a0196eb476f9ff231c9dab60aa642acae651a"
+    },
+    {
+      "file": "checkpoint_software_receipt",
+      "bytes": 1064,
+      "sha256": "ac0304f01d1fd888b1ec6289c27e6fd4853506ff413d6f4c46d9d2f19537e853"
+    },
+    {
+      "file": "budget_software_receipt",
+      "bytes": 2199,
+      "sha256": "1571ce8a77c5471850cfab3b63da77310cadc96cf64111dc8ec5481bf21e4d5a"
+    }
+  ],
+  "source_records": [
+    {
+      "file": "src/solvers/bounded_mumps.py",
+      "bytes": 11424,
+      "sha256": "f41823e7a208814113856d3e5f7e8c31a0884b1fa7fa6e840a42a0d4642fe8cb"
+    },
+    {
+      "file": "src/solvers/volume_tensor_checkpoint.py",
+      "bytes": 6181,
+      "sha256": "7ce02f4f64a2b0c1898f96819ffd39d92055a1d026231a3cd8d9155aa48374d6"
+    },
+    {
+      "file": "src/test/test_task44_mumps_budget.py",
+      "bytes": 2920,
+      "sha256": "371ff5ded241235ab595927d2baddf97c275310fee3b3352eddf4fc338c22276"
+    }
+  ],
+  "limitations": [
+    "No p6 accuracy or six-layer physics conclusion from this p1 single-cell prefix.",
+    "Old failed prefix and formal A admission remain failures; not retrospectively upgraded.",
+    "Exact cached volume tensors do not bypass full original UFL and raw C/D/J residual qualification."
+  ]
+}

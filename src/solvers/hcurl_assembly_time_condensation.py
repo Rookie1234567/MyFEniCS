@@ -1035,6 +1035,8 @@ def _global_raw_tensor_cache(
     ],
     *,
     raw_tensor_evaluator: Callable[..., np.ndarray] | None = None,
+    raw_tensor_checkpoint=None,
+    progress_callback=None,
 ) -> tuple[dict[tuple[Any, ...], np.ndarray], dict[str, Any], float]:
     """Evaluate each raw tensor class once globally, then broadcast it.
 
@@ -1142,6 +1144,9 @@ def _global_raw_tensor_cache(
     local_kernel_seconds = 0.0
     local_broadcast_seconds = 0.0
     local_evaluations = 0
+    native_evaluations = 0
+    checkpoint_hits = 0
+    checkpoint_compute_seconds = 0.0
     logical_broadcast_bytes = 0
     local_keys = set(local_class_coordinates)
     locally_evaluated: dict[tuple[Any, ...], np.ndarray] = {}
@@ -1156,14 +1161,22 @@ def _global_raw_tensor_cache(
             compiled_form, kernels, dimension = policy_forms[policy]
             kernel_started = perf_counter()
             if raw_tensor_evaluator is None:
-                locally_evaluated[key] = _tabulate_raw_tensor_class(
-                    compiled_form,
-                    kernels,
-                    global_coordinates[key],
-                    tag=int(key[1]),
-                    dimension=int(dimension),
-                )
+                def compute_raw():
+                    return _tabulate_raw_tensor_class(compiled_form,kernels,global_coordinates[key],
+                                                     tag=int(key[1]),dimension=int(dimension))
+                if raw_tensor_checkpoint is None:
+                    locally_evaluated[key] = compute_raw()
+                    native_evaluations += 1
+                else:
+                    if comm.size != 1:raise RuntimeError("persistent raw checkpoint is MPI1-only")
+                    locally_evaluated[key], receipt = raw_tensor_checkpoint(compiled_form,kernels,
+                        global_coordinates[key],int(key[1]),int(dimension),compute_raw)
+                    checkpoint_hits += int(receipt["cache_hit"])
+                    native_evaluations += int(not receipt["cache_hit"])
+                    checkpoint_compute_seconds += float(receipt["compute_seconds"])
             else:
+                if raw_tensor_checkpoint is not None:raise ValueError("checkpoint cannot substitute a separate raw evaluator")
+                native_evaluations += 1
                 locally_evaluated[key] = raw_tensor_evaluator(
                     compiled_form,
                     kernels,
@@ -1173,6 +1186,11 @@ def _global_raw_tensor_cache(
                 )
             local_kernel_seconds += perf_counter() - kernel_started
             local_evaluations += 1
+            if progress_callback is not None:
+                progress_callback({"stage":"raw_class_available","class_key":repr(key),
+                                   "elapsed_seconds":perf_counter()-kernel_started,
+                                   "classes_available":local_evaluations,"native_evaluations":native_evaluations,
+                                   "checkpoint_hits":checkpoint_hits})
     except Exception as error:
         local_kernel_error = f"{type(error).__name__}: {error}"
     owner_sync_started = perf_counter()
@@ -1259,6 +1277,10 @@ def _global_raw_tensor_cache(
         cache,
         {
             "raw_tensor_class_count_sum": evaluation_count,
+            "raw_tensor_native_evaluations":int(comm.allreduce(native_evaluations,op=MPI.SUM)),
+            "raw_tensor_checkpoint_hits":int(comm.allreduce(checkpoint_hits,op=MPI.SUM)),
+            "raw_tensor_checkpoint_native_compute_seconds":float(comm.allreduce(checkpoint_compute_seconds,op=MPI.MAX)),
+            "raw_tensor_kernel_seconds_scope":"raw availability elapsed includes checkpoint IO when enabled",
             "raw_tensor_class_use_count_sum": use_count,
             "raw_tensor_class_count_global_unique": unique_count,
             "raw_tensor_global_owner_policy": (
@@ -1406,6 +1428,8 @@ def build_unconstrained_assembly_time_condensation(
     preserve_exact_geometry: bool = False,
     allocation_gate: Callable[[str, Mapping[str, Any]], None] | None = None,
     raw_tensor_evaluator: Callable[..., np.ndarray] | None = None,
+    raw_tensor_checkpoint=None,
+    progress_callback=None,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
 
@@ -1719,6 +1743,8 @@ def build_unconstrained_assembly_time_condensation(
             local_class_coordinates,
             policy_forms,
             raw_tensor_evaluator=raw_tensor_evaluator,
+            raw_tensor_checkpoint=raw_tensor_checkpoint,
+            progress_callback=progress_callback,
         )
     except Exception:
         if condensed is not None:
@@ -1800,7 +1826,11 @@ def build_unconstrained_assembly_time_condensation(
             )
             trace_from_interior_rhs = -adjoint_trace_solution.conj().T
             schur = A_tt + A_ti @ interior_from_trace
-            local_schur_seconds += perf_counter() - schur_started
+            class_schur_seconds = perf_counter() - schur_started
+            local_schur_seconds += class_schur_seconds
+            if progress_callback is not None:
+                progress_callback({"stage":"oriented_schur_class_complete","class_key":repr(class_key),
+                                   "elapsed_seconds":class_schur_seconds,"local_LU_residual_max":local_lu_residual_max})
             schur_cache[class_key] = schur
             recovery_cache[class_key] = interior_from_trace
             lu_cache[class_key] = interior_lu

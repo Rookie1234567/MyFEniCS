@@ -1,3 +1,11 @@
+# Task44 六层 .7 nm：首A资源准入负结果（2026-10-30）
+
+六参数Si/SiGe/Si/SiGe/Si/SiO2柱，144hex/p6；首A完成30,644行trace+DtN凝聚系统装配及MUMPS符号分析，在numeric前被原保守预测门拒绝。总1242.566597秒、整树采样峰值3,168,022,528字节、零swap/clean；0数值因子，没有R/T/Av或合格训练标签。不是内存实测9GB，也不是代理不可行结论。新预算按同版MUMPS语义分开内部workspace与PETSc/进程余量；精确局部张量/稀疏检查点用于避免无谓重算，正式复算未过前不宣成功。用户48小时研究继续，盲标签未消费。
+
+[Task44统一结果](task44_sixlayer_surrogate_0p7nm/outcomes/summary.md)、[首A证据](task44_sixlayer_surrogate_0p7nm/outcomes/first_A_admission.json)、[预算与检查点](task44_sixlayer_surrogate_0p7nm/memory_and_checkpoint_policy.md)。
+
+---
+
 # dot Task40extra V15：Ny6/K3 Y点完整恢复通过
 
 Y把周期y方向扩到六层、三个局部相位空间和六q因子，保留p4/120 global cells/12960内部与manual532。source9511930c的fresh worker及saved-only checker同源，85252 passing entries，最终独立metadata linkage152/0；完整原三维方程、恢复与8组532输出通过。

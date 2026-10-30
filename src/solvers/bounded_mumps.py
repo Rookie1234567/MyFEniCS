@@ -127,13 +127,48 @@ class PublicMumpsFactor:
             self.close_error=exc;FAILED_OWNERS.append(self);raise
 
 
-def symbolic_memory_preflight(matrix, options, *, admit, directory):
-    """Temporary symbolic only, same numerical controls as the later KSP.
+def incore_memory_budget(info, nnz, observation, *, available_floor_bytes):
+    """MUMPS 5.8.2 in-core policy; INFOG16 already includes ICNTL14.
 
-    Estimates are not RSS bounds: reserve two times the larger INFOG memory
-    estimate plus 256 MiB and an independent caller margin. Numeric re-analysis
-    is explicitly counted and is not a reused factor.
+    ICNTL23 caps MUMPS workspace only, NOT process RSS. PETSc conversion is
+    conservatively charged 24 bytes per stored entry (two indices plus a value
+    copy even when complex-double SeqAIJ aliases values), plus 256 MiB outside
+    MUMPS. The independent 512 MiB stage margin is never lent to the factor.
     """
+    if type(nnz) is not int or nnz < 1 or type(available_floor_bytes) is not int or available_floor_bytes < 2**30:
+        raise ValueError("positive exact nnz and >=1GiB available floor required")
+    need=info["16"]
+    values=[need,observation["effective_cap_bytes"],observation["live_tree_and_supervisor_bytes"],
+            observation["system"]["available"],observation["margin_bytes"]]
+    if any(type(v) is not int or v < 0 for v in values) or need < 1 or values[-1] < 512*2**20:
+        raise ValueError("finite exact integer live memory/INFOG16 observations required")
+    external=24*nnz+256*2**20
+    available=min(min(values[1],10_000_000_000)-values[2], values[3]-available_floor_bytes)
+    observation_slack=16*2**20
+    workspace_budget=available-values[4]-external-observation_slack
+    cap_mb=workspace_budget//1_000_000
+    return {"policy":"mumps582-incore-live-workspace-cap-v2",
+            "required_INFOG16_MB":need,"INFOG26_OOC_diagnostic_only":info["26"],
+            "matrix_stored_nnz":nnz,"petsc_conversion_upper_bytes":24*nnz,
+            "outside_mumps_reserve_bytes":256*2**20,"external_future_bytes":external,
+            "independent_margin_bytes":values[4],"available_floor_bytes":available_floor_bytes,
+            "uncommitted_observation_slack_bytes":observation_slack,
+            "live_observation":observation,"workspace_budget_bytes":workspace_budget,
+            "numeric_ICNTL23_MB":cap_mb,"future_numeric_bytes":max(0,cap_mb)*1_000_000+external,
+            "passed":cap_mb>=need,"estimate_not_upper_bound":True,
+            "MUMPS_cap_not_process_RSS_cap":True,
+            "reference":"MUMPS 5.8.2 user guide section 5.11; PETSc v3.25.6 MatConvertToTriples_seqaij_seqaij"}
+
+
+def symbolic_memory_preflight(matrix, options, *, admit, directory):
+    """Same in-core controls as the later KSP, before any numeric factor.
+
+    INFOG16 includes the selected ICNTL14. ICNTL23 is selected from observed
+    live headroom after releasing this temporary symbolic factor, with separate
+    PETSc conversion reserve and the unchanged stage/supervisor safety gates.
+    Ordinary KSP repeats symbolic; no factor reuse or changed ordering claimed.
+    """
+    from ..common.strict_json import atomic_json
     api,identity=load_public_shim(directory)
     controls={14:100,24:1,35:0,22:0}
     for key,value in options.items():
@@ -144,16 +179,11 @@ def symbolic_memory_preflight(matrix, options, *, admit, directory):
     try:
         factor=PublicMumpsFactor(matrix,api,controls=controls)
         info=factor.symbolic()
-        if info["1"]<0:raise RuntimeError("MUMPS symbolic INFOG failure")
-        estimate_mb=max(info["16"],info["26"])
-        if estimate_mb<=0:raise RuntimeError("missing positive MUMPS symbolic memory estimate")
-        future=ceil(2*estimate_mb*1_000_000)+256*2**20
-        cap_mb=ceil(future/1_000_000)
-        record={"schema":"mumps-symbolic-preflight.v1","INFOG":info,"controls":factor.controls,
-                "shim":identity,"future_numeric_bytes":future,"numeric_ICNTL23_MB":cap_mb,
-                "numeric_calls":0,"symbolic_seconds":time.monotonic()-started,
+        if info["1"]<0 or info["16"]<=0:raise RuntimeError("MUMPS symbolic INFOG failure or missing in-core estimate")
+        record={"schema":"mumps-symbolic-preflight.v2","INFOG":info,"controls":factor.controls,
+                "shim":identity,"numeric_calls":0,"symbolic_seconds":time.monotonic()-started,
                 "estimate_not_upper_bound":True,"later_KSP_repeats_symbolic":True}
-        Path(directory,"symbolic_preflight.json").write_text(json.dumps(record,indent=2,allow_nan=False))
+        atomic_json(Path(directory,"symbolic_preflight.json"),record)
     except BaseException as exc:primary=exc;raise
     finally:
         if factor is not None:
@@ -161,5 +191,14 @@ def symbolic_memory_preflight(matrix, options, *, admit, directory):
             except BaseException as cleanup:
                 if primary is None:raise
                 primary.add_note("symbolic factor cleanup: "+repr(cleanup))
-    admit("mumps_numeric",future,estimate_basis=record)
+    nz=matrix.getInfo()["nz_used"]
+    if isinstance(nz,bool) or not float(nz).is_integer() or nz<1:raise RuntimeError("invalid actual stored nnz")
+    observation=admit("mumps_numeric_budget_observation",0,
+                      estimate_basis="symbolic factor released; observe actual live headroom before choosing ICNTL23")
+    budget=incore_memory_budget(info,int(nz),observation,
+                               available_floor_bytes=int(os.environ["TASK44_AVAILABLE_FLOOR_BYTES"]))
+    record.update(budget)
+    atomic_json(Path(directory,"symbolic_preflight.json"),record)
+    if not budget["passed"]:raise RuntimeError("MUMPS_INCORE_WORKSPACE_CAP_BELOW_ANALYSIS_REQUIREMENT")
+    admit("mumps_numeric",budget["future_numeric_bytes"],estimate_basis=record)
     return record

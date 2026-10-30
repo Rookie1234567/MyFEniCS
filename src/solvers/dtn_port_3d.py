@@ -2255,6 +2255,8 @@ def _solve_augmented_system(
         from .bounded_mumps import symbolic_memory_preflight
         if not active() or out_dir is None:
             raise RuntimeError("bounded exact factorization requires explicit active resource policy")
+        from .pre_factor_checkpoint import save_pre_factor_checkpoint
+        checkpoint=save_pre_factor_checkpoint(A_aug,b_aug,out_dir/"pre_factor_checkpoint",admit=admit)
         symbolic_admission = symbolic_memory_preflight(A_aug, petsc_options, admit=admit,
                                                        directory=out_dir / "mumps_symbolic")
         petsc_options = dict(petsc_options)
@@ -2360,6 +2362,22 @@ def _solve_augmented_system(
         progress_comm.allreduce(time.perf_counter() - setup_started, op=MPI.MAX)
     )
     factor_inventory = _petsc_factor_inventory(ksp)
+    if symbolic_admission is not None:
+        factor=ksp.getPC().getFactorMatrix();primary=None
+        try:
+            from ..common.strict_json import atomic_json
+            memory_actual={"INFOG":{str(i):int(factor.getMumpsInfog(i)) for i in (1,2,16,17,18,19,21,22,26,27,30,31)},
+                           "ICNTL":{str(i):int(factor.getMumpsIcntl(i)) for i in (14,22,23,24,35)},
+                           "phase":"after_numeric_before_solve",
+                           "scope":"MUMPS diagnostic reported integers; memory fields use decimal MB, not whole-tree RSS; solve-only fields not yet final"}
+            atomic_json(out_dir/"mumps_symbolic/after_numeric_memory.json",memory_actual)
+        except BaseException as exc:primary=exc;raise
+        finally:
+            try:factor.destroy()
+            except BaseException as cleanup:
+                FAILED_BOUNDED_FACTOR_ROOTS.append((factor,ksp,A_aug,b_aug))
+                if primary is not None:primary.add_note("numeric inventory reference cleanup: "+repr(cleanup))
+                else:raise
     if out_dir is not None:
         _write_progress_event(
             out_dir,
@@ -2477,6 +2495,20 @@ def _solve_augmented_system(
             petsc_options=petsc_options,
             extra={"ksp_solve_seconds": solve_seconds},
         )
+    if symbolic_admission is not None:
+        factor=ksp.getPC().getFactorMatrix();primary=None
+        try:
+            from ..common.strict_json import atomic_json
+            atomic_json(out_dir/"mumps_symbolic/after_solve_memory.json",
+                        {"phase":"after_solve","INFOG":{str(i):int(factor.getMumpsInfog(i)) for i in (1,2,16,17,18,19,21,22,26,27,30,31)},
+                         "scope":"MUMPS diagnostics only; whole-tree peak remains external supervisor evidence"})
+        except BaseException as exc:primary=exc;raise
+        finally:
+            try:factor.destroy()
+            except BaseException as cleanup:
+                FAILED_BOUNDED_FACTOR_ROOTS.append((factor,ksp,A_aug,b_aug,x_aug))
+                if primary is not None:primary.add_note("postsolve inventory reference cleanup: "+repr(cleanup))
+                else:raise
     return (
         x_aug,
         ksp,
@@ -3098,6 +3130,11 @@ def _solve_stage4_dtn_port_total_field_impl(
             )
             reduction_system = variable_p_reduction.system
         else:
+            volume_checkpoint = None
+            if cfg.grating_layer_thicknesses_nm is not None:
+                from .volume_tensor_checkpoint import VolumeTensorCheckpoint
+                cache_root=Path(__file__).resolve().parents[2]/"benchmarks/artifacts/task44/exact_volume_tensor_cache_v1"
+                volume_checkpoint=VolumeTensorCheckpoint(cfg,cache_root,out_dir/"raw_tensor_progress.jsonl")
             assembly_time_system = build_unconstrained_assembly_time_condensation(
                 fem.form(a),
                 V,
@@ -3114,7 +3151,14 @@ def _solve_stage4_dtn_port_total_field_impl(
                 preserve_exact_geometry=_stage4_preserve_exact_geometry(cfg),
                 sum_duplicate_cell_integrals=cfg.grating_layer_thicknesses_nm is not None,
                 strict_local_checks=cfg.grating_layer_thicknesses_nm is not None,
+                raw_tensor_checkpoint=volume_checkpoint,
+                progress_callback=volume_checkpoint.event if volume_checkpoint is not None else None,
             )
+            if volume_checkpoint is not None:
+                volume_checkpoint.verify()
+                from ..common.strict_json import atomic_json
+                atomic_json(out_dir/"volume_checkpoint_receipts.json",volume_checkpoint.receipts)
+                atomic_json(out_dir/"assembly_time_build_audit.json",assembly_time_system.build_audit)
             reduction_system = assembly_time_system
         A_base = None
         A_aug = reduction_system.matrix
@@ -3321,7 +3365,7 @@ def _solve_stage4_dtn_port_total_field_impl(
                 "assembly_time_final_augmented_matrix": not never_materialized_port,
                 "base_to_augmented_matrix_copy_performed": False,
                 "global_A_materialized": not never_materialized_port,
-                "global_F_materialized": not never_materialized_port,
+                "global_F_materialized": False,  # Numeric factorization has not begun
             },
         )
     _write_progress_event(
@@ -4095,7 +4139,7 @@ def _solve_stage4_dtn_port_total_field_impl(
         extra={
             "stage4_dtn_num_auxiliary_dofs": int(n_aux),
             "global_A_materialized": not never_materialized_port,
-            "global_F_materialized": not never_materialized_port,
+            "global_F_materialized": False,  # Numeric factorization has not begun
             "dtn_action_preallocation_audit": dtn_action_preallocation_audit,
         },
     )

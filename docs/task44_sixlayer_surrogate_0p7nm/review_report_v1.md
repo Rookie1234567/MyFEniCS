@@ -87,3 +87,15 @@ A–D实际几何/模式前缀已完成且独立核对800个源/输入记录：�
 首A完整源码现允许提交后由唯一数值owner受控试算：加载器在首次MPI前arm，FE前及求解/后处理后核同进程来源；JIT仅fresh cache路径改变，原编译政策不变；完整原UFL action与raw C/D/J残差独立于凝聚诊断，保存向量完整读回；逐材料吸收、MPC相位/配对、R00分量和能量门已接；symbolic预估与实际树资源/余量共同约束numeric。此为**源码准入，不是首A运行成功、生成器资格或训练标签批准**。
 
 经根任务负责人确认，采用own branch最窄实现变体而非整搬db790研究支线。只对本任务分区常数材料、无PML、轴对齐affine单元的体积curl/mass使用平移归一exact-width缓存（tag/width/permutation区分）；incident/port仍用真实坐标。解析平移不变性与本次原UFL残差/稳定性检查共同约束该实现，不声称继承母版本逐bit数值资格；空间变材料或非affine几何不适用此论证。
+
+## 2026-10-30 13:01 UTC：首A资源拒绝与受控重试边界
+
+首A `qualification_A_v1` 已结束：1242.566596713 s，全进程树峰值3,168,022,528 B，4941资源样本均零交换，监督清理正常，子进程失败。实际symbolic为INFOG(16)=4388 MB、INFOG(26)=1234 MB，配置ICNTL(14)=100、(22)=0、(35)=0。旧代码额外取两倍最大估计，再加256 MiB，得到9,044,435,456 B future，故numeric前资源门拒绝。**这是保守准入失败，不是实际OOM，也不是数值因子失败；没有解、原残差、功率或训练标签。** 已保留原失败证据，后续成功不追认本次。
+
+同版本[MUMPS 5.8.2作者手册§5.11](https://sources.debian.org/data/main/m/mumps/5.8.2-1/doc/userguide_5.8.2.pdf)表明INFOG(16)已含ICNTL(14)的松弛量；INFOG(26)是out-of-core口径，不能用于当前in-core准入。正ICNTL(23)限制每进程MUMPS内部工作内存，单位为十进制MB，并不限制PETSc、Python或全进程RSS。估计不是数值pivot需求的保证；内部额度不足可能报−19。
+
+允许的最窄重试保留in-core与原数值控制：临时symbolic释放后重新测量live树RSS和available；按实际stored-nnz预留24 B/entry及256 MiB外部空间，另保留512 MiB安全余量和16 MiB观测波动空间；剩余额度向下取整为ICNTL(23)，必须不少于本次INFOG(16)，并在numeric前再次通过完整门。实际监控、1 GiB available停止线和零交换要求均不放宽。旧观测的纯算术示例为4538 MB额度，而非新factor成功预言。
+
+新增持久化只保存完整身份绑定的pre-orientation常量材料raw tensor，以及本次真实凝聚trace/aux A、b；不缓存局部LU、MPC、incident或端口算子，不跳过原完整UFL残差。A二进制逐row与live矩阵bitwise比对，明确**不是未凝聚原FE矩阵**。缓存损坏/部分提交拒绝而非静默覆盖。小前缀v1因真实`mu_r=1+0j`类型适配错误失败，保留；显式无损unit-mu适配后，v2实际p1单hex cold/warm及2×2二进制检查通过（5.023582 s，峰315,805,696 B），813源/输入记录与资源已独立核。这仅资格化软件接口，不证明p6六层精度。
+
+当前允许fresh A重试的源码与软件前置，**仍未批准任何FE训练样本或代理可行性结论**。48小时总成本与截止时刻不重置；技术watchdog可依据已测成本调整，不是研究重启。
