@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +19,31 @@ HOST_RESERVE_BYTES = 384 * GIB
 INITIAL_CAP_BYTES = 128 * GIB
 JOB_BUFFER_BYTES = 8 * GIB
 BRANCH = "task44_sixlayer_surrogate_0p7nm"
+
+
+
+
+def _atomic_write_json(path: Path, value: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as stream:
+            temporary_path = Path(stream.name)
+            stream.write(json.dumps(value, indent=2, sort_keys=True, allow_nan=False))
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary_path, path)
+    finally:
+        if temporary_path is not None and temporary_path.exists():
+            temporary_path.unlink()
 
 
 def verify_task44_root(repo_root: Path, environ: Mapping[str, str]) -> None:
@@ -152,8 +178,7 @@ def _write_service_identity(
         "working_directory": str(repo_root),
     }
     path = repo_root / "benchmarks/artifacts/task44_native_services" / unit / "service_identity.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _atomic_write_json(path, receipt)
     return receipt
 
 
@@ -474,10 +499,7 @@ def run_service(
         "wall_time_termination": "disabled_by_time_policy_observe_only",
         "smoke": smoke,
     }
-    (artifacts / "service_summary.json").write_text(
-        json.dumps(summary, indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
+    _atomic_write_json(artifacts / "service_summary.json", summary)
     print(
         f"Task44 service finished unit={unit} classification={summary.get('classification')} "
         f"elapsed_seconds={summary.get('elapsed_seconds')}",

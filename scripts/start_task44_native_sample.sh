@@ -67,78 +67,123 @@ systemd-run --user --no-block --expand-environment=no \
     ' task44-native-service "$repo_root" "$input_path" "$unit" "$cpu_set" \
     "$max_concurrent" "$cap_bytes" "$smoke"
 
-for _ in {1..30}; do
-    state="$(systemctl --user show --value --property=ActiveState "$unit" 2>/dev/null || true)"
-    case "$state" in
-        active)
-            if [[ -f "$artifact_dir/service_identity.json" ]]; then
-                break
-            fi
-            ;;
-        failed|inactive)
-            if [[ -f "$artifact_dir/service_identity.json" && -f "$artifact_dir/service_summary.json" ]]; then
-                python - "$artifact_dir/service_identity.json" "$artifact_dir/service_summary.json" "$unit" "$cap_bytes" "$cpu_set" <<'PY'
+task44_startup_decision() {
+    python - "$1" "$artifact_dir/service_identity.json" "$artifact_dir/service_summary.json" "$unit" "$cap_bytes" "$cpu_set" <<'PY'
 import json
 import sys
 from pathlib import Path
 
+from scripts.task44_service_startup import classify_service_startup
+
+state = sys.argv[1]
+identity_path, summary_path = Path(sys.argv[2]), Path(sys.argv[3])
+unit, cap_bytes = sys.argv[4], int(sys.argv[5])
+cpus = [int(value) for value in sys.argv[6].split(",")]
+
+def load_receipt(path):
+    if not path.exists():
+        return None
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"_invalid_receipt": True}
+    return value if isinstance(value, dict) else {"_invalid_receipt": True}
+
+print(classify_service_startup(
+    state, load_receipt(identity_path), load_receipt(summary_path),
+    unit=unit, cap_bytes=cap_bytes, cpu_affinity=cpus,
+))
+PY
+}
+
+task44_verify_completed() {
+    python - "$artifact_dir/service_identity.json" "$artifact_dir/service_summary.json" "$unit" "$cap_bytes" "$cpu_set" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+from scripts.task44_service_startup import classify_service_startup
+
 identity_path, summary_path = Path(sys.argv[1]), Path(sys.argv[2])
 unit, cap_bytes = sys.argv[3], int(sys.argv[4])
-cpus = sorted(int(value) for value in sys.argv[5].split(","))
+cpus = [int(value) for value in sys.argv[5].split(",")]
 identity = json.loads(identity_path.read_text(encoding="utf-8"))
 summary = json.loads(summary_path.read_text(encoding="utf-8"))
-if (
-    identity.get("service_unit") != unit
-    or identity.get("memory_max_bytes") != cap_bytes
-    or identity.get("memory_swap_max_bytes") != 0
-    or identity.get("restart") != "no"
-    or identity.get("kill_mode") != "control-group"
-    or identity.get("cpu_affinity") != cpus
-    or not identity.get("invocation_id")
-    or not identity.get("control_group")
-    or identity.get("main_pid", 0) <= 1
-    or not identity.get("main_pid_start_ticks")
-    or summary.get("task44_service", {}).get("service_unit") != unit
-):
-    raise SystemExit(f"Task44 completed-service startup identity is incomplete or mismatched: {identity}")
-if summary.get("classification") != "COMPLETED":
-    raise SystemExit(f"Task44 service ended without a completed watchdog record: {summary.get('classification')}")
-print(json.dumps({"startup_identity": identity, "completed_summary": summary}, sort_keys=True))
+if classify_service_startup(
+    "inactive", identity, summary,
+    unit=unit, cap_bytes=cap_bytes, cpu_affinity=cpus,
+) != "completed":
+    raise SystemExit(f"Task44 completion receipt does not match this unit invocation: {identity}")
+print(json.dumps({
+    "startup_identity": identity,
+    "classification": summary.get("classification"),
+    "task44_service": summary.get("task44_service"),
+}, sort_keys=True))
 PY
-                exit 0
-            fi
-            systemctl --user show "$unit" --no-pager \
-                -p ActiveState -p SubState -p MainPID -p InvocationID -p ControlGroup \
-                -p MemoryMax -p MemorySwapMax -p CPUAffinity >&2 || true
-            journalctl --user -u "$unit" --no-pager -n 40 >&2 || true
-            cat "$artifact_dir/service.log" >&2 2>/dev/null || true
-            echo "Task44 service entered state $state before saving its startup identity" >&2
-            exit 1
-            ;;
-    esac
-    sleep 1
-done
-if [[ "$state" != active || ! -f "$artifact_dir/service_identity.json" ]]; then
+}
+
+task44_startup_diagnostics() {
     systemctl --user show "$unit" --no-pager \
         -p ActiveState -p SubState -p MainPID -p InvocationID -p ControlGroup \
         -p MemoryMax -p MemorySwapMax -p CPUAffinity >&2 || true
     journalctl --user -u "$unit" --no-pager -n 40 >&2 || true
-    cat "$artifact_dir/service.log" >&2 2>/dev/null || true
-    if [[ "$state" == active ]]; then
+    if [[ -f "$artifact_dir/service_identity.json" ]]; then
+        cat "$artifact_dir/service_identity.json" >&2
+    else
+        echo "service_identity.json not written yet" >&2
+    fi
+    tail -n 20 "$artifact_dir/service.log" >&2 2>/dev/null || true
+}
+
+task44_startup_pending_snapshot() {
+    printf 'Task44 service status=startup_pending unit=%s pending_seconds=%s expected_cpus=%s\n' \
+        "$unit" "$pending_seconds" "$cpu_set" >&2
+    task44_startup_diagnostics
+    main_pid="$(systemctl --user show --value --property=MainPID "$unit" 2>/dev/null || true)"
+    if [[ "$main_pid" =~ ^[0-9]+$ ]] && (( main_pid > 1 )); then
+        ps -p "$main_pid" -o pid=,ppid=,comm=,psr=,pcpu=,stat= >&2 || true
+        taskset -pc "$main_pid" >&2 || true
+    fi
+}
+
+task44_startup_monitor_failure() {
+    task44_startup_diagnostics
+    if [[ "$1" == active ]]; then
         systemctl --user stop "$unit" || true
     fi
-    echo "Task44 service did not become active and save its startup identity" >&2
+    echo "Task44 startup state monitor failed; see the exact-unit diagnostics above" >&2
     exit 1
-fi
+}
 
-if ! python - "$unit" "$artifact_dir/service_identity.json" "$cap_bytes" "$cpu_set" <<'PY'
+pending_seconds=0
+next_pending_report=30
+while true; do
+    state="$(systemctl --user show --value --property=ActiveState "$unit" 2>/dev/null || true)"
+    if ! decision="$(task44_startup_decision "$state")"; then
+        task44_startup_monitor_failure "$state"
+    fi
+
+    if [[ "$decision" == "active_identity_ready" ]]; then
+        if python - "$unit" "$artifact_dir/service_identity.json" "$cap_bytes" "$cpu_set" <<'PY'
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 unit, receipt_path, expected_cap = sys.argv[1], Path(sys.argv[2]), int(sys.argv[3])
 expected_cpus = set(int(value) for value in sys.argv[4].split(","))
+
+def parse_cpu_list(value):
+    result = set()
+    for token in value.replace(",", " ").split():
+        if "-" in token:
+            low, high = (int(part) for part in token.split("-", 1))
+            result.update(range(low, high + 1))
+        elif token:
+            result.add(int(token))
+    return result
+
 names = (
     "ActiveState", "MainPID", "InvocationID", "ControlGroup", "MemoryMax",
     "MemorySwapMax", "Restart", "KillMode", "WorkingDirectory", "CPUAffinity",
@@ -157,6 +202,8 @@ expected = {
 }
 if any(facts.get(key) != value for key, value in expected.items()):
     raise SystemExit(f"Task44 service identity gate failed: {facts}")
+if parse_cpu_list(facts["CPUAffinity"]) != expected_cpus:
+    raise SystemExit(f"Task44 systemd CPUAffinity mismatch: {facts}")
 receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
 if (
     not facts.get("InvocationID") or not facts.get("ControlGroup") or pid <= 1
@@ -166,11 +213,82 @@ if (
     or receipt.get("invocation_id") != facts["InvocationID"]
     or receipt.get("control_group") != facts["ControlGroup"]
     or receipt.get("cpu_affinity") != sorted(expected_cpus)
+    or receipt.get("actual_process_cpu_affinity") != sorted(expected_cpus)
 ):
     raise SystemExit(f"live systemd identity differs from saved startup receipt: {facts} / {receipt}")
-print(json.dumps({"live_systemd": facts, "startup_identity": receipt}, sort_keys=True))
+cgroup = Path("/sys/fs/cgroup") / facts["ControlGroup"].lstrip("/")
+process_affinities = {}
+for procs_file in cgroup.rglob("cgroup.procs"):
+    for value in procs_file.read_text(encoding="ascii").split():
+        process_pid = int(value)
+        try:
+            actual = sorted(os.sched_getaffinity(process_pid))
+        except ProcessLookupError:
+            continue
+        process_affinities[str(process_pid)] = actual
+        if set(actual) != expected_cpus:
+            raise SystemExit(f"Task44 cgroup process CPUAffinity mismatch: {process_affinities}")
+print(json.dumps({"live_systemd": facts, "startup_identity": receipt,
+                  "service_process_affinities": process_affinities}, sort_keys=True))
 PY
-then
-    systemctl --user stop "$unit"
-    exit 1
-fi
+        then
+            exit 0
+        fi
+        state="$(systemctl --user show --value --property=ActiveState "$unit" 2>/dev/null || true)"
+        if ! decision="$(task44_startup_decision "$state")"; then
+        task44_startup_monitor_failure "$state"
+    fi
+        if [[ "$decision" == "completed" ]]; then
+            task44_verify_completed
+            exit 0
+        fi
+        if [[ "$decision" == "active_identity_ready" || "$decision" == "identity_invalid" ]]; then
+            task44_startup_diagnostics
+            systemctl --user stop "$unit" || true
+            echo "Task44 live service identity or CPU/resource gate failed" >&2
+            exit 1
+        fi
+    fi
+
+    case "$decision" in
+        completed)
+            task44_verify_completed
+            exit 0
+            ;;
+        identity_invalid)
+            task44_startup_diagnostics
+            if [[ "$state" == active ]]; then
+                systemctl --user stop "$unit" || true
+            fi
+            echo "Task44 service startup identity failed closed" >&2
+            exit 1
+            ;;
+        failed)
+            task44_startup_diagnostics
+            echo "Task44 service failed before a matching completion receipt was saved" >&2
+            exit 1
+            ;;
+        startup_pending)
+            ;;
+        active_identity_ready)
+            ;;
+        *)
+            task44_startup_diagnostics
+            echo "Unexpected Task44 startup classification: $decision" >&2
+            exit 1
+            ;;
+    esac
+
+    if (( pending_seconds < 30 )); then
+        sleep_seconds=1
+        pending_seconds=$((pending_seconds + 1))
+    else
+        sleep_seconds=5
+        pending_seconds=$((pending_seconds + sleep_seconds))
+    fi
+    if (( pending_seconds >= next_pending_report )); then
+        task44_startup_pending_snapshot
+        next_pending_report=$((next_pending_report + 30))
+    fi
+    sleep "$sleep_seconds"
+done
