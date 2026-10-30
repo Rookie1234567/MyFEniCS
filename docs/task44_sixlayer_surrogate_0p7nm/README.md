@@ -8,7 +8,7 @@
 | 指定起点 / 初始 HEAD | `db790f92a186988c5147f1828d15c07034e7c430` |
 | 起点来源 | `origin/task41extra_phi90_p50x50_g17x20` 在开始时核对到相同 SHA |
 | canonical worktree | `/home/fenics/Projects/MyFEniCS-task44-sixlayer` |
-| upstream | 当前实现验证完成后设置并推送到同名 origin 分支 |
+| upstream | `origin/task44_sixlayer_surrogate_0p7nm` 已建立并设为 upstream；实现提交为 `306c374045072f13219a19c0f643a69005df8ffe`，后续证据增量留在同一执行分支 |
 | 仓库任务书 SHA-256 | `af74fccd43cbd6fd9edb216aadd853b01d60fe4c5cd5389c9fdeb65d1d58b837`，与用户附件逐字节相同 |
 
 所有 Task44 的代码、测试、输入、输出和 Git 操作都在指定 worktree 中进行。Task42 checkout 的脏改动、stash、旧结果和共享环境保持原样；不 reset、clean、amend、强推或合并 master。
