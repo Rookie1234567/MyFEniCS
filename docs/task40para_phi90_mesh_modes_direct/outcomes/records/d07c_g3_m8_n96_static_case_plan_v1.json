@@ -19,11 +19,11 @@
     "phase_fit": false
   },
   "files": {
-    "focused_test_source_sha256": "cdcbf6fb02283f8381530ea15541567d19df4aa563bad5cc6ec969673de276f9",
+    "focused_test_source_sha256": "03154f327384a89f14b0c10ea11b34fb1e76d60d476c0281625d725ca88eb2a9",
     "input_file_sha256": "bb2d9300568d68b1959370a899d85bcad2a94ec0c6dcd46f31eed048327aaba6",
     "input_path": "/home/fenics/Projects/Maxwell3D-Phi90/input/task40para_phi90_mesh_modes_direct/d07c_g3_m8_nminus96_to1_p6_direct.dat",
     "input_sha256": "bb2d9300568d68b1959370a899d85bcad2a94ec0c6dcd46f31eed048327aaba6",
-    "native_capacity_profile_source_sha256": "28c036cbffd991cb80862f65b31f7fea7effc2a79bf2eea6b6944c3824880ac9"
+    "native_capacity_profile_source_sha256": "4167ff08a296f7092c5b873f565c6149a812bd06b23787d0e921522d3a531b98"
   },
   "identity": {
     "comparison_group": "task40para_phi90_mesh_modes_direct",

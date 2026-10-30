@@ -88,6 +88,9 @@ def test_g3_m8_n96_real_loader_profile_and_production_inventory():
     assert selection["comparison_reference_mode_sha256"] == N64_SHA
     assert selection["same_mesh_modal_reference_case"] == "G3_M8_N64"
     assert selection["same_mesh_modal_reference_mode_sha256"] == N64_SHA
+    assert native_profile_facts(profile)["component_options"][
+        "directional_mesh_comparison"
+    ]["changed_axes"] == []
     assert selection["added_mode_count_vs_n64"] == 2176
     assert selection["omitted_auto_propagating_mode_count"] == 64120 - 6536
     assert selection["omitted_from_same_mesh_M8_Nminus143_to1_mode_count"] == 9860 - 6664
