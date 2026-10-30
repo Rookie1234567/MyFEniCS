@@ -1,0 +1,87 @@
+{
+  "schema": "task44.material-calculation-receipt.v1",
+  "status": "derived_not_measured",
+  "wavelength_nm": 0.7,
+  "photon_energy_eV": 1771.2028347600037,
+  "formula": "delta + i*beta = r_e * lambda^2 * N_A * rho / (2*pi*M) * sum(nu_j * (f1_j + i*f2_j))",
+  "calculation_constants": {
+    "classical_electron_radius_m": 2.8179403205e-15,
+    "classical_electron_radius_source": "Task40 frozen material identity, sourced from NIST",
+    "avogadro_constant_mol_inverse": 6.02214076e23,
+    "wavelength_m": 7e-10,
+    "atomic_masses_g_mol": {"Si": 28.0855, "Ge": 72.63, "O": 15.999},
+    "time_harmonic_convention": "exp(i*k dot r) exp(-i*omega*t)",
+    "solver_index_convention": "n = 1 - delta + i*beta; epsilon_r = n^2"
+  },
+  "sources": {
+    "scattering_factor_definition": "https://henke.lbl.gov/optical_constants/pert_form.html",
+    "si": {
+      "url": "https://henke.lbl.gov/optical_constants/sf/si.nff",
+      "repository_path": "docs/task40extra_0p7nm_engineering/outcomes/records/raw/si.nff",
+      "sha256": "2bbd2aef0292aa392a61942b1c401171b5bc30bb77ab1cab9c08b6264048019a",
+      "bytes": 19539,
+      "frozen_material_identity_path": "docs/task40extra_0p7nm_engineering/outcomes/records/material_identity.json",
+      "frozen_material_identity_sha256": "5faedf276aba2918cc399c018936964b059127f135e24ea2bf2ba493e3d9876b",
+      "frozen_solver_n": [0.9998851703688496, 4.3236152269189515e-6],
+      "frozen_solver_epsilon_r": [0.9997703539048498, 8.646237495554417e-6],
+      "note": "The Si solver index is the Task40/Task41 frozen value; it is not recomputed or replaced from Task42. Raw Si rows below are used only as the elemental contribution in the SiGe mixture."
+    },
+    "germanium": {
+      "url": "https://henke.lbl.gov/optical_constants/sf/ge.nff",
+      "ignored_raw_copy": "benchmarks/artifacts/task44_material_evidence/raw/Ge.nff",
+      "sha256": "269103885de8c55eab88e3d3fc17286cf49d5e8ad664f720838f96061296637d",
+      "bytes": 13249,
+      "bracket_line_numbers_1_based": [328, 329],
+      "raw_rows_E_f1_f2": [[1752.89, 29.3384, 11.6634], [1781.24, 29.5711, 11.3904]],
+      "interpolation_fraction": 0.645955370723234,
+      "interpolated_f1_f2": [29.488713814767298, 11.487054183792557]
+    },
+    "oxygen": {
+      "url": "https://henke.lbl.gov/optical_constants/sf/o.nff",
+      "ignored_raw_copy": "benchmarks/artifacts/task44_material_evidence/raw/O.nff",
+      "sha256": "adb1540b11008383aaef0b8c4f5fb1a2bc5df14f3717ac4d58fc54fff92ba6cb",
+      "bytes": 13625,
+      "bracket_line_numbers_1_based": [326, 327],
+      "raw_rows_E_f1_f2": [[1752.89, 8.35021, 0.67503], [1781.24, 8.3471, 0.655908]],
+      "interpolation_fraction": 0.645955370723234,
+      "interpolated_f1_f2": [8.34820107879705, 0.6626780414010304]
+    },
+    "density_sources": {
+      "silicon": "https://www.nist.gov/document/nistir69692014092620160121revpdf",
+      "silicon_germanium": "https://www.ioffe.ru/SVA/NSM/Semicond/SiGe/basic.html",
+      "silica": "https://henke.lbl.gov/cgi-bin/density.pl",
+      "atomic_masses": "https://ciaaw.org/atomic-weights.htm"
+    }
+  },
+  "si_elemental_interpolation_for_mixture": {
+    "bracket_line_numbers_1_based": [576, 577],
+    "raw_rows_E_f1_f2": [[1756.82, 10.6935, 0.399988], [1785.24, 10.2377, 0.388059]],
+    "interpolation_fraction": 0.5060814482759941,
+    "interpolated_f1_f2": [10.462828075875802, 0.3939509544035157]
+  },
+  "derived_materials": {
+    "Si0.7Ge0.3": {
+      "atomic_fractions": {"Si": 0.7, "Ge": 0.3},
+      "density_g_cm3_expression": "2.329 + 3.493*0.3 - 0.499*(0.3^2)",
+      "density_g_cm3": 3.33199,
+      "density_kg_m3": 3331.99,
+      "molar_mass_g_mol_expression": "0.7*28.0855 + 0.3*72.630",
+      "molar_mass_g_mol": 41.44885,
+      "weighted_f1_f2": [16.17059379754325, 3.721881923220228],
+      "delta_beta": [0.00017203470889087227, 3.9596126227885923e-5],
+      "solver_n": [0.9998279652911092, 3.9596126227885923e-5],
+      "solver_epsilon_r": [0.9996559586103062, 7.91786286396742e-5]
+    },
+    "SiO2": {
+      "stoichiometry": {"Si": 1, "O": 2},
+      "density_g_cm3": 2.2,
+      "density_kg_m3": 2200.0,
+      "molar_mass_g_mol_expression": "28.0855 + 2*15.999",
+      "molar_mass_g_mol": 60.0835,
+      "summed_stoichiometric_f1_f2": [27.159230233469902, 1.7193070372055765],
+      "delta_beta": [0.00013160846366494378, 8.331434867255551e-6],
+      "solver_n": [0.9998683915363351, 8.331434867255551e-6],
+      "solver_epsilon_r": [0.9997368003240451, 1.6660676759825097e-5]
+    }
+  }
+}

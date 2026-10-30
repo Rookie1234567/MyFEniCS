@@ -103,10 +103,20 @@ def _log_case_header(
     log(f"geometry kind = {cfg.geometry_kind}")
     log(f"validation role = {cfg.validation_role}")
     log(f"substrate material label = {cfg.substrate_material_label}")
-    log(f"grating material label = {cfg.grating_material_label}")
+    if cfg.grating_layers:
+        log(
+            "grating material layers (bottom to top) = "
+            + ", ".join(
+                f"{layer.name}: {layer.thickness:g} nm, n={layer.refractive_index!r}, tag={layer.tag}"
+                for layer in cfg.grating_layers
+            )
+        )
+    else:
+        log(f"grating material label = {cfg.grating_material_label}")
     log(f"lambda0 nm = {cfg.lambda0}")
     log(f"n_substrate = {cfg.substrate_index}")
-    log(f"n_grating = {cfg.grating_index}")
+    if not cfg.grating_layers:
+        log(f"n_grating = {cfg.grating_index}")
     log(f"use Floquet xy = {cfg.use_floquet_xy}")
     log(f"use PML = {cfg.use_pml}")
     log(f"PETSc ScalarType = {PETSc.ScalarType}")
@@ -229,6 +239,8 @@ def _official_result_after_stage4_gates(
     external_solver_snapshot: bool,
     external_rta_gate_pass: bool | None,
     task41_native_a6_gate_pass: bool | None,
+    linear_system_relative_residual: float | None = None,
+    true_residual_tolerance: float | None = None,
 ) -> bool:
     """Require every applicable Stage-4 scientific gate before official status."""
 
@@ -238,7 +250,137 @@ def _official_result_after_stage4_gates(
         return False
     if task41_native_a6_gate_pass is not None and task41_native_a6_gate_pass is not True:
         return False
-    return True
+    return true_residual_tolerance is None or (
+        linear_system_relative_residual is not None
+        and np.isfinite(float(linear_system_relative_residual))
+        and float(linear_system_relative_residual) >= 0.0
+        and float(linear_system_relative_residual) <= float(true_residual_tolerance)
+    )
+
+
+def _record_stage4_energy_closure_gate(
+    out_dir: Path,
+    comm: MPI.Intracomm,
+    summary: dict[str, Any],
+    *,
+    tolerance: float | None,
+) -> None:
+    """Apply a requested volume-power closure limit to official result status."""
+    if tolerance is None:
+        return
+    tolerance = float(tolerance)
+    error = summary.get("energy_closure_error_port_volume")
+    try:
+        numeric_passed = bool(
+            error is not None
+            and np.isfinite(float(error))
+            and abs(float(error)) <= tolerance
+        )
+    except (TypeError, ValueError):
+        numeric_passed = False
+
+    io_facts = None
+    if comm.rank == 0:
+        paths = [
+            out_dir / filename
+            for filename in (
+                "port_power.json",
+                "dtn_port_power_metrics_3d.json",
+                "volume_absorption.json",
+            )
+        ]
+        payloads: list[tuple[Path, dict[str, Any]]] = []
+        io_errors: list[str] = []
+        for path in paths:
+            try:
+                if not path.is_file():
+                    continue
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                if not isinstance(payload, dict):
+                    raise TypeError("expected a JSON object")
+                payloads.append((path, payload))
+            except (OSError, UnicodeError, ValueError) as exc:
+                io_errors.append(f"{path.name}: read failed: {type(exc).__name__}: {exc}")
+
+        if not io_errors:
+            for path, payload in payloads:
+                qualified = numeric_passed and summary.get("official_result") is True
+                payload["official_result"] = qualified
+                payload["stage4_energy_closure_tolerance"] = tolerance
+                payload["stage4_energy_closure_gate_pass"] = numeric_passed
+                if not numeric_passed:
+                    payload["qualification_status"] = "failed_stage4_energy_closure"
+                elif not qualified:
+                    payload["qualification_status"] = summary.get(
+                        "case_status", "diagnostic_only_other_gate_failed"
+                    )
+                try:
+                    path.write_text(
+                        json.dumps(
+                            payload,
+                            ensure_ascii=False,
+                            indent=2,
+                            default=_json_default,
+                        ),
+                        encoding="utf-8",
+                    )
+                except (OSError, TypeError, ValueError) as exc:
+                    io_errors.append(
+                        f"{path.name}: write failed: {type(exc).__name__}: {exc}"
+                    )
+
+        if io_errors:
+            # Best-effort downgrade of every readable record if another file
+            # failed. The collective summary below remains the authority.
+            for path, payload in payloads:
+                payload["official_result"] = False
+                payload["stage4_energy_closure_gate_pass"] = False
+                payload["qualification_status"] = (
+                    "failed_stage4_energy_closure_artifact_io"
+                )
+                try:
+                    path.write_text(
+                        json.dumps(
+                            payload,
+                            ensure_ascii=False,
+                            indent=2,
+                            default=_json_default,
+                        ),
+                        encoding="utf-8",
+                    )
+                except (OSError, TypeError, ValueError) as exc:
+                    io_errors.append(
+                        f"{path.name}: fail-closed rewrite failed: "
+                        f"{type(exc).__name__}: {exc}"
+                    )
+        io_facts = {"numeric_passed": numeric_passed, "errors": io_errors}
+
+    io_facts = comm.bcast(io_facts, root=0)
+    passed = bool(io_facts["numeric_passed"] and not io_facts["errors"])
+    summary["stage4_energy_closure_tolerance"] = float(tolerance)
+    summary["stage4_energy_closure_gate_pass"] = passed
+    summary["stage4_energy_closure_numeric_pass"] = bool(
+        io_facts["numeric_passed"]
+    )
+    summary["stage4_energy_closure_gate_io_errors"] = list(io_facts["errors"])
+    summary["official_result"] = bool(
+        passed and summary.get("official_result") is True
+    )
+    if not passed:
+        summary["diagnostic_only"] = True
+        summary["case_status"] = (
+            "failed_stage4_energy_closure_artifact_io"
+            if io_facts["errors"]
+            else "failed_stage4_energy_closure"
+        )
+        summary["postprocess_skipped"] = False
+        summary["postprocess_skip_reason"] = (
+            "R/T/A remain diagnostic because the energy-closure record could not "
+            "be read or written on rank 0."
+            if io_facts["errors"]
+            else "R/T/A were retained as diagnostics because the requested "
+            "R_total + T_total + A_volume_total closure limit was not met."
+        )
 
 
 def _task41_native_a6_gate_failed(dtn_solver_info: dict[str, Any] | None) -> bool:
@@ -1651,11 +1793,26 @@ def run_prepared_3d_case_flow(
         if dtn_solver_info is None
         else dtn_solver_info.get("task41_native_a6_gate_pass")
     )
+    explicit_true_residual = linear_system_diagnostics.get(
+        "linear_system_relative_residual"
+    )
+    true_residual_gate_pass = (
+        None
+        if cfg.stage4_official_true_residual_tolerance is None
+        else bool(
+            explicit_true_residual is not None
+            and np.isfinite(float(explicit_true_residual))
+            and 0.0 <= float(explicit_true_residual)
+            <= float(cfg.stage4_official_true_residual_tolerance)
+        )
+    )
     official_result = _official_result_after_stage4_gates(
         solver_converged,
         external_solver_snapshot=bool(external_solver_snapshot),
         external_rta_gate_pass=external_rta_gate_pass,
         task41_native_a6_gate_pass=task41_native_a6_gate_pass,
+        linear_system_relative_residual=explicit_true_residual,
+        true_residual_tolerance=cfg.stage4_official_true_residual_tolerance,
     )
     log(f"solver converged reason = {reason}")
     log(f"solver converged reason name = {reason_name}")
@@ -1844,8 +2001,12 @@ def run_prepared_3d_case_flow(
         if external_solver_snapshot and external_rta_gate_pass is False
         else "failed_task41_native_a6_gate"
         if task41_native_a6_gate_pass is False
+        else "failed_stage4_true_residual_gate"
+        if true_residual_gate_pass is False
         else "failed_not_converged",
         "official_result": official_result,
+        "stage4_true_residual_tolerance": cfg.stage4_official_true_residual_tolerance,
+        "stage4_true_residual_gate_pass": true_residual_gate_pass,
         "official_rta_gate_pass": (
             None
             if dtn_solver_info is None
@@ -1866,6 +2027,8 @@ def run_prepared_3d_case_flow(
         if external_solver_snapshot and external_rta_gate_pass is False
         else "Task41 independent full-space A6 residual exceeded 1e-6; official R/T/A was not run."
         if task41_native_a6_gate_pass is False
+        else "Full explicit true residual exceeded the requested limit or was unavailable; official R/T/A was not run."
+        if true_residual_gate_pass is False
         else "PETSc KSP did not converge.",
         "num_mesh_cells": int(num_cells),
         "variable_p_mesh_identity": variable_p_mesh_identity,
@@ -2510,6 +2673,9 @@ def run_prepared_3d_case_flow(
             {
                 "volume_absorption_file": "volume_absorption.json",
                 "A_volume_grating": volume_absorption_metrics.get("A_volume_grating"),
+                "A_volume_grating_layers": volume_absorption_metrics.get(
+                    "A_volume_grating_layers"
+                ),
                 "A_volume_substrate": volume_absorption_metrics.get(
                     "A_volume_substrate"
                 ),
@@ -2535,6 +2701,12 @@ def run_prepared_3d_case_flow(
             volume_metrics=volume_absorption_metrics,
         )
         summary.update(closure_fields)
+        _record_stage4_energy_closure_gate(
+            out_dir,
+            comm,
+            summary,
+            tolerance=cfg.stage4_official_energy_closure_tolerance,
+        )
 
     if cfg.stage_case in {"stage4_flat_layer_sanity", "stage4_block_grating"}:
         power_summary_rows = write_power_summary_csv(

@@ -156,19 +156,52 @@ def _environment_identity() -> dict[str, Any]:
         activation_identity = qualified_activation_identity(os.environ)
     else:
         activation_identity = os.environ.get("_MYFENICS_WSL_QUALIFIED_ACTIVATION")
+    native_identity = None
+    native_activation = os.environ.get("MYFENICS_NATIVE_COMPLEX_ENV") == "1"
+    if native_activation:
+        from basix import __file__ as basix_file
+        from dolfinx import __file__ as dolfinx_file
+        from mpi4py import MPI
+        from petsc4py import PETSc
+        from petsc4py import __file__ as petsc4py_file
+        from slepc4py import __file__ as slepc4py_file
+
+        if "complex128" not in str(PETSc.ScalarType):
+            raise InputError("native activation does not expose complex128 PETSc")
+        task_root = os.environ.get("MYFENICS_TASK44_ROOT")
+        native_identity = {
+            "activation_marker": "MYFENICS_NATIVE_COMPLEX_ENV=1",
+            "task_root": os.path.realpath(task_root) if task_root else None,
+            "petsc_scalar_type": str(PETSc.ScalarType),
+            "petsc_int_type": str(PETSc.IntType),
+            "mpi_library_version": MPI.Get_library_version().strip(),
+            "mpi_size": int(MPI.COMM_WORLD.size),
+            "module_paths": {
+                "petsc4py": os.path.realpath(petsc4py_file),
+                "slepc4py": os.path.realpath(slepc4py_file),
+                "dolfinx": os.path.realpath(dolfinx_file),
+                "basix": os.path.realpath(basix_file),
+            },
+        }
     return {
         "python_executable": os.path.abspath(sys.executable),
         "platform": platform.platform(),
-        "qualified_activation": activation_identity,
+        "qualified_activation": (
+            "MYFENICS_NATIVE_COMPLEX_ENV=1"
+            if native_activation
+            else activation_identity
+        ),
         "runtime_profile": (
             "native_linux"
             if os.environ.get("TASK40_V29_STRICT_FACTOR_ONLY") == "1"
+            else "native_linux_complex"
+            if native_activation
             else "local_wsl2_authorized"
             if activation_identity == "1"
             else None
         ),
+        "native_complex_identity": native_identity,
     }
-
 
 def _write_json(path: Path, value: dict[str, Any]) -> None:
     path.write_bytes(canonical_json_bytes(value) + b"\n")
@@ -5537,7 +5570,7 @@ def _run_worker(
                 break
             if process.poll() is not None:
                 break
-            if monotonic() - started >= timeout:
+            if timeout > 0.0 and monotonic() - started >= timeout:
                 termination = terminate_factory(process)
                 classification = "timeout"
                 break

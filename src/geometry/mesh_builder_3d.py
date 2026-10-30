@@ -111,7 +111,19 @@ def _mark_cells(msh: mesh.Mesh, cfg: SimulationConfig3D) -> mesh.MeshTags:
             & (z >= cfg.grating_z_min - tol)
             & (z <= cfg.grating_z_max + tol)
         )
-        values[in_block] = cfg.tags.grating
+        if cfg.grating_layers:
+            layer_bottom = cfg.grating_z_min
+            for layer in cfg.grating_layers:
+                layer_top = layer_bottom + layer.thickness
+                in_layer = (
+                    in_block
+                    & (z >= layer_bottom - tol)
+                    & (z <= layer_top + tol)
+                )
+                values[in_layer] = layer.tag
+                layer_bottom = layer_top
+        else:
+            values[in_block] = cfg.tags.grating
 
     if cfg.geometry_model_variant == "frozen_notch" and str(
         cfg.geometry_identity or ""
@@ -133,8 +145,9 @@ def _mark_cells(msh: mesh.Mesh, cfg: SimulationConfig3D) -> mesh.MeshTags:
         tol_box = 1.0e-10 * max(
             abs(x1 - x0), abs(y1 - y0), abs(z1 - z0), 1.0
         )
+        grating_tags = (cfg.tags.grating, *(layer.tag for layer in cfg.grating_layers))
         in_void = (
-            (values == cfg.tags.grating)
+            np.isin(values, grating_tags)
             & (x >= x0 - tol_box)
             & (x <= x1 + tol_box)
             & (y >= y0 - tol_box)
@@ -203,6 +216,13 @@ def _stage4_required_planes_by_axis(cfg: SimulationConfig3D) -> dict[str, list[t
             [("grating_y_min", cfg.grating_y_min), ("grating_y_max", cfg.grating_y_max)]
         )
         planes["z"].append(("grating_z_min", cfg.grating_z_min))
+        if cfg.grating_layers:
+            layer_top = cfg.grating_z_min
+            for layer_index, layer in enumerate(cfg.grating_layers[:-1], start=1):
+                layer_top += layer.thickness
+                planes["z"].append(
+                    (f"grating_layer_{layer_index}_top", layer_top)
+                )
     if cfg.air_void_box_nm is not None:
         if len(cfg.air_void_box_nm) != 6:
             raise ValueError("air_void_box_nm must contain exactly six coordinates.")
@@ -250,7 +270,8 @@ def _rectangular_air_void_audit(
         raise RuntimeError("Cell tags do not cover all owned cells for air-box audit.")
     invalid_local = int(np.count_nonzero(inside & (values != cfg.tags.air)))
     count_local = int(np.count_nonzero(inside))
-    grating_local = int(np.count_nonzero(values == cfg.tags.grating))
+    grating_tags = (cfg.tags.grating, *(layer.tag for layer in cfg.grating_layers))
+    grating_local = int(np.count_nonzero(np.isin(values, grating_tags)))
     air_local = int(np.count_nonzero(values == cfg.tags.air))
     comm = msh.comm
     invalid = int(comm.allreduce(invalid_local, op=MPI.SUM))

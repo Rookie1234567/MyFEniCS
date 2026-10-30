@@ -421,7 +421,9 @@ def _summary_base_fields(cfg: SimulationConfig3D, comm: MPI.Intracomm) -> dict[s
         "grating_material_label": cfg.grating_material_label,
         "lambda0_nm": cfg.lambda0,
         "n_substrate_complex": [cfg.substrate_index.real, cfg.substrate_index.imag],
-        "n_grating_complex": [cfg.grating_index.real, cfg.grating_index.imag],
+        "n_grating_complex": None
+        if cfg.grating_layers
+        else [cfg.grating_index.real, cfg.grating_index.imag],
         "mpi_size": comm.size,
         "mpi_rank": comm.rank,
         "mesh_target_size": cfg.mesh_target_size,

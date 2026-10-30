@@ -70,27 +70,83 @@ def _finite_number(value: Any) -> bool:
     )
 
 
-def _generic_authority_errors(summary: Mapping[str, Any]) -> list[str]:
+def _generic_authority_errors(
+    summary: Mapping[str, Any],
+    *,
+    expected_residual_tolerance: float | None = None,
+) -> list[str]:
     errors: list[str] = []
     if summary.get("case_status") != "completed":
         errors.append("numerical summary case_status is not completed")
     if summary.get("official_result") is not True:
         errors.append("numerical summary official_result is not true")
     residual = summary.get("linear_system_relative_residual")
+    reported_limit = summary.get("stage4_true_residual_tolerance")
+    residual_limit = (
+        reported_limit if expected_residual_tolerance is None
+        else expected_residual_tolerance
+    )
+    if expected_residual_tolerance is not None and (
+        not _finite_number(reported_limit)
+        or float(reported_limit) != float(expected_residual_tolerance)
+    ):
+        errors.append("reported true-residual limit differs from resolved input")
+    if (
+        expected_residual_tolerance is not None
+        and summary.get("stage4_true_residual_gate_pass") is not True
+    ):
+        errors.append("true-residual gate did not pass at the resolved input limit")
+    if residual_limit is None:
+        residual_limit = 1.0e-9
+    if not _finite_number(residual_limit) or float(residual_limit) <= 0.0:
+        errors.append("numerical summary has an invalid true-residual limit")
+        residual_limit = 1.0e-9
     if (
         not _finite_number(residual)
         or float(residual) < 0.0
-        or float(residual) > 1.0e-9
+        or float(residual) > float(residual_limit)
     ):
         errors.append("linear-system residual is outside the Full3D authority limit")
     return errors
 
 
-def _stage4_authority_errors(summary: Mapping[str, Any]) -> list[str]:
-    errors = _generic_authority_errors(summary)
+def _stage4_authority_errors(
+    summary: Mapping[str, Any],
+    *,
+    expected_residual_tolerance: float | None = None,
+    expected_energy_closure_tolerance: float | None = None,
+) -> list[str]:
+    errors = _generic_authority_errors(
+        summary,
+        expected_residual_tolerance=expected_residual_tolerance,
+    )
     for key in ("R_total", "T_total", "A_volume_total"):
         if not _finite_number(summary.get(key)):
             errors.append(f"numerical summary lacks finite {key}")
+    reported_closure_limit = summary.get("stage4_energy_closure_tolerance")
+    closure_limit = (
+        reported_closure_limit
+        if expected_energy_closure_tolerance is None
+        else expected_energy_closure_tolerance
+    )
+    if expected_energy_closure_tolerance is not None and (
+        not _finite_number(reported_closure_limit)
+        or float(reported_closure_limit)
+        != float(expected_energy_closure_tolerance)
+    ):
+        errors.append("reported energy-closure limit differs from resolved input")
+    if closure_limit is not None:
+        closure = summary.get("energy_closure_error_port_volume")
+        if (
+            not _finite_number(closure_limit)
+            or float(closure_limit) <= 0.0
+            or not _finite_number(closure)
+            or abs(float(closure)) > float(closure_limit)
+            or summary.get("stage4_energy_closure_gate_pass") is not True
+        ):
+            errors.append("R/T/A energy closure is outside the configured authority limit")
+    if summary.get("stage4_energy_closure_gate_io_errors"):
+        errors.append("R/T/A energy-closure evidence could not be written")
     return errors
 
 
@@ -163,7 +219,15 @@ def run_full3d_direct(
             "numerical_output_directory": str(numerical_output),
         }
     errors = (
-        _stage4_authority_errors(summary)
+        _stage4_authority_errors(
+            summary,
+            expected_residual_tolerance=(
+                cfg.stage4_official_true_residual_tolerance
+            ),
+            expected_energy_closure_tolerance=(
+                cfg.stage4_official_energy_closure_tolerance
+            ),
+        )
         if cfg.stage_case in {"stage4_flat_layer_sanity", "stage4_block_grating"}
         else _generic_authority_errors(summary)
     )

@@ -250,6 +250,99 @@ def test_stage_mapping_and_non_grating_zero_hash_normalization(tmp_path):
     )
 
 
+def test_layered_grating_stack_is_resolved_and_hash_bound(tmp_path):
+    source_path = Path("input/templates/full3d_layered_direct_example.dat")
+    spec = load_and_resolve(source_path)
+    from mpi4py import MPI
+
+    from src.io.input_validation import simulation_config_3d_from_normalized
+    from src.solvers.common_3d_utils import _summary_base_fields
+    from src.solvers.stage4_runtime import stage4_physical_model
+
+    cfg = simulation_config_3d_from_normalized(spec.as_jsonable())
+    assert cfg.stage_case == "stage4_block_grating"
+    assert (cfg.period_x, cfg.period_y) == (2.5, 2.5)
+    assert (cfg.grating_x_min, cfg.grating_x_max) == (0.825, 1.675)
+    assert (cfg.grating_y_min, cfg.grating_y_max) == (0.75, 1.75)
+    assert (cfg.domain_z_min, cfg.domain_z_max) == (-0.5, 3.5)
+    assert (cfg.grating_z_min, cfg.grating_z_max) == (0.0, 3.0)
+    assert cfg.lambda0 == 0.7
+    assert (cfg.incident_theta_deg, cfg.incident_phi_deg) == (89.0, 90.0)
+    assert cfg.polarization_kind == "s"
+    assert cfg.nedelec_degree == 6
+    assert cfg.use_floquet_xy is True
+    assert cfg.stage4_boundary_model == "dtn_port"
+    assert cfg.mesh_axis_cell_counts_requested == (3, 6, 8)
+    assert [layer.name for layer in cfg.grating_layers] == [
+        "Si / silicon",
+        "Si0.7Ge0.3",
+        "Si / silicon",
+        "Si0.7Ge0.3",
+        "Si / silicon",
+        "SiO2 / amorphous silica",
+    ]
+    assert [layer.tag for layer in cfg.grating_layers] == [6, 7, 8, 9, 10, 11]
+    assert [layer.thickness for layer in cfg.grating_layers] == [0.5] * 6
+    assert cfg.grating_layers[1].eps_r.imag > 0.0
+    assert cfg.stage4_official_true_residual_tolerance == 1.0e-6
+    assert cfg.stage4_official_energy_closure_tolerance == 1.0e-5
+    assert len(cfg.grating_volume_regions) == 6
+    assert cfg.as_jsonable()["grating_layers"][1]["tag"] == 7
+    assert stage4_physical_model(cfg)["n_grating"] is None
+    assert _summary_base_fields(cfg, MPI.COMM_WORLD)["n_grating_complex"] is None
+
+    changed_geometry = _write_variant(
+        tmp_path,
+        "changed_layer_geometry.dat",
+        source_path,
+        [(
+            "grating_layer_thicknesses_nm = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]",
+            "grating_layer_thicknesses_nm = [0.6, 0.4, 0.5, 0.5, 0.5, 0.5]",
+        )],
+    )
+    changed_material = _write_variant(
+        tmp_path,
+        "changed_layer_material.dat",
+        source_path,
+        [("0.9998279652911092, 0.000039596126227885923", "0.9998279652911092, 0.0000395961263")],
+    )
+    assert load_and_resolve(changed_geometry).physical_model_sha256 != spec.physical_model_sha256
+    assert load_and_resolve(changed_material).physical_model_sha256 != spec.physical_model_sha256
+
+    incomplete = _write_variant(
+        tmp_path,
+        "incomplete_layer_stack.dat",
+        source_path,
+        [(
+            "grating_layer_names = [\n  \"Si / silicon\",\n  \"Si0.7Ge0.3\",\n  \"Si / silicon\",\n  \"Si0.7Ge0.3\",\n  \"Si / silicon\",\n  \"SiO2 / amorphous silica\",\n]\n",
+            "",
+        )],
+    )
+    with pytest.raises(InputError, match="must be supplied together"):
+        load_and_resolve(incomplete)
+
+    unsupported_notch = _write_variant(
+        tmp_path,
+        "unsupported_layer_notch.dat",
+        source_path,
+        [(
+            'geometry_kind = "rectangular_block_grating"',
+            'geometry_kind = "rectangular_block_grating"\ncell_notch = "positive_x_middle_y_z40_80"',
+        )],
+    )
+    with pytest.raises(InputError, match="do not support layered grating material tags"):
+        load_and_resolve(unsupported_notch)
+
+    unsupported_iterative = _write_variant(
+        tmp_path,
+        "unsupported_layer_iterative.dat",
+        source_path,
+        [('kind = "full3d_direct"', 'kind = "full3d_iterative"')],
+    )
+    with pytest.raises(InputError):
+        load_and_resolve(unsupported_iterative)
+
+
 def test_resolved_writer_uses_one_stable_payload_authority(tmp_path):
     spec = load_and_resolve("input/templates/hybrid_iterative_example.dat")
     target = tmp_path / "resolved_config.json"

@@ -48,15 +48,29 @@ def _cell_tag_volumes(msh, mesh_data, cfg: SimulationConfig3D) -> dict[str, floa
     tag_items = {
         "air": cfg.tags.air,
         "substrate": cfg.tags.substrate,
-        "grating": cfg.tags.grating,
         "top_pml": cfg.tags.top_pml,
         "bottom_pml": cfg.tags.bottom_pml,
     }
+    if cfg.grating_layers:
+        tag_items.update(
+            {
+                f"grating_layer_{index}": layer.tag
+                for index, layer in enumerate(cfg.grating_layers, start=1)
+            }
+        )
+        grating_tags = tuple(layer.tag for layer in cfg.grating_layers)
+    else:
+        tag_items["grating"] = cfg.tags.grating
+        grating_tags = (cfg.tags.grating,)
     volumes: dict[str, float] = {}
     for name, tag in tag_items.items():
         local = fem.assemble_scalar(fem.form(ufl.as_ufl(1.0) * dx(tag)))
         global_value = msh.comm.allreduce(local, op=MPI.SUM)
         volumes[name] = float(np.real(global_value))
+    if cfg.grating_layers:
+        volumes["grating"] = float(
+            sum(volumes[f"grating_layer_{index}"] for index in range(1, len(grating_tags) + 1))
+        )
     return volumes
 
 def _fit_plane_wave_modes(
@@ -391,7 +405,11 @@ def _stage4_lossless_energy_balance_check(cfg: SimulationConfig3D, summary: dict
         return {}
     lossless = all(
         abs(complex(index).imag) < 1.0e-12
-        for index in (cfg.n_air, cfg.substrate_index, cfg.grating_index)
+        for index in (
+            cfg.n_air,
+            cfg.substrate_index,
+            *(layer.refractive_index for layer in cfg.grating_volume_regions),
+        )
     )
     tolerance = 1.0e-8
     r_plus_t = float(summary["R_plus_T"])

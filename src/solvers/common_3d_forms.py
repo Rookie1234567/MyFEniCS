@@ -39,11 +39,14 @@ def _build_physical_volume_terms(
     curl_v = ufl.curl(v)
     curl_curl = PETSc.ScalarType(0.0) * ufl.inner(curl_u, curl_v) * dx
     material_mass = PETSc.ScalarType(0.0) * ufl.inner(u, v) * dx
-    for tag, eps_r in (
+    physical_material_terms = [
         (cfg.tags.air, cfg.eps_r),
         (cfg.tags.substrate, cfg.substrate_index**2),
-        (cfg.tags.grating, cfg.grating_index**2),
-    ):
+    ]
+    physical_material_terms.extend(
+        (layer.tag, layer.eps_r) for layer in cfg.grating_volume_regions
+    )
+    for tag, eps_r in physical_material_terms:
         curl_curl += (
             PETSc.ScalarType(1.0 / cfg.mu_r)
             * ufl.inner(curl_u, curl_v)
@@ -72,6 +75,10 @@ def _build_variational_forms(
     Cell tags decide which material tensor is used.  The x/y periodicity is not
     part of this form; it is imposed later through ``dolfinx_mpc`` constraints.
     """
+    if cfg.grating_layers and field_formulation == "layered_scattered":
+        raise ValueError(
+            "layered grating materials require the total-field dtn_port formulation"
+        )
     u = ufl.TrialFunction(V)
     v = ufl.TestFunction(V)
     dx = ufl.Measure("dx", domain=msh, subdomain_data=mesh_data.cell_tags)
@@ -82,7 +89,7 @@ def _build_variational_forms(
     curl_curl, material_mass = _build_physical_volume_terms(cfg, u, v, dx)
     a = curl_curl + material_mass
     if float(cfg.divergence_penalty) > 0.0:
-        d_physical = dx((cfg.tags.air, cfg.tags.substrate, cfg.tags.grating))
+        d_physical = dx(cfg.physical_material_tags)
         a += PETSc.ScalarType(cfg.divergence_penalty) * ufl.inner(ufl.div(u), ufl.div(v)) * d_physical
 
     # PML cells use the same unknown E, but with the z-stretched material

@@ -165,19 +165,39 @@ def compute_volume_absorption_3d(
     pass E_background + E_scattered.
     """
 
+    if cfg.grating_layers:
+        grating_regions = {
+            f"grating_layer_{index}": _region_absorption(
+                mesh_data,
+                cfg,
+                E_total,
+                name=f"grating layer {index} ({layer.name})",
+                tag=layer.tag,
+                eps_r=layer.eps_r,
+                n_value=layer.refractive_index,
+                material_label=layer.name,
+                incident_power=incident_power,
+                jit_options=jit_options,
+            )
+            for index, layer in enumerate(cfg.grating_layers, start=1)
+        }
+    else:
+        grating_regions = {
+            "grating": _region_absorption(
+                mesh_data,
+                cfg,
+                E_total,
+                name="grating",
+                tag=cfg.tags.grating,
+                eps_r=cfg.eps_grating,
+                n_value=cfg.grating_index,
+                material_label=cfg.grating_material_label,
+                incident_power=incident_power,
+                jit_options=jit_options,
+            )
+        }
     regions = {
-        "grating": _region_absorption(
-            mesh_data,
-            cfg,
-            E_total,
-            name="grating",
-            tag=cfg.tags.grating,
-            eps_r=cfg.eps_grating,
-            n_value=cfg.grating_index,
-            material_label=cfg.grating_material_label,
-            incident_power=incident_power,
-            jit_options=jit_options,
-        ),
+        **grating_regions,
         "substrate": _region_absorption(
             mesh_data,
             cfg,
@@ -191,9 +211,20 @@ def compute_volume_absorption_3d(
             jit_options=jit_options,
         ),
     }
-    A_grating = _maybe_float(regions["grating"]["A_volume"])
+    grating_absorption_values = [
+        _maybe_float(region["A_volume"]) for region in grating_regions.values()
+    ]
+    A_grating = (
+        None
+        if any(value is None for value in grating_absorption_values)
+        else float(sum(value for value in grating_absorption_values if value is not None))
+    )
     A_substrate = _maybe_float(regions["substrate"]["A_volume"])
-    A_volume_total = float(sum(value for value in (A_grating, A_substrate) if value is not None))
+    A_volume_total = (
+        None
+        if cfg.grating_layers and (A_grating is None or A_substrate is None)
+        else float(sum(value for value in (A_grating, A_substrate) if value is not None))
+    )
 
     port_R = _maybe_float(None if port_metrics is None else port_metrics.get("R_total"))
     port_T = _maybe_float(None if port_metrics is None else port_metrics.get("T_total"))
@@ -217,12 +248,22 @@ def compute_volume_absorption_3d(
         "A_substrate": A_substrate,
         "A_volume_grating": A_grating,
         "A_volume_substrate": A_substrate,
+        "A_volume_grating_layers": {
+            name: _maybe_float(region.get("A_volume"))
+            for name, region in grating_regions.items()
+        },
         "A_volume_total": A_volume_total,
-        "A_port_balance_minus_A_volume_total": None if port_A is None else float(port_A - A_volume_total),
-        "A_probe_balance_minus_A_volume_total": None if probe_A is None else float(probe_A - A_volume_total),
-        "A_flux_minus_A_volume_total": None if flux_A is None else float(flux_A - A_volume_total),
+        "A_port_balance_minus_A_volume_total": None
+        if port_A is None or A_volume_total is None
+        else float(port_A - A_volume_total),
+        "A_probe_balance_minus_A_volume_total": None
+        if probe_A is None or A_volume_total is None
+        else float(probe_A - A_volume_total),
+        "A_flux_minus_A_volume_total": None
+        if flux_A is None or A_volume_total is None
+        else float(flux_A - A_volume_total),
         "energy_closure_error_port_volume": None
-        if port_R is None or port_T is None
+        if port_R is None or port_T is None or A_volume_total is None
         else float(port_R + port_T + A_volume_total - 1.0),
     }
 

@@ -1,0 +1,31 @@
+{
+  "schema": "task44.condensation-kernel-observation.v1",
+  "classification": "not_qualified",
+  "observed_at_utc": "2026-10-30",
+  "source_base_sha": "db790f92a186988c5147f1828d15c07034e7c430",
+  "probe": {
+    "input": "input/templates/full3d_layered_direct_example.dat",
+    "mesh": "sample A, 3 x 6 x 8 = 144 hexahedra",
+    "forms": "curl and material forms returned by _build_physical_volume_terms, then combined and compiled with fem.form",
+    "helper": "_cell_integral_kernels(sum_duplicate_cell_integrals=True)",
+    "observed_integral_ids": {
+      "1": 1,
+      "2": 1,
+      "6": 1,
+      "7": 1,
+      "8": 1,
+      "9": 1,
+      "10": 1,
+      "11": 1
+    }
+  },
+  "failed_test_expectation": "Each layer tag would expose at least two compiled kernels in the combined physical form.",
+  "actual_result": "FFCx exposed one compiled integral kernel for each of the six layer tags (6 through 11). The >=2 assertion failed; this was a test expectation mismatch, not a PDE or solver result.",
+  "test_run": {
+    "command_scope": "Task44 layered-material tests plus launcher and subreaper targeted tests",
+    "result": "1 failed, 19 passed",
+    "failing_assertion": "len(combined_kernels[layer.tag]) >= 2"
+  },
+  "decision": "The Task44-only condensation opt-in and its unsupported assertion were removed. Static condensation remains unqualified and deferred. Official Task44 A-D use standard_full, which retains the original full matrix for the explicit true-residual gate.",
+  "pde_executed": false
+}

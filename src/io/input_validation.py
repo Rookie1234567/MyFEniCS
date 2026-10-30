@@ -159,6 +159,19 @@ def _parse_value(spec: Any, value: Any) -> Any:
         result = tuple(
             _finite_number(item, f"{path}[{index}]") for index, item in enumerate(value)
         )
+    elif value_type == "string_array":
+        if not isinstance(value, (list, tuple)) or any(
+            not isinstance(item, str) or not item.strip() for item in value
+        ):
+            raise _error(path, "expected an array of non-empty strings")
+        result = tuple(item.strip() for item in value)
+    elif value_type == "complex_array":
+        if not isinstance(value, (list, tuple)):
+            raise _error(path, "expected an array of [real, imag] pairs")
+        result = tuple(
+            _parse_complex_pair(item, f"{path}[{index}]")
+            for index, item in enumerate(value)
+        )
     elif value_type == "integer_array":
         if not isinstance(value, (list, tuple)):
             raise _error(path, "expected an array of integers")
@@ -2744,7 +2757,82 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
         "rectangular_block_grating",
     }:
         _require(materials, "n_substrate", "materials.n_substrate")
-    if dimension == 2 or geometry_kind in {"rectangular_block_grating"}:
+    supplied_grating_layer_fields = (
+        "grating_layer_thicknesses_nm" in geometry,
+        "grating_layer_names" in materials,
+        "grating_layer_indices" in materials,
+    )
+    has_grating_layers = any(supplied_grating_layer_fields)
+    if has_grating_layers:
+        if dimension != 3 or geometry_kind != "rectangular_block_grating":
+            raise _error(
+                "geometry.grating_layer_thicknesses_nm",
+                "layered grating materials require a 3D rectangular block",
+            )
+        if method.get("kind") != "full3d_direct":
+            raise _error(
+                "method.kind",
+                "layered grating materials currently require full3d_direct",
+            )
+        if geometry.get("cell_notch") is not None or geometry.get(
+            "model_variant", "original"
+        ) != "original":
+            raise _error(
+                "geometry",
+                "cell_notch and frozen model variants do not support layered grating material tags",
+            )
+        if not all(supplied_grating_layer_fields):
+            raise _error(
+                "geometry.grating_layer_thicknesses_nm",
+                "thicknesses, material names, and indices must be supplied together",
+            )
+        thicknesses = geometry["grating_layer_thicknesses_nm"]
+        names = materials["grating_layer_names"]
+        indices = materials["grating_layer_indices"]
+        if not thicknesses or not (len(thicknesses) == len(names) == len(indices)):
+            raise _error(
+                "geometry.grating_layer_thicknesses_nm",
+                "requires equal, non-empty thickness, name, and index arrays",
+            )
+        if any(value <= 0.0 for value in thicknesses):
+            raise _error(
+                "geometry.grating_layer_thicknesses_nm",
+                "every layer thickness must be positive",
+            )
+        if not isclose(
+            sum(thicknesses),
+            geometry.get("grating_height_nm", 0.0),
+            rel_tol=1.0e-12,
+            abs_tol=1.0e-12,
+        ):
+            raise _error(
+                "geometry.grating_layer_thicknesses_nm",
+                "thickness sum must equal geometry.grating_height_nm",
+            )
+        if any(index[1] < 0.0 for index in indices):
+            raise _error(
+                "materials.grating_layer_indices",
+                "imaginary refractive-index parts must be non-negative for exp(-i omega t)",
+            )
+        if "n_grating" in materials or "grating_name" in materials:
+            raise _error(
+                "materials.n_grating",
+                "single-material grating fields cannot be combined with grating layer arrays",
+            )
+        if boundary.get("vertical_boundary") != "dtn_port":
+            raise _error(
+                "boundary.vertical_boundary",
+                "layered grating materials currently require dtn_port",
+            )
+        if (
+            "official_true_residual_tolerance" not in solver
+            or "official_energy_closure_tolerance" not in solver
+        ):
+            raise _error(
+                "solver",
+                "layered grating inputs require explicit official true-residual and energy-closure tolerances",
+            )
+    elif dimension == 2 or geometry_kind == "rectangular_block_grating":
         _require(materials, "n_grating", "materials.n_grating")
     for key in ("grating_width_x_nm", "grating_height_nm"):
         if key in geometry:
@@ -2978,8 +3066,13 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
         raise _error(
             "execution", "warning_memory_gib must be below terminate_memory_gib"
         )
-    if execution["timeout_seconds"] <= 0:
-        raise _error("execution.timeout_seconds", "must be positive")
+    if execution["timeout_seconds"] < 0 or (
+        execution["timeout_seconds"] == 0 and not has_grating_layers
+    ):
+        raise _error(
+            "execution.timeout_seconds",
+            "must be positive, except zero disables the wall-time watchdog for an explicit layered-material model",
+        )
 
     if dimension == 3:
         if output["export_reference_planes"]:
@@ -3035,6 +3128,12 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             raise _error("solver", "ILU level/shift must be non-negative")
         if not 0.0 <= solver["overlap_fraction"] < 1.0:
             raise _error("solver.overlap_fraction", "must satisfy 0 <= value < 1")
+    for key in (
+        "official_true_residual_tolerance",
+        "official_energy_closure_tolerance",
+    ):
+        if key in solver and solver[key] <= 0.0:
+            raise _error(f"solver.{key}", "must be positive")
 
 
 def _validate_loaded_input(loaded: LoadedInput) -> dict[str, Any]:
@@ -3159,7 +3258,7 @@ def simulation_config_3d_from_normalized(
     field mapping.  The adapter must not reconstruct a second public schema.
     """
 
-    from src.common.config_3d import SimulationConfig3D
+    from src.common.config_3d import GratingLayer3D, SimulationConfig3D
 
     g = config["geometry"]
     m = config["materials"]
@@ -3172,6 +3271,22 @@ def simulation_config_3d_from_normalized(
         90.0 - i["grazing_angle_deg"]
         if "grazing_angle_deg" in i
         else i["tilt_from_downward_z_deg"]
+    )
+    grating_layers = tuple(
+        GratingLayer3D(
+            name=str(name),
+            thickness=float(thickness),
+            refractive_index=_complex(index),
+            tag=6 + layer_index,
+        )
+        for layer_index, (thickness, name, index) in enumerate(
+            zip(
+                g.get("grating_layer_thicknesses_nm", ()),
+                m.get("grating_layer_names", ()),
+                m.get("grating_layer_indices", ()),
+                strict=True,
+            )
+        )
     )
     if g["geometry_kind"] == "rectangular_block_grating":
         stage_case = "stage4_block_grating"
@@ -3221,6 +3336,13 @@ def simulation_config_3d_from_normalized(
         n_grating=(None if m.get("n_grating") is None else _complex(m["n_grating"])),
         substrate_material_label=m.get("substrate_name"),
         grating_material_label=m.get("grating_name"),
+        grating_layers=grating_layers,
+        stage4_official_true_residual_tolerance=solver.get(
+            "official_true_residual_tolerance"
+        ),
+        stage4_official_energy_closure_tolerance=solver.get(
+            "official_energy_closure_tolerance"
+        ),
         interface_z=g["interface_z_nm"],
         scattering_background=b.get("scattering_background", "layered"),
         stage4_boundary_model=b["vertical_boundary"],
@@ -3308,7 +3430,7 @@ def _build_3d_config(config: Mapping[str, Any]) -> dict[str, Any]:
         "task40extra_0p7nm_"
     )
     if (
-        task40_electrical_size_profile
+        (task40_electrical_size_profile or bool(cfg.grating_layers))
         and config["output"].get("export_diffraction_orders", False)
     ):
         from src.postprocessing.diffraction_3d import (

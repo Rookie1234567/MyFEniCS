@@ -44,6 +44,20 @@ class Tags3D:
     z_max: int = 16
 
 
+@dataclass(frozen=True)
+class GratingLayer3D:
+    """One exact-z material slab inside the rectangular grating block."""
+
+    name: str
+    thickness: float
+    refractive_index: complex
+    tag: int
+
+    @property
+    def eps_r(self) -> complex:
+        return complex(self.refractive_index**2)
+
+
 @dataclass
 class SimulationConfig3D:
     """Configuration for the staged 3D Maxwell path.
@@ -86,6 +100,9 @@ class SimulationConfig3D:
     n_grating: complex | None = None
     substrate_material_label: str | None = None
     grating_material_label: str | None = None
+    grating_layers: tuple[GratingLayer3D, ...] = ()
+    stage4_official_true_residual_tolerance: float | None = None
+    stage4_official_energy_closure_tolerance: float | None = None
     validation_role: str = NUMERICAL_SANITY_ONLY
     interface_z: float = 0.0
     scattering_background: str = "layered"
@@ -617,6 +634,28 @@ class SimulationConfig3D:
         return complex(self.grating_index**2)
 
     @property
+    def grating_volume_regions(self) -> tuple[GratingLayer3D, ...]:
+        """Return explicit pillar layers, or the historical single grating region."""
+        if self.grating_layers:
+            return self.grating_layers
+        return (
+            GratingLayer3D(
+                name=self.grating_material_label or "grating",
+                thickness=float(self.grating_height),
+                refractive_index=self.grating_index,
+                tag=self.tags.grating,
+            ),
+        )
+
+    @property
+    def physical_material_tags(self) -> tuple[int, ...]:
+        return (
+            self.tags.air,
+            self.tags.substrate,
+            *(layer.tag for layer in self.grating_volume_regions),
+        )
+
+    @property
     def grating_x_min(self) -> float:
         return 0.5 * (self.x_min + self.x_max) - 0.5 * self.grating_width_x
 
@@ -662,6 +701,26 @@ class SimulationConfig3D:
         units all come from the same config used by the solver.
         """
         data = asdict(self)
+        if self.grating_layers:
+            data["grating_layers"] = [
+                {
+                    "name": layer.name,
+                    "thickness_nm": float(layer.thickness),
+                    "refractive_index": _complex_or_none(layer.refractive_index),
+                    "epsilon_r": _complex_or_none(layer.eps_r),
+                    "tag": int(layer.tag),
+                }
+                for layer in self.grating_layers
+            ]
+        else:
+            # Keep old single-material config snapshots stable.
+            data.pop("grating_layers", None)
+        for key in (
+            "stage4_official_true_residual_tolerance",
+            "stage4_official_energy_closure_tolerance",
+        ):
+            if data.get(key) is None:
+                data.pop(key, None)
         # Keep historical config snapshots byte-compatible when the optional
         # V21 identity/axis fields are not in use.  Explicit V21 inputs retain
         # the fields below so the runtime identity is visible in evidence.

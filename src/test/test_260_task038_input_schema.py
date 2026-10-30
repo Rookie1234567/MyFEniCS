@@ -73,18 +73,18 @@ def test_schema_identity_sections_and_unique_whitelist():
         "output",
     )
     assert len(IDENTITY_FIELD_SPECS) == 5
-    assert len(FIELD_SPECS) == 121
-    assert len(PUBLIC_FIELD_SPECS) == len(PUBLIC_FIELD_KEYS) == 126
+    assert len(FIELD_SPECS) == 144
+    assert len(PUBLIC_FIELD_SPECS) == len(PUBLIC_FIELD_KEYS) == 149
     assert set(FIELD_SPECS_BY_KEY) == set(PUBLIC_FIELD_KEYS)
     assert {name: len(keys) for name, keys in SECTION_FIELD_KEYS.items()} == {
-        "geometry": 15,
-        "materials": 6,
+        "geometry": 16,
+        "materials": 8,
         "incidence": 8,
         "discretization": 22,
         "boundary": 12,
         "method": 7,
-        "solver": 24,
-        "execution": 7,
+        "solver": 27,
+        "execution": 24,
         "output": 20,
     }
     assert METHOD_KINDS == (
@@ -115,6 +115,15 @@ def test_schema_identity_sections_and_unique_whitelist():
         "auto_propagating",
         "manual",
     )
+    assert FIELD_SPECS_BY_KEY["geometry.grating_layer_thicknesses_nm"].value_type == (
+        "float_array"
+    )
+    assert FIELD_SPECS_BY_KEY["materials.grating_layer_names"].value_type == (
+        "string_array"
+    )
+    assert FIELD_SPECS_BY_KEY["materials.grating_layer_indices"].value_type == (
+        "complex_array"
+    )
     assert FIELD_SPECS_BY_KEY["discretization.assembly_backend"].allowed == (
         "standard_full",
         "assembly_time_static_condensed",
@@ -128,52 +137,66 @@ def test_schema_identity_sections_and_unique_whitelist():
         "iterative",
     )
     assert FIELD_SPECS_BY_KEY["solver.preconditioner"].allowed == (
-        "full3d_scalable_v1",
-        "fullspace_pml_double_sweep_v19",
-        "physical_intermediate_p4_shifted_aux_v1",
-        "physical_intermediate_p4_reference_v1",
-        "a2r_equivalent_fast_v1",
-        "a2r_packed_equivalent_v2",
-        "light_p4ref_jointmr3_v2",
-        "balanced_h6_p4_v5",
-        "balanced_s6_p4_v5",
-        "projected_krylov6_h6_p4_v5",
-        "balanced_h6_recursive_p4_lo_v6",
-        "balanced_h6_recursive_p4_hi_v6",
-        "bounded_entity16_v7",
-        "bounded_projected_seq2_16_v7",
-        "balanced_h6_entity_gcrot8_v8",
-        "balanced_h6_entity_gcrot8_new16_v9",
-        "p6smooth_p4ref_p6smooth_v1",
-        "physical_macro_dd4_v10",
-        "physical_macro_dd4_v11",
-        "physical_macro_dd4_v12",
-        "physical_p4_direction_diagnosis_v13",
-        "physical_p4_schur_v14",
-        "physical_p4_blr_bal_h_v16",
-        "physical_p4_blr_tradeoff_v17",
-            "physical_p4_cell_condensed_exact_v18",
-            "physical_p4_cell_condensed_blr_v18",
-                "physical_p6_trace_p4_condensed_balh_v19",
-                "physical_p6_trace_p4_condensed_lowmem_v20",
-                "physical_p6_trace_p4_condensed_robustness_v21",
-                "physical_p6_trace_p4_condensed_capacity_v22",
-                "physical_p6_trace_p4_condensed_physical_memory_v23",
-                    "physical_p6_trace_p4_condensed_laptop_speed_v24",
-                    "physical_p6_trace_coarse_degree_speed_v25",
-                    "physical_p6_trace_setup_efficiency_v26",
-                    "physical_p6_trace_workingset_efficiency_v27",
-                    "physical_p6_trace_fused_kernel_v28",
-                    "physical_p6_trace_a4_tensor_h6_v29",
-                    "physical_p6_trace_workstation_guided_v30",
-                    "physical_p6_trace_projection_layout_v31",
-                    "task40extra_0p7nm_p6trace_p4_v1",
-                    "task40extra_0p7nm_p6trace_p4_reference_metric_v2",
-                    "task40extra_v10_p6_y_orbit_reference_v1",
-                    "task40extra_v10_p4_balh_control_v1",
-                    "task40extra_v11_p6_y_orbit_gx560_reference_v1",
-                    "task40extra_v11_p6_y_orbit_gx784_reference_v1",
-                    "hybrid_block_ldu_ilu0_dtn_woodbury",
+        'full3d_scalable_v1',
+        'fullspace_pml_double_sweep_v19',
+        'physical_intermediate_p4_shifted_aux_v1',
+        'physical_intermediate_p4_reference_v1',
+        'a2r_equivalent_fast_v1',
+        'a2r_packed_equivalent_v2',
+        'light_p4ref_jointmr3_v2',
+        'balanced_h6_p4_v5',
+        'balanced_s6_p4_v5',
+        'projected_krylov6_h6_p4_v5',
+        'balanced_h6_recursive_p4_lo_v6',
+        'balanced_h6_recursive_p4_hi_v6',
+        'bounded_entity16_v7',
+        'bounded_projected_seq2_16_v7',
+        'balanced_h6_entity_gcrot8_v8',
+        'balanced_h6_entity_gcrot8_new16_v9',
+        'p6smooth_p4ref_p6smooth_v1',
+        'physical_macro_dd4_v10',
+        'physical_macro_dd4_v11',
+        'physical_macro_dd4_v12',
+        'physical_p4_direction_diagnosis_v13',
+        'physical_p4_schur_v14',
+        'physical_p4_blr_bal_h_v16',
+        'physical_p4_blr_tradeoff_v17',
+        'physical_p4_cell_condensed_exact_v18',
+        'physical_p4_cell_condensed_blr_v18',
+        'physical_p6_trace_p4_condensed_balh_v19',
+        'physical_p6_trace_p4_condensed_lowmem_v20',
+        'physical_p6_trace_p4_condensed_robustness_v21',
+        'physical_p6_trace_p4_condensed_capacity_v22',
+        'physical_p6_trace_p4_condensed_physical_memory_v23',
+        'physical_p6_trace_p4_condensed_laptop_speed_v24',
+        'physical_p6_trace_coarse_degree_speed_v25',
+        'physical_p6_trace_setup_efficiency_v26',
+        'physical_p6_trace_workingset_efficiency_v27',
+        'physical_p6_trace_fused_kernel_v28',
+        'physical_p6_trace_a4_tensor_h6_v29',
+        'physical_p6_trace_workstation_guided_v30',
+        'physical_p6_trace_projection_layout_v31',
+        'task40extra_0p7nm_p6trace_p4_v1',
+        'task40extra_0p7nm_p6trace_p4_reference_metric_v2',
+        'task40extra_v10_p6_y_orbit_reference_v1',
+        'task40extra_v10_p4_balh_control_v1',
+        'task40extra_v11_p6_y_orbit_gx560_reference_v1',
+        'task40extra_v11_p6_y_orbit_gx784_reference_v1',
+        'task40extra_v15_p6_y_orbit_b0_reference_v1',
+        'task40extra_v15_p6_y_orbit_gx560_reference_v1',
+        'task40extra_v15_p6_y_orbit_e1_reference_v1',
+        'task40extra_v16_p6_y_orbit_gx560_reference_v1',
+        'task40extra_v16_p6_y_orbit_e1_reference_v1',
+        'task40extra_v17_p6_y_orbit_b0_reference_v1',
+        'task40extra_v17_p6_y_orbit_gx560_reference_v1',
+        'task40extra_v17_p6_y_orbit_e1_reference_v1',
+        'task40extra_v18_p6_y_orbit_b0_y8_reference_v1',
+        'task40extra_v20_p6_y_orbit_e2_reference_v1',
+        'task40extra_v20_p6_y_orbit_target_original_ny8_v1',
+        'task40extra_v22_p6_y_orbit_target_original_ny8_operator_probe_v1',
+        'task41extra_g13_p6_phi90_a2_y_orbit_reference_v1',
+        'task41extra_b0_p6_phi90_07nm_y_orbit_reference_v1',
+        'hybrid_block_ldu_ilu0_dtn_woodbury',
     )
     for key in (
         "geometry.period_y_nm",
@@ -200,7 +223,7 @@ def test_readme_markers_and_continuous_table():
     text, rows = _readme_table()
     marker_pattern = re.compile(r"^<!-- schema-field (\{.*\}) -->$", re.MULTILINE)
     markers = [json.loads(match) for match in marker_pattern.findall(text)]
-    assert len(markers) == len(PUBLIC_FIELD_KEYS) == 126
+    assert len(markers) == len(PUBLIC_FIELD_KEYS) == 149
     assert [marker["key"] for marker in markers] == list(PUBLIC_FIELD_KEYS)
     assert len({marker["key"] for marker in markers}) == len(markers)
     for marker in markers:
@@ -240,6 +263,7 @@ def test_templates_parse_and_use_only_public_keys():
     expected = {
         "ordinary_2d_example.dat": "2d_scattered",
         "full3d_direct_example.dat": "full3d_direct",
+        "full3d_layered_direct_example.dat": "full3d_direct",
         "full3d_iterative_example.dat": "full3d_iterative",
         "full3d_pml_double_sweep_v19.dat": "full3d_iterative",
         "hybrid_direct_example.dat": "hybrid_direct",
@@ -280,8 +304,18 @@ def test_templates_parse_and_use_only_public_keys():
             )
             if spec.allowed and isinstance(value, str):
                 assert value in spec.allowed
-        for key in ("n_air", "n_substrate", "n_grating"):
+        for key in ("n_air", "n_substrate"):
             pair = document["materials"][key]
+            assert isinstance(pair, list) and len(pair) == 2
+            assert all(isinstance(item, (int, float)) for item in pair)
+        if "grating_layer_indices" in document["materials"]:
+            thicknesses = document["geometry"]["grating_layer_thicknesses_nm"]
+            names = document["materials"]["grating_layer_names"]
+            indices = document["materials"]["grating_layer_indices"]
+            assert len(thicknesses) == len(names) == len(indices) > 0
+            assert all(len(pair) == 2 for pair in indices)
+        else:
+            pair = document["materials"]["n_grating"]
             assert isinstance(pair, list) and len(pair) == 2
             assert all(isinstance(item, (int, float)) for item in pair)
         if document["dimension"] == 2:

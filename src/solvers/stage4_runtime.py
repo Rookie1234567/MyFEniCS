@@ -64,7 +64,16 @@ def stage4_physical_model(cfg: SimulationConfig3D) -> dict[str, Any]:
         "grating_height_nm": float(cfg.grating_height),
         "n_air": pair(cfg.n_air),
         "n_substrate": pair(cfg.substrate_index),
-        "n_grating": pair(cfg.grating_index),
+        "n_grating": None if cfg.grating_layers else pair(cfg.grating_index),
+        "grating_layers": [
+            {
+                "name": layer.name,
+                "thickness_nm": float(layer.thickness),
+                "n": pair(layer.refractive_index),
+                "tag": int(layer.tag),
+            }
+            for layer in cfg.grating_layers
+        ],
         "wavelength_nm": float(cfg.lambda0),
         "incident_theta_deg": float(cfg.incident_theta_deg),
         "incident_phi_deg": float(cfg.incident_phi_deg),

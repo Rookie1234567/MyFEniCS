@@ -328,6 +328,16 @@ FIELD_SPECS: Final = (
             "non-grating geometry",
         ),
     ),
+    _f(
+        "geometry.grating_layer_thicknesses_nm",
+        "float_array",
+        "nm",
+        ("full3d_direct",),
+        "矩形柱内部从下到上的逐层厚度；总和必须等于 grating_height_nm",
+        "grating_layers[].thickness",
+        "[0.5, 0.5, 0.5, 0.5, 0.5, 0.5]",
+        constraints=("3D rectangular block only; all values > 0; sum equals grating_height_nm",),
+    ),
     # materials
     _f(
         "materials.n_air",
@@ -388,6 +398,26 @@ FIELD_SPECS: Final = (
         "n_grating",
         "[0.999002304859, 0.00182649365]",
         required=False,
+    ),
+    _f(
+        "materials.grating_layer_names",
+        "string_array",
+        "none",
+        ("full3d_direct",),
+        "矩形柱逐层材料标签，顺序与 grating_layer_thicknesses_nm 相同",
+        "grating_layers[].name",
+        '["Si", "SiGe", "Si", "SiGe", "Si", "SiO2"]',
+        constraints=("same length as grating_layer_thicknesses_nm; labels must not be empty",),
+    ),
+    _f(
+        "materials.grating_layer_indices",
+        "complex_array",
+        "relative index",
+        ("full3d_direct",),
+        "矩形柱逐层复折射率 [实部, 虚部]，顺序与厚度数组相同",
+        "grating_layers[].refractive_index",
+        "[[0.9998851703688496, 0.0000043236152269], [0.9998279652911091, 0.000039596126228], [0.9998851703688496, 0.0000043236152269], [0.9998279652911091, 0.000039596126228], [0.9998851703688496, 0.0000043236152269], [0.9998683915363351, 0.0000083314348673]]",
+        constraints=("same length as thickness array; finite values and imaginary part >= 0",),
     ),
     # incidence
     _f(
@@ -1319,6 +1349,26 @@ FIELD_SPECS: Final = (
         constraints=("only hybrid_iterative; >= 0 and finite",),
     ),
     _f(
+        "solver.official_true_residual_tolerance",
+        "float",
+        "relative residual",
+        ("full3d_direct",),
+        "保留 Full3D 官方场结果前要求的 full explicit true residual 上限",
+        "stage4_official_true_residual_tolerance",
+        "1.0e-6",
+        constraints=("> 0; evaluated before official field postprocessing",),
+    ),
+    _f(
+        "solver.official_energy_closure_tolerance",
+        "float",
+        "absolute power fraction",
+        ("full3d_direct",),
+        "R_total + T_total + A_volume_total 相对 1 的绝对误差上限",
+        "stage4_official_energy_closure_tolerance",
+        "1.0e-5",
+        constraints=("> 0; failed closure disqualifies official R/T/A",),
+    ),
+    _f(
         "solver.initial_guess",
         "enum",
         "none",
@@ -1649,7 +1699,9 @@ FIELD_SPECS: Final = (
         "watchdog timeout",
         "7200",
         required=True,
-        constraints=("> 0; generic policy, not authority hard gate",),
+        constraints=(
+            "> 0 generally; 0 disables wall-time watchdog only for explicit layered-material models",
+        ),
     ),
     _f(
         "execution.memory_limit_gb",

@@ -69,6 +69,19 @@ class _FakeProcess:
         return self.returncode
 
 
+class _FinishAfterPolls(_FakeProcess):
+    def __init__(self, polls_before_exit=3):
+        super().__init__()
+        self.polls_before_exit = polls_before_exit
+        self.poll_count = 0
+
+    def poll(self):
+        self.poll_count += 1
+        if self.poll_count >= self.polls_before_exit:
+            self.returncode = 0
+        return self.returncode
+
+
 def _authority(*, memory=1024, swap=0):
     return {
         "memory_authority_bytes": memory,
@@ -467,3 +480,22 @@ def test_launcher_classifies_exit_timeout_memory_and_swap(
         assert not terminated
     else:
         assert terminated
+
+
+def test_zero_timeout_does_not_terminate_worker_and_positive_timeout_stays_enforced(tmp_path):
+    ordinary = _input(tmp_path, results_root=str(tmp_path / "no-wall-watchdog"))
+    no_wall_watchdog = replace(
+        ordinary,
+        execution={**ordinary.execution, "timeout_seconds": 0},
+    )
+    process = _FinishAfterPolls()
+    result, _calls, terminated = _fake_launch(
+        no_wall_watchdog,
+        tmp_path,
+        process=process,
+        sample=_authority(),
+        timestamp="20260812T000001.000000Z",
+    )
+    assert result["result_classification"] == "contract_probe_pass"
+    assert process.poll_count >= 3
+    assert not terminated
