@@ -1871,7 +1871,9 @@ def _task40_phi90_d07c_profile_facts(identity):
     elif case_label == "G3_M8_N96":
         options["directional_mesh_comparison"].update(
             display_name="D07C-G3-M8-N96",
-            changed_axes=[],
+            # The plan's changed_axes are relative to baseline B.  This N96
+            # run keeps the same G3 mesh as its N64 modal reference.
+            changed_axes=["y", "z"],
             changed_axes_vs_mesh_reference=[],
             mode_window=window_label,
             modal_window="M[-8,8],N[-96,1]",

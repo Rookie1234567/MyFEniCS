@@ -88,9 +88,11 @@ def test_g3_m8_n96_real_loader_profile_and_production_inventory():
     assert selection["comparison_reference_mode_sha256"] == N64_SHA
     assert selection["same_mesh_modal_reference_case"] == "G3_M8_N64"
     assert selection["same_mesh_modal_reference_mode_sha256"] == N64_SHA
-    assert native_profile_facts(profile)["component_options"][
+    mesh_comparison = native_profile_facts(profile)["component_options"][
         "directional_mesh_comparison"
-    ]["changed_axes"] == []
+    ]
+    assert mesh_comparison["changed_axes"] == ["y", "z"]
+    assert mesh_comparison["changed_axes_vs_mesh_reference"] == []
     assert selection["added_mode_count_vs_n64"] == 2176
     assert selection["omitted_auto_propagating_mode_count"] == 64120 - 6536
     assert selection["omitted_from_same_mesh_M8_Nminus143_to1_mode_count"] == 9860 - 6664
@@ -181,3 +183,30 @@ def test_g3_m8_n96_profile_rejects_unknown_identity_and_worker_contract_drift(
         "active_mode_count"
     ] == 6664
     assert d07c_axis_plan("G3")["expected_global_cell_count"] == 4800
+
+
+def test_g3_m8_n96_real_loader_route_matches_live_g3_mesh_axes(tmp_path):
+    from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
+    from src.runners.p6_condensed_direct import _task40_d07c_mesh_evidence
+
+    specification = load_and_resolve(N96_INPUT)
+    resolved = specification.as_jsonable()
+    profile = resolved["solver"]["native_capacity_profile"]
+    facts = native_profile_facts(profile)["component_options"][
+        "directional_mesh_comparison"
+    ]
+    route = _direct_run_contract(profile)
+    plan = d07c_axis_plan("G3")
+    assert facts["changed_axes"] == ["y", "z"]  # relative to baseline B
+    assert facts["changed_axes_vs_mesh_reference"] == []  # same G3 mesh as N64
+    assert route["task40_changed_axis"] == "yz"
+    assert route["task40_changed_axes"] == ["y", "z"]
+    cfg = simulation_config_3d_from_normalized(resolved)
+    mesh_data = build_airbox_mesh_3d(cfg, tmp_path)
+    evidence = _task40_d07c_mesh_evidence({"mesh_data": mesh_data}, cfg, route)
+    assert evidence["status"] == "PASS"
+    assert evidence["axis_cell_counts"] == [6, 100, 8]
+    assert evidence["actual_global_cell_count"] == 4800
+    assert evidence["material_tag_counts"] == {"1": 3280, "2": 1200, "3": 320}
+    assert evidence["axis_sha256_le_f64"] == plan["axis_sha256_le_f64"]
+    assert evidence["changed_axis"] == "yz"
