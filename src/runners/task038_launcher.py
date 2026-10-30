@@ -211,6 +211,55 @@ def _environment_identity() -> dict[str, Any]:
         "native_complex_identity": native_identity,
     }
 
+
+def _manifest_environment_identity() -> dict[str, Any]:
+    """Keep the Task44 public launcher MPI-free while writing its ABI facts."""
+
+    repo_root = Path(__file__).resolve().parents[2]
+    task_root = os.environ.get("MYFENICS_TASK44_ROOT")
+    if (
+        os.environ.get("MYFENICS_NATIVE_COMPLEX_ENV") != "1"
+        or not task_root
+        or Path(task_root).resolve() != repo_root
+    ):
+        return _environment_identity()
+    command = [
+        sys.executable,
+        "-c",
+        (
+            "import json; "
+            "from src.runners.task038_launcher import _environment_identity; "
+            "print(json.dumps(_environment_identity(), sort_keys=True))"
+        ),
+    ]
+    completed = subprocess.run(
+        command,
+        cwd=repo_root,
+        env=os.environ.copy(),
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    if completed.returncode != 0:
+        detail = completed.stderr.strip() or completed.stdout.strip()
+        raise InputError(
+            f"isolated native environment identity probe failed: {detail}"
+        )
+    try:
+        identity = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise InputError(
+            "isolated native environment identity probe returned invalid JSON"
+        ) from exc
+    if (
+        not isinstance(identity, dict)
+        or identity.get("qualified_activation") != "MYFENICS_NATIVE_COMPLEX_ENV=1"
+        or identity.get("runtime_profile") != "native_linux_complex"
+    ):
+        raise InputError("isolated native environment identity probe did not qualify")
+    return identity
+
+
 def _write_json(path: Path, value: dict[str, Any]) -> None:
     path.write_bytes(canonical_json_bytes(value) + b"\n")
 
@@ -5386,7 +5435,7 @@ def _base_manifest(
         "input_sha256": specification.input_sha256,
         "physical_model_sha256": specification.physical_model_sha256,
         "source_sha": source_sha,
-        "environment": _environment_identity(),
+        "environment": _manifest_environment_identity(),
         "resolved_config_sha256": resolved_sha,
         "start_time": start_time,
         "end_time": None,
