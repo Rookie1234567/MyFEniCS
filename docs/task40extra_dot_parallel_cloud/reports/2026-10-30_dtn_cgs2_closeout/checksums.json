@@ -1,0 +1,24 @@
+{
+  "schema": "public-archive-checksums.v1",
+  "date_utc": "2026-10-30",
+  "scope": "Only these three public files; not a scientific payload/reproduction certificate. This checksum manifest excludes itself.",
+  "files": [
+    {
+      "file": "README.md",
+      "bytes": 11632,
+      "sha256": "056dae5d2db3bf0a81ca4ad30d7a06ec930954e4efad7abf5415fb51e2a5b45d"
+    },
+    {
+      "file": "results.csv",
+      "bytes": 2181,
+      "sha256": "4e3ef2c1480f1d8a498605c4f664aa55bd45f591ec2b6198c14a6c9068aa1554"
+    },
+    {
+      "file": "results.json",
+      "bytes": 52950,
+      "sha256": "7199083f7400c91ce9a4fd0964ba68165a8dad5a6bd03817cb333ab08fd3f90f"
+    }
+  ],
+  "original_scientific_files_not_rehashed": true,
+  "private_restore_identifiers_included": false
+}
