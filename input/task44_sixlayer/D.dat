@@ -1,0 +1,8 @@
+model = "sixlayer_surrogate_0p7nm"
+sample_id = "qualification_D_v1"
+generator_version = "sixlayer-p6-centered-dtn-v1"
+thicknesses_nm = [0.5, 1.0, 0.5, 1.0, 0.5, 1.0]
+
+[dtn]
+evanescent_padding = 2
+quadrature_degree = 32

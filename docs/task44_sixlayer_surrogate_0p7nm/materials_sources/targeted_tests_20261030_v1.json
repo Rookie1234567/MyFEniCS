@@ -1,0 +1,36 @@
+{
+  "schema": "task44.material_targeted_tests.v1",
+  "interpreter": "qualified Linux Python; absolute execution path withheld",
+  "elapsed_seconds": 0.13429184100004932,
+  "tests_run": 12,
+  "failures": 1,
+  "errors": 0,
+  "successful": false,
+  "scientific_imports": [],
+  "files": [
+    {
+      "path": "src/common/sixlayer_materials.py",
+      "bytes": 14722,
+      "sha256": "72d244f64e925ae556796e13e0a7d5353719a16b15902c6daf9ea5f36c77d093"
+    },
+    {
+      "path": "src/test/test_task44_materials.py",
+      "bytes": 7759,
+      "sha256": "59cc4a46f33efd605cc345bb1c4dec3bb59b5004d26f083c8c5c883befc29ffe"
+    },
+    {
+      "path": "input/materials/task44_0p7nm.json",
+      "bytes": 9760,
+      "sha256": "1841c550babd874d58a147782154cdabfbb941c3930c05e3396d27d844f61d1b"
+    }
+  ],
+  "public_redaction": {
+    "status": "SANITIZED_PRESENTATION_COPY_NOT_ORIGINAL_BYTES",
+    "original_bytes": 857,
+    "original_sha256": "aa6729093ff1b92245de58939466f70234097c564b92e48d21a589c1f893d124",
+    "redacted_fields": [
+      "interpreter"
+    ],
+    "scientific_test_results_and_source_hashes_unchanged": true
+  }
+}

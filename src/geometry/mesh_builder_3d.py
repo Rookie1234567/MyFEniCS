@@ -11,6 +11,7 @@ from mpi4py import MPI
 from dolfinx import default_real_type, graph, io, mesh
 
 from ..common.config_3d import SimulationConfig3D
+from ..common.material_regions_3d import grating_layers
 
 
 @dataclass
@@ -112,6 +113,11 @@ def _mark_cells(msh: mesh.Mesh, cfg: SimulationConfig3D) -> mesh.MeshTags:
             & (z <= cfg.grating_z_max + tol)
         )
         values[in_block] = cfg.tags.grating
+        layers = grating_layers(cfg)
+        for low, high, region in layers:
+            values[in_block & (z >= low) & (z < high)] = region.tag
+        if layers and np.any(values[in_block] == cfg.tags.grating):
+            raise ValueError("layered block contains an unassigned material cell")
 
     if cfg.geometry_model_variant == "frozen_notch" and str(
         cfg.geometry_identity or ""
@@ -203,6 +209,8 @@ def _stage4_required_planes_by_axis(cfg: SimulationConfig3D) -> dict[str, list[t
             [("grating_y_min", cfg.grating_y_min), ("grating_y_max", cfg.grating_y_max)]
         )
         planes["z"].append(("grating_z_min", cfg.grating_z_min))
+        for low, high, region in grating_layers(cfg):
+            planes["z"].extend(((region.name+"_min",low),(region.name+"_max",high)))
     if cfg.air_void_box_nm is not None:
         if len(cfg.air_void_box_nm) != 6:
             raise ValueError("air_void_box_nm must contain exactly six coordinates.")

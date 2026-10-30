@@ -1,0 +1,196 @@
+"""Finite shared-filesystem stop protocol; no cross-namespace PID lookup/signalling.
+
+The supervisor verifies its own PID/start and receives SIGTERM in its namespace.
+The writer only creates one atomic request for exact case/launch/pins/token.
+"""
+from pathlib import Path
+import hashlib
+import json
+import os
+import stat
+import sys
+
+MAX_JSON_BYTES=65536
+FAILED_CLOSES=[]
+READY_KEYS={'schema','case','pins_sha256','launch_sha256','supervisor_pid','supervisor_start_ticks','token','request_path','launch_path','signal','scope'}
+REQUEST_KEYS={'schema','case','pins_sha256','launch_sha256','supervisor_pid','supervisor_start_ticks','token','signal'}
+
+
+class RequestIdentityError(RuntimeError):
+    def __init__(self,reason,**facts):
+        self.facts={'reason':reason,**facts};super().__init__(json.dumps(self.facts,sort_keys=True,allow_nan=False))
+
+
+def _close(fd,label,primary=None):
+    try:os.close(fd)
+    except BaseException as exc:
+        FAILED_CLOSES.append({'fd':fd,'label':str(label),'error':repr(exc),'retry':False})
+        if primary is not None:primary.add_note('request fd close failed: '+repr(exc))
+        else:raise
+
+
+def _json(raw):
+    def pairs(items):
+        d={}
+        for k,v in items:
+            if type(k) is not str or k in d:raise RequestIdentityError('DUPLICATE_OR_NONSTRING_JSON_KEY')
+            d[k]=v
+        return d
+    def invalid(x):raise RequestIdentityError('NONFINITE_JSON',value=x)
+    return json.loads(raw.decode('utf-8'),object_pairs_hook=pairs,parse_constant=invalid)
+
+
+def _read_regular(path,*,dir_fd=None,max_bytes=MAX_JSON_BYTES):
+    fd=None;primary=None
+    try:
+        fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_CLOEXEC|os.O_NONBLOCK,dir_fd=dir_fd)
+        before=os.fstat(fd)
+        if not stat.S_ISREG(before.st_mode) or before.st_size<1 or before.st_size>max_bytes or before.st_mode&0o444==0:
+            raise RequestIdentityError('REQUEST_OR_LAUNCH_NOT_BOUNDED_READABLE_REGULAR',path=str(path),mode=before.st_mode,bytes=before.st_size)
+        raw=b''
+        while len(raw)<=max_bytes:
+            part=os.read(fd,min(8192,max_bytes+1-len(raw)))
+            if not part:break
+            raw+=part
+        after=os.fstat(fd);named=os.stat(path,dir_fd=dir_fd,follow_symlinks=False)
+        fields=('st_dev','st_ino','st_size','st_mtime_ns','st_ctime_ns')
+        if len(raw)!=before.st_size or any(getattr(before,k)!=getattr(after,k) or getattr(after,k)!=getattr(named,k) for k in fields) or not stat.S_ISREG(named.st_mode):
+            raise RequestIdentityError('REQUEST_OR_LAUNCH_CHANGED_DURING_READ',path=str(path))
+        return _json(raw),{'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'device':after.st_dev,'inode':after.st_ino}
+    except BaseException as exc:primary=exc;raise
+    finally:
+        if fd is not None:_close(fd,path,primary)
+
+
+def atomic_exclusive_json(parent,name,value):
+    """Write/fsync privately then atomic hard-link publication with O_EXCL semantics."""
+    parent=Path(parent)
+    if parent.resolve(strict=True)!=parent or parent.is_symlink():raise RequestIdentityError('NONCANONICAL_CONTROL_DIRECTORY')
+    fd=os.open(parent,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW|os.O_CLOEXEC)
+    temporary='.'+name+'.'+os.urandom(16).hex()+'.tmp';filefd=None;primary=None;published=False
+    try:
+        before=os.fstat(fd);raw=(json.dumps(value,sort_keys=True,indent=2,allow_nan=False)+'\n').encode()
+        if len(raw)>MAX_JSON_BYTES:raise RequestIdentityError('JSON_PUBLICATION_TOO_LARGE')
+        filefd=os.open(temporary,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_CLOEXEC,0o600,dir_fd=fd)
+        view=memoryview(raw)
+        while view:
+            n=os.write(filefd,view)
+            if n<=0:raise OSError('short control write')
+            view=view[n:]
+        os.fsync(filefd);closing=filefd;filefd=None;_close(closing,temporary)
+        named=os.stat(parent,follow_symlinks=False)
+        if (before.st_dev,before.st_ino)!=(named.st_dev,named.st_ino) or not stat.S_ISDIR(named.st_mode):raise RequestIdentityError('CONTROL_DIRECTORY_REPLACED')
+        os.link(temporary,name,src_dir_fd=fd,dst_dir_fd=fd,follow_symlinks=False);published=True
+        os.unlink(temporary,dir_fd=fd);os.fsync(fd)
+        named=os.stat(parent,follow_symlinks=False);current=os.fstat(fd)
+        if (before.st_dev,before.st_ino)!=(named.st_dev,named.st_ino) or (before.st_dev,before.st_ino)!=(current.st_dev,current.st_ino) or not stat.S_ISDIR(named.st_mode) or named.st_nlink<=0 or current.st_nlink<=0:
+            raise RequestIdentityError('CONTROL_DIRECTORY_REPLACED_AFTER_PUBLICATION')
+        return {'path':str(parent/name),'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'exclusive_atomic_publication':True}
+    except BaseException as exc:primary=exc;raise
+    finally:
+        if filefd is not None:_close(filefd,temporary,primary)
+        # Only the exact temporary name generated by this call may be removed.
+        try:os.unlink(temporary,dir_fd=fd)
+        except FileNotFoundError:pass
+        except BaseException as exc:
+            if primary is not None:primary.add_note('private request temporary cleanup failed: '+repr(exc))
+            else:primary=exc
+        _close(fd,parent,primary)
+        if primary is not None and sys.exception() is None:raise primary
+
+
+def process_start(pid):
+    s=Path(f'/proc/{pid}/stat').read_text();return int(s[s.rfind(')')+2:].split()[19])
+
+
+def valid_sha(s):return type(s) is str and len(s)==64 and all(c in '0123456789abcdef' for c in s)
+
+
+def validate_request(request,ready):
+    if type(request) is not dict or set(request)!=REQUEST_KEYS:raise RequestIdentityError('REQUEST_SCHEMA')
+    expected={'schema':'supervisor-stop-request.v1',**{k:ready[k] for k in REQUEST_KEYS-{'schema','signal'}},'signal':15}
+    if request!=expected:
+        keys=sorted(k for k in expected if request.get(k)!=expected[k])
+        raise RequestIdentityError('REQUEST_IDENTITY_MISMATCH',differing_fields=keys)
+    if type(request['supervisor_pid']) is not int or type(request['supervisor_start_ticks']) is not int or type(request['signal']) is not int:
+        raise RequestIdentityError('REQUEST_SCALAR_TYPES')
+    return expected
+
+
+class RequestChannel:
+    def __init__(self,output,case,pins_sha256,launch_path,actual_argv,command):
+        self.output=Path(output);self.fd=None;self.closed=False;self.consumed=False;self.polls=0;self.request=None
+        self.case=case;self.launch_path=Path(launch_path);self.error=None
+        if not valid_sha(pins_sha256) or type(case) is not str or not case.startswith('task44_'):raise RequestIdentityError('CONTROL_CASE_OR_PINS_SCHEMA')
+        if self.launch_path.resolve(strict=True)!=self.launch_path or self.launch_path.is_symlink():raise RequestIdentityError('NONCANONICAL_LAUNCH_PATH')
+        launch,record=_read_regular(self.launch_path)
+        if launch.get('case')!=case or launch.get('pins_sha256')!=pins_sha256 or launch.get('supervisor_argv')!=actual_argv or launch.get('command')!=command:
+            raise RequestIdentityError('LAUNCH_COMMAND_OR_CASE_IDENTITY')
+        self.launch_record=record
+        self.ready={'schema':'supervisor-control-ready.v1','case':case,'pins_sha256':pins_sha256,'launch_sha256':record['sha256'],
+                    'supervisor_pid':os.getpid(),'supervisor_start_ticks':process_start(os.getpid()),'token':os.urandom(32).hex(),
+                    'request_path':str(self.output/'stop_request.json'),'launch_path':str(self.launch_path),
+                    'signal':15,'scope':'shared-filesystem request; no external PID namespace access required'}
+        try:
+            self.fd=os.open(self.output,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW|os.O_CLOEXEC)
+            self.directory=os.fstat(self.fd);self._identity()
+            self.ready_record=atomic_exclusive_json(self.output,'control_ready.json',self.ready)
+        except BaseException as exc:
+            self.close(exc);raise
+
+    def _identity(self):
+        named=os.stat(self.output,follow_symlinks=False);current=os.fstat(self.fd)
+        if (named.st_dev,named.st_ino)!=(self.directory.st_dev,self.directory.st_ino) or (current.st_dev,current.st_ino)!=(self.directory.st_dev,self.directory.st_ino) or not stat.S_ISDIR(named.st_mode) or named.st_nlink<=0 or current.st_nlink<=0:raise RequestIdentityError('CONTROL_OUTPUT_DIRECTORY_REPLACED')
+
+    def poll(self):
+        if self.closed:raise RequestIdentityError('POLL_AFTER_CLOSE')
+        self.polls+=1;self._identity()
+        if self.consumed:return None
+        try:request,record=_read_regular('stop_request.json',dir_fd=self.fd,max_bytes=4096)
+        except FileNotFoundError:
+            # Atomic publisher never exposes partial content. Reappearance is
+            # not assumed absent: a second nofollow lookup must still be absent.
+            try:os.stat('stop_request.json',dir_fd=self.fd,follow_symlinks=False)
+            except FileNotFoundError:return None
+            raise RequestIdentityError('REQUEST_REAPPEARED_DURING_READ')
+        except BaseException as exc:
+            self.error=getattr(exc,'facts',{'reason':'REQUEST_READ_FAILURE','error':repr(exc)})
+            raise
+        try:
+            if process_start(os.getpid())!=self.ready['supervisor_start_ticks']:raise RequestIdentityError('SUPERVISOR_START_IDENTITY_CHANGED')
+            launch,now=_read_regular(self.launch_path)
+            if now!=self.launch_record:raise RequestIdentityError('LAUNCH_CHANGED_BEFORE_STOP')
+            validate_request(request,self.ready)
+        except BaseException as exc:
+            self.error=getattr(exc,'facts',{'reason':'REQUEST_READ_FAILURE','error':repr(exc)})
+            raise
+        self.consumed=True;self.request={'payload':request,'record':record,'accepted':True}
+        return self.request
+
+    def facts(self):
+        return {'schema':'supervisor-request-channel.v1','case':self.case,'ready':self.ready,'ready_record':self.ready_record,
+                'launch_record':self.launch_record,'polls':self.polls,'consumed_once':self.consumed,'request':self.request,
+                'error':self.error,'poll_IO_cost':'poll count measured; per-poll timing not isolated; all I/O included in supervisor elapsed','closed':self.closed,'close_uncertain':bool(FAILED_CLOSES)}
+
+    def close(self,primary=None):
+        if self.closed:return
+        self.closed=True
+        if self.fd is not None:
+            fd=self.fd;self.fd=None;_close(fd,self.output,primary)
+
+
+def write_stop_request(ready_path,expected_case,expected_launch_sha256,expected_pins_sha256):
+    path=Path(ready_path)
+    if path.resolve(strict=True)!=path or path.is_symlink() or path.name!='control_ready.json':raise RequestIdentityError('READY_CANONICAL_PATH')
+    ready,record=_read_regular(path)
+    if type(ready) is not dict or set(ready)!=READY_KEYS:raise RequestIdentityError('READY_SCHEMA')
+    if type(ready.get('supervisor_pid')) is not int or ready['supervisor_pid']<=0 or type(ready.get('supervisor_start_ticks')) is not int or ready['supervisor_start_ticks']<=0 or type(ready.get('signal')) is not int or ready['signal']!=15:raise RequestIdentityError('READY_SCALARS')
+    if ready.get('schema')!='supervisor-control-ready.v1' or ready.get('case')!=expected_case or ready.get('launch_sha256')!=expected_launch_sha256 or ready.get('pins_sha256')!=expected_pins_sha256:
+        raise RequestIdentityError('WRITER_EXPECTED_READY_IDENTITY')
+    if not valid_sha(ready.get('token')) or not valid_sha(expected_launch_sha256) or not valid_sha(expected_pins_sha256):raise RequestIdentityError('READY_DIGEST_OR_TOKEN_SCHEMA')
+    if ready.get('request_path')!=str(path.parent/'stop_request.json'):raise RequestIdentityError('READY_REQUEST_PATH')
+    payload={'schema':'supervisor-stop-request.v1',**{k:ready[k] for k in REQUEST_KEYS-{'schema','signal'}},'signal':15}
+    validate_request(payload,ready)
+    published=atomic_exclusive_json(path.parent,'stop_request.json',payload)
+    return {'status':'EXACT_STOP_REQUEST_ATOMICALLY_PUBLISHED_NOT_TERMINATION_PROOF','ready_file':record,'request':published,'payload':payload,
+            'cross_namespace_PID_lookup_or_signal':False}

@@ -20,6 +20,7 @@ from ..common.config_3d import (
     resolve_stage4_full3d_assembly_backend,
 )
 from ..constraints.floquet_3d import DoubleFloquet3DData, build_double_floquet_mpc
+from ..common.material_regions_3d import material_regions
 from ..geometry.mesh_builder_3d import AirBox3DMesh, build_airbox_mesh_3d
 from ..postprocessing.diffraction_3d import compute_diffraction_orders_3d
 from ..postprocessing.flat_layer_reference_3d import write_flat_layer_reference_outputs
@@ -2008,21 +2009,24 @@ def run_prepared_3d_case_flow(
         "rhs_source_contrast": (
             complex(cfg.substrate_index**2 - cfg.eps_r)
             if solve_incident_scattered
-            else complex(cfg.eps_grating - cfg.grating_background_eps)
+            else ({r.name:complex(r.epsilon_r-cfg.grating_background_eps)
+                   for r in material_regions(cfg) if r.role=="grating"}
+                  if cfg.grating_layer_thicknesses_nm is not None
+                  else complex(cfg.eps_grating-cfg.grating_background_eps))
             if solve_layered_scattered
             else None
         ),
         "rhs_source_tag_ids": (
             {"substrate": cfg.tags.substrate}
             if solve_incident_scattered
-            else {"grating": cfg.tags.grating}
+            else {r.name:r.tag for r in material_regions(cfg) if r.role=="grating"}
             if solve_layered_scattered
             else {}
         ),
         "rhs_source_tag_volumes": (
             {"substrate": domain_tag_volumes["substrate"]}
             if solve_incident_scattered
-            else {"grating": domain_tag_volumes["grating"]}
+            else {r.name:domain_tag_volumes[r.name] for r in material_regions(cfg) if r.role=="grating"}
             if solve_layered_scattered
             else {}
         ),

@@ -12,6 +12,7 @@ from mpi4py import MPI
 from dolfinx import fem
 
 from ..common.config_3d import SimulationConfig3D
+from ..common.material_regions_3d import material_regions
 from .diffraction_3d import (
     DIAGNOSTIC_EH_FOURIER_PROBE_POWER_SOURCE,
     DIAGNOSTIC_SAMPLED_NET_FLUX_POWER_SOURCE,
@@ -72,6 +73,10 @@ def _region_absorbed_power(
         )
     )
     absorbed = float(np.real(msh.comm.allreduce(local, op=MPI.SUM)))
+    if cfg.grating_layer_thicknesses_nm is not None:
+        if not np.isfinite(absorbed) or absorbed < 0.0:
+            raise ValueError("nonfinite/negative six-layer material absorption; no clipping")
+        return absorbed
     return max(absorbed, 0.0)
 
 
@@ -166,32 +171,18 @@ def compute_volume_absorption_3d(
     """
 
     regions = {
-        "grating": _region_absorption(
-            mesh_data,
-            cfg,
-            E_total,
-            name="grating",
-            tag=cfg.tags.grating,
-            eps_r=cfg.eps_grating,
-            n_value=cfg.grating_index,
-            material_label=cfg.grating_material_label,
-            incident_power=incident_power,
+        region.name: _region_absorption(
+            mesh_data, cfg, E_total, name=region.name, tag=region.tag,
+            eps_r=region.epsilon_r, n_value=region.refractive_index,
+            material_label=region.label, incident_power=incident_power,
             jit_options=jit_options,
-        ),
-        "substrate": _region_absorption(
-            mesh_data,
-            cfg,
-            E_total,
-            name="substrate",
-            tag=cfg.tags.substrate,
-            eps_r=cfg.eps_substrate,
-            n_value=cfg.substrate_index,
-            material_label=cfg.substrate_material_label,
-            incident_power=incident_power,
-            jit_options=jit_options,
-        ),
+        )
+        for region in material_regions(cfg) if region.role != "air"
     }
-    A_grating = _maybe_float(regions["grating"]["A_volume"])
+    grating_values = [_maybe_float(regions[region.name]["A_volume"])
+                      for region in material_regions(cfg) if region.role == "grating"]
+    A_grating = (None if all(v is None for v in grating_values)
+                 else float(sum(v for v in grating_values if v is not None)))
     A_substrate = _maybe_float(regions["substrate"]["A_volume"])
     A_volume_total = float(sum(value for value in (A_grating, A_substrate) if value is not None))
 

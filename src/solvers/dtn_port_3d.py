@@ -76,12 +76,14 @@ from .static_local_schur_action import create_static_local_schur_action
 
 DTN_PORT_MODAL_POWER_SOURCE = "dtn_port_modal_amplitudes"
 DTN_PORT_MODAL_REFERENCE = "top=physical_z_max; bottom=physical_z_min; bottom lossy power uses boundary-plane phase attenuation"
+FAILED_BOUNDED_FACTOR_ROOTS = []
 
 
 def _stage4_preserve_exact_geometry(cfg: SimulationConfig3D) -> bool:
     """Keep Task40's local cache geometry identical to its native mesh."""
 
-    return cfg.geometry_identity == TASK40_GEOMETRY_IDENTITY
+    return (cfg.geometry_identity == TASK40_GEOMETRY_IDENTITY
+            or cfg.grating_layer_thicknesses_nm is not None)
 
 
 class Stage4VariablePLiveObserverError(RuntimeError):
@@ -1547,7 +1549,16 @@ def _mode_boundary_z(mode: PortMode3D, cfg: SimulationConfig3D) -> float:
 
 
 def _mode_boundary_phase(mode: PortMode3D, cfg: SimulationConfig3D) -> complex:
+    if _centered_port_basis(cfg):
+        return 1.0 + 0.0j
     return complex(np.exp(1j * complex(mode.k_vector[2]) * _mode_boundary_z(mode, cfg)))
+
+
+def _centered_port_basis(cfg: SimulationConfig3D) -> bool:
+    gauge = cfg.dtn_phase_gauge
+    if gauge not in (None, "global_z", "boundary_plane"):
+        raise ValueError("unknown explicit DtN phase gauge")
+    return gauge == "boundary_plane"
 
 
 def _mode_projection_denominator(mode: PortMode3D, cfg: SimulationConfig3D) -> float:
@@ -1585,7 +1596,10 @@ def _incident_projection_onto_top_mode(
         cfg.polarization_vector, dtype=np.complex128
     )
     tangential_overlap = np.vdot(mode.e_vector[:2], incident_e[:2])
-    phase = np.exp(1j * (cfg.kz - mode.k_vector[2]) * cfg.physical_z_max)
+    # The incident wave retains the fixed physical coordinate reference. In
+    # centered coordinates only its actual top-plane phase is present.
+    mode_kz = 0.0 if _centered_port_basis(cfg) else mode.k_vector[2]
+    phase = np.exp(1j * (cfg.kz - mode_kz) * cfg.physical_z_max)
     area = (cfg.x_max - cfg.x_min) * (cfg.y_max - cfg.y_min)
     return complex(area * tangential_overlap * phase / denominator)
 
@@ -1653,7 +1667,8 @@ def _mode_projection_from_solution(
     phase = ufl.exp(
         PETSc.ScalarType(1j * mode.alpha) * x[0]
         + PETSc.ScalarType(1j * mode.gamma) * x[1]
-        + PETSc.ScalarType(1j * mode.k_vector[2]) * x[2]
+        + PETSc.ScalarType(1j * mode.k_vector[2])
+        * (x[2] - (_mode_boundary_z(mode, cfg) if _centered_port_basis(cfg) else 0.0))
     )
     tangential_field = ufl.as_vector((E_total[0], E_total[1], PETSc.ScalarType(0.0)))
     tangential_mode = np.asarray(
@@ -2231,8 +2246,19 @@ def _solve_augmented_system(
     constraints: int | None = None,
     matrix_stats: dict[str, Any] | None = None,
     factorization_only: bool = False,
+    resource_preflight: bool = False,
 ) -> tuple[PETSc.Vec, PETSc.KSP, dict[str, Any]]:
     progress_comm = comm if comm is not None else A_aug.getComm()
+    symbolic_admission = None
+    if resource_preflight:
+        from ..common.runtime_resource_policy import admit, active
+        from .bounded_mumps import symbolic_memory_preflight
+        if not active() or out_dir is None:
+            raise RuntimeError("bounded exact factorization requires explicit active resource policy")
+        symbolic_admission = symbolic_memory_preflight(A_aug, petsc_options, admit=admit,
+                                                       directory=out_dir / "mumps_symbolic")
+        petsc_options = dict(petsc_options)
+        petsc_options["mat_mumps_icntl_23"] = symbolic_admission["numeric_ICNTL23_MB"]
     if out_dir is not None:
         _write_progress_event(
             out_dir,
@@ -2256,6 +2282,28 @@ def _solve_augmented_system(
     for key in petsc_options.keys():
         del opts[key]
     opts.prefixPop()
+    if symbolic_admission is not None:
+        pc=ksp.getPC()
+        pc.setFactorSetUpSolverType()
+        factor=pc.getFactorMatrix()
+        factor_primary=None
+        try:
+            expected={int(key):int(value) for key,value in symbolic_admission["controls"].items()}
+            expected[23]=symbolic_admission["numeric_ICNTL23_MB"]
+            for index,value in expected.items():factor.setMumpsIcntl(index,value)
+            actual={str(index):int(factor.getMumpsIcntl(index)) for index in expected}
+            if actual!={str(k):v for k,v in expected.items()}:raise RuntimeError("numeric MUMPS controls differ from analyzed controls")
+            from ..common.strict_json import atomic_json
+            atomic_json(out_dir/"mumps_symbolic/numeric_controls.json",{"expected":{str(k):v for k,v in expected.items()},"actual":actual})
+        except BaseException as exc:
+            factor_primary=exc
+            raise
+        finally:
+            try:factor.destroy()
+            except BaseException as cleanup:
+                FAILED_BOUNDED_FACTOR_ROOTS.append((factor,pc,ksp,A_aug,b_aug))
+                if factor_primary is not None:factor_primary.add_note("factor reference cleanup: "+repr(cleanup))
+                else:raise
     x_aug = b_aug.duplicate()
     if out_dir is not None:
         _write_progress_event(
@@ -2436,6 +2484,7 @@ def _solve_augmented_system(
             "ksp_setup_seconds": setup_seconds,
             "ksp_solve_seconds": solve_seconds,
             "factor_inventory": factor_inventory,
+            "symbolic_resource_admission": symbolic_admission,
         },
     )
 
@@ -2706,6 +2755,9 @@ def _port_power_metrics(
     R00_total = float(sum(R00_by_polarization.values()))
     return {
         "R_total": float(R_total),
+        "dtn_phase_gauge": cfg.dtn_phase_gauge or "global_z",
+        "modal_amplitudes_reference": ("actual boundary plane; no global coefficient conversion"
+                                       if _centered_port_basis(cfg) else "global z phase"),
         "R00_total": R00_total,
         "R00_s": float(R00_by_polarization.get("s", 0.0)),
         "R00_p": float(R00_by_polarization.get("p", 0.0)),
@@ -2992,6 +3044,23 @@ def _solve_stage4_dtn_port_total_field_impl(
 
     t0 = time.perf_counter()
     if assembly_time_cell_static_condensation:
+        if cfg.grating_layer_thicknesses_nm is not None:
+            from ..common.runtime_resource_policy import admit
+            cells = int(mesh_data.mesh.topology.index_map(3).size_global)
+            p = int(cfg.nedelec_degree)
+            interior, trace = 3*p*(p-1)**2, 12*p*p
+            # Per-cell dense full/local factor/Schur payload plus global
+            # insertion upper estimate, counted even when classes share data.
+            future = cells*((interior+trace)**2+interior**2+trace**2)*16 + cells*trace**2*20
+            boundary_cells = max(len(_owned_cells_adjacent_to_facet_tag(mesh_data,tag))
+                                 for tag in (cfg.tags.z_min,cfg.tags.z_max))
+            future += 2*int(n_aux)*boundary_cells*trace*20
+            future += 4*int(V.dofmap.index_map.size_global)*16
+            admit("full_cell_condensation_and_augmented_assembly", int(future),
+                  estimate_basis={"cells":cells,"local_full_dofs":interior+trace,"trace_per_cell":trace,
+                                  "includes_full_cell_cache_LU_Schur_and_sparse_insertion":True,
+                                  "surface_sparse_support_cell_upper_bound":boundary_cells,
+                                  "surface_stream_live_full_vectors":4})
         support_cell_groups = (
             _owned_cells_adjacent_to_facet_tag(
                 mesh_data,
@@ -3043,6 +3112,8 @@ def _solve_stage4_dtn_port_total_field_impl(
                 ),
                 materialize_global_matrix=not never_materialized_port,
                 preserve_exact_geometry=_stage4_preserve_exact_geometry(cfg),
+                sum_duplicate_cell_integrals=cfg.grating_layer_thicknesses_nm is not None,
+                strict_local_checks=cfg.grating_layer_thicknesses_nm is not None,
             )
             reduction_system = assembly_time_system
         A_base = None
@@ -3488,18 +3559,27 @@ def _solve_stage4_dtn_port_total_field_impl(
     incident_projections: list[complex] = []
     surface_assemblers = {
         ("top", 0): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_max, 0, quadrature_degree=dtn_quadrature_degree
+            V, mesh_data, cfg.tags.z_max, 0, quadrature_degree=dtn_quadrature_degree,
+            boundary_reference_z=cfg.physical_z_max if _centered_port_basis(cfg) else None,
         ),
         ("top", 1): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_max, 1, quadrature_degree=dtn_quadrature_degree
+            V, mesh_data, cfg.tags.z_max, 1, quadrature_degree=dtn_quadrature_degree,
+            boundary_reference_z=cfg.physical_z_max if _centered_port_basis(cfg) else None,
         ),
         ("bottom", 0): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_min, 0, quadrature_degree=dtn_quadrature_degree
+            V, mesh_data, cfg.tags.z_min, 0, quadrature_degree=dtn_quadrature_degree,
+            boundary_reference_z=cfg.physical_z_min if _centered_port_basis(cfg) else None,
         ),
         ("bottom", 1): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_min, 1, quadrature_degree=dtn_quadrature_degree
+            V, mesh_data, cfg.tags.z_min, 1, quadrature_degree=dtn_quadrature_degree,
+            boundary_reference_z=cfg.physical_z_min if _centered_port_basis(cfg) else None,
         ),
     }
+    if _centered_port_basis(cfg):
+        from ..common.strict_json import atomic_json
+        atomic_json(out_dir/"actual_compiled_surface_rules.json",
+                    {f"{side}_{component}":assembler.compiled_gauss_identity
+                     for (side,component),assembler in surface_assemblers.items()})
     try:
         trace_alias_preflight = _dtn_n0_trace_alias_preflight(
             modes,
@@ -4248,6 +4328,7 @@ def _solve_stage4_dtn_port_total_field_impl(
                     else augmented_matrix_stats_after_finalize
                 ),
                 factorization_only=cfg.matrix_diagnostics_factorization_only,
+                resource_preflight=bool(cfg.require_full_explicit_residual),
             )
         else:
             if never_materialized_port:
@@ -4524,19 +4605,27 @@ def _solve_stage4_dtn_port_total_field_impl(
         )
     elif assembly_time_system is not None and embedded_fe_solution is not None:
         residual_started = time.perf_counter()
-        linear_residual = _assembly_time_full_operator_residual(
-            a,
-            floquet_data,
-            embedded_fe_solution,
-            None if released_external else A_aug,
-            b_aug,
-            x_aug,
-            assembly_time_system,
-            assembly_time_full_rhs,
-            reduced_residual_norm=(
-                external_snapshot.reduced_residual_norm if released_external else None
-            ),
-        )
+        if cfg.require_full_explicit_residual:
+            # This is only an inexpensive condensed diagnostic. The new
+            # all-row native UFL+port gate below is authoritative, so do not
+            # build the older projected-interior action/cache a second time.
+            if released_external:raise RuntimeError("explicit full residual requires owned original solve state")
+            linear_residual=_linear_residual(A_aug,b_aug,x_aug)
+            linear_residual["scope"]="condensed_diagnostic_only_not_original_residual"
+        else:
+            linear_residual = _assembly_time_full_operator_residual(
+                a,
+                floquet_data,
+                embedded_fe_solution,
+                None if released_external else A_aug,
+                b_aug,
+                x_aug,
+                assembly_time_system,
+                assembly_time_full_rhs,
+                reduced_residual_norm=(
+                    external_snapshot.reduced_residual_norm if released_external else None
+                ),
+            )
         embedded_fe_solution.destroy()
         embedded_fe_solution = None
         assembly_time_full_rhs.destroy()
@@ -4560,7 +4649,7 @@ def _solve_stage4_dtn_port_total_field_impl(
     _write_progress_event(
         out_dir,
         comm,
-        stage="after_true_residual",
+        stage="after_condensed_diagnostic_residual" if cfg.require_full_explicit_residual else "after_true_residual",
         status="end",
         started=started,
         dofs=int(V.dofmap.index_map.size_global * V.dofmap.index_map_bs),
@@ -4609,6 +4698,31 @@ def _solve_stage4_dtn_port_total_field_impl(
         petsc_options=petsc_options,
     )
     aux_values = _gather_auxiliary_values(x_aug, n_fe, n_aux, comm)
+    if cfg.require_full_explicit_residual:
+        from ..common.runtime_resource_policy import admit
+        from .full_augmented_residual import original_augmented_residual
+        full_rows=int(V.dofmap.index_map.size_global*V.dofmap.index_map_bs)
+        vector_budget=16*(15*full_rows+4*n_aux)
+        admit("original_full_augmented_residual",256*2**20+vector_budget,
+              estimate_basis={"native_rank1_JIT_reserve_bytes":256*2**20,
+                "complex128_vector_slots":15,"full_FE_rows":full_rows,"auxiliary_slots":4,
+                "vectors_include":"3 PETSc action/rhs/incident, x, 2 surface, C/ell/D/products, residual/fullrhs and one-member readback",
+                "factor_still_live_and_counted":True,"no_full_global_matrix":True})
+        original_residual = original_augmented_residual(
+            a,L,E_total,mesh_data,cfg,floquet_data,modes,surface_assemblers,
+            aux_values,incident_projections,out_dir)
+        linear_residual = {**linear_residual,
+            "condensed_and_interior_diagnostic_relative_residual":linear_residual.get("linear_system_relative_residual"),
+            "original_full_augmented_residual":original_residual,
+            "linear_system_relative_residual":original_residual["relative_residual"],
+            "linear_system_residual_norm":original_residual["residual_norm"],
+            "linear_system_rhs_norm":original_residual["rhs_norm"],
+            "full_operator_residual_method":"fresh native UFL full MPC action + raw streamed original C/D/J and full RHS"}
+        if not original_residual["passed"]:
+            raise RuntimeError("original full augmented residual failed before official R/T")
+        _write_progress_event(out_dir,comm,stage="after_original_full_augmented_residual",status="end",
+            started=started,dofs=full_rows,constraints=floquet_data.num_constraints,
+            extra={"full_original_FE_plus_aux":True,"relative_residual":original_residual["relative_residual"]})
     port_metrics = (
         {}
         if external_rta_gate_pass is False

@@ -1,0 +1,18 @@
+{
+  "schema": "task44.density_source_observation.v1",
+  "observed_date_utc": "2026-10-30",
+  "url": "https://www.ioffe.ru/SVA/NSM/Semicond/SiGe/basic.html",
+  "secondary_url": "https://www.ioffe.ru/SVA/NSM/Semicond/SiGe/mechanic.html",
+  "institution": "Ioffe Institute NSM Archive",
+  "access_method": "Web search returned the indexed official Basic Parameters page and its density row; direct HTTP retrieval failed with 503. This JSON is an observation record, NOT an original HTML download.",
+  "original_html_sha256": null,
+  "formula_transcription": "rho_g_cm3 = 2.329 + 3.493*x - 0.499*x*x",
+  "x_meaning": "Ge atomic fraction in Si_(1-x)Ge_x",
+  "temperature_K": 300,
+  "page_attribution": "Schaffler F. et al. (2001)",
+  "primary_publication_read": false,
+  "adoption": "Declared bulk random-alloy testing-density assumption; not measured density of a strained, interdiffused, or sub-nanometre film. Relaxed bulk behaviour is assumed, not established for this six-layer stack.",
+  "x": 0.3,
+  "rho_g_cm3": 3.33199,
+  "optical_values_from_this_page": false
+}

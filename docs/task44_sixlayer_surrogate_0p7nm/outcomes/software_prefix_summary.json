@@ -1,0 +1,282 @@
+{
+  "status": "SOFTWARE_AND_GEOMETRY_PREFIX_ONLY_NO_FORMAL_PDE_LABELS",
+  "fixed_readonly_base": "db790f92a186988c5147f1828d15c07034e7c430",
+  "own_branch_initial_HEAD": "a2f489ad0972279e5dd6ff15d41517c6e13fe79e",
+  "geometry_phase": {
+    "cases": {
+      "A": {
+        "actual_mesh": {
+          "cells": 144,
+          "coordinates_sha256": "a038f9a11944a97206dd83fde8d546a2aa1e14143bb9c7591c60ff9eb61d477a",
+          "geometry_dofmap_sha256": "63953b227de31c0a87141edffffb79f6c454393896d0bfaaf0e376f599b5928f",
+          "max_affine_coordinate_defect": 1.3322676295501878e-15,
+          "minimum_Jacobian_determinant": 0.15468749999999992,
+          "passed": true,
+          "periodic_opposite_faces": {
+            "x": {
+              "face_vertices": 63,
+              "matching": true
+            },
+            "y": {
+              "face_vertices": 36,
+              "matching": true
+            }
+          },
+          "region_cell_counts": {
+            "air": 114,
+            "layer_1": 2,
+            "layer_2": 2,
+            "layer_3": 2,
+            "layer_4": 2,
+            "layer_5": 2,
+            "layer_6": 2,
+            "substrate": 18
+          },
+          "region_volumes_nm3": {
+            "air": 19.32500000000002,
+            "layer_1": 0.42499999999999993,
+            "layer_2": 0.425,
+            "layer_3": 0.42500000000000004,
+            "layer_4": 0.425,
+            "layer_5": 0.425,
+            "layer_6": 0.425,
+            "substrate": 3.124999999999999
+          },
+          "schema": "sixlayer-actual-mesh-audit.v1",
+          "tags_sha256": "2bfd904e2f0bbc1f2a517dc9bbcb5982380fd8aa50b1559cf9ff2df992b92b32"
+        },
+        "actual_modes": 836,
+        "errors": {
+          "basis_change_max_error": 4.063689730248253e-16,
+          "incident_phase_once_max_error": 1.1102230246251565e-16,
+          "propagating_power_max_error": 9.42670524367464e-16
+        },
+        "propagating_modes": 160
+      },
+      "B": {
+        "actual_mesh": {
+          "cells": 144,
+          "coordinates_sha256": "18855b5107bac9438c64cb97ce903b4e053fbeff423183d3de26cc6caac3bb9a",
+          "geometry_dofmap_sha256": "63953b227de31c0a87141edffffb79f6c454393896d0bfaaf0e376f599b5928f",
+          "max_affine_coordinate_defect": 3.1086244689504383e-15,
+          "minimum_Jacobian_determinant": 0.15468749999999992,
+          "passed": true,
+          "periodic_opposite_faces": {
+            "x": {
+              "face_vertices": 63,
+              "matching": true
+            },
+            "y": {
+              "face_vertices": 36,
+              "matching": true
+            }
+          },
+          "region_cell_counts": {
+            "air": 114,
+            "layer_1": 2,
+            "layer_2": 2,
+            "layer_3": 2,
+            "layer_4": 2,
+            "layer_5": 2,
+            "layer_6": 2,
+            "substrate": 18
+          },
+          "region_volumes_nm3": {
+            "air": 27.424999999999983,
+            "layer_1": 0.6374999999999996,
+            "layer_2": 0.6375,
+            "layer_3": 0.6375000000000002,
+            "layer_4": 0.6375000000000002,
+            "layer_5": 0.6375000000000004,
+            "layer_6": 0.6375000000000002,
+            "substrate": 3.124999999999999
+          },
+          "schema": "sixlayer-actual-mesh-audit.v1",
+          "tags_sha256": "2bfd904e2f0bbc1f2a517dc9bbcb5982380fd8aa50b1559cf9ff2df992b92b32"
+        },
+        "actual_modes": 836,
+        "errors": {
+          "basis_change_max_error": 4.063689730248253e-16,
+          "incident_phase_once_max_error": 5.473822126268817e-48,
+          "propagating_power_max_error": 7.314357805979395e-16
+        },
+        "propagating_modes": 160
+      },
+      "C": {
+        "actual_mesh": {
+          "cells": 144,
+          "coordinates_sha256": "f0e1fc67738fc15b95c5a33c231736fab6a217dbc04d8817a0e5d270f8322b00",
+          "geometry_dofmap_sha256": "63953b227de31c0a87141edffffb79f6c454393896d0bfaaf0e376f599b5928f",
+          "max_affine_coordinate_defect": 2.6645352591003757e-15,
+          "minimum_Jacobian_determinant": 0.15468749999999992,
+          "passed": true,
+          "periodic_opposite_faces": {
+            "x": {
+              "face_vertices": 63,
+              "matching": true
+            },
+            "y": {
+              "face_vertices": 36,
+              "matching": true
+            }
+          },
+          "region_cell_counts": {
+            "air": 114,
+            "layer_1": 2,
+            "layer_2": 2,
+            "layer_3": 2,
+            "layer_4": 2,
+            "layer_5": 2,
+            "layer_6": 2,
+            "substrate": 18
+          },
+          "region_volumes_nm3": {
+            "air": 35.52500000000002,
+            "layer_1": 0.8499999999999999,
+            "layer_2": 0.8499999999999999,
+            "layer_3": 0.8500000000000001,
+            "layer_4": 0.8499999999999999,
+            "layer_5": 0.8499999999999999,
+            "layer_6": 0.8499999999999999,
+            "substrate": 3.124999999999999
+          },
+          "schema": "sixlayer-actual-mesh-audit.v1",
+          "tags_sha256": "2bfd904e2f0bbc1f2a517dc9bbcb5982380fd8aa50b1559cf9ff2df992b92b32"
+        },
+        "actual_modes": 836,
+        "errors": {
+          "basis_change_max_error": 4.253817332524384e-16,
+          "incident_phase_once_max_error": 1.5700924586837752e-16,
+          "propagating_power_max_error": 7.315236759442632e-16
+        },
+        "propagating_modes": 160
+      },
+      "D": {
+        "actual_mesh": {
+          "cells": 144,
+          "coordinates_sha256": "4f633ac40b909d3d5e9dc4824364a057e493e6e057313cf514ca60d26178d080",
+          "geometry_dofmap_sha256": "63953b227de31c0a87141edffffb79f6c454393896d0bfaaf0e376f599b5928f",
+          "max_affine_coordinate_defect": 2.6645352591003757e-15,
+          "minimum_Jacobian_determinant": 0.15468749999999992,
+          "passed": true,
+          "periodic_opposite_faces": {
+            "x": {
+              "face_vertices": 63,
+              "matching": true
+            },
+            "y": {
+              "face_vertices": 36,
+              "matching": true
+            }
+          },
+          "region_cell_counts": {
+            "air": 114,
+            "layer_1": 2,
+            "layer_2": 2,
+            "layer_3": 2,
+            "layer_4": 2,
+            "layer_5": 2,
+            "layer_6": 2,
+            "substrate": 18
+          },
+          "region_volumes_nm3": {
+            "air": 27.42500000000003,
+            "layer_1": 0.42499999999999993,
+            "layer_2": 0.8499999999999999,
+            "layer_3": 0.425,
+            "layer_4": 0.8500000000000001,
+            "layer_5": 0.4250000000000004,
+            "layer_6": 0.8500000000000005,
+            "substrate": 3.124999999999999
+          },
+          "schema": "sixlayer-actual-mesh-audit.v1",
+          "tags_sha256": "2bfd904e2f0bbc1f2a517dc9bbcb5982380fd8aa50b1559cf9ff2df992b92b32"
+        },
+        "actual_modes": 836,
+        "errors": {
+          "basis_change_max_error": 4.063689730248253e-16,
+          "incident_phase_once_max_error": 5.473822126268817e-48,
+          "propagating_power_max_error": 7.314357805979395e-16
+        },
+        "propagating_modes": 160
+      }
+    },
+    "solve": false,
+    "PDE_assembly": false
+  },
+  "public_mumps_tiny": {
+    "symbolic_INFOG": {
+      "1": 0,
+      "2": 0,
+      "3": 4,
+      "4": 24,
+      "16": 1,
+      "17": 1,
+      "26": 1,
+      "27": 1
+    },
+    "numeric_done_after_symbolic": false,
+    "controls": {
+      "14": 100,
+      "24": 1,
+      "35": 0,
+      "22": 0
+    },
+    "relative_residual": 2.1593801109342874e-16,
+    "numpy_solution_relative_error": 2.0959427429541053e-16,
+    "ordinary_INFOG": {
+      "16": 1,
+      "26": 1
+    },
+    "ordinary_vs_staged_solution_relative_error": 0.0,
+    "ordinary_controls": {
+      "14": 100,
+      "24": 1,
+      "35": 0,
+      "22": 0
+    },
+    "status": "PUBLIC_MUMPS_STAGES_TINY_PASS_NOT_PDE",
+    "elapsed_seconds": 0.21803203099989332,
+    "cleanup_errors": [],
+    "cleanup_complete": true
+  },
+  "evidence": [
+    {
+      "name": "independent_capability_review_v1.json",
+      "bytes": 1065,
+      "sha256": "8098dac99099a0ef1c2901e5ef2e8642380acf77751519622bbf476cba0b4a00"
+    },
+    {
+      "name": "independent_supervision_review_v1.json",
+      "bytes": 1084,
+      "sha256": "bd81116fbd09245dbf0f37b83c387755fc32620820c714060dc03b33eeb9e911"
+    },
+    {
+      "name": "mumps_tiny_actual_v1/result.json",
+      "bytes": 4964,
+      "sha256": "9fb4e15edcd4229b71cf9d587ad5ffb88ec4e7e2fd319210abd8a9439894e7ca"
+    },
+    {
+      "name": "mumps_tiny_independent_review_v1.json",
+      "bytes": 894,
+      "sha256": "048130ac0a5d6b4ac04d2bfa3ca052b8495514b4fdf6a819f32fef466be063d7"
+    },
+    {
+      "name": "geometry_phase_actual_v1/result.json",
+      "bytes": 157080,
+      "sha256": "b385475ab6de4321a4e087a83997f19b2755995e37a86c519781ad3ed1ef0462"
+    },
+    {
+      "name": "geometry_phase_independent_review_v1.json",
+      "bytes": 830,
+      "sha256": "836cdcd39b8b27621afa8a75e4d96835fb9ff0d2e15f146ed5620c188c4575aa"
+    }
+  ],
+  "lightweight_tests": {
+    "geometry_and_result_tests": 10,
+    "material_tests": 12,
+    "surrogate_tests": 23,
+    "note": "software only; native FE runtime prefix has its own independent tests"
+  },
+  "availability": "Raw source/runtime/supervision evidence retained outside Git; this compact digest is not a self-contained FE runtime replay."
+}

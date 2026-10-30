@@ -2,3 +2,10 @@
 # Keep their checkout bytes stable on Windows even when core.autocrlf=true.
 benchmarks/cases/**/records/*.json text eol=lf
 benchmarks/records/*.json text eol=lf
+
+# Task44 immutable uploaded instruction / source tables retain exact source bytes.
+docs/task44_sixlayer_surrogate_0p7nm/task.md -text
+docs/task44_sixlayer_surrogate_0p7nm/materials_sources/*.nff -text -diff
+# Small reproducibility records use portable LF.
+docs/task44_sixlayer_surrogate_0p7nm/**/*.json text eol=lf
+input/materials/task44_0p7nm.json text eol=lf

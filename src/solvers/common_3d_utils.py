@@ -252,6 +252,9 @@ def _write_progress_event(
     process may be killed before a normal summary can be written.
     """
 
+    if status == "begin" and stage in {"function_space_setup", "floquet_and_boundary_setup", "variational_form_setup"}:
+        from ..common.runtime_resource_policy import admit
+        admit(stage,512*2**20,estimate_basis="bounded FE space/MPC/form preparation reserve; ordinary path inactive")
     try:
         local_current_rss = _current_rss_mb()
         local_peak_rss = _max_rss_mb()

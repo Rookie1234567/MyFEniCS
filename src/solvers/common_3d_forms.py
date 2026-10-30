@@ -8,6 +8,7 @@ from petsc4py import PETSc
 from dolfinx import default_scalar_type, fem
 
 from ..common.config_3d import SimulationConfig3D
+from ..common.material_regions_3d import material_regions
 from ..common.pml_3d import z_pml_tensors
 
 
@@ -39,11 +40,8 @@ def _build_physical_volume_terms(
     curl_v = ufl.curl(v)
     curl_curl = PETSc.ScalarType(0.0) * ufl.inner(curl_u, curl_v) * dx
     material_mass = PETSc.ScalarType(0.0) * ufl.inner(u, v) * dx
-    for tag, eps_r in (
-        (cfg.tags.air, cfg.eps_r),
-        (cfg.tags.substrate, cfg.substrate_index**2),
-        (cfg.tags.grating, cfg.grating_index**2),
-    ):
+    for region in material_regions(cfg):
+        tag, eps_r = region.tag, region.epsilon_r
         curl_curl += (
             PETSc.ScalarType(1.0 / cfg.mu_r)
             * ufl.inner(curl_u, curl_v)
@@ -82,7 +80,7 @@ def _build_variational_forms(
     curl_curl, material_mass = _build_physical_volume_terms(cfg, u, v, dx)
     a = curl_curl + material_mass
     if float(cfg.divergence_penalty) > 0.0:
-        d_physical = dx((cfg.tags.air, cfg.tags.substrate, cfg.tags.grating))
+        d_physical = dx(tuple(region.tag for region in material_regions(cfg)))
         a += PETSc.ScalarType(cfg.divergence_penalty) * ufl.inner(ufl.div(u), ufl.div(v)) * d_physical
 
     # PML cells use the same unknown E, but with the z-stretched material
@@ -123,8 +121,10 @@ def _build_variational_forms(
     elif field_formulation == "layered_scattered":
         if incident_field is None:
             raise ValueError("layered_scattered formulation requires a layered background field.")
-        contrast = PETSc.ScalarType(cfg.eps_grating - cfg.grating_background_eps)
-        L += cfg.k0**2 * contrast * ufl.inner(incident_field, v) * dx(cfg.tags.grating)
+        for region in material_regions(cfg):
+            if region.role == "grating":
+                contrast = PETSc.ScalarType(region.epsilon_r - cfg.grating_background_eps)
+                L += cfg.k0**2 * contrast * ufl.inner(incident_field, v) * dx(region.tag)
     return a, L
 
 def _rhs_source_norm_for_tag(
@@ -159,14 +159,17 @@ def _incident_scattered_rhs_source_norm(
 def _layered_scattered_rhs_source_norm(
     msh, mesh_data, cfg: SimulationConfig3D, background_field: fem.Function | None
 ) -> float | None:
-    return _rhs_source_norm_for_tag(
-        msh,
-        mesh_data,
-        cfg,
-        background_field,
-        cfg.tags.grating,
-        cfg.eps_grating - cfg.grating_background_eps,
-    )
+    if background_field is None:
+        return None
+    squares = []
+    for region in material_regions(cfg):
+        if region.role == "grating":
+            norm = _rhs_source_norm_for_tag(
+                msh, mesh_data, cfg, background_field, region.tag,
+                region.epsilon_r - cfg.grating_background_eps,
+            )
+            squares.append(float(norm)**2)
+    return float(np.sqrt(sum(squares)))
 
 def _use_reference_correction_formulation(cfg: SimulationConfig3D) -> bool:
     """Use a correction unknown for analytic Stage-2 reference sanity cases.

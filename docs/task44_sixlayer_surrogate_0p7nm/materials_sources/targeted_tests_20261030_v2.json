@@ -1,0 +1,37 @@
+{
+  "schema": "task44.material_targeted_tests.v1",
+  "interpreter": "qualified Linux Python; absolute execution path withheld",
+  "elapsed_seconds": 0.15089678499998627,
+  "tests_run": 12,
+  "failures": 0,
+  "errors": 0,
+  "successful": true,
+  "scientific_imports": [],
+  "prior_test_fixture_failure": "v1 negative substituted Si stoichiometry with its unchanged actual value; corrected negative to Si2, no material or formula change",
+  "files": [
+    {
+      "path": "src/common/sixlayer_materials.py",
+      "bytes": 14722,
+      "sha256": "72d244f64e925ae556796e13e0a7d5353719a16b15902c6daf9ea5f36c77d093"
+    },
+    {
+      "path": "src/test/test_task44_materials.py",
+      "bytes": 7759,
+      "sha256": "f3886a3d07f68876f5f14fd07aaa99a4ad316e20372de0bd0167de4615565dd1"
+    },
+    {
+      "path": "input/materials/task44_0p7nm.json",
+      "bytes": 9760,
+      "sha256": "1841c550babd874d58a147782154cdabfbb941c3930c05e3396d27d844f61d1b"
+    }
+  ],
+  "public_redaction": {
+    "status": "SANITIZED_PRESENTATION_COPY_NOT_ORIGINAL_BYTES",
+    "original_bytes": 1022,
+    "original_sha256": "0fa638f9648e3fa02fb171620265c4b948dbb495f53e076d6e70f8bfffdbf109",
+    "redacted_fields": [
+      "interpreter"
+    ],
+    "scientific_test_results_and_source_hashes_unchanged": true
+  }
+}

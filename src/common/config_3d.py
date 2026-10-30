@@ -84,6 +84,16 @@ class SimulationConfig3D:
     geometry_identity: str | None = None
     n_substrate: complex | None = None
     n_grating: complex | None = None
+    # Opt-in interface-fitted multilayer pillar; legacy single material unchanged.
+    grating_layer_thicknesses_nm: tuple[float, ...] | None = None
+    grating_layer_indices: tuple[complex, ...] | None = None
+    grating_layer_labels: tuple[str, ...] | None = None
+    material_identity_sha256: str | None = None
+    # Opt-in directly centered modal basis; no conversion through attenuated
+    # global-z coefficients is used in its primary assembly.
+    dtn_phase_gauge: str | None = None
+    stage4_dtn_quadrature_degree: int | None = None
+    require_full_explicit_residual: bool | None = None
     substrate_material_label: str | None = None
     grating_material_label: str | None = None
     validation_role: str = NUMERICAL_SANITY_ONLY
@@ -665,6 +675,13 @@ class SimulationConfig3D:
         # V21 identity/axis fields are not in use.  Explicit V21 inputs retain
         # the fields below so the runtime identity is visible in evidence.
         for key in (
+            "grating_layer_thicknesses_nm",
+            "grating_layer_indices",
+            "grating_layer_labels",
+            "material_identity_sha256",
+            "dtn_phase_gauge",
+            "stage4_dtn_quadrature_degree",
+            "require_full_explicit_residual",
             "geometry_model_variant",
             "geometry_identity",
             "mesh_axis_x_values",
@@ -676,6 +693,8 @@ class SimulationConfig3D:
                 data.pop(key, None)
         for key in ("n_air", "mu_r", "n_substrate", "n_grating", "incident_amplitude"):
             data[key] = _complex_or_none(data[key])
+        if self.grating_layer_indices is not None:
+            data["grating_layer_indices"] = [_complex_or_none(v) for v in self.grating_layer_indices]
         data["custom_polarization"] = _vector_or_none(self.custom_polarization)
         data["eps_r"] = _complex_or_none(self.eps_r)
         data["x_min"] = self.x_min

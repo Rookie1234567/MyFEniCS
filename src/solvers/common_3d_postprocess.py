@@ -17,6 +17,7 @@ from ..common.analytic_fields_3d import (
     fresnel_reference,
 )
 from ..common.config_3d import SimulationConfig3D
+from ..common.material_regions_3d import material_regions, grating_layers
 from ..constraints.floquet_3d import DoubleFloquet3DData
 from ..geometry.mesh_builder_3d import build_airbox_mesh_3d
 from .common_3d_fields import (
@@ -45,18 +46,15 @@ def _sample_grid_points(cfg: SimulationConfig3D, z_values: np.ndarray, nx: int =
 
 def _cell_tag_volumes(msh, mesh_data, cfg: SimulationConfig3D) -> dict[str, float]:
     dx = ufl.Measure("dx", domain=msh, subdomain_data=mesh_data.cell_tags)
-    tag_items = {
-        "air": cfg.tags.air,
-        "substrate": cfg.tags.substrate,
-        "grating": cfg.tags.grating,
-        "top_pml": cfg.tags.top_pml,
-        "bottom_pml": cfg.tags.bottom_pml,
-    }
+    tag_items = {region.name:region.tag for region in material_regions(cfg)}
+    tag_items.update({"top_pml":cfg.tags.top_pml,"bottom_pml":cfg.tags.bottom_pml})
     volumes: dict[str, float] = {}
     for name, tag in tag_items.items():
         local = fem.assemble_scalar(fem.form(ufl.as_ufl(1.0) * dx(tag)))
         global_value = msh.comm.allreduce(local, op=MPI.SUM)
         volumes[name] = float(np.real(global_value))
+    if grating_layers(cfg):
+        volumes["grating"] = sum(volumes[r.name] for r in material_regions(cfg) if r.role == "grating")
     return volumes
 
 def _fit_plane_wave_modes(

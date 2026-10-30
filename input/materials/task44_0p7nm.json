@@ -1,0 +1,284 @@
+{
+  "schema": "task44.sixlayer_materials.v1",
+  "wavelength_nm": 0.7,
+  "photon_energy_eV": 1771.2028347600037,
+  "units": {
+    "wavelength": "nm",
+    "energy": "eV",
+    "density": "kg/m^3",
+    "molar_mass": "g/mol"
+  },
+  "convention": {
+    "solver_phase": "exp(i*k dot r) exp(-i*omega*t)",
+    "n": "1-delta+i*beta",
+    "epsilon_r": "n*n",
+    "cxro_n": "1-delta-i*beta",
+    "conversion": "complex_conjugate_of_CXRO_n",
+    "passivity": "beta>0 and Im(epsilon_r)>0",
+    "mu_r": 1.0
+  },
+  "constants": {
+    "hc_eV_nm": 1239.8419843320025,
+    "avogadro_mol_inverse": 6.02214076e+23,
+    "classical_electron_radius_m": 2.8179403205e-15,
+    "molar_masses_g_mol": {
+      "Si": 28.0855,
+      "Ge": 72.64,
+      "O": 15.9994
+    }
+  },
+  "derivation": {
+    "number_density": "rho_kg_m3/(M_formula_g_mol/1000)*N_A",
+    "delta_beta": "r_e*lambda_m^2*N_formula/(2*pi) * sum(stoich_i*f1_or_f2_i)",
+    "alloy_composition": "atomic fractions, NOT mass fractions or linear n/epsilon mixing",
+    "SiO2_number_density": "formula units per m^3; total atomic density is three times this",
+    "interpolation": "linear in energy for both f1 and f2, inherited Si convention; no extrapolation"
+  },
+  "layer_order_bottom_to_top": [
+    "Si",
+    "SiGe",
+    "Si",
+    "SiGe",
+    "Si",
+    "SiO2"
+  ],
+  "substrate_material": "Si",
+  "external_air": {
+    "n": {
+      "real": 1.0,
+      "imag": 0.0
+    },
+    "epsilon_r": {
+      "real": 1.0,
+      "imag": 0.0
+    }
+  },
+  "materials": {
+    "Si": {
+      "status": "INHERITED_SOURCE_VERIFIED_ELEMENTAL_DERIVATION",
+      "stoichiometry": {
+        "Si": 1.0
+      },
+      "atomic_fractions": {
+        "Si": 1.0
+      },
+      "density_kg_m3": 2329.1,
+      "calculation": {
+        "molar_mass_g_mol": 28.0855,
+        "formula_unit_number_density_m3": 4.994095901485108e+28,
+        "f1_sum": 10.462828075875802,
+        "f2_sum": 0.3939509544035157,
+        "delta": 0.00011482963115036948,
+        "beta": 4.3236152269189515e-06,
+        "n": {
+          "real": 0.9998851703688496,
+          "imag": 4.3236152269189515e-06
+        },
+        "epsilon_r": {
+          "real": 0.9997703539048498,
+          "imag": 8.646237495554417e-06
+        },
+        "mu_r": 1.0
+      },
+      "element_source_sha256": {
+        "Si": "2bbd2aef0292aa392a61942b1c401171b5bc30bb77ab1cab9c08b6264048019a"
+      },
+      "density_basis": "Inherited 2.3291 g/cm^3 at 20 C; do not replace with alloy endpoint 2.329",
+      "inherited_material_model_sha256": "7d21c0c1f964c2fe2bf44d2e724fc62e0f68aa9ebc4352c1616e763e7fc11aea",
+      "identity_sha256": "908c904d2bd15254dee92ce9c34d7266439bc4f93512fada3fe3d730bc162af3"
+    },
+    "SiGe": {
+      "status": "DERIVED_INDEPENDENT_ATOM_ALLOY_NOT_MEASURED",
+      "stoichiometry": {
+        "Si": 0.7,
+        "Ge": 0.3
+      },
+      "atomic_fractions": {
+        "Si": 0.7,
+        "Ge": 0.3
+      },
+      "density_kg_m3": 3331.9900000000002,
+      "calculation": {
+        "molar_mass_g_mol": 41.45184999999999,
+        "formula_unit_number_density_m3": 4.840727926717964e+28,
+        "f1_sum": 16.17059379754325,
+        "f2_sum": 3.721881923220228,
+        "delta": 0.00017202225820105572,
+        "beta": 3.959326053241796e-05,
+        "n": {
+          "real": 0.999827977741799,
+          "imag": 3.959326053241796e-05
+        },
+        "epsilon_r": {
+          "real": 0.9996559835076291,
+          "imag": 7.917289922066326e-05
+        },
+        "mu_r": 1.0
+      },
+      "element_source_sha256": {
+        "Si": "2bbd2aef0292aa392a61942b1c401171b5bc30bb77ab1cab9c08b6264048019a",
+        "Ge": "269103885de8c55eab88e3d3fc17286cf49d5e8ad664f720838f96061296637d"
+      },
+      "density_basis": "Declared 300 K bulk random-alloy test assumption; relaxed, not sample measured",
+      "identity_sha256": "e75ffdabce51e411d4877585768f3cd131d395e2beb7635c20517ce66a57cc90"
+    },
+    "SiO2": {
+      "status": "DERIVED_INDEPENDENT_ATOM_COMPOUND_NOT_MEASURED",
+      "stoichiometry": {
+        "Si": 1.0,
+        "O": 2.0
+      },
+      "atomic_fractions": {
+        "Si": 0.3333333333333333,
+        "O": 0.6666666666666666
+      },
+      "density_kg_m3": 2200.0,
+      "calculation": {
+        "molar_mass_g_mol": 60.0843,
+        "formula_unit_number_density_m3": 2.20502022525019e+28,
+        "f1_sum": 27.159230233469902,
+        "f2_sum": 1.7193070372055765,
+        "delta": 0.00013160671134743434,
+        "beta": 8.331323937313888e-06,
+        "n": {
+          "real": 0.9998683932886525,
+          "imag": 8.331323937313888e-06
+        },
+        "epsilon_r": {
+          "real": 0.9997368038282206,
+          "imag": 1.6660454958338655e-05
+        },
+        "mu_r": 1.0
+      },
+      "element_source_sha256": {
+        "Si": "2bbd2aef0292aa392a61942b1c401171b5bc30bb77ab1cab9c08b6264048019a",
+        "O": "adb1540b11008383aaef0b8c4f5fb1a2bc5df14f3717ac4d58fc54fff92ba6cb"
+      },
+      "density_basis": "Task44 explicitly specified amorphous SiO2 test density 2.2 g/cm^3",
+      "identity_sha256": "d267bfc37a4e6d3f64515e026a4d86ae78495ac74faa374af57b2b39f8cdae49"
+    }
+  },
+  "atomic_scattering_factors": {
+    "Si": {
+      "energy_eV": 1771.2028347600037,
+      "bracket": [
+        {
+          "energy_eV": 1756.82,
+          "f1": 10.6935,
+          "f2": 0.399988,
+          "line": 576
+        },
+        {
+          "energy_eV": 1785.24,
+          "f1": 10.2377,
+          "f2": 0.388059,
+          "line": 577
+        }
+      ],
+      "fraction": 0.5060814482759941,
+      "f1": 10.462828075875802,
+      "f2": 0.3939509544035157,
+      "interpolation": "linear_in_photon_energy_for_f1_and_f2",
+      "extrapolated": false
+    },
+    "Ge": {
+      "energy_eV": 1771.2028347600037,
+      "bracket": [
+        {
+          "energy_eV": 1752.89,
+          "f1": 29.3384,
+          "f2": 11.6634,
+          "line": 328
+        },
+        {
+          "energy_eV": 1781.24,
+          "f1": 29.5711,
+          "f2": 11.3904,
+          "line": 329
+        }
+      ],
+      "fraction": 0.645955370723234,
+      "f1": 29.488713814767298,
+      "f2": 11.487054183792557,
+      "interpolation": "linear_in_photon_energy_for_f1_and_f2",
+      "extrapolated": false
+    },
+    "O": {
+      "energy_eV": 1771.2028347600037,
+      "bracket": [
+        {
+          "energy_eV": 1752.89,
+          "f1": 8.35021,
+          "f2": 0.67503,
+          "line": 326
+        },
+        {
+          "energy_eV": 1781.24,
+          "f1": 8.3471,
+          "f2": 0.655908,
+          "line": 327
+        }
+      ],
+      "fraction": 0.645955370723234,
+      "f1": 8.34820107879705,
+      "f2": 0.6626780414010304,
+      "interpolation": "linear_in_photon_energy_for_f1_and_f2",
+      "extrapolated": false
+    }
+  },
+  "sources": {
+    "atomic_tables": {
+      "Si": {
+        "path": "docs/task44_sixlayer_surrogate_0p7nm/materials_sources/si.nff",
+        "bytes": 19539,
+        "sha256": "2bbd2aef0292aa392a61942b1c401171b5bc30bb77ab1cab9c08b6264048019a",
+        "url": "https://henke.lbl.gov/optical_constants/sf/si.nff",
+        "retrieved_date_utc": "2026-10-30"
+      },
+      "Ge": {
+        "path": "docs/task44_sixlayer_surrogate_0p7nm/materials_sources/ge.nff",
+        "bytes": 13249,
+        "sha256": "269103885de8c55eab88e3d3fc17286cf49d5e8ad664f720838f96061296637d",
+        "url": "https://henke.lbl.gov/optical_constants/sf/ge.nff",
+        "retrieved_date_utc": "2026-10-30"
+      },
+      "O": {
+        "path": "docs/task44_sixlayer_surrogate_0p7nm/materials_sources/o.nff",
+        "bytes": 13625,
+        "sha256": "adb1540b11008383aaef0b8c4f5fb1a2bc5df14f3717ac4d58fc54fff92ba6cb",
+        "url": "https://henke.lbl.gov/optical_constants/sf/o.nff",
+        "retrieved_date_utc": "2026-10-30"
+      }
+    },
+    "inherited_Si": {
+      "path": "docs/task44_sixlayer_surrogate_0p7nm/materials_sources/base_si_material_identity.json",
+      "bytes": 4920,
+      "sha256": "5faedf276aba2918cc399c018936964b059127f135e24ea2bf2ba493e3d9876b",
+      "repository": "Rookie1234567/MyFEniCS",
+      "commit": "db790f92a186988c5147f1828d15c07034e7c430",
+      "original_path": "docs/task40extra_0p7nm_engineering/outcomes/records/material_identity.json"
+    },
+    "alloy_density_observation": {
+      "path": "docs/task44_sixlayer_surrogate_0p7nm/materials_sources/density_source_observation.json",
+      "bytes": 1066,
+      "sha256": "b4da182d9133f3849f4b382fdd371be112950d8221cff64f6689d389b9e077cf"
+    }
+  },
+  "reference_urls": {
+    "atomic_model": "https://henke.lbl.gov/optical_constants/intro.html",
+    "CXRO_sign": "https://henke.lbl.gov/optical_constants/pert_form.html",
+    "alloy_density": "https://www.ioffe.ru/SVA/NSM/Semicond/SiGe/basic.html",
+    "Ge_molar_mass": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7440564&Mask=20",
+    "O2_molar_mass_divide_by_two": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7782447&Mask=20",
+    "Si_molar_mass": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7440213&Mask=48&Units=SI",
+    "Si_density": "https://www.nist.gov/document/nistir69692014092620160121revpdf"
+  },
+  "limitations": [
+    "Derived independent-atom model, not measured SiGe or amorphous-SiO2 optical constants.",
+    "No sample-specific density, strain, oxidation, intermixing, roughness or bonding correction.",
+    "Si target is below the tabulated 1838.8/1839.0 eV K-edge; its bracket does not cross the edge; this does not quantify chemical-state errors.",
+    "No statistical error bar or film-accuracy guarantee; printed digits are reproducibility, not physical precision.",
+    "Sub-nanometre continuum layer geometry is a numerical surrogate-method test, not validated atomistic fabrication physics.",
+    "The Ge/O molar masses are explicitly frozen NIST WebBook values, not a claim to latest isotope-specific weights."
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "status": "INDEPENDENT_SURROGATE_SOFTWARE_SOURCE_REVIEW_PASS_NOT_PHYSICAL_FEASIBILITY",
+  "reviewed_source_files": {
+    "scripts/run_surrogate.py": {
+      "bytes": 3290,
+      "sha256": "6304eb719a403e03038611a919adc0f2c9787ea03bf5a833a5743c1adf33cd21"
+    },
+    "src/surrogate/__init__.py": {
+      "bytes": 79,
+      "sha256": "6329168933f17cd646b8c3b9247c708aaeba35272046e39506221d491b942455"
+    },
+    "src/surrogate/data.py": {
+      "bytes": 11599,
+      "sha256": "1145666361df4a2a8e8f4e6a76e8ba67ae4ffe0cfa39acd5a639a5f96235f375"
+    },
+    "src/surrogate/design.py": {
+      "bytes": 7522,
+      "sha256": "be1c8966bc5ddb7daaaafe74582295327ed6d9ff596733ccc282fbd6eab115ca"
+    },
+    "src/surrogate/models.py": {
+      "bytes": 11015,
+      "sha256": "27c7a15e0428d0edceca4781c6f002f936477ec3afda45db900b9e01e7bb51f3"
+    },
+    "src/surrogate/workflow.py": {
+      "bytes": 8726,
+      "sha256": "cb2bd9a9b31d06222ee53b3f0110457724ef77922821c978ea52d402639c95e1"
+    },
+    "src/test/test_task44_surrogate.py": {
+      "bytes": 17390,
+      "sha256": "72be04fada6318124a112f68276ed6ba8d8a3fdf284d86969d023a30aac452cb"
+    }
+  },
+  "author_actual_test_receipt_sha256": "4ec9d9ad106f63edc91c011f7ee9091fc80520e07179c132da820e2993776fe8",
+  "independent_tests": {
+    "command": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 python -B -m unittest src.test.test_task44_surrogate -v",
+    "executable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+    "tests": 23,
+    "failures": 0,
+    "elapsed_reported_seconds": 4.929,
+    "log_sha256": "67f8d1245417fd6eea4e5213e94b355f3cb802315457f0b1a725a673eb49545e",
+    "scope": "synthetic only; no FE import or PDE"
+  },
+  "design_file_sha256": "a86aa2eca9435065a4c95fd352c2f21a5a4281c68462865c1be777b1371dc22b",
+  "design_counts": {
+    "blind": 6,
+    "dev": 4,
+    "train": 8
+  },
+  "reviewed_boundaries": [
+    "train-only scaler and fold-local cross validation",
+    "same physical/material qualification, only declared numeric refinement",
+    "actual full residual/energy/resource compact gates, not FE recomputation",
+    "blind freeze and source/package/design checks before label open; exposure ledger first",
+    "independent output Matern5/2 ARD, fixed ridge, raw-unit mean/linear comparison",
+    "measured-repeat and refinement indicators distinguished; no-repeat not zero-noise",
+    "rank/condition and small pilot limitation recorded"
+  ],
+  "operational_conditions": [
+    "formal generator recipe identity must match producer; per-sample geometry separate",
+    "use frozen independent statistical runtime/package versions",
+    "owner keeps one canonical blind file; copying labels cannot restore independence",
+    "6 blind cases are a finite pilot, not global six-dimensional guarantee",
+    "no FE qualification or surrogate accuracy result yet"
+  ]
+}

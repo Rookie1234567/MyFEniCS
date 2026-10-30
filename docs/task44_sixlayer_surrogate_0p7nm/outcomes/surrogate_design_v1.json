@@ -1,0 +1,270 @@
+{
+  "blind_labels": "separate protected file; never in this design",
+  "planned_counts": {
+    "blind": 6,
+    "dev": 4,
+    "train": 8
+  },
+  "points": [
+    {
+      "anchor": "A",
+      "order": 1,
+      "sample_id": "train-001",
+      "split": "train",
+      "thickness_nm": [
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "anchor": "B",
+      "order": 2,
+      "sample_id": "train-002",
+      "split": "train",
+      "thickness_nm": [
+        0.75,
+        0.75,
+        0.75,
+        0.75,
+        0.75,
+        0.75
+      ]
+    },
+    {
+      "anchor": "C",
+      "order": 3,
+      "sample_id": "train-003",
+      "split": "train",
+      "thickness_nm": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "anchor": "D",
+      "order": 4,
+      "sample_id": "train-004",
+      "split": "train",
+      "thickness_nm": [
+        0.5,
+        1.0,
+        0.5,
+        1.0,
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "anchor": null,
+      "order": 5,
+      "sample_id": "train-005",
+      "split": "train",
+      "thickness_nm": [
+        0.521486374821,
+        0.509230098097,
+        0.989635834861,
+        0.506421118954,
+        0.513689888746,
+        0.806093025935
+      ]
+    },
+    {
+      "anchor": null,
+      "order": 6,
+      "sample_id": "train-006",
+      "split": "train",
+      "thickness_nm": [
+        0.973424390943,
+        0.525719214028,
+        0.518579408697,
+        0.99966894479,
+        0.631352316597,
+        0.531260345504
+      ]
+    },
+    {
+      "anchor": null,
+      "order": 7,
+      "sample_id": "train-007",
+      "split": "train",
+      "thickness_nm": [
+        0.994126521424,
+        0.573622858369,
+        0.932402148947,
+        0.736753179263,
+        0.992059078184,
+        0.507677606481
+      ]
+    },
+    {
+      "anchor": null,
+      "order": 8,
+      "sample_id": "train-008",
+      "split": "train",
+      "thickness_nm": [
+        0.891988023019,
+        0.997951485689,
+        0.945781309808,
+        0.962215874646,
+        0.606786328952,
+        0.515014102225
+      ]
+    },
+    {
+      "anchor": null,
+      "order": 1,
+      "sample_id": "dev-001",
+      "split": "dev",
+      "thickness_nm": [
+        0.564445906267,
+        0.502611294225,
+        0.536517118811,
+        0.998891724217,
+        0.972944136374,
+        0.740772354568
+      ]
+    },
+    {
+      "anchor": null,
+      "order": 2,
+      "sample_id": "dev-002",
+      "split": "dev",
+      "thickness_nm": [
+        0.519599776077,
+        0.931711114435,
+        0.998123689904,
+        0.923898960837,
+        0.662105735772,
+        0.984790712692
+      ]
+    },
+    {
+      "anchor": null,
+      "order": 3,
+      "sample_id": "dev-003",
+      "split": "dev",
+      "thickness_nm": [
+        0.690434903973,
+        0.961283534383,
+        0.940116236665,
+        0.552634450681,
+        0.987970361095,
+        0.51630773222
+      ]
+    },
+    {
+      "anchor": null,
+      "order": 4,
+      "sample_id": "dev-004",
+      "split": "dev",
+      "thickness_nm": [
+        0.947320427598,
+        0.951434980071,
+        0.543882629089,
+        0.784469036041,
+        0.997023471239,
+        0.930320312755
+      ]
+    },
+    {
+      "anchor": null,
+      "order": 1,
+      "sample_id": "blind-001",
+      "split": "blind",
+      "thickness_nm": [
+        0.997838232971,
+        0.505633272989,
+        0.573189384531,
+        0.513875446316,
+        0.86304417739,
+        0.966208526712
+      ]
+    },
+    {
+      "anchor": null,
+      "order": 2,
+      "sample_id": "blind-002",
+      "split": "blind",
+      "thickness_nm": [
+        0.989723459681,
+        0.919927179675,
+        0.972409083105,
+        0.500630870357,
+        0.541055013001,
+        0.90693799939
+      ]
+    },
+    {
+      "anchor": null,
+      "order": 3,
+      "sample_id": "blind-003",
+      "split": "blind",
+      "thickness_nm": [
+        0.530463025401,
+        0.512934250455,
+        0.841159675308,
+        0.571665160066,
+        0.961487485394,
+        0.517407739859
+      ]
+    },
+    {
+      "anchor": null,
+      "order": 4,
+      "sample_id": "blind-004",
+      "split": "blind",
+      "thickness_nm": [
+        0.969685715193,
+        0.930019037534,
+        0.565521048426,
+        0.537985953777,
+        0.523088104518,
+        0.607300458566
+      ]
+    },
+    {
+      "anchor": null,
+      "order": 5,
+      "sample_id": "blind-005",
+      "split": "blind",
+      "thickness_nm": [
+        0.537991052526,
+        0.927294529794,
+        0.502306449613,
+        0.98112453211,
+        0.585405383536,
+        0.539707970856
+      ]
+    },
+    {
+      "anchor": null,
+      "order": 6,
+      "sample_id": "blind-006",
+      "split": "blind",
+      "thickness_nm": [
+        0.566978673347,
+        0.843304534878,
+        0.567621345759,
+        0.519257940718,
+        0.995203698443,
+        0.927325504409
+      ]
+    }
+  ],
+  "range_nm": [
+    0.5,
+    1.0
+  ],
+  "sampling": "fixed LHS candidate pool512 then greedy maximin; no output adaptation",
+  "schema": "sixlayer-design-v1",
+  "seed": 440700,
+  "training_rule": "arbitrary nested contiguous prefixes starting with A-D; no obligation to fill pool"
+}

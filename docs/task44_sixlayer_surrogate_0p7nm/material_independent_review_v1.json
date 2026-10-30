@@ -1,0 +1,44 @@
+{
+  "status": "INDEPENDENT_MATERIAL_SOURCE_AND_ARITHMETIC_PASS_NOT_PDE_OR_FILM_VALIDATION",
+  "identity_sha256": "a97145083393dea53a51aaa1bf500ed38afe4b384436c3073062bd0e9b9727bc",
+  "checks": [
+    "all 3 source/test/material file records match actual test receipt",
+    "independent fsum-based element mixture arithmetic within 2e-16",
+    "qualified runtime actual load recomputes exact material identity",
+    "12 test actual receipt: zero failures; first negative-fixture failure retained",
+    "Si bitwise inherited; SiGe/SiO2 independent atom density model; passive convention",
+    "official Ioffe indexed 300K density verified; raw HTTP503 openly recorded"
+  ],
+  "limitations": [
+    "not measured ultrathin film constants",
+    "not sixlayer PDE qualification",
+    "density and chemical-state model uncertainty not numerically bounded"
+  ],
+  "files": [
+    {
+      "path": "task44_cloud_repo/src/common/sixlayer_materials.py",
+      "bytes": 14722,
+      "sha256": "72d244f64e925ae556796e13e0a7d5353719a16b15902c6daf9ea5f36c77d093"
+    },
+    {
+      "path": "task44_cloud_repo/src/test/test_task44_materials.py",
+      "bytes": 7759,
+      "sha256": "f3886a3d07f68876f5f14fd07aaa99a4ad316e20372de0bd0167de4615565dd1"
+    },
+    {
+      "path": "task44_cloud_repo/input/materials/task44_0p7nm.json",
+      "bytes": 9760,
+      "sha256": "1841c550babd874d58a147782154cdabfbb941c3930c05e3396d27d844f61d1b"
+    },
+    {
+      "path": "task44_cloud_repo/docs/task44_sixlayer_surrogate_0p7nm/materials.md",
+      "bytes": 8057,
+      "sha256": "609ff7757af9c7a4849b242ccfd8ed9e635f2e44d79cecf055af1534ecbef71a"
+    },
+    {
+      "path": "task44_cloud_repo/docs/task44_sixlayer_surrogate_0p7nm/materials_sources/targeted_tests_20261030_v2.json",
+      "bytes": 1022,
+      "sha256": "0fa638f9648e3fa02fb171620265c4b948dbb495f53e076d6e70f8bfffdbf109"
+    }
+  ]
+}

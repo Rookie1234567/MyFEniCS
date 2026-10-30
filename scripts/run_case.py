@@ -110,6 +110,20 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        from src.io.input_loader import load_dat_input
+        marker = load_dat_input(args.input_path)
+        if marker.document.get("model") == "sixlayer_surrogate_0p7nm":
+            # A narrow explicit schema dispatch, not a change to legacy input
+            # defaults. Task-specific PC/recovery flags do not apply here.
+            defaults = vars(_parser().parse_args([str(args.input_path)]))
+            changed = {key for key,value in vars(args).items() if value != defaults[key]}
+            if changed - {"validate_only","dry_run"}:
+                raise InputError("six-layer input accepts only --validate-only or --dry-run")
+            from src.runners.sixlayer_case import run_sixlayer
+            result = run_sixlayer(args.input_path,dry_run=bool(args.validate_only or args.dry_run))
+            from src.common.strict_json import snapshot
+            print(json.dumps(snapshot(result),sort_keys=True,allow_nan=False))
+            return 0
         if args.r0_evidence is not None and not args.recover_v15_q0_eio_once:
             raise InputError('--r0-evidence requires --recover-v15-q0-eio-once')
         if args.recover_v15_q0_eio_once:
