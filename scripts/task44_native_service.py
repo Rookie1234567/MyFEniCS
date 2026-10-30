@@ -26,6 +26,13 @@ TASK44_RUNTIME_CONTROLS = {
     "openmpi_pml": "ob1",
     "hwloc_components": "-x86",
 }
+AUTHORIZED_CPU0_NEIGHBOR = {
+    "pid": 3893658,
+    "start_ticks": 324107938,
+    "parent_pid": 1,
+    "command_basename": "supervise_authorized_CPU_release_v3_20261030.py",
+    "cpu_affinity": [0],
+}
 _THREAD_VARIABLES = (
     "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
     "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS", "BLIS_NUM_THREADS",
@@ -141,6 +148,168 @@ def _parse_cpu_list(value: str) -> set[int]:
     return result
 
 
+def _status_fields(path: Path) -> dict[str, str]:
+    return {
+        key: value.strip()
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if ":" in line
+        for key, value in (line.split(":", 1),)
+    }
+
+
+def _host_allowed_cpus(proc_root: Path) -> tuple[set[int], str]:
+    host_comm = (proc_root / "1/comm").read_text(encoding="utf-8").strip()
+    if "systemd" not in host_comm.lower():
+        raise RuntimeError(
+            f"Task44 CPU0 neighbor gate requires the native host PID namespace; PID1 is {host_comm!r}"
+        )
+    host_status = _status_fields(proc_root / "1/status")
+    host_cpus = _parse_cpu_list(host_status.get("Cpus_allowed_list", ""))
+    if TASK44_MPI_CPU not in host_cpus:
+        raise RuntimeError("native host PID1 CPU mask does not include the qualified CPU0")
+    return host_cpus, host_comm
+
+
+def _proc_identity(pid: int, proc_root: Path) -> dict[str, Any]:
+    process_root = proc_root / str(pid)
+    stat = (process_root / "stat").read_text(encoding="ascii")
+    close = stat.rfind(")")
+    fields = stat[close + 2 :].split()
+    return {
+        "pid": pid,
+        "parent_pid": int(fields[1]),
+        "start_ticks": int(fields[19]),
+        "state": fields[0],
+        "comm": stat[stat.find("(") + 1 : close],
+    }
+
+
+def _proc_cpu0_claim(
+    process: Mapping[str, Any], proc_root: Path, host_cpus: set[int]
+) -> dict[str, Any] | None:
+    pid = int(process["pid"])
+    process_root = proc_root / str(pid)
+    before = _proc_identity(pid, proc_root)
+    if before["state"] in {"Z", "X"}:
+        return None
+    status = _status_fields(process_root / "status")
+    cpu_list = status.get("Cpus_allowed_list")
+    if not cpu_list:
+        raise RuntimeError(f"cannot read CPU affinity for process {pid}")
+    affinity = _parse_cpu_list(cpu_list)
+    authorized_pid = pid == AUTHORIZED_CPU0_NEIGHBOR["pid"]
+    narrow_cpu0_claim = TASK44_MPI_CPU in affinity and affinity != host_cpus
+    if not narrow_cpu0_claim and not authorized_pid:
+        return None
+    command_bytes = (process_root / "cmdline").read_bytes().split(b"\0")
+    argv = [part.decode("utf-8", errors="replace") for part in command_bytes if part]
+    command_basename = next(
+        (Path(part).name for part in argv if part.endswith(".py")),
+        Path(argv[0]).name if argv else before["comm"],
+    )
+    cgroup = (process_root / "cgroup").read_text(encoding="utf-8").strip()
+    after = _proc_identity(pid, proc_root)
+    after_status = _status_fields(process_root / "status")
+    if (
+        before["start_ticks"] != after["start_ticks"]
+        or before["parent_pid"] != after["parent_pid"]
+        or before["comm"] != after["comm"]
+        or after_status.get("Cpus_allowed_list") != cpu_list
+        or int(process.get("ppid", before["parent_pid"])) != before["parent_pid"]
+        or str(process.get("comm", before["comm"])) != before["comm"]
+    ):
+        raise RuntimeError(f"process identity or affinity changed while checking CPU0 claim {pid}")
+    return {
+        **before,
+        "command_basename": command_basename,
+        "cpu_affinity": sorted(affinity),
+        "narrow_cpu0_claim": narrow_cpu0_claim,
+        "cgroup": "/" + cgroup.split(":", 2)[-1].lstrip("/"),
+    }
+
+
+def _cpu0_neighbor_gate(
+    *,
+    proc_root: Path = Path("/proc"),
+    ignored_pids: set[int] | None = None,
+    ignored_cgroup: str | None = None,
+    numerical_processes: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    if ignored_cgroup is not None and not ignored_cgroup.strip("/"):
+        raise RuntimeError("Task44 CPU0 neighbor gate refuses an empty/root cgroup exclusion")
+    host_cpus, host_comm = _host_allowed_cpus(proc_root)
+    ignored = ignored_pids or set()
+    claims: list[dict[str, Any]] = []
+    unreadable: list[dict[str, Any]] = []
+    candidates = _numerical_processes() if numerical_processes is None else numerical_processes
+    candidates_by_pid = {int(process["pid"]): process for process in candidates}
+    authorized_pid = int(AUTHORIZED_CPU0_NEIGHBOR["pid"])
+    if authorized_pid not in candidates_by_pid and (proc_root / str(authorized_pid)).exists():
+        candidates_by_pid[authorized_pid] = {"pid": authorized_pid}
+    observed: list[dict[str, Any]] = []
+    for process in candidates_by_pid.values():
+        pid = int(process["pid"])
+        if pid in ignored:
+            continue
+        try:
+            row = _proc_cpu0_claim(process, proc_root, host_cpus)
+        except FileNotFoundError:
+            continue
+        except (OSError, ValueError, RuntimeError) as exc:
+            if not (proc_root / str(pid)).exists():
+                continue
+            unreadable.append({"pid": pid, "error": f"{type(exc).__name__}: {exc}"})
+            continue
+        if row is None:
+            continue
+        ignored_path = "/" + ignored_cgroup.lstrip("/") if ignored_cgroup else None
+        if ignored_path and (
+            row["cgroup"] == ignored_path
+            or row["cgroup"].startswith(ignored_path.rstrip("/") + "/")
+        ):
+            continue
+        observed.append(row)
+    claims = [row for row in observed if row["narrow_cpu0_claim"]]
+    authorized = [
+        row for row in claims
+        if all(row.get(key) == expected for key, expected in AUTHORIZED_CPU0_NEIGHBOR.items())
+    ]
+    identity_conflicts = [
+        row for row in observed
+        if row["pid"] == authorized_pid
+        and not all(
+            row.get(key) == expected
+            for key, expected in AUTHORIZED_CPU0_NEIGHBOR.items()
+        )
+    ]
+    unexpected = [
+        row for row in claims
+        if row not in authorized and row["pid"] != authorized_pid
+    ]
+    unexpected.extend(identity_conflicts)
+    failures = []
+    if len(authorized) > 1:
+        failures.append("authorized_cpu0_neighbor_identity_duplicated")
+    if unexpected:
+        failures.append("unexpected_narrow_cpu0_affinity_neighbor")
+    if identity_conflicts:
+        failures.append("authorized_cpu0_pid_identity_mismatch")
+    if unreadable:
+        failures.append("cpu0_neighbor_process_identity_unreadable")
+    return {
+        "status": "pass" if not failures else "fail",
+        "failures": failures,
+        "host_pid1_comm": host_comm,
+        "host_allowed_cpus": sorted(host_cpus),
+        "authorized_neighbor": authorized[0] if authorized else None,
+        "authorized_pid_identity_conflicts": identity_conflicts,
+        "narrow_cpu0_affinity_claims": claims,
+        "unexpected_claims": unexpected,
+        "unreadable_processes": unreadable,
+        "performance_not_isolated": bool(authorized),
+    }
+
+
 def _require_task44_cpu(cpu_affinity: set[int]) -> None:
     if cpu_affinity != {TASK44_MPI_CPU}:
         raise RuntimeError(
@@ -156,6 +325,7 @@ def _pid_start_ticks(pid: int) -> int:
 def _write_service_identity(
     unit: str, repo_root: Path, expected_cpus: set[int], cap_bytes: int,
     native_environment: Mapping[str, Any],
+    cpu0_neighbor_gate: Mapping[str, Any],
 ) -> dict[str, Any]:
     from benchmarks.task034_wsl_resources import current_cgroup_path
 
@@ -189,6 +359,7 @@ def _write_service_identity(
         or probe.get("exit_code") != 0
         or not isinstance(probe.get("facts_sha256"), str)
         or not re.fullmatch(r"[0-9a-f]{64}", probe["facts_sha256"])
+        or cpu0_neighbor_gate.get("status") != "pass"
     ):
         raise RuntimeError("Task44 service identity is missing its qualified isolated ABI probe receipt")
     receipt = {
@@ -212,6 +383,10 @@ def _write_service_identity(
             "module_paths": native["module_paths"],
             "runtime_controls": native["task44_runtime_controls"],
         },
+        "cpu0_neighbor_gate": dict(cpu0_neighbor_gate),
+        "performance_not_isolated": bool(
+            cpu0_neighbor_gate.get("performance_not_isolated")
+        ),
     }
     path = repo_root / "benchmarks/artifacts/task44_native_services" / unit / "service_identity.json"
     _atomic_write_json(path, receipt)
@@ -228,7 +403,11 @@ def _task44_services(units: list[str]) -> list[dict[str, Any]]:
 
 def _numerical_processes() -> list[dict[str, Any]]:
     text = _run(["ps", "-eo", "pid=,ppid=,comm=,args="])
-    marker = re.compile(r"python|mpiexec|mpirun|dolfinx|petsc|slepc|gmsh|fenics|pytest", re.IGNORECASE)
+    marker = re.compile(
+        r"python|mpiexec|mpirun|dolfinx|petsc|slepc|gmsh|fenics|pytest|"
+        r"supervise_authorized_cpu_release",
+        re.IGNORECASE,
+    )
     result = []
     for line in text.splitlines():
         fields = line.strip().split(None, 3)
@@ -532,6 +711,11 @@ def _exact_service_guard(
             failures.append("task44_concurrency_gate_failed")
         if _parse_cpu_list(facts["cpu_affinity"]) != expected_cpus:
             failures.append("service_cpu_affinity_property_mismatch")
+        neighbor_gate = _cpu0_neighbor_gate(
+            ignored_cgroup=facts["control_group"]
+        )
+        if neighbor_gate["status"] != "pass":
+            failures.append("cpu0_neighbor_gate_failed")
         affinity_report = observe_cgroup_cpu_affinity(expected_cgroup, expected_cpus)
         actual_affinities = affinity_report["service_pid_affinities"]
         if affinity_report["stop"]:
@@ -548,6 +732,8 @@ def _exact_service_guard(
             "expected_cpu_affinity": sorted(expected_cpus),
             "service_pid_affinities": actual_affinities,
             "service_process_affinity_observation": affinity_report,
+            "cpu0_neighbor_gate": neighbor_gate,
+            "performance_not_isolated": neighbor_gate["performance_not_isolated"],
         }
     except Exception as exc:  # noqa: BLE001 - any monitor error must fail closed.
         return {
@@ -576,6 +762,9 @@ def preflight(
     _require_task44_cpu(cpu_affinity)
     if set(os.sched_getaffinity(0)) != cpu_affinity:
         raise RuntimeError("Task44 preflight process must be pinned to exactly CPU0")
+    neighbor_gate = _cpu0_neighbor_gate(ignored_pids={os.getpid()})
+    if neighbor_gate["status"] != "pass":
+        raise RuntimeError(f"Task44 CPU0 neighbor gate failed: {neighbor_gate}")
     from src.runners.task038_launcher import _environment_identity
 
     environment = _environment_identity()
@@ -604,6 +793,8 @@ def preflight(
         "service_memory_max_bytes": cap_bytes,
         "service_memory_swap_max_bytes": 0,
         "selected_cpu_affinity": sorted(cpu_affinity),
+        "cpu0_neighbor_gate": neighbor_gate,
+        "performance_not_isolated": neighbor_gate["performance_not_isolated"],
     }
 
 
@@ -616,12 +807,19 @@ def run_service(
     _require_task44_cpu(cpu_affinity)
     if set(os.sched_getaffinity(0)) != cpu_affinity:
         raise RuntimeError("Task44 service process is not pinned to exactly CPU0")
+    unit_cgroup = _unit_facts(unit)["control_group"]
+    neighbor_gate = _cpu0_neighbor_gate(ignored_cgroup=unit_cgroup)
+    if neighbor_gate["status"] != "pass":
+        raise RuntimeError(f"Task44 CPU0 neighbor gate failed before ABI probe: {neighbor_gate}")
     source = _source_facts(repo_root)
     source, inputs, native_environment = _isolated_runtime_facts(
         input_path, repo_root, source, cpu_affinity
     )
+    neighbor_gate = _cpu0_neighbor_gate(ignored_cgroup=unit_cgroup)
+    if neighbor_gate["status"] != "pass":
+        raise RuntimeError(f"Task44 CPU0 neighbor gate failed after ABI probe: {neighbor_gate}")
     identity = _write_service_identity(
-        unit, repo_root, cpu_affinity, cap_bytes, native_environment
+        unit, repo_root, cpu_affinity, cap_bytes, native_environment, neighbor_gate
     )
     guard = _exact_service_guard(unit, cap_bytes, max_concurrent, cpu_affinity)
     if guard["stop"]:
@@ -677,6 +875,8 @@ def run_service(
             "input_sha256": inputs["sha256"],
             "execution_mode": "public_runner_dry_run_smoke" if smoke else "public_runner_full3d",
             "native_environment": native_environment,
+            "cpu0_neighbor_gate": neighbor_gate,
+            "performance_not_isolated": neighbor_gate["performance_not_isolated"],
             "time_policy": "observe_only; no wall-time termination",
         },
     )
@@ -689,6 +889,8 @@ def run_service(
         "runner_log": str(watchdog_directory / "worker.log"),
         "wall_time_termination": "disabled_by_time_policy_observe_only",
         "smoke": smoke,
+        "cpu0_neighbor_gate": neighbor_gate,
+        "performance_not_isolated": neighbor_gate["performance_not_isolated"],
     }
     _atomic_write_json(artifacts / "service_summary.json", summary)
     print(

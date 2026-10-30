@@ -64,12 +64,18 @@
 4. 每场正式 PDE 前冻结输入、源码 SHA、材料表、网格/DtN 精度对照、单样本初始 128 GiB cap、service/cgroup 与资源硬门；运行期间按真实进度和资源情况继续，不使用原 30 分钟到点强停。
 5. 完成代表点与精度资格后，根据实测单样本成本、已有独立样本上限和数值证据推进训练点、GP、开发验证与盲测；数据/GP 资格分别判定，不受原 12 小时窗口约束。
 
-当前阶段：材料 receipt、六层输入、Task44 启动器和针对性修复已在执行分支实现。凝聚 kernel 数量假设已撤回，相关测试观察保留为未资格记录；standard_full 的层吸收、A–D 网格检查、超时边界和 subreaper 停止/清理测试继续执行。定向测试和原生 systemd 服务 smoke 通过并提交后，每次正式运行前都从实际 Ubuntu 主机重新读取 CPU、邻任务、内存及 cgroup 状态；仅在 CPU0 仍空闲、无邻任务 affinity 冲突且动态资源门通过时，才启动绑定 CPU0、128 GiB / 零 swap 的专属服务。smoke 只执行公共 runner 的 `--dry-run`，不组装或求解有限元系统。正式运行采用共享 subreaper watchdog 的 `observe_only` 时间策略：继续记录运行时间，但不因时钟停止 PDE；动态内存、祖先 cgroup、零 swap 和精确服务身份仍由硬门控制。
+当前阶段：材料 receipt、六层输入、Task44 启动器和针对性修复已在执行分支实现。凝聚 kernel 数量假设已撤回，相关测试观察保留为未资格记录；standard_full 的层吸收、A–D 网格检查、超时边界和 subreaper 停止/清理测试继续执行。每次正式运行前都从实际 Ubuntu 主机重新读取 CPU、邻任务、内存及 cgroup 状态；在精确 CPU0 邻居身份 Gate 通过、其他数值进程无冲突且动态资源门通过时，才启动绑定 CPU0、128 GiB / 零 swap 的专属服务。CPU0 已获批与唯一 Metrology 监督进程共享，因此该进程存续期间结果标为 `performance_not_isolated=true`。smoke 只执行公共 runner 的 `--dry-run`，不组装或求解有限元系统。正式运行采用共享 subreaper watchdog 的 `observe_only` 时间策略：继续记录运行时间，但不因时钟停止 PDE；动态内存、祖先 cgroup、零 swap 和精确服务身份仍由硬门控制。
 
-### 当前执行状态（2026-10-30）
+### 历史执行状态（截至 2026-10-30）
 
 CPU0/MPI1 的 ABI 探针已在 CPU0 上通过，Task44 dry-run systemd smoke 也以 `COMPLETED` 结束；它只验证启动和清场，不是有限元求解资格。之后核对发现，Metrology 的长期监督进程 PID `3893658`（start ticks `324107938`）仍声明 affinity `[0]`。15:31 的一次快照把 CPU0 的 7.77% 忙度和空的 affinity-claim 列表误读成空闲；采样器当时由 `taskset -c 8` 启动，并且只把 Task40/Maxwell 进程列入 affinity claim，因此不能据此确认 CPU0 已释放。完整快照和误判原因见 [`response_v1.md`](response_v1.md) 及 ignored artifact `benchmarks/artifacts/task44_native_services/task44-sample-smoke6.service/cpu0_neighbor_conflict_audit.json`。
 
 该误判也意味着 smoke6 的 15.72 秒运行期间无法证明 CPU0 独占，可能与监督进程发生短时 CPU 争用。smoke 没有 PDE 计算，但不能将这次 service 资源记录当作正式样本的邻任务资格证据。
 
-因此当前 CPU0 资源 Gate 为 `not_passed`，正式样本 A 尚未启动，也没有 PDE 结果。不得共享、迁移或停止该监督进程；只有在用户裁决 CPU0 的资源归属后，才能继续正式 A–D。低忙度读数不等同于 affinity 释放。
+截至上述记录，CPU0 资源 Gate 为 `not_passed`，正式样本 A 尚未启动。低忙度读数不等同于 affinity 释放。
+
+### CPU0 共享执行授权（2026-10-31）
+
+用户明确授权 Task44 与下列唯一监督进程共享 CPU0：PID `3893658`、start ticks `324107938`、PPID 1、affinity `[0]`、命令脚本 `supervise_authorized_CPU_release_v3_20261030.py`。该例外只识别这组完整进程身份；同 PID 重用、身份字段变化或任何其他窄 affinity 数值进程占用 CPU0 都会使邻核 Gate 失败。该进程自然退出后，只要 CPU0 没有其他冲突，就允许继续。
+
+共享运行必须在 preflight、service startup 和 watchdog 运行期重新核对该身份，并在 preflight、service identity 与最终 service summary 中记录 `performance_not_isolated=true`（监督进程不存在且无其他共享者时记录 `false`）。不得向该监督进程发送信号、迁移进程、调整其优先级或环境。每场正式 PDE 仍必须通过 CPU 负载门、宿主与祖先 cgroup 内存门、384 GiB reserve、128 GiB 初始 cap、任务 swap 为零、磁盘、ABI、service/cgroup 身份和数值 Gate；该授权不批准共享给其他新增任务。后续 A 使用既有公共 `scripts/start_task44_native_sample.sh` 与 systemd service 路径。
