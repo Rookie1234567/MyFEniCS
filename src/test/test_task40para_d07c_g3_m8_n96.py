@@ -185,7 +185,9 @@ def test_g3_m8_n96_profile_rejects_unknown_identity_and_worker_contract_drift(
     assert d07c_axis_plan("G3")["expected_global_cell_count"] == 4800
 
 
-def test_g3_m8_n96_real_loader_route_matches_live_g3_mesh_axes(tmp_path):
+def test_g3_m8_n96_real_loader_route_matches_live_g3_mesh_axes(tmp_path, monkeypatch):
+    from copy import deepcopy
+
     from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
     from src.runners.p6_condensed_direct import _task40_d07c_mesh_evidence
 
@@ -210,3 +212,22 @@ def test_g3_m8_n96_real_loader_route_matches_live_g3_mesh_axes(tmp_path):
     assert evidence["material_tag_counts"] == {"1": 3280, "2": 1200, "3": 320}
     assert evidence["axis_sha256_le_f64"] == plan["axis_sha256_le_f64"]
     assert evidence["changed_axis"] == "yz"
+
+    # Recreate the pre-fix route input: an empty relative-to-baseline field
+    # fell back to the combined label ["yz"] and was rejected by plan QA.
+    import src.io.native_capacity_profile as profile_module
+
+    production_facts = native_profile_facts(profile)
+
+    def old_empty_changed_axes(_identity):
+        old_facts = deepcopy(production_facts)
+        old_facts["component_options"]["directional_mesh_comparison"][
+            "changed_axes"
+        ] = []
+        return old_facts
+
+    monkeypatch.setattr(profile_module, "native_profile_facts", old_empty_changed_axes)
+    old_route = _direct_run_contract(profile)
+    assert old_route["task40_changed_axes"] == ["yz"]
+    with pytest.raises(ValueError, match="changed axes differ from plan"):
+        _task40_d07c_mesh_evidence({"mesh_data": mesh_data}, cfg, old_route)
