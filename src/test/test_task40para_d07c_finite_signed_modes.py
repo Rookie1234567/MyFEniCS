@@ -289,6 +289,164 @@ def test_d07c_signed_window_production_inventory_is_finite_and_uses_q81():
     assert float(np.linalg.norm(traction)) == pytest.approx(0.1566524338595219)
     assert route["surface_quadrature_reference_degree"] == 161
 
+
+def test_d07c_g3_m8_n64_loader_mesh_selector_and_q81_contract(tmp_path):
+    """The narrower signed window is selected before production inventory build."""
+    path = INPUT_DIR / "d07c_g3_m8_nminus64_to1_p6_direct.dat"
+    specification = load_and_resolve(path)
+    resolved = specification.as_jsonable()
+    profile_id = "task40para_phi90_0p7_D07C_G3_M8_N64_p6_direct_v1"
+    run_id = "task40para_phi90_0p7_D07C_G3_M8_N64_p6_direct_v1"
+    assert specification.identity["run_id"] == run_id
+    assert resolved["solver"]["native_capacity_profile"] == profile_id
+    normalized = _validate_sections(_plain(load_dat_input(path).document))
+    validate_native_case(normalized)
+    route = _direct_run_contract(profile_id)
+
+    plan = d07c_axis_plan("G3")
+    assert tuple(plan["axis_cell_counts"]) == (6, 100, 8)
+    assert plan["expected_global_cell_count"] == 4800
+    assert _independent_midpoint_tags(plan) == {"1": 3280, "2": 1200, "3": 320}
+    assert plan["expected_material_tag_counts"] == {"1": 3280, "2": 1200, "3": 320}
+    assert plan["axis_sha256_le_f64"] == D07C_AXIS_PLANS["G3"]["axis_sha256_le_f64"]
+    g2_plan = D07C_AXIS_PLANS["G2"]
+    for axis in ("x", "z"):
+        assert plan["axis_sha256_le_f64"][axis] == g2_plan["axis_sha256_le_f64"][axis]
+        assert plan["axes_nm"][axis] == g2_plan["axes_nm"][axis]
+    assert plan["axis_sha256_le_f64"]["y"] != g2_plan["axis_sha256_le_f64"]["y"]
+
+    from src.runners.p6_condensed_direct import _task40_d07c_mesh_evidence
+
+    coordinates = np.asarray(
+        list(product(plan["axes_nm"]["x"], plan["axes_nm"]["y"], plan["axes_nm"]["z"])),
+        dtype=np.float64,
+    )
+    cell_tags = []
+    for z0, z1 in pairwise(plan["axes_nm"]["z"]):
+        z_mid = (z0 + z1) / 2.0
+        for y0, y1 in pairwise(plan["axes_nm"]["y"]):
+            y_mid = (y0 + y1) / 2.0
+            for x0, x1 in pairwise(plan["axes_nm"]["x"]):
+                x_mid = (x0 + x1) / 2.0
+                cell_tags.append(
+                    2 if z_mid < 0.0 else 1 if z_mid >= 120.0 else
+                    3 if 16.5 < x_mid < 33.5 and 15.0 < y_mid < 35.0 else 1
+                )
+    mesh = SimpleNamespace(
+        geometry=SimpleNamespace(x=coordinates),
+        topology=SimpleNamespace(
+            dim=3,
+            index_map=lambda _dim: SimpleNamespace(size_global=4800),
+            cell_name=lambda: "hexahedron",
+        ),
+    )
+    mesh_evidence = _task40_d07c_mesh_evidence(
+        {
+            "mesh_data": SimpleNamespace(
+                mesh=mesh,
+                cell_tags=SimpleNamespace(values=np.asarray(cell_tags, dtype=np.int32)),
+            )
+        },
+        SimpleNamespace(tags=SimpleNamespace(air=1, substrate=2, grating=3)),
+        route,
+    )
+    assert mesh_evidence["status"] == "PASS"
+    assert mesh_evidence["actual_global_cell_count"] == 4800
+    assert mesh_evidence["material_tag_counts"] == {"1": 3280, "2": 1200, "3": 320}
+
+    facts = native_profile_facts(profile_id)
+    options = facts["component_options"]
+    mode = options["mode_selection"]
+    assert route["task40_mesh_case"] == "G3"
+    assert route["signed_rectangle_bounds_mn"] == [-8, 8, -64, 1]
+    assert route["parent_rectangle_max_abs_m_n"] == [8, 64]
+    assert route["expected_mode_count"] == 4488
+    assert route["expected_mode_sha256"] == (
+        "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0"
+    )
+    assert route["expected_propagating_count"] == 4360
+    assert route["expected_power_carrying_count"] == 4426
+    assert options["surface_quadrature"]["degree"] == route["surface_quadrature_degree"] == 81
+    assert options["volume_quadrature"] == {
+        "degree": 15,
+        "rule": "default",
+        "authority": "live_FFCx_Basix_p6_volume_form_degree_metadata",
+    }
+    assert mode["omitted_from_G3_M8_Nminus143_to_1_mode_count"] == 5372
+    assert mode["omitted_from_G3_M8_Nminus143_to_1_propagating_count"] == 5304
+    assert mode["omitted_from_G3_M8_Nminus143_to_1_power_carrying_count"] == 5338
+    assert mode["same_mesh_modal_reference_case"] == "G3_M8"
+    assert mode["mesh_comparison_reference_case"] == "G2_M8"
+    assert mode["cutoff_validation_status"].endswith(
+        "NOT_CONVERGENCE_QUALIFICATION"
+    )
+    assert route["full_dtn_status"] == "FULL_DTN_NOT_VERIFIED"
+
+    cfg = simulation_config_3d_from_normalized(resolved)
+    cfg.stage4_dtn_order_policy = "explicit_signed_rectangle"
+    cfg.task40_dtn_signed_rectangle_bounds_mn = tuple(route["signed_rectangle_bounds_mn"])
+    cfg.stage4_dtn_quadrature_degree = int(route["surface_quadrature_degree"])
+    cfg.task40_port_boundary_amplitude_scale_policy = route["mode_basis_scale_policy"]
+    modes, rows, mode_sha = build_dynamic_mode_inventory(cfg)
+    assert len(modes) == len(rows) == 4488
+    assert mode_sha == route["expected_mode_sha256"]
+    assert (modes[0].side, modes[0].m, modes[0].n, modes[0].polarization) == (
+        "top", -8, -64, "s"
+    )
+    assert (modes[-1].side, modes[-1].m, modes[-1].n, modes[-1].polarization) == (
+        "bottom", 8, 1, "p"
+    )
+    assert all(-8 <= mode.m <= 8 and -64 <= mode.n <= 1 for mode in modes)
+    assert sum(bool(mode.propagating) for mode in modes) == 4360
+    assert sum(float(mode.power_per_unit_amplitude) > 0.0 for mode in modes) == 4426
+    assert Counter(mode.side for mode in modes) == {"top": 2244, "bottom": 2244}
+    assert len({(mode.side, mode.m, mode.n, mode.polarization) for mode in modes}) == 4488
+    assert sum(
+        not mode.propagating and float(mode.power_per_unit_amplitude) > 0.0
+        for mode in modes
+    ) == 66
+    assert all(
+        np.isfinite(np.asarray((mode.alpha, mode.gamma, mode.beta), dtype=np.complex128)).all()
+        and np.isfinite(mode.e_vector).all()
+        and np.isfinite(mode.h_vector).all()
+        and np.isfinite(mode.power_per_unit_amplitude)
+        and np.isfinite(mode.boundary_amplitude_scale)
+        and np.isfinite(mode.boundary_amplitude_log_scale)
+        for mode in modes
+    )
+    assert _dtn_surface_quadrature_degree(cfg, list(modes)) == 81
+
+    from src.runners.task038_launcher import _write_bootstrap, build_execution_plan
+    from src.test.test_task40para_d07c_manifest_worker_contract import _worker_validate
+
+    manifest_directory = tmp_path / "manifest_worker"
+    manifest_directory.mkdir()
+    execution_plan = build_execution_plan(
+        specification,
+        manifest_directory,
+        source_sha="d07c" * 10,
+        python_executable="/qualified/python",
+        mpiexec_command="/usr/bin/mpiexec",
+    )
+    _manifest_path, resolved_sha = _write_bootstrap(
+        specification,
+        manifest_directory,
+        source_sha="d07c" * 10,
+        adapter_identity=execution_plan.adapter_identity,
+        start_time="2026-10-30T00:00:00Z",
+    )
+    _payload, worker_errors = _worker_validate(
+        specification, manifest_directory, resolved_sha, execution_plan
+    )
+    assert not worker_errors
+
+    wrong_cfg = simulation_config_3d_from_normalized(resolved)
+    wrong_cfg.stage4_dtn_order_policy = "explicit_signed_rectangle"
+    wrong_cfg.task40_dtn_signed_rectangle_bounds_mn = (-8, 8, -65, 1)
+    wrong_modes, _wrong_rows, wrong_sha = build_dynamic_mode_inventory(wrong_cfg)
+    assert len(wrong_modes) == 4556
+    assert wrong_sha != route["expected_mode_sha256"]
+
     with pytest.raises(ValueError, match="signed diffraction bounds must be ordered"):
         enumerate_diffraction_orders_3d(cfg, signed_bounds_override=(1, -1, -2, 2))
     with pytest.raises(ValueError, match="signed bounds cannot be combined"):

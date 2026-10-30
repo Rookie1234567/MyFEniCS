@@ -586,6 +586,8 @@ def interleaved_admission(resources, worker_cpus, *, parallel_allowed=False):
 def task40_host_floor_interleaved_admission(
     resources, worker_cpus, *, task_profile=None, task_run_id=None,
     parallel_authority_path=None, parallel_authority_sha256=None,
+    pair_scope_path=None, pair_scope_sha256=None, pair_role=None,
+    current_service_unit=None, supervisor_cpu=9,
 ):
     """Task40 admission: explicit available-memory floor, no legacy RSS cap."""
     import shutil
@@ -639,10 +641,109 @@ def task40_host_floor_interleaved_admission(
             f'Task40 effective available memory is below its explicit floor: {available} < {floor}'
         )
 
+    # The exact two-member Task40 pair is a separate, hash-bound authorization.
+    # It must never be inferred from the older Task41 exception or a profile flag.
+    pair_authority = None
+    pair_scope = None
+    if pair_scope_path is not None or pair_scope_sha256 is not None or pair_role is not None:
+        if parallel_authority_path is not None or parallel_authority_sha256 is not None:
+            raise InputError('Task40 pair and legacy Task41 authorizations cannot be combined')
+        if pair_scope_path is None or pair_scope_sha256 is None or pair_role is None:
+            raise InputError('Task40 exact-pair scope path, SHA256, and role must be supplied together')
+        from .task40_exact_parallel_pair import (
+            MEMBERS,
+            PAIR_BINDING_DIRECTORY_ENV,
+            load_pair_scope,
+            load_peer_binding_if_present,
+            peer_authorized_process_nodes,
+            role_for_identity,
+            validate_active_roles,
+        )
+
+        pair_scope = load_pair_scope(
+            scope_path=pair_scope_path,
+            expected_sha256=pair_scope_sha256,
+        )
+        reviewed_floor = int(
+            pair_scope.get('admission_contract', {}).get('minimum_available_bytes', 0)
+        )
+        if (
+            floor != reviewed_floor
+            or resources.get('pss_sampling_policy') != 'disabled_by_profile'
+            or resources.get('uss_sampling_policy') != 'disabled_by_profile'
+            or resources.get('time_limit_mode') != 'none'
+        ):
+            raise InputError(
+                'Task40 exact-pair resource profile differs from the reviewed 64 GiB/no-cap policy'
+            )
+        expected_role = role_for_identity(task_profile, task_run_id)
+        if expected_role != pair_role:
+            raise InputError('Task40 exact-pair runtime role differs from profile/run identity')
+        pair_member = MEMBERS[expected_role]
+        if supervisor_cpu != pair_member['supervisor_cpu'] or list(worker_cpus) != [
+            pair_member['worker_cpu']
+        ]:
+            raise InputError(
+                'Task40 exact-pair profile CPU assignment differs from its reviewed member'
+            )
+        reservation_name = (
+            'g3_m8_n64' if pair_role == '0p7nm_g3_m8_n64' else 'ten_layer_m7_n9'
+        )
+        reservation = pair_scope.get('cpu_reservation', {}).get(reservation_name, {})
+        expected_topology = reservation.get('expected_topology', {})
+        if supervisor_cpu not in allowed_cpus or not set(worker_cpus).issubset(allowed_cpus):
+            raise InputError('Task40 exact-pair CPU reservation is outside the effective cpuset')
+        observed_topology = {}
+        for cpu in [supervisor_cpu, *worker_cpus]:
+            topology = sys_root/f'devices/system/cpu/cpu{cpu}/topology'
+            try:
+                observed_topology[str(cpu)] = {
+                    'package': int((topology/'physical_package_id').read_text()),
+                    'core': int((topology/'core_id').read_text()),
+                    'thread_siblings': (topology/'thread_siblings_list').read_text().strip(),
+                }
+            except (OSError, ValueError) as exc:
+                raise InputError(f'Task40 exact-pair CPU{cpu} topology is unreadable') from exc
+        if any(
+            observed_topology.get(cpu) != expected
+            for cpu, expected in expected_topology.items()
+        ) or len({(row['package'], row['core']) for row in observed_topology.values()}) != len(observed_topology):
+            raise InputError('Task40 exact-pair supervisor/worker CPU topology differs from review')
+        verified_peer = load_peer_binding_if_present(
+            task_profile,
+            task_run_id,
+            pair_scope,
+            current_service_unit=current_service_unit,
+            directory=os.environ.get(PAIR_BINDING_DIRECTORY_ENV, '/tmp'),
+        )
+        peer_role = None
+        if verified_peer is not None:
+            peer_role = verified_peer['binding']['member']['role']
+        pair_state = validate_active_roles(
+            [] if peer_role is None else [peer_role], current_role=pair_role
+        )
+        pair_solver_nodes, pair_process_nodes = peer_authorized_process_nodes(verified_peer)
+        pair_authority = {
+            'state': 'first_member_without_peer' if verified_peer is None
+            else 'authorized_exact_pair_peer_active',
+            'current_role': pair_role,
+            'launch_position': pair_state,
+            'scope_path': str(Path(pair_scope_path).resolve()),
+            'scope_sha256': str(pair_scope_sha256).lower(),
+            'peer_role': peer_role,
+            'peer_live_binding': verified_peer,
+            'authorized_solver_nodes': pair_solver_nodes,
+            'authorized_process_nodes': pair_process_nodes,
+            'authorized_solver_pids': sorted(pair_solver_nodes),
+            'user_parallel_window_authorization': True,
+        }
+
     # Refuse a concurrent large solver process without signaling or modifying it.
     if (parallel_authority_path is None) != (parallel_authority_sha256 is None):
         raise InputError('Task40 parallel authorization path and SHA256 must be supplied together')
     parallel_authority = None
+    if parallel_authority_path is not None and pair_authority is not None:
+        raise InputError('Task40 pair and legacy Task41 authorizations cannot be combined')
     if parallel_authority_path is not None:
         record = _task40_parallel_authorization(
             parallel_authority_path, parallel_authority_sha256,
@@ -698,21 +799,25 @@ def task40_host_floor_interleaved_admission(
                         unknown_solver_role_candidates.append(candidate)
         except (OSError, ValueError, KeyError, IndexError):
             continue
+    active_parallel_authority = pair_authority or parallel_authority
     authorized_solver_pids = set(
-        parallel_authority.get('authorized_solver_pids', [])
-        if parallel_authority else []
+        active_parallel_authority.get('authorized_solver_pids', [])
+        if active_parallel_authority else []
     )
     authorized_solver_nodes = (
-        parallel_authority.get('authorized_solver_nodes', {})
-        if parallel_authority else {}
+        active_parallel_authority.get('authorized_solver_nodes', {})
+        if active_parallel_authority else {}
     )
     blocking_active_candidates = []
     blocking_unknown_candidates = []
     parallel_authorized_candidates = []
     for candidate in active_solver_candidates:
         pid = candidate['pid']
-        if (parallel_authority
-                and parallel_authority.get('state') == 'authorized_exact_neighbor_active'
+        if (active_parallel_authority
+                and active_parallel_authority.get('state') in (
+                    'authorized_exact_neighbor_active',
+                    'authorized_exact_pair_peer_active',
+                )
                 and pid in authorized_solver_pids
                 and pid in authorized_solver_nodes
                 and _candidate_matches_authorized_node(
@@ -722,13 +827,16 @@ def task40_host_floor_interleaved_admission(
         else:
             blocking_active_candidates.append(candidate)
     blocking_unknown_candidates = list(unknown_solver_role_candidates)
-    if parallel_authority and parallel_authority.get('state') == 'authorized_exact_neighbor_active':
+    if active_parallel_authority and active_parallel_authority.get('state') in (
+        'authorized_exact_neighbor_active', 'authorized_exact_pair_peer_active'
+    ):
         observed_parallel_pids = {row['pid'] for row in parallel_authorized_candidates}
         if observed_parallel_pids != authorized_solver_pids:
             raise InputError(
-                'Task40 authorized Task41 solver roles were not all observed exactly once: '
+                'Task40 authorized parallel solver roles were not all observed exactly once: '
                 + repr(sorted(observed_parallel_pids))
             )
+        authority_label = 'Task40 exact-pair peer' if pair_authority else 'Task41'
         for pid, authorized_node in authorized_solver_nodes.items():
             node = authorized_node['node']
             try:
@@ -738,9 +846,9 @@ def task40_host_floor_interleaved_admission(
                     f'Task40 authorized Task41 PID {pid} disappeared after solver scan: {exc}'
                 ) from exc
             _require_bound_process_identity(
-                live, node, f'Task41 {node.get("role")} at final solver scan'
+                live, node, f'{authority_label} {node.get("role")} at final solver scan'
             )
-        for pid, node in parallel_authority.get('authorized_process_nodes', {}).items():
+        for pid, node in active_parallel_authority.get('authorized_process_nodes', {}).items():
             try:
                 live = _read_proc_identity(proc_root, pid)
             except (OSError, ValueError, KeyError, IndexError) as exc:
@@ -748,7 +856,7 @@ def task40_host_floor_interleaved_admission(
                     f'Task40 authorized Task41 PID {pid} disappeared after large-process scan: {exc}'
                 ) from exc
             _require_bound_process_identity(
-                live, node, f'Task41 {node.get("role")} at final large-process scan'
+                    live, node, f'{authority_label} {node.get("role")} at final large-process scan'
             )
     if blocking_active_candidates:
         raise InputError(
@@ -761,15 +869,18 @@ def task40_host_floor_interleaved_admission(
             + repr(blocking_unknown_candidates)
         )
     parallel_process_nodes = (
-        parallel_authority.get('authorized_process_nodes', {})
-        if parallel_authority else {}
+        active_parallel_authority.get('authorized_process_nodes', {})
+        if active_parallel_authority else {}
     )
     blocking_large = [
         row for row in large
         if row['rss_bytes'] >= 100_000_000_000
         and not (
-            parallel_authority
-            and parallel_authority.get('state') == 'authorized_exact_neighbor_active'
+            active_parallel_authority
+            and active_parallel_authority.get('state') in (
+                'authorized_exact_neighbor_active',
+                'authorized_exact_pair_peer_active',
+            )
             and row['pid'] in parallel_process_nodes
             and all(row.get(key) == parallel_process_nodes[row['pid']].get(key)
                     for key in ('start_ticks', 'ppid', 'cwd', 'argv'))
@@ -814,14 +925,23 @@ def task40_host_floor_interleaved_admission(
         'parallel_authorized_solver_candidates': parallel_authorized_candidates,
         'blocking_active_solver_candidates': blocking_active_candidates,
         'unknown_solver_role_candidates': unknown_solver_role_candidates,
-        'parallel_neighbor_authorization': parallel_authority,
+        'parallel_neighbor_authorization': active_parallel_authority,
         'parallel_neighbor_authorized': bool(
-            parallel_authority
-            and parallel_authority.get('state') == 'authorized_exact_neighbor_active'
+            active_parallel_authority
+            and active_parallel_authority.get('state') in (
+                'authorized_exact_neighbor_active',
+                'authorized_exact_pair_peer_active',
+            )
         ),
         'user_parallel_window_authorization': bool(
-            parallel_authority
-            and parallel_authority.get('state') == 'authorized_exact_neighbor_active'
+            active_parallel_authority
+            and (
+                active_parallel_authority.get('state') in (
+                    'authorized_exact_neighbor_active',
+                    'authorized_exact_pair_peer_active',
+                )
+                or active_parallel_authority.get('user_parallel_window_authorization') is True
+            )
         ),
         'interleave_probe_maps': maps,
         'worktree_disk_free_bytes_at_admission': disk.free,

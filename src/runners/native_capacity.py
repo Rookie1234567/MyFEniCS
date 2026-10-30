@@ -37,6 +37,85 @@ def _native_capacity_host_lock(root: Path, profile: str) -> tuple[Path, Path]:
     return common.parent/'native-capacity-heavy.lock', common
 
 
+@contextmanager
+def _native_capacity_launch_lock(root, profile, task_run_id):
+    """Keep legacy launches exclusive; share only the reviewed exact pair."""
+    from src.runners.task40_exact_parallel_pair import (
+        CANONICAL_COMMON_REPOSITORY,
+        CANONICAL_HEAVY_LOCK_PATH,
+        PAIR_SCOPE_PATH_ENV,
+        PAIR_SCOPE_SHA_ENV,
+        acquire_pair_runtime_locks,
+        load_pair_scope,
+        pair_role_if_member,
+    )
+
+    scope_path = os.environ.get(PAIR_SCOPE_PATH_ENV)
+    scope_sha = os.environ.get(PAIR_SCOPE_SHA_ENV)
+    role = pair_role_if_member(profile, task_run_id or "")
+    if role is None:
+        if scope_path is not None or scope_sha is not None:
+            raise InputError(
+                'Task40 exact-pair scope cannot authorize a non-member profile/run identity'
+            )
+        # Leave ordinary Task40 and every legacy profile on its existing
+        # worktree/common-dir lock resolver.
+        lock_path, common_repository = _native_capacity_host_lock(root, profile)
+        with lock_path.open('a') as stream:
+            try:
+                fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as exc:
+                raise InputError('native-capacity heavy lock is held; no retry started') from exc
+            yield stream, lock_path, common_repository, None
+        return
+
+    if scope_path is None or scope_sha is None:
+        raise InputError('Task40 exact-pair member requires its reviewed scope path and SHA256')
+    scope = load_pair_scope(scope_path=scope_path, expected_sha256=scope_sha)
+    lock_contract = scope.get('canonical_host_lock', {})
+    lock_path = Path(lock_contract.get('path', ''))
+    if (
+        not lock_path.is_absolute()
+        or lock_path.resolve() != CANONICAL_HEAVY_LOCK_PATH.resolve()
+        or lock_contract.get('canonical_lock_must_preexist') is not True
+        or lock_contract.get('keep_canonical_lock') is not True
+        or not lock_path.is_file()
+    ):
+        raise InputError('Task40 exact-pair scope names a different canonical heavy lock')
+    try:
+        common_repository = CANONICAL_COMMON_REPOSITORY.resolve(strict=True)
+        common_check = subprocess.run(
+            [
+                'git', '--git-dir', str(common_repository),
+                'rev-parse', '--is-bare-repository',
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise InputError(
+            f'Task40 exact-pair canonical repository is unavailable: {exc}'
+        ) from exc
+    if (
+        common_repository.name != 'task-repository.git'
+        or not common_repository.is_dir()
+        or common_check.stdout.strip() != 'true'
+    ):
+        raise InputError(
+            f'Task40 exact-pair canonical repository is unexpected: {common_repository}'
+        )
+    with acquire_pair_runtime_locks(
+        role=role, canonical_lock_path=lock_path
+    ) as pair_locks:
+        yield pair_locks, lock_path, common_repository, {
+            'role': role,
+            'scope_path': str(Path(scope_path).resolve()),
+            'scope_sha256': str(scope_sha).lower(),
+            'scope': scope,
+        }
+
+
 def _cpu_launch_snapshot(cpus):
     """Record processes last scheduled on the reserved CPUs before launch."""
     snapshot = {str(cpu): [] for cpu in sorted(cpus)}
@@ -219,19 +298,25 @@ def native_capacity_guard(profile, *, memory_policy='none', task_run_id=None):
     if os.environ.get('_MYFENICS_NATIVE_QUALIFIED_ACTIVATION') != '1':
         raise InputError('source scripts/activate_myfenics_linux.sh first')
     root = Path(__file__).resolve().parents[2]
-    lock_path, common_repository = _native_capacity_host_lock(root, profile)
-    with lock_path.open('a') as lock:
-        try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError as exc:
-            raise InputError('native-capacity heavy lock is held; no retry started') from exc
-        # Keep process-tree sampling off the worker's CPU23.
-        os.sched_setaffinity(0, {9})
+    profile_facts = native_profile_facts(profile)
+    supervisor_cpu = int(profile_facts.get('native_execution', {}).get('supervisor_cpu', 9))
+    worker_cpu = profile_facts.get('native_execution', {}).get('worker_cpu', 23)
+    worker_cpus = profile_facts.get('native_execution', {}).get('worker_cpus', [worker_cpu])
+    with _native_capacity_launch_lock(root, profile, task_run_id) as (
+        _lock, lock_path, common_repository, pair_context
+    ):
+        if pair_context is not None and (
+            memory_policy != 'interleave_nodes0_1'
+            or profile_facts['resources'].get('resource_stop_policy')
+            != 'host_available_floor_v1'
+        ):
+            raise InputError(
+                'Task40 exact-pair members require the reviewed host-floor/interleave admission path'
+            )
+        # Keep process-tree sampling on the reviewed profile supervisor CPU.
+        os.sched_setaffinity(0, {supervisor_cpu})
         os.environ['OMPI_MCA_hwloc_base_binding_policy'] = 'none'
         os.environ['PHYSICAL_NATIVE_CAPACITY'] = profile
-        profile_facts = native_profile_facts(profile)
-        worker_cpu = profile_facts.get('native_execution', {}).get('worker_cpu', 23)
-        worker_cpus = profile_facts.get('native_execution', {}).get('worker_cpus', [worker_cpu])
         observe_only_swap = profile_facts['resources'].get('swap_policy') == 'observe_only'
         swap_launch = _launch_swap_snapshot()
         swap_launch['policy'] = _validate_preexisting_swap(
@@ -252,6 +337,11 @@ def native_capacity_guard(profile, *, memory_policy='none', task_run_id=None):
                     task_run_id=task_run_id,
                     parallel_authority_path=os.environ.get(_TASK40_PARALLEL_AUTH_FILE_ENV),
                     parallel_authority_sha256=os.environ.get(_TASK40_PARALLEL_AUTH_SHA_ENV),
+                    pair_scope_path=(None if pair_context is None else pair_context['scope_path']),
+                    pair_scope_sha256=(None if pair_context is None else pair_context['scope_sha256']),
+                    pair_role=(None if pair_context is None else pair_context['role']),
+                    current_service_unit=os.environ.get('TASK40_EXACT_PARALLEL_PAIR_SERVICE_UNIT'),
+                    supervisor_cpu=supervisor_cpu,
                 )
             else:
                 from .reviewed_workstation_admission import (
@@ -331,11 +421,14 @@ def native_capacity_guard(profile, *, memory_policy='none', task_run_id=None):
         isolation = {'canonical_repository': str(common_repository),
                      'native_capacity_heavy_lock': str(lock_path.resolve()),
                      'native_capacity_lock_scope': (
+                         'canonical_host_shared_with_exact_task40_pair'
+                         if pair_context is not None else
                          'canonical_host_shared_with_task39_worktrees'
                          if profile in TASK40_PHI90_P6_DIRECT_PROFILES else
                          'legacy_worktree_parent_unchanged'
                      ),
                      'worktree': str(root), 'supervisor_affinity': sorted(os.sched_getaffinity(0)),
+                     'supervisor_cpu': supervisor_cpu,
                      'worker_affinity': worker_cpus,
                      'worker_memory_policy': ({'mode': 'strict_membind', 'node': 1}
                                               if memory_policy == 'membind_node1'
@@ -350,7 +443,16 @@ def native_capacity_guard(profile, *, memory_policy='none', task_run_id=None):
                      'node_memory_admission': node_admission,
                      'swap_launch': swap_launch,
                      'native_capacity_profile': profile,
-                     'cpu_launch_snapshot': _cpu_launch_snapshot({9, *worker_cpus}),
+                     'cpu_launch_snapshot': _cpu_launch_snapshot({supervisor_cpu, *worker_cpus}),
+                     'exact_parallel_pair': (None if pair_context is None else {
+                         'pair_id': pair_context['scope']['pair_id'],
+                         'role': pair_context['role'],
+                         'scope_path': pair_context['scope_path'],
+                         'scope_sha256': pair_context['scope_sha256'],
+                         'canonical_lock_mode': 'shared_nonblocking',
+                         'pair_membership_lock_mode': 'shared_nonblocking',
+                         'member_role_lock_mode': 'exclusive_nonblocking',
+                     }),
                      'profile_concurrent_neighbor_authorized': profile_facts['resources']['concurrent_neighbor_authorized'],
                      'neighbor_concurrent_heavy_authorized': (
                          profile_facts['resources']['concurrent_neighbor_authorized']

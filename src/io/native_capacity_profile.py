@@ -163,7 +163,10 @@ TASK40_PHI90_D5C_PROFILES = frozenset(
 # D07C is the separate 0.7 nm finite signed-window full-solve study.
 TASK40_PHI90_D07C_PROFILE_BY_CASE = {
     case: f"task40para_phi90_0p7_D07C_{case}_p6_direct_v1"
-    for case in ("B", "Y1", "Y2", "B_M8", "Y3_M8", "G2_M8", "G3_M8")
+    for case in (
+        "B", "Y1", "Y2", "B_M8", "Y3_M8", "G2_M8", "G3_M8",
+        "G3_M8_N64",
+    )
 }
 TASK40_PHI90_D07C_PROFILES = frozenset(
     TASK40_PHI90_D07C_PROFILE_BY_CASE.values()
@@ -1569,12 +1572,33 @@ def _task40_phi90_d07c_profile_facts(identity):
         )
     except StopIteration as exc:
         raise ValueError(f"unsupported Task40 D07C profile: {identity}") from exc
-    case_name = case_label.removesuffix("_M8")
-    max_m = 8 if case_label.endswith("_M8") else 32
-    mode_count, mode_sha, propagating_count, power_count = {
-        32: (37700, "fad8f4be8404605d5e75cd6f19506890689e10f7d81367ef44aaadb9437e7873", 35784, 36744),
-        8: (9860, "5524a412514e85d243665050d7bf0f272c7f1347da338b03e2fbda22d257b057", 9664, 9764),
-    }[max_m]
+    case_name = case_label.split("_M", maxsplit=1)[0]
+    max_m = 8 if "_M8" in case_label else 32
+    n_min, n_max = (-64, 1) if case_label == "G3_M8_N64" else (-143, 1)
+    n_abs_max = max(abs(n_min), abs(n_max))
+    mode_facts = {
+        (32, -143, 1): (
+            37700,
+            "fad8f4be8404605d5e75cd6f19506890689e10f7d81367ef44aaadb9437e7873",
+            35784,
+            36744,
+        ),
+        (8, -143, 1): (
+            9860,
+            "5524a412514e85d243665050d7bf0f272c7f1347da338b03e2fbda22d257b057",
+            9664,
+            9764,
+        ),
+        (8, -64, 1): (
+            4488,
+            "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0",
+            4360,
+            4426,
+        ),
+    }
+    mode_count, mode_sha, propagating_count, power_count = mode_facts[
+        (max_m, n_min, n_max)
+    ]
     omitted_auto_count = 64120 - propagating_count
     plan = D07C_AXIS_PLANS[case_name]
     counts = [int(value) for value in plan["axis_cell_counts"]]
@@ -1583,23 +1607,25 @@ def _task40_phi90_d07c_profile_facts(identity):
     base = deepcopy(
         _task40_phi90_d13_profile_facts(TASK40_PHI90_D13_B_P6_DIRECT_PROFILE)
     )
-    operator_scope = f"task40_phi90_D07C_{case_name}_M{max_m}_Nminus143_to_1_finite"
-    signed_bounds = [-max_m, max_m, -143, 1]
+    n_min_label = f"minus{abs(n_min)}" if n_min < 0 else str(n_min)
+    window_label = f"M{max_m}_N{n_min_label}_to_{n_max}"
+    operator_scope = f"task40_phi90_D07C_{case_name}_{window_label}_finite"
+    signed_bounds = [-max_m, max_m, n_min, n_max]
     evidence_keys = [
         [side, m, n, pol]
         for side in ("top", "bottom")
-        for m, n, pol in ((-max_m, -143, "p"), (0, 0, "s"), (max_m, 1, "p"))
+        for m, n, pol in ((-max_m, n_min, "p"), (0, 0, "s"), (max_m, n_max, "p"))
     ]
     mode_selection = {
         "schema": "task40.dtn-mode-selection.v1",
         "policy": "explicit_signed_rectangle_v1",
-        "reference_mode_label": f"D07C_M{max_m}_Nminus143_to_1",
+        "reference_mode_label": f"D07C_{window_label}",
         "parent_signed_bounds_mn": signed_bounds,
         "active_signed_bounds_mn": signed_bounds,
-        "parent_rectangle_max_abs_m_n": [max_m, 143],
-        "active_rectangle_max_abs_m_n": [max_m, 143],
+        "parent_rectangle_max_abs_m_n": [max_m, n_abs_max],
+        "active_rectangle_max_abs_m_n": [max_m, n_abs_max],
         "parent_inventory_scope": (
-            f"D07C_finite_signed_rectangle_M[-{max_m},{max_m}]_N[-143,1]_including_evanescent"
+            f"D07C_finite_signed_rectangle_M[-{max_m},{max_m}]_N[{n_min},{n_max}]_including_evanescent"
         ),
         "expected_mode_count": mode_count,
         "expected_active_mode_count": mode_count,
@@ -1625,7 +1651,7 @@ def _task40_phi90_d07c_profile_facts(identity):
         wavelength_nm=0.7,
         allowed_mesh_targets_nm=[0.7],
         formal_runner="src.runners.p6_condensed_direct",
-        route=f"TASK40_PHI90_D07C_{case_name}_P6_CONDENSED_DIRECT_M{max_m}_Nminus143_to_1",
+        route=f"TASK40_PHI90_D07C_{case_name}_P6_CONDENSED_DIRECT_{window_label}",
         operator_scope=operator_scope,
         full_dtn_status="FULL_DTN_NOT_VERIFIED",
     )
@@ -1711,7 +1737,7 @@ def _task40_phi90_d07c_profile_facts(identity):
     options["direct_factor_evidence"]["mode_keys"] = evidence_keys
     options["direct_factor_evidence"]["full_primal_projection_quadrature_degree"] = 81
     options["direct_factor_evidence"]["active_mode_scope"] = (
-        f"D07C finite signed M[-{max_m},{max_m}],N[-143,1]; not full auto inventory"
+        f"D07C finite signed M[-{max_m},{max_m}],N[{n_min},{n_max}]; not full auto inventory"
     )
     base["backend"].update(
         independent_residual="original_full_p6_A6_active_D07C_finite_signed_window_action",
@@ -1720,7 +1746,7 @@ def _task40_phi90_d07c_profile_facts(identity):
     )
     base["condensed_route"].update(
         name="task40_phi90_p6_exact_local_condensation_direct_d07c_v1",
-        operator_family=f"D07C_M{max_m}_Nminus143_to_1_finite_signed_rectangle",
+        operator_family=f"D07C_{window_label}_finite_signed_rectangle",
         parent_mode_inventory=mode_selection["parent_inventory_scope"],
         active_mode_inventory="same_as_finite_signed_parent",
         parent_mode_count=mode_count,
@@ -1735,8 +1761,8 @@ def _task40_phi90_d07c_profile_facts(identity):
         d07c_case=case_name,
         parent_signed_bounds_mn=signed_bounds,
         active_signed_bounds_mn=signed_bounds,
-        parent_rectangle_max_abs_m_n=[max_m, 143],
-        active_rectangle_max_abs_m_n=[max_m, 143],
+        parent_rectangle_max_abs_m_n=[max_m, n_abs_max],
+        active_rectangle_max_abs_m_n=[max_m, n_abs_max],
         parent_mode_count=mode_count,
         active_mode_count=mode_count,
         parent_mode_sha256=mode_selection["expected_mode_sha256"],
@@ -1772,7 +1798,7 @@ def _task40_phi90_d07c_profile_facts(identity):
         "User-authorized three-case 0.7 nm D07C study using one fixed finite signed mode window; "
         "the excluded high-|m| propagating orders remain outside qualification."
     )
-    if max_m == 8:
+    if max_m == 8 and case_label != "G3_M8_N64":
         base["campaign_authorization"]["source"] = (
             "User-authorized 2026-10-29 0.7nm mesh refinement with economical modal truncation: "
             "B_M8 is the same-grid cutoff anchor; Y3_M8 bisects B y only. "
@@ -1783,7 +1809,7 @@ def _task40_phi90_d07c_profile_facts(identity):
             "fad8f4be8404605d5e75cd6f19506890689e10f7d81367ef44aaadb9437e7873"
         )
         mode_selection["cutoff_validation_status"] = "REQUIRES_SAME_GRID_SOLVE_COMPARISON"
-    if case_name in {"G2", "G3"}:
+    if case_name in {"G2", "G3"} and case_label != "G3_M8_N64":
         options["directional_mesh_comparison"]["changed_axes"] = ["y", "z"]
         base["campaign_authorization"]["source"] = (
             "User-authorized 2026-10-29 G2 first and conditional G3, M8/q81/q15 fixed; "
@@ -1791,6 +1817,48 @@ def _task40_phi90_d07c_profile_facts(identity):
             "RCWA R/T/A differences are diagnostic only; near-unity R triggers consideration of G3."
         )
         mode_selection["cutoff_validation_status"] = "FINITE_M8_DIAGNOSTIC_NOT_CONVERGENCE_QUALIFICATION"
+    if case_label == "G3_M8_N64":
+        options["directional_mesh_comparison"].update(
+            display_name="D07C-G3-M8-N64",
+            changed_axes=["y", "z"],
+            changed_axes_vs_mesh_reference=["y"],
+            mode_window=window_label,
+            modal_window="M[-8,8],N[-64,1]",
+            same_mesh_modal_reference_case="G3_M8",
+            same_mesh_modal_reference_bounds_mn=[-8, 8, -143, 1],
+            same_mesh_modal_reference_sha256=(
+                "5524a412514e85d243665050d7bf0f272c7f1347da338b03e2fbda22d257b057"
+            ),
+            mesh_comparison_reference_case="G2_M8",
+            mesh_comparison_reference_axis_hashes=deepcopy(
+                D07C_AXIS_PLANS["G2"]["axis_sha256_le_f64"]
+            ),
+            joint_mesh_and_cutoff_change=True,
+        )
+        mode_selection.update(
+            comparison_reference_signed_bounds_mn=[-8, 8, -143, 1],
+            comparison_reference_mode_sha256=(
+                "5524a412514e85d243665050d7bf0f272c7f1347da338b03e2fbda22d257b057"
+            ),
+            same_mesh_modal_reference_case="G3_M8",
+            mesh_comparison_reference_case="G2_M8",
+            omitted_high_negative_n_modes=9860 - mode_count,
+            omitted_high_negative_n_propagating_modes=9664 - propagating_count,
+            omitted_high_negative_n_power_carrying_modes=9764 - power_count,
+            omitted_from_G3_M8_Nminus143_to_1_mode_count=9860 - mode_count,
+            omitted_from_G3_M8_Nminus143_to_1_propagating_count=9664 - propagating_count,
+            omitted_from_G3_M8_Nminus143_to_1_power_carrying_count=9764 - power_count,
+            cutoff_validation_status=(
+                "FINITE_M8_N64_JOINT_MESH_AND_CUTOFF_DIAGNOSTIC_NOT_CONVERGENCE_QUALIFICATION"
+            ),
+        )
+        base["campaign_authorization"]["source"] = (
+            "User-authorized D07C_G3_M8_N64 diagnostic: G3 axes [6,100,8] refine y from G2 while "
+            "the finite signed window narrows to M[-8,8],N[-64,1]. This changes both y mesh and "
+            "modal cutoff relative to G2_M8; compare with same-mesh G3_M8 to isolate cutoff only. "
+            "The omitted finite-parent tail and all excluded high-|m| propagating orders remain "
+            "outside qualification; FULL_DTN_NOT_VERIFIED."
+        )
     base["operator_scope"] = operator_scope
     base["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"
     return base
