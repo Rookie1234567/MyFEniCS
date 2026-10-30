@@ -164,15 +164,18 @@ while true; do
     fi
 
     if [[ "$decision" == "active_identity_ready" ]]; then
-        if python - "$unit" "$artifact_dir/service_identity.json" "$cap_bytes" "$cpu_set" <<'PY'
+        if python - "$unit" "$artifact_dir/service_identity.json" "$cap_bytes" "$cpu_set" "$artifact_dir/startup_affinity_check.json" <<'PY'
 import json
 import os
 import subprocess
 import sys
 from pathlib import Path
 
+from scripts.task44_service_startup import observe_cgroup_cpu_affinity
+
 unit, receipt_path, expected_cap = sys.argv[1], Path(sys.argv[2]), int(sys.argv[3])
 expected_cpus = set(int(value) for value in sys.argv[4].split(","))
+affinity_receipt_path = Path(sys.argv[5])
 
 def parse_cpu_list(value):
     result = set()
@@ -217,19 +220,27 @@ if (
 ):
     raise SystemExit(f"live systemd identity differs from saved startup receipt: {facts} / {receipt}")
 cgroup = Path("/sys/fs/cgroup") / facts["ControlGroup"].lstrip("/")
-process_affinities = {}
-for procs_file in cgroup.rglob("cgroup.procs"):
-    for value in procs_file.read_text(encoding="ascii").split():
-        process_pid = int(value)
-        try:
-            actual = sorted(os.sched_getaffinity(process_pid))
-        except ProcessLookupError:
-            continue
-        process_affinities[str(process_pid)] = actual
-        if set(actual) != expected_cpus:
-            raise SystemExit(f"Task44 cgroup process CPUAffinity mismatch: {process_affinities}")
+affinity_report = observe_cgroup_cpu_affinity(cgroup, expected_cpus)
+affinity_receipt = {
+    "unit": unit,
+    "invocation_id": facts["InvocationID"],
+    "service_pid": pid,
+    "service_pid_start_ticks": start_ticks,
+    "control_group": facts["ControlGroup"],
+    "affinity_observation": affinity_report,
+}
+temporary_path = affinity_receipt_path.with_name(
+    f".{affinity_receipt_path.name}.{os.getpid()}.tmp"
+)
+temporary_path.write_text(
+    json.dumps(affinity_receipt, indent=2, sort_keys=True, allow_nan=False) + "\n",
+    encoding="utf-8",
+)
+os.replace(temporary_path, affinity_receipt_path)
+if affinity_report["stop"]:
+    raise SystemExit(json.dumps(affinity_receipt, sort_keys=True))
 print(json.dumps({"live_systemd": facts, "startup_identity": receipt,
-                  "service_process_affinities": process_affinities}, sort_keys=True))
+                  "affinity_observation": affinity_report}, sort_keys=True))
 PY
         then
             exit 0

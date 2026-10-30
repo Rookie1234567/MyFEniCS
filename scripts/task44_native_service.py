@@ -462,6 +462,7 @@ def _exact_service_guard(
     unit: str, cap_bytes: int, max_concurrent: int, expected_cpus: set[int]
 ) -> dict[str, Any]:
     from benchmarks.task034_wsl_resources import cgroup_snapshot, current_cgroup_path
+    from scripts.task44_service_startup import observe_cgroup_cpu_affinity
 
     try:
         units = _active_units()
@@ -488,25 +489,10 @@ def _exact_service_guard(
             failures.append("task44_concurrency_gate_failed")
         if _parse_cpu_list(facts["cpu_affinity"]) != expected_cpus:
             failures.append("service_cpu_affinity_property_mismatch")
-        actual_affinities: dict[str, list[int]] = {}
-        service_pids = (
-            {
-                int(pid)
-                for path in expected_cgroup.rglob("cgroup.procs")
-                for pid in path.read_text(encoding="ascii").split()
-            }
-            if own_cgroup is not None
-            else set()
-        )
-        for pid in service_pids:
-            try:
-                actual = set(os.sched_getaffinity(pid))
-            except (ProcessLookupError, PermissionError, OSError):
-                failures.append(f"service_pid_affinity_unreadable:{pid}")
-                continue
-            actual_affinities[str(pid)] = sorted(actual)
-            if actual != expected_cpus:
-                failures.append(f"service_pid_affinity_mismatch:{pid}")
+        affinity_report = observe_cgroup_cpu_affinity(expected_cgroup, expected_cpus)
+        actual_affinities = affinity_report["service_pid_affinities"]
+        if affinity_report["stop"]:
+            failures.extend(affinity_report.get("failures") or ["service_process_affinity_monitor_failed"])
         return {
             "stop": bool(failures),
             "reason": "MONITORING_FAILED" if failures else None,
@@ -518,6 +504,7 @@ def _exact_service_guard(
             "active_task44_services": services,
             "expected_cpu_affinity": sorted(expected_cpus),
             "service_pid_affinities": actual_affinities,
+            "service_process_affinity_observation": affinity_report,
         }
     except Exception as exc:  # noqa: BLE001 - any monitor error must fail closed.
         return {
