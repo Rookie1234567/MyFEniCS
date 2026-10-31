@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import hashlib
 import json
 import os
@@ -10,6 +11,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,12 +22,17 @@ HOST_RESERVE_BYTES = 384 * GIB
 INITIAL_CAP_BYTES = 128 * GIB
 JOB_BUFFER_BYTES = 8 * GIB
 BRANCH = "task44_sixlayer_surrogate_0p7nm"
-RUNTIME_PROBE_SCHEMA = "task44_isolated_runtime_facts_v1"
-TASK44_MPI_CPU = 0
+RUNTIME_PROBE_SCHEMA = "task44_isolated_runtime_facts_v2"
 TASK44_RUNTIME_CONTROLS = {
     "openmpi_pml": "ob1",
     "hwloc_components": "-x86",
+    "hwloc_base_binding_policy": "none",
 }
+TASK44_SYSTEM_CALL_FILTER = "~sched_setaffinity"
+TASK44_SYSTEM_CALL_ERROR_NUMBER = "EPERM"
+PREFLIGHT_CAP_BYTES = 4 * GIB
+MAX_IDLE_CPU_BUSY_PERCENT = 20.0
+CPU_SAMPLE_SECONDS = 0.5
 AUTHORIZED_CPU0_NEIGHBOR = {
     "pid": 3893658,
     "start_ticks": 324107938,
@@ -98,11 +105,13 @@ def _unit_facts(unit: str) -> dict[str, Any]:
         "-p", "ControlGroup", "-p", "MemoryMax", "-p", "MemorySwapMax",
         "-p", "ActiveState", "-p", "CPUAffinity", "-p", "MainPID",
         "-p", "InvocationID", "-p", "Restart", "-p", "KillMode",
+        "-p", "SystemCallFilter", "-p", "SystemCallErrorNumber",
     ])
     values = dict(line.split("=", 1) for line in output.splitlines() if "=" in line)
     if set(values) != {
         "ControlGroup", "MemoryMax", "MemorySwapMax", "ActiveState", "CPUAffinity",
         "MainPID", "InvocationID", "Restart", "KillMode",
+        "SystemCallFilter", "SystemCallErrorNumber",
     }:
         raise RuntimeError(f"systemd returned incomplete properties for {unit}")
     cgroup = Path("/sys/fs/cgroup") / values["ControlGroup"].lstrip("/")
@@ -124,6 +133,8 @@ def _unit_facts(unit: str) -> dict[str, Any]:
         "restart": values["Restart"],
         "kill_mode": values["KillMode"],
         "cpu_affinity": values["CPUAffinity"],
+        "system_call_filter": values["SystemCallFilter"],
+        "system_call_error_number": values["SystemCallErrorNumber"],
         "control_group": values["ControlGroup"],
         "memory_max_bytes": int(values["MemoryMax"]),
         "memory_current_bytes": memory_current,
@@ -161,12 +172,12 @@ def _host_allowed_cpus(proc_root: Path) -> tuple[set[int], str]:
     host_comm = (proc_root / "1/comm").read_text(encoding="utf-8").strip()
     if "systemd" not in host_comm.lower():
         raise RuntimeError(
-            f"Task44 CPU0 neighbor gate requires the native host PID namespace; PID1 is {host_comm!r}"
+            f"Task44 CPU gate requires the native host PID namespace; PID1 is {host_comm!r}"
         )
     host_status = _status_fields(proc_root / "1/status")
     host_cpus = _parse_cpu_list(host_status.get("Cpus_allowed_list", ""))
-    if TASK44_MPI_CPU not in host_cpus:
-        raise RuntimeError("native host PID1 CPU mask does not include the qualified CPU0")
+    if not host_cpus:
+        raise RuntimeError("native host PID1 has an empty allowed CPU mask")
     return host_cpus, host_comm
 
 
@@ -184,8 +195,8 @@ def _proc_identity(pid: int, proc_root: Path) -> dict[str, Any]:
     }
 
 
-def _proc_cpu0_claim(
-    process: Mapping[str, Any], proc_root: Path, host_cpus: set[int]
+def _proc_cpu_claim(
+    process: Mapping[str, Any], proc_root: Path, host_cpus: set[int], selected_cpu: int
 ) -> dict[str, Any] | None:
     pid = int(process["pid"])
     process_root = proc_root / str(pid)
@@ -197,9 +208,9 @@ def _proc_cpu0_claim(
     if not cpu_list:
         raise RuntimeError(f"cannot read CPU affinity for process {pid}")
     affinity = _parse_cpu_list(cpu_list)
-    authorized_pid = pid == AUTHORIZED_CPU0_NEIGHBOR["pid"]
-    narrow_cpu0_claim = TASK44_MPI_CPU in affinity and affinity != host_cpus
-    if not narrow_cpu0_claim and not authorized_pid:
+    authorized_pid = selected_cpu == 0 and pid == AUTHORIZED_CPU0_NEIGHBOR["pid"]
+    narrow_selected_cpu_claim = selected_cpu in affinity and affinity != host_cpus
+    if not narrow_selected_cpu_claim and not authorized_pid:
         return None
     command_bytes = (process_root / "cmdline").read_bytes().split(b"\0")
     argv = [part.decode("utf-8", errors="replace") for part in command_bytes if part]
@@ -218,33 +229,40 @@ def _proc_cpu0_claim(
         or int(process.get("ppid", before["parent_pid"])) != before["parent_pid"]
         or str(process.get("comm", before["comm"])) != before["comm"]
     ):
-        raise RuntimeError(f"process identity or affinity changed while checking CPU0 claim {pid}")
+        raise RuntimeError(
+            f"process identity or affinity changed while checking CPU{selected_cpu} claim {pid}"
+        )
     return {
         **before,
         "command_basename": command_basename,
         "cpu_affinity": sorted(affinity),
-        "narrow_cpu0_claim": narrow_cpu0_claim,
+        "narrow_selected_cpu_claim": narrow_selected_cpu_claim,
         "cgroup": "/" + cgroup.split(":", 2)[-1].lstrip("/"),
     }
 
 
-def _cpu0_neighbor_gate(
+def _cpu_neighbor_gate(
     *,
+    selected_cpu: int,
     proc_root: Path = Path("/proc"),
     ignored_pids: set[int] | None = None,
     ignored_cgroup: str | None = None,
     numerical_processes: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     if ignored_cgroup is not None and not ignored_cgroup.strip("/"):
-        raise RuntimeError("Task44 CPU0 neighbor gate refuses an empty/root cgroup exclusion")
+        raise RuntimeError("Task44 CPU neighbor gate refuses an empty/root cgroup exclusion")
     host_cpus, host_comm = _host_allowed_cpus(proc_root)
     ignored = ignored_pids or set()
     claims: list[dict[str, Any]] = []
     unreadable: list[dict[str, Any]] = []
     candidates = _numerical_processes() if numerical_processes is None else numerical_processes
     candidates_by_pid = {int(process["pid"]): process for process in candidates}
-    authorized_pid = int(AUTHORIZED_CPU0_NEIGHBOR["pid"])
-    if authorized_pid not in candidates_by_pid and (proc_root / str(authorized_pid)).exists():
+    authorized_pid = int(AUTHORIZED_CPU0_NEIGHBOR["pid"]) if selected_cpu == 0 else None
+    if (
+        authorized_pid is not None
+        and authorized_pid not in candidates_by_pid
+        and (proc_root / str(authorized_pid)).exists()
+    ):
         candidates_by_pid[authorized_pid] = {"pid": authorized_pid}
     observed: list[dict[str, Any]] = []
     for process in candidates_by_pid.values():
@@ -252,7 +270,7 @@ def _cpu0_neighbor_gate(
         if pid in ignored:
             continue
         try:
-            row = _proc_cpu0_claim(process, proc_root, host_cpus)
+            row = _proc_cpu_claim(process, proc_root, host_cpus, selected_cpu)
         except FileNotFoundError:
             continue
         except (OSError, ValueError, RuntimeError) as exc:
@@ -269,7 +287,7 @@ def _cpu0_neighbor_gate(
         ):
             continue
         observed.append(row)
-    claims = [row for row in observed if row["narrow_cpu0_claim"]]
+    claims = [row for row in observed if row["narrow_selected_cpu_claim"]]
     authorized = [
         row for row in claims
         if all(row.get(key) == expected for key, expected in AUTHORIZED_CPU0_NEIGHBOR.items())
@@ -291,19 +309,20 @@ def _cpu0_neighbor_gate(
     if len(authorized) > 1:
         failures.append("authorized_cpu0_neighbor_identity_duplicated")
     if unexpected:
-        failures.append("unexpected_narrow_cpu0_affinity_neighbor")
+        failures.append("unexpected_narrow_selected_cpu_affinity_neighbor")
     if identity_conflicts:
         failures.append("authorized_cpu0_pid_identity_mismatch")
     if unreadable:
-        failures.append("cpu0_neighbor_process_identity_unreadable")
+        failures.append("selected_cpu_neighbor_process_identity_unreadable")
     return {
         "status": "pass" if not failures else "fail",
         "failures": failures,
+        "selected_cpu": selected_cpu,
         "host_pid1_comm": host_comm,
         "host_allowed_cpus": sorted(host_cpus),
         "authorized_neighbor": authorized[0] if authorized else None,
         "authorized_pid_identity_conflicts": identity_conflicts,
-        "narrow_cpu0_affinity_claims": claims,
+        "narrow_selected_cpu_affinity_claims": claims,
         "unexpected_claims": unexpected,
         "unreadable_processes": unreadable,
         "performance_not_isolated": bool(authorized),
@@ -311,10 +330,72 @@ def _cpu0_neighbor_gate(
 
 
 def _require_task44_cpu(cpu_affinity: set[int]) -> None:
-    if cpu_affinity != {TASK44_MPI_CPU}:
+    if len(cpu_affinity) != 1:
         raise RuntimeError(
-            "this Task44 workstation qualification requires exactly CPU0 for its one-rank MPI run"
+            "Task44 one-rank MPI execution requires affinity to exactly one selected CPU"
         )
+
+
+def _require_sched_setaffinity_eperm(expected_cpus: set[int]) -> dict[str, Any]:
+    actual_cpus = set(os.sched_getaffinity(0))
+    if actual_cpus != expected_cpus:
+        raise RuntimeError(
+            f"Task44 process affinity mismatch: expected={sorted(expected_cpus)}, "
+            f"actual={sorted(actual_cpus)}"
+        )
+    try:
+        os.sched_setaffinity(0, actual_cpus)
+    except OSError as exc:
+        if exc.errno != errno.EPERM:
+            raise RuntimeError(
+                f"same-mask sched_setaffinity failed with errno {exc.errno}, expected EPERM"
+            ) from exc
+    else:
+        raise RuntimeError("same-mask sched_setaffinity succeeded despite the Task44 seccomp gate")
+    unchanged_cpus = set(os.sched_getaffinity(0))
+    if unchanged_cpus != expected_cpus:
+        raise RuntimeError(
+            f"Task44 seccomp denial changed the process CPU mask: {sorted(unchanged_cpus)}"
+        )
+    return {
+        "status": "pass",
+        "requested_cpu_affinity": sorted(actual_cpus),
+        "actual_cpu_affinity": sorted(unchanged_cpus),
+        "denied_syscall": "sched_setaffinity",
+        "errno": "EPERM",
+    }
+
+
+def _verify_filtered_unit(
+    unit: str, *, expected_cpus: set[int], cap_bytes: int
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    from benchmarks.task034_wsl_resources import current_cgroup_path
+
+    facts = _unit_facts(unit)
+    expected_cgroup = Path("/sys/fs/cgroup") / facts["control_group"].lstrip("/")
+    own_cgroup = current_cgroup_path(os.getpid())
+    error_number = facts["system_call_error_number"]
+    if error_number == str(errno.EPERM):
+        error_number = "EPERM"
+    if (
+        facts["main_pid"] != os.getpid()
+        or facts["active_state"] != "active"
+        or facts["restart"] != "no"
+        or facts["kill_mode"] != "control-group"
+        or facts["memory_max_bytes"] != cap_bytes
+        or facts["cgroup_memory_max_bytes"] != cap_bytes
+        or facts["swap_max_bytes"] != 0
+        or facts["cgroup_swap_max_bytes"] != 0
+        or facts["swap_current_bytes"] != 0
+        or _parse_cpu_list(facts["cpu_affinity"]) != expected_cpus
+        or facts["system_call_filter"].split() != [TASK44_SYSTEM_CALL_FILTER]
+        or error_number != TASK44_SYSTEM_CALL_ERROR_NUMBER
+        or own_cgroup is None
+        or expected_cgroup.resolve(strict=True) != own_cgroup.resolve(strict=True)
+    ):
+        raise RuntimeError(f"Task44 filtered unit identity or seccomp properties mismatch: {facts}")
+    syscall_test = _require_sched_setaffinity_eperm(expected_cpus)
+    return facts, syscall_test
 
 
 def _pid_start_ticks(pid: int) -> int:
@@ -325,7 +406,8 @@ def _pid_start_ticks(pid: int) -> int:
 def _write_service_identity(
     unit: str, repo_root: Path, expected_cpus: set[int], cap_bytes: int,
     native_environment: Mapping[str, Any],
-    cpu0_neighbor_gate: Mapping[str, Any],
+    cpu_neighbor_gate: Mapping[str, Any],
+    seccomp_receipt: Mapping[str, Any],
 ) -> dict[str, Any]:
     from benchmarks.task034_wsl_resources import current_cgroup_path
 
@@ -345,6 +427,8 @@ def _write_service_identity(
         or facts["cgroup_swap_max_bytes"] != 0
         or facts["swap_current_bytes"] != 0
         or _parse_cpu_list(facts["cpu_affinity"]) != expected_cpus
+        or facts["system_call_filter"].split() != [TASK44_SYSTEM_CALL_FILTER]
+        or facts["system_call_error_number"] not in {"EPERM", str(errno.EPERM)}
         or own_cpus != expected_cpus
         or own_cgroup is None
         or expected_cgroup.resolve(strict=True) != own_cgroup.resolve(strict=True)
@@ -352,6 +436,7 @@ def _write_service_identity(
         raise RuntimeError(f"Task44 service process identity does not match its unit: {facts}")
     native = native_environment.get("native_complex_identity")
     probe = native_environment.get("isolated_runtime_probe")
+    runtime_syscall_test = native_environment.get("sched_setaffinity_filter_test")
     if (
         not isinstance(native, dict)
         or native.get("task44_runtime_controls") != TASK44_RUNTIME_CONTROLS
@@ -359,7 +444,11 @@ def _write_service_identity(
         or probe.get("exit_code") != 0
         or not isinstance(probe.get("facts_sha256"), str)
         or not re.fullmatch(r"[0-9a-f]{64}", probe["facts_sha256"])
-        or cpu0_neighbor_gate.get("status") != "pass"
+        or not isinstance(runtime_syscall_test, dict)
+        or runtime_syscall_test.get("status") != "pass"
+        or runtime_syscall_test.get("errno") != "EPERM"
+        or cpu_neighbor_gate.get("status") != "pass"
+        or seccomp_receipt.get("sched_setaffinity_filter_test", {}).get("status") != "pass"
     ):
         raise RuntimeError("Task44 service identity is missing its qualified isolated ABI probe receipt")
     receipt = {
@@ -374,18 +463,24 @@ def _write_service_identity(
         "memory_swap_max_bytes": facts["swap_max_bytes"],
         "restart": facts["restart"],
         "kill_mode": facts["kill_mode"],
+        "system_call_filter": facts["system_call_filter"],
+        "system_call_error_number": facts["system_call_error_number"],
+        "sched_setaffinity_filter_test": dict(
+            seccomp_receipt["sched_setaffinity_filter_test"]
+        ),
         "cpu_affinity": sorted(expected_cpus),
         "actual_process_cpu_affinity": sorted(own_cpus),
         "working_directory": str(repo_root),
         "isolated_runtime_probe": {
             "exit_code": probe["exit_code"],
             "facts_sha256": probe["facts_sha256"],
+            "sched_setaffinity_filter_test": runtime_syscall_test,
             "module_paths": native["module_paths"],
             "runtime_controls": native["task44_runtime_controls"],
         },
-        "cpu0_neighbor_gate": dict(cpu0_neighbor_gate),
+        "cpu_neighbor_gate": dict(cpu_neighbor_gate),
         "performance_not_isolated": bool(
-            cpu0_neighbor_gate.get("performance_not_isolated")
+            cpu_neighbor_gate.get("performance_not_isolated")
         ),
     }
     path = repo_root / "benchmarks/artifacts/task44_native_services" / unit / "service_identity.json"
@@ -430,6 +525,134 @@ def _numerical_processes() -> list[dict[str, Any]]:
                 "cpus_allowed_list": allowed,
             })
     return result
+
+
+def _cpu_counters(path: Path = Path("/proc/stat")) -> dict[int, tuple[int, int]]:
+    counters = {}
+    for line in path.read_text(encoding="ascii").splitlines():
+        match = re.match(r"^cpu(\d+)\s+(.+)$", line)
+        if not match:
+            continue
+        values = [int(value) for value in match.group(2).split()[:8]]
+        if len(values) < 4:
+            continue
+        total = sum(values)
+        idle = values[3] + (values[4] if len(values) > 4 else 0)
+        counters[int(match.group(1))] = (total, idle)
+    if not counters:
+        raise RuntimeError("cannot read per-CPU counters from /proc/stat")
+    return counters
+
+
+def _cpu_busy_percentages(
+    before: Mapping[int, tuple[int, int]], after: Mapping[int, tuple[int, int]]
+) -> dict[int, float]:
+    result = {}
+    for cpu in sorted(before.keys() & after.keys()):
+        total = after[cpu][0] - before[cpu][0]
+        idle = after[cpu][1] - before[cpu][1]
+        if total <= 0 or idle < 0 or idle > total:
+            continue
+        result[cpu] = 100.0 * (total - idle) / total
+    return result
+
+
+def select_idle_cpu(*, sample_seconds: float = CPU_SAMPLE_SECONDS) -> dict[str, Any]:
+    """Choose the least-busy CPU below the task's strict 20% admission threshold."""
+    proc_root = Path("/proc")
+    host_cpus, host_comm = _host_allowed_cpus(proc_root)
+    own_pid = os.getpid()
+    excluded_claims = []
+    blocked_cpus: set[int] = set()
+    for process in _numerical_processes():
+        pid = int(process["pid"])
+        if pid == own_pid:
+            continue
+        cpu_list = process.get("cpus_allowed_list")
+        if not cpu_list:
+            raise RuntimeError(f"cannot read CPU affinity for numerical process {pid}")
+        affinity = _parse_cpu_list(str(cpu_list))
+        if not affinity or not affinity.issubset(host_cpus):
+            raise RuntimeError(f"numerical process {pid} has an invalid CPU affinity: {cpu_list}")
+        if affinity == host_cpus:
+            continue
+        for cpu in sorted(affinity):
+            blocked_cpus.add(cpu)
+            excluded_claims.append({
+                "cpu": cpu,
+                "pid": pid,
+                "authorized_cpu0_neighbor_identity_candidate": (
+                    cpu == 0 and pid == AUTHORIZED_CPU0_NEIGHBOR["pid"]
+                ),
+            })
+
+    counter_samples = []
+
+    def sample_counters() -> dict[int, tuple[int, int]]:
+        counters = _cpu_counters(proc_root / "stat")
+        counter_samples.append({
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "monotonic_ns": time.monotonic_ns(),
+            "counters": {
+                str(cpu): {
+                    "total_jiffies": total,
+                    "idle_and_iowait_jiffies": idle,
+                }
+                for cpu, (total, idle) in sorted(counters.items())
+            },
+        })
+        return counters
+
+    first = sample_counters()
+    time.sleep(sample_seconds)
+    second = sample_counters()
+    time.sleep(sample_seconds)
+    third = sample_counters()
+    sample_busy = [
+        _cpu_busy_percentages(first, second),
+        _cpu_busy_percentages(second, third),
+    ]
+    busy = {
+        cpu: max(values[cpu] for values in sample_busy if cpu in values)
+        for cpu in set(sample_busy[0]) & set(sample_busy[1])
+    }
+    interval_seconds = [
+        (counter_samples[index + 1]["monotonic_ns"] - counter_samples[index]["monotonic_ns"])
+        / 1_000_000_000
+        for index in range(2)
+    ]
+    candidates = [
+        cpu for cpu in host_cpus
+        if cpu in busy
+        and cpu not in blocked_cpus
+        and busy[cpu] < MAX_IDLE_CPU_BUSY_PERCENT
+    ]
+    if not candidates:
+        raise RuntimeError(
+            "no allowed CPU passed the idle and numerical-neighbor gates: "
+            f"busy_percent={busy}, blocked_cpus={sorted(blocked_cpus)}, "
+            f"required_busy_percent_strictly_below={MAX_IDLE_CPU_BUSY_PERCENT}"
+        )
+    selected = min(candidates, key=lambda cpu: (busy[cpu], cpu))
+    return {
+        "schema": "task44.dynamic_cpu_selection.v1",
+        "selected_cpu": selected,
+        "selected_cpu_busy_percent": busy[selected],
+        "busy_percent_limit_strictly_less_than": MAX_IDLE_CPU_BUSY_PERCENT,
+        "requested_sample_pause_seconds": sample_seconds,
+        "sample_intervals_seconds": interval_seconds,
+        "cpu_counter_unit": "jiffies from /proc/stat",
+        "cpu_counter_samples": counter_samples,
+        "sample_busy_percent": [
+            {str(cpu): values[cpu] for cpu in sorted(values)}
+            for values in sample_busy
+        ],
+        "host_pid1_comm": host_comm,
+        "host_allowed_cpus": sorted(host_cpus),
+        "cpu_busy_percent": {str(cpu): busy[cpu] for cpu in sorted(busy)},
+        "blocked_cpus": sorted(blocked_cpus),
+        "narrow_numerical_affinity_claims": excluded_claims,
+    }
 
 
 def _input_facts(path: Path, repo_root: Path) -> dict[str, Any]:
@@ -514,9 +737,18 @@ def _validate_runtime_probe(
         raise RuntimeError("isolated Task44 runtime probe input binding failed")
     if not isinstance(environment, dict) or set(environment) != {
         "python_executable", "platform", "qualified_activation", "runtime_profile",
-        "native_complex_identity",
+        "native_complex_identity", "sched_setaffinity_filter_test",
     }:
         raise RuntimeError("isolated Task44 runtime probe environment facts are incomplete")
+    syscall_test = environment["sched_setaffinity_filter_test"]
+    if (
+        not isinstance(syscall_test, dict)
+        or syscall_test.get("status") != "pass"
+        or syscall_test.get("denied_syscall") != "sched_setaffinity"
+        or syscall_test.get("errno") != "EPERM"
+        or syscall_test.get("requested_cpu_affinity") != syscall_test.get("actual_cpu_affinity")
+    ):
+        raise RuntimeError("isolated Task44 runtime probe did not verify inherited seccomp denial")
     native = environment["native_complex_identity"]
     if not isinstance(native, dict) or set(native) != {
         "activation_marker", "task_root", "petsc_scalar_type", "petsc_int_type",
@@ -557,7 +789,7 @@ def _runtime_probe(
     verify_task44_root(repo_root, os.environ)
     _require_task44_cpu(cpu_affinity)
     if set(os.sched_getaffinity(0)) != cpu_affinity:
-        raise RuntimeError("isolated Task44 runtime probe must inherit the exact CPU0 service affinity")
+        raise RuntimeError("isolated Task44 runtime probe must inherit the exact selected CPU affinity")
     source = _source_facts(repo_root)
     if source["source_sha"] != expected_source_sha:
         raise RuntimeError("Task44 source SHA changed before isolated runtime probe")
@@ -565,6 +797,9 @@ def _runtime_probe(
     from src.runners.task038_launcher import _environment_identity
 
     environment = _environment_identity()
+    environment["sched_setaffinity_filter_test"] = _require_sched_setaffinity_eperm(
+        cpu_affinity
+    )
     document = {
         "schema": RUNTIME_PROBE_SCHEMA,
         "source": source,
@@ -711,11 +946,16 @@ def _exact_service_guard(
             failures.append("task44_concurrency_gate_failed")
         if _parse_cpu_list(facts["cpu_affinity"]) != expected_cpus:
             failures.append("service_cpu_affinity_property_mismatch")
-        neighbor_gate = _cpu0_neighbor_gate(
+        if facts["system_call_filter"].split() != [TASK44_SYSTEM_CALL_FILTER]:
+            failures.append("service_system_call_filter_mismatch")
+        if facts["system_call_error_number"] not in {"EPERM", str(errno.EPERM)}:
+            failures.append("service_system_call_error_number_mismatch")
+        neighbor_gate = _cpu_neighbor_gate(
+            selected_cpu=next(iter(expected_cpus)),
             ignored_cgroup=facts["control_group"]
         )
         if neighbor_gate["status"] != "pass":
-            failures.append("cpu0_neighbor_gate_failed")
+            failures.append("selected_cpu_neighbor_gate_failed")
         affinity_report = observe_cgroup_cpu_affinity(expected_cgroup, expected_cpus)
         actual_affinities = affinity_report["service_pid_affinities"]
         if affinity_report["stop"]:
@@ -732,7 +972,7 @@ def _exact_service_guard(
             "expected_cpu_affinity": sorted(expected_cpus),
             "service_pid_affinities": actual_affinities,
             "service_process_affinity_observation": affinity_report,
-            "cpu0_neighbor_gate": neighbor_gate,
+            "cpu_neighbor_gate": neighbor_gate,
             "performance_not_isolated": neighbor_gate["performance_not_isolated"],
         }
     except Exception as exc:  # noqa: BLE001 - any monitor error must fail closed.
@@ -753,21 +993,51 @@ def _source_facts(repo_root: Path) -> dict[str, Any]:
     return {"branch": branch, "source_sha": sha, "worktree_clean": True}
 
 
+def resource_preflight(
+    *, max_concurrent: int, cap_bytes: int, cpu_affinity: set[int]
+) -> dict[str, Any]:
+    verify_task44_root(Path(__file__).resolve().parents[1], os.environ)
+    _require_task44_cpu(cpu_affinity)
+    selected_cpu = next(iter(cpu_affinity))
+    neighbor_gate = _cpu_neighbor_gate(
+        selected_cpu=selected_cpu, ignored_pids={os.getpid()}
+    )
+    if neighbor_gate["status"] != "pass":
+        raise RuntimeError(f"Task44 selected CPU neighbor gate failed: {neighbor_gate}")
+    return {
+        "schema": "task44.resource_preflight.v1",
+        "status": "resource_preflight_pass",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "resources": _admission_facts(cap_bytes, max_concurrent),
+        "max_concurrent": max_concurrent,
+        "service_memory_max_bytes": cap_bytes,
+        "service_memory_swap_max_bytes": 0,
+        "selected_cpu_affinity": sorted(cpu_affinity),
+        "cpu_neighbor_gate": neighbor_gate,
+        "performance_not_isolated": neighbor_gate["performance_not_isolated"],
+    }
+
+
 def preflight(
-    input_path: Path, *, max_concurrent: int, cap_bytes: int,
-    cpu_affinity: set[int],
+    input_path: Path, *, unit: str, cpu_affinity: set[int],
 ) -> dict[str, Any]:
     repo_root = Path(__file__).resolve().parents[1]
     verify_task44_root(repo_root, os.environ)
     _require_task44_cpu(cpu_affinity)
-    if set(os.sched_getaffinity(0)) != cpu_affinity:
-        raise RuntimeError("Task44 preflight process must be pinned to exactly CPU0")
-    neighbor_gate = _cpu0_neighbor_gate(ignored_pids={os.getpid()})
+    unit_facts, syscall_test = _verify_filtered_unit(
+        unit, expected_cpus=cpu_affinity, cap_bytes=PREFLIGHT_CAP_BYTES
+    )
+    selected_cpu = next(iter(cpu_affinity))
+    neighbor_gate = _cpu_neighbor_gate(
+        selected_cpu=selected_cpu,
+        ignored_cgroup=unit_facts["control_group"],
+    )
     if neighbor_gate["status"] != "pass":
-        raise RuntimeError(f"Task44 CPU0 neighbor gate failed: {neighbor_gate}")
+        raise RuntimeError(f"Task44 selected CPU neighbor gate failed: {neighbor_gate}")
     from src.runners.task038_launcher import _environment_identity
 
     environment = _environment_identity()
+    environment["sched_setaffinity_filter_test"] = syscall_test
     if environment["runtime_profile"] != "native_linux_complex":
         raise RuntimeError("native environment identity did not resolve to native Linux complex runtime")
     native = environment.get("native_complex_identity") or {}
@@ -777,8 +1047,6 @@ def preflight(
         raise RuntimeError("Task44 activation is missing the qualified hwloc/Open MPI runtime controls")
     source = _source_facts(repo_root)
     inputs = _input_facts(input_path, repo_root)
-    neighbors = _numerical_processes()
-    resources = _admission_facts(cap_bytes, max_concurrent)
     return {
         "status": "preflight_pass",
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
@@ -787,13 +1055,14 @@ def preflight(
         "input": inputs,
         "environment": environment,
         "active_user_services": _active_units(),
-        "numerical_neighbor_processes": neighbors,
-        "resources": resources,
-        "max_concurrent": max_concurrent,
-        "service_memory_max_bytes": cap_bytes,
+        "preflight_service_memory_max_bytes": PREFLIGHT_CAP_BYTES,
         "service_memory_swap_max_bytes": 0,
+        "preflight_service_unit": unit,
+        "preflight_service_system_call_filter": unit_facts["system_call_filter"],
+        "preflight_service_system_call_error_number": unit_facts["system_call_error_number"],
+        "sched_setaffinity_filter_test": syscall_test,
         "selected_cpu_affinity": sorted(cpu_affinity),
-        "cpu0_neighbor_gate": neighbor_gate,
+        "cpu_neighbor_gate": neighbor_gate,
         "performance_not_isolated": neighbor_gate["performance_not_isolated"],
     }
 
@@ -805,21 +1074,32 @@ def run_service(
     repo_root = Path(__file__).resolve().parents[1]
     verify_task44_root(repo_root, os.environ)
     _require_task44_cpu(cpu_affinity)
-    if set(os.sched_getaffinity(0)) != cpu_affinity:
-        raise RuntimeError("Task44 service process is not pinned to exactly CPU0")
-    unit_cgroup = _unit_facts(unit)["control_group"]
-    neighbor_gate = _cpu0_neighbor_gate(ignored_cgroup=unit_cgroup)
+    unit_facts, syscall_test = _verify_filtered_unit(
+        unit, expected_cpus=cpu_affinity, cap_bytes=cap_bytes
+    )
+    unit_cgroup = unit_facts["control_group"]
+    selected_cpu = next(iter(cpu_affinity))
+    neighbor_gate = _cpu_neighbor_gate(
+        selected_cpu=selected_cpu, ignored_cgroup=unit_cgroup
+    )
     if neighbor_gate["status"] != "pass":
-        raise RuntimeError(f"Task44 CPU0 neighbor gate failed before ABI probe: {neighbor_gate}")
+        raise RuntimeError(f"Task44 selected CPU neighbor gate failed before ABI probe: {neighbor_gate}")
     source = _source_facts(repo_root)
     source, inputs, native_environment = _isolated_runtime_facts(
         input_path, repo_root, source, cpu_affinity
     )
-    neighbor_gate = _cpu0_neighbor_gate(ignored_cgroup=unit_cgroup)
+    neighbor_gate = _cpu_neighbor_gate(
+        selected_cpu=selected_cpu, ignored_cgroup=unit_cgroup
+    )
     if neighbor_gate["status"] != "pass":
-        raise RuntimeError(f"Task44 CPU0 neighbor gate failed after ABI probe: {neighbor_gate}")
+        raise RuntimeError(f"Task44 selected CPU neighbor gate failed after ABI probe: {neighbor_gate}")
     identity = _write_service_identity(
-        unit, repo_root, cpu_affinity, cap_bytes, native_environment, neighbor_gate
+        unit, repo_root, cpu_affinity, cap_bytes, native_environment, neighbor_gate,
+        {
+            "system_call_filter": unit_facts["system_call_filter"],
+            "system_call_error_number": unit_facts["system_call_error_number"],
+            "sched_setaffinity_filter_test": syscall_test,
+        },
     )
     guard = _exact_service_guard(unit, cap_bytes, max_concurrent, cpu_affinity)
     if guard["stop"]:
@@ -875,7 +1155,7 @@ def run_service(
             "input_sha256": inputs["sha256"],
             "execution_mode": "public_runner_dry_run_smoke" if smoke else "public_runner_full3d",
             "native_environment": native_environment,
-            "cpu0_neighbor_gate": neighbor_gate,
+            "cpu_neighbor_gate": neighbor_gate,
             "performance_not_isolated": neighbor_gate["performance_not_isolated"],
             "time_policy": "observe_only; no wall-time termination",
         },
@@ -889,7 +1169,7 @@ def run_service(
         "runner_log": str(watchdog_directory / "worker.log"),
         "wall_time_termination": "disabled_by_time_policy_observe_only",
         "smoke": smoke,
-        "cpu0_neighbor_gate": neighbor_gate,
+        "cpu_neighbor_gate": neighbor_gate,
         "performance_not_isolated": neighbor_gate["performance_not_isolated"],
     }
     _atomic_write_json(artifacts / "service_summary.json", summary)
@@ -909,6 +1189,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-concurrent", type=int, choices=(1, 2), default=1)
     parser.add_argument("--cap-bytes", type=int, default=INITIAL_CAP_BYTES)
     parser.add_argument("--preflight", action="store_true")
+    parser.add_argument("--resource-preflight", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--runtime-probe", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--expected-source-sha", help=argparse.SUPPRESS)
@@ -919,6 +1200,16 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         cpu_affinity = _parse_cpu_list(args.cpu_affinity)
+        if args.resource_preflight:
+            if args.preflight or args.runtime_probe or args.smoke:
+                raise RuntimeError("Task44 resource preflight arguments are invalid")
+            result = resource_preflight(
+                max_concurrent=args.max_concurrent,
+                cap_bytes=args.cap_bytes,
+                cpu_affinity=cpu_affinity,
+            )
+            print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
+            return 0
         if args.runtime_probe:
             if args.preflight or args.smoke or not args.expected_source_sha:
                 raise RuntimeError("isolated Task44 runtime probe arguments are invalid")
@@ -932,7 +1223,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.preflight:
             result = preflight(
-                args.input, max_concurrent=args.max_concurrent, cap_bytes=args.cap_bytes,
+                args.input, unit=args.unit,
                 cpu_affinity=cpu_affinity,
             )
             print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))

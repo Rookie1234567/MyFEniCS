@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import errno
 from pathlib import Path
 
 import pytest
 
+import scripts.task44_native_service as native_service
 import scripts.task44_service_startup as startup
 from scripts.task44_native_service import _require_task44_cpu
 
@@ -25,11 +27,40 @@ def _identity(pid: int, start_ticks: int) -> dict[str, object]:
     }
 
 
-def test_task44_formal_affinity_is_qualified_for_cpu_zero_only():
+def test_task44_formal_affinity_requires_exactly_one_selected_cpu():
     _require_task44_cpu({0})
+    _require_task44_cpu({7})
 
-    with pytest.raises(RuntimeError, match="requires exactly CPU0"):
-        _require_task44_cpu({8})
+    with pytest.raises(RuntimeError, match="exactly one selected CPU"):
+        _require_task44_cpu({7, 8})
+
+
+def test_same_mask_affinity_call_records_seccomp_eperm(monkeypatch):
+    monkeypatch.setattr(native_service.os, "sched_getaffinity", lambda _pid: {7})
+
+    def deny_same_mask(_pid, mask):
+        assert set(mask) == {7}
+        raise PermissionError(errno.EPERM, "Operation not permitted")
+
+    monkeypatch.setattr(native_service.os, "sched_setaffinity", deny_same_mask)
+
+    report = native_service._require_sched_setaffinity_eperm({7})
+
+    assert report == {
+        "status": "pass",
+        "requested_cpu_affinity": [7],
+        "actual_cpu_affinity": [7],
+        "denied_syscall": "sched_setaffinity",
+        "errno": "EPERM",
+    }
+
+
+def test_same_mask_affinity_call_success_is_rejected(monkeypatch):
+    monkeypatch.setattr(native_service.os, "sched_getaffinity", lambda _pid: {7})
+    monkeypatch.setattr(native_service.os, "sched_setaffinity", lambda _pid, _mask: None)
+
+    with pytest.raises(RuntimeError, match="succeeded despite the Task44 seccomp gate"):
+        native_service._require_sched_setaffinity_eperm({7})
 
 
 def test_process_identity_records_parent_and_state(tmp_path):

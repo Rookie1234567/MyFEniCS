@@ -33,9 +33,11 @@
 
 ### 本工作站的 MPI 启动核资格
 
-启动排查确认了两个独立的临时绑核来源。Open MPI 4.1.6 默认使用的 hwloc x86 拓扑探测会逐个探查宿主 CPU，并在探测时短暂改变当前进程的 affinity；Task44 activation 因此只在本任务设置 `HWLOC_COMPONENTS=-x86`，保留 Linux 拓扑后端并跳过这段 x86 探测。其次，DOLFINx 导入会沿 ADIOS2/libfabric 依赖加载 PSM 库，其初始化构造函数会短暂请求 CPU0 再恢复原 affinity。`OMPI_MCA_pml=ob1` 固定本任务单 rank 的本地 Open MPI 通信路径，但不会卸载这条库依赖或消除 PSM 构造函数。
+启动排查确认了两个独立的临时绑核来源。Open MPI 4.1.6 默认使用的 hwloc x86 拓扑探测会逐个探查宿主 CPU，并在探测时短暂改变当前进程的 affinity；Task44 activation 因此只在本任务设置 `HWLOC_COMPONENTS=-x86`，保留 Linux 拓扑后端并跳过这段 x86 探测。其次，DOLFINx 导入会沿 ADIOS2/libfabric 依赖加载 PSM 库，其初始化构造函数会短暂请求 CPU0 再恢复原 affinity。`OMPI_MCA_pml=ob1` 固定本任务单 rank 的本地 Open MPI 通信路径；`OMPI_MCA_hwloc_base_binding_policy=none` 让 MPI rank 继承 systemd 指定的单核 affinity。它们都不会卸载 PSM 依赖或消除 PSM 构造函数。
 
-完整 ABI 导入在 CPU0 affinity 下通过，PETSc 为 `complex128`、MPI size 为 1；观测到的 PSM affinity 系统调用请求均为 `[0]`。因此当前 Task44 服务和其 ABI preflight 都必须精确绑定 CPU0。该结果只资格化这台工作站上的 CPU0/MPI1 启动路径，不能外推到其他 CPU、MPI rank 数或主机。每个正式样本启动前须重新采集 CPU 忙碌率及邻任务 affinity/进程；依据 2026-10-31 用户授权，唯一允许共享的邻居是身份字段全部匹配的 Metrology 监督进程 PID `3893658`，其存在时须标记 `performance_not_isolated=true`。其他数值进程的 CPU0 窄 affinity claim 或主机资源门失败仍会阻止启动。启动脚本把 preflight 进程和 systemd 服务都绑到经检查的 CPU0，服务身份及 isolated ABI receipt 会记录实际 affinity 和两个 runtime control 值。
+此前完整 ABI 导入在 CPU0 affinity 下通过，PETSc 为 `complex128`、MPI size 为 1；PSM 曾请求 CPU0。该历史运行只说明当时 CPU0 启动路径可用，不再要求后续样本绑定 CPU0，也不能外推到其他 MPI rank 数或主机。2026-10-31 的 v2 轻量服务探针在动态选择的 CPU7 上完成完整 ABI/ADIOS 导入，PSM 的两次 affinity 请求及显式同 mask 检查均得到 `EPERM`，进程 affinity 始终为 `[7]`；它没有创建有限元网格、组装或求解 PDE，因此只验证过滤机制和启动导入。每场运行都在启动时做两段各 0.5 秒采样，以两段中的最大忙度严格低于 20% 且没有数值进程窄 affinity claim 的可用 CPU 中选最空闲者；CPU0 监督进程若仍声明窄 affinity，也会使 CPU0 从自动候选中排除。随后还会在 preflight 与正式服务启动前复查所选 CPU 的进程 claim。
+
+当前启动器将纯资源准入留在外层，以正式样本的 128 GiB cap 检查宿主与祖先 cgroup 余量；4 GiB 的短 ABI preflight service 不参与这项未来正式任务容量计算。ABI preflight 和正式 service 都由 systemd 设置同一个单核 `CPUAffinity`、`SystemCallFilter=~sched_setaffinity` 与 `SystemCallErrorNumber=EPERM`，并在各自进程及关键子进程里验证同 mask affinity 调用实际被拒绝；运行时探针、service identity 与公共 manifest environment receipt 均保存对应证明。正式 service 的 128 GiB cgroup cap、零 swap 与祖先余量仍须在启动及 watchdog 期间复核。依据 2026-10-31 用户授权，唯一可共享的邻居是身份字段全部匹配的 Metrology 监督进程 PID `3893658`；自动选核会排除它仍声明窄 affinity 的 CPU0。若它在选核后才取得该 claim，只有动态选择结果恰为 CPU0 且完整身份复核匹配时，邻居 Gate 才保留该共享例外，并记录 `performance_not_isolated=true`。
 
 ## 冻结物理与数值合同
 
@@ -64,7 +66,7 @@
 4. 每场正式 PDE 前冻结输入、源码 SHA、材料表、网格/DtN 精度对照、单样本初始 128 GiB cap、service/cgroup 与资源硬门；运行期间按真实进度和资源情况继续，不使用原 30 分钟到点强停。
 5. 完成代表点与精度资格后，根据实测单样本成本、已有独立样本上限和数值证据推进训练点、GP、开发验证与盲测；数据/GP 资格分别判定，不受原 12 小时窗口约束。
 
-当前阶段：材料 receipt、六层输入、Task44 启动器和针对性修复已在执行分支实现。凝聚 kernel 数量假设已撤回，相关测试观察保留为未资格记录；standard_full 的层吸收、A–D 网格检查、超时边界和 subreaper 停止/清理测试继续执行。每次正式运行前都从实际 Ubuntu 主机重新读取 CPU、邻任务、内存及 cgroup 状态；在精确 CPU0 邻居身份 Gate 通过、其他数值进程无冲突且动态资源门通过时，才启动绑定 CPU0、128 GiB / 零 swap 的专属服务。CPU0 已获批与唯一 Metrology 监督进程共享，因此该进程存续期间结果标为 `performance_not_isolated=true`。smoke 只执行公共 runner 的 `--dry-run`，不组装或求解有限元系统。正式运行采用共享 subreaper watchdog 的 `observe_only` 时间策略：继续记录运行时间，但不因时钟停止 PDE；动态内存、祖先 cgroup、零 swap 和精确服务身份仍由硬门控制。
+当前阶段：材料 receipt、六层输入、Task44 启动器和针对性修复已在执行分支实现。凝聚 kernel 数量假设已撤回，相关测试观察保留为未资格记录；standard_full 的层吸收、A–D 网格检查、超时边界和 subreaper 停止/清理测试继续执行。每次正式运行前都从实际 Ubuntu 主机重新读取 CPU、邻任务、内存及 cgroup 状态；通过外层 128 GiB 资源准入和动态选核后的邻居 Gate 后，才启动绑定所选单核、128 GiB / 零 swap 的专属服务。smoke 只执行公共 runner 的 `--dry-run`，不组装或求解有限元系统。正式运行采用共享 subreaper watchdog 的 `observe_only` 时间策略：继续记录运行时间，但不因时钟停止 PDE；动态内存、祖先 cgroup、零 swap 和精确服务身份仍由硬门控制。
 
 ### 历史执行状态（截至 2026-10-30）
 
@@ -76,6 +78,6 @@ CPU0/MPI1 的 ABI 探针已在 CPU0 上通过，Task44 dry-run systemd smoke 也
 
 ### CPU0 共享执行授权（2026-10-31）
 
-用户明确授权 Task44 与下列唯一监督进程共享 CPU0：PID `3893658`、start ticks `324107938`、PPID 1、affinity `[0]`、命令脚本 `supervise_authorized_CPU_release_v3_20261030.py`。该例外只识别这组完整进程身份；同 PID 重用、身份字段变化或任何其他窄 affinity 数值进程占用 CPU0 都会使邻核 Gate 失败。该进程自然退出后，只要 CPU0 没有其他冲突，就允许继续。
+用户明确授权 Task44 在动态选择结果恰为 CPU0 时，与下列唯一监督进程共享 CPU0：PID `3893658`、start ticks `324107938`、PPID 1、affinity `[0]`、命令脚本 `supervise_authorized_CPU_release_v3_20261030.py`。该例外只识别这组完整进程身份；同 PID 重用、身份字段变化或任何其他窄 affinity 数值进程占用所选 CPU 都会使邻核 Gate 失败。该进程自然退出后，只要 CPU0 没有其他冲突，就允许继续。
 
-共享运行必须在 preflight、service startup 和 watchdog 运行期重新核对该身份，并在 preflight、service identity 与最终 service summary 中记录 `performance_not_isolated=true`（监督进程不存在且无其他共享者时记录 `false`）。不得向该监督进程发送信号、迁移进程、调整其优先级或环境。每场正式 PDE 仍必须通过 CPU 负载门、宿主与祖先 cgroup 内存门、384 GiB reserve、128 GiB 初始 cap、任务 swap 为零、磁盘、ABI、service/cgroup 身份和数值 Gate；该授权不批准共享给其他新增任务。后续 A 使用既有公共 `scripts/start_task44_native_sample.sh` 与 systemd service 路径。
+共享运行必须在资源 preflight、ABI preflight、service startup 和 watchdog 运行期重新核对该身份，并在相关记录中写入 `performance_not_isolated=true`（监督进程不存在且无其他共享者时写 `false`）。不得向该监督进程发送信号、迁移进程、调整其优先级或环境。每场正式 PDE 仍必须通过 CPU 负载门、宿主与祖先 cgroup 内存门、384 GiB reserve、128 GiB 初始 cap、任务 swap 为零、磁盘、ABI、service/cgroup 身份和数值 Gate；该授权不批准共享给其他新增任务。后续 A 通过既有公共 `scripts/start_task44_native_sample.sh` 与 systemd service 路径运行，ABI preflight 与正式 service 都须在所选 CPU 上通过 seccomp 同 mask 检查。

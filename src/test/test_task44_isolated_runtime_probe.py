@@ -48,6 +48,7 @@ def _probe_document(tmp_path):
             "task44_runtime_controls": {
                 "openmpi_pml": "ob1",
                 "hwloc_components": "-x86",
+                "hwloc_base_binding_policy": "none",
             },
             "module_paths": {
                 "petsc4py": "/tmp/petsc4py/__init__.py",
@@ -55,6 +56,13 @@ def _probe_document(tmp_path):
                 "dolfinx": "/tmp/dolfinx/__init__.py",
                 "basix": "/tmp/basix/__init__.py",
             },
+        },
+        "sched_setaffinity_filter_test": {
+            "status": "pass",
+            "requested_cpu_affinity": [7],
+            "actual_cpu_affinity": [7],
+            "denied_syscall": "sched_setaffinity",
+            "errno": "EPERM",
         },
     }
     document = {
@@ -121,12 +129,31 @@ def test_isolated_runtime_probe_rejects_unqualified_task44_controls_even_with_up
     document["environment"]["native_complex_identity"]["task44_runtime_controls"] = {
         "openmpi_pml": None,
         "hwloc_components": "-x86",
+        "hwloc_base_binding_policy": "none",
     }
     document["facts_sha256"] = _runtime_facts_digest(
         document["source"], document["input"], document["environment"]
     )
 
     with pytest.raises(RuntimeError, match="runtime controls gate failed"):
+        _validate_runtime_probe(
+            document,
+            repo_root=tmp_path,
+            input_path=input_path,
+            expected_source=source,
+        )
+
+
+def test_isolated_runtime_probe_rejects_missing_seccomp_denial_even_with_updated_digest(
+    tmp_path,
+):
+    document, input_path, source = _probe_document(tmp_path)
+    document["environment"]["sched_setaffinity_filter_test"]["errno"] = "EACCES"
+    document["facts_sha256"] = _runtime_facts_digest(
+        document["source"], document["input"], document["environment"]
+    )
+
+    with pytest.raises(RuntimeError, match="inherited seccomp denial"):
         _validate_runtime_probe(
             document,
             repo_root=tmp_path,

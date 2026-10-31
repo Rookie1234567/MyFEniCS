@@ -3,18 +3,14 @@ set -euo pipefail
 
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 input_path="${1:-}"
-cpu_set="${2:-}"
-unit="${3:-task44-sample-a.service}"
-max_concurrent="${4:-1}"
-smoke="${5:-}"
+unit="${2:-task44-sample-a.service}"
+max_concurrent="${3:-1}"
+smoke="${4:-}"
 cap_bytes=137438953472
+preflight_cap_bytes=4294967296
 
-if [[ -z "$input_path" || -z "$cpu_set" ]]; then
-    echo "Usage: bash scripts/start_task44_native_sample.sh INPUT.dat CPUSET [UNIT.service] [MAX_CONCURRENT] [--smoke]" >&2
-    exit 2
-fi
-if [[ ! "$cpu_set" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
-    echo "CPUSET must be a comma-separated list of host-selected CPU numbers" >&2
+if [[ -z "$input_path" ]]; then
+    echo "Usage: bash scripts/start_task44_native_sample.sh INPUT.dat [UNIT.service] [MAX_CONCURRENT] [--smoke]" >&2
     exit 2
 fi
 if [[ "$unit" != *.service || ! "$unit" =~ ^task44-sample-[a-z0-9-]+\.service$ ]]; then
@@ -33,16 +29,46 @@ fi
 input_path="$(realpath -- "$input_path")"
 
 source "$repo_root/scripts/activate_task44_native.sh"
+cd -- "$repo_root"
 artifact_dir="$repo_root/benchmarks/artifacts/task44_native_services/$unit"
 if [[ -e "$artifact_dir" ]]; then
     echo "Task44 service artifact directory already exists; choose a unique unit: $artifact_dir" >&2
     exit 2
 fi
 mkdir -p "$artifact_dir"
-taskset -c "$cpu_set" python "$repo_root/scripts/task44_native_service.py" \
-    --preflight --input "$input_path" --unit "$unit" \
+cpu_selection_json="$(python -c 'import json; from scripts.task44_native_service import select_idle_cpu; print(json.dumps(select_idle_cpu(), sort_keys=True, allow_nan=False))')"
+printf '%s\n' "$cpu_selection_json" > "$artifact_dir/cpu-selection.json"
+cpu_set="$(python -c 'import json, sys; print(json.load(sys.stdin)["selected_cpu"])' <<< "$cpu_selection_json")"
+sample_name="${unit#task44-sample-}"
+sample_name="${sample_name%.service}"
+preflight_unit="task44-preflight-${sample_name}-${BASHPID}.service"
+python scripts/task44_native_service.py \
+    --resource-preflight --input "$input_path" --unit "$unit" \
     --cpu-affinity "$cpu_set" --max-concurrent "$max_concurrent" \
-    --cap-bytes "$cap_bytes" | tee "$artifact_dir/preflight.json"
+    --cap-bytes "$cap_bytes" | tee "$artifact_dir/resource-preflight.json"
+
+systemd-run --user --wait --pipe --collect --expand-environment=no \
+    --unit="$preflight_unit" --service-type=exec \
+    --property=Restart=no \
+    --property=KillMode=control-group \
+    --property="MemoryMax=$preflight_cap_bytes" \
+    --property=MemorySwapMax=0 \
+    --property="CPUAffinity=$cpu_set" \
+    --property="SystemCallFilter=~sched_setaffinity" \
+    --property=SystemCallErrorNumber=EPERM \
+    --property="WorkingDirectory=$repo_root" \
+    --property="Environment=XDG_RUNTIME_DIR=/run/user/$UID" \
+    --property="Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$UID/bus" \
+    /usr/bin/bash -c '
+        set -euo pipefail
+        cd -- "$1"
+        source scripts/activate_task44_native.sh
+        exec python scripts/task44_native_service.py \
+            --preflight --input "$2" --unit "$3" \
+            --cpu-affinity "$4"
+    ' task44-native-preflight "$repo_root" "$input_path" "$preflight_unit" \
+    "$cpu_set" \
+    | tee "$artifact_dir/preflight.json"
 
 systemd-run --user --no-block --expand-environment=no \
     --unit="$unit" --service-type=exec \
@@ -51,6 +77,8 @@ systemd-run --user --no-block --expand-environment=no \
     --property="MemoryMax=$cap_bytes" \
     --property=MemorySwapMax=0 \
     --property="CPUAffinity=$cpu_set" \
+    --property="SystemCallFilter=~sched_setaffinity" \
+    --property=SystemCallErrorNumber=EPERM \
     --property="WorkingDirectory=$repo_root" \
     --property="StandardOutput=append:$artifact_dir/service.log" \
     --property="StandardError=append:$artifact_dir/service.log" \
@@ -190,6 +218,7 @@ def parse_cpu_list(value):
 names = (
     "ActiveState", "MainPID", "InvocationID", "ControlGroup", "MemoryMax",
     "MemorySwapMax", "Restart", "KillMode", "WorkingDirectory", "CPUAffinity",
+    "SystemCallFilter", "SystemCallErrorNumber",
 )
 args = ["systemctl", "--user", "show", unit, "--no-pager"]
 for name in names:
@@ -205,6 +234,11 @@ expected = {
 }
 if any(facts.get(key) != value for key, value in expected.items()):
     raise SystemExit(f"Task44 service identity gate failed: {facts}")
+if (
+    facts["SystemCallFilter"].split() != ["~sched_setaffinity"]
+    or facts["SystemCallErrorNumber"] not in {"EPERM", "1"}
+):
+    raise SystemExit(f"Task44 service seccomp properties mismatch: {facts}")
 if parse_cpu_list(facts["CPUAffinity"]) != expected_cpus:
     raise SystemExit(f"Task44 systemd CPUAffinity mismatch: {facts}")
 receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
@@ -215,6 +249,10 @@ if (
     or receipt.get("main_pid_start_ticks") != start_ticks
     or receipt.get("invocation_id") != facts["InvocationID"]
     or receipt.get("control_group") != facts["ControlGroup"]
+    or receipt.get("system_call_filter") != facts["SystemCallFilter"]
+    or receipt.get("system_call_error_number") != facts["SystemCallErrorNumber"]
+    or receipt.get("sched_setaffinity_filter_test", {}).get("status") != "pass"
+    or receipt.get("sched_setaffinity_filter_test", {}).get("errno") != "EPERM"
     or receipt.get("cpu_affinity") != sorted(expected_cpus)
     or receipt.get("actual_process_cpu_affinity") != sorted(expected_cpus)
 ):

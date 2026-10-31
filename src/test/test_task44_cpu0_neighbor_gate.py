@@ -6,7 +6,7 @@ import pytest
 
 from scripts.task44_native_service import (
     AUTHORIZED_CPU0_NEIGHBOR,
-    _cpu0_neighbor_gate,
+    _cpu_neighbor_gate,
 )
 
 
@@ -71,7 +71,8 @@ def test_authorized_supervisor_is_the_only_cpu0_claim(tmp_path):
         start_ticks=AUTHORIZED_CPU0_NEIGHBOR["start_ticks"],
     )
 
-    report = _cpu0_neighbor_gate(
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
         proc_root=root,
         numerical_processes=[_candidate(AUTHORIZED_CPU0_NEIGHBOR["pid"])],
     )
@@ -83,7 +84,9 @@ def test_authorized_supervisor_is_the_only_cpu0_claim(tmp_path):
 
 
 def test_no_neighbor_is_allowed_but_does_not_claim_shared_performance(tmp_path):
-    report = _cpu0_neighbor_gate(proc_root=_proc_root(tmp_path), numerical_processes=[])
+    report = _cpu_neighbor_gate(
+        selected_cpu=0, proc_root=_proc_root(tmp_path), numerical_processes=[]
+    )
 
     assert report["status"] == "pass"
     assert report["authorized_neighbor"] is None
@@ -98,7 +101,8 @@ def test_reused_pid_does_not_inherit_cpu0_sharing_authority(tmp_path):
         start_ticks=AUTHORIZED_CPU0_NEIGHBOR["start_ticks"] + 1,
     )
 
-    report = _cpu0_neighbor_gate(
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
         proc_root=root,
         numerical_processes=[_candidate(AUTHORIZED_CPU0_NEIGHBOR["pid"])],
     )
@@ -126,7 +130,8 @@ def test_changed_supervisor_identity_does_not_inherit_authority(tmp_path, change
     values.update(changes)
     _process(root, **values)
 
-    report = _cpu0_neighbor_gate(
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
         proc_root=root,
         numerical_processes=[
             _candidate(
@@ -157,7 +162,8 @@ def test_second_narrow_cpu0_process_is_rejected(tmp_path):
         cgroup="/user.slice/user-1000.slice/app.slice/other.service",
     )
 
-    report = _cpu0_neighbor_gate(
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
         proc_root=root,
         numerical_processes=[
             _candidate(AUTHORIZED_CPU0_NEIGHBOR["pid"]),
@@ -166,7 +172,7 @@ def test_second_narrow_cpu0_process_is_rejected(tmp_path):
     )
 
     assert report["status"] == "fail"
-    assert report["failures"] == ["unexpected_narrow_cpu0_affinity_neighbor"]
+    assert report["failures"] == ["unexpected_narrow_selected_cpu_affinity_neighbor"]
     assert [row["pid"] for row in report["unexpected_claims"]] == [5000]
 
 
@@ -180,21 +186,64 @@ def test_task44_service_cgroup_is_not_misclassified_as_a_neighbor(tmp_path):
         cgroup="/user.slice/user-1000.slice/app.slice/task44-sample-a.service",
     )
 
-    report = _cpu0_neighbor_gate(
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
         proc_root=root,
         ignored_cgroup="/user.slice/user-1000.slice/app.slice/task44-sample-a.service",
         numerical_processes=[_candidate(6000, command="run_case.py")],
     )
 
     assert report["status"] == "pass"
-    assert report["narrow_cpu0_affinity_claims"] == []
+    assert report["narrow_selected_cpu_affinity_claims"] == []
 
 
 @pytest.mark.parametrize("ignored_cgroup", ("", "/"))
 def test_empty_or_root_cgroup_cannot_hide_neighbor_processes(tmp_path, ignored_cgroup):
     with pytest.raises(RuntimeError, match="refuses an empty/root cgroup exclusion"):
-        _cpu0_neighbor_gate(
+        _cpu_neighbor_gate(
+            selected_cpu=0,
             proc_root=_proc_root(tmp_path),
             ignored_cgroup=ignored_cgroup,
             numerical_processes=[],
         )
+
+
+def test_dynamic_selected_cpu_rejects_a_narrow_neighbor_claim(tmp_path):
+    root = _proc_root(tmp_path)
+    _process(
+        root,
+        pid=5001,
+        start_ticks=9010,
+        affinity="2",
+        command="another_solver.py",
+    )
+
+    report = _cpu_neighbor_gate(
+        selected_cpu=2,
+        proc_root=root,
+        numerical_processes=[_candidate(5001, command="another_solver.py")],
+    )
+
+    assert report["status"] == "fail"
+    assert report["selected_cpu"] == 2
+    assert report["authorized_neighbor"] is None
+    assert report["failures"] == ["unexpected_narrow_selected_cpu_affinity_neighbor"]
+
+
+def test_cpu0_sharing_exception_does_not_apply_to_another_selected_cpu(tmp_path):
+    root = _proc_root(tmp_path)
+    _process(
+        root,
+        pid=AUTHORIZED_CPU0_NEIGHBOR["pid"],
+        start_ticks=AUTHORIZED_CPU0_NEIGHBOR["start_ticks"],
+    )
+
+    report = _cpu_neighbor_gate(
+        selected_cpu=1,
+        proc_root=root,
+        numerical_processes=[_candidate(AUTHORIZED_CPU0_NEIGHBOR["pid"])],
+    )
+
+    assert report["status"] == "pass"
+    assert report["authorized_neighbor"] is None
+    assert report["performance_not_isolated"] is False

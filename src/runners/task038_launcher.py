@@ -180,6 +180,9 @@ def _environment_identity() -> dict[str, Any]:
                 {
                     "openmpi_pml": os.environ.get("OMPI_MCA_pml"),
                     "hwloc_components": os.environ.get("HWLOC_COMPONENTS"),
+                    "hwloc_base_binding_policy": os.environ.get(
+                        "OMPI_MCA_hwloc_base_binding_policy"
+                    ),
                 }
                 if task_root
                 else None
@@ -227,9 +230,23 @@ def _manifest_environment_identity() -> dict[str, Any]:
         sys.executable,
         "-c",
         (
-            "import json; "
-            "from src.runners.task038_launcher import _environment_identity; "
-            "print(json.dumps(_environment_identity(), sort_keys=True))"
+            "import errno, json, os\n"
+            "from src.runners.task038_launcher import _environment_identity\n"
+            "mask = os.sched_getaffinity(0)\n"
+            "if len(mask) != 1: raise RuntimeError('Task44 manifest child must inherit one selected CPU')\n"
+            "try:\n"
+            "    os.sched_setaffinity(0, mask)\n"
+            "except OSError as exc:\n"
+            "    if exc.errno != errno.EPERM: raise\n"
+            "else:\n"
+            "    raise RuntimeError('Task44 manifest child did not inherit the sched_setaffinity seccomp denial')\n"
+            "actual = os.sched_getaffinity(0)\n"
+            "if actual != mask: raise RuntimeError('Task44 manifest child CPU mask changed')\n"
+            "test = {'status': 'pass', 'requested_cpu_affinity': sorted(mask), "
+            "'actual_cpu_affinity': sorted(actual), 'denied_syscall': 'sched_setaffinity', "
+            "'errno': 'EPERM'}\n"
+            "print(json.dumps({'environment': _environment_identity(), "
+            "'sched_setaffinity_filter_test': test}, sort_keys=True))"
         ),
     ]
     completed = subprocess.run(
@@ -246,17 +263,32 @@ def _manifest_environment_identity() -> dict[str, Any]:
             f"isolated native environment identity probe failed: {detail}"
         )
     try:
-        identity = json.loads(completed.stdout)
+        probe = json.loads(completed.stdout)
     except json.JSONDecodeError as exc:
         raise InputError(
             "isolated native environment identity probe returned invalid JSON"
         ) from exc
+    if not isinstance(probe, dict) or set(probe) != {
+        "environment", "sched_setaffinity_filter_test",
+    }:
+        raise InputError("isolated native environment identity probe returned an invalid document")
+    identity = probe["environment"]
+    syscall_test = probe["sched_setaffinity_filter_test"]
     if (
         not isinstance(identity, dict)
         or identity.get("qualified_activation") != "MYFENICS_NATIVE_COMPLEX_ENV=1"
         or identity.get("runtime_profile") != "native_linux_complex"
     ):
         raise InputError("isolated native environment identity probe did not qualify")
+    if (
+        not isinstance(syscall_test, dict)
+        or syscall_test.get("status") != "pass"
+        or syscall_test.get("denied_syscall") != "sched_setaffinity"
+        or syscall_test.get("errno") != "EPERM"
+        or syscall_test.get("requested_cpu_affinity") != syscall_test.get("actual_cpu_affinity")
+    ):
+        raise InputError("isolated native environment identity probe did not verify seccomp denial")
+    identity["task44_sched_setaffinity_filter_test"] = syscall_test
     return identity
 
 

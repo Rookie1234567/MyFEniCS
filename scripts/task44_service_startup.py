@@ -347,6 +347,11 @@ def _identity_matches(
         and identity.get("memory_swap_max_bytes") == 0
         and identity.get("restart") == "no"
         and identity.get("kill_mode") == "control-group"
+        and identity.get("system_call_filter") == "~sched_setaffinity"
+        and identity.get("system_call_error_number") in {"EPERM", "1"}
+        and isinstance(identity.get("sched_setaffinity_filter_test"), Mapping)
+        and identity["sched_setaffinity_filter_test"].get("status") == "pass"
+        and identity["sched_setaffinity_filter_test"].get("errno") == "EPERM"
         and identity.get("cpu_affinity") == expected_cpus
         and identity.get("actual_process_cpu_affinity") == expected_cpus
     )
@@ -414,6 +419,8 @@ def classify_service_startup(
         and service.get("swap_max_bytes") == 0
         and service.get("cgroup_swap_max_bytes") == 0
         and service.get("swap_current_bytes") == 0
+        and service.get("system_call_filter") == identity.get("system_call_filter")
+        and service.get("system_call_error_number") == identity.get("system_call_error_number")
         and _parse_cpu_set(service.get("cpu_affinity")) == sorted(set(cpu_affinity))
     )
     if identity_matches_summary:

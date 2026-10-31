@@ -20,6 +20,9 @@ def _identity():
         "memory_swap_max_bytes": 0,
         "restart": "no",
         "kill_mode": "control-group",
+        "system_call_filter": "~sched_setaffinity",
+        "system_call_error_number": "EPERM",
+        "sched_setaffinity_filter_test": {"status": "pass", "errno": "EPERM"},
         "cpu_affinity": CPUS,
         "actual_process_cpu_affinity": CPUS,
     }
@@ -43,6 +46,8 @@ def _summary(identity):
                     "swap_max_bytes": 0,
                     "cgroup_swap_max_bytes": 0,
                     "swap_current_bytes": 0,
+                    "system_call_filter": identity["system_call_filter"],
+                    "system_call_error_number": identity["system_call_error_number"],
                     "cpu_affinity": "8",
                 }
             },
@@ -83,6 +88,14 @@ def test_completed_summary_from_another_invocation_is_rejected():
 def test_live_identity_with_wrong_process_affinity_is_invalid():
     identity = _identity()
     identity["actual_process_cpu_affinity"] = [9]
+    assert classify_service_startup(
+        "active", identity, None, unit=UNIT, cap_bytes=CAP_BYTES, cpu_affinity=CPUS
+    ) == "identity_invalid"
+
+
+def test_live_identity_without_seccomp_receipt_is_invalid():
+    identity = _identity()
+    identity["sched_setaffinity_filter_test"] = {"status": "failed", "errno": None}
     assert classify_service_startup(
         "active", identity, None, unit=UNIT, cap_bytes=CAP_BYTES, cpu_affinity=CPUS
     ) == "identity_invalid"
