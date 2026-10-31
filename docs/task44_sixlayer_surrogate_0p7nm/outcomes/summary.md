@@ -77,7 +77,7 @@ worker wall 与 systemd 全生命周期是不同口径，不相加。进程树 R
 | 零级反射 | `R00_s=0.10376987725348902`；`R00_p=6.570154036905706e-22`；`R00_total=0.10376987725348902` | `R00_total=R00_s+R00_p`，从保存值重算一致 |
 | 主透射 `T_total` | `0.8800846265279674` | 主功率源 `dtn_port_modal_amplitudes` |
 | 端口功率平衡 `A_balance` | `0.01614476691607314` | 由端口模态的 R/T 得到 |
-| 材料体吸收 `A_volume_total` | `0.016144766075562058` | 六层与 Si 基底上的 `Im(epsilon_r)|E|²` 积分；每层及基底状态均为 `ok` |
+| 材料体吸收 `A_volume_total` | `0.016144766075562058` | 按材料虚部与电场强度平方，在六层与 Si 基底上积分；每层及基底状态均为 `ok` |
 | 能量闭合 `R+T+A_volume−1` | `-8.405111051601466e-10` | 绝对值 ≤ `1e-5`，pass；端口 A 与体积分 A 差 `8.405110808740179e-10` |
 | KSP/PC/MUMPS | `preonly` / `lu` / `mumps`；`CONVERGED_ITS`，1 iteration | `mumps_control_readback.pass=true`，六项 ICNTL 的读回与要求一致 |
 
