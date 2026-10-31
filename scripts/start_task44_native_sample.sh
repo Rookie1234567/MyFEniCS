@@ -28,19 +28,26 @@ fi
 [[ "$input_path" == /* ]] || input_path="$repo_root/$input_path"
 input_path="$(realpath -- "$input_path")"
 
-source "$repo_root/scripts/activate_task44_native.sh"
 cd -- "$repo_root"
 artifact_dir="$repo_root/benchmarks/artifacts/task44_native_services/$unit"
 if [[ -e "$artifact_dir" ]]; then
     echo "Task44 service artifact directory already exists; choose a unique unit: $artifact_dir" >&2
     exit 2
 fi
+sample_name="${unit#task44-sample-}"
+sample_name="${sample_name%.service}"
+cache_root="/tmp/myfenics-task44-native-cache-${UID}/${sample_name}"
+if [[ -e "$cache_root" ]]; then
+    echo "Task44 per-service cache root already exists; choose a unique unit: $cache_root" >&2
+    exit 2
+fi
+export MYFENICS_TASK44_CACHE_ROOT="$cache_root"
+source "$repo_root/scripts/activate_task44_native.sh"
 mkdir -p "$artifact_dir"
+printf '%s\n' "$cache_root" > "$artifact_dir/jit-cache-root.txt"
 cpu_selection_json="$(python -c 'import json; from scripts.task44_native_service import select_idle_cpu; print(json.dumps(select_idle_cpu(), sort_keys=True, allow_nan=False))')"
 printf '%s\n' "$cpu_selection_json" > "$artifact_dir/cpu-selection.json"
 cpu_set="$(python -c 'import json, sys; print(json.load(sys.stdin)["selected_cpu"])' <<< "$cpu_selection_json")"
-sample_name="${unit#task44-sample-}"
-sample_name="${sample_name%.service}"
 preflight_unit="task44-preflight-${sample_name}-${BASHPID}.service"
 python scripts/task44_native_service.py \
     --resource-preflight --input "$input_path" --unit "$unit" \
@@ -59,6 +66,7 @@ systemd-run --user --wait --pipe --collect --expand-environment=no \
     --property="WorkingDirectory=$repo_root" \
     --property="Environment=XDG_RUNTIME_DIR=/run/user/$UID" \
     --property="Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$UID/bus" \
+    --property="Environment=MYFENICS_TASK44_CACHE_ROOT=$cache_root" \
     /usr/bin/bash -c '
         set -euo pipefail
         cd -- "$1"
@@ -84,6 +92,7 @@ systemd-run --user --no-block --expand-environment=no \
     --property="StandardError=append:$artifact_dir/service.log" \
     --property="Environment=XDG_RUNTIME_DIR=/run/user/$UID" \
     --property="Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$UID/bus" \
+    --property="Environment=MYFENICS_TASK44_CACHE_ROOT=$cache_root" \
     /usr/bin/bash -c '
         set -euo pipefail
         cd -- "$1"

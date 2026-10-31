@@ -1073,6 +1073,27 @@ def run_service(
 ) -> int:
     repo_root = Path(__file__).resolve().parents[1]
     verify_task44_root(repo_root, os.environ)
+    expected_cache_root = (
+        Path("/tmp")
+        / f"myfenics-task44-native-cache-{os.getuid()}"
+        / unit.removesuffix(".service")
+    ).resolve()
+    cache_root = Path(os.environ.get("MYFENICS_TASK44_CACHE_ROOT", "")).resolve()
+    xdg_cache_home = Path(os.environ.get("XDG_CACHE_HOME", "")).resolve()
+    if (
+        cache_root != expected_cache_root
+        or xdg_cache_home != (expected_cache_root / "xdg").resolve()
+    ):
+        raise RuntimeError(
+            "Task44 service JIT cache is not bound to its unique per-service root: "
+            f"expected={expected_cache_root / 'xdg'} actual={xdg_cache_home}"
+        )
+    cache_identity = {
+        "root": str(cache_root),
+        "xdg_cache_home": str(xdg_cache_home),
+        "ffcx_cache_dir": str(xdg_cache_home / "fenics"),
+        "worker_environment_binding": "explicit",
+    }
     _require_task44_cpu(cpu_affinity)
     unit_facts, syscall_test = _verify_filtered_unit(
         unit, expected_cpus=cpu_affinity, cap_bytes=cap_bytes
@@ -1114,7 +1135,8 @@ def run_service(
     watchdog_directory = artifacts / "watchdog"
     print(
         f"Task44 service unit={unit} supervisor_pid={os.getpid()} "
-        f"input_sha256={inputs['sha256']} source_sha={source['source_sha']}",
+        f"input_sha256={inputs['sha256']} source_sha={source['source_sha']} "
+        f"ffcx_cache_dir={cache_identity['ffcx_cache_dir']}",
         flush=True,
     )
     command = [
@@ -1146,9 +1168,12 @@ def run_service(
         worker_environment={
             "MYFENICS_NATIVE_COMPLEX_ENV": "1",
             "MYFENICS_TASK44_ROOT": str(repo_root),
+            "MYFENICS_TASK44_CACHE_ROOT": str(cache_root),
+            "XDG_CACHE_HOME": str(xdg_cache_home),
         },
         source_state={
             **source,
+            "jit_cache": cache_identity,
             "service_unit": unit,
             "service_identity": identity,
             "input_path": inputs["path"],
@@ -1164,6 +1189,7 @@ def run_service(
         "service_unit": unit,
         "input": inputs,
         "source": source,
+        "jit_cache": cache_identity,
         "service_gate_start": guard,
         "resource_authority_samples": str(watchdog_directory / "resources.jsonl"),
         "runner_log": str(watchdog_directory / "worker.log"),
