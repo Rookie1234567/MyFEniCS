@@ -36,6 +36,24 @@ Task44 实际起点是 `db790f92a186988c5147f1828d15c07034e7c430`。本轮修改
 
 测试写出的精确独立 residual、run summaries、scientific field NPZ、ABI preflight、输入/源文件哈希收录于 ignored artifact：`benchmarks/artifacts/task44_condensed_direct_validation_20261031/`。P2 用例是 144-cell 的 P2 numerical sanity fixture，不构成 P6 性能、标准尺寸或代理精度资格。
 
+## P6 正式样本 A 的结果
+
+A 已在 clean source SHA `03ee03a51f9f7057376975fd43fd9d059dd9cd2b` 上，通过 fresh ABI、动态 CPU、邻任务、128 GiB cgroup cap 与零 swap Gate 后完成。正式 service 为 `task44-sample-a-condensed-cachefix.service`（Invocation ID `6a2fb5670a684354b10a520e1021d94d`；CPU 12）；worker 与 service 均正常退出，PID/cgroup 清空。唯一 run 目录为 `results/task44_sixlayer_0p7nm/sample_A_condensed_direct_20261031__full3d_direct__mpi1__Mna/20261031T055027.974554Z/`。
+
+| Gate / 结果 | 实测 | 结论 |
+|---|---:|---|
+| 完整离散算子的相对真残差 | `7.584367086899987e-10`，容限 `1e-6` | pass；使用恢复完整场后的显式迹/DtN 作用和 matrix-free UFL interior 作用，不另建完整全局矩阵 |
+| `R_total + T_total + A_volume - 1` | `-8.405111051601466e-10`，容限 `1e-5` | pass |
+| `R_total / T_total / A_volume_total` | `0.10377060655595945 / 0.8800846265279674 / 0.016144766075562058` | 主值来自完整 DtN 端口模态；端口与体吸收差 `8.405110808740179e-10` |
+| 零级反射 | `R00_s=0.10376987725348902`，`R00_p=6.570154036905706e-22`，`R00_total=0.10376987725348902` | `R00_total=R00_s+R00_p` |
+| 求解器读回 | `preonly / lu / mumps`；`mumps_control_readback.pass=true` | MUMPS exact 控制项读回一致；因子化 41.037 s，driver solve 0.860 s |
+| worker / service wall | `1653.708 / 1740.104 s` | 单样本约 29 min，完整记录于摘要与资源账 |
+| 峰值 / swap | process-tree RSS `7282.69 MB`；cgroup peak `8,337,240,064 B`；任务 swap `0 B` | 专属 cgroup 128 GiB cap，资源 Gate pass；完成后 service 清场 |
+
+每层及基底的 `A_volume`、P6/矩阵行与 nnz、14 个派生 cell-kernel 调用的语义、场文件 hash、MUMPS raw factor inventory、逐阶段时间，以及两个诊断功率源与主端口结果的差异，见 [`outcomes/summary.md`](outcomes/summary.md) 与 ignored [`official_A_review_v1.json`](../../benchmarks/artifacts/task44_condensed_direct_validation_20261031/official_A_review_v1.json)。诊断 probe-EH 与采样净通量只作诊断，不替代完整端口模态主值；当前尚未把其明显差异归因到单一原因。
+
+第一次 cachefix 运行仍因激活脚本落回共享旧 FFCx cache，在组装前发生 C 文件 JIT timeout；这是启动/cache 问题，`worker_nonzero` 不代表 PDE 数值失败。之后的最小修复把唯一 cache root 显式传到 ABI preflight、正式 systemd unit 和 worker，并加了 fail-closed 路径检查。现有 `--smoke` dry-run 验证通过；旧 cache 和第一次失败 artifacts 保留，没有清除其他运行缓存。
+
 ## 下一步
 
-按用户授权，将本响应、outcomes、三项源码修改和独立 P6 输入作为一个普通提交推送至 Task44 upstream；以 clean HEAD 重新绑定输入与证据。随后使用现有 `scripts/start_task44_native_sample.sh` 唯一启动 `task44-sample-a-condensed.service`。保留 128 GiB cgroup cap、384 GiB host reserve、至少 8 GiB job buffer、零 task swap、MPI1、单数学线程及动态 CPU/邻任务检查；运行不设时钟强停。新样本的实际因子后端、控制读回、stage、wall time、cgroup/进程树峰值与 R/T/A/residual 在运行证据中单独记录。
+用户/主控已授权继续 B/C/D 的既有代表点范围。三个输入只改变六层厚度、对应总高/空气上边界和唯一 run ID，均通过公共 `run_case.py --validate-only`；正式运行继续用 `assembly_time_static_condensed + mumps_exact`、MPI1 和每 unit 独立 cache，并在每场运行前重新执行全部资源与 ABI Gate。A 的约 29 min 成本高于 README 的 10 min 批量成本提示，因此 A–D 和有限网格/DtN/参考面对照后先做成本/资格复核，不直接铺开 20/40/80 点训练库。标准尺寸、GP、开发验证与最终盲测仍为 `not_run`。

@@ -62,11 +62,13 @@
 
 1. 只读核验材料与现有 `SimulationConfig3D`、结构化网格、材料 tag、体积分、吸收后处理和 `.dat` input whitelist；明确所有受影响调用点及现有回归。
 2. 在可复用 `src/` 中实现参数化六层材料栈、贴体分层网格和材料相关输出；沿公共 `python scripts/run_case.py input/path/to/case.dat`，扩展现有 schema/validation 和配置适配，不复制 solver 或 runner 框架。
-3. 运行 ABI preflight，通过后做最小 pure-Python/material/mesh fixture 定向测试，再做最小有限元组件验证。首批正式输入固定走 `standard_full`，保留完整原始矩阵以检查 full explicit true residual。Task44 A 的实际组合物理形式经 FFCx 编译后，每个分层 tag 显示一个积分核；针对“每个 tag 至少两个核”的测试断言没有得到支持，记录为凝聚路径未资格、后移，不代表 PDE 失败。详细观察见 [`condensation_kernel_observation_v1.json`](condensation_kernel_observation_v1.json)。
-4. 每场正式 PDE 前冻结输入、源码 SHA、材料表、网格/DtN 精度对照、单样本初始 128 GiB cap、service/cgroup 与资源硬门；运行期间按真实进度和资源情况继续，不使用原 30 分钟到点强停。
+3. 运行 ABI preflight，通过后做最小 pure-Python/material/mesh fixture 定向测试，再做最小有限元组件验证。`standard_full` 是最初方案；根据 `response_v2.md` 的用户批准，正式代表点 A–D 现使用 `assembly_time_static_condensed + mumps_exact`，并用恢复全场的显式 matrix-free 原算子作用检查 true residual。P2 完整矩阵对照验证凝聚与恢复一致；P6 A 也已完成正式残差门。A 的 14 次 kernel invocation 数由编译核与唯一原始材料/几何类映射推导，不是动态 profiler 计数。关于原先“每个 tag 至少两个核”的测试假设，观察记录在 [`condensation_kernel_observation_v1.json`](condensation_kernel_observation_v1.json)，该假设不代表 PDE 失败。
+4. 每场正式 PDE 前冻结输入、源码 SHA、材料表、网格/DtN 精度对照、单样本初始 128 GiB cap、service/cgroup 与资源硬门；每个 service 显式绑定自己唯一的 Task44 JIT cache root，并在 preflight、service 与 worker 中验证一致。运行期间按真实进度和资源情况继续，不使用原 30 分钟到点强停。
 5. 完成代表点与精度资格后，根据实测单样本成本、已有独立样本上限和数值证据推进训练点、GP、开发验证与盲测；数据/GP 资格分别判定，不受原 12 小时窗口约束。
 
-当前阶段：材料 receipt、六层输入、Task44 启动器和针对性修复已在执行分支实现。凝聚 kernel 数量假设已撤回，相关测试观察保留为未资格记录；standard_full 的层吸收、A–D 网格检查、超时边界和 subreaper 停止/清理测试继续执行。每次正式运行前都从实际 Ubuntu 主机重新读取 CPU、邻任务、内存及 cgroup 状态；通过外层 128 GiB 资源准入和动态选核后的邻居 Gate 后，才启动绑定所选单核、128 GiB / 零 swap 的专属服务。smoke 只执行公共 runner 的 `--dry-run`，不组装或求解有限元系统。正式运行采用共享 subreaper watchdog 的 `observe_only` 时间策略：继续记录运行时间，但不因时钟停止 PDE；动态内存、祖先 cgroup、零 swap 和精确服务身份仍由硬门控制。
+当前阶段：P6 condensed-direct A 已通过完整残差与能量闭合门；A 的 probe-EH Fourier 与净通量诊断和端口模态主结果有明显差异，已在 `outcomes/summary.md` 明确保留。B/C/D 输入已通过公共 adapter 的 validation-only，下一步逐个正式运行。A–D 之后仍需有限网格、DtN 与上方空气间距稳定性对照；训练、开发验证、盲测与 GP 尚未开始。A 的实测单样本约 29 分钟，先完成代表点和有限数值诊断，再依据成本决定是否有证据支持扩展训练集。
+
+每次正式运行前都从实际 Ubuntu 主机重新读取 CPU、邻任务、内存及 cgroup 状态；通过外层 128 GiB 资源准入和动态选核后的邻居 Gate 后，才启动绑定所选单核、128 GiB / 零 swap 的专属服务。smoke 只执行公共 runner 的 `--dry-run`，不组装或求解有限元系统。正式运行采用共享 subreaper watchdog 的 `observe_only` 时间策略：继续记录运行时间，但不因时钟停止 PDE；动态内存、祖先 cgroup、零 swap 和精确服务身份仍由硬门控制。
 
 ### 历史执行状态（截至 2026-10-30）
 
