@@ -195,6 +195,157 @@ def _proc_identity(pid: int, proc_root: Path) -> dict[str, Any]:
     }
 
 
+def _proc_cgroup_path(pid: int, proc_root: Path) -> str:
+    rows = [
+        line.split(":", 2)[2]
+        for line in (proc_root / str(pid) / "cgroup").read_text(encoding="utf-8").splitlines()
+        if line.startswith("0::")
+    ]
+    if len(rows) != 1:
+        raise ValueError(f"/proc/{pid}/cgroup has no unique cgroup-v2 membership")
+    return "/" + rows[0].lstrip("/")
+
+
+def _read_direct_cgroup_members(cgroup: Path) -> set[int]:
+    return {
+        int(value)
+        for value in (cgroup / "cgroup.procs").read_text(encoding="ascii").split()
+    }
+
+
+def _unit_identity_signature(facts: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        key: int(facts[key]) if key == "main_pid" else facts[key]
+        for key in ("unit", "invocation_id", "control_group", "active_state", "main_pid", "cpu_affinity")
+    }
+
+
+def _owned_service_context(
+    facts: Mapping[str, Any] | None,
+    *,
+    ignored_cgroup: str | None,
+    selected_cpu: int,
+    proc_root: Path,
+    cgroup_fs_root: Path,
+) -> dict[str, Any]:
+    """Bind the exclusion to one live systemd invocation and check its affinity."""
+    report: dict[str, Any] = {"identity_verified": False, "affinity_verified": False, "failures": []}
+    if facts is None:
+        report["failures"] = ["owned_service_invocation_facts_missing"]
+        return report
+    stage = "input_validation"
+    try:
+        expected = _unit_identity_signature(facts)
+        unit, invocation, group = expected["unit"], expected["invocation_id"], expected["control_group"]
+        main_pid = expected["main_pid"]
+        if (
+            not isinstance(unit, str) or not unit.startswith("task44-sample-") or not unit.endswith(".service")
+            or not isinstance(invocation, str) or re.fullmatch(r"[0-9a-f]{32}", invocation) is None
+            or not isinstance(group, str) or not group.startswith("/user.slice/")
+            or Path(group).name != unit or ".." in Path(group).parts
+            or expected["active_state"] != "active" or main_pid <= 0
+            or _parse_cpu_list(str(expected["cpu_affinity"])) != {selected_cpu}
+            or (ignored_cgroup is not None and ignored_cgroup != group)
+        ):
+            raise ValueError("service facts do not identify the active selected-CPU invocation")
+        root = cgroup_fs_root.resolve(strict=True)
+        cgroup = (root / group.lstrip("/")).resolve(strict=True)
+        cgroup.relative_to(root)
+        if cgroup == root or Path(group).name != unit or not (cgroup / "cgroup.procs").is_file():
+            raise ValueError("service cgroup is not a dedicated readable non-root cgroup")
+        report.update({"unit": unit, "invocation_id": invocation, "control_group": group, "main_pid": main_pid})
+
+        stage = "systemd_facts_before"
+        systemd_before = _unit_identity_signature(_unit_facts(unit))
+        stage = "main_process_before"
+        members_before = _read_direct_cgroup_members(cgroup)
+        main_before = _proc_identity(main_pid, proc_root)
+        cgroup_before = _proc_cgroup_path(main_pid, proc_root)
+        from scripts.task44_service_startup import observe_cgroup_cpu_affinity
+        stage = "service_affinity_observation"
+        affinity = observe_cgroup_cpu_affinity(cgroup, {selected_cpu}, proc_root=proc_root)
+        stage = "main_process_after"
+        main_after = _proc_identity(main_pid, proc_root)
+        cgroup_after = _proc_cgroup_path(main_pid, proc_root)
+        members_after = _read_direct_cgroup_members(cgroup)
+        systemd_after = _unit_identity_signature(_unit_facts(unit))
+        identity_checks = {
+            "systemd_facts_match_invocation": systemd_before == expected == systemd_after,
+            "main_pid_start_ticks_stable": main_before["start_ticks"] == main_after["start_ticks"],
+            "main_pid_cgroup_exact": cgroup_before == group == cgroup_after,
+            "main_pid_member_stable": main_pid in members_before and main_pid in members_after,
+        }
+        report.update({
+            "identity_verified": all(identity_checks.values()),
+            "affinity_verified": affinity.get("stop") is False,
+            "identity_checks": identity_checks,
+            "systemd_facts_before": systemd_before,
+            "systemd_facts_after": systemd_after,
+            "main_pid_identity_before": main_before,
+            "main_pid_identity_after": main_after,
+            "main_pid_cgroup_before": cgroup_before,
+            "main_pid_cgroup_after": cgroup_after,
+            "member_pids_before": sorted(members_before),
+            "member_pids_after": sorted(members_after),
+            "service_affinity_observation": affinity,
+        })
+        if not report["identity_verified"]:
+            report["failures"].append("owned_service_invocation_identity_unverified")
+        if not report["affinity_verified"]:
+            report["failures"].append("owned_service_affinity_gate_failed")
+    except (KeyError, OSError, TypeError, ValueError, RuntimeError) as exc:
+        report.update({"failures": ["owned_service_context_observation_failed"],
+                       "failure_stage": stage, "error_type": type(exc).__name__, "error": str(exc)})
+    return report
+
+
+def _owned_service_member(
+    process: Mapping[str, Any], *, expected_cgroup: str, cgroup: Path, proc_root: Path
+) -> tuple[bool, dict[str, Any]]:
+    """Confirm PID/start-tick/exact-cgroup membership twice; comm may change on exec."""
+    pid = int(process["pid"])
+    snapshot = {key: process.get(key) for key in ("ppid", "comm", "start_ticks", "cgroup_path")}
+    if snapshot["cgroup_path"] != expected_cgroup:
+        return False, {"pid": pid, "status": "not_owned", "candidate_snapshot": snapshot}
+    stage = "cgroup_members_before"
+    evidence: dict[str, Any] = {"pid": pid, "candidate_snapshot": snapshot}
+    try:
+        members_before = _read_direct_cgroup_members(cgroup)
+        stage = "proc_identity_before"
+        before = _proc_identity(pid, proc_root)
+        cgroup_before = _proc_cgroup_path(pid, proc_root)
+        stage = "proc_identity_after"
+        after = _proc_identity(pid, proc_root)
+        cgroup_after = _proc_cgroup_path(pid, proc_root)
+        members_after = _read_direct_cgroup_members(cgroup)
+        checks = {
+            "candidate_start_ticks_match_both_reads": (
+                isinstance(snapshot["start_ticks"], int)
+                and snapshot["start_ticks"] == before["start_ticks"] == after["start_ticks"]
+            ),
+            "proc_start_ticks_stable": before["start_ticks"] == after["start_ticks"],
+            "cgroup_exact_both_reads": cgroup_before == expected_cgroup == cgroup_after,
+            "direct_membership_stable": pid in members_before and pid in members_after,
+        }
+        evidence.update({
+            "identity_before": before, "identity_after": after,
+            "cgroup_before": cgroup_before, "cgroup_after": cgroup_after,
+            "member_before": pid in members_before, "member_after": pid in members_after,
+            "comm_transition_observed": snapshot["comm"] != before["comm"] or before["comm"] != after["comm"],
+            "checks": checks,
+        })
+        return all(checks.values()), evidence
+    except (OSError, ValueError, RuntimeError) as exc:
+        evidence.update({"failure_stage": stage, "error_type": type(exc).__name__, "error": str(exc)})
+        return False, evidence
+
+
+class _ProcessClaimError(RuntimeError):
+    def __init__(self, message: str, evidence: Mapping[str, Any]):
+        super().__init__(message)
+        self.evidence = dict(evidence)
+
+
 def _proc_cpu_claim(
     process: Mapping[str, Any], proc_root: Path, host_cpus: set[int], selected_cpu: int
 ) -> dict[str, Any] | None:
@@ -218,26 +369,37 @@ def _proc_cpu_claim(
         (Path(part).name for part in argv if part.endswith(".py")),
         Path(argv[0]).name if argv else before["comm"],
     )
-    cgroup = (process_root / "cgroup").read_text(encoding="utf-8").strip()
+    cgroup_before = _proc_cgroup_path(pid, proc_root)
     after = _proc_identity(pid, proc_root)
     after_status = _status_fields(process_root / "status")
-    if (
-        before["start_ticks"] != after["start_ticks"]
-        or before["parent_pid"] != after["parent_pid"]
-        or before["comm"] != after["comm"]
-        or after_status.get("Cpus_allowed_list") != cpu_list
-        or int(process.get("ppid", before["parent_pid"])) != before["parent_pid"]
-        or str(process.get("comm", before["comm"])) != before["comm"]
-    ):
-        raise RuntimeError(
-            f"process identity or affinity changed while checking CPU{selected_cpu} claim {pid}"
+    cgroup_after = _proc_cgroup_path(pid, proc_root)
+    checks = {
+        "pid_stable": before["pid"] == after["pid"] == pid,
+        "start_ticks_stable": before["start_ticks"] == after["start_ticks"],
+        "parent_pid_stable": before["parent_pid"] == after["parent_pid"],
+        "comm_stable": before["comm"] == after["comm"],
+        "affinity_stable": after_status.get("Cpus_allowed_list") == cpu_list,
+        "snapshot_parent_pid_matches": process.get("ppid") is None or int(process["ppid"]) == before["parent_pid"],
+        "snapshot_comm_matches": process.get("comm") is None or str(process["comm"]) == before["comm"],
+        "snapshot_start_ticks_matches": process.get("start_ticks") is None or int(process["start_ticks"]) == before["start_ticks"],
+        "cgroup_stable": cgroup_before == cgroup_after,
+        "snapshot_cgroup_matches": process.get("cgroup_path") is None or process["cgroup_path"] == cgroup_before,
+    }
+    evidence = {"candidate_snapshot": dict(process), "identity_before": before,
+                "identity_after": after, "cpu_affinity_before": cpu_list,
+                "cpu_affinity_after": after_status.get("Cpus_allowed_list"),
+                "cgroup_before": cgroup_before, "cgroup_after": cgroup_after,
+                "identity_checks": checks}
+    if not all(checks.values()):
+        raise _ProcessClaimError(
+            f"process identity or affinity changed while checking CPU{selected_cpu} claim {pid}", evidence
         )
     return {
         **before,
         "command_basename": command_basename,
         "cpu_affinity": sorted(affinity),
         "narrow_selected_cpu_claim": narrow_selected_cpu_claim,
-        "cgroup": "/" + cgroup.split(":", 2)[-1].lstrip("/"),
+        "cgroup": cgroup_after,
     }
 
 
@@ -247,12 +409,36 @@ def _cpu_neighbor_gate(
     proc_root: Path = Path("/proc"),
     ignored_pids: set[int] | None = None,
     ignored_cgroup: str | None = None,
+    owned_service_facts: Mapping[str, Any] | None = None,
+    cgroup_fs_root: Path = Path("/sys/fs/cgroup"),
     numerical_processes: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     if ignored_cgroup is not None and not ignored_cgroup.strip("/"):
         raise RuntimeError("Task44 CPU neighbor gate refuses an empty/root cgroup exclusion")
     host_cpus, host_comm = _host_allowed_cpus(proc_root)
     ignored = ignored_pids or set()
+    if ignored_cgroup is not None and owned_service_facts is None:
+        owned_context = {
+            "identity_verified": False,
+            "affinity_verified": False,
+            "control_group": ignored_cgroup,
+            "failures": ["ignored_cgroup_requires_invocation_bound_service_facts"],
+        }
+    elif owned_service_facts is not None:
+        owned_context = _owned_service_context(
+            owned_service_facts,
+            ignored_cgroup=ignored_cgroup,
+            selected_cpu=selected_cpu,
+            proc_root=proc_root,
+            cgroup_fs_root=cgroup_fs_root,
+        )
+    else:
+        owned_context = None
+    failures = list(owned_context["failures"]) if owned_context else []
+    expected_owned_cgroup = owned_context.get("control_group") if owned_context else None
+    owned_excluded: list[int] = []
+    owned_member_proofs: list[dict[str, Any]] = []
+    unverified_owned_members: list[dict[str, Any]] = []
     claims: list[dict[str, Any]] = []
     unreadable: list[dict[str, Any]] = []
     candidates = _numerical_processes() if numerical_processes is None else numerical_processes
@@ -269,23 +455,51 @@ def _cpu_neighbor_gate(
         pid = int(process["pid"])
         if pid in ignored:
             continue
+        if owned_context and owned_context.get("identity_verified") and expected_owned_cgroup:
+            owned, proof = _owned_service_member(
+                process,
+                expected_cgroup=expected_owned_cgroup,
+                cgroup=cgroup_fs_root / expected_owned_cgroup.lstrip("/"),
+                proc_root=proc_root,
+            )
+            if process.get("cgroup_path") == expected_owned_cgroup:
+                owned_member_proofs.append(proof)
+                if not owned:
+                    unverified_owned_members.append(proof)
+                    if "owned_service_member_identity_unverified" not in failures:
+                        failures.append("owned_service_member_identity_unverified")
+            if owned:
+                owned_excluded.append(pid)
+                continue
         try:
             row = _proc_cpu_claim(process, proc_root, host_cpus, selected_cpu)
-        except FileNotFoundError:
-            continue
         except (OSError, ValueError, RuntimeError) as exc:
             if not (proc_root / str(pid)).exists():
                 continue
-            unreadable.append({"pid": pid, "error": f"{type(exc).__name__}: {exc}"})
+            unreadable_row = {"pid": pid, "error": f"{type(exc).__name__}: {exc}"}
+            unreadable_row["evidence"] = (
+                exc.evidence
+                if isinstance(exc, _ProcessClaimError)
+                else {"failure_stage": "claim_observation", "error_type": type(exc).__name__, "error": str(exc)}
+            )
+            unreadable.append(unreadable_row)
             continue
         if row is None:
             continue
-        ignored_path = "/" + ignored_cgroup.lstrip("/") if ignored_cgroup else None
-        if ignored_path and (
-            row["cgroup"] == ignored_path
-            or row["cgroup"].startswith(ignored_path.rstrip("/") + "/")
-        ):
-            continue
+        if expected_owned_cgroup and row["cgroup"] == expected_owned_cgroup:
+            proof = {
+                "pid": pid,
+                "status": "unverified",
+                "reason": "owned_member_was_not_proven_before_neighbor_claim",
+                "identity_observation": {
+                    "candidate_snapshot": process,
+                    "cgroup_before": row.get("cgroup"),
+                    "cgroup_after": row.get("cgroup"),
+                },
+            }
+            unverified_owned_members.append(proof)
+            if "owned_service_member_identity_unverified" not in failures:
+                failures.append("owned_service_member_identity_unverified")
         observed.append(row)
     claims = [row for row in observed if row["narrow_selected_cpu_claim"]]
     authorized = [
@@ -305,7 +519,6 @@ def _cpu_neighbor_gate(
         if row not in authorized and row["pid"] != authorized_pid
     ]
     unexpected.extend(identity_conflicts)
-    failures = []
     if len(authorized) > 1:
         failures.append("authorized_cpu0_neighbor_identity_duplicated")
     if unexpected:
@@ -325,6 +538,10 @@ def _cpu_neighbor_gate(
         "narrow_selected_cpu_affinity_claims": claims,
         "unexpected_claims": unexpected,
         "unreadable_processes": unreadable,
+        "owned_service_context": owned_context,
+        "owned_service_excluded_pids": sorted(owned_excluded),
+        "owned_service_member_proofs": owned_member_proofs,
+        "unverified_owned_members": unverified_owned_members,
         "performance_not_isolated": bool(authorized),
     }
 
@@ -510,8 +727,9 @@ def _numerical_processes() -> list[dict[str, Any]]:
             continue
         command = fields[3] if len(fields) == 4 else fields[2]
         if marker.search(f"{fields[2]} {command}"):
+            pid = int(fields[0])
             try:
-                status = Path(f"/proc/{fields[0]}/status").read_text(encoding="utf-8")
+                status = Path(f"/proc/{pid}/status").read_text(encoding="utf-8")
                 allowed = next(
                     (line.split(":", 1)[1].strip() for line in status.splitlines()
                      if line.startswith("Cpus_allowed_list:")),
@@ -519,10 +737,21 @@ def _numerical_processes() -> list[dict[str, Any]]:
                 )
             except OSError:
                 allowed = None
+            try:
+                identity = _proc_identity(pid, Path("/proc"))
+                cgroup_path = _proc_cgroup_path(pid, Path("/proc"))
+                identity_error = None
+            except (OSError, ValueError, RuntimeError) as exc:
+                identity = {}
+                cgroup_path = None
+                identity_error = f"{type(exc).__name__}: {exc}"
             result.append({
-                "pid": int(fields[0]), "ppid": int(fields[1]),
+                "pid": pid, "ppid": int(fields[1]),
                 "comm": fields[2], "command": command[:240],
                 "cpus_allowed_list": allowed,
+                "start_ticks": identity.get("start_ticks"),
+                "cgroup_path": cgroup_path,
+                "identity_snapshot_error": identity_error,
             })
     return result
 
@@ -952,7 +1181,8 @@ def _exact_service_guard(
             failures.append("service_system_call_error_number_mismatch")
         neighbor_gate = _cpu_neighbor_gate(
             selected_cpu=next(iter(expected_cpus)),
-            ignored_cgroup=facts["control_group"]
+            ignored_cgroup=facts["control_group"],
+            owned_service_facts=facts,
         )
         if neighbor_gate["status"] != "pass":
             failures.append("selected_cpu_neighbor_gate_failed")
@@ -1031,6 +1261,7 @@ def preflight(
     neighbor_gate = _cpu_neighbor_gate(
         selected_cpu=selected_cpu,
         ignored_cgroup=unit_facts["control_group"],
+        owned_service_facts=unit_facts,
     )
     if neighbor_gate["status"] != "pass":
         raise RuntimeError(f"Task44 selected CPU neighbor gate failed: {neighbor_gate}")
@@ -1101,7 +1332,8 @@ def run_service(
     unit_cgroup = unit_facts["control_group"]
     selected_cpu = next(iter(cpu_affinity))
     neighbor_gate = _cpu_neighbor_gate(
-        selected_cpu=selected_cpu, ignored_cgroup=unit_cgroup
+        selected_cpu=selected_cpu, ignored_cgroup=unit_cgroup,
+        owned_service_facts=unit_facts,
     )
     if neighbor_gate["status"] != "pass":
         raise RuntimeError(f"Task44 selected CPU neighbor gate failed before ABI probe: {neighbor_gate}")
@@ -1110,7 +1342,8 @@ def run_service(
         input_path, repo_root, source, cpu_affinity
     )
     neighbor_gate = _cpu_neighbor_gate(
-        selected_cpu=selected_cpu, ignored_cgroup=unit_cgroup
+        selected_cpu=selected_cpu, ignored_cgroup=unit_cgroup,
+        owned_service_facts=unit_facts,
     )
     if neighbor_gate["status"] != "pass":
         raise RuntimeError(f"Task44 selected CPU neighbor gate failed after ABI probe: {neighbor_gate}")
