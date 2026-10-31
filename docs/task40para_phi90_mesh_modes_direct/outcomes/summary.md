@@ -135,6 +135,12 @@ Z2 `[6,24,28]` / 4032 cells 已自然完成；相对同策略 Y2 `[6,24,14]`，x
 
 R14 不据此证明 continuum/full-DtN 收敛：新增模式没有 R13 逐模解作为误差基准；同坐标 E/H/Ht 仅为有限采样比较，六键 pre-release witness 仍 `OBSERVED_NOT_QUALIFICATION`。完整 source/input/resolved、模态身份、每模幅值/功率、样本哈希和资源口径见 R14 比较 JSON；逐模表见836行CSV。该比较不启动额外 FE/factor。
 
+## 2026-10-31：D07C G3 N96 完成与 G5 静态准备
+
+G3 M8/N96 已自然完成；同 G3 网格的 N64→N96 保存输出比较三组门均通过。该结果只支持两个有限 signed 窗口之间的对照，不验证 full DtN。原始小型 JSON、报告与比较脚本见 `response_d07c_g3_m8_n64_n96_comparison_20261031.md` 和 `records/d07c_g3_m8_n64_n96_saved_output_comparison_v1.json`；不重读 VTU 或 resource 流。
+
+用户授权的下一候选 G5 以 G3 为父，仅细化 y 到 50/67/50 段，总网格 `[6,167,8]` / 8,016 cells。生产 loader/mode inventory 给出 formal input/physical/resolved 身份、4,488 modes（M[-8,8], N[-64,1]）、q81 surface/q15-default volume。主 y 网格对照绑定同模式 G3 M8/N64；G3 M8/N96 仅作为截断背景。G5 仍是有限 DtN 窗口，canonical sidewall 仍 `NOT_MEASURED`。主审包尚待技术审阅；本次没有 fresh、mesh、carrier、matrix、factor、solve 或 systemd 启动。详细静态合同见 `response_d07c_g5_m8_n64_preparation_20261031.md` 与 `records/d07c_g5_m8_n64_static_case_plan_v1.json`。
+
 
 ## 2026-10-23：D15-Y3 有限 R13 模态截断 K1–K4
 

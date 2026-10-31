@@ -165,7 +165,7 @@ TASK40_PHI90_D07C_PROFILE_BY_CASE = {
     case: f"task40para_phi90_0p7_D07C_{case}_p6_direct_v1"
     for case in (
         "B", "Y1", "Y2", "B_M8", "Y3_M8", "G2_M8", "G3_M8",
-        "G3_M8_N64", "G3_M8_N96",
+        "G3_M8_N64", "G3_M8_N96", "G5_M8_N64",
     )
 }
 TASK40_PHI90_D07C_PROFILES = frozenset(
@@ -1577,6 +1577,7 @@ def _task40_phi90_d07c_profile_facts(identity):
     n_min, n_max = {
         "G3_M8_N64": (-64, 1),
         "G3_M8_N96": (-96, 1),
+        "G5_M8_N64": (-64, 1),
     }.get(case_label, (-143, 1))
     n_abs_max = max(abs(n_min), abs(n_max))
     mode_facts = {
@@ -1698,6 +1699,15 @@ def _task40_phi90_d07c_profile_facts(identity):
         "time_limit_mode": "none",
     }
     options = base["component_options"]
+    options["visualization_output_policy"] = {
+        "write_visualization_files": case_label != "G5_M8_N64",
+        "retained_field_samples": "full3d_reference_sample_npz",
+        "field_recovery_and_energy_metrics": "unchanged",
+        "visualization_files": (
+            "disabled_by_explicit_G5_profile" if case_label == "G5_M8_N64"
+            else "enabled_by_legacy_profile_default"
+        ),
+    }
     options.update(
         task_family="task40_phi90_d07c_mesh_modes_direct",
         mesh_target_nm=0.7,
@@ -1709,7 +1719,7 @@ def _task40_phi90_d07c_profile_facts(identity):
             "mesh_plan_family": "d07c",
             "case": case_name,
             "display_name": f"D07C-{case_name}",
-            "parent_case": "B",
+            "parent_case": plan["parent_case"],
             "changed_axis": plan["changed_axis"],
             "axis_cell_counts": counts,
             "segment_cell_counts": {
@@ -1791,6 +1801,7 @@ def _task40_phi90_d07c_profile_facts(identity):
             "symbolic_calls": 1, "numeric_calls": 1, "initial_solve_calls": 1,
             "same_factor_correction_solve_calls_max": 2, "total_solve_calls_max": 3,
         },
+        write_visualization_files=case_label != "G5_M8_N64",
     )
     base["campaign_authorization"]["resource_policy"] = {
         "name": "host_available_floor_v1",
@@ -1807,7 +1818,9 @@ def _task40_phi90_d07c_profile_facts(identity):
         "User-authorized three-case 0.7 nm D07C study using one fixed finite signed mode window; "
         "the excluded high-|m| propagating orders remain outside qualification."
     )
-    if max_m == 8 and case_label not in {"G3_M8_N64", "G3_M8_N96"}:
+    if max_m == 8 and case_label not in {
+        "G3_M8_N64", "G3_M8_N96", "G5_M8_N64"
+    }:
         base["campaign_authorization"]["source"] = (
             "User-authorized 2026-10-29 0.7nm mesh refinement with economical modal truncation: "
             "B_M8 is the same-grid cutoff anchor; Y3_M8 bisects B y only. "
@@ -1913,6 +1926,46 @@ def _task40_phi90_d07c_profile_facts(identity):
             "P6 direct route, sparse cutoff and all single-run gates stay fixed. The N64 "
             "ordered signed keys are a subset of this N96 inventory. The finite rectangle "
             "still excludes high-|m| propagating modes and is not full-DtN or convergence qualification."
+        )
+    elif case_label == "G5_M8_N64":
+        options["directional_mesh_comparison"].update(
+            display_name="D07C-G5-M8-N64-y0p3",
+            changed_axes=["y"],
+            changed_axes_vs_mesh_reference=["y"],
+            mode_window=window_label,
+            modal_window="M[-8,8],N[-64,1]",
+            mesh_comparison_reference_case="G3_M8_N64",
+            mesh_comparison_reference_axis_hashes=deepcopy(
+                D07C_AXIS_PLANS["G3"]["axis_sha256_le_f64"]
+            ),
+            finite_window_context_reference_case="G3_M8_N96",
+            same_mesh_modal_reference_case=None,
+            joint_mesh_and_cutoff_change=False,
+        )
+        mode_selection.update(
+            cutoff_validation_status=(
+                "G3_N64_TO_N96_FINITE_WINDOW_CHECK_PASSED; G5 keeps N64; "
+                "no same-mesh G5 cutoff comparison"
+            ),
+            mesh_comparison_reference_case="G3_M8_N64",
+            mesh_comparison_reference_mode_sha256=(
+                "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0"
+            ),
+            finite_window_context_reference_case="G3_M8_N96",
+            finite_window_context_mode_sha256=(
+                "f044d5183d9f106bfff3e9d312e6aef9e7a205ab42b961655c4415a6afab949d"
+            ),
+        )
+        base["campaign_authorization"]["source"] = (
+            "User-authorized D07C G5 y-refinement after the G3 N64-to-N96 finite-window "
+            "comparison passed. The primary G5 mesh comparison uses G3 M8/N64 to keep "
+            "the signed mode set identical; G3 M8/N96 is a separate finite-window context. "
+            "G5 uses x/z axes identical to G3 and 167 y cells across "
+            "the three physical slabs (50/67/50; maximum step 0.3 nm), with the same "
+            "M[-8,8], N[-64,1] finite signed window, q81 surface/q15 default volume, "
+            "relative-only cutoff and P6 direct route. It is a mesh candidate, not a "
+            "continuum or full-DtN qualification. Visualization files are disabled while "
+            "the direct field sample archive and all physical outputs remain enabled."
         )
     base["operator_scope"] = operator_scope
     base["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"
@@ -4225,6 +4278,23 @@ def _validate_task40_phi90_d07c_case(config: dict, identity: str) -> None:
 
     facts = _task40_phi90_d07c_profile_facts(identity)
     comparison = facts["component_options"]["directional_mesh_comparison"]
+    case_label = next(
+        case for case, profile in TASK40_PHI90_D07C_PROFILE_BY_CASE.items()
+        if profile == identity
+    )
+    expected_visualization_files = case_label != "G5_M8_N64"
+    actual_visualization_files = config.get("output", {}).get(
+        "write_visualization_files", True
+    )
+    if actual_visualization_files is not expected_visualization_files:
+        raise InputError(
+            f"{identity} fixes output.write_visualization_files="
+            f"{expected_visualization_files}"
+        )
+    if facts["component_options"]["visualization_output_policy"][
+        "write_visualization_files"
+    ] is not expected_visualization_files:
+        raise InputError(f"{identity} has inconsistent visualization output profile facts")
     discretization = config.get("discretization", {})
     if discretization.get("mesh_target_nm") != 0.7:
         raise InputError(f"{identity} fixes discretization.mesh_target_nm=0.7")
@@ -4330,6 +4400,14 @@ def validate_native_case(config):
     identity = native_capacity_profile_identity(
         config.get('method', {}).get('kind'), config['solver']
     )
+    if (
+        "write_visualization_files" in config.get("output", {})
+        and identity not in TASK40_PHI90_D07C_PROFILES
+    ):
+        raise InputError(
+            "output.write_visualization_files is supported only by the explicitly "
+            "authorized Task40 D07C profile family"
+        )
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
         if identity in TASK40_PHI90_D5C_PROFILES:
             _validate_task40_phi90_d5c_case(config, identity)

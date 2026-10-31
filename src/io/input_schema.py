@@ -1257,6 +1257,16 @@ FIELD_SPECS: Final = (
         default="false",
     ),
     _f(
+        "output.write_visualization_files",
+        "boolean",
+        "none",
+        ("full3d_direct",),
+        "是否写出用于可视化的大型 VTX/VTU/PVD 文件；关闭时保留有限元场恢复、能量指标及显式 reference-sample NPZ",
+        "full3d direct visualization file policy",
+        "true",
+        constraints=("false is supported only by an explicitly authorized Task40 D07C profile",),
+    ),
+    _f(
         "output.export_diffraction_orders",
         "boolean",
         "none",

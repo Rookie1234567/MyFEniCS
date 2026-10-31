@@ -22,6 +22,8 @@ D07C_CASE_SEGMENT_COUNTS = {
     "Y3": {"x": (2, 2, 2), "y": (20, 12, 20), "z": (2, 2, 2)},
     "G2": {"x": (2, 2, 2), "y": (20, 28, 20), "z": (2, 4, 2)},
     "G3": {"x": (2, 2, 2), "y": (30, 40, 30), "z": (2, 4, 2)},
+    # G5 keeps G3 x/z and uses approximately 0.3 nm per y cell.
+    "G5": {"x": (2, 2, 2), "y": (50, 67, 50), "z": (2, 4, 2)},
 }
 
 def _uniform_segment(start: float, stop: float, cells: int) -> tuple[float, ...]:
@@ -60,8 +62,9 @@ def d07c_axis_plan(case: str) -> dict[str, object]:
     segments = D07C_CASE_SEGMENT_COUNTS[case]
     axes = {axis: _piecewise_axis(axis, segments[axis]) for axis in "xyz"}
     counts = tuple(len(axes[axis]) - 1 for axis in "xyz")
+    parent_case = "G3" if case == "G5" else "B"
     parent_axes = {
-        axis: _piecewise_axis(axis, D07C_CASE_SEGMENT_COUNTS["B"][axis])
+        axis: _piecewise_axis(axis, D07C_CASE_SEGMENT_COUNTS[parent_case][axis])
         for axis in "xyz"
     }
     if case == "Y3":
@@ -100,14 +103,22 @@ def d07c_axis_plan(case: str) -> dict[str, object]:
     expected_refined = {
         "Y1": {"1": 696, "2": 360, "3": 24},
         "Y2": {"1": 680, "2": 360, "3": 40},
+        "G5": {"1": 5476, "2": 2004, "3": 536},
     }
-    if case in expected_refined and (counts, tags) != ((6, 30, 6), expected_refined[case]):
+    expected_refined_counts = {
+        "Y1": (6, 30, 6),
+        "Y2": (6, 30, 6),
+        "G5": (6, 167, 8),
+    }
+    if case in expected_refined and (
+        counts, tags
+    ) != (expected_refined_counts[case], expected_refined[case]):
         raise AssertionError(f"D07C-{case} static geometry changed: {counts}, {tags}")
     plan = {
         "schema": "task40.phi90.d07c.axis_plan.v1",
         "display_name": f"D07C-{case}",
         "case": case,
-        "parent_case": "B",
+        "parent_case": parent_case,
         "changed_axis": None if case == "B" else ("yz" if case in {"G2", "G3"} else "y"),
         "segment_cell_counts": {axis: list(segments[axis]) for axis in "xyz"},
         "axes_nm": {axis: list(axes[axis]) for axis in "xyz"},

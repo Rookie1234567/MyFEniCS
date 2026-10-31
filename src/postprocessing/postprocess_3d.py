@@ -173,6 +173,7 @@ def save_airbox_3d_fields(
     E_scattered=None,
     E_background=None,
     E_incident_port=None,
+    write_visualization_files: bool = True,
 ) -> dict[str, object]:
     """Save compact 3D E/H fields and return reconstruction metrics.
 
@@ -238,9 +239,11 @@ def save_airbox_3d_fields(
         H_exact_dg = fem.Function(V_dg, name="H_exact_A_per_m")
         H_exact_dg.interpolate(lambda x: _exact_h_values(cfg, x.T).T)
 
-    vtx_output_status = "skipped_mpi"
+    if not isinstance(write_visualization_files, bool):
+        raise TypeError("write_visualization_files must be a bool")
+    vtx_output_status = "disabled_by_profile" if not write_visualization_files else "skipped_mpi"
     vtx_output_files: list[str] = []
-    if comm.size == 1:
+    if write_visualization_files and comm.size == 1:
         try:
             with io.VTXWriter(comm, out_dir / "E_3d_numerical.bp", E_num_dg) as writer:
                 writer.write(0.0)
@@ -252,7 +255,7 @@ def save_airbox_3d_fields(
             vtx_output_status = "failed_serial"
             if comm.rank == 0:
                 (out_dir / "vtx_3d_warning.txt").write_text(str(exc), encoding="utf-8")
-    elif comm.rank == 0:
+    elif write_visualization_files and comm.rank == 0:
         (out_dir / "vtx_3d_skipped_mpi.txt").write_text(
             "MPI 3D VTX .bp output is skipped because ADIOS2/VTXWriter can raise "
             "unrecoverable BUS errors for large parallel vector fields in the current container. "
@@ -327,7 +330,8 @@ def save_airbox_3d_fields(
         paraview_owned_cell_filter_applied = True
     paraview_cells_written = int(paraview_grid.n_cells)
 
-    if comm.size > 1:
+    visualization_output_files: list[str] = []
+    if write_visualization_files and comm.size > 1:
         # PyVista writes one local VTU per rank.  Rank0 writes the collection
         # file after a barrier so ParaView can open the distributed result.
         paraview_path = out_dir / "fields_3d_for_paraview_parallel.pvd"
@@ -335,9 +339,20 @@ def save_airbox_3d_fields(
         comm.barrier()
         if comm.rank == 0:
             _write_parallel_vtu_collection(out_dir, comm.size)
-    else:
+            visualization_output_files.append("fields_3d_for_paraview_parallel.pvd")
+        visualization_output_files.append(
+            f"fields_3d_for_paraview_rank{comm.rank:04d}.vtu"
+        )
+        paraview_cells_written = int(paraview_grid.n_cells)
+        paraview_path = out_dir / "fields_3d_for_paraview_parallel.pvd"
+    elif write_visualization_files:
         paraview_grid.save(out_dir / "fields_3d_for_paraview.vtu")
+        visualization_output_files.append("fields_3d_for_paraview.vtu")
         paraview_path = out_dir / "fields_3d_for_paraview.vtu"
+        paraview_cells_written = int(paraview_grid.n_cells)
+    else:
+        paraview_path = None
+        paraview_cells_written = 0
 
     max_e_exact = _global_max_norm(comm, e_exact, owned_point_mask) if e_exact is not None else None
     max_e_num = _global_max_norm(comm, e_num, owned_point_mask)
@@ -375,7 +390,11 @@ def save_airbox_3d_fields(
         "mean_poynting_W_per_m2": mean_poynting.tolist(),
         "poynting_direction_cosine": poynting_cosine,
         "curl_postprocess_success": True,
-        "paraview_file": str(paraview_path),
+        "paraview_file": None if paraview_path is None else str(paraview_path),
+        "visualization_output_status": (
+            "written" if write_visualization_files else "disabled_by_profile"
+        ),
+        "visualization_files_written": visualization_output_files + vtx_output_files,
         "postprocess_point_scope": postprocess_point_scope,
         "postprocess_local_owned_points": local_owned_point_count,
         "postprocess_local_total_points_before_owned_filter": local_total_point_count,
@@ -391,7 +410,7 @@ def save_airbox_3d_fields(
         "exact_reference_note": None
         if has_exact_reference
         else "Stage 4 grating has no analytic exact solution; E_b is the layered background field, so E_exact is not written.",
-        "paraview_e_field_arrays": [
+        "paraview_e_field_arrays": [] if not write_visualization_files else [
             "E_tot_V_per_m_real",
             "E_tot_V_per_m_imag",
             "E_tot_V_per_m_abs",

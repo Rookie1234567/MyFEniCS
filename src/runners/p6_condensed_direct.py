@@ -363,6 +363,11 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "max_same_factor_corrections": 2,
             "expected_axis_cell_counts": expected_counts,
             "expected_global_cell_count": expected_cells,
+            "write_visualization_files": bool(
+                options.get("visualization_output_policy", {}).get(
+                    "write_visualization_files", True
+                )
+            ),
             "d13_case": case_name if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None,
             "changed_axis": mesh_case["changed_axis"],
             "d13_mesh_plan_id": plan_id if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None,
@@ -544,6 +549,9 @@ def _direct_output_policy(route: Mapping[str, Any]) -> dict[str, Any]:
         return {
             "active_port_outputs_only": False,
             "active_fe_port_output_contract": contract,
+            "write_visualization_files": bool(
+                route.get("write_visualization_files", True)
+            ),
             "dtn_output_mode_count": int(route["active_count"]),
             "omitted_dtn_channels": (
                 "NONE_WITHIN_DECLARED_PARENT"
@@ -1668,11 +1676,15 @@ def _task40_d07c_mesh_evidence(
         raise ValueError(f"actual D07C-{case_name} axis hashes differ from profile facts")
     if hashes != plan["axis_sha256_le_f64"]:
         raise ValueError(f"actual D07C-{case_name} axis hashes differ from frozen plan")
-    if route.get("task40_parent_case") != "B":
-        raise ValueError(f"D07C-{case_name} must be derived independently from B")
-    if hashes != plan["parent_axis_sha256_le_f64"] and case_name == "B":
-        raise ValueError("D07C-B axes differ from their frozen baseline identity")
-    if case_name != "B":
+    expected_parent_case = str(plan["parent_case"])
+    if route.get("task40_parent_case") != expected_parent_case:
+        raise ValueError(
+            f"D07C-{case_name} parent differs from frozen plan: "
+            f"{route.get('task40_parent_case')} != {expected_parent_case}"
+        )
+    if hashes != plan["parent_axis_sha256_le_f64"] and case_name == expected_parent_case:
+        raise ValueError(f"D07C-{case_name} axes differ from their parent identity")
+    if case_name != expected_parent_case:
         declared_axes = plan.get("changed_axes", [plan["changed_axis"]])
         if route.get("task40_changed_axis") != plan["changed_axis"]:
             raise ValueError(f"D07C-{case_name} changed-axis identity differs from plan")
@@ -1707,7 +1719,7 @@ def _task40_d07c_mesh_evidence(
         "profile": route["profile_identity"],
         "family": "D07C_0p7nm_finite_signed_modes",
         "case": case_name,
-        "parent_case": "B",
+        "parent_case": expected_parent_case,
         "changed_axis": route["task40_changed_axis"],
         "cell_type": "hexahedron",
         "actual_global_cell_count": cells,
@@ -3790,6 +3802,9 @@ def run_p6_condensed_direct(
             active_port_outputs_only=output_policy["active_port_outputs_only"],
             active_fe_port_output_contract=output_policy.get(
                 "active_fe_port_output_contract"
+            ),
+            write_visualization_files=output_policy.get(
+                "write_visualization_files", True
             ),
         )
         if route["family"] == "dispersion_flat":

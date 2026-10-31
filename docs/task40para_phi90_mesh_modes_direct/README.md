@@ -52,3 +52,11 @@ K1–K4（`m,n∈[-K,K]`）四个独立完整场已运行；与原有限 R13/612
 ## 2026-10-31 D07C G3 M8/N96 静态准备
 
 在已完成 G3 M8/N64 同一网格上，用户授权准备有限窗口 `m=-8…8,n=-96…1` 的 N96 扩展；生产枚举为 6,664 modes（6,536 propagating、6,602 power-carrying），新增 2,176 个 `n=-96…-65` keys。surface q81、volume q15/default 与 relative-only p6 direct 路线不变。定向验证为 25 passed；本阶段未 fresh、未启动 FE。静态计划与限制见[outcomes summary](outcomes/summary.md)和[静态计划](outcomes/records/d07c_g3_m8_n96_static_case_plan_v1.json)。执行须主审审核后独立 fresh；若 Task41 仍运行，按用户选择等待自然清场，且不享受并行例外。有限窗口不是 full DtN，canonical sidewall 仍为 `NOT_MEASURED`。
+
+### 2026-10-31 G3 N96 终态及有限窗比较
+
+上述 N96 后续已自然完成；同 G3 网格的 N64→N96 全三组保存输出比较均通过。此结论只覆盖两个有限签名窗口，不证明 full DtN，也不覆盖网格收敛。机器记录、复现脚本和小型比较报告见[比较记录](outcomes/response_d07c_g3_m8_n64_n96_comparison_20261031.md)。
+
+### 2026-10-31 D07C-G5 M8/N64 静态准备
+
+用户随后授权 G5：在 G3 x/z 轴上将 y 改为 50/67/50，共 `[6,167,8]` / 8,016 cells，最大 y 步长 0.3 nm。生产 loader/mode inventory、独立中点标签 fake 和真实 manifest→worker 接线已定向验证；G5 profile 使用同一 M8/N64 有限窗口。主 y 网格对照定义为 G3 M8/N64，保持 signed keys 相同；G3 M8/N96 另作有限截断背景，不能用二者混合结果归因单一网格或模态变化。该候选当前尚未 fresh 或启动 FE，须待精确包主审和新的 fresh PASS。静态轴、标签、输入身份和运行限制见[G5准备记录](outcomes/response_d07c_g5_m8_n64_preparation_20261031.md)及[机器计划](outcomes/records/d07c_g5_m8_n64_static_case_plan_v1.json)。G5 明确不写大体积 VTX/VTU/PVD 可视化文件，但保留场恢复、能量、模态和 reference-sample NPZ；不据此声称 RSS 会下降。`FULL_DTN_NOT_VERIFIED` 与 canonical sidewall `NOT_MEASURED` 继续有效。

@@ -1,0 +1,629 @@
+{
+  "boundary_complex_amplitude_outgoing": {
+    "added_N96_keys_vs_zero": {
+      "N64_missing_keys_zero_extended_for_diagnostic": 2176,
+      "comparison": "outgoing_amplitude_at_boundary; no phase fit",
+      "delta_l2": 1.2550082270014372e-07,
+      "key_count": 2176,
+      "max_abs_delta": 1.4724980196264024e-08,
+      "max_abs_delta_key": {
+        "m": 0,
+        "n": -66,
+        "polarization": "s",
+        "side": "bottom"
+      },
+      "reference_l2": 0.0,
+      "relative_l2_reference_denominator": null
+    },
+    "all_N96_with_N64_zero_extension": {
+      "N64_missing_keys_zero_extended_for_diagnostic": 2176,
+      "comparison": "outgoing_amplitude_at_boundary; no phase fit",
+      "delta_l2": 1.255008227289726e-07,
+      "key_count": 6664,
+      "limit": 0.0001,
+      "max_abs_delta": 1.4724980196264024e-08,
+      "max_abs_delta_key": {
+        "m": 0,
+        "n": -66,
+        "polarization": "s",
+        "side": "bottom"
+      },
+      "pass": true,
+      "reference_l2": 1.288873057271548,
+      "relative_l2_reference_denominator": 9.737252402082858e-08
+    },
+    "common_measured_keys_only": {
+      "N64_missing_keys_zero_extended_for_diagnostic": 0,
+      "comparison": "outgoing_amplitude_at_boundary; no phase fit",
+      "delta_l2": 2.6900064682907778e-12,
+      "key_count": 4488,
+      "max_abs_delta": 1.7355110200403421e-12,
+      "max_abs_delta_key": {
+        "m": -1,
+        "n": 0,
+        "polarization": "s",
+        "side": "top"
+      },
+      "reference_l2": 1.288873057271548,
+      "relative_l2_reference_denominator": 2.0870996201792973e-12
+    },
+    "metric": "outgoing_amplitude_at_boundary complex L2; no phase alignment or fit"
+  },
+  "comparison": {
+    "candidate": "G3 M8/N96",
+    "canonical_sidewall": "NOT_MEASURED",
+    "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+    "missing_reference_semantics": "N64 has no measured values for 2,176 N96-added keys. A separate mathematical zero-extension diagnostic is used for full-candidate-set mode and boundary comparisons; missing reference data are not represented as measured zeros.",
+    "mode_identity": "N64 signed mode keys are a verified subset of N96; common beta/kz/boundary-phase and propagation/power classifications match exactly.",
+    "phase_fit": false,
+    "reference": "G3 M8/N64"
+  },
+  "comparison_gates": {
+    "all_signed_and_power_carrying_R_T_1e-6_with_explicit_zero_extension": true,
+    "boundary_and_sampled_E_H_1e-4_no_phase_fit": true,
+    "does_not_imply_full_DTN_or_full_auto_inventory": true,
+    "finite_N64_to_N96_comparison_all_three_groups_pass": true,
+    "global_1e-5": true
+  },
+  "fixed_identity_checks": {
+    "axes_equal": true,
+    "cell_count": 4800,
+    "input_equal": false,
+    "material_tags_equal": true,
+    "physical_model_equal": true,
+    "relative_only_cutoff_equal": true,
+    "sample_coordinates_exactly_equal": true,
+    "source_equal": false,
+    "surface_q81_equal": true,
+    "volume_q15_default_equal": true
+  },
+  "global_observables": {
+    "A_balance": {
+      "N64": 0.14549410863807632,
+      "N96": 0.1454941086379764,
+      "absolute_delta": 9.992007221626409e-14,
+      "limit": 1e-05,
+      "pass": true,
+      "signed_delta_N96_minus_N64": -9.992007221626409e-14
+    },
+    "A_volume_total": {
+      "N64": 0.14549410858587863,
+      "N96": 0.1454941085857223,
+      "absolute_delta": 1.5634715744283767e-13,
+      "limit": 1e-05,
+      "pass": true,
+      "signed_delta_N96_minus_N64": -1.5634715744283767e-13
+    },
+    "R_total": {
+      "N64": 0.13879755144146974,
+      "N96": 0.13879755144180536,
+      "absolute_delta": 3.356204203441848e-13,
+      "limit": 1e-05,
+      "pass": true,
+      "signed_delta_N96_minus_N64": 3.356204203441848e-13
+    },
+    "T_total": {
+      "N64": 0.7157083399204539,
+      "N96": 0.7157083399202182,
+      "absolute_delta": 2.3570034812792073e-13,
+      "limit": 1e-05,
+      "pass": true,
+      "signed_delta_N96_minus_N64": -2.3570034812792073e-13
+    }
+  },
+  "limitations": [
+    "N64 and N96 source and input identities differ as expected for the mode-window change; each run is independently solved and no FE object/factor is shared.",
+    "The comparison covers finite N64 and N96 rectangles only. N96 includes 6,664 modes but the automatic propagating inventory has 64,120; 57,584 propagating modes remain outside N96.",
+    "Mathematical zero extension is explicitly diagnostic for the 2,176 N96-only keys; their N64 amplitudes/powers were not measured.",
+    "Horizontal E_t/H_t samples do not close canonical sidewall trace requirements.",
+    "FULL_DTN_NOT_VERIFIED and canonical sidewall NOT_MEASURED remain in force."
+  ],
+  "modal_R_T": {
+    "N96_added_keys": {
+      "count": 2176,
+      "max_abs_delta_R": {
+        "N64_or_zero_extension": 0.0,
+        "N64_value_measured": false,
+        "N96": 9.845800078801151e-15,
+        "key": {
+          "m": 0,
+          "n": -66,
+          "polarization": "s",
+          "side": "top"
+        },
+        "value": 9.845800078801151e-15
+      },
+      "max_abs_delta_T": {
+        "N64_or_zero_extension": 0.0,
+        "N64_value_measured": false,
+        "N96": 1.2386571445104099e-14,
+        "key": {
+          "m": 0,
+          "n": -66,
+          "polarization": "s",
+          "side": "bottom"
+        },
+        "value": 1.2386571445104099e-14
+      }
+    },
+    "all_N96_keys_with_N64_zero_extension": {
+      "R_limit": 1e-06,
+      "R_pass": true,
+      "T_limit": 1e-06,
+      "T_pass": true,
+      "count": 6664,
+      "max_abs_delta_R": {
+        "N64_or_zero_extension": 0.056809125802967486,
+        "N64_value_measured": true,
+        "N96": 0.0568091258026959,
+        "key": {
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "side": "top"
+        },
+        "value": 2.715883073989289e-13
+      },
+      "max_abs_delta_T": {
+        "N64_or_zero_extension": 0.7150948258851878,
+        "N64_value_measured": true,
+        "N96": 0.7150948258844585,
+        "key": {
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "side": "bottom"
+        },
+        "value": 7.293055048762653e-13
+      }
+    },
+    "common_measured_keys": {
+      "count": 4488,
+      "max_abs_delta_R": {
+        "N64_or_zero_extension": 0.056809125802967486,
+        "N64_value_measured": true,
+        "N96": 0.0568091258026959,
+        "key": {
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "side": "top"
+        },
+        "value": 2.715883073989289e-13
+      },
+      "max_abs_delta_T": {
+        "N64_or_zero_extension": 0.7150948258851878,
+        "N64_value_measured": true,
+        "N96": 0.7150948258844585,
+        "key": {
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "side": "bottom"
+        },
+        "value": 7.293055048762653e-13
+      }
+    },
+    "power_carrying_N96": {
+      "R_limit": 1e-06,
+      "R_pass": true,
+      "T_limit": 1e-06,
+      "T_pass": true,
+      "count": 6602,
+      "max_abs_delta_R": {
+        "N64_or_zero_extension": 0.056809125802967486,
+        "N64_value_measured": true,
+        "N96": 0.0568091258026959,
+        "key": {
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "side": "top"
+        },
+        "value": 2.715883073989289e-13
+      },
+      "max_abs_delta_T": {
+        "N64_or_zero_extension": 0.7150948258851878,
+        "N64_value_measured": true,
+        "N96": 0.7150948258844585,
+        "key": {
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "side": "bottom"
+        },
+        "value": 7.293055048762653e-13
+      }
+    },
+    "propagating_N96": {
+      "count": 6536,
+      "max_abs_delta_R": {
+        "N64_or_zero_extension": 0.056809125802967486,
+        "N64_value_measured": true,
+        "N96": 0.0568091258026959,
+        "key": {
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "side": "top"
+        },
+        "value": 2.715883073989289e-13
+      },
+      "max_abs_delta_T": {
+        "N64_or_zero_extension": 0.7150948258851878,
+        "N64_value_measured": true,
+        "N96": 0.7150948258844585,
+        "key": {
+          "m": 0,
+          "n": 0,
+          "polarization": "s",
+          "side": "bottom"
+        },
+        "value": 7.293055048762653e-13
+      }
+    }
+  },
+  "mode_counts": {
+    "N64": {
+      "all": 4488,
+      "power_carrying": 4426,
+      "propagating": 4360
+    },
+    "N96": {
+      "all": 6664,
+      "power_carrying": 6602,
+      "propagating": 6536
+    },
+    "N96_added_vs_N64": 2176,
+    "added_power_carrying": 2176,
+    "added_propagating": 2176,
+    "added_range": {
+      "m": [
+        -8,
+        8
+      ],
+      "n": [
+        -96,
+        -65
+      ]
+    },
+    "auto_inventory_propagating_modes": 64120,
+    "auto_inventory_propagating_not_in_N96": 57584
+  },
+  "named_channel_observables": {
+    "R00_s": {
+      "N64": 0.056809125802967486,
+      "N96": 0.0568091258026959,
+      "absolute_delta": 2.715883073989289e-13,
+      "limit": 1e-06,
+      "pass": true,
+      "signed_delta_N96_minus_N64": -2.715883073989289e-13,
+      "signed_mode_key": {
+        "m": 0,
+        "n": 0,
+        "polarization": "s",
+        "side": "top"
+      }
+    },
+    "R00_total": {
+      "N64": 0.056809125802967486,
+      "N96": 0.0568091258026959,
+      "absolute_delta": 2.715883073989289e-13,
+      "limit": 1e-06,
+      "pass": true,
+      "signed_delta_N96_minus_N64": -2.715883073989289e-13,
+      "signed_mode_key": null
+    }
+  },
+  "run_identity": {
+    "N64": {
+      "exit_status": 0,
+      "files": {
+        "dtn_port_diffraction_orders_3d.json": {
+          "bytes": 6682509,
+          "path": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N64_p6_direct_v1__full3d_direct__mpi1__Mna/20261030T132407.592584Z/numerical_output/dtn_port_diffraction_orders_3d.json",
+          "sha256": "71fef18ae785dd380e12c775aee9126b45295b2b852151b9e6db90dc0a5eef01"
+        },
+        "full3d_reference_samples.json": {
+          "bytes": 1969,
+          "path": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N64_p6_direct_v1__full3d_direct__mpi1__Mna/20261030T132407.592584Z/numerical_output/full3d_reference_samples.json",
+          "sha256": "980e73a6b2d0df819b0e0bd9ee7e11e96540c7acdc52c7d89c03363735047e58"
+        },
+        "full3d_reference_samples.npz": {
+          "bytes": 1346037,
+          "path": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N64_p6_direct_v1__full3d_direct__mpi1__Mna/20261030T132407.592584Z/numerical_output/full3d_reference_samples.npz",
+          "sha256": "f6b999dfa3ff7405c6e0fceb4f64feba4991aa9afdb9b43ba469fb2383ff36d1"
+        },
+        "p6_condensed_direct_summary.json": {
+          "bytes": 76293,
+          "path": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N64_p6_direct_v1__full3d_direct__mpi1__Mna/20261030T132407.592584Z/p6_condensed_direct_summary.json",
+          "sha256": "cd2ea69d1f69020d348dde3ba9843c9e4fecccdbcbb881ed0cc10b26a671f70c"
+        },
+        "run_manifest.json": {
+          "bytes": 44532,
+          "path": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N64_p6_direct_v1__full3d_direct__mpi1__Mna/20261030T132407.592584Z/run_manifest.json",
+          "sha256": "c6b85dbc87c0c7ec2aeba6a1eed8b374cfb31b9ac54f67c1bb86c65e0421f7ed"
+        }
+      },
+      "input_sha256": "70d60efef816b44831e8a22f63c4d587748221a295ad20ea68686472e58b7ef5",
+      "mesh_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "538a217db2639320447c691a4d5cf79437c84bea4ffea119df6ba2702a2c676c",
+        "z": "b603d8672fe0097d827859e5b4cab92ad139ba71427d4f75fa421bbd8bc25501"
+      },
+      "mode_count": 4488,
+      "mode_sha256": "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0",
+      "physical_model_sha256": "8614e125acda5e11c6c00ef4152e944cd3af09a14760e1d4338f4e1bf87b0631",
+      "resolved_config_sha256": "f44208b0825729fc13b2113fe18d1a054305e0e753aa1e35621e706e113474f4",
+      "run_directory": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N64_p6_direct_v1__full3d_direct__mpi1__Mna/20261030T132407.592584Z",
+      "run_id": "task40para_phi90_0p7_D07C_G3_M8_N64_p6_direct_v1",
+      "source_sha": "3a0676dd47c7729fa279d74b114aaf2125ec8072",
+      "sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+      "sparse_cutoff_relative_tolerance": 1e-13,
+      "status": "finished",
+      "surface_quadrature": 81,
+      "volume_quadrature_records": [
+        {
+          "component": "curl",
+          "integral_type": "cell",
+          "quadrature_degree": 15,
+          "quadrature_rule": "default",
+          "subdomain_id": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "component": "material_mass",
+          "integral_type": "cell",
+          "quadrature_degree": 15,
+          "quadrature_rule": "default",
+          "subdomain_id": [
+            1
+          ]
+        },
+        {
+          "component": "material_mass",
+          "integral_type": "cell",
+          "quadrature_degree": 15,
+          "quadrature_rule": "default",
+          "subdomain_id": [
+            2,
+            3
+          ]
+        }
+      ]
+    },
+    "N96": {
+      "exit_status": 0,
+      "files": {
+        "dtn_port_diffraction_orders_3d.json": {
+          "bytes": 9926452,
+          "path": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N96_p6_direct_v1__full3d_direct__mpi1__Mna/20261030T234947.703061Z/numerical_output/dtn_port_diffraction_orders_3d.json",
+          "sha256": "92a4b06f65255f2dd603bbbff88c7a6ce420258fb3616c1eca0b9c456f747a86"
+        },
+        "full3d_reference_samples.json": {
+          "bytes": 1967,
+          "path": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N96_p6_direct_v1__full3d_direct__mpi1__Mna/20261030T234947.703061Z/numerical_output/full3d_reference_samples.json",
+          "sha256": "84b22ceee480c4ade5ba8e6d809d3d892a3ba673d650f66eea31244001b4dd3a"
+        },
+        "full3d_reference_samples.npz": {
+          "bytes": 1346086,
+          "path": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N96_p6_direct_v1__full3d_direct__mpi1__Mna/20261030T234947.703061Z/numerical_output/full3d_reference_samples.npz",
+          "sha256": "22b856c6fcdc2e4ffe711631e5e9ab7f8a9e87d45cbff5fa12263e62470f5a02"
+        },
+        "p6_condensed_direct_summary.json": {
+          "bytes": 76343,
+          "path": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N96_p6_direct_v1__full3d_direct__mpi1__Mna/20261030T234947.703061Z/p6_condensed_direct_summary.json",
+          "sha256": "5d6d4cd6b7fb14b9e9bb0ae58a1f2ba9a176ecc7cf9020db78ab6059c8bfa698"
+        },
+        "run_manifest.json": {
+          "bytes": 42151,
+          "path": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N96_p6_direct_v1__full3d_direct__mpi1__Mna/20261030T234947.703061Z/run_manifest.json",
+          "sha256": "98f9db62abc7e7eeb2fc2f57d576978a3c6ef22d6f5de11c81cab111bff9c3bf"
+        }
+      },
+      "input_sha256": "bb2d9300568d68b1959370a899d85bcad2a94ec0c6dcd46f31eed048327aaba6",
+      "mesh_axis_sha256_le_f64": {
+        "x": "bb1d6be1e2cec153c7bd67a71e29f5967b3035b4928cd06f51ee2c0b6f2a5361",
+        "y": "538a217db2639320447c691a4d5cf79437c84bea4ffea119df6ba2702a2c676c",
+        "z": "b603d8672fe0097d827859e5b4cab92ad139ba71427d4f75fa421bbd8bc25501"
+      },
+      "mode_count": 6664,
+      "mode_sha256": "f044d5183d9f106bfff3e9d312e6aef9e7a205ab42b961655c4415a6afab949d",
+      "physical_model_sha256": "8614e125acda5e11c6c00ef4152e944cd3af09a14760e1d4338f4e1bf87b0631",
+      "resolved_config_sha256": "49368696418a6e6a52ced944bfb8006aebf869b6ecbb5fa5468cd9baa0d9940f",
+      "run_directory": "/home/fenics/Projects/Maxwell3D-Phi90/results/si_block_phi90_50x50_17x20_h120/task40para_phi90_0p7_D07C_G3_M8_N96_p6_direct_v1__full3d_direct__mpi1__Mna/20261030T234947.703061Z",
+      "run_id": "task40para_phi90_0p7_D07C_G3_M8_N96_p6_direct_v1",
+      "source_sha": "d99aa7e1424d29b20d2e39bea6d27aadc9842efa",
+      "sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
+      "sparse_cutoff_relative_tolerance": 1e-13,
+      "status": "finished",
+      "surface_quadrature": 81,
+      "volume_quadrature_records": [
+        {
+          "component": "curl",
+          "integral_type": "cell",
+          "quadrature_degree": 15,
+          "quadrature_rule": "default",
+          "subdomain_id": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "component": "material_mass",
+          "integral_type": "cell",
+          "quadrature_degree": 15,
+          "quadrature_rule": "default",
+          "subdomain_id": [
+            1
+          ]
+        },
+        {
+          "component": "material_mass",
+          "integral_type": "cell",
+          "quadrature_degree": 15,
+          "quadrature_rule": "default",
+          "subdomain_id": [
+            2,
+            3
+          ]
+        }
+      ]
+    }
+  },
+  "sampled_complex_fields": {
+    "interpretation": "E_t/H_t are horizontal z-plane interface diagnostics at the saved sample planes; they are not canonical grating sidewall traces.",
+    "metadata": {
+      "coordinate_arrays": {
+        "interface_z_nm": [
+          10.0,
+          110.0
+        ],
+        "x_nm": {
+          "count": 40,
+          "first": 0.625,
+          "last": 49.375
+        },
+        "y_nm": {
+          "count": 64,
+          "first": 0.390625,
+          "last": 49.609375
+        },
+        "z_nm": [
+          10.0,
+          30.0,
+          60.0,
+          90.0,
+          110.0
+        ]
+      },
+      "horizontal_interface_planes_z_nm": [
+        10.0,
+        110.0
+      ],
+      "phase_fit": false,
+      "plane_z_nm": [
+        10.0,
+        30.0,
+        60.0,
+        90.0,
+        110.0
+      ],
+      "relative_denominator": "N64 sample norm"
+    },
+    "overall": {
+      "E_V_per_m": {
+        "delta_l2": 1.0813279570285403e-08,
+        "limit": 0.0001,
+        "max_abs_delta": 8.384991114185038e-10,
+        "pass": true,
+        "reference_l2": 127.78914065792442,
+        "relative_l2_reference_denominator": 8.461814137424402e-11
+      },
+      "E_t_interface_V_per_m": {
+        "delta_l2": 7.849365937528432e-09,
+        "limit": 0.0001,
+        "max_abs_delta": 8.384991114185038e-10,
+        "pass": true,
+        "reference_l2": 83.30614219038995,
+        "relative_l2_reference_denominator": 9.422313566734725e-11
+      },
+      "H_A_per_m": {
+        "delta_l2": 7.362748385557035e-12,
+        "limit": 0.0001,
+        "max_abs_delta": 4.972599203058902e-13,
+        "pass": true,
+        "reference_l2": 0.33922989474965465,
+        "relative_l2_reference_denominator": 2.1704302891673525e-11
+      },
+      "H_t_interface_A_per_m": {
+        "delta_l2": 1.1670688140803232e-13,
+        "limit": 0.0001,
+        "max_abs_delta": 1.2418204291567794e-14,
+        "pass": true,
+        "reference_l2": 0.0033971656171006316,
+        "relative_l2_reference_denominator": 3.435419245401341e-11
+      }
+    },
+    "per_plane_E": {
+      "10.0": {
+        "delta_l2": 5.8555464815529325e-09,
+        "max_abs_delta": 8.384991114185038e-10,
+        "reference_l2": 47.45889660268771,
+        "relative_l2_reference_denominator": 1.233814289989481e-10
+      },
+      "110.0": {
+        "delta_l2": 5.2273437030900595e-09,
+        "max_abs_delta": 7.458129685854895e-10,
+        "reference_l2": 68.46580541323475,
+        "relative_l2_reference_denominator": 7.634969999315294e-11
+      },
+      "30.0": {
+        "delta_l2": 5.521126032089938e-09,
+        "max_abs_delta": 7.910799158081665e-10,
+        "reference_l2": 43.27656573027248,
+        "relative_l2_reference_denominator": 1.275777303241011e-10
+      },
+      "60.0": {
+        "delta_l2": 7.112759692114562e-10,
+        "max_abs_delta": 1.0239480331900526e-10,
+        "reference_l2": 63.92617141496062,
+        "relative_l2_reference_denominator": 1.112652225947316e-11
+      },
+      "90.0": {
+        "delta_l2": 4.932111323833902e-09,
+        "max_abs_delta": 7.053296431138411e-10,
+        "reference_l2": 58.57247270930047,
+        "relative_l2_reference_denominator": 8.42052775936631e-11
+      }
+    },
+    "per_plane_H": {
+      "10.0": {
+        "delta_l2": 3.4334983368957217e-12,
+        "max_abs_delta": 3.5640521347982735e-13,
+        "reference_l2": 0.12600560396138571,
+        "relative_l2_reference_denominator": 2.7248774887408292e-11
+      },
+      "110.0": {
+        "delta_l2": 3.066889821595645e-12,
+        "max_abs_delta": 3.1942218700684023e-13,
+        "reference_l2": 0.18173635425759382,
+        "relative_l2_reference_denominator": 1.6875488859255e-11
+      },
+      "30.0": {
+        "delta_l2": 3.496841460849272e-12,
+        "max_abs_delta": 3.326344731154775e-13,
+        "reference_l2": 0.11489924655959448,
+        "relative_l2_reference_denominator": 3.04339807749355e-11
+      },
+      "60.0": {
+        "delta_l2": 6.259152188282468e-13,
+        "max_abs_delta": 5.154974516674976e-14,
+        "reference_l2": 0.16969166871897748,
+        "relative_l2_reference_denominator": 3.688544190491819e-12
+      },
+      "90.0": {
+        "delta_l2": 4.516156520568651e-12,
+        "max_abs_delta": 4.972599203058902e-13,
+        "reference_l2": 0.15548089114342256,
+        "relative_l2_reference_denominator": 2.9046376614877678e-11
+      }
+    }
+  },
+  "schema": "task40.d07c.g3.m8.n64_n96_saved_output_comparison.v1",
+  "single_run_gates": {
+    "N64_condensed_residual": 7.019688508589285e-12,
+    "N64_energy_closure_signed": -5.219769061426405e-11,
+    "N64_original_A6_active_rectangle_relative": 3.655244736924708e-09,
+    "N64_passed": true,
+    "N96_condensed_residual": 6.606524227998438e-12,
+    "N96_energy_closure_signed": -5.2254089943915005e-11,
+    "N96_original_A6_active_rectangle_relative": 3.655082643014393e-09,
+    "N96_passed": true,
+    "scope_note": "These are finite active-rectangle A6 checks; they do not verify the omitted parent DtN modes."
+  }
+}
