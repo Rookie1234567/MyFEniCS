@@ -189,3 +189,88 @@ def test_reused_pid_is_retried_under_its_new_start_tick(tmp_path, monkeypatch):
         and row.get("identity_after", {}).get("start_ticks") == 101
         for row in result["observations"]
     )
+
+
+def test_late_compiler_child_identity_gets_additional_bounded_retries(
+    tmp_path, monkeypatch
+):
+    leader, child = 6101, 6102
+    cgroup = _cgroup(tmp_path, leader)
+    membership_reads = 0
+
+    def members(_root):
+        nonlocal membership_reads
+        membership_reads += 1
+        return {leader} if membership_reads == 1 else {leader, child}
+
+    child_observations = 0
+
+    def observe(pid, expected_cpus, cgroup_root, _proc_root):
+        nonlocal child_observations
+        base = {
+            "pid": pid,
+            "cgroup_path": str(cgroup_root),
+            "expected_cpu_affinity": sorted(expected_cpus),
+            "affinity_samples": [{"cpu_affinity": [32]}],
+            "identity": _identity(pid, 10000 + pid),
+        }
+        if pid == child:
+            child_observations += 1
+            if child_observations < 4:
+                return {**base, "status": "transient_identity"}
+        return {**base, "status": "stable_match"}
+
+    monkeypatch.setattr(startup, "_read_cgroup_process_ids", members)
+    monkeypatch.setattr(
+        startup, "_read_process_identity",
+        lambda pid, _proc_root: _identity(pid, 10000 + pid),
+    )
+    monkeypatch.setattr(startup, "_observe_process_affinity", observe)
+
+    result = startup.observe_cgroup_cpu_affinity(cgroup, {32})
+
+    assert result["stop"] is False
+    assert result["member_pids_final"] == [leader, child]
+    assert child_observations == 4
+
+
+def test_cgroup_identity_still_fails_closed_after_bounded_retries(
+    tmp_path, monkeypatch
+):
+    leader, child = 6201, 6202
+    cgroup = _cgroup(tmp_path, leader)
+    membership_reads = 0
+    child_observations = 0
+
+    def members(_root):
+        nonlocal membership_reads
+        membership_reads += 1
+        return {leader} if membership_reads == 1 else {leader, child}
+
+    def observe(pid, expected_cpus, cgroup_root, _proc_root):
+        nonlocal child_observations
+        base = {
+            "pid": pid,
+            "cgroup_path": str(cgroup_root),
+            "expected_cpu_affinity": sorted(expected_cpus),
+            "affinity_samples": [{"cpu_affinity": [32]}],
+            "identity": _identity(pid, 20000 + pid),
+        }
+        if pid == child:
+            child_observations += 1
+            return {**base, "status": "transient_identity"}
+        return {**base, "status": "stable_match"}
+
+    monkeypatch.setattr(startup, "_read_cgroup_process_ids", members)
+    monkeypatch.setattr(
+        startup, "_read_process_identity",
+        lambda pid, _proc_root: _identity(pid, 20000 + pid),
+    )
+    monkeypatch.setattr(startup, "_observe_process_affinity", observe)
+
+    result = startup.observe_cgroup_cpu_affinity(cgroup, {32})
+
+    assert result["stop"] is True
+    assert result["failures"] == [f"service_pid_identity_unstable:{child}"]
+    assert result["member_pids_final"] == [leader, child]
+    assert child_observations == startup._CGROUP_IDENTITY_ROUNDS - 1

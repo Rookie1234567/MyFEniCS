@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 _TERMINAL_STATES = {"inactive", "failed", "unknown", ""}
+_CGROUP_IDENTITY_ROUNDS = 6
 
 
 def _read_cgroup_process_ids(cgroup_root: Path) -> set[int]:
@@ -204,7 +205,10 @@ def observe_cgroup_cpu_affinity(
         }
     initial_members = sorted(pending)
     unresolved: set[int] = set()
-    for _round in range(3):
+    # Short-lived compiler children can enter the service cgroup while startup
+    # is being inspected. Give their identities a few more bounded retries;
+    # unresolved members still fail closed below.
+    for _round in range(_CGROUP_IDENTITY_ROUNDS):
         for pid in sorted(pending):
             observation = _observe_process_affinity(pid, expected, root, proc_path)
             observations.append(observation)
