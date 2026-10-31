@@ -36,7 +36,8 @@ if [[ -e "$artifact_dir" ]]; then
 fi
 sample_name="${unit#task44-sample-}"
 sample_name="${sample_name%.service}"
-cache_root="/tmp/myfenics-task44-native-cache-${UID}/${sample_name}"
+cache_name="${unit%.service}"
+cache_root="/tmp/myfenics-task44-native-cache-${UID}/${cache_name}"
 if [[ -e "$cache_root" ]]; then
     echo "Task44 per-service cache root already exists; choose a unique unit: $cache_root" >&2
     exit 2
