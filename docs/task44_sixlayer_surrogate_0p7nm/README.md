@@ -66,7 +66,7 @@
 4. 每场正式 PDE 前冻结输入、源码 SHA、材料表、网格/DtN 精度对照、单样本初始 128 GiB cap、service/cgroup 与资源硬门；每个 service 显式绑定自己唯一的 Task44 JIT cache root，并在 preflight、service 与 worker 中验证一致。运行期间按真实进度和资源情况继续，不使用原 30 分钟到点强停。
 5. 完成代表点与精度资格后，根据实测单样本成本、已有独立样本上限和数值证据推进训练点、GP、开发验证与盲测；数据/GP 资格分别判定，不受原 12 小时窗口约束。
 
-当前阶段（2026-10-31）：A–D 四个 P6 condensed-direct + MUMPS exact 样本均通过 full explicit true residual 与能量闭合门。B 的 y 加密 retry 内部残差/闭合通过，但三个主输出变化约 9.2–9.8e-4，超过 2e-4 稳定性门；z 加密三项输出变化约 1e-10，z 方向门通过。DtN 倏逝壳层对照使用 m=4、n=8，实际系统完成求解后，显式相对残差为 1.623574709e11，远超 1e-6 门限；official R/T/A 被跳过，不能判断 DtN 稳定性。四项 accuracy attempt 已记录：两次 y、一次 z、一次 DtN；顶部空气间距是下一项。y 与 DtN 负结果都保留，A–D 仍为 gp_eligible=false。GP/design 软件通过 9 项定向测试和 40 点设计校验；有限元 GP 训练、开发误差、盲测误差和标准尺寸计算尚未运行。详细结果见 [outcomes/summary.md](outcomes/summary.md) 与 [response_v6.md](response_v6.md)。
+当前阶段（2026-10-31）：A–D 四个 P6 condensed-direct + MUMPS exact 样本均通过 full explicit true residual 与能量闭合门。B 的 y 加密 retry 三项输出变化约 `9.2–9.8e-4`，超过 `2e-4` 稳定性门；z 加密三项变化约 `1e-10`，z 方向门通过。DtN 倏逝壳层对照使用 m=4、n=8，完整显式相对残差为 `1.623574709e11`，official R/T/A 未运行，DtN 稳定性未判定。顶部空气由 0.5 增至 1.0 nm 的对照通过真残差与能量闭合，但相对 B 的 `R_total/T_total/R00_total` 变化绝对值分别为 `2.34999e-4 / 2.28409e-4 / 2.35003e-4`，均超过 `2e-4`。精度复算已用 5/12 次，y 与空气间距失败、z 通过、DtN 未判定；A–D 仍为 `gp_eligible=false`。GP/design 软件通过 9 项定向测试和 40 点设计校验；有限元 GP 训练、开发误差、盲测误差和标准尺寸计算尚未运行。详细结果见 [outcomes/summary.md](outcomes/summary.md) 与 [response_v7.md](response_v7.md)。
 
 每次正式运行前都从实际 Ubuntu 主机重新读取 CPU、邻任务、内存及 cgroup 状态；通过外层 128 GiB 资源准入和动态选核后的邻居 Gate 后，才启动绑定所选单核、128 GiB / 零 swap 的专属服务。smoke 只执行公共 runner 的 `--dry-run`，不组装或求解有限元系统。正式运行采用共享 subreaper watchdog 的 `observe_only` 时间策略：继续记录运行时间，但不因时钟停止 PDE；动态内存、祖先 cgroup、零 swap 和精确服务身份仍由硬门控制。
 

@@ -1,10 +1,10 @@
-# Task44 outcomes summary（A–D 已完成；y 稳定性与 DtN residual 门未通过，z 通过）
+# Task44 outcomes summary（A–D 已完成；y 与空气间距稳定性未通过，DtN residual 门失败，z 通过）
 
 ## 当前状态
 
 2026-10-31，四个冻结厚度点 A–D 均已用 P6、144 个贴体六面体、装配期静态凝聚和 MUMPS exact 完成正式三维计算。四场都通过完整离散算子相对真残差门（≤ `1e-6`）和体吸收能量闭合门（≤ `1e-5`），并保存了全级 DtN 端口 R/T 与场数据。它们是当前有限网格上的正式离散样本，不代表连续解精度，也尚未因空间稳定性核查而取得代理训练资格。
 
-用户允许 Task44 与 Task40 同时运行；Task44 只监控自身 service 与资源，不停止或修改 Task40。四项精度对照仍由 Task44 一次运行一个。传播方向 y 加密第一次启动因 service 子进程身份未稳定而受控终止，没有进入矩阵组装或求解，保留为 `MONITORING_FAILED / not_run`；retry 的残差与能量闭合通过，但相对 B 的 `R_total/T_total/R00_total` 变化均超过 `2e-4`，所以 y 方向稳定性门失败。材料内部 z 加密已完成：残差与能量闭合通过，三项主输出相对 B 的变化均约 `1e-10`，低于 `2e-4`。z 对照只表明该设置下加密结果稳定；y 对照仍未通过，因此 A–D 仍不得取得 GP 训练资格。DtN 倏逝模态扩展已运行，但 full explicit 相对残差为 1.623574709e11，远超 1e-6 门限，official R/T/A 因此跳过；本次不能判定 DtN 截断稳定性。顶部空气间距对照仍未运行。
+用户允许 Task44 与 Task40 同时运行；Task44 只监控自身 service 与资源，不停止或修改 Task40。四项精度对照由 Task44 一次运行一个。传播方向 y 加密第一次启动因 service 子进程身份未稳定而受控终止，没有进入矩阵组装或求解，保留为 `MONITORING_FAILED / not_run`；retry 的残差与能量闭合通过，但相对 B 的三个主输出变化均超过 `2e-4`，所以 y 方向稳定性门失败。材料内部 z 加密的残差与能量闭合通过，三项主输出相对 B 的变化约 `1e-10`，z 方向门通过；这不证明 y 方向或连续解已收敛。DtN 倏逝模态扩展的 full explicit 相对残差为 `1.623574709e11`，远超 `1e-6` 门限，official R/T/A 跳过，DtN 截断稳定性未判定。顶部空气间距对照已完成：full true residual `6.752756601e-10` 和端口/体积能量闭合 `-7.221615528e-10` 均通过，但相对 B 的 `R_total`、`T_total`、`R00_total` 变化绝对值分别为 `2.34999e-4`、`2.28409e-4`、`2.35003e-4`，均略高于 `2e-4`，空气间距稳定性门失败。y 与空气间距两个精度门未通过，DtN 精度仍未判定，因此 A–D 均保持 `gp_eligible=false`。
 
 固定 seed `440731` 的首轮设计已冻结为 20 training / 10 development / 10 blind test，见 [`sample_design_v1.json`](../sample_design_v1.json)。训练候选含 A–D 和 16 个六维分层覆盖点；A–D 标签仍为 `gp_eligible=false`。40 个几何输入字节、解析物理模型和离散签名哈希已登记，未求解候选的结果保持 `null`。开发和盲测几何均不与训练重合；盲测样本没有标签字段。GP 软件已通过 9 项定向测试和 40 点设计校验；有限元训练、模型选择、开发评估、盲测和标准尺寸仍为 `not_run`。
 
@@ -19,7 +19,7 @@
 | y 传播方向加密 retry | 以 B 为基线，`[3,6,8]` → `[3,12,8]`；P6、288 hex、MPI1、CPU8、static condensation + MUMPS | 求解和闭合 `pass`；空间稳定性 `failed` | `R/T/R00` 绝对变化分别为 `9.8002e-4 / 9.2275e-4 / 9.8001e-4`，均超过 `2e-4`。保留 measured 结果，不把 B 的 GP 标签标成 eligible | [run summary](../../../results/task44_sixlayer_0p7nm/task44_accuracy_propagation_y2_20261031__full3d_direct__mpi1__Mna/20261031T091904.310578Z/numerical_output/run_summary.json)、[service summary](../../../benchmarks/artifacts/task44_native_services/task44-sample-accuracy-yrefine-retry1.service/service_summary.json) |
 | 材料内部 z 加密 | 以 B 为基线，`[3,6,8]` → `[3,6,16]`；P6、288 hex、MPI1、CPU29、static condensation + MUMPS | 求解、闭合、z 稳定性 `pass` | 三项主输出相对 B 的绝对变化均约 `1e-10`，远小于 `2e-4`；该比较不证明 y 方向或连续解已收敛 | [run summary](../../../results/task44_sixlayer_0p7nm/task44_accuracy_layer_z2_20261031__full3d_direct__mpi1__Mna/20261031T102657.088710Z/numerical_output/run_summary.json)、[service summary](../../../benchmarks/artifacts/task44_native_services/task44-sample-accuracy-zrefine1.service/service_summary.json) |
 | DtN 倏逝模态扩展 | B 的 P6、[3,6,8] 网格；手动 DtN 上限 m=4、n=8；auxiliary 装配；static condensation + MUMPS exact | 数值失败；official_result=false；R/T/A not_run | 显式相对残差 1.623574709e11，对照限值 1e-6；无可用 R_total、T_total、R00_total，不能判断模态截断稳定性 | [输入](../../../input/task44_accuracy_dtn_evanescent_shell_v1.dat)、[run summary](../../../results/task44_sixlayer_0p7nm/task44_accuracy_dtn_evanescent_shell_20261031__full3d_direct__mpi1__Mna/20261031T110232.922585Z/numerical_output/run_summary.json)、[service summary](../../../benchmarks/artifacts/task44_native_services/task44-sample-accuracy-dtn-shell1.service/service_summary.json) |
-| 顶部空气间距 | 0.5 → 1.0 nm；基底底面固定 `z=-0.5 nm` | 同上 | `not_run`；仍需比较 `R_total`、`T_total`、`R00_total` 的绝对变化是否均 ≤ `2e-4` | [输入](../../../input/task44_accuracy_air_gap_1nm_v1.dat) |
+| 顶部空气间距 | 0.5 → 1.0 nm；底面固定 `z=-0.5 nm`，z 网格 `[3,6,8]` → `[3,6,9]`，144 → 162 cells | `abs(ΔR_total)=2.34999e-4`；`abs(ΔT_total)=2.28409e-4`；`abs(ΔR00_total)=2.35003e-4`，目标均 ≤ `2e-4` | full true residual 与能量闭合通过；三项变化均超限，空气间距稳定性失败；A–D 仍不具备 GP 资格 | [输入](../../../input/task44_accuracy_air_gap_1nm_v1.dat)、[response v7](../response_v7.md) |
 | GP与样本设计软件 | 20/10/10 固定划分；Matérn 5/2 ARD三输出 GP、均值和线性基线 | 软件 `verified`；有限元 GP `not_run` | 40个几何互不重复；A–D等待精度资格；未求解候选结果为空；开发/盲测没有标签泄漏 | [`sample_design_v1.json`](../sample_design_v1.json)、`src/studies/task44_surrogate.py`、`src/test/test_task44_surrogate.py` |
 | 有限元训练扩充 / 开发评估 / 最终盲测 / 标准尺寸 | 原任务后续阶段 | `not_run` | A–D尚无空间稳定性资格；四个正式 worker 用时约27.6–30.6分钟，先完成有限核查与合法缓存成本证据，再按实测调整批量 | 本 summary 的下一步决策 |
 
@@ -104,7 +104,7 @@ DtN 端口用边界上的模态关系表示空气和基底半空间中的出射�
 
 完整证据见 [numerical run summary](../../../results/task44_sixlayer_0p7nm/task44_accuracy_dtn_evanescent_shell_20261031__full3d_direct__mpi1__Mna/20261031T110232.922585Z/numerical_output/run_summary.json)、[外层 run summary](../../../results/task44_sixlayer_0p7nm/task44_accuracy_dtn_evanescent_shell_20261031__full3d_direct__mpi1__Mna/20261031T110232.922585Z/run_summary.json)、[service summary](../../../benchmarks/artifacts/task44_native_services/task44-sample-accuracy-dtn-shell1.service/service_summary.json)、[watchdog summary](../../../benchmarks/artifacts/task44_native_services/task44-sample-accuracy-dtn-shell1.service/watchdog/summary.json)、[progress log](../../../results/task44_sixlayer_0p7nm/task44_accuracy_dtn_evanescent_shell_20261031__full3d_direct__mpi1__Mna/20261031T110232.922585Z/numerical_output/progress_3d.jsonl)、[worker output](../../../results/task44_sixlayer_0p7nm/task44_accuracy_dtn_evanescent_shell_20261031__full3d_direct__mpi1__Mna/20261031T110232.922585Z/worker_stdout.txt) 和 [输入](../../../input/task44_accuracy_dtn_evanescent_shell_v1.dat)。
 
-精度资格最多 12 次额外 attempt；目前登记 4 次：两次 y attempt（一次监控失败、一次稳定性超限）、一次 z 通过、一次 DtN 真残差失败。顶部空气间距仍排在下一项；完成该项后还剩 7 次预算。无论后续结果如何，当前 y 与 DtN 的负结果都必须保留，A–D 的 gp_eligible 状态不变。
+精度资格最多 12 次额外 attempt；目前登记 5 次：两次 y attempt（一次监控失败、一次稳定性超限）、一次 z 通过、一次 DtN 真残差失败、一次空气间距稳定性超限；剩余 7 次预算。y 和空气间距的 stability 负结果必须保留；DtN 没有 official R/T/A，模态稳定性仍未判定。不得将 z 单方向通过扩大解释为总精度通过，A–D 的 `gp_eligible=false` 状态不变。
 
 GP 的 Matérn 5/2 ARD 核把相近的六层厚度组合视为更可能产生相近功率结果，并为六个厚度分别拟合影响范围；这样可以表达某一层厚度比另一层更敏感的情况。代价是要从有限训练点估计多个尺度参数，预测标准差仍只是模型内部的不确定度，不是真实误差上界。输入使用冻结的 `[0.5,1.0] nm` 范围归一化；输出均值和尺度只从训练数据取得。实现同时保留训练均值和线性拟合基线，并把误差还原到原始功率比单位。
 
@@ -153,9 +153,9 @@ B/C/D 记录的源码 SHA 相同，preflight 的 Python 路径、complex128、PE
 | 传播方向 y 加密 | `[3,6,8]` → `[3,12,8]`；网格 144 → 288 cells | B 为基线：`abs(ΔR_total)=9.8002e-4`、`abs(ΔT_total)=9.2275e-4`、`abs(ΔR00_total)=9.8001e-4`；三项阈值均 `2e-4` | 求解 residual 与能量闭合 pass；三个空间差值均超限，判 `accuracy_gate_failed`，不更新 GP 标签 | 首次 attempt 的监控失败保留；retry unit `task44-sample-accuracy-yrefine-retry1.service`、Invocation `27c2f1ed195943a8a494bd87c788c70f`；[run summary](../../../results/task44_sixlayer_0p7nm/task44_accuracy_propagation_y2_20261031__full3d_direct__mpi1__Mna/20261031T091904.310578Z/numerical_output/run_summary.json) |
 | 材料内部 z 加密 | `[3,6,8]` → `[3,6,16]`；网格 144 → 288 cells | `abs(ΔR_total)=9.6331e-11`、`abs(ΔT_total)=8.4396e-11`、`abs(ΔR00_total)=1.0040e-10`，均 ≤ `2e-4` | full true residual 与能量闭合 pass；本项 z 对照 pass。y 门失败仍有效，样本资格不改变 | [输入](../../../input/task44_accuracy_layer_z2_v1.dat)、[run summary](../../../results/task44_sixlayer_0p7nm/task44_accuracy_layer_z2_20261031__full3d_direct__mpi1__Mna/20261031T102657.088710Z/numerical_output/run_summary.json) |
 | DtN 倏逝模态扩展 | B 基线增加手动倏逝壳层 m=4、n=8 | R_total、T_total、R00_total 各自变化目标 ≤ 2e-4；本次差值无法计算 | 求解完成但真残差门失败；official R/T/A 未运行，DtN 稳定性未判定 | [输入](../../../input/task44_accuracy_dtn_evanescent_shell_v1.dat)、[数值摘要](../../../results/task44_sixlayer_0p7nm/task44_accuracy_dtn_evanescent_shell_20261031__full3d_direct__mpi1__Mna/20261031T110232.922585Z/numerical_output/run_summary.json)、[响应 v6](../response_v6.md) |
-| 顶部空气间距 | 0.5 → 1.0 nm；基底底面固定 `z=-0.5 nm` | 同上 | `not_run` | [输入](../../../input/task44_accuracy_air_gap_1nm_v1.dat) |
+| 顶部空气间距 | 空气高度 0.5 → 1.0 nm，基底底面固定 `z=-0.5 nm`；为延伸顶部空气区域，z 网格由 8 段增至 9 段 | `R_total`：0.0952190944953505 → 0.0949840957114875，`Δ=-2.349987839e-4`；`T_total`：0.8831311299072778 → 0.8833595386823099，`Δ=+2.284087750e-4`；`R00_total`：0.0952186487281771 → 0.09498364561553266，`Δ=-2.350031126e-4` | 解与能量门通过；三项 `abs(Δ)>2e-4`，判 `accuracy_gate_failed` | [输入](../../../input/task44_accuracy_air_gap_1nm_v1.dat)、[数值摘要](../../../results/task44_sixlayer_0p7nm/task44_accuracy_air_gap_1nm_20261031__full3d_direct__mpi1__Mna/20261031T114301.012893Z/numerical_output/run_summary.json)、[service summary](../../../benchmarks/artifacts/task44_native_services/task44-sample-accuracy-airgap1.service/service_summary.json)、[response v7](../response_v7.md) |
 
-该 2e-4 门只说明已对照离散之间的工程稳定性，不是连续解误差保证。资格复算上限为 12 次；当前登记 4 次 attempt：两次 y attempt（一次未进入求解的 monitor failure、一次数值求解完成但空间稳定性失败）、一次 z 求解通过和一次 DtN full explicit residual 失败。顶部空气间距完成后预算还剩 7 次；DtN 因没有 official R/T/A，模态截断稳定性仍未判定。不得把 z 单方向通过扩大解释为总精度通过。
+该 `2e-4` 门只说明已对照离散之间的工程稳定性，不是连续解误差保证。资格复算上限为 12 次；当前登记 5 次 attempt：两次 y attempt（一次未进入求解的 monitor failure、一次空间稳定性失败）、一次 z 求解通过、一次 DtN full explicit residual 失败、一次空气间距对照（解与闭合通过，但三项稳定性变化超限）。剩余预算为 7 次。DtN 因没有 official R/T/A，模态截断稳定性仍未判定；y 和空气间距稳定性失败仍有效。不得把 z 单方向通过扩大解释为总精度通过。
 
 ## A 的材料吸收分布与主功率诊断补充
 
@@ -223,7 +223,7 @@ A 的正式 service 为 `task44-sample-a-condensed-cachefix.service`，Invocatio
 ## 下一步
 
 1. Task44 与 Task40 并行已获用户明确授权。Task44 只观测自己的 service 和资源，不发送信号或修改 Task40；Task44 的重型对照仍一次运行一个。
-2. y 加密 retry 的空间稳定性负结果和 z 加密通过结果均保留；DtN 倏逝壳层已运行，但完整显式残差远超 1e-6，official R/T/A 未运行且没有模态稳定性结论。下一步只运行顶部空气间距对照。每次启动前重新检查 ABI、邻任务、CPU、宿主/祖先 cgroup、内存、swap 和 service 身份；运行后核对完整残差、能量闭合、R/T/R00 和进程清场。
-3. 四项对照结束后，以 B 为基线比较三项输出并综合 y、z、DtN、空气的证据。若精度门未通过，在剩余资格复算预算内最小调整网格/模态并保留旧负结果；不把未通过的标签混入同精度数据集。
-4. A–D worker 实测为 1653.708–1836.503 s（27.6–30.6 min）；服务全生命周期为 1740.104–1911.111 s（29.0–31.9 min）。不预设批量性能已达到目标，也不因单样本较慢直接判断 GP 不可行。完成精度门后先按成本规划训练点数，训练、开发验证、最终盲测与标准尺寸目前仍为 `not_run`。
+2. 四项精度对照均已完成：y 与顶部空气间距的稳定性变化超限；z 对照通过；DtN 倏逝壳层因 full true residual 失败而无法判定稳定性。后续任何复算都须保留这些负结果，并先核对 ABI、邻任务、CPU、宿主/祖先 cgroup、内存、swap 和 service 身份，再按完整残差、能量闭合、R/T/R00 与进程清场逐项判定。
+3. 以 B 为基线，当前证据不满足总精度门；不把 A–D 标记为 `gp_eligible`，也不将未通过结果混入同精度训练集。若继续精度工作，在剩余 7 次资格复算预算内针对失败方向做最小、有明确假设的复算，并保留此前的所有结果。
+4. A–D worker 实测为 1653.708–1836.503 s（27.6–30.6 min）；空气间距 worker 为 1877.662 s，服务全生命周期为 1944.634 s。该服务同时进程树 RSS 峰值为 8,538,501,120 B，专属 cgroup memory peak 为 9,228,845,056 B，swap 峰值为 0 B。不预设批量性能已达到目标，也不因单样本较慢直接判断 GP 不可行；GP 训练、开发评估、盲测和标准尺寸仍为 `not_run`。
 5. 当前 execution branch 保持显式凝聚 direct 研究路线，不改 ordinary solver default，不合并 `master`；结果与未运行范围进入下一轮 review。
