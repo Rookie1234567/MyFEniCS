@@ -588,6 +588,10 @@ def task40_host_floor_interleaved_admission(
     parallel_authority_path=None, parallel_authority_sha256=None,
     pair_scope_path=None, pair_scope_sha256=None, pair_role=None,
     current_service_unit=None, supervisor_cpu=9,
+    g5_observational_scope_path=None,
+    g5_observational_scope_sha256=None,
+    g5_expected_identity=None,
+    g5_lock_directory='/tmp',
 ):
     """Task40 admission: explicit available-memory floor, no legacy RSS cap."""
     import shutil
@@ -604,6 +608,40 @@ def task40_host_floor_interleaved_admission(
         raise InputError('Task40 admission requires a positive available-memory floor')
     if resources.get('swap_policy') != 'observe_only' or resources.get('stop_on_global_swap') is not False:
         raise InputError('Task40 admission requires observe-only swap policy')
+
+    from .task40_d07c_g5_join import G5_PROFILE, load_g5_scope
+    g5_scope = None
+    g5_scope_present = (
+        g5_observational_scope_path is not None
+        or g5_observational_scope_sha256 is not None
+    )
+    if task_profile == G5_PROFILE:
+        if (
+            not g5_scope_present
+            or g5_observational_scope_path is None
+            or g5_observational_scope_sha256 is None
+            or resources.get('parallel_admission_policy')
+            != 'g5_scoped_observational_neighbors_v1'
+        ):
+            raise InputError('G5 production admission requires its exact scoped observational policy')
+        if (
+            parallel_authority_path is not None
+            or parallel_authority_sha256 is not None
+            or pair_scope_path is not None
+            or pair_scope_sha256 is not None
+            or pair_role is not None
+        ):
+            raise InputError('G5 observational scope cannot be combined with Task41 or exact-pair authority')
+        g5_scope = load_g5_scope(
+            g5_observational_scope_path,
+            g5_observational_scope_sha256,
+            profile=task_profile,
+            run_id=task_run_id,
+            expected_identity=g5_expected_identity,
+            lock_directory=g5_lock_directory,
+        )
+    elif g5_scope_present:
+        raise InputError('G5 observational scope cannot authorize another profile')
 
     proc_root = _proc_root()
     sys_root = _sys_root()
@@ -624,7 +662,8 @@ def task40_host_floor_interleaved_admission(
         if cpuset_path == cgroup_root:
             break
         cpuset_path = cpuset_path.parent
-    if allowed_cpus is None or not set(worker_cpus).issubset(allowed_cpus):
+    if (allowed_cpus is None or not set(worker_cpus).issubset(allowed_cpus)
+            or supervisor_cpu not in allowed_cpus):
         raise InputError('Task40 worker CPUs are outside or unknown in the effective cpuset')
     cores = set()
     for cpu in worker_cpus:
@@ -633,6 +672,14 @@ def task40_host_floor_interleaved_admission(
                    int((topology/'core_id').read_text())))
     if len(cores) != len(worker_cpus):
         raise InputError('Task40 worker CPUs must be distinct physical cores')
+    if g5_scope is not None:
+        supervisor_topology = sys_root/f'devices/system/cpu/cpu{supervisor_cpu}/topology'
+        supervisor_core = (
+            int((supervisor_topology/'physical_package_id').read_text()),
+            int((supervisor_topology/'core_id').read_text()),
+        )
+        if supervisor_core in cores:
+            raise InputError('G5 supervisor and worker must use distinct physical cores')
 
     envelope = memory_envelope()
     available = int(envelope['effective_available_bytes'])
@@ -858,12 +905,12 @@ def task40_host_floor_interleaved_admission(
             _require_bound_process_identity(
                     live, node, f'{authority_label} {node.get("role")} at final large-process scan'
             )
-    if blocking_active_candidates:
+    if blocking_active_candidates and g5_scope is None:
         raise InputError(
             'Task40 admission found another active run_case/native solver process: '
             + repr(blocking_active_candidates)
         )
-    if blocking_unknown_candidates:
+    if blocking_unknown_candidates and g5_scope is None:
         raise InputError(
             'Task40 admission found an active Task038/P6 Python entrypoint with unknown role: '
             + repr(blocking_unknown_candidates)
@@ -886,7 +933,17 @@ def task40_host_floor_interleaved_admission(
                     for key in ('start_ticks', 'ppid', 'cwd', 'argv'))
         )
     ]
-    if blocking_large:
+    g5_observed_only = None
+    if g5_scope is not None:
+        g5_observed_only = {
+            'active_solver_candidates': blocking_active_candidates,
+            'unknown_solver_role_candidates': blocking_unknown_candidates,
+            'large_process_candidates_at_or_above_100gb': blocking_large,
+        }
+        blocking_active_candidates = []
+        blocking_unknown_candidates = []
+        blocking_large = []
+    if blocking_large and g5_scope is None:
         raise InputError(
             'Task40 admission found a non-authorized process >=100 GB; no heavy launch: '
             + repr(blocking_large)
@@ -924,6 +981,7 @@ def task40_host_floor_interleaved_admission(
         'active_solver_candidates': active_solver_candidates,
         'parallel_authorized_solver_candidates': parallel_authorized_candidates,
         'blocking_active_solver_candidates': blocking_active_candidates,
+        'blocking_unknown_solver_role_candidates': blocking_unknown_candidates,
         'unknown_solver_role_candidates': unknown_solver_role_candidates,
         'parallel_neighbor_authorization': active_parallel_authority,
         'parallel_neighbor_authorized': bool(
@@ -933,6 +991,7 @@ def task40_host_floor_interleaved_admission(
                 'authorized_exact_pair_peer_active',
             )
         ),
+        'g5_parallel_authorized_by_exact_scope': g5_scope is not None,
         'user_parallel_window_authorization': bool(
             active_parallel_authority
             and (
@@ -942,6 +1001,23 @@ def task40_host_floor_interleaved_admission(
                 )
                 or active_parallel_authority.get('user_parallel_window_authorization') is True
             )
+        ),
+        'neighbor_admission_mode': (
+            'g5_scoped_observational_neighbors_v1'
+            if g5_scope is not None else 'existing_fail_closed_solver_scan'
+        ),
+        'g5_observational_scope': (
+            None if g5_scope is None else {
+                'schema': g5_scope['schema'],
+                'attempt_id': g5_scope['attempt_id'],
+                'scope_path': str(Path(g5_observational_scope_path).resolve()),
+                'scope_sha256': str(g5_observational_scope_sha256).lower(),
+                'active_solver_candidates_observed_not_blocking': len(active_solver_candidates),
+                'unknown_solver_candidates_observed_not_blocking': len(unknown_solver_role_candidates),
+                'large_process_candidates_observed_not_blocking': len(large),
+                'observed_only_candidate_details': g5_observed_only,
+                'neighbors_modified': False,
+            }
         ),
         'interleave_probe_maps': maps,
         'worktree_disk_free_bytes_at_admission': disk.free,

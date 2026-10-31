@@ -28,6 +28,7 @@ from src.io.execution_plan import (
 from src.io.input_loader import InputError
 from src.io.resolved_config import canonical_json_bytes, write_resolved_config
 from src.io.run_specification import RunSpecification
+from src.runners.task40_d07c_g5_join import G5_PROFILE
 
 
 PopenFactory = Callable[..., Any]
@@ -543,6 +544,42 @@ def launch_specification(
         if p6_condensed_direct
         else {}
     )
+    g5_attempt_cache = None
+    if native_identity == G5_PROFILE:
+        g5_join = (
+            None if prelaunch_isolation is None
+            else prelaunch_isolation.get('g5_observational_join')
+        )
+        if not isinstance(g5_join, dict):
+            raise InputError('G5 standard launcher requires the production observational lease')
+        attempt_id = g5_join.get('attempt_id')
+        expected_cache_root = Path('/tmp') / f'task40_d07c_g5_attempt_{attempt_id}'
+        supplied_cache_root = os.environ.get('TASK40_D07C_G5_ATTEMPT_CACHE_ROOT')
+        if supplied_cache_root != str(expected_cache_root):
+            raise InputError('G5 attempt cache root differs from its reviewed attempt id')
+        cache_root = expected_cache_root
+        cache_paths = {
+            'root': cache_root,
+            'tmp': cache_root / 'tmp',
+            'xdg': cache_root / 'xdg',
+            'pycache': cache_root / 'pycache',
+            'mpl': cache_root / 'mpl',
+        }
+        if any(not path.is_dir() for name, path in cache_paths.items() if name != 'root'):
+            raise InputError('G5 attempt-specific cache directories were not prepared after activation')
+        if cache_root.is_symlink() or any(path.is_symlink() for name, path in cache_paths.items() if name != 'root'):
+            raise InputError('G5 attempt cache paths must not be symlinks')
+        expected_cache_environment = {
+            'TMPDIR': str(cache_paths['tmp']),
+            'TMP': str(cache_paths['tmp']),
+            'TEMP': str(cache_paths['tmp']),
+            'XDG_CACHE_HOME': str(cache_paths['xdg']),
+            'PYTHONPYCACHEPREFIX': str(cache_paths['pycache']),
+            'MPLCONFIGDIR': str(cache_paths['mpl']),
+        }
+        if any(os.environ.get(name) != value for name, value in expected_cache_environment.items()):
+            raise InputError('G5 attempt-specific cache environment differs from its reviewed attempt')
+        g5_attempt_cache = cache_paths
     watchdog_resources = physical_resources if physical_candidate else native_resources
     if pc_profile is not None and not physical_candidate:
         raise InputError('PC timing mode requires a physical reference run')
@@ -600,6 +637,12 @@ def launch_specification(
     if prelaunch_isolation is not None:
         manifest['native_capacity_isolation'] = prelaunch_isolation
         _write_json(run_directory / 'run_manifest.json', manifest)
+    if g5_attempt_cache is not None:
+        manifest['attempt_specific_runtime_cache'] = {
+            key: str(value.resolve()) for key, value in g5_attempt_cache.items()
+        }
+        manifest['attempt_specific_runtime_cache']['owner'] = 'G5_attempt_only'
+        _write_json(run_directory / 'run_manifest.json', manifest)
     if pc_profile is not None:
         from .physical_pc_profile import CHECKPOINT_MANIFEST_SHA, CHECKPOINT_SOLUTION_SHA, SCHEDULE
         from .physical_pc_profile import PACKED_CHECKPOINT_MANIFEST_SHA, PACKED_CHECKPOINT_SOLUTION_SHA, paired_schedule
@@ -630,6 +673,9 @@ def launch_specification(
         cache_home.mkdir(exist_ok=False)
         manifest['execution_cache'] = dict(path=str(cache_home.resolve()), empty_before_launch=not any(cache_home.iterdir()))
         _write_json(run_directory/'run_manifest.json', manifest)
+    g5_worker_cpus_override = None
+    if native_identity == G5_PROFILE:
+        g5_worker_cpus_override = list(prelaunch_isolation.get('worker_affinity', []))
     plan = build_execution_plan(
         specification,
         run_directory,
@@ -639,6 +685,7 @@ def launch_specification(
         adapter_identity=adapter,
         contract_probe=contract_probe,
         setup_only=setup_only,
+        worker_cpus_override=g5_worker_cpus_override,
     )
     if prelaunch_isolation is not None or setup_only:
         manifest['worker_command'] = list(plan.argv)
@@ -667,6 +714,7 @@ def launch_specification(
                             if balanced else monotonic()-workflow_started))
 
                 watchdog_options = {}
+                watchdog_cache_path = None
                 if pc_profile is not None:
                     watchdog_options = {
                         'grace_seconds': 60 if packed else 30,
@@ -677,6 +725,7 @@ def launch_specification(
                             'XDG_CACHE_HOME': pc_profile['cache_home'],
                         },
                     }
+                    watchdog_cache_path = Path(pc_profile['cache_home'])
                 elif light or balanced:
                     watchdog_options = {
                         'grace_seconds': 60,
@@ -684,6 +733,7 @@ def launch_specification(
                         'cooperative_performance_stop': True,
                         'worker_environment': {'XDG_CACHE_HOME': str(cache_home.resolve())},
                     }
+                    watchdog_cache_path = cache_home
                     if balanced:
                         watchdog_options.update(
                             timebase_guard=True,
@@ -694,6 +744,24 @@ def launch_specification(
                         'grace_seconds': 60,
                         'hard_stop_immediate': True,
                     }
+                    if g5_attempt_cache is not None:
+                        worker_env = {
+                            'TMPDIR': str(g5_attempt_cache['tmp'].resolve()),
+                            'TMP': str(g5_attempt_cache['tmp'].resolve()),
+                            'TEMP': str(g5_attempt_cache['tmp'].resolve()),
+                            'XDG_CACHE_HOME': str(g5_attempt_cache['xdg'].resolve()),
+                            'PYTHONPYCACHEPREFIX': str(g5_attempt_cache['pycache'].resolve()),
+                            'MPLCONFIGDIR': str(g5_attempt_cache['mpl'].resolve()),
+                        }
+                        watchdog_options['worker_environment'] = worker_env
+                        watchdog_cache_path = g5_attempt_cache['xdg']
+                    else:
+                        watchdog_cache_path = (
+                            Path(os.environ['XDG_CACHE_HOME'])
+                            if 'XDG_CACHE_HOME' in os.environ else None
+                        )
+                else:
+                    watchdog_cache_path = None
 
                 watchdog_policy_options = {
                     'stop_on_global_swap': bool(
@@ -717,8 +785,10 @@ def launch_specification(
                     wall_seconds=watchdog_wall_seconds,
                     solve_seconds=None if pc_profile is not None else solve_limit,
                     phase_path=run_directory / 'workflow_phase.json',
-                    cache_path=Path(pc_profile['cache_home']) if pc_profile is not None else cache_home if light or balanced else
-                        Path(os.environ['XDG_CACHE_HOME']) if 'XDG_CACHE_HOME' in os.environ else None,
+                    cache_path=(
+                        g5_attempt_cache['xdg']
+                        if g5_attempt_cache is not None else watchdog_cache_path
+                    ),
                     source_state=physical_source,
                     **watchdog_policy_options,
                     **watchdog_options,

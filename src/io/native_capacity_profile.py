@@ -1698,6 +1698,23 @@ def _task40_phi90_d07c_profile_facts(identity):
         "solve_seconds": None,
         "time_limit_mode": "none",
     }
+    if case_label == "G5_M8_N64":
+        # This authorization is enforced only by the exact G5-scoped
+        # observational admission branch. It is not the generic
+        # concurrent_neighbor_authorized bypass used by older launch routes.
+        base["resources"]["parallel_admission_policy"] = (
+            "g5_scoped_observational_neighbors_v1"
+        )
+        base["resources"]["concurrent_neighbor_authorized"] = False
+        base["native_execution"].update(
+            supervisor_cpu=None,
+            worker_cpu=None,
+            worker_cpus=[],
+            cpu_reservation_policy=(
+                "sampled_low_load_distinct_physical_cores_v1"
+            ),
+            outer_taskset_required=False,
+        )
     options = base["component_options"]
     options["visualization_output_policy"] = {
         "write_visualization_files": case_label != "G5_M8_N64",

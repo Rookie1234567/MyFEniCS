@@ -97,6 +97,7 @@ def build_execution_plan(
     adapter_identity: str | None = None,
     contract_probe: bool = False,
     setup_only: bool = False,
+    worker_cpus_override: list[int] | tuple[int, ...] | None = None,
 ) -> ExecutionPlan:
     """Build the private worker argv without shell interpolation or overrides."""
 
@@ -176,12 +177,29 @@ def build_execution_plan(
     profile_identity = native_capacity_profile_identity(
         method, specification.solver
     )
+    if worker_cpus_override is not None and profile_identity not in NATIVE_PROFILES:
+        raise InputError("dynamic G5 worker CPUs cannot override a non-native profile")
     if profile_identity in NATIVE_PROFILES:
         profile_facts = native_profile_facts(profile_identity)
-        worker_cpu = profile_facts.get("native_execution", {}).get(
-            "worker_cpu", 23
-        )
-        worker_cpus = profile_facts.get('native_execution', {}).get('worker_cpus', [worker_cpu])
+        from src.runners.task40_d07c_g5_join import G5_PROFILE
+        if profile_identity == G5_PROFILE:
+            if (
+                worker_cpus_override is None
+                or len(worker_cpus_override) != 1
+                or type(worker_cpus_override[0]) is not int
+                or worker_cpus_override[0] < 0
+            ):
+                raise InputError("G5 execution plan requires the dynamic one-CPU reservation")
+            worker_cpus = list(worker_cpus_override)
+            if specification.execution.get("native_memory_policy") != "interleave_nodes0_1":
+                raise InputError("G5 rank must use interleave_nodes0_1")
+        else:
+            if worker_cpus_override is not None:
+                raise InputError("dynamic G5 worker CPUs cannot override another profile")
+            worker_cpu = profile_facts.get("native_execution", {}).get(
+                "worker_cpu", 23
+            )
+            worker_cpus = profile_facts.get('native_execution', {}).get('worker_cpus', [worker_cpu])
         taskset_prefix = (
             "/usr/bin/taskset",
             "-c",

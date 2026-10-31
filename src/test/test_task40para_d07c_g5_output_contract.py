@@ -146,7 +146,33 @@ def test_g5_real_manifest_worker_path_and_output_policy_drift_rejection(tmp_path
         source_sha=SOURCE_SHA,
         python_executable=sys.executable,
         mpiexec_command="/usr/bin/mpiexec",
+        worker_cpus_override=[17],
     )
+    assert execution.argv[:8] == (
+        "/usr/bin/mpiexec", "-n", "1", "/usr/bin/numactl",
+        "--interleave=0,1", "/usr/bin/taskset", "-c", "17",
+    )
+    with pytest.raises(InputError, match="dynamic one-CPU reservation"):
+        build_execution_plan(
+            specification,
+            run_dir,
+            source_sha=SOURCE_SHA,
+            python_executable=sys.executable,
+            mpiexec_command="/usr/bin/mpiexec",
+            worker_cpus_override=[True],
+        )
+    legacy_spec = load_and_resolve(
+        INPUT_DIR / "d07c_g3_m8_nminus64_to1_p6_direct.dat"
+    )
+    with pytest.raises(InputError, match="dynamic G5 worker CPUs cannot override another profile"):
+        build_execution_plan(
+            legacy_spec,
+            run_dir,
+            source_sha=SOURCE_SHA,
+            python_executable=sys.executable,
+            mpiexec_command="/usr/bin/mpiexec",
+            worker_cpus_override=[17],
+        )
     manifest, resolved_sha = _write_bootstrap(
         specification,
         run_dir,
