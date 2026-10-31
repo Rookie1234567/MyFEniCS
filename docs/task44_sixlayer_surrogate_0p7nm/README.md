@@ -66,7 +66,7 @@
 4. 每场正式 PDE 前冻结输入、源码 SHA、材料表、网格/DtN 精度对照、单样本初始 128 GiB cap、service/cgroup 与资源硬门；每个 service 显式绑定自己唯一的 Task44 JIT cache root，并在 preflight、service 与 worker 中验证一致。运行期间按真实进度和资源情况继续，不使用原 30 分钟到点强停。
 5. 完成代表点与精度资格后，根据实测单样本成本、已有独立样本上限和数值证据推进训练点、GP、开发验证与盲测；数据/GP 资格分别判定，不受原 12 小时窗口约束。
 
-当前阶段：P6 condensed-direct A 已通过完整残差与能量闭合门；A 的 probe-EH Fourier 与净通量诊断和端口模态主结果有明显差异，已在 `outcomes/summary.md` 明确保留。B/C/D 输入已通过公共 adapter 的 validation-only，下一步逐个正式运行。A–D 之后仍需有限网格、DtN 与上方空气间距稳定性对照；训练、开发验证、盲测与 GP 尚未开始。A 的实测单样本约 29 分钟，先完成代表点和有限数值诊断，再依据成本决定是否有证据支持扩展训练集。
+当前阶段（2026-10-31）：A–D 四个 P6 condensed-direct + MUMPS exact 正式样本均通过 full explicit true residual 与能量闭合门，结果和资源见 [`outcomes/summary.md`](outcomes/summary.md)。y 传播方向加密第一次启动因监控身份未稳定而 `MONITORING_FAILED`，没有进入组装或求解；不属于数值失败。依用户要求，等待 Task40 direct service 及其进程树清空后，按顺序完成 y 重试、z 加密、DtN 倏逝壳层和顶部空气间距四项对照。训练、GP、开发验证、盲测和标准尺寸仍为 `not_run`；代表点还没有空间精度资格。
 
 每次正式运行前都从实际 Ubuntu 主机重新读取 CPU、邻任务、内存及 cgroup 状态；通过外层 128 GiB 资源准入和动态选核后的邻居 Gate 后，才启动绑定所选单核、128 GiB / 零 swap 的专属服务。smoke 只执行公共 runner 的 `--dry-run`，不组装或求解有限元系统。正式运行采用共享 subreaper watchdog 的 `observe_only` 时间策略：继续记录运行时间，但不因时钟停止 PDE；动态内存、祖先 cgroup、零 swap 和精确服务身份仍由硬门控制。
 

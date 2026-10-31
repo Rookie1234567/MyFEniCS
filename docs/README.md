@@ -229,3 +229,12 @@ Task40extra 的活动执行分支为 task40extra_0p7nm_engineering。Review V27 
 | [`task40extra_0p7nm_engineering/outcomes/records/run_index.json`](task40extra_0p7nm_engineering/outcomes/records/run_index.json) | V21/V20命令、ABI、原始证据与hash-bound索引 |
 
 普通求解器默认未变；六个 V24 源码提交已包含在冻结 source，本文档收口没有新增代码提交、推送或 master 合并。
+
+## Task44：六层 0.7 nm 缩尺代理模型
+
+| 文件 | 内容 |
+|---|---|
+| [`task44_sixlayer_surrogate_0p7nm/README.md`](task44_sixlayer_surrogate_0p7nm/README.md) 与 [`task.md`](task44_sixlayer_surrogate_0p7nm/task.md) | 六层缩尺模型冻结条件、执行顺序和当前进度 |
+| [`task44_sixlayer_surrogate_0p7nm/outcomes/summary.md`](task44_sixlayer_surrogate_0p7nm/outcomes/summary.md) | A–D 正式数值、资源/缓存、y-refinement 监控负结果和剩余精度门 |
+| [`task44_sixlayer_surrogate_0p7nm/response_v3.md`](task44_sixlayer_surrogate_0p7nm/response_v3.md) | A–D 的求解/能量资格、场文件身份检查及后续排队安排 |
+| [`task44_sixlayer_surrogate_0p7nm/materials.md`](task44_sixlayer_surrogate_0p7nm/materials.md) 与 [`source_receipt.json`](task44_sixlayer_surrogate_0p7nm/source_receipt.json) | 材料来源、组成、密度和派生光学常数记录 |

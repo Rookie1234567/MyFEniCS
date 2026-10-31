@@ -3942,3 +3942,19 @@ V13 对既有两cell保存包完成8组误差账与4条目标行独立复核；�
 ## Task41extra Review V14：保存 RHS 候选与最终接线回归（2026-10-25）
 
 V14在cells 360/446及已保存star cells 23352/23493上测试有界同LU残差校正：四个局部star目标行d均下降，8个唯一RHS的Decimal补充残差复核通过；初始wide-arithmetic checker仍为`INCONCLUSIVE`，而V9全域full-action仍`GATE_FAILED`。最终冻结HEAD `eb57f88f26fb3cbbe0d7c34ebb725f9a6b310fe1` 的owner/target/reference/recovery窄接线已由7项工作站定向测试覆盖；没有运行全域official terminal checker或FE/PDE。8个代表键缺完整candidate LU/pivots及原始`b_i`映射，不能转授资格。旧载荷435.653172 GB加新K派生90.72 GB为526.373172 GB，仍只是容量估算。详见[response_v14](task41extra_phi90_p50x50_g17x20/response_v14.md)、[summary](task41extra_phi90_p50x50_g17x20/outcomes/summary.md)和[V14 closeout ledger](task41extra_phi90_p50x50_g17x20/outcomes/v14_closeout/timing_and_adjoint_ledgers.json)。
+
+## Task44 中间进展（2026-10-31）：四个缩尺代表点通过求解与能量门，空间稳定性仍待核查
+
+Task44 从 Task41 的材料/方位执行分支建立，目标是先为 0.7 nm 波长的 1/20 六层缩尺模型生成可信的有限元样本，再判断是否值得投入 GP。标准尺寸和 GP 本来就不在最初数值阶段；本阶段的关键问题是新六层材料标签、吸收积分和端口模型能否在 P6 下给出闭合场，以及 144 格起步网格能否稳定输出。
+
+| 阶段对象 | measured 结果 | 解释和状态 |
+|---|---|---|
+| A–D 正式样本 | P6、144 hex、双 Floquet、完整传播 DtN，静态凝聚 + MUMPS exact；四场 full explicit true residual 为 `5.12e-9` 至 `7.58e-10`，闭合误差绝对值小于 `8.5e-10` | 方程解和端口/体吸收闭合门通过；这没有证明连续解或网格精度 |
+| 代表点响应 | `R_total` 范围 `0.0858165–0.1037706`，`T_total` 范围 `0.8800846–0.8877016`，`A_volume` 范围 `0.0161448–0.0264819` | 当前四点显示可测响应变化，但是否超过离散误差仍需 y/z 网格、DtN 和空气距对照 |
+| 成本与资源 | worker `1653.708–1836.503 s`；独立 service `1740.104–1911.111 s`；cgroup peak `8,337,240,064–8,586,145,792 B`；任务 cgroup swap `0 B` | worker 与 service 的边界不同；RSS、cgroup、历史 rank 上界分别记录。C 的全局 swap 归因未知，但它的 task cgroup/进程树采样 swap 为零 |
+| 传播方向精度启动 | y-refinement watchdog `MONITORING_FAILED`，21.729 s 后停止；288-cell 网格已建立，组装和求解未运行 | 这是进程身份监控稳定性负结果，不是数值失败。旧 service 证据保留，待独立 direct solve 清场后用新 unit 重试 |
+| 场文件审计 | 四个 NPZ 哈希与 run summary 相符，NPZ/VTU 数值数组有限；E/H BP 目录已记录组件清单 hash，但无 ADIOS2 reader | BP 未独立解码，故不宣称其数值有限性通过；receipt 在 ignored artifacts |
+
+主办法是单元内部静态凝聚：先消去单元内部自由度以减小全局未知量，再恢复完整 H(curl) 场并用完整算子求真残差。它解决 P6 全局系统规模问题，但每场仍需独立组装、MUMPS 因子与场恢复。每个 service 使用独立 FFCx cache root，未证明跨样本 JIT 加速；raw tensor 类复用和局部 recovery cache 只在单样本内发生。`cell_form_kernel_invocation_count_global_unique` 是由编译核映射推导的结构计数，不是 profiler 实测。
+
+当前 classification 为 `in_progress`：A–D 是通过求解/闭合 Gate 的离散样本，但还未通过有限空间稳定性 Gate；精度复算、代理训练、开发验证、盲测和标准尺寸均未运行。用户明确选择等待 Task40 结束再执行四项稳定性对照。没有改 ordinary solver default，没有最终 review 或 master merge；执行分支 `task44_sixlayer_surrogate_0p7nm`，起点 `db790f92a186988c5147f1828d15c07034e7c430`。细节与证据见 [Task44 outcomes](task44_sixlayer_surrogate_0p7nm/outcomes/summary.md)、[response v3](task44_sixlayer_surrogate_0p7nm/response_v3.md) 和 ignored [A–D field receipt](../benchmarks/artifacts/task44_condensed_direct_validation_20261031/official_AD_field_read_receipt_v1.json)。
