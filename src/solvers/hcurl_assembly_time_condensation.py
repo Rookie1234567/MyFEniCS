@@ -2802,6 +2802,19 @@ def _global_raw_tensor_cache(
             ranks_by_class.setdefault(key, []).append(rank)
 
     ordered_keys = sorted(global_coordinates)
+    kernel_counts_by_class: dict[tuple[Any, ...], dict[int, int]] = {}
+    raw_cell_kernel_invocation_count = 0
+    for key in ordered_keys:
+        policy = str(key[0])
+        kernels = policy_forms[policy][1]
+        active_ids = tuple(dict.fromkeys((-1, int(key[1]))))
+        counts = {
+            integral_id: _kernel_count(kernels, integral_id)
+            for integral_id in active_ids
+            if integral_id in kernels
+        }
+        kernel_counts_by_class[key] = counts
+        raw_cell_kernel_invocation_count += sum(counts.values())
     owner_loads = [0] * comm.size
     owner_by_class: dict[tuple[Any, ...], int] = {}
     for key in sorted(
@@ -2956,6 +2969,17 @@ def _global_raw_tensor_cache(
             "raw_tensor_class_count_sum": evaluation_count,
             "raw_tensor_class_use_count_sum": use_count,
             "raw_tensor_class_count_global_unique": unique_count,
+            "cell_form_kernel_invocation_count_global_unique": (
+                int(raw_cell_kernel_invocation_count)
+                if raw_tensor_evaluator is None
+                else None
+            ),
+            "cell_form_kernel_invocation_count_semantics": (
+                "one compiled default/tag integral-kernel call per unique "
+                "material-and-geometry raw tensor class"
+                if raw_tensor_evaluator is None
+                else "custom raw_tensor_evaluator bypasses built-in cell-form tabulation"
+            ),
             "raw_tensor_global_owner_policy": (
                 "deterministic_dimension_squared_greedy_all_mpi_ranks"
             ),
@@ -2987,6 +3011,10 @@ def _global_raw_tensor_cache(
                         for kernel_id in dict.fromkeys((-1, int(key[1])))
                         if kernel_id in policy_forms[str(key[0])][1]
                     ],
+                    "active_kernel_counts": {
+                        str(integral_id): int(count)
+                        for integral_id, count in kernel_counts_by_class[key].items()
+                    },
                     "owner_rank": int(owner_by_class[key]),
                     "consumer_rank_count": len(ranks_by_class[key]),
                     "tensor_bytes": int(
@@ -5158,6 +5186,10 @@ def build_unconstrained_assembly_time_condensation(
                if not materialize_global_matrix else {}),
             "cell_kernel_evaluation_fraction": float(
                 raw_class_count / max(global_cells, 1)
+            ),
+            "raw_tensor_cell_use_count_sum": int(global_cells),
+            "raw_tensor_cell_reuse_count_global": int(
+                max(global_cells - raw_class_count, 0)
             ),
             "kernel_seconds_max": float(
                 comm.allreduce(local_kernel_seconds, op=MPI.MAX)

@@ -87,30 +87,33 @@ DTN_PORT_MODAL_REFERENCE = "top=physical_z_max; bottom=physical_z_min; bottom lo
 def _stage4_preserve_exact_geometry(cfg: SimulationConfig3D) -> bool:
     """Keep registered exact-geometry profiles identical to their native mesh."""
 
-    return is_task40_geometry_identity(cfg.geometry_identity) or is_task41_geometry_identity(
-        cfg.geometry_identity
+    return (
+        bool(cfg.grating_layers)
+        or is_task40_geometry_identity(cfg.geometry_identity)
+        or is_task41_geometry_identity(cfg.geometry_identity)
     )
 
 
 def _stage4_sum_duplicate_cell_integrals(cfg: SimulationConfig3D) -> bool:
-    """Preserve every default/tag cell term for the new Task41 material map."""
+    """Accumulate all compiled integrals for layered and Task41 material maps."""
 
-    return is_task41_geometry_identity(cfg.geometry_identity)
+    return bool(cfg.grating_layers) or is_task41_geometry_identity(cfg.geometry_identity)
 
 
 def _stage4_strict_condensation_checks(cfg: SimulationConfig3D) -> bool:
-    return is_task41_geometry_identity(cfg.geometry_identity)
+    return bool(cfg.grating_layers) or is_task41_geometry_identity(cfg.geometry_identity)
 
 
 def _stage4_share_identity_cache(cfg: SimulationConfig3D) -> bool:
-    return is_task41_geometry_identity(cfg.geometry_identity)
+    return bool(cfg.grating_layers) or is_task41_geometry_identity(cfg.geometry_identity)
 
 
 def _build_stage4_assembly_time_condensation(
     compiled_form, function_space, cell_tags, *, cfg: SimulationConfig3D, **kwargs
 ):
-    """Forward the Task41-only local-kernel and exact-coordinate contracts."""
+    """Forward exact layered-material and registered geometry contracts."""
 
+    kwargs.setdefault("dense_appended_block", bool(cfg.grating_layers))
     return build_unconstrained_assembly_time_condensation(
         compiled_form,
         function_space,
