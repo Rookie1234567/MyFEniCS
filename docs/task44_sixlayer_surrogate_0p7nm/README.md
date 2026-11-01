@@ -1,5 +1,9 @@
 # Task44：六层 0.7 nm 尺度代理模型
 
+### 2026-11-01 最新执行增量
+
+B6 是第 6/12 次精度对照，固定 B 的几何、材料、P6、DtN 模态与凝聚求解，只改变入射端口相位参考面至 `boundary_plane`。运行在 Stage-4 assembly-time condensation 路径中因 CPU11 邻核 Gate 首次发现 PID 189961（parent 189960，affinity `[11]`）而受控停止；service wall 868.733 s、同时进程树 RSS 峰值 5,052,604,416 B、cgroup peak 5,277,028,352 B、swap 0。没有残差或 R/T/A 数值结果，不把它分类为数值失败。详细边界、identity 和原始证据 hash 见 [`B6 terminal receipt`](outcomes/b6_boundary_plane_controlled_stop_20261101.md)。最新用户指令明确 Task44 与 Task40 可并行；Task44 自身仍一次运行一个正式算例。下一项为新身份的 B7 boundary-plane 复算。
+
 ## 执行身份
 
 | 项目 | 当前记录 |
