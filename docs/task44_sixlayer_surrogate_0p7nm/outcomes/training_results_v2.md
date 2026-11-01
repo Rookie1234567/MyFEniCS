@@ -11,7 +11,7 @@
 
 ## 下一训练输入的冻结身份
 
-`train_007` 仍是未运行的训练样本。使用冻结设计 `task44_gp_20261101_seed440731_p6_y12_air0p5_v2` 和其 hash 固定的模板重建输入字节后，输入、物理模型、离散签名与几何哈希均逐项匹配设计记录；这一步没有启动 PDE，也没有读取开发集或盲测标签。
+`train_007` 使用冻结设计 `task44_gp_20261101_seed440731_p6_y12_air0p5_v2`。启动前，按 hash 固定的模板重建输入字节，输入、物理模型、离散签名与几何哈希均逐项匹配设计记录；没有读取开发集或盲测标签。该样本随后启动了一次正式计算，但监控器在求解后的核验阶段受控终止 worker；没有形成正式数值标签，见下文。`sample_design_v2.json` 保持原样。
 
 | 身份项 | 冻结值 |
 |---|---|
@@ -20,3 +20,16 @@
 | physical-model SHA-256 / discrete SHA-256 | `3d70fbc62b39b845c7e1ca65319604f65a510c9e8feefb48720580f88366afb0` / `19a726fc988bf9a476f6d710494098a28919642319e864ff70bbdb5e129802e2` |
 | 模板 SHA-256 / 文件大小 | `272312c4e0b997fbf40649c4d3be678a9cd38efe229f3b3d61fddc5fa0656269` / `2534 B` |
 | 几何高度 / 顶部空气边界 | `5.114549672229329 nm` / `5.614549672229329 nm` |
+
+## train_007 首次运行：监控失败，未形成训练标签
+
+该 attempt 不加入上方的合格训练标签表。worker 完成基矩阵与 DtN 矩阵组装，MUMPS factorization 和线性 solve 均返回；随后在求解后处理、完整真残差与 official R/T/A 写出之前，监控器因无法在极短重试窗口内核实一个刚退出的临时编译进程而 fail-closed 终止整个 worker 树。这是监控失败，不是数值残差失败，也不能据此判定模型不可计算。
+
+| 项目 | 记录 |
+|---|---|
+| 最终分类 / 时间 | `MONITORING_FAILED`; service elapsed `5522.097969743889 s`；watchdog 在约 `5505.954 s` 请求停止，并在约 `22 µs` 后对整个 worker 子树发送 `SIGKILL`（该监控失败路径启用了立即终止；`grace_seconds=10` 是记录的常规宽限值，本次未等待）；worker leader exit `-9`，后代已清空。时间策略为 `observe_only`，24 小时门限未触发。 |
+| 监控首因 | `owned_service_member_identity_unverified`。目标 PID `406525` 是服务 cgroup 内短暂启动的 GNU `as` 编译子进程；第一次读取其 `/proc/406525/stat` 时它已退出，监控器确认 `/proc/406525` 不存在。受限复核中，service context 的第一次核对稳定，但随后 `systemctl --user show` 探针在约 `0.003872 s` 后超时；50 ms 总复核期限耗尽，未能再次证明成员身份。证据没有显示 service invocation 或其 MainPID 改变；fail-closed 是因为这次竞态后的身份复核不完整。 |
+| 已完成 / 未完成的数值步骤 | MUMPS 日志记录 factorization `81.0473 s`、线性 solve `1.5553 s`，并正常离开 solve 阶段。worker 随后被监控器终止；没有 full explicit true residual、能量闭合、160 阶端口聚合、official `R_total/T_total/R00/A_volume`，也没有正式 E/H 与模态产物。因此 residual、closure 和物理结果均为 `not_run`，样本不是 GP 训练标签。 |
+| 资源与清理 | process-tree RSS 峰值 `13,002,153,984 B`；service cgroup 内存峰值 `13,870,080,000 B`，低于 `137,438,953,472 B` 上限；cgroup swap 峰值 `0 B`，OOM 与 OOM-kill 计数均为 0；worker 全树终止后已清空。 |
+| 运行身份 | input SHA `0ce23fe8d3c333f23aed932ba06fbdd2c533c203e51e3758eb798204fb84136c`；physical-model SHA `3d70fbc62b39b845c7e1ca65319604f65a510c9e8feefb48720580f88366afb0`；discrete SHA `19a726fc988bf9a476f6d710494098a28919642319e864ff70bbdb5e129802e2`；manifest source SHA `cf771759da5c8df52826a63736a2904f2abb17d4`。冻结设计未修改。 |
+| 原始证据 / SHA-256 | [run manifest](../../../results/task44_sixlayer_0p7nm/task44_train_007_v2__full3d_direct__mpi1__Mna/20261101T190358.466473Z/run_manifest.json) `fac003325c9f35ce8bb68698ef0445e4242f93f654a6886590b95241da1af96b`；[run summary](../../../results/task44_sixlayer_0p7nm/task44_train_007_v2__full3d_direct__mpi1__Mna/20261101T190358.466473Z/run_summary.json) `28ee7e2cee62f2f8f185b072841d33d9601285435ce4e7efb92b0683465218d0`（原始文件保持 `launching / not_run`）；[progress log](../../../results/task44_sixlayer_0p7nm/task44_train_007_v2__full3d_direct__mpi1__Mna/20261101T190358.466473Z/numerical_output/progress_3d.jsonl) `cb7d9cd69a140c99e93dae56e1b5c0e3cc8b64008b6d38b6974a6caea4d6db36`；[worker stdout](../../../results/task44_sixlayer_0p7nm/task44_train_007_v2__full3d_direct__mpi1__Mna/20261101T190358.466473Z/worker_stdout.txt) `6b7b38fa1371792b66f657a4f1f320082c151de3778e18356843628f45e7924b`；[service summary](../../../benchmarks/artifacts/task44_native_services/task44-sample-train-007-v2.service/service_summary.json) `0004689cdb02bc2ad3cf7487607c716384e9b4e80810e9ee7e619178203a1314`；[watchdog summary](../../../benchmarks/artifacts/task44_native_services/task44-sample-train-007-v2.service/watchdog/summary.json) `51d4a9f6a2b5b4f0ab1a26c3574b13f6759b7b86564ede08e7b7a7830dc41915`；[resource samples](../../../benchmarks/artifacts/task44_native_services/task44-sample-train-007-v2.service/watchdog/resources.jsonl) `979b8737c8de53884734b926e6bd5e69de62dd675c7f42e33b5e749e0b1ff2a9`。 |
