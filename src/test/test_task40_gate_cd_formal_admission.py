@@ -308,3 +308,75 @@ def test_native_capacity_launch_lock_uses_gate_cd_one_shot_not_legacy_lock(
         assert context["scope_sha256"] == scope_sha
     assert observed["submission_mode"] == "fresh_check"
     assert observed["expected_identity"] == _identity()
+
+
+def test_native_capacity_guard_uses_gate_cd_lease_summary_and_cleanup(
+    tmp_path, monkeypatch
+):
+    from src.io import execution_plan
+    from src.runners import native_capacity
+    from src.runners import reviewed_workstation_admission as admission
+    from src.runners import task40_gate_cd_formal_admission as gate_admission
+
+    scope_path, scope_sha, scope = _scope(tmp_path, "guardpath0001")
+    real_lease = gate_admission.gate_cd_runtime_lease
+
+    def deterministic_lease(*args, **kwargs):
+        kwargs["cpu_selector"] = lambda *_a: {
+            "supervisor_cpu": 9,
+            "worker_cpu": 24,
+            "worker_cpus": [24],
+            "exclusive_cpu_ownership": False,
+        }
+        return real_lease(*args, **kwargs)
+
+    monkeypatch.setattr(gate_admission, "gate_cd_runtime_lease", deterministic_lease)
+    monkeypatch.setattr(execution_plan, "native_memory_policy_prefix", lambda _policy: [])
+    monkeypatch.setattr(native_capacity.os, "sched_setaffinity", lambda *_a: None)
+    monkeypatch.setattr(native_capacity.os, "sched_getaffinity", lambda *_a: {9})
+    monkeypatch.setattr(native_capacity, "_launch_swap_snapshot", lambda: {
+        "stable_two_read_baseline": True,
+        "preexisting_global_swap_bytes": 0,
+    })
+    monkeypatch.setattr(
+        native_capacity, "_validate_preexisting_swap",
+        lambda _snapshot, **_kwargs: "observe_only_zero_preexisting_global_swap",
+    )
+    monkeypatch.setattr(native_capacity, "_cpu_launch_snapshot", lambda _cpus: {})
+    monkeypatch.setattr(
+        admission,
+        "task40_host_floor_interleaved_admission",
+        lambda *_a, **_k: {
+            "resource_stop_policy": "host_available_floor_v1",
+            "minimum_available_bytes": 64 * 1024**3,
+            "rss_hard_limit_bytes": None,
+        },
+    )
+    monkeypatch.setenv("_MYFENICS_NATIVE_QUALIFIED_ACTIVATION", "1")
+    monkeypatch.setenv(gate_admission.GATE_CD_SCOPE_PATH_ENV, str(scope_path))
+    monkeypatch.setenv(gate_admission.GATE_CD_SCOPE_SHA_ENV, scope_sha)
+    monkeypatch.setenv(gate_admission.GATE_CD_LOCK_DIRECTORY_ENV, str(tmp_path))
+    monkeypatch.setenv(gate_admission.GATE_CD_SUBMISSION_MODE_ENV, "fresh_check")
+
+    with native_capacity.native_capacity_guard(
+        GATE_CD_FORMAL_PROFILE,
+        memory_policy="interleave_nodes0_1",
+        task_run_id=GATE_CD_FORMAL_PROFILE,
+        submission_mode="fresh_check",
+        expected_identity=_identity(),
+    ) as (root, isolation):
+        assert root.is_dir()
+        facts = isolation["gate_cd_formal_admission"]
+        assert facts["attempt_id"] == "guardpath0001"
+        assert facts["canonical_heavy_lock_touched"] is False
+        assert isolation["exact_parallel_pair"] is None
+        assert isolation["native_capacity_lock_scope"] == (
+            "gate_cd_exact_one_shot_case_lease_no_canonical_lock"
+        )
+        paths = scope["runtime_paths"]
+        reservation = Path(paths["one_shot_reservation"])
+        cache_root = Path(paths["attempt_cache_root"])
+        assert not reservation.exists()
+        assert not cache_root.exists()
+    assert not reservation.exists()
+    assert not cache_root.exists()

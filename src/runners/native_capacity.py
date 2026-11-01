@@ -609,7 +609,7 @@ def native_capacity_guard(
                      'native_capacity_profile': profile,
                      'cpu_launch_snapshot': _cpu_launch_snapshot({supervisor_cpu, *worker_cpus}),
                      'exact_parallel_pair': (
-                         None if g5_profile or pair_context is None else {
+                         None if g5_profile or gate_cd_profile or pair_context is None else {
                              'pair_id': pair_context['scope']['pair_id'],
                              'role': pair_context['role'],
                              'scope_path': pair_context['scope_path'],

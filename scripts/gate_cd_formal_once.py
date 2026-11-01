@@ -71,6 +71,41 @@ def _atomic_json(path: str | Path, value: dict) -> None:
             os.unlink(temp_name)
 
 
+def _require_systemd_unit_not_loaded(unit: str, *, timeout_seconds: float = 5.0) -> str:
+    """Proceed only when the user manager proves the unique unit is absent."""
+    try:
+        result = subprocess.run(
+            ["systemctl", "--user", "show", unit, "--property=LoadState"],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=timeout_seconds,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(
+            "user systemd did not answer the bounded unit-state query; "
+            "cannot prove the reviewed unit is absent"
+        ) from exc
+    if result.returncode != 0:
+        raise RuntimeError(
+            "user systemd unit-state query failed; cannot prove the reviewed unit is absent"
+        )
+    states = [
+        line.split("=", 1)[1].strip()
+        for line in result.stdout.splitlines()
+        if line.startswith("LoadState=")
+    ]
+    if len(states) != 1 or not states[0]:
+        raise RuntimeError(
+            "user systemd returned no unique LoadState; cannot prove the reviewed unit is absent"
+        )
+    if states[0] != "not-found":
+        raise ValueError(
+            "the exact service unit already exists or has an unknown load state; no duplicate"
+        )
+    return states[0]
+
+
 def _require_final_package(package: dict) -> None:
     if package.get("schema") != "task40.gate_cd.formal_package.v1":
         raise ValueError("unsupported Gate-CD final package schema")
@@ -349,20 +384,7 @@ def fresh_acceptance(
         raise ValueError("sidecar output parent differs from the formal loader")
     if output_parent.exists() and any(output_parent.iterdir()):
         raise ValueError("formal output parent is not empty; refusing a duplicate/overwrite")
-    unit_state = subprocess.run(
-        [
-            "systemctl",
-            "--user",
-            "show",
-            str(sidecar["service_unit"]),
-            "--property=LoadState",
-        ],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    if unit_state.returncode == 0 and "LoadState=loaded" in unit_state.stdout:
-        raise ValueError("the exact Gate-CD service unit already exists")
+    _require_systemd_unit_not_loaded(str(sidecar["service_unit"]))
     scope_path = Path(sidecar["scope_path"]).resolve()
     old_env = {
         key: os.environ.get(key)
@@ -735,14 +757,7 @@ def submit_once(
         raise ValueError("fresh receipt package/source identity mismatch")
     argv = _validate_systemd_argv(sidecar)
     unit = sidecar["service_unit"]
-    show = subprocess.run(
-        ["systemctl", "--user", "show", unit, "--property=LoadState"],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    if show.returncode == 0 and "LoadState=loaded" in show.stdout:
-        raise ValueError("the exact service unit already exists; no duplicate")
+    _require_systemd_unit_not_loaded(unit)
     marker = Path(marker_path)
     _write_once_marker(
         marker,

@@ -8,6 +8,7 @@ import pytest
 from scripts import gate_cd_formal_once as execution_helper
 from scripts.gate_cd_formal_once import (
     _require_final_package,
+    _require_systemd_unit_not_loaded,
     _validate_live_profile_contract,
     _validate_systemd_argv,
     _wait_for_runtime_cpu_reservation,
@@ -247,6 +248,41 @@ def test_systemd_argv_requires_one_reviewed_user_service_and_run_case(tmp_path):
     sidecar["shell_command"] = sidecar["systemd_run_argv"][-1]
     with pytest.raises(ValueError, match="standard run_case"):
         _validate_systemd_argv(sidecar)
+
+
+def test_systemd_unit_state_query_is_bounded_and_fails_closed(monkeypatch):
+    observed = []
+
+    def run(argv, **kwargs):
+        observed.append((argv, kwargs))
+        return SimpleNamespace(returncode=0, stdout="LoadState=not-found\n", stderr="")
+
+    monkeypatch.setattr(execution_helper.subprocess, "run", run)
+    assert _require_systemd_unit_not_loaded("task40-gate-cd-test.service") == "not-found"
+    assert observed[0][1]["timeout"] == 5.0
+
+    monkeypatch.setattr(
+        execution_helper.subprocess,
+        "run",
+        lambda *_a, **_k: SimpleNamespace(returncode=0, stdout="LoadState=loaded\n", stderr=""),
+    )
+    with pytest.raises(ValueError, match="already exists"):
+        _require_systemd_unit_not_loaded("task40-gate-cd-test.service")
+
+    monkeypatch.setattr(
+        execution_helper.subprocess,
+        "run",
+        lambda *_a, **_k: SimpleNamespace(returncode=1, stdout="", stderr="bus unavailable"),
+    )
+    with pytest.raises(RuntimeError, match="query failed"):
+        _require_systemd_unit_not_loaded("task40-gate-cd-test.service")
+
+    def timeout(*_a, **_k):
+        raise execution_helper.subprocess.TimeoutExpired("systemctl", 5.0)
+
+    monkeypatch.setattr(execution_helper.subprocess, "run", timeout)
+    with pytest.raises(RuntimeError, match="bounded unit-state query"):
+        _require_systemd_unit_not_loaded("task40-gate-cd-test.service")
 
 
 def test_submission_consumes_exactly_one_marker_even_on_systemd_error(
