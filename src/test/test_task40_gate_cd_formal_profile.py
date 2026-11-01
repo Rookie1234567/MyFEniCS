@@ -39,6 +39,7 @@ from src.runners.p6_condensed_direct import (
     _validate_resolved_profile,
 )
 from src.runners.task038_input_worker import _load_and_validate_worker_payload
+from src.runners.task038_input_worker import _parser as _load_worker_parser
 from src.runners.task038_launcher import _write_bootstrap
 
 _ROOT = Path(__file__).resolve().parents[2]
@@ -323,13 +324,30 @@ def test_formal_profile_roundtrips_through_manifest_and_worker(tmp_path):
         source_sha=source_sha,
         python_executable=sys.executable,
         mpiexec_command="/usr/bin/mpiexec",
+        worker_cpus_override=[43],
     )
-    manifest, resolved_sha = _write_bootstrap(
+    assert plan.argv[:11] == (
+        "/usr/bin/mpiexec", "-n", "1", "/usr/bin/numactl",
+        "--interleave=0,1", "/usr/bin/taskset", "-c", "43",
+        sys.executable, "-m", "src.runners.task038_input_worker",
+    )
+    with pytest.raises(InputError, match="dynamic one-CPU reservation"):
+        build_execution_plan(
+            specification, run_directory, source_sha=source_sha,
+            python_executable=sys.executable, mpiexec_command="/usr/bin/mpiexec",
+            worker_cpus_override=[43, 44],
+        )
+    manifest, _resolved_sha = _write_bootstrap(
         specification,
         run_directory,
         source_sha=source_sha,
         adapter_identity=plan.adapter_identity,
         start_time="2026-11-01T00:00:00Z",
+    )
+    manifest["worker_command"] = list(plan.argv)
+    (run_directory / "run_manifest.json").write_text(
+        json.dumps(manifest, sort_keys=True, separators=(",", ":")),
+        encoding="utf-8",
     )
     native_contract = manifest["native_capacity_contract"]
     route = native_contract["direct_route"]
@@ -350,18 +368,25 @@ def test_formal_profile_roundtrips_through_manifest_and_worker(tmp_path):
         "profile_selected_mapped_geometry_cache_v1"
     )
 
+    worker_module_index = plan.argv.index("src.runners.task038_input_worker")
+    worker_args = plan.argv[worker_module_index + 1 :]
+    parsed_worker_args = _load_worker_parser().parse_args(worker_args)
+    assert manifest["worker_command"] == list(plan.argv)
+    assert parsed_worker_args.expected_input_sha256 == specification.input_sha256
+    assert Path(parsed_worker_args.expected_output_directory) == run_directory
+
     def validate_worker():
         return _load_and_validate_worker_payload(
-            resolved_config=run_directory / "resolved_config.json",
-            manifest=run_directory / "run_manifest.json",
-            expected_input_sha256=specification.input_sha256,
-            expected_physical_model_sha256=specification.physical_model_sha256,
-            expected_source_sha=source_sha,
-            expected_mpi_size=1,
-            expected_method="full3d_direct",
-            expected_adapter=plan.adapter_identity,
-            expected_output_directory=run_directory,
-            expected_resolved_config_sha256=resolved_sha,
+            resolved_config=parsed_worker_args.resolved_config,
+            manifest=parsed_worker_args.manifest,
+            expected_input_sha256=parsed_worker_args.expected_input_sha256,
+            expected_physical_model_sha256=parsed_worker_args.expected_physical_model_sha256,
+            expected_source_sha=parsed_worker_args.expected_source_sha,
+            expected_mpi_size=parsed_worker_args.expected_mpi_size,
+            expected_method=parsed_worker_args.expected_method,
+            expected_adapter=parsed_worker_args.expected_adapter,
+            expected_output_directory=parsed_worker_args.expected_output_directory,
+            expected_resolved_config_sha256=parsed_worker_args.resolved_config_sha256,
             actual_mpi_size=1,
         )
 

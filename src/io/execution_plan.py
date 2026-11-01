@@ -178,21 +178,26 @@ def build_execution_plan(
         method, specification.solver
     )
     if worker_cpus_override is not None and profile_identity not in NATIVE_PROFILES:
-        raise InputError("dynamic G5 worker CPUs cannot override a non-native profile")
+        raise InputError("dynamic worker CPUs cannot override a non-native profile")
     if profile_identity in NATIVE_PROFILES:
         profile_facts = native_profile_facts(profile_identity)
         from src.runners.task40_d07c_g5_join import G5_PROFILE
-        if profile_identity == G5_PROFILE:
+        from src.runners.task40_gate_cd_formal_admission import GATE_CD_FORMAL_PROFILE
+        if profile_identity in {G5_PROFILE, GATE_CD_FORMAL_PROFILE}:
             if (
                 worker_cpus_override is None
                 or len(worker_cpus_override) != 1
                 or type(worker_cpus_override[0]) is not int
                 or worker_cpus_override[0] < 0
             ):
-                raise InputError("G5 execution plan requires the dynamic one-CPU reservation")
+                raise InputError(
+                    "G5 and Gate-CD execution plans require their dynamic one-CPU reservation"
+                )
             worker_cpus = list(worker_cpus_override)
             if specification.execution.get("native_memory_policy") != "interleave_nodes0_1":
-                raise InputError("G5 rank must use interleave_nodes0_1")
+                raise InputError(
+                    "G5 and Gate-CD rank commands require interleave_nodes0_1"
+                )
         else:
             if worker_cpus_override is not None:
                 raise InputError("dynamic G5 worker CPUs cannot override another profile")

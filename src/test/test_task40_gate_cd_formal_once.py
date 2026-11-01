@@ -11,6 +11,7 @@ from scripts.gate_cd_formal_once import (
     _require_systemd_unit_not_loaded,
     _validate_live_profile_contract,
     _validate_systemd_argv,
+    _verify_prelaunch_output_parent,
     _wait_for_runtime_cpu_reservation,
     submit_once,
     validate_package_sidecar,
@@ -283,6 +284,119 @@ def test_systemd_unit_state_query_is_bounded_and_fails_closed(monkeypatch):
     monkeypatch.setattr(execution_helper.subprocess, "run", timeout)
     with pytest.raises(RuntimeError, match="bounded unit-state query"):
         _require_systemd_unit_not_loaded("task40-gate-cd-test.service")
+
+
+def _make_bootstrap_residue(tmp_path):
+    import hashlib
+
+    output_parent = tmp_path / "output-parent"
+    attempt = output_parent / "20261101T100144.202495Z"
+    attempt.mkdir(parents=True)
+    profile = "task40_gate_cd_0p7_mapped_m8n64_p6_direct_v1"
+    run_id = profile
+    source = "c73f3ba7f934fc54a436e7f7f5d417dea2c9fc16"
+    input_bytes = b"frozen input bytes\n"
+    input_sha = hashlib.sha256(input_bytes).hexdigest()
+    physical_sha = "a" * 64
+    resolved = {
+        "run_id": run_id,
+        "solver": {"native_capacity_profile": profile},
+        "provenance": {
+            "input_sha256": input_sha,
+            "physical_model_sha256": physical_sha,
+            "expected_output_parent": str(output_parent.resolve()),
+        },
+    }
+    resolved_bytes = (json.dumps(resolved, sort_keys=True, indent=2) + "\n").encode()
+    resolved_sha = hashlib.sha256(resolved_bytes).hexdigest()
+    manifest = {
+        "run_id": run_id,
+        "source_sha": source,
+        "input_path": str((tmp_path / "input.dat").resolve()),
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "native_capacity_profile_identity": profile,
+        "output_directory": str(attempt.resolve()),
+    }
+    summary = {
+        "run_id": run_id,
+        "status": "launching",
+        "result_classification": "not_run",
+        "exit_status": None,
+        "resource_authority": {"status": "not_sampled"},
+        "output_directory": str(attempt.resolve()),
+        "numerical_output_directory": str(attempt / "numerical_output"),
+    }
+    files = {
+        "input_original.dat": input_bytes,
+        "input_sha256.txt": f"{input_sha}\n".encode(),
+        "physical_model_sha256.txt": f"{physical_sha}\n".encode(),
+        "resolved_config.json": resolved_bytes,
+        "run_manifest.json": (json.dumps(manifest) + "\n").encode(),
+        "run_summary.json": (json.dumps(summary) + "\n").encode(),
+        "source_sha.txt": f"{source}\n".encode(),
+    }
+    for name, content in files.items():
+        (attempt / name).write_bytes(content)
+    package = {
+        "input_path": str(tmp_path / "input.dat"),
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "profile_identity": profile,
+        "run_id": run_id,
+        "source_commit": "d" * 40,
+        "prelaunch_output_residue_allowlist": {
+            "attempt_id": attempt.name,
+            "attempt_directory": str(attempt.resolve()),
+            "prior_source_commit": source,
+            "files": {
+                name: hashlib.sha256(content).hexdigest()
+                for name, content in files.items()
+            },
+        },
+    }
+    expected_identity = {
+        "profile_identity": profile,
+        "run_id": run_id,
+        "input_path": str((tmp_path / "input.dat").resolve()),
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "resolved_output_parent_absolute": str(output_parent.resolve()),
+    }
+    return output_parent, package, expected_identity
+
+
+def test_prelaunch_output_parent_accepts_only_exact_hashed_bootstrap_residue(tmp_path):
+    output_parent, package, expected_identity = _make_bootstrap_residue(tmp_path)
+    result = _verify_prelaunch_output_parent(
+        output_parent, package, expected_identity
+    )
+    assert result["status"] == "accepted_exact_prelaunch_bootstrap_only"
+    assert len(result["files"]) == 7
+
+
+def test_prelaunch_output_parent_rejects_changed_or_extra_residue_files(tmp_path):
+    output_parent, package, expected_identity = _make_bootstrap_residue(tmp_path)
+    attempt = output_parent / package["prelaunch_output_residue_allowlist"]["attempt_id"]
+    with pytest.raises(ValueError, match="hash changed"):
+        (attempt / "source_sha.txt").write_text("changed\n")
+        _verify_prelaunch_output_parent(output_parent, package, expected_identity)
+
+    output_parent, package, expected_identity = _make_bootstrap_residue(tmp_path / "extra")
+    attempt = output_parent / package["prelaunch_output_residue_allowlist"]["attempt_id"]
+    (attempt / "unexpected.txt").write_text("extra\n")
+    with pytest.raises(ValueError, match="missing, extra"):
+        _verify_prelaunch_output_parent(output_parent, package, expected_identity)
+
+
+def test_prelaunch_output_parent_rejects_identity_drift(tmp_path):
+    output_parent, package, expected_identity = _make_bootstrap_residue(tmp_path)
+    expected_identity["run_id"] = "different-run"
+    with pytest.raises(ValueError, match="identity differs"):
+        _verify_prelaunch_output_parent(output_parent, package, expected_identity)
 
 
 def test_submission_consumes_exactly_one_marker_even_on_systemd_error(

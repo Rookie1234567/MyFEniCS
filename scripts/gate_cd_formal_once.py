@@ -329,6 +329,139 @@ def _expected_identity(specification, profile: str, source_commit: str) -> dict:
     }
 
 
+def _verify_prelaunch_output_parent(
+    output_parent: Path, package: dict, expected_identity: dict
+) -> dict:
+    """Accept an empty output parent or one exact, hash-bound bootstrap residue."""
+    if not output_parent.exists():
+        return {"status": "empty_or_not_yet_created", "residue": None}
+    if not output_parent.is_dir() or output_parent.is_symlink():
+        raise ValueError("formal output parent is not a regular directory")
+    children = sorted(output_parent.iterdir(), key=lambda item: item.name)
+    if not children:
+        return {"status": "empty", "residue": None}
+
+    allowlist = package.get("prelaunch_output_residue_allowlist")
+    if not isinstance(allowlist, dict):
+        raise TypeError("formal output parent is nonempty without an exact residue allowlist")
+    expected_attempt = allowlist.get("attempt_id")
+    expected_directory = allowlist.get("attempt_directory")
+    prior_source = allowlist.get("prior_source_commit")
+    expected_files = allowlist.get("files")
+    if (
+        not isinstance(expected_attempt, str)
+        or not expected_attempt
+        or not isinstance(expected_directory, str)
+        or not isinstance(prior_source, str)
+        or not isinstance(expected_files, dict)
+    ):
+        raise ValueError("prelaunch residue allowlist is incomplete")
+    attempt_dir = (output_parent / expected_attempt).resolve()
+    if (
+        expected_directory != str(attempt_dir)
+        or attempt_dir.parent != output_parent.resolve()
+        or len(children) != 1
+        or children[0].name != expected_attempt
+        or children[0].is_symlink()
+        or not children[0].is_dir()
+    ):
+        raise ValueError("formal output parent contains an unapproved attempt directory")
+
+    required_files = {
+        "input_original.dat",
+        "input_sha256.txt",
+        "physical_model_sha256.txt",
+        "resolved_config.json",
+        "run_manifest.json",
+        "run_summary.json",
+        "source_sha.txt",
+    }
+    if set(expected_files) != required_files:
+        raise ValueError("prelaunch residue must bind the exact seven bootstrap files")
+    entries = sorted(attempt_dir.iterdir(), key=lambda item: item.name)
+    if {item.name for item in entries} != required_files or any(
+        not item.is_file() or item.is_symlink() for item in entries
+    ):
+        raise ValueError("prelaunch attempt contains missing, extra, or non-file entries")
+    for item in entries:
+        expected_hash = expected_files.get(item.name)
+        if not isinstance(expected_hash, str) or sha256_file(item) != expected_hash:
+            raise ValueError(f"prelaunch bootstrap file hash changed: {item.name}")
+
+    manifest = _load_json(attempt_dir / "run_manifest.json")
+    summary = _load_json(attempt_dir / "run_summary.json")
+    resolved = _load_json(attempt_dir / "resolved_config.json")
+    expected_values = {
+        "run_id": expected_identity["run_id"],
+        "input_sha256": expected_identity["input_sha256"],
+        "physical_model_sha256": expected_identity["physical_model_sha256"],
+        "resolved_config_sha256": expected_identity["resolved_config_sha256"],
+    }
+    for key, value in expected_values.items():
+        if manifest.get(key) != value:
+            raise ValueError(f"prelaunch residue identity differs for {key}")
+    if summary.get("run_id") != expected_identity["run_id"]:
+        raise ValueError("prelaunch summary run identity differs from the formal loader")
+    if (
+        manifest.get("source_sha") != prior_source
+        or (attempt_dir / "source_sha.txt").read_text().strip() != prior_source
+        or manifest.get("native_capacity_profile_identity")
+        != expected_identity["profile_identity"]
+        or manifest.get("output_directory") != str(attempt_dir)
+        or manifest.get("input_path") != expected_identity["input_path"]
+        or summary.get("output_directory") != str(attempt_dir)
+    ):
+        raise ValueError("prelaunch residue source/profile/output identity mismatch")
+    if (
+        (attempt_dir / "input_sha256.txt").read_text().strip()
+        != expected_identity["input_sha256"]
+        or sha256_file(attempt_dir / "input_original.dat")
+        != expected_identity["input_sha256"]
+        or (attempt_dir / "physical_model_sha256.txt").read_text().strip()
+        != expected_identity["physical_model_sha256"]
+        or sha256_file(attempt_dir / "resolved_config.json")
+        != expected_identity["resolved_config_sha256"]
+    ):
+        raise ValueError("prelaunch identity sidecars differ from the formal loader")
+    if (
+        resolved.get("run_id") != expected_identity["run_id"]
+        or resolved.get("solver", {}).get("native_capacity_profile")
+        != expected_identity["profile_identity"]
+        or resolved.get("provenance", {}).get("input_sha256")
+        != expected_identity["input_sha256"]
+        or resolved.get("provenance", {}).get("physical_model_sha256")
+        != expected_identity["physical_model_sha256"]
+    ):
+        raise ValueError("prelaunch resolved configuration identity mismatch")
+    if (
+        summary.get("status") != "launching"
+        or summary.get("result_classification") != "not_run"
+        or summary.get("exit_status") is not None
+        or summary.get("resource_authority", {}).get("status") != "not_sampled"
+    ):
+        raise ValueError("prelaunch residue is not the recorded non-FE launcher failure")
+    numerical_output = Path(summary.get("numerical_output_directory", ""))
+    if numerical_output.exists() or any(
+        (attempt_dir / name).exists()
+        for name in ("workflow_phase.json", "stages.jsonl", "numerical_output")
+    ):
+        raise ValueError("prelaunch residue unexpectedly contains FE-stage outputs")
+    resolved_parent = Path(
+        resolved.get("provenance", {}).get("expected_output_parent", "")
+    )
+    if not resolved_parent.is_absolute():
+        resolved_parent = (REPO_ROOT / resolved_parent).resolve()
+    if str(resolved_parent) != expected_identity["resolved_output_parent_absolute"]:
+        raise ValueError("prelaunch resolved output-parent identity mismatch")
+    return {
+        "status": "accepted_exact_prelaunch_bootstrap_only",
+        "attempt_id": expected_attempt,
+        "attempt_directory": str(attempt_dir),
+        "prior_source_commit": prior_source,
+        "files": expected_files,
+    }
+
+
 def fresh_acceptance(
     package_path: str | Path, sidecar_path: str | Path, output_path: str | Path
 ) -> dict:
@@ -382,8 +515,7 @@ def fresh_acceptance(
     output_parent = Path(sidecar["expected_output_parent"]).resolve()
     if str(output_parent) != actual["resolved_output_parent_absolute"]:
         raise ValueError("sidecar output parent differs from the formal loader")
-    if output_parent.exists() and any(output_parent.iterdir()):
-        raise ValueError("formal output parent is not empty; refusing a duplicate/overwrite")
+    residue = _verify_prelaunch_output_parent(output_parent, package, actual)
     _require_systemd_unit_not_loaded(str(sidecar["service_unit"]))
     scope_path = Path(sidecar["scope_path"]).resolve()
     old_env = {
@@ -424,6 +556,7 @@ def fresh_acceptance(
                 "profile_identity": profile,
                 "host_and_lease_facts": isolation,
                 "no_FE_or_factor_started": True,
+                "prelaunch_output_parent_review": residue,
             }
     finally:
         for key, value in old_env.items():
