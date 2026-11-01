@@ -211,6 +211,9 @@ class SimulationConfig3D:
     matrix_diagnostics_factorization_only: bool = False
     unique_output: bool = True
     tags: Tags3D = field(default_factory=Tags3D)
+    # Exact opt-in physical volume table for the mapped Task40 gate_cd path.
+    # None preserves the historical air/substrate/grating forms and outputs.
+    physical_material_regions: tuple[dict[str, object], ...] | None = None
 
     @property
     def eps_r(self) -> complex:
@@ -719,6 +722,19 @@ class SimulationConfig3D:
         data["eps_air"] = _complex_or_none(self.eps_air)
         data["eps_substrate"] = _complex_or_none(self.eps_substrate)
         data["eps_grating"] = _complex_or_none(self.eps_grating)
+        if self.physical_material_regions is None:
+            data.pop("physical_material_regions", None)
+        else:
+            data["physical_material_regions"] = [
+                {
+                    "tag": int(entry["tag"]),
+                    "label": str(entry["label"]),
+                    "material_name": str(entry["material_name"]),
+                    "epsilon_r": _complex_or_none(complex(entry["epsilon_r"])),
+                    "n_complex": _complex_or_none(complex(entry["n_complex"])),
+                }
+                for entry in self.physical_material_regions
+            ]
         data["grating_index"] = _complex_or_none(self.grating_index)
         data["grating_bounds"] = {
             "x_min": self.grating_x_min,

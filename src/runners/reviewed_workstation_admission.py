@@ -592,6 +592,7 @@ def task40_host_floor_interleaved_admission(
     g5_observational_scope_sha256=None,
     g5_expected_identity=None,
     g5_lock_directory='/tmp',
+    gate_cd_scope=None,
 ):
     """Task40 admission: explicit available-memory floor, no legacy RSS cap."""
     import shutil
@@ -610,7 +611,9 @@ def task40_host_floor_interleaved_admission(
         raise InputError('Task40 admission requires observe-only swap policy')
 
     from .task40_d07c_g5_join import G5_PROFILE, load_g5_scope
+    from .task40_gate_cd_formal_admission import GATE_CD_FORMAL_PROFILE
     g5_scope = None
+    gate_cd_observational_scope = None
     g5_scope_present = (
         g5_observational_scope_path is not None
         or g5_observational_scope_sha256 is not None
@@ -640,8 +643,40 @@ def task40_host_floor_interleaved_admission(
             expected_identity=g5_expected_identity,
             lock_directory=g5_lock_directory,
         )
+    elif task_profile == GATE_CD_FORMAL_PROFILE:
+        if (
+            not isinstance(gate_cd_scope, dict)
+            or gate_cd_scope.get('schema') != 'task40.gate_cd_formal_exact_execution_scope.v1'
+            or gate_cd_scope.get('identity', {}).get('profile_identity') != task_profile
+            or gate_cd_scope.get('identity', {}).get('run_id') != task_run_id
+            or resources.get('parallel_admission_policy')
+            != 'gate_cd_exact_scope_one_shot_host_floor_v1'
+        ):
+            raise InputError('Gate-CD production admission requires its exact formal observational scope')
+        if (
+            parallel_authority_path is not None
+            or parallel_authority_sha256 is not None
+            or pair_scope_path is not None
+            or pair_scope_sha256 is not None
+            or pair_role is not None
+            or g5_scope_present
+        ):
+            raise InputError('Gate-CD scope cannot be combined with other parallel admission authorities')
+        gate_cd_policy = gate_cd_scope.get('parallel_neighbors', {})
+        if (
+            gate_cd_policy.get('policy') != 'gate_cd_observational_neighbors_v1'
+            or gate_cd_policy.get('solver_candidates_block_admission') is not False
+            or gate_cd_policy.get('unknown_solver_candidates_block_admission') is not False
+            or gate_cd_policy.get('large_process_candidates_block_admission') is not False
+            or gate_cd_policy.get('neighbors_modified') is not False
+        ):
+            raise InputError('Gate-CD scope must allow parallel jobs as observational neighbors')
+        gate_cd_observational_scope = gate_cd_scope
     elif g5_scope_present:
         raise InputError('G5 observational scope cannot authorize another profile')
+    elif gate_cd_scope is not None:
+        raise InputError('Gate-CD observational scope cannot authorize another profile')
+    observational_scope = g5_scope is not None or gate_cd_observational_scope is not None
 
     proc_root = _proc_root()
     sys_root = _sys_root()
@@ -672,7 +707,7 @@ def task40_host_floor_interleaved_admission(
                    int((topology/'core_id').read_text())))
     if len(cores) != len(worker_cpus):
         raise InputError('Task40 worker CPUs must be distinct physical cores')
-    if g5_scope is not None:
+    if observational_scope:
         supervisor_topology = sys_root/f'devices/system/cpu/cpu{supervisor_cpu}/topology'
         supervisor_core = (
             int((supervisor_topology/'physical_package_id').read_text()),
@@ -905,12 +940,12 @@ def task40_host_floor_interleaved_admission(
             _require_bound_process_identity(
                     live, node, f'{authority_label} {node.get("role")} at final large-process scan'
             )
-    if blocking_active_candidates and g5_scope is None:
+    if blocking_active_candidates and not observational_scope:
         raise InputError(
             'Task40 admission found another active run_case/native solver process: '
             + repr(blocking_active_candidates)
         )
-    if blocking_unknown_candidates and g5_scope is None:
+    if blocking_unknown_candidates and not observational_scope:
         raise InputError(
             'Task40 admission found an active Task038/P6 Python entrypoint with unknown role: '
             + repr(blocking_unknown_candidates)
@@ -934,7 +969,7 @@ def task40_host_floor_interleaved_admission(
         )
     ]
     g5_observed_only = None
-    if g5_scope is not None:
+    if observational_scope:
         g5_observed_only = {
             'active_solver_candidates': blocking_active_candidates,
             'unknown_solver_role_candidates': blocking_unknown_candidates,
@@ -943,7 +978,7 @@ def task40_host_floor_interleaved_admission(
         blocking_active_candidates = []
         blocking_unknown_candidates = []
         blocking_large = []
-    if blocking_large and g5_scope is None:
+    if blocking_large and not observational_scope:
         raise InputError(
             'Task40 admission found a non-authorized process >=100 GB; no heavy launch: '
             + repr(blocking_large)
@@ -992,6 +1027,7 @@ def task40_host_floor_interleaved_admission(
             )
         ),
         'g5_parallel_authorized_by_exact_scope': g5_scope is not None,
+        'gate_cd_parallel_neighbors_observed_only': gate_cd_observational_scope is not None,
         'user_parallel_window_authorization': bool(
             active_parallel_authority
             and (
@@ -1003,8 +1039,21 @@ def task40_host_floor_interleaved_admission(
             )
         ),
         'neighbor_admission_mode': (
+            'gate_cd_exact_scope_observational_neighbors_v1'
+            if gate_cd_observational_scope is not None else
             'g5_scoped_observational_neighbors_v1'
             if g5_scope is not None else 'existing_fail_closed_solver_scan'
+        ),
+        'gate_cd_formal_observational_scope': (
+            None if gate_cd_observational_scope is None else {
+                'schema': gate_cd_observational_scope['schema'],
+                'attempt_id': gate_cd_observational_scope['attempt_id'],
+                'parallel_solver_candidates_observed_not_blocking': len(active_solver_candidates),
+                'unknown_solver_candidates_observed_not_blocking': len(unknown_solver_role_candidates),
+                'large_process_candidates_observed_not_blocking': len(large),
+                'canonical_heavy_lock_touched': False,
+                'neighbors_modified': False,
+            }
         ),
         'g5_observational_scope': (
             None if g5_scope is None else {

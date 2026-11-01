@@ -71,7 +71,8 @@ def _mesh_is_tetrahedron(msh) -> bool:
 def _fixed_target_high_order_floquet(cfg: SimulationConfig3D) -> bool:
     if (
         cfg.stage_case == "stage4_block_grating"
-        and cfg.geometry_kind == "rectangular_block_grating"
+        and cfg.geometry_kind
+        in {"rectangular_block_grating", "task40_gate_cd_mapped"}
     ):
         return True
     if cfg.stage_case == "stage4_flat_layer_sanity":

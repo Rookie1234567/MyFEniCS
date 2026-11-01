@@ -180,10 +180,11 @@ FIELD_SPECS: Final = (
             "fresnel_interface",
             "flat_layer",
             "rectangular_block_grating",
+            "task40_gate_cd_mapped",
         ),
         constraints=(
             "2D uses euv_grating_2d/layered_2d; 3D uses airbox/fresnel_interface/"
-            "flat_layer/rectangular_block_grating",
+            "flat_layer/rectangular_block_grating/task40_gate_cd_mapped",
         ),
     ),
     _f(

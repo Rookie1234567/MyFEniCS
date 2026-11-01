@@ -977,6 +977,7 @@ def recover_p0_outputs(
     active_port_outputs_only: bool = False,
     active_fe_port_output_contract: Mapping[str, Any] | None = None,
     write_visualization_files: bool = True,
+    volume_quadrature_metadata: tuple[Mapping[str, Any], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Recover E/H and compute the existing modal and diagnostic outputs.
 
@@ -1054,6 +1055,7 @@ def recover_p0_outputs(
             output_dir,
             incident_power=incident_power_3d(bundle["cfg"]),
             port_metrics=port_metrics,
+            volume_quadrature_metadata=volume_quadrature_metadata,
         )
         if active_port_outputs_only:
             if not export_all_port_modes or len(bundle["modes"]) != 572 or any(

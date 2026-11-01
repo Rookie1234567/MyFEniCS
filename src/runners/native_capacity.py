@@ -42,7 +42,56 @@ def _native_capacity_launch_lock(
     root, profile, task_run_id, *, expected_identity=None,
     submission_mode="runtime",
 ):
-    """Keep legacy launches exclusive; share only the reviewed exact pair."""
+    """Keep legacy launches exclusive; share only reviewed exact scopes."""
+    from .task40_gate_cd_formal_admission import (
+        GATE_CD_FORMAL_PROFILE, GATE_CD_SCOPE_PATH_ENV,
+        GATE_CD_SCOPE_SHA_ENV, GATE_CD_SUBMISSION_MODE_ENV,
+        GATE_CD_LOCK_DIRECTORY_ENV, gate_cd_runtime_lease,
+    )
+    if profile == GATE_CD_FORMAL_PROFILE:
+        from .reviewed_workstation_admission import (
+            _TASK40_PARALLEL_AUTH_FILE_ENV, _TASK40_PARALLEL_AUTH_SHA_ENV,
+        )
+        from .task40_exact_parallel_pair import PAIR_SCOPE_PATH_ENV, PAIR_SCOPE_SHA_ENV
+        if any(os.environ.get(name) for name in (
+            _TASK40_PARALLEL_AUTH_FILE_ENV, _TASK40_PARALLEL_AUTH_SHA_ENV,
+            PAIR_SCOPE_PATH_ENV, PAIR_SCOPE_SHA_ENV,
+            'TASK40_D07C_G5_SCOPE_PATH', 'TASK40_D07C_G5_SCOPE_SHA256',
+        )):
+            raise InputError("Gate-CD exact scope cannot be combined with legacy parallel scopes")
+        scope_path = os.environ.get(GATE_CD_SCOPE_PATH_ENV)
+        scope_sha = os.environ.get(GATE_CD_SCOPE_SHA_ENV)
+        if not scope_path or not scope_sha:
+            raise InputError("Gate-CD formal route requires its hash-bound exact scope")
+        requested_mode = os.environ.get(GATE_CD_SUBMISSION_MODE_ENV)
+        if requested_mode is not None and requested_mode != submission_mode:
+            raise InputError("Gate-CD submission mode environment disagrees with the production caller")
+        lock_directory = os.environ.get(GATE_CD_LOCK_DIRECTORY_ENV, "/tmp")
+        with gate_cd_runtime_lease(
+            profile, task_run_id or "", scope_path=scope_path,
+            scope_sha256=scope_sha, expected_identity=expected_identity,
+            submission_mode=submission_mode,
+            lock_directory=lock_directory,
+        ) as lease:
+            try:
+                common = subprocess.run(
+                    ['git', 'rev-parse', '--path-format=absolute', '--git-common-dir'],
+                    cwd=Path(__file__).resolve().parents[2], capture_output=True,
+                    text=True, check=True,
+                )
+                common_repository = Path(common.stdout.strip()).resolve(strict=True)
+            except (OSError, subprocess.CalledProcessError) as exc:
+                raise InputError(f"Gate-CD cannot identify its canonical repository: {exc}") from exc
+            if common_repository.name != 'task-repository.git' or not common_repository.is_dir():
+                raise InputError("Gate-CD canonical repository identity is unexpected")
+            yield lease.member_stream, lease.member_path, common_repository, {
+                'gate_cd_runtime_lease': lease,
+                'scope_path': str(lease.scope_path),
+                'scope_sha256': lease.scope_sha256,
+                'lock_directory': str(Path(lock_directory).resolve()),
+            }
+        return
+
     from .task40_d07c_g5_join import (
         G5_PROFILE, G5_SCOPE_PATH_ENV, G5_SCOPE_SHA_ENV, g5_runtime_lease,
     )
@@ -337,6 +386,9 @@ def native_capacity_guard(
         TASK40_PHI90_P6_DIRECT_PROFILES,
         native_profile_facts,
     )
+    from .task40_gate_cd_formal_admission import (
+        GATE_CD_FORMAL_PROFILE, GATE_CD_ATTEMPT_CACHE_ENV,
+    )
 
     memory_prefix = native_memory_policy_prefix(memory_policy)
     if os.environ.get('_MYFENICS_NATIVE_QUALIFIED_ACTIVATION') != '1':
@@ -345,7 +397,8 @@ def native_capacity_guard(
     profile_facts = native_profile_facts(profile)
     from .task40_d07c_g5_join import G5_PROFILE
     g5_profile = profile == G5_PROFILE
-    if g5_profile:
+    gate_cd_profile = profile == GATE_CD_FORMAL_PROFILE
+    if g5_profile or gate_cd_profile:
         supervisor_cpu = None
         worker_cpus = None
     else:
@@ -360,6 +413,11 @@ def native_capacity_guard(
     ):
         g5_context = pair_context if g5_profile else None
         g5_lease = None if g5_context is None else g5_context.get('g5_runtime_lease')
+        gate_cd_context = pair_context if gate_cd_profile else None
+        gate_cd_lease = (
+            None if gate_cd_context is None
+            else gate_cd_context.get('gate_cd_runtime_lease')
+        )
         if g5_profile:
             if g5_lease is None:
                 raise InputError('G5 production guard did not return its scoped runtime lease')
@@ -368,7 +426,14 @@ def native_capacity_guard(
             worker_cpus = [int(cpu_reservation['worker_cpu'])]
             if memory_policy != 'interleave_nodes0_1':
                 raise InputError('G5 runtime requires interleave_nodes0_1')
-        if pair_context is not None and not g5_profile and (
+        if gate_cd_profile:
+            if gate_cd_lease is None:
+                raise InputError('Gate-CD exact scope did not return its one-shot runtime lease')
+            if memory_policy != 'interleave_nodes0_1':
+                raise InputError('Gate-CD formal route requires interleave_nodes0_1')
+            supervisor_cpu = int(gate_cd_lease.cpu_reservation['supervisor_cpu'])
+            worker_cpus = list(map(int, gate_cd_lease.cpu_reservation['worker_cpus']))
+        if pair_context is not None and not (g5_profile or gate_cd_profile) and (
             memory_policy != 'interleave_nodes0_1'
             or profile_facts['resources'].get('resource_stop_policy')
             != 'host_available_floor_v1'
@@ -388,7 +453,18 @@ def native_capacity_guard(
         node_admission = None
         if memory_policy == 'interleave_nodes0_1':
             os.environ.pop('PHYSICAL_NATIVE_NODE_CAP_BYTES', None)
-            if profile_facts['resources'].get('resource_stop_policy') == 'host_available_floor_v1':
+            if gate_cd_profile:
+                from .reviewed_workstation_admission import (
+                    task40_host_floor_interleaved_admission,
+                )
+                node_admission = task40_host_floor_interleaved_admission(
+                    profile_facts['resources'], worker_cpus,
+                    task_profile=profile,
+                    task_run_id=task_run_id,
+                    supervisor_cpu=supervisor_cpu,
+                    gate_cd_scope=gate_cd_lease.scope,
+                )
+            elif profile_facts['resources'].get('resource_stop_policy') == 'host_available_floor_v1':
                 from .reviewed_workstation_admission import (
                     _TASK40_PARALLEL_AUTH_FILE_ENV,
                     _TASK40_PARALLEL_AUTH_SHA_ENV,
@@ -501,8 +577,12 @@ def native_capacity_guard(
             }
         filesystem = os.statvfs(root)
         isolation = {'canonical_repository': str(common_repository),
-                     'native_capacity_heavy_lock': str(lock_path.resolve()),
+                     'native_capacity_heavy_lock': (
+                         None if gate_cd_profile else str(lock_path.resolve())
+                     ),
                      'native_capacity_lock_scope': (
+                         'gate_cd_exact_one_shot_case_lease_no_canonical_lock'
+                         if gate_cd_profile else
                          'g5_case_level_member_lock_no_canonical'
                          if g5_profile else
                          'canonical_host_shared_with_exact_task40_pair'
@@ -542,6 +622,9 @@ def native_capacity_guard(
                      'g5_observational_join': (
                          None if g5_lease is None else g5_lease.summary()
                      ),
+                     'gate_cd_formal_admission': (
+                         None if gate_cd_lease is None else gate_cd_lease.summary()
+                     ),
                      'profile_concurrent_neighbor_authorized': profile_facts['resources']['concurrent_neighbor_authorized'],
                      'neighbor_concurrent_heavy_authorized': (
                          g5_profile
@@ -555,6 +638,9 @@ def native_capacity_guard(
                      'inodes_available': filesystem.f_favail}
         env_names = (
             'PHYSICAL_WATCHDOG_PSS_POLICY',
+            GATE_CD_ATTEMPT_CACHE_ENV,
+            'TMPDIR', 'TMP', 'TEMP', 'XDG_CACHE_HOME',
+            'PYTHONPYCACHEPREFIX', 'MPLCONFIGDIR',
             'OMP_NUM_THREADS',
             'OPENBLAS_NUM_THREADS',
             'MKL_NUM_THREADS',
@@ -577,6 +663,22 @@ def native_capacity_guard(
             if g5_lease is not None and submission_mode == 'runtime':
                 # The one-shot is durable before run_case can create/launch its worker.
                 g5_lease.commit_runtime_submission()
+            if gate_cd_lease is not None and submission_mode == 'runtime':
+                attempt_cache = gate_cd_lease.prepare_attempt_cache()
+                isolation['gate_cd_formal_admission']['attempt_cache'] = {
+                    key: str(value.resolve()) for key, value in attempt_cache.items()
+                }
+                os.environ[GATE_CD_ATTEMPT_CACHE_ENV] = str(
+                    attempt_cache['root'].resolve()
+                )
+                for env_name, key in (
+                    ('TMPDIR', 'tmp'), ('TMP', 'tmp'), ('TEMP', 'tmp'),
+                    ('XDG_CACHE_HOME', 'xdg'),
+                    ('PYTHONPYCACHEPREFIX', 'pycache'),
+                    ('MPLCONFIGDIR', 'mpl'),
+                ):
+                    os.environ[env_name] = str(attempt_cache[key].resolve())
+                gate_cd_lease.commit_runtime_submission()
             yield root, isolation
         finally:
             for name, value in previous_environment.items():
@@ -588,7 +690,10 @@ def native_capacity_guard(
 
 
 def launch_native_capacity(specification, *, setup_only: bool = False):
-    from src.io.native_capacity_profile import native_capacity_profile_identity
+    from src.io.native_capacity_profile import (
+        native_capacity_profile_identity,
+        native_profile_facts,
+    )
     from src.io.resolved_config import resolved_config_sha256
 
     from .task038_launcher import launch_specification
@@ -601,7 +706,8 @@ def launch_native_capacity(specification, *, setup_only: bool = False):
         raise InputError('native capacity launch requires an explicit native profile')
     expected_identity = None
     from .task40_d07c_g5_join import G5_PROFILE
-    if profile == G5_PROFILE:
+    from .task40_gate_cd_formal_admission import GATE_CD_FORMAL_PROFILE
+    if profile in {G5_PROFILE, GATE_CD_FORMAL_PROFILE}:
         root = Path(__file__).resolve().parents[2]
         try:
             source_commit = subprocess.check_output(
@@ -622,6 +728,10 @@ def launch_native_capacity(specification, *, setup_only: bool = False):
             ),
             'source_commit': source_commit,
         }
+        if profile == GATE_CD_FORMAL_PROFILE:
+            expected_identity['direct_route_contract'] = native_profile_facts(
+                profile
+            )['campaign_authorization']['direct_route']
     with native_capacity_guard(
         profile,
         memory_policy=memory_policy,

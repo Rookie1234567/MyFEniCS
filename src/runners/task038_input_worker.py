@@ -96,6 +96,83 @@ def _write_g5_runtime_cache_evidence(output_directory: str | Path, evidence: dic
     return path
 
 
+def _task40_gate_cd_runtime_cache_evidence(
+    manifest: dict[str, Any], *, environment=None, jit_options_resolver=None
+) -> dict[str, Any] | None:
+    """Validate Gate-CD's exact one-shot cache paths before worker dispatch."""
+    from src.runners.task40_gate_cd_formal_admission import GATE_CD_FORMAL_PROFILE
+
+    if manifest.get("native_capacity_profile_identity") != GATE_CD_FORMAL_PROFILE:
+        return None
+    env = os.environ if environment is None else environment
+    isolation = manifest.get("native_capacity_isolation")
+    lease = isolation.get("gate_cd_formal_admission") if isinstance(isolation, dict) else None
+    cache = manifest.get("attempt_specific_runtime_cache")
+    if not isinstance(lease, dict) or not isinstance(cache, dict):
+        raise ValueError("Gate-CD manifest lacks the formal lease/cache evidence")
+    if cache.get("owner") != "GateCD_formal_attempt_only":
+        raise ValueError("Gate-CD cache is not owned by this formal attempt")
+    attempt_id = lease.get("attempt_id")
+    if not isinstance(attempt_id, str) or cache.get("attempt_id") != attempt_id:
+        raise ValueError("Gate-CD cache attempt id differs from its exact lease")
+    expected_root = Path(lease.get("attempt_cache_root", "")).resolve()
+    if Path(cache.get("root", "")).resolve() != expected_root:
+        raise ValueError("Gate-CD manifest cache root differs from its lease")
+    expected_paths = {
+        "root": expected_root,
+        "tmp": expected_root / "tmp",
+        "xdg": expected_root / "xdg",
+        "pycache": expected_root / "pycache",
+        "mpl": expected_root / "mpl",
+    }
+    for key, path in expected_paths.items():
+        if Path(cache.get(key, "")).resolve() != path.resolve():
+            raise ValueError(f"Gate-CD cache path differs at {key}")
+        if path.is_symlink() or (key != "root" and not path.is_dir()):
+            raise ValueError(f"Gate-CD attempt cache path is missing or symlinked: {key}")
+    expected_environment = {
+        "TMPDIR": str(expected_paths["tmp"]),
+        "TMP": str(expected_paths["tmp"]),
+        "TEMP": str(expected_paths["tmp"]),
+        "XDG_CACHE_HOME": str(expected_paths["xdg"]),
+        "PYTHONPYCACHEPREFIX": str(expected_paths["pycache"]),
+        "MPLCONFIGDIR": str(expected_paths["mpl"]),
+    }
+    mismatches = {key: {"expected": value, "actual": env.get(key)}
+                  for key, value in expected_environment.items()
+                  if env.get(key) != value}
+    if mismatches:
+        raise ValueError(f"Gate-CD worker cache environment differs: {mismatches}")
+    if jit_options_resolver is None:
+        from dolfinx.jit import get_options
+        from src.solvers.fullspace_same_mesh_hcurl_pmg_setup import SAME_MESH_JIT_OPTIONS
+        jit_options_resolver = lambda: get_options(dict(SAME_MESH_JIT_OPTIONS))
+    options = jit_options_resolver()
+    actual_jit_cache = Path(options["cache_dir"]).expanduser().resolve()
+    expected_jit_cache = (expected_paths["xdg"] / "fenics").resolve()
+    if actual_jit_cache != expected_jit_cache:
+        raise ValueError("Gate-CD DOLFINx JIT cache escaped the attempt XDG cache")
+    return {
+        "schema": "task40.gate_cd.formal_worker_cache_runtime.v1",
+        "attempt_id": attempt_id,
+        "owner": "GateCD_formal_attempt_only",
+        "environment": expected_environment,
+        "dolfinx_jit_cache_dir": str(actual_jit_cache),
+        "cache_paths_verified_before_FE_dispatch": True,
+    }
+
+
+def _write_gate_cd_runtime_cache_evidence(output_directory: str | Path, evidence: dict) -> Path:
+    path = Path(output_directory) / "gate_cd_runtime_environment.json"
+    payload = (json.dumps(evidence, sort_keys=True, indent=2) + "\n").encode()
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "wb") as stream:
+        stream.write(payload)
+        stream.flush()
+        os.fsync(stream.fileno())
+    return path
+
+
 def _read_json_bytes(
     path: Path, label: str
 ) -> tuple[dict[str, Any] | None, bytes | None, str | None]:
@@ -282,8 +359,11 @@ def _load_and_validate_worker_payload(
         )
         if profile_name in (V6_NATIVE_PROFILES | P6_CONDENSED_DIRECT_PROFILES):
             profile = native_profile_facts(profile_name)
+            from src.io.input_validation import _jsonable
+
+            profile_json = _jsonable(profile)
             expected_execution_mode = profile['execution_mode']
-            if manifest_value.get('component_options') != profile['component_options']:
+            if manifest_value.get('component_options') != profile_json['component_options']:
                 errors.append('manifest native profile component options mismatch')
             if profile_name in P6_CONDENSED_DIRECT_PROFILES:
                 resolved_derived = resolved.get('derived')
@@ -296,7 +376,7 @@ def _load_and_validate_worker_payload(
                 if (
                     not isinstance(resolved_profile, dict)
                     or canonical_json_bytes(resolved_profile)
-                    != canonical_json_bytes(profile)
+                    != canonical_json_bytes(profile_json)
                 ):
                     errors.append(
                         'resolved condensed-direct native-capacity profile facts mismatch'
@@ -514,6 +594,7 @@ def main(argv: list[str] | None = None) -> int:
                 resolved_payload.get("solver", {}),
             )
             from src.runners.task40_d07c_g5_join import G5_PROFILE
+            from src.runners.task40_gate_cd_formal_admission import GATE_CD_FORMAL_PROFILE
 
             if profile_name == G5_PROFILE:
                 manifest_value, _manifest_bytes, manifest_error = _read_json_bytes(
@@ -522,6 +603,15 @@ def main(argv: list[str] | None = None) -> int:
                 if manifest_error or manifest_value is None:
                     raise ValueError(manifest_error or "G5 manifest is unavailable")
                 runtime_cache_evidence = _task40_g5_runtime_cache_evidence(manifest_value)
+            elif profile_name == GATE_CD_FORMAL_PROFILE:
+                manifest_value, _manifest_bytes, manifest_error = _read_json_bytes(
+                    args.manifest, "manifest for Gate-CD runtime cache verification"
+                )
+                if manifest_error or manifest_value is None:
+                    raise ValueError(manifest_error or "Gate-CD manifest is unavailable")
+                runtime_cache_evidence = _task40_gate_cd_runtime_cache_evidence(
+                    manifest_value
+                )
         except (ImportError, KeyError, OSError, RuntimeError, TypeError, ValueError) as exc:
             runtime_cache_errors.append(f"G5 worker runtime-cache verification failed: {exc}")
     cache_failed = comm.allreduce(bool(runtime_cache_errors), op=MPI.LOR)
@@ -533,9 +623,14 @@ def main(argv: list[str] | None = None) -> int:
     write_errors: list[str] = []
     if comm.rank == 0 and runtime_cache_evidence is not None:
         try:
-            _write_g5_runtime_cache_evidence(
-                args.expected_output_directory, runtime_cache_evidence
-            )
+            if runtime_cache_evidence.get("owner") == "GateCD_formal_attempt_only":
+                _write_gate_cd_runtime_cache_evidence(
+                    args.expected_output_directory, runtime_cache_evidence
+                )
+            else:
+                _write_g5_runtime_cache_evidence(
+                    args.expected_output_directory, runtime_cache_evidence
+                )
         except (OSError, TypeError, ValueError) as exc:
             write_errors.append(f"G5 runtime-cache evidence could not be persisted: {exc}")
     if comm.allreduce(bool(write_errors), op=MPI.LOR):

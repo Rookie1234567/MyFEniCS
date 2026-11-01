@@ -279,10 +279,42 @@ def _volume_absorption_metrics(
     E_total,
     incident_power: float,
     field_model: str,
+    volume_quadrature_metadata=None,
 ) -> dict[str, object]:
     msh = mesh_data.mesh
-    dx = ufl.Measure("dx", msh, subdomain_data=mesh_data.cell_tags)
-    d_physical = dx((cfg.tags.air, cfg.tags.substrate, cfg.tags.grating))
+    if volume_quadrature_metadata is None:
+        dx = ufl.Measure("dx", msh, subdomain_data=mesh_data.cell_tags)
+    else:
+        from .rta_3d import _gate_cd_volume_measure_metadata
+
+        metadata = _gate_cd_volume_measure_metadata(cfg, volume_quadrature_metadata)
+        dx = ufl.Measure(
+            "dx",
+            domain=msh,
+            subdomain_data=mesh_data.cell_tags,
+            metadata=metadata,
+        )
+    explicit_regions = getattr(cfg, "physical_material_regions", None)
+    if explicit_regions is not None:
+        from ..common.gate_cd_materials import validate_gate_cd_region_entries
+
+        regions = validate_gate_cd_region_entries(explicit_regions)
+        if cfg.geometry_kind != "task40_gate_cd_mapped":
+            raise ValueError("explicit physical absorption map is restricted to gate_cd")
+        for entry in regions:
+            label = str(entry["label"])
+            actual_count = int(
+                msh.comm.allreduce(
+                    len(mesh_data.cell_tags.find(int(entry["tag"]))), op=MPI.SUM
+                )
+            )
+            if actual_count <= 0:
+                raise ValueError(f"gate_cd absorption region {label} has no tagged cells")
+        tags = tuple(int(entry["tag"]) for entry in regions)
+        d_physical = dx(tags)
+    else:
+        regions = None
+        d_physical = dx((cfg.tags.air, cfg.tags.substrate, cfg.tags.grating))
     eps = relative_permittivity(mesh_data, cfg)
     eps_imag = ufl.imag(eps)
     field_abs2 = ufl.inner(E_total, E_total)
@@ -290,8 +322,12 @@ def _volume_absorption_metrics(
         fem.form(0.5 * cfg.k0**2 * eps_imag * field_abs2 * d_physical)
     )
     absorbed_power = float(np.real(msh.comm.allreduce(local_abs, op=MPI.SUM)))
+    if not np.isfinite(absorbed_power):
+        raise ValueError("volume absorption is non-finite")
     absorbed_power = max(absorbed_power, 0.0)
-    return {
+    if explicit_regions is not None and (not np.isfinite(incident_power) or incident_power <= 0.0):
+        raise ValueError("gate_cd volume absorption requires a finite positive incident power")
+    result = {
         "field_model_for_absorption": field_model,
         "absorbed_power_weighted": absorbed_power,
         "A_volume": absorbed_power / incident_power if incident_power > 0 else None,
@@ -300,6 +336,40 @@ def _volume_absorption_metrics(
             "physical air/substrate/grating cells. PML cells are deliberately excluded."
         ),
     }
+    if volume_quadrature_metadata is not None:
+        result["volume_quadrature_metadata"] = _gate_cd_volume_measure_metadata(
+            cfg, volume_quadrature_metadata
+        )
+    if regions is not None:
+        per_region: dict[str, object] = {}
+        for entry in regions:
+            tag = int(entry["tag"])
+            label = str(entry["label"])
+            epsilon = complex(entry["epsilon_r"])
+            local = fem.assemble_scalar(
+                fem.form(
+                    0.5
+                    * cfg.k0**2
+                    * epsilon.imag
+                    * field_abs2
+                    * dx(tag)
+                )
+            )
+            power = float(np.real(msh.comm.allreduce(local, op=MPI.SUM)))
+            if not np.isfinite(power):
+                raise ValueError(f"gate_cd region {label} absorption is non-finite")
+            per_region[label] = {
+                "tag": tag,
+                "material_name": str(entry["material_name"]),
+                "epsilon_r": [epsilon.real, epsilon.imag],
+                "absorbed_power_weighted": max(power, 0.0),
+                "A_volume": max(power, 0.0) / incident_power
+                if incident_power > 0.0
+                else None,
+            }
+        result["volume_absorption_by_physical_region"] = per_region
+        result["volume_absorption_tag_map_source"] = "resolved_gate_cd_profile_exact_map"
+    return result
 
 
 def _box_indicator(x, bounds: dict[str, float]):
@@ -365,12 +435,18 @@ def _attach_absorption_metrics(
     E_total,
     incident_power: float,
     field_model: str,
+    volume_quadrature_metadata=None,
 ) -> None:
     balance = 1.0 - float(metrics["R_total"]) - float(metrics["T_total"])
     metrics["A_balance"] = balance
     try:
         absorption = _volume_absorption_metrics(
-            mesh_data, cfg, E_total, incident_power, field_model
+            mesh_data,
+            cfg,
+            E_total,
+            incident_power,
+            field_model,
+            volume_quadrature_metadata,
         )
     except (
         Exception
@@ -410,6 +486,7 @@ def _compute_power_metrics_from_lines(
     sampling_method: str,
     order_count_name: str,
     extra_metadata: dict[str, object] | None = None,
+    volume_quadrature_metadata=None,
 ) -> dict[str, object]:
     out_dir.mkdir(parents=True, exist_ok=True)
     hz_scaled = _scaled_hz_function(E_total, cfg)
@@ -585,7 +662,8 @@ def _compute_power_metrics_from_lines(
     if extra_metadata:
         metrics.update(extra_metadata)
     _attach_absorption_metrics(
-        metrics, mesh_data, cfg, E_total, incident_power, "TM vector Ex/Ey"
+        metrics, mesh_data, cfg, E_total, incident_power, "TM vector Ex/Ey",
+        volume_quadrature_metadata,
     )
 
     if MPI.COMM_WORLD.rank == 0:
@@ -623,6 +701,7 @@ def _compute_te_power_metrics_from_lines(
     sampling_method: str,
     order_count_name: str,
     extra_metadata: dict[str, object] | None = None,
+    volume_quadrature_metadata=None,
 ) -> dict[str, object]:
     out_dir.mkdir(parents=True, exist_ok=True)
     hx_scaled = _scaled_hx_function(E_total, cfg)
@@ -772,7 +851,8 @@ def _compute_te_power_metrics_from_lines(
     if extra_metadata:
         metrics.update(extra_metadata)
     _attach_absorption_metrics(
-        metrics, mesh_data, cfg, E_total, incident_power, "TE scalar Ez"
+        metrics, mesh_data, cfg, E_total, incident_power, "TE scalar Ez",
+        volume_quadrature_metadata,
     )
 
     if MPI.COMM_WORLD.rank == 0:
@@ -795,7 +875,12 @@ def _compute_te_power_metrics_from_lines(
 
 
 def compute_power_metrics(
-    mesh_data, cfg: SimulationConfig, E_total, out_dir: Path
+    mesh_data,
+    cfg: SimulationConfig,
+    E_total,
+    out_dir: Path,
+    *,
+    volume_quadrature_metadata=None,
 ) -> dict[str, object]:
     """Compute reflection/transmission metrics from interior horizontal probe lines."""
     if not cfg.compute_power_metrics:
@@ -830,6 +915,7 @@ def compute_power_metrics(
                     "horizontal lines inside the uniform top air and bottom substrate regions."
                 ),
             },
+            volume_quadrature_metadata=volume_quadrature_metadata,
         )
 
     return _compute_power_metrics_from_lines(
@@ -856,6 +942,7 @@ def compute_power_metrics(
                 "for scattered-field, Robin-port, and DtN-port runs."
             ),
         },
+        volume_quadrature_metadata=volume_quadrature_metadata,
     )
 
 
@@ -894,6 +981,7 @@ def _compute_tm_dtn_power_from_coefficients(
     postprocess_family: str,
     projection_source: str,
     extra_metadata: dict[str, object] | None = None,
+    volume_quadrature_metadata=None,
 ) -> dict[str, object]:
     out_dir.mkdir(parents=True, exist_ok=True)
     top_y = float(cfg.y_max)
@@ -1057,7 +1145,8 @@ def _compute_tm_dtn_power_from_coefficients(
     if extra_metadata:
         metrics.update(extra_metadata)
     _attach_absorption_metrics(
-        metrics, mesh_data, cfg, E_total, incident_power, "TM vector Ex/Ey"
+        metrics, mesh_data, cfg, E_total, incident_power, "TM vector Ex/Ey",
+        volume_quadrature_metadata,
     )
 
     if MPI.COMM_WORLD.rank == 0:
@@ -1085,6 +1174,8 @@ def compute_dtn_port_power_metrics(
     E_total,
     out_dir: Path,
     trace_vectors: dict[str, dict[int, dict[str, object]]],
+    *,
+    volume_quadrature_metadata=None,
 ) -> dict[str, object]:
     """Compute R/T by reusing the DtN boundary-integral projection vectors."""
     if not cfg.compute_power_metrics:
@@ -1132,6 +1223,7 @@ def compute_dtn_port_power_metrics(
         sampling_method="dtn_port_boundary_integral_projection",
         postprocess_family="dtn_port_trace",
         projection_source="same_compressed_trace_vectors_used_to_assemble_fourier_dtn_port_matrix",
+        volume_quadrature_metadata=volume_quadrature_metadata,
     )
 
 
@@ -1142,6 +1234,8 @@ def compute_dtn_auxiliary_power_metrics(
     out_dir: Path,
     auxiliary_coefficients: dict[str, dict[int, complex]],
     port_metadata: dict[str, object] | None = None,
+    *,
+    volume_quadrature_metadata=None,
 ) -> dict[str, object]:
     """Compute R/T directly from the auxiliary modal-amplitude unknowns."""
     if not cfg.compute_power_metrics:
@@ -1196,6 +1290,7 @@ def compute_dtn_auxiliary_power_metrics(
                 "rayleigh_warnings", []
             ),
         },
+        volume_quadrature_metadata=volume_quadrature_metadata,
     )
 
 
@@ -1205,6 +1300,8 @@ def compute_te_dtn_port_power_metrics(
     E_total,
     out_dir: Path,
     trace_vectors: dict[str, dict[int, dict[str, object]]],
+    *,
+    volume_quadrature_metadata=None,
 ) -> dict[str, object]:
     """Compute TE R/T by reusing scalar DtN boundary-integral projection vectors."""
     if not cfg.compute_power_metrics:
@@ -1359,7 +1456,8 @@ def compute_te_dtn_port_power_metrics(
         ),
     }
     _attach_absorption_metrics(
-        metrics, mesh_data, cfg, E_total, incident_power, "TE scalar Ez"
+        metrics, mesh_data, cfg, E_total, incident_power, "TE scalar Ez",
+        volume_quadrature_metadata,
     )
 
     if MPI.COMM_WORLD.rank == 0:

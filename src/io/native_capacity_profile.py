@@ -171,6 +171,20 @@ TASK40_PHI90_D07C_PROFILE_BY_CASE = {
 TASK40_PHI90_D07C_PROFILES = frozenset(
     TASK40_PHI90_D07C_PROFILE_BY_CASE.values()
 )
+# The staged mapped-material QA identity remains fail-closed.  A separate
+# formal identity is defined for the finite M8N64 direct route; it cannot be
+# launched until the route_readiness facts are filled from reviewed witnesses.
+TASK40_GATE_CD_P6_DIRECT_PROFILE = "task40_gate_cd_0p7_mapped_p6_direct_v1"
+TASK40_GATE_CD_STAGED_PROFILES = frozenset({TASK40_GATE_CD_P6_DIRECT_PROFILE})
+TASK40_GATE_CD_M8N64_P6_DIRECT_PROFILE = (
+    "task40_gate_cd_0p7_mapped_m8n64_p6_direct_v1"
+)
+TASK40_GATE_CD_FORMAL_PROFILES = frozenset(
+    {TASK40_GATE_CD_M8N64_P6_DIRECT_PROFILE}
+)
+TASK40_GATE_CD_P6_DIRECT_PROFILES = frozenset(
+    {*TASK40_GATE_CD_STAGED_PROFILES, *TASK40_GATE_CD_FORMAL_PROFILES}
+)
 TASK40_PHI90_H15_B_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_H15_B_p6_direct_v1"
 )
@@ -370,6 +384,7 @@ TASK40_PHI90_P6_DIRECT_PROFILES = frozenset(
         *TASK40_PHI90_D07C_PROFILES,
         *TASK40_PHI90_H15_PROFILES,
         *TASK40_PHI90_D15_PROFILES,
+        *TASK40_GATE_CD_FORMAL_PROFILES,
     }
 )
 P6_CONDENSED_DIRECT_PROFILES = (
@@ -377,6 +392,7 @@ P6_CONDENSED_DIRECT_PROFILES = (
     | V6_F5_P6_DIRECT_PROFILES
     | DISPERSION_FLAT_P6_PROFILES
     | TASK40_PHI90_P6_DIRECT_PROFILES
+    | TASK40_GATE_CD_P6_DIRECT_PROFILES
 )
 V7_ANISO_N0_PROFILES = (
     V7_ANISO_N0_P4_PROFILES | V7_ANISO_N0_P6_DIRECT_PROFILES
@@ -478,6 +494,8 @@ for _task40_profile in TASK40_PHI90_D15_PROFILES:
     NATIVE_CASES[_task40_profile] = (13.5, (15.0,), None, None, None)
 for _task40_profile in TASK40_PHI90_D07C_PROFILES:
     NATIVE_CASES[_task40_profile] = (0.7, (0.7,), None, None, None)
+for _task40_profile in TASK40_GATE_CD_P6_DIRECT_PROFILES:
+    NATIVE_CASES[_task40_profile] = (0.7, (0.7,), None, None, None)
 NATIVE_CASES[TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE] = (
     13.5, (10.0,), None, None, None
 )
@@ -545,6 +563,7 @@ NATIVE_TIME_LIMIT_MODES.update(
             *V6_F5_P6_DIRECT_PROFILES,
             *DISPERSION_FLAT_P6_PROFILES,
             *TASK40_PHI90_P6_DIRECT_PROFILES,
+            *TASK40_GATE_CD_P6_DIRECT_PROFILES,
         )
     }
 )
@@ -1989,6 +2008,521 @@ def _task40_phi90_d07c_profile_facts(identity):
     return base
 
 
+def _task40_gate_cd_profile_facts(identity):
+    """Bind the exact gate_cd map while keeping full direct solve fail-closed."""
+    from copy import deepcopy
+
+    from src.common.gate_cd_materials import (
+        GATE_CD_CONDITIONS_SHA256,
+        gate_cd_region_entries,
+    )
+    from src.geometry.task40_gate_cd_mesh_plan import (
+        GATE_CD_CELLS,
+        GATE_CD_STATIC_PLAN,
+    )
+
+    if identity not in TASK40_GATE_CD_STAGED_PROFILES:
+        raise ValueError(f"unsupported staged gate_cd profile: {identity}")
+    base = deepcopy(
+        _task40_phi90_d13_profile_facts(TASK40_PHI90_D13_B_P6_DIRECT_PROFILE)
+    )
+    plan = GATE_CD_STATIC_PLAN
+    entries = gate_cd_region_entries()
+    operator_scope = "task40_gate_cd_mapped_p6_finite_dtn_not_yet_bound"
+    base.update(
+        identity=identity,
+        model_id="gate_cd_0p7nm_mapped_50x50_zminus10_to240",
+        execution_mode="full_solve",
+        wavelength_nm=0.7,
+        allowed_mesh_targets_nm=[0.25],
+        formal_runner="src.runners.p6_condensed_direct",
+        route="TASK40_GATE_CD_MAPPED_P6_CONDENSED_DIRECT_STAGED",
+        operator_scope=operator_scope,
+        full_dtn_status="FULL_DTN_NOT_VERIFIED",
+        task40_gate_cd_material_map={
+            "source_conditions_sha256": GATE_CD_CONDITIONS_SHA256,
+            "regions": list(entries),
+            "aggregate_region_volume_nm3": dict(
+                plan.static_facts["aggregated_volume_check_nm3"]
+            ),
+        },
+        launch_status="BLOCKED_UNTIL_GATE_CD_MODE_AND_FULL_RESOURCE_REVIEW",
+    )
+    base["task40_material_identity"] = {
+        "model_id": base["model_id"],
+        "material_authority": "user_conditions_file_exact_hash",
+        "source_conditions_sha256": GATE_CD_CONDITIONS_SHA256,
+        "shared_material_tables_modified": False,
+    }
+    options = base["component_options"]
+    options.update(
+        task_family="task40_gate_cd_mapped_mesh_material_qa",
+        geometry_kind="task40_gate_cd_mapped",
+        geometry_identity_policy="mapped_exact",
+        mesh_plan_id="task40_gate_cd_0p7_mapped_p6_v1",
+        mesh_plan_sha256=plan.plan_sha256,
+        mesh_axis_cell_counts=list(GATE_CD_CELLS),
+        mesh_axis_sha256_le_f64=dict(plan.axis_hashes),
+        expected_global_cell_count=int(plan.static_facts["global_cell_count"]),
+        expected_material_tag_counts_by_label=dict(plan.tag_counts),
+        physical_material_regions=list(entries),
+        mesh_target_nm=0.25,
+        expected_axis_cell_counts=list(GATE_CD_CELLS),
+        direct_p6_route=False,
+        direct_route_launchable=False,
+        full_solve_block_reason=(
+            "Finite port inventory/quadrature and full-tree capacity are not yet qualified; "
+            "only mapped-mesh and bounded mixed-material QA are enabled."
+        ),
+        dtn_sparse_cutoff_policy="NOT_CONFIGURED_FOR_STAGED_GATE_CD_QA",
+        dtn_sparse_cutoff_relative_tolerance=None,
+        mode_selection={
+            "schema": "task40.dtn-mode-selection.v1",
+            "policy": "NOT_FROZEN_FOR_GATE_CD",
+            "parent_inventory_scope": "NOT_RUN",
+            "active_inventory_scope": "NOT_RUN",
+            "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        },
+        directional_mesh_comparison={
+            "schema": "task40.gate-cd-mesh-material-qa.v1",
+            "scope": "one_exact_mapped_geometry_not_a_directional_mesh_study",
+            "case": "gate_cd_mapped_staged_qa",
+            "parent_case": None,
+            "changed_axis": None,
+            "axis_cell_counts": list(GATE_CD_CELLS),
+            "mesh_plan_id": "task40_gate_cd_0p7_mapped_p6_v1",
+            "mesh_plan_sha256": plan.plan_sha256,
+            "expected_axis_sha256_le_f64": dict(plan.axis_hashes),
+            "expected_material_tag_counts_by_label": dict(plan.tag_counts),
+            "separable_segment_cell_counts": "NOT_APPLICABLE_SWEPT_PLAN",
+            "explicit_axis_counts_in_input": False,
+            "only_axis_changes_from_B": None,
+        },
+        direct_factor_evidence={
+            "schema": "task40.gate-cd-staged-factor-evidence.v1",
+            "status": "NOT_RUN_NO_FACTOR_ALLOWED",
+            "enabled": False,
+        },
+        field_output_evidence={
+            "status": "NOT_RUN_NO_FULL_SOLVE_ALLOWED",
+            "visualization_files": "disabled_by_explicit_gate_cd_profile",
+        },
+        surface_assembly_backend_by_degree={
+            "status": "NOT_RUN_GATE_CD_QUADRATURE_UNQUALIFIED"
+        },
+        surface_quadrature={
+            "candidate_degree": None,
+            "reference_degree": None,
+            "authority": "gate_cd trace witness not yet run",
+            "production_degree": None,
+            "status": "NOT_FROZEN_FOR_GATE_CD",
+        },
+        volume_quadrature={
+            "candidate_degree": None,
+            "rule": "default",
+            "authority": "gate_cd FFCx/Basix production metadata not yet checked",
+            "status": "NOT_FROZEN_FOR_GATE_CD",
+        },
+        visualization_output_policy={
+            "write_visualization_files": False,
+            "visualization_files": "disabled_by_explicit_gate_cd_profile",
+            "retained_field_samples": "full3d_reference_sample_npz",
+            "field_recovery_and_energy_metrics": "unchanged",
+            "vtk_vtu_vtx_pvd": "prohibited",
+        },
+    )
+    # This profile is carried by the p6-direct configuration schema so the
+    # staged input can be resolved, but it does not inherit D13's mode,
+    # quadrature, factor, or directional-comparison contract.
+    base.update(
+        execution_mode="staged_mesh_and_material_qa",
+        route="TASK40_GATE_CD_MAPPED_MESH_MATERIAL_QA_STAGED",
+        native_execution={
+            "supervisor_cpu": 9,
+            "worker_cpu": 24,
+            "worker_cpus": [24],
+            "mpi_size": 1,
+            "math_threads": 1,
+            "native_memory_policy": "interleave_nodes0_1",
+            "memory_policy": "interleave_nodes0_1",
+        },
+        outer={
+            "route": "NOT_APPLICABLE_STAGED_QA",
+            "initial_guess": "NOT_APPLICABLE",
+            "screen": {"enabled": False, "policy": "not_applicable_staged_qa"},
+        },
+    )
+    base["campaign_authorization"] = {
+        "source": (
+            "User-preserved gate_cd geometry and material conditions. Current staged "
+            "scope is mapped mesh/topology/material/MPC QA and bounded mixed-material "
+            "assembly only; no global FE matrix, port operator, factor, or solve."
+        ),
+        "execution_mode": "staged_mesh_and_material_qa",
+        "formal_mpi": 1,
+        "math_threads": 1,
+        "supervisor_cpu": 9,
+        "worker_cpu": 24,
+        "numa_policy": "interleave_nodes0_1",
+        "time_limit_mode": "none",
+        "resource_policy": {
+            "name": "host_available_floor_v1",
+            "minimum_available_bytes": 64 * 1024**3,
+            "rss_user_cap": None,
+            "swap": "observe_only",
+            "prediction": "record_only",
+            "pss_uss_sampling": "disabled",
+        },
+        "staged_scope": {
+            "live_mapped_mesh_topology_material_mpc_qa": "AUTHORIZED",
+            "bounded_mixed_material_assembly": "AUTHORIZED",
+            "global_fe_matrix": "NOT_AUTHORIZED",
+            "port_operator": "NOT_AUTHORIZED",
+            "factor": "NOT_AUTHORIZED",
+            "solve": "NOT_AUTHORIZED",
+        },
+    }
+    base["condensed_route"] = {
+        "name": "task40_gate_cd_p6_direct_not_launchable",
+        "operator_family": "gate_cd_mapped_p6_staged_qa_only",
+        "operator_scope": operator_scope,
+        "geometry_identity_policy": "mapped_exact",
+        "degree": 6,
+        "launchable": False,
+        "active_mode_inventory": "NOT_RUN",
+        "parent_mode_inventory": "NOT_RUN",
+        "parent_quadrature_degree": None,
+        "matrix_blocks": "NOT_BUILT",
+        "local_elimination": "NOT_RUN",
+        "materialized_matrix_owner": "NONE_GLOBAL_MATRIX_FORBIDDEN",
+        "borrowed_action_owns_matrix": False,
+        "cross_mesh_reuse": False,
+        "functional_store": False,
+        "factor": "NOT_BUILT",
+        "p4_or_outer_ksp": "NOT_BUILT",
+    }
+    base["backend"] = {
+        "operator_scope": operator_scope,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "p6": "SPACE_AND_MPC_QA_ONLY",
+        "global_matrix": "NOT_BUILT",
+        "factor": "NOT_BUILT",
+        "outer_ksp": "NOT_BUILT",
+        "p4_operator": "NOT_BUILT",
+        "p4_factor": "NOT_BUILT",
+        "independent_residual": "NOT_RUN_NO_SOLVE_AUTHORIZED",
+    }
+    base["campaign_authorization"]["source"] = (
+        "User-preserved gate_cd geometry and material conditions. Current staged scope is "
+        "mapped mesh/topology/material/MPC QA and bounded mixed-material assembly only; "
+        "no full gate_cd solve is launchable until mode/quadrature/resource review."
+    )
+    base["resources"].update(
+        resource_stop_policy="host_available_floor_v1",
+        rss_hard_limit_bytes=None,
+        rss_warning_bytes=None,
+        minimum_available_bytes=64 * 1024**3,
+        swap_policy="observe_only",
+        global_swap_delta_policy="observe_only",
+        stop_on_global_swap=False,
+        pss_sampling_policy="disabled_by_profile",
+        pss_interval_seconds=None,
+        uss_sampling_policy="disabled_by_profile",
+        uss_interval_seconds=None,
+        workflow_seconds=None,
+        solve_seconds=None,
+        time_limit_mode="none",
+    )
+    base["operator_scope"] = operator_scope
+    base["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"
+    return base
+
+
+def _task40_gate_cd_m8n64_profile_facts(identity):
+    """Draft the distinct Gate-CD M8N64 route; keep it fail-closed pending witnesses."""
+    from copy import deepcopy
+
+    from src.common.gate_cd_materials import GATE_CD_REGION_TAGS
+
+    if identity not in TASK40_GATE_CD_FORMAL_PROFILES:
+        raise ValueError(f"unsupported formal gate_cd profile: {identity}")
+    from src.geometry.task40_gate_cd_mesh_plan import (
+        GATE_CD_CELLS,
+        GATE_CD_STATIC_PLAN,
+    )
+
+    base = deepcopy(
+        _task40_gate_cd_profile_facts(TASK40_GATE_CD_P6_DIRECT_PROFILE)
+    )
+    scope = "task40_gate_cd_mapped_M8N64_finite_signed_rectangle"
+    options = base["component_options"]
+    tag_counts_by_tag = {
+        str(GATE_CD_REGION_TAGS[label]): int(count)
+        for label, count in GATE_CD_STATIC_PLAN.tag_counts.items()
+    }
+    options.update(
+        task_family="task40_gate_cd_mapped_m8n64_p6_direct",
+        direct_p6_route=True,
+        direct_route_launchable=True,
+        full_solve_block_reason=(
+            "The finite M8N64 route is not full-DtN qualified; an exact reviewed "
+            "package and a passing fresh host admission are required before its run."
+        ),
+        dtn_sparse_cutoff_policy="scale_homogeneous_relative_only_v1",
+        dtn_sparse_cutoff_relative_tolerance=1.0e-13,
+        mesh_plan_id="task40_gate_cd_0p7_mapped_p6_v1",
+        mesh_plan_sha256=GATE_CD_STATIC_PLAN.plan_sha256,
+        mesh_axis_cell_counts=list(GATE_CD_CELLS),
+        expected_global_cell_count=int(GATE_CD_STATIC_PLAN.static_facts["global_cell_count"]),
+        expected_material_tag_counts_by_label=dict(GATE_CD_STATIC_PLAN.tag_counts),
+        physical_material_regions=options["physical_material_regions"],
+        mode_selection={
+            "schema": "task40.dtn-mode-selection.v1",
+            "policy": "explicit_signed_rectangle_v1",
+            "reference_mode_label": "M8N64",
+            "parent_inventory_scope": "Gate-CD finite signed m[-8,8], n[-64,1], both ports s/p",
+            "active_inventory_scope": "same as finite M8N64 parent",
+            "parent_signed_bounds_mn": [-8, 8, -64, 1],
+            "active_signed_bounds_mn": [-8, 8, -64, 1],
+            "parent_rectangle_max_abs_m_n": [8, 64],
+            "active_rectangle_max_abs_m_n": [8, 64],
+            "expected_mode_count": 4488,
+            "expected_active_mode_count": 4488,
+            "expected_mode_sha256": "6cf60807239dffc209b47336581e8bb50a5f4d986cba5bbdc06500f6271d3865",
+            "expected_active_mode_sha256": "6cf60807239dffc209b47336581e8bb50a5f4d986cba5bbdc06500f6271d3865",
+            "expected_active_propagating_count": 4360,
+            "expected_active_power_carrying_count": 4426,
+            "port_power_carrying_count_by_side": {"top": 2182, "bottom": 2244},
+            "port_propagating_count_by_side": {"top": 2182, "bottom": 2178},
+            "projection_denominator_min": 0.14473769552326393,
+            "projection_denominator_max": 2500.000000000001,
+            "port_reference_planes_nm": {"top": 240.0, "bottom": -10.0},
+            "boundary_amplitude_scale_policy": "boundary_magnitude_scaled_r5_v1",
+            "quadrature_inventory": "gate_cd_finite_M8N64_parent",
+            "quadrature_reference_label": "Gate-CD_M8N64_finite_parent",
+            "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        },
+        surface_quadrature={
+            "candidate_degree": 81,
+            "reference_degree": 161,
+            "degree": 81,
+            "rule": "default",
+            "fixed_comparison_envelope": {"max_abs_m": 8, "max_abs_n": 64},
+            "authority": "actual_axis_aligned_gate_cd_top_bottom_p6_trace_probe",
+            "status": "PASS_BOUNDED_TRACE_FUNCTIONAL_ONLY",
+            "witness": {
+                "path": "/tmp/task40_gate_cd_main_surface_probe_v1.json",
+                "sha256": "04e305e9492a9cc18f109f10d916559140419e94f4a19f7e99cd6f7c4dafd526",
+                "scope": "top_z240_and_bottom_zminus10_axis_aligned_port_faces_only",
+                "actual_p6_trace_element": "Basix_N1curl_degree6_legendre_covariant_Piola",
+                "actual_geometry_combinations": 12,
+                "signed_mode_keys": 42,
+                "max_scaled_vector_error": 3.41753174736795e-12,
+                "scaled_vector_error_tolerance": 1.0e-11,
+                "max_absolute_entry_error": 9.731597004924098e-11,
+                "full_port_or_dtn_qualification": "NOT_ESTABLISHED",
+            },
+        },
+        volume_quadrature={
+            "production_ffcx_metadata": {"degree": 15, "rule": "default"},
+            "production_ffcx_metadata_role": (
+                "pre_override_automatic_ffcx_default_baseline_not_selected_operator"
+            ),
+            "candidate_degrees": [15, 21, 27],
+            "degree": 21,
+            "rule": "default",
+            "authority": "three_actual_cell_p6_q15_q21_q27_tensor_schur_recovery_witness",
+            "status": "SELECTED_Q21_BOUNDED_LOCAL_CANDIDATE_NOT_GLOBAL_ERROR_BOUND",
+            "selection_witness": {
+                "path": "docs/task40para_phi90_mesh_modes_direct/outcomes/records/gate_cd_local_cache_quadrature_q21_witness_20261101.json",
+                "sha256": "3b012b12005aed7fc809beb349a511c27c8f5a28b74b054f130429986951735e",
+                "scope": "three_actual_tag106_worst_taper_cells; q15_vs_q21_and_q21_vs_q27_tensor_schur_recovery_trace_rhs",
+                "selected_q21_vs_q27_max_relative_frobenius": 2.025688753701772e-08,
+                "q15_vs_q21_max_relative_frobenius": 0.0004150388686260537,
+                "global_quadrature_error_bound": "NOT_ESTABLISHED",
+            },
+        },
+        mapped_geometry_cache_policy={
+            "identity": "profile_selected_mapped_geometry_cache_v1",
+            "geometry_identity_policy": "mapped_exact",
+            "mapped_geometry_translation_invariant": True,
+            "translation_normalized_candidate": True,
+            "translation_equivalence_status": "PASS_BOUNDED_TRANSLATION_EQUIVALENCE",
+            "translation_equivalence_witness": {
+                "sha256": "3b012b12005aed7fc809beb349a511c27c8f5a28b74b054f130429986951735e",
+                "scope": "active_local_tensor_schur_recovery_trace_rhs_same_storage",
+                "max_relative_error": 3.837957466360521e-12,
+                "reviewed_tolerance": 1.0e-11,
+                "evidence_path": "docs/task40para_phi90_mesh_modes_direct/outcomes/records/gate_cd_local_cache_quadrature_q21_witness_20261101.json",
+                "actual_cells": [1114, 1221, 27574],
+                "quadrature_witness_degree": 15,
+                "production_cache_paths_q15_exact": True,
+            },
+            "cell_tensor_key_includes_material_tag": True,
+            "local_recovery_key_includes_orientation": True,
+            "identity_scope": (
+                "profile-selected mapped_exact identity; translation is normalized "
+                "only under the recorded bounded local tensor/Schur/recovery/trace/RHS witness"
+            ),
+        },
+        route_readiness={
+            "schema": "task40.gate_cd.formal_route_readiness.v1",
+            "launchable": True,
+            "required": [
+                "selected_volume_q_from_q15_q21_q27_local_comparison",
+                "reviewed_mapped_geometry_cache_identity_choice",
+                "formal_host_floor_observational_scope",
+                "gate_cd_exact_one_shot_host_floor_dynamic_cpu_admission",
+            ],
+            "completed_bounded_witnesses": [
+                "actual_finite_M8N64_inventory_and_per_port_power_counts",
+                "actual_axis_aligned_top_bottom_P6_trace_q81_vs_q161",
+                "selected_volume_q_from_q15_q21_q27_local_comparison",
+                "reviewed_mapped_geometry_cache_identity_choice",
+                "formal_host_floor_observational_scope",
+                "gate_cd_exact_one_shot_host_floor_dynamic_cpu_admission",
+                "actual_translation_normalized_cache_equivalence_witness",
+            ],
+        },
+    )
+    options["directional_mesh_comparison"] = {
+        "schema": "task40.gate-cd-mesh-material-qa.v1",
+        "scope": "one_exact_mapped_gate_cd_geometry; no directional convergence claim",
+        "case": "M8N64",
+        "parent_case": None,
+        "changed_axis": None,
+        "axis_cell_counts": list(GATE_CD_CELLS),
+        "mesh_plan_id": "task40_gate_cd_0p7_mapped_p6_v1",
+        "mesh_plan_sha256": GATE_CD_STATIC_PLAN.plan_sha256,
+        "expected_axis_sha256_le_f64": dict(GATE_CD_STATIC_PLAN.axis_hashes),
+        "base_axis_sha256_le_f64": dict(GATE_CD_STATIC_PLAN.axis_hashes),
+        "expected_material_tag_counts": tag_counts_by_tag,
+        "expected_material_tag_counts_by_label": dict(GATE_CD_STATIC_PLAN.tag_counts),
+        "explicit_axis_counts_in_input": False,
+    }
+    options["direct_factor_evidence"].update(
+        schema="task40.p6-direct-factor-evidence.v1",
+        status="NOT_RUN_UNTIL_FORMAL_ROUTE_READY",
+        enabled=True,
+        pre_release=True,
+        saves_full_p6_storage_and_augmented_solution=True,
+        saves_independent_port_residuals=True,
+        mode_keys=[
+            [side, m, n, pol]
+            for side in ("top", "bottom")
+            for m, n, pol in ((-8, -64, "p"), (0, 0, "s"), (8, 1, "p"))
+        ],
+        full_primal_projection_quadrature_degree=81,
+        active_mode_scope="finite M8N64 only; not the auto/full DtN inventory",
+    )
+    base.update(
+        identity=identity,
+        model_id="gate_cd_0p7nm_mapped_50x50_zminus10_to240",
+        execution_mode="full_solve",
+        route="TASK40_GATE_CD_MAPPED_M8N64_P6_CONDENSED_DIRECT",
+        operator_scope=scope,
+        full_dtn_status="FULL_DTN_NOT_VERIFIED",
+        launch_status="READY_FOR_EXACT_PACKAGE_REVIEW_AND_FRESH_ADMISSION",
+        native_execution={
+            "supervisor_cpu": None,
+            "worker_cpu": None,
+            "worker_cpus": [],
+            "cpu_reservation_policy": "sampled_low_load_distinct_physical_cores_v1",
+            "busy_fallback_allowed": True,
+            "exclusive_cpu_ownership": False,
+            "outer_taskset_required": False,
+            "mpi_size": 1,
+            "math_threads": 1,
+            "native_memory_policy": "interleave_nodes0_1",
+            "memory_policy": "interleave_nodes0_1",
+        },
+    )
+    base["condensed_route"].update(
+        name="task40_gate_cd_m8n64_p6_exact_local_condensation_direct_v1",
+        operator_family="gate_cd_M8N64_finite_signed_rectangle",
+        operator_scope=scope,
+        launchable=True,
+        active_mode_inventory="finite M8N64 both ports s/p; hash pending actual loader",
+        full_dtn_status="FULL_DTN_NOT_VERIFIED",
+        geometry_identity_policy="mapped_exact",
+        mapped_geometry_translation_invariant=True,
+        matrix_blocks="NOT_BUILT",
+        factor="NOT_BUILT",
+    )
+    base["campaign_authorization"]["direct_route"] = {
+        "profile_identity": identity,
+        "operator_scope": scope,
+        "mesh_plan_id": "task40_gate_cd_0p7_mapped_p6_v1",
+        "mesh_plan_sha256": GATE_CD_STATIC_PLAN.plan_sha256,
+        "geometry_identity_policy": "mapped_exact",
+        "mapped_geometry_translation_invariant": True,
+        "mapped_geometry_cache_identity": "profile_selected_mapped_geometry_cache_v1",
+        "selection_policy": "explicit_signed_rectangle_v1",
+        "parent_signed_bounds_mn": [-8, 8, -64, 1],
+        "active_signed_bounds_mn": [-8, 8, -64, 1],
+        "parent_mode_count": 4_488,
+        "active_mode_count": 4_488,
+        "mode_sha256": "6cf60807239dffc209b47336581e8bb50a5f4d986cba5bbdc06500f6271d3865",
+        "surface_quadrature_degree": 81,
+        "surface_quadrature_reference_degree": 161,
+        "volume_quadrature": dict(
+            base["component_options"]["volume_quadrature"]
+        ),
+        "volume_quadrature_status": "SELECTED_Q21_BOUNDED_LOCAL_CANDIDATE_NOT_GLOBAL_ERROR_BOUND",
+        "parallel_admission_policy": "gate_cd_exact_scope_one_shot_host_floor_v1",
+        "one_shot_submission_policy": "profile_run_attempt_scope_o_excl_v1",
+        "cpu_reservation_policy": "sampled_low_load_distinct_physical_cores_v1",
+        "cpu_exclusive_ownership": False,
+        "attempt_cache_policy": "isolated_empty_attempt_cache_v1",
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "launchable": True,
+    }
+    base["backend"].update(
+        operator_scope=scope,
+        full_dtn_status="FULL_DTN_NOT_VERIFIED",
+        p6="P6_CONDENSED_DIRECT_M8N64_Q21_SELECTED_BOUNDED_LOCAL_WITNESS",
+        independent_residual="original_full_p6_A6_active_M8N64_finite_window",
+    )
+    base["resources"].update(
+        resource_stop_policy="host_available_floor_v1",
+        rss_hard_limit_bytes=None,
+        rss_warning_bytes=None,
+        minimum_available_bytes=64 * 1024**3,
+        swap_policy="observe_only",
+        global_swap_delta_policy="observe_only",
+        stop_on_global_swap=False,
+        pss_sampling_policy="disabled_by_profile",
+        uss_sampling_policy="disabled_by_profile",
+        workflow_seconds=None,
+        solve_seconds=None,
+        time_limit_mode="none",
+        parallel_admission_policy="gate_cd_exact_scope_one_shot_host_floor_v1",
+    )
+    base["campaign_authorization"].update(
+        execution_mode="full_solve",
+        source=(
+            "User-preserved Gate-CD mapped model with finite M8N64 direct route; "
+            "q21/default and translation-normalized cell-key reuse are selected from "
+            "bounded actual-cell witnesses. This is not full-DtN qualification; "
+            "an exact case package and fresh host admission remain required."
+        ),
+        resource_policy={
+            "name": "host_available_floor_v1",
+            "minimum_available_bytes": 64 * 1024**3,
+            "rss_user_cap": None,
+            "swap": "observe_only",
+            "prediction": "record_only",
+            "pss_uss_sampling": "disabled",
+            "parallel_neighbors": "exact_hash_bound_observational_scope_only",
+        },
+        staged_scope={
+            "bounded_mapped_mesh_p6_mpc_cache_quadrature_qa": "AUTHORIZED",
+            "global_direct_solve": "READY_FOR_EXACT_PACKAGE_REVIEW_AND_FRESH_ADMISSION",
+        },
+    )
+    return base
+
+
 def _task40_phi90_d5c_modal_profile_facts(identity):
     """Freeze one same-grid D5C-Y7 subrectangle against its finite R5 parent."""
     from copy import deepcopy
@@ -2562,6 +3096,10 @@ def _task40_phi90_d15_profile_facts(identity):
 
 def native_profile_facts(identity):
     from .physical_balanced_profile import balanced_profile_facts
+    if identity in TASK40_GATE_CD_STAGED_PROFILES:
+        return _task40_gate_cd_profile_facts(identity)
+    if identity in TASK40_GATE_CD_FORMAL_PROFILES:
+        return _task40_gate_cd_m8n64_profile_facts(identity)
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
         if identity in TASK40_PHI90_D5C_PROFILES:
             return _task40_phi90_d5c_profile_facts(identity)
@@ -3976,6 +4514,311 @@ def _validate_task40_phi90_d13_case(config: dict, identity: str) -> None:
         raise InputError(f'{identity} requires at least 64 full-3D y samples for phase resolution')
 
 
+def _validate_task40_gate_cd_geometry_cache_readiness(
+    cache_policy: dict,
+    condensed_route: dict,
+    readiness: dict,
+) -> None:
+    """Validate either exact-coordinate reuse or a witnessed translation opt-in."""
+
+    if (
+        cache_policy.get("identity")
+        != "profile_selected_mapped_geometry_cache_v1"
+        or cache_policy.get("geometry_identity_policy") != "mapped_exact"
+        or condensed_route.get("geometry_identity_policy") != "mapped_exact"
+        or cache_policy.get("mapped_geometry_translation_invariant")
+        is not condensed_route.get("mapped_geometry_translation_invariant")
+        or not isinstance(
+            cache_policy.get("mapped_geometry_translation_invariant"), bool
+        )
+        or not isinstance(
+            cache_policy.get("translation_normalized_candidate"), bool
+        )
+        or cache_policy.get("cell_tensor_key_includes_material_tag") is not True
+        or cache_policy.get("local_recovery_key_includes_orientation") is not True
+    ):
+        raise ValueError("Gate-CD mapped geometry cache identity is malformed")
+
+    translation_invariant = cache_policy["mapped_geometry_translation_invariant"]
+    status = cache_policy.get("translation_equivalence_status")
+    witness = cache_policy.get("translation_equivalence_witness")
+    completed = set(readiness.get("completed_bounded_witnesses", ()))
+    launchable = readiness.get("launchable") is True
+    if translation_invariant:
+        if (
+            cache_policy["translation_normalized_candidate"] is not True
+            or status != "PASS_BOUNDED_TRANSLATION_EQUIVALENCE"
+            or not isinstance(witness, dict)
+        ):
+            raise ValueError(
+                "translation-normalized mapped cache needs its bounded equivalence witness"
+            )
+        sha = witness.get("sha256")
+        scope = witness.get("scope")
+        max_error = witness.get("max_relative_error")
+        tolerance = witness.get("reviewed_tolerance")
+        if (
+            not isinstance(sha, str)
+            or len(sha) != 64
+            or any(character not in "0123456789abcdef" for character in sha)
+            or scope
+            != "active_local_tensor_schur_recovery_trace_rhs_same_storage"
+            or not isinstance(max_error, (int, float))
+            or not isinstance(tolerance, (int, float))
+            or not math.isfinite(float(max_error))
+            or not math.isfinite(float(tolerance))
+            or float(tolerance) <= 0.0
+            or float(max_error) < 0.0
+            or float(max_error) > float(tolerance)
+        ):
+            raise ValueError(
+                "translation-normalized mapped cache witness identity or error bound is invalid"
+            )
+        if launchable and (
+            "actual_translation_normalized_cache_equivalence_witness" not in completed
+        ):
+            raise ValueError(
+                "launchable Gate-CD route lacks the translated-cache witness marker"
+            )
+    else:
+        if status not in {
+            "PENDING_ACTIVE_LOCAL_TENSOR_SCHUR_RECOVERY_TRACE_RHS_WITNESS",
+            "SELECTED_EXACT_PHYSICAL_COORDINATE_KEYS",
+        }:
+            raise ValueError("exact-coordinate Gate-CD cache state is malformed")
+        if launchable and (
+            status != "SELECTED_EXACT_PHYSICAL_COORDINATE_KEYS"
+            or "selected_exact_physical_coordinate_cache_identity" not in completed
+        ):
+            raise ValueError(
+                "launchable Gate-CD route lacks an explicit exact-coordinate cache selection"
+            )
+
+
+def _validate_task40_gate_cd_case(config: dict, identity: str) -> None:
+    """Validate staged and finite M8N64 Gate-CD inputs against their own profiles."""
+    from src.common.gate_cd_materials import GATE_CD_N_COMPLEX
+    from src.geometry.task40_gate_cd_mesh_plan import (
+        GATE_CD_CELLS,
+        GATE_CD_PROFILE_ID,
+        GATE_CD_STATIC_PLAN,
+    )
+
+    from .input_loader import InputError
+
+    def require(section: str, key: str, expected: object) -> None:
+        actual = config.get(section, {}).get(key)
+        if actual != expected:
+            raise InputError(
+                f'{identity} fixes {section}.{key}={expected!r}; got {actual!r}'
+            )
+
+    require('method', 'kind', 'full3d_direct')
+    solver = config.get('solver', {})
+    require('solver', 'native_capacity_profile', identity)
+    require('solver', 'linear_solver', 'direct')
+    require('solver', 'direct_solver_profile', 'default')
+    forbidden = {
+        'preconditioner', 'ksp_type', 'restart', 'max_iterations', 'coarse_degree'
+    } & set(solver)
+    if forbidden:
+        raise InputError(f'{identity} forbids iterative/P4 fields: {sorted(forbidden)}')
+    if config.get('model_id') != 'gate_cd_0p7nm_mapped_50x50_zminus10_to240':
+        raise InputError(f'{identity} fixes the gate_cd mapped model identity')
+    if identity in TASK40_GATE_CD_FORMAL_PROFILES and config.get('run_id') != identity:
+        raise InputError(f'{identity} requires a distinct formal run_id equal to its profile identity')
+    geometry = config.get('geometry', {})
+    for key, expected in {
+        'geometry_kind': 'task40_gate_cd_mapped',
+        'period_x_nm': 50.0,
+        'period_y_nm': 50.0,
+        'z_min_nm': -10.0,
+        'z_max_nm': 240.0,
+        'interface_z_nm': 0.0,
+        'air_height_nm': 240.0,
+        'substrate_thickness_nm': 10.0,
+    }.items():
+        if geometry.get(key) != expected:
+            raise InputError(f'{identity} fixes geometry.{key}={expected!r}')
+
+    materials = config.get('materials', {})
+    si_index = GATE_CD_N_COMPLEX['Si']
+    for key, expected in {
+        'n_air': (1.0, 0.0),
+        'mu_r': (1.0, 0.0),
+        # These fields serve the homogeneous half-space/legacy cfg interface.
+        # The volume UFL and loss outputs use the exact per-region table.
+        'n_substrate': (si_index.real, si_index.imag),
+        'n_grating': (si_index.real, si_index.imag),
+    }.items():
+        if tuple(materials.get(key, ())) != expected:
+            raise InputError(f'{identity} fixes materials.{key}={expected!r}')
+    if materials.get('substrate_name') != 'Si' or materials.get('grating_name') != 'Si':
+        raise InputError(f'{identity} fixes the legacy material labels to Si')
+
+    for key, expected in {
+        'wavelength_nm': 0.7,
+        'grazing_angle_deg': 1.0,
+        'azimuth_deg': 90.0,
+        'polarization': 's',
+        'electric_amplitude': 1.0,
+    }.items():
+        require('incidence', key, expected)
+
+    discretization = config.get('discretization', {})
+    for key, expected in {
+        'nedelec_degree': 6,
+        'visualization_degree': 6,
+        'mesh_target_nm': 0.25,
+        'mesh_cell_type': 'hexahedron',
+        'mesh_spacing_mode': 'boundary_fitted',
+        'assembly_backend': 'standard_full',
+        'floquet_constraint_mode': 'auto',
+        'mesh_plan_id': GATE_CD_PROFILE_ID,
+        'mesh_plan_sha256': GATE_CD_STATIC_PLAN.plan_sha256,
+    }.items():
+        require('discretization', key, expected)
+    if tuple(discretization.get('mesh_axis_cell_counts') or ()) != GATE_CD_CELLS:
+        raise InputError(f'{identity} fixes mesh axis counts {GATE_CD_CELLS!r}')
+    for key in ('mesh_axis_x_values', 'mesh_axis_y_values', 'mesh_axis_z_values', 'mesh_axis_z_profile'):
+        if discretization.get(key) is not None:
+            raise InputError(
+                f'{identity} uses the exact swept mesh plan; {key} is not a separable axis'
+            )
+
+    for key, expected in {
+        'use_floquet_x': True,
+        'use_floquet_y': True,
+        'vertical_boundary': 'dtn_port',
+        'scattering_background': 'layered',
+        'dtn_order_policy': 'auto_propagating',
+        'dtn_assembly': 'auxiliary',
+        'use_pml': False,
+    }.items():
+        require('boundary', key, expected)
+
+    execution = config.get('execution', {})
+    for key, expected in {
+        'mpi_size': 1,
+        'time_limit_mode': 'none',
+        'timeout_seconds': None,
+        'require_zero_swap': False,
+        'native_memory_policy': 'interleave_nodes0_1',
+        'warning_memory_gib': 64.0,
+        'terminate_memory_gib': 128.0,
+        'memory_limit_gb': 128.0,
+    }.items():
+        require('execution', key, expected)
+    facts = native_profile_facts(identity)
+    resources = facts['resources']
+    if (
+        resources.get('resource_stop_policy') != 'host_available_floor_v1'
+        or resources.get('minimum_available_bytes') != 64 * 1024**3
+        or resources.get('rss_hard_limit_bytes') is not None
+        or resources.get('pss_sampling_policy') != 'disabled_by_profile'
+        or resources.get('uss_sampling_policy') != 'disabled_by_profile'
+    ):
+        raise InputError(f'{identity} has an invalid bounded Task40 host-floor profile')
+
+    if identity in TASK40_GATE_CD_FORMAL_PROFILES:
+        mode = facts['component_options']['mode_selection']
+        if (
+            mode.get('policy') != 'explicit_signed_rectangle_v1'
+            or tuple(mode.get('active_signed_bounds_mn') or ()) != (-8, 8, -64, 1)
+            or tuple(mode.get('parent_signed_bounds_mn') or ()) != (-8, 8, -64, 1)
+            or int(mode.get('expected_mode_count', -1)) != 4488
+            or int(mode.get('expected_active_mode_count', -1)) != 4488
+            or mode.get('expected_mode_sha256') != '6cf60807239dffc209b47336581e8bb50a5f4d986cba5bbdc06500f6271d3865'
+            or mode.get('expected_active_mode_sha256') != '6cf60807239dffc209b47336581e8bb50a5f4d986cba5bbdc06500f6271d3865'
+            or int(mode.get('expected_active_propagating_count', -1)) != 4360
+            or int(mode.get('expected_active_power_carrying_count', -1)) != 4426
+            or mode.get('full_dtn_status') != 'FULL_DTN_NOT_VERIFIED'
+            or facts.get('full_dtn_status') != 'FULL_DTN_NOT_VERIFIED'
+        ):
+            raise InputError(f'{identity} finite signed M8N64 mode contract is malformed')
+        if (
+            facts['component_options']['surface_quadrature'].get('degree') != 81
+            or facts['component_options']['surface_quadrature'].get('reference_degree') != 161
+            or facts['component_options']['surface_quadrature'].get('status')
+            != 'PASS_BOUNDED_TRACE_FUNCTIONAL_ONLY'
+        ):
+            raise InputError(f'{identity} lacks the reviewed bounded q81 surface witness')
+        witness = facts['component_options']['surface_quadrature'].get('witness', {})
+        witness_error = float(witness.get('max_scaled_vector_error', float('nan')))
+        if (
+            witness.get('sha256') != '04e305e9492a9cc18f109f10d916559140419e94f4a19f7e99cd6f7c4dafd526'
+            or witness.get('scope')
+            != 'top_z240_and_bottom_zminus10_axis_aligned_port_faces_only'
+            or not math.isfinite(witness_error)
+            or witness_error > 1.0e-11
+            or witness.get('full_port_or_dtn_qualification') != 'NOT_ESTABLISHED'
+        ):
+            raise InputError(f'{identity} surface-q witness identity or scope is incomplete')
+        volume = facts['component_options']['volume_quadrature']
+        if (
+            int(volume.get('degree', -1)) not in (15, 21, 27)
+            or volume.get('rule') != 'default'
+            or volume.get('production_ffcx_metadata')
+            != {'degree': 15, 'rule': 'default'}
+        ):
+            raise InputError(f'{identity} volume quadrature is outside the measured FFCx candidate set')
+        cache_policy = facts['component_options'].get(
+            'mapped_geometry_cache_policy', {}
+        )
+        condensed_route = facts.get('condensed_route', {})
+        readiness = facts['component_options'].get('route_readiness', {})
+        launchable = readiness.get('launchable')
+        if not isinstance(launchable, bool):
+            raise InputError('Gate-CD formal route readiness must be an explicit boolean')
+        try:
+            _validate_task40_gate_cd_geometry_cache_readiness(
+                cache_policy, condensed_route, readiness
+            )
+        except ValueError as exc:
+            raise InputError(f'{identity}: {exc}') from exc
+        campaign_route = facts['campaign_authorization']['direct_route']
+        if (
+            campaign_route.get('geometry_identity_policy') != 'mapped_exact'
+            or campaign_route.get('mapped_geometry_translation_invariant')
+            is not cache_policy.get('mapped_geometry_translation_invariant')
+            or campaign_route.get('mapped_geometry_cache_identity')
+            != cache_policy.get('identity')
+        ):
+            raise InputError(
+                f'{identity} campaign route cache identity differs from the selected profile'
+            )
+        required = set(readiness.get('required', ()))
+        completed = set(readiness.get('completed_bounded_witnesses', ()))
+        if launchable and required - completed:
+            raise InputError(
+                f'Gate-CD formal route is marked launchable with missing witnesses: '
+                f'{sorted(required - completed)}'
+            )
+        if (
+            facts['component_options'].get('direct_route_launchable') is not launchable
+            or facts['condensed_route'].get('launchable') is not launchable
+        ):
+            raise InputError('Gate-CD formal route launch state differs across profile layers')
+
+    output = config.get('output', {})
+    if output.get('write_visualization_files') is not False:
+        raise InputError(f'{identity} disables VTK/VTU/VTX/PVD output')
+    for key in ('export_fields', 'export_diffraction_orders', 'export_modal_amplitudes'):
+        if output.get(key) is not True:
+            raise InputError(f'{identity} requires output.{key}=true')
+    if output.get('export_canonical_vectors') is not False:
+        raise InputError(f'{identity} keeps large canonical-vector exports disabled')
+    if int(output.get('sample_count_y', 0)) < 64:
+        raise InputError(f'{identity} requires at least 64 y samples for grazing-phase outputs')
+    if identity in TASK40_GATE_CD_FORMAL_PROFILES and (
+        output.get('diffraction_order_max_m') != 8
+        or output.get('diffraction_order_max_n') != 64
+    ):
+        raise InputError(
+            f'{identity} reporting envelope must remain the explicit M8N64 rectangle'
+        )
+
+
 def _validate_task40_phi90_d15_case(config: dict, identity: str) -> None:
     """Validate D15 axes, then reuse the D13 baseline's unchanged physics contract."""
     from copy import deepcopy
@@ -4420,11 +5263,15 @@ def validate_native_case(config):
     if (
         "write_visualization_files" in config.get("output", {})
         and identity not in TASK40_PHI90_D07C_PROFILES
+        and identity not in TASK40_GATE_CD_P6_DIRECT_PROFILES
     ):
         raise InputError(
             "output.write_visualization_files is supported only by the explicitly "
             "authorized Task40 D07C profile family"
         )
+    if identity in TASK40_GATE_CD_P6_DIRECT_PROFILES:
+        _validate_task40_gate_cd_case(config, identity)
+        return
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
         if identity in TASK40_PHI90_D5C_PROFILES:
             _validate_task40_phi90_d5c_case(config, identity)

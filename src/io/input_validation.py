@@ -500,6 +500,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
             "fresnel_interface",
             "flat_layer",
             "rectangular_block_grating",
+            "task40_gate_cd_mapped",
         }:
             raise _error("geometry.geometry_kind", "invalid 3D geometry kind")
         if discretization["mesh_cell_type"] not in {
@@ -531,7 +532,10 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 "boundary.use_floquet_x",
                 "3D grating, Fresnel, and PML airbox stages require dual Floquet",
             )
-        grating = geometry_kind == "rectangular_block_grating"
+        grating = geometry_kind in {
+            "rectangular_block_grating",
+            "task40_gate_cd_mapped",
+        }
         grazing = "grazing_angle_deg" in incidence
         tilt = "tilt_from_downward_z_deg" in incidence
         if grazing == tilt:
@@ -876,6 +880,79 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 raise _error(
                     "boundary.scattering_background",
                     "Stage4 rectangular grating currently requires layered",
+                )
+        elif geometry_kind == "task40_gate_cd_mapped":
+            from src.io.native_capacity_profile import (
+                TASK40_GATE_CD_FORMAL_PROFILES,
+                TASK40_GATE_CD_STAGED_PROFILES,
+            )
+
+            if kind != "full3d_direct":
+                raise _error(
+                    "method.kind",
+                    "gate_cd mapped material route is currently p6 condensed direct only",
+                )
+            exact_geometry = {
+                "period_x_nm": 50.0,
+                "period_y_nm": 50.0,
+                "z_min_nm": -10.0,
+                "z_max_nm": 240.0,
+                "interface_z_nm": 0.0,
+                "air_height_nm": 240.0,
+                "substrate_thickness_nm": 10.0,
+            }
+            for field, expected in exact_geometry.items():
+                if geometry.get(field) != expected:
+                    raise _error(
+                        f"geometry.{field}",
+                        f"gate_cd requires the preserved value {expected!r}",
+                    )
+            exact_incidence = {
+                "wavelength_nm": 0.7,
+                "grazing_angle_deg": 1.0,
+                "azimuth_deg": 90.0,
+                "polarization": "s",
+            }
+            for field, expected in exact_incidence.items():
+                if incidence.get(field) != expected:
+                    raise _error(
+                        f"incidence.{field}",
+                        f"gate_cd requires the preserved value {expected!r}",
+                    )
+            if materials.get("n_air") != (1.0, 0.0) or materials.get(
+                "mu_r"
+            ) != (1.0, 0.0):
+                raise _error(
+                    "materials",
+                    "gate_cd requires user-preserved air index 1 and mu_r=1",
+                )
+            profile_identity = str(solver.get("native_capacity_profile", ""))
+            if profile_identity not in (
+                TASK40_GATE_CD_STAGED_PROFILES | TASK40_GATE_CD_FORMAL_PROFILES
+            ):
+                raise _error(
+                    "solver.native_capacity_profile",
+                    "gate_cd requires a dedicated staged or finite M8N64 profile",
+                )
+            if (
+                discretization.get("nedelec_degree") != 6
+                or discretization.get("mesh_cell_type") != "hexahedron"
+                or tuple(discretization.get("mesh_axis_cell_counts") or ())
+                != (5, 240, 23)
+            ):
+                raise _error(
+                    "discretization",
+                    "gate_cd fixes P6 hexahedra and mapped axis counts [5,240,23]",
+                )
+            if (
+                boundary.get("vertical_boundary") != "dtn_port"
+                or boundary.get("dtn_assembly") != "auxiliary"
+                or boundary.get("use_pml") is not False
+                or boundary.get("scattering_background") != "layered"
+            ):
+                raise _error(
+                    "boundary",
+                    "gate_cd requires auxiliary DtN, no PML, layered incident setup",
                 )
         elif geometry_kind == "flat_layer":
             if kind != "full3d_direct":
@@ -1416,6 +1493,8 @@ def simulation_config_3d_from_normalized(
     )
     if g["geometry_kind"] == "rectangular_block_grating":
         stage_case = "stage4_block_grating"
+    elif g["geometry_kind"] == "task40_gate_cd_mapped":
+        stage_case = "stage4_block_grating"
     elif g["geometry_kind"] == "flat_layer":
         stage_case = "stage4_flat_layer_sanity"
     elif g["geometry_kind"] == "fresnel_interface":
@@ -1431,6 +1510,11 @@ def simulation_config_3d_from_normalized(
         if g["geometry_kind"] == "flat_layer"
         else g["geometry_kind"]
     )
+    physical_material_regions = None
+    if g["geometry_kind"] == "task40_gate_cd_mapped":
+        from src.common.gate_cd_materials import gate_cd_region_entries
+
+        physical_material_regions = gate_cd_region_entries()
     reporting_requested = (
         out.get("export_diffraction_orders", False)
         and out.get("diffraction_order_max_m") is not None
@@ -1491,6 +1575,7 @@ def simulation_config_3d_from_normalized(
         mesh_plan_sha256=d.get("mesh_plan_sha256"),
         mesh_cell_type=d["mesh_cell_type"],
         mesh_spacing_mode=d.get("mesh_spacing_mode", "auto"),
+        physical_material_regions=physical_material_regions,
         mesh_refined_size=d.get("mesh_refined_size_nm"),
         mesh_refinement_radius=d.get("mesh_refinement_radius_nm"),
         floquet_constraint_mode=d.get("floquet_constraint_mode", "auto"),
@@ -1658,6 +1743,31 @@ def resolve_loaded_input(loaded: LoadedInput) -> RunSpecification:
             "boundary",
         )
     }
+    if normalized["geometry"].get("geometry_kind") == "task40_gate_cd_mapped":
+        from src.common.gate_cd_materials import (
+            GATE_CD_CONDITIONS_SHA256,
+            gate_cd_region_entries,
+        )
+
+        physical["mapped_material_model"] = {
+            "source_conditions_sha256": GATE_CD_CONDITIONS_SHA256,
+            "regions": [
+                {
+                    "tag": int(entry["tag"]),
+                    "label": str(entry["label"]),
+                    "material_name": str(entry["material_name"]),
+                    "epsilon_r": [
+                        complex(entry["epsilon_r"]).real,
+                        complex(entry["epsilon_r"]).imag,
+                    ],
+                    "n_complex": [
+                        complex(entry["n_complex"]).real,
+                        complex(entry["n_complex"]).imag,
+                    ],
+                }
+                for entry in gate_cd_region_entries()
+            ],
+        }
     physical_sha = sha256(canonical_json_bytes(physical)).hexdigest()
     output = normalized["output"]
     method = normalized["method"]["kind"]

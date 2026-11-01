@@ -14,6 +14,7 @@ import math
 import os
 import sys
 import time
+from collections import Counter
 from collections.abc import Mapping
 from itertools import pairwise
 from pathlib import Path
@@ -94,6 +95,7 @@ def _write_direct_flat_reference_outputs(
 
 
 def _validate_resolved_profile(payload: Mapping[str, Any]) -> dict[str, Any]:
+    from src.io.input_validation import _jsonable
     from src.io.native_capacity_profile import (
         P6_CONDENSED_DIRECT_PROFILES,
         native_capacity_profile_identity,
@@ -115,7 +117,9 @@ def _validate_resolved_profile(payload: Mapping[str, Any]) -> dict[str, Any]:
     expected_facts = native_profile_facts(identity)
     if not isinstance(resolved_facts, Mapping):
         raise TypeError("resolved derived.native_capacity_profile is missing")
-    if canonical_json_bytes(dict(resolved_facts)) != canonical_json_bytes(expected_facts):
+    if canonical_json_bytes(_jsonable(dict(resolved_facts))) != canonical_json_bytes(
+        _jsonable(expected_facts)
+    ):
         raise ValueError("resolved direct profile facts differ from the frozen profile")
     if resolved_facts.get("identity") != identity:
         raise ValueError("resolved native profile identity differs from solver selection")
@@ -134,6 +138,55 @@ def _validate_resolved_profile(payload: Mapping[str, Any]) -> dict[str, Any]:
     return dict(resolved_facts)
 
 
+def _condensation_geometry_cache_kwargs(
+    profile_facts: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Bind the exact mapped-cell identity policy selected by a profile."""
+
+    condensed_route = profile_facts.get("condensed_route", {})
+    if not isinstance(condensed_route, Mapping):
+        raise TypeError("p6 condensed geometry route must be a mapping")
+    policy = str(condensed_route.get("geometry_identity_policy", "raw_unrounded"))
+    translation_invariant = condensed_route.get(
+        "mapped_geometry_translation_invariant", False
+    )
+    if not isinstance(translation_invariant, bool):
+        raise TypeError("mapped geometry translation policy must be boolean")
+    if translation_invariant and policy != "mapped_exact":
+        raise ValueError(
+            "translation-normalized mapped geometry reuse requires mapped_exact"
+        )
+    return {
+        "geometry_identity_policy": policy,
+        "mapped_geometry_translation_invariant": translation_invariant,
+    }
+
+
+def _reject_unqualified_gate_cd_full_solve(profile_facts: Mapping[str, Any]) -> None:
+    """Keep the mesh-QA identity closed and gate formal solves on route evidence."""
+
+    from src.io.native_capacity_profile import (
+        TASK40_GATE_CD_FORMAL_PROFILES,
+        TASK40_GATE_CD_STAGED_PROFILES,
+    )
+
+    identity = str(profile_facts.get("identity"))
+    if identity in TASK40_GATE_CD_STAGED_PROFILES:
+        raise RuntimeError(
+            "full P6 solve is not enabled: Gate-CD staged profile permits "
+            "mapped mesh/material QA only"
+        )
+    if identity in TASK40_GATE_CD_FORMAL_PROFILES:
+        readiness = profile_facts.get("component_options", {}).get(
+            "route_readiness", {}
+        )
+        if readiness.get("launchable") is not True:
+            raise RuntimeError(
+                "Gate-CD formal P6 solve remains blocked until every route-readiness "
+                "witness is reviewed and launchable is explicitly true"
+            )
+
+
 def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
     """Return route-specific immutable identities without conflating V7 N0."""
 
@@ -144,6 +197,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         TASK40_PHI90_D5C_PROFILES,
         TASK40_PHI90_D15_PROFILES,
         TASK40_PHI90_H15_PROFILES,
+        TASK40_GATE_CD_FORMAL_PROFILES,
         TASK40_PHI90_P6_DIRECT_PROFILES,
         V6_F5_P6_DIRECT_FULL600_PROFILE,
         V6_F5_P6_DIRECT_N0_PROFILE,
@@ -251,12 +305,13 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         d5c_case = profile_identity in TASK40_PHI90_D5C_PROFILES
         d07c_case = profile_identity in TASK40_PHI90_D07C_PROFILES
         d5_case = profile_identity in TASK40_PHI90_D5_PROFILES
+        gate_cd_case = profile_identity in TASK40_GATE_CD_FORMAL_PROFILES
         family_label = (
-            "d15" if d15_case else "d07c" if d07c_case else "d5c" if d5c_case else "d5" if d5_case
+            "gate_cd" if gate_cd_case else "d15" if d15_case else "d07c" if d07c_case else "d5c" if d5c_case else "d5" if d5_case
             else "h15" if h15_case else "d13"
         )
         route_label = (
-            "D15" if d15_case else "D07C" if d07c_case else "D5C" if d5c_case else "D5" if d5_case
+            "GATE_CD" if gate_cd_case else "D15" if d15_case else "D07C" if d07c_case else "D5C" if d5c_case else "D5" if d5_case
             else "H15" if h15_case else "D13"
         )
         plan_id = mesh_case["mesh_plan_id"]
@@ -274,7 +329,16 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             mode.get("expected_mode_sha256"),
         )
         return {
+            # Gate-CD deliberately reuses the already-qualified Task40 direct
+            # algorithm family while retaining its own mesh evidence,
+            # operator-scope, run labels, and finite modal identity.
             "family": "task40_phi90",
+            "comparison_family": (
+                "GATE_CD_M8N64_FINITE_SIGNED_RECTANGLE"
+                if gate_cd_case
+                else "task40_phi90"
+            ),
+            "gate_cd_case": gate_cd_case,
             "task40_mesh_plan_family": family_label,
             "task40_mesh_case": case_name,
             "task40_changed_axis": mesh_case["changed_axis"],
@@ -293,6 +357,15 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "task40_base_axis_sha256_le_f64": base_axis_hashes,
             "task40_expected_material_tag_counts": expected_tag_counts,
             "profile_identity": profile_identity,
+            "geometry_identity_policy": profile["condensed_route"].get(
+                "geometry_identity_policy", "raw_unrounded"
+            ),
+            "mapped_geometry_translation_invariant": profile[
+                "condensed_route"
+            ].get("mapped_geometry_translation_invariant", False),
+            "mapped_geometry_cache_identity": options.get(
+                "mapped_geometry_cache_policy", {}
+            ).get("identity"),
             "truncated": truncated,
             "operator_scope": route_scope,
             "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
@@ -336,8 +409,12 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "residual_gate_key": "original_A6_active_rectangle_residual_pass",
             "residual_finite_key": "original_A6_active_rectangle_finite",
             "summary_prefix": (
-                f"task40_phi90_{family_label}_{case_name.lower()}_p6_direct_"
-                f"{reference_label}"
+                f"task40_gate_cd_{case_name.lower()}_p6_direct_{reference_label}"
+                if gate_cd_case
+                else (
+                    f"task40_phi90_{family_label}_{case_name.lower()}_p6_direct_"
+                    f"{reference_label}"
+                )
             ),
             "expected_mode_count": expected_mode_count,
             "expected_rectangle_max_abs_m_n": active_rectangle,
@@ -347,8 +424,22 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "surface_quadrature_reference_degree": options[
                 "surface_quadrature"
             ].get("reference_degree"),
+            "volume_quadrature": dict(options.get("volume_quadrature", {})),
             "expected_propagating_count": mode.get("expected_active_propagating_count"),
             "expected_power_carrying_count": mode.get("expected_active_power_carrying_count"),
+            "expected_propagating_count_by_side": dict(
+                mode.get("port_propagating_count_by_side", {})
+            ),
+            "expected_power_carrying_count_by_side": dict(
+                mode.get("port_power_carrying_count_by_side", {})
+            ),
+            "expected_projection_denominator_range": [
+                mode.get("projection_denominator_min"),
+                mode.get("projection_denominator_max"),
+            ],
+            "expected_port_reference_planes_nm": dict(
+                mode.get("port_reference_planes_nm", {})
+            ),
             "surface_quadrature_envelope_max_abs_m_n": [
                 options["surface_quadrature"]["fixed_comparison_envelope"]["max_abs_m"],
                 options["surface_quadrature"]["fixed_comparison_envelope"]["max_abs_n"],
@@ -368,25 +459,25 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
                     "write_visualization_files", True
                 )
             ),
-            "d13_case": case_name if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None,
+            "d13_case": case_name if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case and not gate_cd_case else None,
             "changed_axis": mesh_case["changed_axis"],
-            "d13_mesh_plan_id": plan_id if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None,
-            "d13_mesh_plan_sha256": plan_sha if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None,
+            "d13_mesh_plan_id": plan_id if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case and not gate_cd_case else None,
+            "d13_mesh_plan_sha256": plan_sha if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case and not gate_cd_case else None,
             "d13_expected_axis_sha256_le_f64": (
-                expected_axis_hashes if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None
+                expected_axis_hashes if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case and not gate_cd_case else None
             ),
             "d13_base_axis_sha256_le_f64": (
-                base_axis_hashes if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None
+                base_axis_hashes if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case and not gate_cd_case else None
             ),
             "d13_axis_comparison_parent": mesh_case.get(
                 "axis_comparison_parent", "B"
-            ) if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None,
+            ) if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case and not gate_cd_case else None,
             "d13_expected_material_tag_counts": (
-                expected_tag_counts if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None
+                expected_tag_counts if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case and not gate_cd_case else None
             ),
             "diagnostic_scope": (
                 f"TASK40_{route_label}_{case_name}_"
-                f"{'0P7NM' if d07c_case else '5NM' if d5_case or d5c_case else '13P5NM'}_"
+                f"{'0P7NM' if d07c_case or gate_cd_case else '5NM' if d5_case or d5c_case else '13P5NM'}_"
                 f"{expected_cells}CELL_PHI90"
             ),
         }
@@ -468,6 +559,46 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "summary_prefix": "v6_f5_p6_condensed_direct_n0",
         }
     raise ValueError(f"unsupported p6 condensed-direct profile: {profile_identity}")
+
+
+def _task40_gate_cd_volume_quadrature_metadata(
+    route: Mapping[str, Any],
+    production_metadata: tuple[Mapping[str, Any], Mapping[str, Any]],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Select an explicitly profiled Gate-CD volume rule from the bounded candidates.
+
+    The production FFCx inventory is still obtained first and must remain q15/default;
+    the selected q15/q21/q27 rule is then carried into both action components and
+    physical absorption postprocessing. Other direct families keep their old path.
+    """
+
+    if route.get("gate_cd_case") is not True:
+        raise ValueError("Gate-CD volume selector cannot be used by another route")
+    expected_production = (
+        {"quadrature_degree": 15, "quadrature_rule": "default"},
+        {"quadrature_degree": 15, "quadrature_rule": "default"},
+    )
+    actual_production = tuple(dict(item) for item in production_metadata)
+    if actual_production != expected_production:
+        raise ValueError("Gate-CD actual production FFCx volume inventory is not q15/default")
+    selection = route.get("volume_quadrature")
+    if not isinstance(selection, Mapping):
+        raise TypeError("Gate-CD direct route is missing its selected volume quadrature facts")
+    candidates = tuple(int(value) for value in selection.get("candidate_degrees", ()))
+    degree = selection.get("degree")
+    rule = selection.get("rule")
+    if (
+        candidates != (15, 21, 27)
+        or isinstance(degree, bool)
+        or not isinstance(degree, int)
+        or degree not in candidates
+        or rule != "default"
+    ):
+        raise ValueError("Gate-CD selected volume quadrature is outside q15/q21/q27 default")
+    return tuple(
+        {"quadrature_degree": degree, "quadrature_rule": rule}
+        for _ in range(2)
+    )
 
 
 def _validate_direct_condensed_dimensions(
@@ -1234,6 +1365,184 @@ def _f5_expected_material_tag_counts(
         "grating": grating,
         "substrate": substrate,
         "air": total - grating - substrate,
+    }
+
+
+def _task40_gate_cd_mesh_evidence(
+    levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Bind the formal route to the actual mapped mesh, tags and P6 space."""
+    from src.common.gate_cd_materials import (
+        GATE_CD_CONDITIONS_SHA256,
+        gate_cd_region_entries,
+    )
+    from src.geometry.task40_gate_cd_mesh_plan import (
+        GATE_CD_STATIC_PLAN,
+        gate_cd_live_mesh_facts,
+    )
+
+    mesh_data = levels["mesh_data"]
+    facts = gate_cd_live_mesh_facts(
+        mesh_data.mesh, mesh_data.cell_tags, GATE_CD_STATIC_PLAN
+    )
+    if (
+        str(cfg.mesh_plan_id) != "task40_gate_cd_0p7_mapped_p6_v1"
+        or str(cfg.mesh_plan_sha256) != GATE_CD_STATIC_PLAN.plan_sha256
+        or route.get("task40_mesh_plan_family") != "gate_cd"
+        or route.get("task40_mesh_plan_sha256") != GATE_CD_STATIC_PLAN.plan_sha256
+    ):
+        raise ValueError("live Gate-CD route identity differs from its mapped mesh plan")
+    if (
+        facts.get("axis_hashes_sha256_le_f64")
+        != route.get("task40_expected_axis_sha256_le_f64")
+        or facts.get("cell_tag_counts_by_tag")
+        != route.get("task40_expected_material_tag_counts")
+    ):
+        raise ValueError("live Gate-CD axes/tags differ from the formal profile identity")
+    regions = tuple(cfg.physical_material_regions or ())
+    expected_regions = tuple(gate_cd_region_entries())
+    if len(regions) != len(expected_regions):
+        raise ValueError("live Gate-CD physical material map has the wrong region count")
+    for actual, expected in zip(regions, expected_regions, strict=True):
+        for field in ("tag", "label", "material_name", "epsilon_r", "n_complex"):
+            if actual.get(field) != expected.get(field):
+                raise ValueError(f"live Gate-CD material map differs at {field}")
+    if GATE_CD_CONDITIONS_SHA256 != "d85db27dbad9170c59b0a83e3e090a39db35c6974e5b71094aa8df6748b313d2":
+        raise ValueError("Gate-CD conditions identity changed in the mapped mesh path")
+    dofmap = levels["spaces"][6].dofmap
+    p6_rows = int(dofmap.index_map.size_global * dofmap.index_map_bs)
+    if p6_rows != 18_378_528:
+        raise ValueError(f"actual Gate-CD P6 global rows changed: {p6_rows}")
+    p6_local_dimension = int(levels["spaces"][6].element.space_dimension)
+    if p6_local_dimension != 882:
+        raise ValueError(
+            f"actual Gate-CD P6 local element dimension changed: {p6_local_dimension}"
+        )
+    facts.update(
+        profile_identity=route["profile_identity"],
+        operator_scope=route["operator_scope"],
+        full_dtn_status="FULL_DTN_NOT_VERIFIED",
+        geometry_kind=str(cfg.geometry_kind),
+        material_conditions_sha256=GATE_CD_CONDITIONS_SHA256,
+        material_region_count=len(regions),
+        global_p6_dof_rows=p6_rows,
+        p6_local_element_dimension=p6_local_dimension,
+        mesh_cell_type=str(mesh_data.mesh_cell_type_resolved),
+        mesh_spacing_mode=str(mesh_data.mesh_spacing_mode_resolved),
+        vtk_outputs_written=False,
+        global_matrix_built=False,
+        factor_built=False,
+    )
+    return facts
+
+
+def _task40_gate_cd_mode_inventory_evidence(
+    inventory: tuple[list[Any], list[Mapping[str, Any]], str],
+    route: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Check the formal finite signed parent identity and port power classes."""
+
+    if route.get("gate_cd_case") is not True:
+        raise ValueError("Gate-CD mode evidence helper requires the formal route")
+    modes, rows, mode_sha = inventory
+    expected_count = int(route["parent_count"])
+    expected_sha = str(route["expected_mode_sha256"])
+    if len(modes) != expected_count or len(rows) != expected_count:
+        raise ValueError("Gate-CD live signed mode inventory has the wrong count")
+    if mode_sha != expected_sha:
+        raise ValueError("Gate-CD live signed mode inventory SHA differs from profile")
+    keys = tuple(
+        (str(mode.side), int(mode.m), int(mode.n), str(mode.polarization))
+        for mode in modes
+    )
+    if len(set(keys)) != expected_count:
+        raise ValueError("Gate-CD finite signed inventory contains duplicate keys")
+    if any(
+        side not in ("top", "bottom")
+        or pol not in ("s", "p")
+        or not -8 <= m <= 8
+        or not -64 <= n <= 1
+        for side, m, n, pol in keys
+    ):
+        raise ValueError("Gate-CD inventory contains a key outside M8N64 signed bounds")
+    side_counts = Counter(key[0] for key in keys)
+    propagating_by_side = Counter(
+        str(mode.side) for mode in modes if bool(mode.propagating)
+    )
+    power_by_side = Counter(
+        str(mode.side)
+        for mode in modes
+        if float(mode.power_per_unit_amplitude) > 0.0
+    )
+    expected_propagating_by_side = dict(route["expected_propagating_count_by_side"])
+    expected_power_by_side = dict(route["expected_power_carrying_count_by_side"])
+    if side_counts != {"top": 2244, "bottom": 2244}:
+        raise ValueError("Gate-CD finite mode inventory port split differs from 2244/2244")
+    if dict(propagating_by_side) != expected_propagating_by_side:
+        raise ValueError("Gate-CD propagating counts by port differ from profile")
+    if dict(power_by_side) != expected_power_by_side:
+        raise ValueError("Gate-CD power-carrying counts by port differ from profile")
+    propagating_count = sum(bool(mode.propagating) for mode in modes)
+    power_count = sum(float(mode.power_per_unit_amplitude) > 0.0 for mode in modes)
+    if (
+        propagating_count != int(route["expected_propagating_count"])
+        or power_count != int(route["expected_power_carrying_count"])
+    ):
+        raise ValueError("Gate-CD global propagating/power counts differ from profile")
+    for mode in modes:
+        values = np.asarray(
+            (
+                mode.alpha,
+                mode.gamma,
+                mode.beta,
+                mode.power_per_unit_amplitude,
+                mode.boundary_amplitude_scale,
+                mode.boundary_amplitude_log_scale,
+            ),
+            dtype=np.complex128,
+        )
+        if (
+            not np.isfinite(values).all()
+            or not np.isfinite(np.asarray(mode.e_vector)).all()
+            or not np.isfinite(np.asarray(mode.h_vector)).all()
+        ):
+            raise ValueError("Gate-CD finite signed mode inventory contains nonfinite data")
+    projection_denominators = np.asarray(
+        [float(row["projection_denominator"]) for row in rows], dtype=np.float64
+    )
+    if not np.isfinite(projection_denominators).all() or np.any(
+        projection_denominators <= 0.0
+    ):
+        raise ValueError("Gate-CD projection denominators must be finite and positive")
+    actual_range = (
+        float(projection_denominators.min()),
+        float(projection_denominators.max()),
+    )
+    expected_range = tuple(
+        float(value) for value in route["expected_projection_denominator_range"]
+    )
+    if len(expected_range) != 2 or any(
+        not math.isclose(actual, expected, rel_tol=1.0e-12, abs_tol=1.0e-14)
+        for actual, expected in zip(actual_range, expected_range, strict=True)
+    ):
+        raise ValueError("Gate-CD projection denominator range differs from profile")
+    refs = dict(route["expected_port_reference_planes_nm"])
+    if refs != {"top": 240.0, "bottom": -10.0}:
+        raise ValueError("Gate-CD mode profile uses unexpected physical port planes")
+    return {
+        "status": "PASS",
+        "scope": "finite_M8N64_inventory_only_FULL_DTN_NOT_VERIFIED",
+        "mode_count": expected_count,
+        "mode_sha256": str(mode_sha),
+        "port_mode_count": dict(side_counts),
+        "propagating_count": int(propagating_count),
+        "propagating_count_by_side": dict(propagating_by_side),
+        "power_carrying_count": int(power_count),
+        "power_carrying_count_by_side": dict(power_by_side),
+        "projection_denominator_range": [actual_range[0], actual_range[1]],
+        "port_reference_planes_nm": refs,
+        "omitted_auto_inventory_modes": "NOT_COMPUTED_BY_THIS_FINITE_ROUTE",
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
     }
 
 
@@ -2753,6 +3062,7 @@ def run_p6_condensed_direct(
     same_matrix_lifecycle_verified = None
     try:
         profile_facts = _validate_resolved_profile(resolved_payload)
+        _reject_unqualified_gate_cd_full_solve(profile_facts)
         route = _direct_run_contract(str(profile_facts["identity"]))
         route.setdefault("sparse_cutoff_policy", "absolute_floor_relative_v1")
         route.setdefault("sparse_cutoff_relative_tolerance", 1.0e-13)
@@ -2766,7 +3076,7 @@ def run_p6_condensed_direct(
             profile=profile_facts["identity"],
             operator_scope=route["operator_scope"],
             full_dtn_status=route["full_dtn_status"],
-            comparison_family=route["family"],
+            comparison_family=route.get("comparison_family", route["family"]),
             active_mode_count_expected=route["active_count"],
             active_mode_sha256_expected=route["active_sha256"],
         )
@@ -2885,7 +3195,9 @@ def run_p6_condensed_direct(
         elif route["family"] == "dispersion_flat":
             mesh_evidence = _dispersion_flat_mesh_evidence(levels, cfg)
         elif route["family"] == "task40_phi90":
-            if route["task40_mesh_plan_family"] == "d07c":
+            if route["task40_mesh_plan_family"] == "gate_cd":
+                mesh_evidence = _task40_gate_cd_mesh_evidence(levels, cfg, route)
+            elif route["task40_mesh_plan_family"] == "d07c":
                 mesh_evidence = _task40_d07c_mesh_evidence(levels, cfg, route)
             elif route["task40_mesh_plan_family"] == "d5c":
                 mesh_evidence = _task40_d5c_mesh_evidence(levels, cfg, route)
@@ -2953,6 +3265,15 @@ def run_p6_condensed_direct(
                 raise ValueError("live Task40 propagating mode count differs from the frozen inventory")
             if expected_power is not None and sum(float(mode.power_per_unit_amplitude) > 0.0 for mode in parent_inventory[0]) != int(expected_power):
                 raise ValueError("live Task40 power-carrying mode count differs from the frozen inventory")
+            if route.get("gate_cd_case") is True:
+                gate_cd_mode_evidence = _task40_gate_cd_mode_inventory_evidence(
+                    parent_inventory, route
+                )
+                summary["gate_cd_mode_inventory_evidence"] = gate_cd_mode_evidence
+                ledger.marker(
+                    "p6_direct_gate_cd_finite_mode_identity_complete",
+                    gate_cd_mode_evidence,
+                )
         if route["family"] == "dispersion_flat":
             if (
                 not parent_inventory[0]
@@ -3086,9 +3407,14 @@ def run_p6_condensed_direct(
         }
         ledger.marker("p6_direct_mode_inventory_complete", summary["mode_inventory"])
 
-        volume_quadrature_metadata, _volume_quadrature_records = (
+        production_volume_quadrature_metadata, _volume_quadrature_records = (
             fine_volume_quadrature_metadata(levels, cfg)
         )
+        volume_quadrature_metadata = production_volume_quadrature_metadata
+        if route.get("gate_cd_case") is True:
+            volume_quadrature_metadata = _task40_gate_cd_volume_quadrature_metadata(
+                route, production_volume_quadrature_metadata
+            )
         if route["family"] == "dispersion_flat":
             if tuple(volume_quadrature_metadata) != (
                 {"quadrature_degree": 15, "quadrature_rule": "default"},
@@ -3129,14 +3455,29 @@ def run_p6_condensed_direct(
                 surface_progress_interval=1024,
             )
         else:
-            expected_volume_metadata = (
-                {"quadrature_degree": 15, "quadrature_rule": "default"},
-                {"quadrature_degree": 15, "quadrature_rule": "default"},
-            )
-            if tuple(volume_quadrature_metadata) != expected_volume_metadata:
-                raise ValueError(
-                    "P6 direct route must retain the frozen volume q15/default rule"
+            if route.get("gate_cd_case") is True:
+                if tuple(production_volume_quadrature_metadata) != (
+                    {"quadrature_degree": 15, "quadrature_rule": "default"},
+                    {"quadrature_degree": 15, "quadrature_rule": "default"},
+                ):
+                    raise ValueError(
+                        "Gate-CD production volume authority must remain q15/default"
+                    )
+                if tuple(volume_quadrature_metadata) != tuple(
+                    {"quadrature_degree": int(route["volume_quadrature"]["degree"]),
+                     "quadrature_rule": "default"}
+                    for _ in range(2)
+                ):
+                    raise ValueError("Gate-CD selected volume rule differs from route facts")
+            else:
+                expected_volume_metadata = (
+                    {"quadrature_degree": 15, "quadrature_rule": "default"},
+                    {"quadrature_degree": 15, "quadrature_rule": "default"},
                 )
+                if tuple(volume_quadrature_metadata) != expected_volume_metadata:
+                    raise ValueError(
+                        "P6 direct route must retain the frozen volume q15/default rule"
+                    )
             parent_surface_kwargs = (
                 {
                     "quadrature_mode_inventory": parent_inventory,
@@ -3183,6 +3524,10 @@ def run_p6_condensed_direct(
             or len(bundle["dtn_action"].carrier.entries) != route["active_count"]
         ):
             raise ValueError("live p6 carrier differs from its selected active mode identity")
+        if tuple(bundle.get("volume_quadrature_metadata") or ()) != tuple(
+            volume_quadrature_metadata
+        ):
+            raise ValueError("live p6 volume action differs from selected quadrature metadata")
         carrier_sparse_audit = dict(bundle["dtn_action"].carrier.audit)
         cutoff_identity = carrier_sparse_audit.get(
             "sparse_cutoff_identity_sha256"
@@ -3228,6 +3573,9 @@ def run_p6_condensed_direct(
             ],
             "carrier_audit": carrier_sparse_audit,
             "volume_quadrature_metadata": volume_quadrature_metadata,
+            "production_volume_quadrature_metadata": (
+                production_volume_quadrature_metadata
+            ),
             "volume_quadrature_records": _volume_quadrature_records,
             "functional_store": False,
             "cross_mesh_fe_reuse": False,
@@ -3324,7 +3672,7 @@ def run_p6_condensed_direct(
             defer_final_assembly=True,
             retain_local_schur_for_matrix_free=True,
             materialize_global_matrix=True,
-            geometry_identity_policy="raw_unrounded",
+            **_condensation_geometry_cache_kwargs({"condensed_route": route}),
             share_identity_cache=True,
         )
         if condensed.matrix is None:
@@ -3805,6 +4153,11 @@ def run_p6_condensed_direct(
             ),
             write_visualization_files=output_policy.get(
                 "write_visualization_files", True
+            ),
+            volume_quadrature_metadata=(
+                volume_quadrature_metadata
+                if route.get("gate_cd_case") is True
+                else None
             ),
         )
         if route["family"] == "dispersion_flat":

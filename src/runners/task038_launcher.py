@@ -29,6 +29,9 @@ from src.io.input_loader import InputError
 from src.io.resolved_config import canonical_json_bytes, write_resolved_config
 from src.io.run_specification import RunSpecification
 from src.runners.task40_d07c_g5_join import G5_PROFILE
+from src.runners.task40_gate_cd_formal_admission import (
+    GATE_CD_FORMAL_PROFILE, GATE_CD_ATTEMPT_CACHE_ENV,
+)
 
 
 PopenFactory = Callable[..., Any]
@@ -95,7 +98,9 @@ def _environment_identity() -> dict[str, Any]:
 
 
 def _write_json(path: Path, value: dict[str, Any]) -> None:
-    path.write_bytes(canonical_json_bytes(value) + b"\n")
+    from src.io.input_validation import _jsonable
+
+    path.write_bytes(canonical_json_bytes(_jsonable(value)) + b"\n")
 
 
 def _write_text_hash(path: Path, value: str) -> None:
@@ -195,7 +200,11 @@ def _base_manifest(
                 raise InputError(
                     'resolved p6-direct native-capacity profile facts are missing'
                 )
-            if canonical_json_bytes(resolved_profile) != canonical_json_bytes(profile):
+            from src.io.input_validation import _jsonable
+
+            if canonical_json_bytes(resolved_profile) != canonical_json_bytes(
+                _jsonable(profile)
+            ):
                 raise InputError(
                     'resolved p6-direct native-capacity profile facts do not match '
                     'the selected profile identity'
@@ -349,6 +358,9 @@ def _write_bootstrap(
         start_time=start_time,
         resolved_sha=resolved_sha,
     )
+    from src.io.input_validation import _jsonable
+
+    manifest = _jsonable(manifest)
     _write_json(run_directory / "run_manifest.json", manifest)
     _write_json(run_directory / "run_summary.json", _initial_summary(manifest))
     return manifest, resolved_sha
@@ -545,6 +557,7 @@ def launch_specification(
         else {}
     )
     g5_attempt_cache = None
+    gate_cd_attempt_cache = None
     if native_identity == G5_PROFILE:
         g5_join = (
             None if prelaunch_isolation is None
@@ -580,6 +593,36 @@ def launch_specification(
         if any(os.environ.get(name) != value for name, value in expected_cache_environment.items()):
             raise InputError('G5 attempt-specific cache environment differs from its reviewed attempt')
         g5_attempt_cache = cache_paths
+    if native_identity == GATE_CD_FORMAL_PROFILE:
+        isolation = prelaunch_isolation
+        lease = isolation.get('gate_cd_formal_admission') if isinstance(isolation, dict) else None
+        attempt_cache = lease.get('attempt_cache') if isinstance(lease, dict) else None
+        attempt_id = lease.get('attempt_id') if isinstance(lease, dict) else None
+        if not isinstance(lease, dict) or not isinstance(attempt_cache, dict) or not isinstance(attempt_id, str):
+            raise InputError('Gate-CD standard launcher requires its runtime one-shot lease/cache')
+        expected_root = Path(lease.get('attempt_cache_root', '')).resolve()
+        supplied_root = Path(os.environ.get(GATE_CD_ATTEMPT_CACHE_ENV, '')).resolve()
+        if supplied_root != expected_root or Path(attempt_cache.get('root', '')).resolve() != expected_root:
+            raise InputError('Gate-CD attempt cache root differs from its exact one-shot lease')
+        cache_paths = {key: expected_root / key for key in ('tmp', 'xdg', 'pycache', 'mpl')}
+        cache_paths['root'] = expected_root
+        if any(Path(attempt_cache.get(key, '')).resolve() != path.resolve()
+               for key, path in cache_paths.items()):
+            raise InputError('Gate-CD attempt cache paths differ from the lease evidence')
+        if any(path.is_symlink() or (key != 'root' and not path.is_dir())
+               for key, path in cache_paths.items()):
+            raise InputError('Gate-CD attempt cache directories are missing or symlinked')
+        expected_environment = {
+            'TMPDIR': str(cache_paths['tmp'].resolve()),
+            'TMP': str(cache_paths['tmp'].resolve()),
+            'TEMP': str(cache_paths['tmp'].resolve()),
+            'XDG_CACHE_HOME': str(cache_paths['xdg'].resolve()),
+            'PYTHONPYCACHEPREFIX': str(cache_paths['pycache'].resolve()),
+            'MPLCONFIGDIR': str(cache_paths['mpl'].resolve()),
+        }
+        if any(os.environ.get(name) != value for name, value in expected_environment.items()):
+            raise InputError('Gate-CD attempt cache environment differs from its exact lease')
+        gate_cd_attempt_cache = cache_paths
     watchdog_resources = physical_resources if physical_candidate else native_resources
     if pc_profile is not None and not physical_candidate:
         raise InputError('PC timing mode requires a physical reference run')
@@ -643,6 +686,15 @@ def launch_specification(
         }
         manifest['attempt_specific_runtime_cache']['owner'] = 'G5_attempt_only'
         _write_json(run_directory / 'run_manifest.json', manifest)
+    if gate_cd_attempt_cache is not None:
+        manifest['attempt_specific_runtime_cache'] = {
+            key: str(value.resolve()) for key, value in gate_cd_attempt_cache.items()
+        }
+        manifest['attempt_specific_runtime_cache']['owner'] = 'GateCD_formal_attempt_only'
+        manifest['attempt_specific_runtime_cache']['attempt_id'] = (
+            prelaunch_isolation['gate_cd_formal_admission']['attempt_id']
+        )
+        _write_json(run_directory / 'run_manifest.json', manifest)
     if pc_profile is not None:
         from .physical_pc_profile import CHECKPOINT_MANIFEST_SHA, CHECKPOINT_SOLUTION_SHA, SCHEDULE
         from .physical_pc_profile import PACKED_CHECKPOINT_MANIFEST_SHA, PACKED_CHECKPOINT_SOLUTION_SHA, paired_schedule
@@ -675,6 +727,8 @@ def launch_specification(
         _write_json(run_directory/'run_manifest.json', manifest)
     g5_worker_cpus_override = None
     if native_identity == G5_PROFILE:
+        g5_worker_cpus_override = list(prelaunch_isolation.get('worker_affinity', []))
+    elif native_identity == GATE_CD_FORMAL_PROFILE:
         g5_worker_cpus_override = list(prelaunch_isolation.get('worker_affinity', []))
     plan = build_execution_plan(
         specification,
@@ -755,6 +809,17 @@ def launch_specification(
                         }
                         watchdog_options['worker_environment'] = worker_env
                         watchdog_cache_path = g5_attempt_cache['xdg']
+                    elif gate_cd_attempt_cache is not None:
+                        worker_env = {
+                            'TMPDIR': str(gate_cd_attempt_cache['tmp'].resolve()),
+                            'TMP': str(gate_cd_attempt_cache['tmp'].resolve()),
+                            'TEMP': str(gate_cd_attempt_cache['tmp'].resolve()),
+                            'XDG_CACHE_HOME': str(gate_cd_attempt_cache['xdg'].resolve()),
+                            'PYTHONPYCACHEPREFIX': str(gate_cd_attempt_cache['pycache'].resolve()),
+                            'MPLCONFIGDIR': str(gate_cd_attempt_cache['mpl'].resolve()),
+                        }
+                        watchdog_options['worker_environment'] = worker_env
+                        watchdog_cache_path = gate_cd_attempt_cache['xdg']
                     else:
                         watchdog_cache_path = (
                             Path(os.environ['XDG_CACHE_HOME'])

@@ -39,11 +39,29 @@ def _build_physical_volume_terms(
     curl_v = ufl.curl(v)
     curl_curl = PETSc.ScalarType(0.0) * ufl.inner(curl_u, curl_v) * dx
     material_mass = PETSc.ScalarType(0.0) * ufl.inner(u, v) * dx
-    for tag, eps_r in (
-        (cfg.tags.air, cfg.eps_r),
-        (cfg.tags.substrate, cfg.substrate_index**2),
-        (cfg.tags.grating, cfg.grating_index**2),
-    ):
+    if cfg.geometry_kind == "task40_gate_cd_mapped":
+        from ..common.gate_cd_materials import validate_gate_cd_region_entries
+
+        region_entries = validate_gate_cd_region_entries(
+            cfg.physical_material_regions
+        )
+        tagged_materials = tuple(
+            (int(entry["tag"]), complex(entry["epsilon_r"]))
+            for entry in region_entries
+        )
+    else:
+        if cfg.physical_material_regions is not None:
+            raise ValueError(
+                "explicit physical material maps are restricted to task40_gate_cd_mapped"
+            )
+        # Preserve the historical three-tag form construction verbatim unless
+        # the explicit gate_cd profile is selected.
+        tagged_materials = (
+            (cfg.tags.air, cfg.eps_r),
+            (cfg.tags.substrate, cfg.substrate_index**2),
+            (cfg.tags.grating, cfg.grating_index**2),
+        )
+    for tag, eps_r in tagged_materials:
         curl_curl += (
             PETSc.ScalarType(1.0 / cfg.mu_r)
             * ufl.inner(curl_u, curl_v)
@@ -72,6 +90,13 @@ def _build_variational_forms(
     Cell tags decide which material tensor is used.  The x/y periodicity is not
     part of this form; it is imposed later through ``dolfinx_mpc`` constraints.
     """
+    if cfg.geometry_kind == "task40_gate_cd_mapped" and (
+        field_formulation != "total_field" or incident_field is not None
+    ):
+        raise ValueError(
+            "gate_cd mapped materials currently permit only the direct total-field "
+            "formulation; legacy incident/layered scattered sources are unsupported"
+        )
     u = ufl.TrialFunction(V)
     v = ufl.TestFunction(V)
     dx = ufl.Measure("dx", domain=msh, subdomain_data=mesh_data.cell_tags)

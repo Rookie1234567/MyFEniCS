@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import json
 import os
 from pathlib import Path
@@ -7,6 +8,7 @@ from types import SimpleNamespace
 
 import dolfinx_mpc
 import numpy as np
+import pytest
 import ufl
 from basix.ufl import element
 from dolfinx import default_real_type, fem, mesh
@@ -123,6 +125,41 @@ def _compile_form(V, cell_tags, quadrature_degree: int):
         )
         * dx(1)
     )
+
+
+def test_real_mpc_python_lifetime_and_report_survive_assertion_failure(
+    tmp_path, monkeypatch
+):
+    msh = mesh.create_box(
+        MPI.COMM_SELF,
+        [np.asarray((0.0, 0.0, 0.0)), np.asarray((1.0, 1.0, 1.0))],
+        [1, 1, 1],
+        cell_type=mesh.CellType.hexahedron,
+    )
+    V = fem.functionspace(
+        msh,
+        element("N1curl", "hexahedron", 1, dtype=default_real_type),
+    )
+    mpc = dolfinx_mpc.MultiPointConstraint(V)
+    assert not hasattr(mpc, "destroy")
+    mpc.finalize()
+    assert mpc.finalized
+    cpp_mpc = mpc._cpp_object
+    report_path = tmp_path / "intentional_numeric_failure.json"
+    monkeypatch.setenv("TASK40_GATE_CD_VALIDATION_REPORT", str(report_path))
+    payload = {"status": "diagnostic_written_before_gate", "value": 1.25}
+
+    with pytest.raises(AssertionError, match="intentional numeric gate failure"):
+        try:
+            _write_validation_report(payload)
+            raise AssertionError("intentional numeric gate failure")
+        finally:
+            # dolfinx_mpc owns its C++ object through Python references; this API
+            # has no explicit destroy() method. Dropping the owners is the release.
+            del cpp_mpc, mpc, V, msh
+            gc.collect()
+
+    assert json.loads(report_path.read_text(encoding="utf-8")) == payload
 
 
 def test_mapped_p6_condensation_matches_independent_full_assembly_and_recovery():
@@ -384,5 +421,5 @@ def test_mapped_p6_condensation_matches_independent_full_assembly_and_recovery()
         for obj in (system27, system21, system15):
             if obj is not None:
                 obj.destroy()
-        if floquet is not None:
-            floquet.mpc.destroy()
+        # MultiPointConstraint has no destroy() API; its C++ wrapper is released
+        # when the owning Python references leave scope.
