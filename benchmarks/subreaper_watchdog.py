@@ -2831,6 +2831,22 @@ def _external_guard_stop_reason(first_reason, facts):
     return first_reason or reason
 
 
+def _external_guard_sleep_duration(interval, facts, *, now=None):
+    """Shorten an opted-in poll to an external guard's pending deadline."""
+    duration = float(interval)
+    if not isinstance(facts, dict):
+        return duration
+    deadline = facts.get('next_poll_deadline_monotonic')
+    if (
+        not isinstance(deadline, (int, float))
+        or isinstance(deadline, bool)
+        or not math.isfinite(float(deadline))
+    ):
+        return duration
+    current = time.monotonic() if now is None else float(now)
+    return min(duration, max(0.0, float(deadline) - current))
+
+
 def stop_signal(reason, *, hard_stop_immediate, elapsed, grace_seconds):
     hard = hard_stop_immediate and reason in ('RESOURCE_CONTROLLED_STOP', 'MONITORING_FAILED', 'TIMEBASE_INCONSISTENCY', 'GLOBAL_SWAP_ATTRIBUTION_UNRESOLVED', 'PC_TIME_CONTROLLED_STOP')
     return signal.SIGTERM if not hard and elapsed < grace_seconds else signal.SIGKILL
@@ -3241,6 +3257,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
             leader = subprocess.Popen(command, stdout=output, stderr=subprocess.STDOUT,
                                       start_new_session=True, env=environment)
             while True:
+                external_facts = None
                 exit_code = leader.poll()
                 _reap_adopted(leader.pid)
                 children = _children()
@@ -3523,7 +3540,7 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float,
                 if stop_started is not None and (budget_elapsed(stop_clock, clock_sample())
                         if timebase_guard else time.monotonic() - stop_started) > grace_seconds + 10:
                     raise RuntimeError('descendants did not clear after SIGKILL')
-                time.sleep(interval)
+                time.sleep(_external_guard_sleep_duration(interval, external_facts))
         summary['cache_metadata_stable'] = True
     except BaseException as exc:
         if classification is None:

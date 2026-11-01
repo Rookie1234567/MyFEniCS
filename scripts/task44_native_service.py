@@ -6,6 +6,7 @@ import argparse
 import errno
 import hashlib
 import json
+import math
 import os
 import re
 import subprocess
@@ -388,6 +389,229 @@ class _ProcessClaimError(RuntimeError):
     def __init__(self, message: str, evidence: Mapping[str, Any]):
         super().__init__(message)
         self.evidence = dict(evidence)
+
+
+def _verify_pending_cpu_claim(
+    expected: Mapping[str, Any],
+    *,
+    selected_cpu: int,
+    host_cpus: set[int],
+    proc_root: Path,
+) -> dict[str, Any]:
+    """Re-read one previously observed neighbor before granting monitor grace."""
+    pid = int(expected["pid"])
+    try:
+        before = _proc_identity(pid, proc_root)
+        affinity_before = _status_fields(proc_root / str(pid) / "status").get(
+            "Cpus_allowed_list"
+        )
+        cgroup_before = _proc_cgroup_path(pid, proc_root)
+        after = _proc_identity(pid, proc_root)
+        affinity_after = _status_fields(proc_root / str(pid) / "status").get(
+            "Cpus_allowed_list"
+        )
+        cgroup_after = _proc_cgroup_path(pid, proc_root)
+        if not affinity_before or not affinity_after:
+            raise RuntimeError(f"cannot read CPU affinity for pending process {pid}")
+        affinity = _parse_cpu_list(affinity_after)
+        checks = {
+            "pid_stable": before["pid"] == after["pid"] == pid,
+            "start_ticks_match_observed_identity": (
+                before["start_ticks"] == after["start_ticks"]
+                == int(expected["start_ticks"])
+            ),
+            "parent_pid_matches_observed_identity": (
+                before["parent_pid"] == after["parent_pid"]
+                == int(expected["parent_pid"])
+            ),
+            "comm_matches_observed_identity": (
+                before["comm"] == after["comm"] == str(expected["comm"])
+            ),
+            "cgroup_matches_observed_identity": (
+                cgroup_before == cgroup_after == str(expected["cgroup"])
+            ),
+            "affinity_stable": affinity_before == affinity_after,
+        }
+        evidence = {
+            "identity_before": before,
+            "identity_after": after,
+            "cpu_affinity_before": affinity_before,
+            "cpu_affinity_after": affinity_after,
+            "cgroup_before": cgroup_before,
+            "cgroup_after": cgroup_after,
+            "identity_checks": checks,
+        }
+        if not all(checks.values()):
+            return {"status": "unverified", "pid": pid, "evidence": evidence}
+        if before["state"] in {"Z", "X"}:
+            return {"status": "released", "pid": pid, "evidence": evidence}
+        active = selected_cpu in affinity and affinity != host_cpus
+        return {
+            "status": "active" if active else "released",
+            "pid": pid,
+            "cpu_affinity": sorted(affinity),
+            "evidence": evidence,
+        }
+    except (OSError, ValueError, RuntimeError, KeyError, TypeError) as exc:
+        confirmation = _confirm_proc_pid_directory_gone(pid, proc_root)
+        if confirmation["status"] == "gone":
+            return {"status": "gone", "pid": pid, "evidence": confirmation}
+        return {
+            "status": "unverified",
+            "pid": pid,
+            "evidence": {
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+                "proc_directory_confirmation": confirmation,
+            },
+        }
+
+
+class _CpuNeighborGrace:
+    """Bound each continuous, identity-bound CPU-neighbor review episode."""
+
+    def __init__(self, grace_seconds: float = 15.0):
+        if not isinstance(grace_seconds, (int, float)) or isinstance(grace_seconds, bool):
+            raise TypeError("CPU-neighbor grace must be a finite positive number")
+        if not math.isfinite(float(grace_seconds)) or float(grace_seconds) <= 0:
+            raise ValueError("CPU-neighbor grace must be a finite positive number")
+        self.grace_seconds = float(grace_seconds)
+        self.first_conflict_monotonic: float | None = None
+        self.deadline_monotonic: float | None = None
+        self.performance_not_isolated = False
+        self.claims: dict[tuple[int, int], dict[str, Any]] = {}
+
+    def assess(
+        self,
+        neighbor_gate: Mapping[str, Any],
+        *,
+        selected_cpu: int,
+        proc_root: Path = Path("/proc"),
+        hard_failures: list[str] | None = None,
+        now: float | None = None,
+    ) -> dict[str, Any]:
+        """Allow only a verified transient neighbor claim to use the grace window."""
+        timestamp = time.monotonic() if now is None else float(now)
+        hard = list(hard_failures or [])
+        if hard:
+            return {
+                "status": "hard_gate_failed",
+                "stop": True,
+                "reason": "MONITORING_FAILED",
+                "hard_failures": hard,
+                "performance_not_isolated": self.performance_not_isolated,
+            }
+        if not isinstance(neighbor_gate, Mapping):
+            return {"status": "unverified", "stop": True,
+                    "reason": "MONITORING_FAILED", "failures": ["neighbor_gate_unreadable"]}
+        gate_failures = neighbor_gate.get("failures")
+        if not isinstance(gate_failures, list):
+            return {"status": "unverified", "stop": True,
+                    "reason": "MONITORING_FAILED", "failures": ["neighbor_gate_failures_unreadable"]}
+        allowed_failure = "unexpected_narrow_selected_cpu_affinity_neighbor"
+        if neighbor_gate.get("status") not in {"pass", "fail"}:
+            return {"status": "unverified", "stop": True,
+                    "reason": "MONITORING_FAILED", "failures": ["neighbor_gate_status_unreadable"]}
+        if neighbor_gate.get("status") == "pass" and gate_failures:
+            return {"status": "unverified", "stop": True,
+                    "reason": "MONITORING_FAILED", "failures": ["neighbor_gate_status_inconsistent"]}
+        if neighbor_gate.get("status") == "fail" and set(gate_failures) != {allowed_failure}:
+            return {"status": "hard_gate_failed", "stop": True,
+                    "reason": "MONITORING_FAILED", "failures": list(gate_failures)}
+        if neighbor_gate.get("performance_not_isolated") is True:
+            self.performance_not_isolated = True
+
+        rows = neighbor_gate.get("unexpected_claims", [])
+        if not isinstance(rows, list):
+            return {"status": "unverified", "stop": True,
+                    "reason": "MONITORING_FAILED", "failures": ["neighbor_claims_unreadable"]}
+        if neighbor_gate.get("status") == "fail" and not rows:
+            return {"status": "unverified", "stop": True,
+                    "reason": "MONITORING_FAILED", "failures": ["neighbor_claim_identity_missing"]}
+        if rows:
+            self.performance_not_isolated = True
+            if self.first_conflict_monotonic is None:
+                self.first_conflict_monotonic = timestamp
+                self.deadline_monotonic = timestamp + self.grace_seconds
+        current_keys: set[tuple[int, int]] = set()
+        for row in rows:
+            try:
+                pid = int(row["pid"])
+                start_ticks = int(row["start_ticks"])
+                identity = {
+                    key: row[key]
+                    for key in ("pid", "start_ticks", "parent_pid", "comm", "cgroup")
+                }
+                identity.update(pid=pid, start_ticks=start_ticks)
+            except (KeyError, TypeError, ValueError):
+                return {"status": "unverified", "stop": True,
+                        "reason": "MONITORING_FAILED",
+                        "failures": ["neighbor_claim_identity_missing"],
+                        "performance_not_isolated": True}
+            key = (pid, start_ticks)
+            current_keys.add(key)
+            self.claims.setdefault(key, {"identity": identity, "status": "pending"})
+
+        host_cpus = neighbor_gate.get("host_allowed_cpus")
+        if not isinstance(host_cpus, list) or any(type(cpu) is not int for cpu in host_cpus):
+            return {"status": "unverified", "stop": True,
+                    "reason": "MONITORING_FAILED", "failures": ["host_cpu_inventory_unreadable"],
+                    "performance_not_isolated": self.performance_not_isolated}
+        for key, record in self.claims.items():
+            if record["status"] in {"released", "gone"} and key not in current_keys:
+                continue
+            observation = _verify_pending_cpu_claim(
+                record["identity"], selected_cpu=selected_cpu,
+                host_cpus=set(host_cpus), proc_root=proc_root,
+            )
+            record["status"] = observation["status"]
+            record["last_observation"] = observation
+            if observation["status"] == "unverified":
+                return {
+                    "status": "identity_unverified", "stop": True,
+                    "reason": "MONITORING_FAILED", "failures": ["pending_neighbor_identity_unverified"],
+                    "performance_not_isolated": self.performance_not_isolated,
+                    "claims": self._claim_evidence(),
+                }
+
+        active = any(record["status"] == "active" for record in self.claims.values())
+        if active and self.deadline_monotonic is not None and timestamp >= self.deadline_monotonic:
+            return {
+                "status": "review_timeout", "stop": True,
+                "reason": "MONITORING_FAILED", "failures": ["selected_cpu_neighbor_review_timeout"],
+                "performance_not_isolated": self.performance_not_isolated,
+                "first_conflict_monotonic": self.first_conflict_monotonic,
+                "deadline_monotonic": self.deadline_monotonic,
+                "claims": self._claim_evidence(),
+            }
+        status = "waiting" if active else ("released" if self.claims else "clear")
+        result = {
+            "status": status,
+            "stop": False,
+            "reason": None,
+            "performance_not_isolated": bool(
+                self.performance_not_isolated or neighbor_gate.get("performance_not_isolated") is True
+            ),
+            "first_conflict_monotonic": self.first_conflict_monotonic,
+            "deadline_monotonic": self.deadline_monotonic,
+            "next_poll_deadline_monotonic": self.deadline_monotonic if active else None,
+            "claims": self._claim_evidence(),
+        }
+        if not active and neighbor_gate.get("status") == "pass" and self.claims:
+            # Close only after the complete inventory passes and all tracked
+            # identities have just been proven released or gone. A later,
+            # separate conflict gets its own bounded review window.
+            self.first_conflict_monotonic = None
+            self.deadline_monotonic = None
+            self.claims.clear()
+        return result
+
+    def _claim_evidence(self) -> list[dict[str, Any]]:
+        return [
+            {"identity": record["identity"], "status": record["status"],
+             "last_observation": record.get("last_observation")}
+            for _, record in sorted(self.claims.items())
+        ]
 
 
 def _proc_cpu_claim(
@@ -1203,7 +1427,8 @@ def _admission_facts(cap_bytes: int, max_concurrent: int) -> dict[str, Any]:
 
 
 def _exact_service_guard(
-    unit: str, cap_bytes: int, max_concurrent: int, expected_cpus: set[int]
+    unit: str, cap_bytes: int, max_concurrent: int, expected_cpus: set[int],
+    *, cpu_neighbor_grace: _CpuNeighborGrace | None = None,
 ) -> dict[str, Any]:
     from benchmarks.task034_wsl_resources import cgroup_snapshot, current_cgroup_path
     from scripts.task44_service_startup import observe_cgroup_cpu_affinity
@@ -1242,12 +1467,25 @@ def _exact_service_guard(
             ignored_cgroup=facts["control_group"],
             owned_service_facts=facts,
         )
-        if neighbor_gate["status"] != "pass":
-            failures.append("selected_cpu_neighbor_gate_failed")
         affinity_report = observe_cgroup_cpu_affinity(expected_cgroup, expected_cpus)
         actual_affinities = affinity_report["service_pid_affinities"]
         if affinity_report["stop"]:
             failures.extend(affinity_report.get("failures") or ["service_process_affinity_monitor_failed"])
+        neighbor_review = None
+        if cpu_neighbor_grace is None:
+            if neighbor_gate["status"] != "pass":
+                failures.append("selected_cpu_neighbor_gate_failed")
+        else:
+            neighbor_review = cpu_neighbor_grace.assess(
+                neighbor_gate,
+                selected_cpu=next(iter(expected_cpus)),
+                hard_failures=failures,
+            )
+            if neighbor_review["stop"] and not failures:
+                failures.extend(
+                    neighbor_review.get("failures")
+                    or ["selected_cpu_neighbor_gate_failed"]
+                )
         return {
             "stop": bool(failures),
             "reason": "MONITORING_FAILED" if failures else None,
@@ -1261,7 +1499,15 @@ def _exact_service_guard(
             "service_pid_affinities": actual_affinities,
             "service_process_affinity_observation": affinity_report,
             "cpu_neighbor_gate": neighbor_gate,
-            "performance_not_isolated": neighbor_gate["performance_not_isolated"],
+            "cpu_neighbor_grace": neighbor_review,
+            "next_poll_deadline_monotonic": (
+                neighbor_review.get("next_poll_deadline_monotonic")
+                if neighbor_review is not None else None
+            ),
+            "performance_not_isolated": bool(
+                neighbor_gate["performance_not_isolated"]
+                or (neighbor_review and neighbor_review.get("performance_not_isolated"))
+            ),
         }
     except Exception as exc:  # noqa: BLE001 - any monitor error must fail closed.
         return {
@@ -1429,6 +1675,7 @@ def run_service(
     guard = _exact_service_guard(unit, cap_bytes, max_concurrent, cpu_affinity)
     if guard["stop"]:
         raise RuntimeError(f"Task44 exact-service startup gate failed: {guard}")
+    cpu_neighbor_grace = _CpuNeighborGrace(grace_seconds=15.0)
     from benchmarks.subreaper_watchdog import (
         PHYSICAL_MEMORY_PRESSURE_POLICY,
         supervise,
@@ -1467,7 +1714,8 @@ def run_service(
         host_reserve_bytes=HOST_RESERVE_BYTES,
         task_cgroup_reserve_bytes=JOB_BUFFER_BYTES,
         external_guard=lambda: _exact_service_guard(
-            unit, cap_bytes, max_concurrent, cpu_affinity
+            unit, cap_bytes, max_concurrent, cpu_affinity,
+            cpu_neighbor_grace=cpu_neighbor_grace,
         ),
         worker_environment={
             "MYFENICS_NATIVE_COMPLEX_ENV": "1",
