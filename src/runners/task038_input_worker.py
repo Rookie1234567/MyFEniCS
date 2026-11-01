@@ -12,25 +12,29 @@ from typing import Any
 from src.io.execution_plan import CONTRACT_PROBE_ADAPTER, METHOD_ADAPTERS
 
 
-def _task40_g5_runtime_cache_evidence(
+def _task40_d07c_runtime_cache_evidence(
     manifest: dict[str, Any], *, environment=None, jit_options_resolver=None
 ) -> dict[str, Any] | None:
-    """Verify and describe the actual G5 worker cache/JIT routing before FE work."""
+    """Verify the exact G5/G6 worker cache and JIT routing before FE work."""
     profile = manifest.get("native_capacity_profile_identity")
-    from src.runners.task40_d07c_g5_join import G5_PROFILE
+    from src.runners.task40_d07c_g5_join import G5_PROFILE, G6_PROFILE
 
-    if profile != G5_PROFILE:
+    if profile not in {G5_PROFILE, G6_PROFILE}:
         return None
+    case = "G5" if profile == G5_PROFILE else "G6"
+    case_key = case.lower()
+    owner = f"{case}_attempt_only"
+    scope_key = f"{case_key}_observational_join"
 
     env = os.environ if environment is None else environment
     runtime = manifest.get("attempt_specific_runtime_cache")
-    if not isinstance(runtime, dict) or runtime.get("owner") != "G5_attempt_only":
-        raise ValueError("G5 manifest is missing its attempt-owned cache paths")
-    join = manifest.get("native_capacity_isolation", {}).get("g5_observational_join")
+    if not isinstance(runtime, dict) or runtime.get("owner") != owner:
+        raise ValueError(f"{case} manifest is missing its attempt-owned cache paths")
+    join = manifest.get("native_capacity_isolation", {}).get(scope_key)
     attempt_id = join.get("attempt_id") if isinstance(join, dict) else None
     if not isinstance(attempt_id, str):
-        raise TypeError("G5 manifest is missing its one-attempt identity")
-    expected_root = Path("/tmp") / f"task40_d07c_g5_attempt_{attempt_id}"
+        raise TypeError(f"{case} manifest is missing its one-attempt identity")
+    expected_root = Path("/tmp") / f"task40_d07c_{case_key}_attempt_{attempt_id}"
     expected_paths = {
         "root": expected_root,
         "tmp": expected_root / "tmp",
@@ -40,9 +44,9 @@ def _task40_g5_runtime_cache_evidence(
     }
     for key, path in expected_paths.items():
         if Path(runtime.get(key, "")).resolve() != path.resolve():
-            raise ValueError(f"G5 manifest cache path differs at {key}")
+            raise ValueError(f"{case} manifest cache path differs at {key}")
         if path.is_symlink() or (key != "root" and not path.is_dir()):
-            raise ValueError(f"G5 attempt cache directory is missing or symlinked: {key}")
+            raise ValueError(f"{case} attempt cache directory is missing or symlinked: {key}")
     expected_environment = {
         "TMPDIR": str(expected_paths["tmp"]),
         "TMP": str(expected_paths["tmp"]),
@@ -57,7 +61,7 @@ def _task40_g5_runtime_cache_evidence(
         if env.get(key) != value
     }
     if mismatches:
-        raise ValueError(f"G5 worker cache environment differs: {mismatches}")
+        raise ValueError(f"{case} worker cache environment differs: {mismatches}")
     if jit_options_resolver is None:
         from dolfinx.jit import get_options
 
@@ -65,19 +69,20 @@ def _task40_g5_runtime_cache_evidence(
             SAME_MESH_JIT_OPTIONS,
         )
 
-        jit_options_resolver = lambda: get_options(dict(SAME_MESH_JIT_OPTIONS))
+        def jit_options_resolver():
+            return get_options(dict(SAME_MESH_JIT_OPTIONS))
     options = jit_options_resolver()
     actual_jit_cache = Path(options["cache_dir"]).expanduser().resolve()
     expected_jit_cache = (expected_paths["xdg"] / "fenics").resolve()
     if actual_jit_cache != expected_jit_cache:
         raise ValueError(
-            "G5 DOLFINx JIT cache is not inside this attempt's XDG cache: "
+            f"{case} DOLFINx JIT cache is not inside this attempt's XDG cache: "
             f"{actual_jit_cache} != {expected_jit_cache}"
         )
     return {
-        "schema": "task40.d07c.g5_worker_cache_runtime.v1",
+        "schema": f"task40.d07c.{case_key}_worker_cache_runtime.v1",
         "attempt_id": attempt_id,
-        "owner": "G5_attempt_only",
+        "owner": owner,
         "environment": expected_environment,
         "dolfinx_jit_cache_dir": str(actual_jit_cache),
         "dolfinx_jit_options_source": "dolfinx.jit.get_options(SAME_MESH_JIT_OPTIONS)",
@@ -85,8 +90,29 @@ def _task40_g5_runtime_cache_evidence(
     }
 
 
-def _write_g5_runtime_cache_evidence(output_directory: str | Path, evidence: dict) -> Path:
-    path = Path(output_directory) / "g5_runtime_environment.json"
+def _task40_g5_runtime_cache_evidence(
+    manifest: dict[str, Any], *, environment=None, jit_options_resolver=None
+) -> dict[str, Any] | None:
+    if manifest.get("native_capacity_profile_identity") != "task40para_phi90_0p7_D07C_G5_M8_N64_p6_direct_v1":
+        return None
+    return _task40_d07c_runtime_cache_evidence(
+        manifest, environment=environment, jit_options_resolver=jit_options_resolver
+    )
+
+
+def _task40_g6_runtime_cache_evidence(
+    manifest: dict[str, Any], *, environment=None, jit_options_resolver=None
+) -> dict[str, Any] | None:
+    if manifest.get("native_capacity_profile_identity") != "task40para_phi90_0p7_D07C_G6_M8_N64_p6_direct_v1":
+        return None
+    return _task40_d07c_runtime_cache_evidence(
+        manifest, environment=environment, jit_options_resolver=jit_options_resolver
+    )
+
+
+def _write_d07c_runtime_cache_evidence(output_directory: str | Path, evidence: dict) -> Path:
+    case = evidence["owner"].split("_", maxsplit=1)[0].lower()
+    path = Path(output_directory) / f"{case}_runtime_environment.json"
     payload = (json.dumps(evidence, sort_keys=True, indent=2) + "\n").encode()
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(fd, "wb") as stream:
@@ -513,17 +539,18 @@ def main(argv: list[str] | None = None) -> int:
                 resolved_payload.get("method", {}).get("kind"),
                 resolved_payload.get("solver", {}),
             )
-            from src.runners.task40_d07c_g5_join import G5_PROFILE
+            from src.runners.task40_d07c_g5_join import G5_PROFILE, G6_PROFILE
 
-            if profile_name == G5_PROFILE:
+            if profile_name in {G5_PROFILE, G6_PROFILE}:
+                case = "G5" if profile_name == G5_PROFILE else "G6"
                 manifest_value, _manifest_bytes, manifest_error = _read_json_bytes(
-                    args.manifest, "manifest for G5 runtime cache verification"
+                    args.manifest, f"manifest for {case} runtime cache verification"
                 )
                 if manifest_error or manifest_value is None:
-                    raise ValueError(manifest_error or "G5 manifest is unavailable")
-                runtime_cache_evidence = _task40_g5_runtime_cache_evidence(manifest_value)
+                    raise ValueError(manifest_error or f"{case} manifest is unavailable")
+                runtime_cache_evidence = _task40_d07c_runtime_cache_evidence(manifest_value)
         except (ImportError, KeyError, OSError, RuntimeError, TypeError, ValueError) as exc:
-            runtime_cache_errors.append(f"G5 worker runtime-cache verification failed: {exc}")
+            runtime_cache_errors.append(f"D07C worker runtime-cache verification failed: {exc}")
     cache_failed = comm.allreduce(bool(runtime_cache_errors), op=MPI.LOR)
     if cache_failed:
         if comm.rank == 0:
@@ -533,11 +560,11 @@ def main(argv: list[str] | None = None) -> int:
     write_errors: list[str] = []
     if comm.rank == 0 and runtime_cache_evidence is not None:
         try:
-            _write_g5_runtime_cache_evidence(
+            _write_d07c_runtime_cache_evidence(
                 args.expected_output_directory, runtime_cache_evidence
             )
         except (OSError, TypeError, ValueError) as exc:
-            write_errors.append(f"G5 runtime-cache evidence could not be persisted: {exc}")
+            write_errors.append(f"D07C runtime-cache evidence could not be persisted: {exc}")
     if comm.allreduce(bool(write_errors), op=MPI.LOR):
         if comm.rank == 0:
             for error in write_errors:

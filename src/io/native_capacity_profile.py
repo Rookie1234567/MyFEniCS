@@ -165,7 +165,7 @@ TASK40_PHI90_D07C_PROFILE_BY_CASE = {
     case: f"task40para_phi90_0p7_D07C_{case}_p6_direct_v1"
     for case in (
         "B", "Y1", "Y2", "B_M8", "Y3_M8", "G2_M8", "G3_M8",
-        "G3_M8_N64", "G3_M8_N96", "G5_M8_N64",
+        "G3_M8_N64", "G3_M8_N96", "G5_M8_N64", "G6_M8_N64",
     )
 }
 TASK40_PHI90_D07C_PROFILES = frozenset(
@@ -1578,6 +1578,7 @@ def _task40_phi90_d07c_profile_facts(identity):
         "G3_M8_N64": (-64, 1),
         "G3_M8_N96": (-96, 1),
         "G5_M8_N64": (-64, 1),
+        "G6_M8_N64": (-64, 1),
     }.get(case_label, (-143, 1))
     n_abs_max = max(abs(n_min), abs(n_max))
     mode_facts = {
@@ -1715,14 +1716,32 @@ def _task40_phi90_d07c_profile_facts(identity):
             ),
             outer_taskset_required=False,
         )
+    elif case_label == "G6_M8_N64":
+        # G6 has a distinct, exact-profile observational admission scope. It
+        # uses the same fail-closed host-floor guard shape as G5 without
+        # reusing G5 identity, cache, locks, or one-shot reservation.
+        base["resources"]["parallel_admission_policy"] = (
+            "g6_scoped_observational_neighbors_v1"
+        )
+        base["resources"]["concurrent_neighbor_authorized"] = False
+        base["native_execution"].update(
+            supervisor_cpu=None,
+            worker_cpu=None,
+            worker_cpus=[],
+            cpu_reservation_policy=(
+                "sampled_low_load_distinct_physical_cores_v1"
+            ),
+            outer_taskset_required=False,
+        )
     options = base["component_options"]
     options["visualization_output_policy"] = {
-        "write_visualization_files": case_label != "G5_M8_N64",
+        "write_visualization_files": case_label not in {"G5_M8_N64", "G6_M8_N64"},
         "retained_field_samples": "full3d_reference_sample_npz",
         "field_recovery_and_energy_metrics": "unchanged",
         "visualization_files": (
-            "disabled_by_explicit_G5_profile" if case_label == "G5_M8_N64"
-            else "enabled_by_legacy_profile_default"
+            "disabled_by_explicit_G5_profile" if case_label == "G5_M8_N64" else
+            "disabled_by_explicit_G6_profile" if case_label == "G6_M8_N64" else
+            "enabled_by_legacy_profile_default"
         ),
     }
     options.update(
@@ -1818,7 +1837,7 @@ def _task40_phi90_d07c_profile_facts(identity):
             "symbolic_calls": 1, "numeric_calls": 1, "initial_solve_calls": 1,
             "same_factor_correction_solve_calls_max": 2, "total_solve_calls_max": 3,
         },
-        write_visualization_files=case_label != "G5_M8_N64",
+        write_visualization_files=case_label not in {"G5_M8_N64", "G6_M8_N64"},
     )
     base["campaign_authorization"]["resource_policy"] = {
         "name": "host_available_floor_v1",
@@ -1836,7 +1855,7 @@ def _task40_phi90_d07c_profile_facts(identity):
         "the excluded high-|m| propagating orders remain outside qualification."
     )
     if max_m == 8 and case_label not in {
-        "G3_M8_N64", "G3_M8_N96", "G5_M8_N64"
+        "G3_M8_N64", "G3_M8_N96", "G5_M8_N64", "G6_M8_N64"
     }:
         base["campaign_authorization"]["source"] = (
             "User-authorized 2026-10-29 0.7nm mesh refinement with economical modal truncation: "
@@ -1983,6 +2002,44 @@ def _task40_phi90_d07c_profile_facts(identity):
             "relative-only cutoff and P6 direct route. It is a mesh candidate, not a "
             "continuum or full-DtN qualification. Visualization files are disabled while "
             "the direct field sample archive and all physical outputs remain enabled."
+        )
+    elif case_label == "G6_M8_N64":
+        options["directional_mesh_comparison"].update(
+            display_name="D07C-G6-M8-N64-y0p25",
+            changed_axes=["y"],
+            changed_axes_vs_mesh_reference=["y"],
+            mode_window=window_label,
+            modal_window="M[-8,8],N[-64,1]",
+            mesh_comparison_reference_case="G5_M8_N64",
+            mesh_comparison_reference_axis_hashes=deepcopy(
+                D07C_AXIS_PLANS["G5"]["axis_sha256_le_f64"]
+            ),
+            finite_window_context_reference_case="G3_M8_N96",
+            same_mesh_modal_reference_case=None,
+            joint_mesh_and_cutoff_change=False,
+        )
+        mode_selection.update(
+            cutoff_validation_status=(
+                "G3_N64_TO_N96_FINITE_WINDOW_CHECK_PASSED; G6 keeps N64 and inherits "
+                "G5's same finite signed rectangle, not a same-mesh cutoff comparison"
+            ),
+            mesh_comparison_reference_case="G5_M8_N64",
+            mesh_comparison_reference_mode_sha256=(
+                "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0"
+            ),
+            finite_window_context_reference_case="G3_M8_N96",
+            finite_window_context_mode_sha256=(
+                "f044d5183d9f106bfff3e9d312e6aef9e7a205ab42b961655c4415a6afab949d"
+            ),
+        )
+        base["campaign_authorization"]["source"] = (
+            "User-authorized D07C G6 y-refinement from the completed G5 mesh: only y is "
+            "changed to 0.25 nm across all three physical slabs; x/z coordinates, Si/air "
+            "physics, phi90 incidence, p6 condensed direct route, M[-8,8]/N[-64,1], q81/q15, "
+            "and relative-only 1e-13 cutoff remain fixed. G5 is the primary same-mode mesh "
+            "reference. This candidate is not a continuum or full-DtN qualification. "
+            "Visualization files remain disabled while the field sample archive, modal "
+            "amplitudes/powers, residual, energy, and absorption outputs remain enabled."
         )
     base["operator_scope"] = operator_scope
     base["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"
@@ -4299,7 +4356,7 @@ def _validate_task40_phi90_d07c_case(config: dict, identity: str) -> None:
         case for case, profile in TASK40_PHI90_D07C_PROFILE_BY_CASE.items()
         if profile == identity
     )
-    expected_visualization_files = case_label != "G5_M8_N64"
+    expected_visualization_files = case_label not in {"G5_M8_N64", "G6_M8_N64"}
     actual_visualization_files = config.get("output", {}).get(
         "write_visualization_files", True
     )

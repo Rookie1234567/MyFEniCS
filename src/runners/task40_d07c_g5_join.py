@@ -1,8 +1,9 @@
-"""G5-only memory-floor admission for its reviewed parallel execution.
+"""Exact D07C memory-floor admission for reviewed observational execution.
 
 This module deliberately does not acquire or inspect the canonical heavy lock.
-It is reachable only for the exact D07C G5 profile/run and a hash-bound attempt
-scope. Other Task40 profiles retain their existing exclusive/admission paths.
+It is reachable only for the exact G5 or G6 profile/run and a hash-bound
+attempt scope. Other Task40 profiles retain their existing exclusive/admission
+paths. The G5 and G6 scopes, locks, caches, and one-shot markers are distinct.
 """
 from __future__ import annotations
 
@@ -23,8 +24,32 @@ G5_SCOPE_SCHEMA = "task40.d07c_g5_memory_floor_observational_neighbors.v1"
 G5_SCOPE_PATH_ENV = "TASK40_D07C_G5_SCOPE_PATH"
 G5_SCOPE_SHA_ENV = "TASK40_D07C_G5_SCOPE_SHA256"
 G5_SUBMISSION_MODE_ENV = "TASK40_D07C_G5_SUBMISSION_MODE"
+G6_PROFILE = "task40para_phi90_0p7_D07C_G6_M8_N64_p6_direct_v1"
+G6_RUN_ID = G6_PROFILE
+G6_SCOPE_SCHEMA = "task40.d07c_g6_memory_floor_observational_neighbors.v1"
+G6_SCOPE_PATH_ENV = "TASK40_D07C_G6_SCOPE_PATH"
+G6_SCOPE_SHA_ENV = "TASK40_D07C_G6_SCOPE_SHA256"
+G6_SUBMISSION_MODE_ENV = "TASK40_D07C_G6_SUBMISSION_MODE"
 _ATTEMPT_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{5,63}$")
 _LIVE_STATES = {"R", "S", "D", "T", "t", "K", "W", "P"}
+
+_CASE_SPECS = {
+    G5_PROFILE: {
+        "case": "G5", "run_id": G5_RUN_ID, "schema": G5_SCOPE_SCHEMA,
+        "policy": "g5_scoped_observational_neighbors_v1",
+    },
+    G6_PROFILE: {
+        "case": "G6", "run_id": G6_RUN_ID, "schema": G6_SCOPE_SCHEMA,
+        "policy": "g6_scoped_observational_neighbors_v1",
+    },
+}
+
+
+def _case_spec(profile: str, run_id: str) -> dict:
+    spec = _CASE_SPECS.get(str(profile))
+    if spec is None or (str(profile), str(run_id)) != (str(profile), spec["run_id"]):
+        raise InputError("D07C observational admission requires an exact profile/run")
+    return spec
 
 
 def sha256_file(path: Path) -> str:
@@ -32,20 +57,22 @@ def sha256_file(path: Path) -> str:
 
 
 def _case_lock_paths(profile: str, run_id: str, directory: Path) -> tuple[Path, Path]:
-    if (profile, run_id) != (G5_PROFILE, G5_RUN_ID):
-        raise InputError("G5 lock identity is not the exact reviewed profile/run")
+    spec = _case_spec(profile, run_id)
     identity = hashlib.sha256(f"{profile}\0{run_id}".encode()).hexdigest()[:20]
-    prefix = f"task40_d07c_g5_{identity}"
+    prefix = f"task40_d07c_{spec['case'].lower()}_{identity}"
     return directory / f"{prefix}.member.lock", directory / f"{prefix}.submitted.json"
 
 
-def _attempt_cache_root(attempt_id: str) -> Path:
+def _attempt_cache_root(attempt_id: str, profile: str = G5_PROFILE) -> Path:
     if not _ATTEMPT_RE.fullmatch(attempt_id):
-        raise InputError("G5 authorization has an invalid attempt id")
-    return Path("/tmp") / f"task40_d07c_g5_attempt_{attempt_id}"
+        raise InputError("D07C authorization has an invalid attempt id")
+    spec = _CASE_SPECS.get(str(profile))
+    if spec is None:
+        raise InputError("D07C attempt cache requires the exact G5 or G6 profile")
+    return Path("/tmp") / f"task40_d07c_{spec['case'].lower()}_attempt_{attempt_id}"
 
 
-def load_g5_scope(
+def load_observational_scope(
     scope_path: str | Path,
     expected_sha256: str,
     *,
@@ -54,27 +81,27 @@ def load_g5_scope(
     expected_identity: dict | None = None,
     lock_directory: str | Path = "/tmp",
 ) -> dict:
-    """Read the exact one-attempt G5 scope and compare all supplied identity fields."""
-    if (str(profile), str(run_id)) != (G5_PROFILE, G5_RUN_ID):
-        raise InputError("G5 observational admission is restricted to the exact profile/run")
+    """Read one exact D07C case scope and compare supplied identity fields."""
+    spec = _case_spec(profile, run_id)
+    case = spec["case"]
     path = Path(scope_path).resolve()
     try:
         raw = path.read_bytes()
         scope = json.loads(raw)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise InputError(f"G5 scope is unreadable: {exc}") from exc
+        raise InputError(f"{case} scope is unreadable: {exc}") from exc
     digest = hashlib.sha256(raw).hexdigest()
     if digest != str(expected_sha256).lower():
-        raise InputError("G5 scope SHA256 mismatch")
-    if scope.get("schema") != G5_SCOPE_SCHEMA:
-        raise InputError("G5 scope schema is unsupported")
+        raise InputError(f"{case} scope SHA256 mismatch")
+    if scope.get("schema") != spec["schema"]:
+        raise InputError(f"{case} scope schema is unsupported")
     identity = scope.get("identity", {})
-    if identity.get("profile_identity") != G5_PROFILE or identity.get("run_id") != G5_RUN_ID:
-        raise InputError("G5 scope does not bind the exact profile/run")
+    if identity.get("profile_identity") != profile or identity.get("run_id") != run_id:
+        raise InputError(f"{case} scope does not bind the exact profile/run")
     if expected_identity is not None:
         for key, expected in expected_identity.items():
             if identity.get(key) != expected:
-                raise InputError(f"G5 scope identity differs at {key}")
+                raise InputError(f"{case} scope identity differs at {key}")
     resources = scope.get("resource_contract", {})
     if (
         resources.get("mode") != "host_available_floor_v1"
@@ -84,16 +111,16 @@ def load_g5_scope(
         or resources.get("stop_on_global_swap") is not False
         or resources.get("pss_uss_sampling") != "disabled"
     ):
-        raise InputError("G5 scope changes the reviewed 64 GiB/no-RSS-cap contract")
+        raise InputError(f"{case} scope changes the reviewed 64 GiB/no-RSS-cap contract")
     parallel = scope.get("neighbor_policy", {})
     if (
-        parallel.get("policy") != "g5_scoped_observational_neighbors_v1"
+        parallel.get("policy") != spec["policy"]
         or parallel.get("neighbors_block_admission") is not False
         or parallel.get("unknown_solver_candidates_block_admission") is not False
         or parallel.get("large_process_candidates_block_admission") is not False
         or parallel.get("neighbors_modified") is not False
     ):
-        raise InputError("G5 scope lacks the exact observational-neighbor authorization")
+        raise InputError(f"{case} scope lacks the exact observational-neighbor authorization")
     policy = scope.get("cpu_policy", {})
     if (
         policy.get("selection") != "sampled_low_load_distinct_physical_cores_v1"
@@ -101,18 +128,30 @@ def load_g5_scope(
         or policy.get("busy_fallback_allowed") is not True
         or policy.get("exclusive_cpu_ownership") is not False
     ):
-        raise InputError("G5 scope CPU policy differs from the reviewed dynamic reservation")
+        raise InputError(f"{case} scope CPU policy differs from the reviewed dynamic reservation")
     paths = scope.get("runtime_paths", {})
     attempt_id = scope.get("attempt_id")
     if not isinstance(attempt_id, str) or not _ATTEMPT_RE.fullmatch(attempt_id):
-        raise InputError("G5 authorization has an invalid attempt id")
+        raise InputError(f"{case} authorization has an invalid attempt id")
     member, reservation = _case_lock_paths(profile, run_id, Path(lock_directory))
-    cache_root = _attempt_cache_root(attempt_id)
+    cache_root = _attempt_cache_root(attempt_id, profile)
     if paths.get("member_lock") != str(member) or paths.get("one_shot_reservation") != str(reservation):
-        raise InputError("G5 case-level lock paths differ from its exact profile/run identity")
+        raise InputError(f"{case} case-level lock paths differ from its exact profile/run identity")
     if paths.get("attempt_cache_root") != str(cache_root):
-        raise InputError("G5 scope cache root differs from its exact attempt id")
+        raise InputError(f"{case} scope cache root differs from its exact attempt id")
     return scope
+
+
+def load_g5_scope(scope_path, expected_sha256, **kwargs) -> dict:
+    if str(kwargs.get("profile")) != G5_PROFILE:
+        raise InputError("G5 observational admission is restricted to the exact profile/run")
+    return load_observational_scope(scope_path, expected_sha256, **kwargs)
+
+
+def load_g6_scope(scope_path, expected_sha256, **kwargs) -> dict:
+    if str(kwargs.get("profile")) != G6_PROFILE:
+        raise InputError("G6 observational admission is restricted to the exact profile/run")
+    return load_observational_scope(scope_path, expected_sha256, **kwargs)
 
 
 def _core(cpu: int) -> tuple[int, int]:
@@ -261,10 +300,17 @@ def choose_g5_cpu_reservation(*, sample_seconds: float = 1.5, proc_root: str | P
     }
 
 
+def choose_g6_cpu_reservation(*, sample_seconds: float = 1.5, proc_root: str | Path = "/proc") -> dict:
+    """Use the same dynamic, non-exclusive two-core sampler for exact G6."""
+    return choose_g5_cpu_reservation(sample_seconds=sample_seconds, proc_root=proc_root)
+
+
 class G5RuntimeLease:
     def __init__(self, scope: dict, scope_path: Path, scope_sha256: str,
                  member_stream, member_path: Path, reservation_path: Path,
-                 cpu_reservation: dict, submission_mode: str):
+                 cpu_reservation: dict, submission_mode: str, *, profile: str = G5_PROFILE):
+        self.profile = profile
+        self.case = _CASE_SPECS[profile]["case"]
         self.scope = scope
         self.scope_path = scope_path
         self.scope_sha256 = scope_sha256
@@ -277,7 +323,7 @@ class G5RuntimeLease:
 
     def summary(self) -> dict:
         return {
-            "policy": "g5_memory_floor_with_observational_neighbors",
+            "policy": f"{self.case.lower()}_memory_floor_with_observational_neighbors",
             "lock_scope": "case_level_profile_run_identity",
             "scope_path": str(self.scope_path),
             "scope_sha256": self.scope_sha256,
@@ -295,11 +341,11 @@ class G5RuntimeLease:
         if self.submission_mode != "runtime":
             return
         if self._committed:
-            raise InputError("G5 runtime reservation was already committed")
+            raise InputError(f"{self.case} runtime reservation was already committed")
         payload = {
-            "schema": "task40.d07c.g5_one_shot_submission.v1",
-            "profile_identity": G5_PROFILE,
-            "run_id": G5_RUN_ID,
+            "schema": f"task40.d07c.{self.case.lower()}_one_shot_submission.v1",
+            "profile_identity": self.profile,
+            "run_id": self.profile,
             "attempt_id": self.scope["attempt_id"],
             "scope_sha256": self.scope_sha256,
             "cpu_reservation": self.cpu_reservation,
@@ -310,12 +356,61 @@ class G5RuntimeLease:
         try:
             fd = os.open(self.reservation_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         except FileExistsError as exc:
-            raise InputError("G5 one-shot reservation already exists; no retry") from exc
+            raise InputError(f"{self.case} one-shot reservation already exists; no retry") from exc
         with os.fdopen(fd, "wb") as stream:
             stream.write(raw)
             stream.flush()
             os.fsync(stream.fileno())
         self._committed = True
+
+
+@contextmanager
+def _runtime_lease(
+    *,
+    profile: str,
+    run_id: str,
+    scope_path: str | Path,
+    scope_sha256: str,
+    expected_identity: dict | None,
+    submission_mode: str,
+    lock_directory: str | Path,
+    proc_root: str | Path,
+):
+    spec = _case_spec(profile, run_id)
+    case = spec["case"]
+    if submission_mode not in {"fresh_check", "runtime"}:
+        raise InputError(f"{case} submission mode is unsupported")
+    lock_dir = Path(lock_directory)
+    scope_file = Path(scope_path).resolve()
+    scope = load_observational_scope(
+        scope_file, scope_sha256, profile=profile, run_id=run_id,
+        expected_identity=expected_identity, lock_directory=lock_dir,
+    )
+    member_path, reservation_path = _case_lock_paths(profile, run_id, lock_dir)
+    member = member_path.open("a")
+    try:
+        try:
+            fcntl.flock(member.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise InputError(f"{case} case-level member lock is held; no launch") from exc
+        if reservation_path.exists():
+            raise InputError(f"{case} one-shot reservation already exists; no retry")
+        reservation_factory = (
+            choose_g5_cpu_reservation if spec["case"] == "G5"
+            else choose_g6_cpu_reservation
+        )
+        reservation = reservation_factory(proc_root=proc_root)
+        lease = G5RuntimeLease(
+            scope, scope_file, str(scope_sha256).lower(), member,
+            member_path, reservation_path, reservation, submission_mode,
+            profile=profile,
+        )
+        yield lease
+    finally:
+        try:
+            fcntl.flock(member.fileno(), fcntl.LOCK_UN)
+        finally:
+            member.close()
 
 
 @contextmanager
@@ -330,34 +425,38 @@ def g5_runtime_lease(
     lock_directory: str | Path = "/tmp",
     proc_root: str | Path = "/proc",
 ):
-    if submission_mode not in {"fresh_check", "runtime"}:
-        raise InputError("G5 submission mode is unsupported")
-    lock_dir = Path(lock_directory)
-    scope_file = Path(scope_path).resolve()
-    scope = load_g5_scope(
-        scope_file, scope_sha256, profile=profile, run_id=run_id,
-        expected_identity=expected_identity, lock_directory=lock_dir,
-    )
-    member_path, reservation_path = _case_lock_paths(profile, run_id, lock_dir)
-    member = member_path.open("a")
-    try:
-        try:
-            fcntl.flock(member.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError as exc:
-            raise InputError("G5 case-level member lock is held; no launch") from exc
-        if reservation_path.exists():
-            raise InputError("G5 one-shot reservation already exists; no retry")
-        reservation = choose_g5_cpu_reservation(proc_root=proc_root)
-        lease = G5RuntimeLease(
-            scope, scope_file, str(scope_sha256).lower(), member,
-            member_path, reservation_path, reservation, submission_mode,
-        )
+    if str(profile) != G5_PROFILE:
+        raise InputError("G5 runtime lease is restricted to the exact G5 profile")
+    with _runtime_lease(
+        profile=profile, run_id=run_id, scope_path=scope_path,
+        scope_sha256=scope_sha256, expected_identity=expected_identity,
+        submission_mode=submission_mode, lock_directory=lock_directory,
+        proc_root=proc_root,
+    ) as lease:
         yield lease
-    finally:
-        try:
-            fcntl.flock(member.fileno(), fcntl.LOCK_UN)
-        finally:
-            member.close()
+
+
+@contextmanager
+def g6_runtime_lease(
+    profile: str,
+    run_id: str,
+    *,
+    scope_path: str | Path,
+    scope_sha256: str,
+    expected_identity: dict | None = None,
+    submission_mode: str = "runtime",
+    lock_directory: str | Path = "/tmp",
+    proc_root: str | Path = "/proc",
+):
+    if str(profile) != G6_PROFILE:
+        raise InputError("G6 runtime lease is restricted to the exact G6 profile")
+    with _runtime_lease(
+        profile=profile, run_id=run_id, scope_path=scope_path,
+        scope_sha256=scope_sha256, expected_identity=expected_identity,
+        submission_mode=submission_mode, lock_directory=lock_directory,
+        proc_root=proc_root,
+    ) as lease:
+        yield lease
 
 
 __all__ = [
@@ -367,8 +466,18 @@ __all__ = [
     "G5_SCOPE_SCHEMA",
     "G5_SCOPE_SHA_ENV",
     "G5_SUBMISSION_MODE_ENV",
+    "G6_PROFILE",
+    "G6_RUN_ID",
+    "G6_SCOPE_PATH_ENV",
+    "G6_SCOPE_SCHEMA",
+    "G6_SCOPE_SHA_ENV",
+    "G6_SUBMISSION_MODE_ENV",
     "G5RuntimeLease",
     "choose_g5_cpu_reservation",
+    "choose_g6_cpu_reservation",
     "g5_runtime_lease",
+    "g6_runtime_lease",
     "load_g5_scope",
+    "load_g6_scope",
+    "load_observational_scope",
 ]

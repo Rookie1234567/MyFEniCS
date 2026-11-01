@@ -24,6 +24,8 @@ D07C_CASE_SEGMENT_COUNTS = {
     "G3": {"x": (2, 2, 2), "y": (30, 40, 30), "z": (2, 4, 2)},
     # G5 keeps G3 x/z and uses approximately 0.3 nm per y cell.
     "G5": {"x": (2, 2, 2), "y": (50, 67, 50), "z": (2, 4, 2)},
+    # G6 keeps G5/G3 x/z and uses exactly 0.25 nm through the full y period.
+    "G6": {"x": (2, 2, 2), "y": (60, 80, 60), "z": (2, 4, 2)},
 }
 
 def _uniform_segment(start: float, stop: float, cells: int) -> tuple[float, ...]:
@@ -62,7 +64,7 @@ def d07c_axis_plan(case: str) -> dict[str, object]:
     segments = D07C_CASE_SEGMENT_COUNTS[case]
     axes = {axis: _piecewise_axis(axis, segments[axis]) for axis in "xyz"}
     counts = tuple(len(axes[axis]) - 1 for axis in "xyz")
-    parent_case = "G3" if case == "G5" else "B"
+    parent_case = {"G5": "G3", "G6": "G5"}.get(case, "B")
     parent_axes = {
         axis: _piecewise_axis(axis, D07C_CASE_SEGMENT_COUNTS[parent_case][axis])
         for axis in "xyz"
@@ -104,11 +106,13 @@ def d07c_axis_plan(case: str) -> dict[str, object]:
         "Y1": {"1": 696, "2": 360, "3": 24},
         "Y2": {"1": 680, "2": 360, "3": 40},
         "G5": {"1": 5476, "2": 2004, "3": 536},
+        "G6": {"1": 6560, "2": 2400, "3": 640},
     }
     expected_refined_counts = {
         "Y1": (6, 30, 6),
         "Y2": (6, 30, 6),
         "G5": (6, 167, 8),
+        "G6": (6, 200, 8),
     }
     if case in expected_refined and (
         counts, tags

@@ -60,3 +60,7 @@ K1–K4（`m,n∈[-K,K]`）四个独立完整场已运行；与原有限 R13/612
 ### 2026-10-31 D07C-G5 M8/N64 静态准备
 
 用户随后授权 G5：在 G3 x/z 轴上将 y 改为 50/67/50，共 `[6,167,8]` / 8,016 cells，最大 y 步长 0.3 nm。生产 loader/mode inventory、独立中点标签 fake 和真实 manifest→worker 接线已定向验证；G5 profile 使用同一 M8/N64 有限窗口。主 y 网格对照定义为 G3 M8/N64，保持 signed keys 相同；G3 M8/N96 另作有限截断背景，不能用二者混合结果归因单一网格或模态变化。该候选当前尚未 fresh 或启动 FE，须待精确包主审和新的 fresh PASS。静态轴、标签、输入身份和运行限制见[G5准备记录](outcomes/response_d07c_g5_m8_n64_preparation_20261031.md)及[机器计划](outcomes/records/d07c_g5_m8_n64_static_case_plan_v1.json)。G5 明确不写大体积 VTX/VTU/PVD 可视化文件，但保留场恢复、能量、模态和 reference-sample NPZ；不据此声称 RSS 会下降。`FULL_DTN_NOT_VERIFIED` 与 canonical sidewall `NOT_MEASURED` 继续有效。
+
+### 2026-11-01 D07C-G6 M8/N64 y-only 静态准备
+
+G6 以已完成的 G5 为唯一主网格父级，保持 x/z、材料、入射、p6 直接法和 M8/N64 有限窗口不变，只把完整 y 周期细化为 0.25 nm，共 `[6,200,8]` / 9,600 cells。loader、生产 mode inventory、真实结构网格/材料标签 QA，以及 G5/G6 独立授权、锁、一次性提交和缓存路径已定向验证；17 项定向测试通过。本次创建了临时 mesh QA 文件，但没有组装 FE 矩阵或启动求解。运行包仍待精确主审和新的完整 fresh PASS；本节不授权启动。轴、哈希、资源底线和命令模板见[G6准备记录](outcomes/response_d07c_g6_m8_n64_preparation_20261101.md)及[机器计划](outcomes/records/d07c_g6_m8_n64_static_case_plan_v1.json)。G5 的实测 RSS 只作为历史参考，不用于线性外推 G6 峰值。G6 保留场、能量、modal/reference-sample NPZ 输出并禁用大型 VTX/VTU/PVD；`FULL_DTN_NOT_VERIFIED` 与 canonical sidewall `NOT_MEASURED` 继续有效。

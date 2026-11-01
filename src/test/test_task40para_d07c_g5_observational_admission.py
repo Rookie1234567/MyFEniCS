@@ -27,14 +27,24 @@ G5_PROFILE = "task40para_phi90_0p7_D07C_G5_M8_N64_p6_direct_v1"
 G5_RUN_ID = G5_PROFILE
 
 
-def _scope(tmp_path: Path, identity: dict | None = None, *, attempt_id="g5test2026"):
-    member, reservation = g5_join._case_lock_paths(G5_PROFILE, G5_RUN_ID, tmp_path)
+def _scope(
+    tmp_path: Path,
+    identity: dict | None = None,
+    *,
+    attempt_id="g5test2026",
+    profile=G5_PROFILE,
+):
+    case = "G5" if profile == G5_PROFILE else "G6"
+    run_id = profile
+    schema = getattr(g5_join, f"{case}_SCOPE_SCHEMA")
+    policy = f"{case.lower()}_scoped_observational_neighbors_v1"
+    member, reservation = g5_join._case_lock_paths(profile, run_id, tmp_path)
     value = {
-        "schema": g5_join.G5_SCOPE_SCHEMA,
+        "schema": schema,
         "attempt_id": attempt_id,
         "identity": identity or {
-            "profile_identity": G5_PROFILE,
-            "run_id": G5_RUN_ID,
+            "profile_identity": profile,
+            "run_id": run_id,
         },
         "resource_contract": {
             "mode": "host_available_floor_v1",
@@ -45,7 +55,7 @@ def _scope(tmp_path: Path, identity: dict | None = None, *, attempt_id="g5test20
             "pss_uss_sampling": "disabled",
         },
         "neighbor_policy": {
-            "policy": "g5_scoped_observational_neighbors_v1",
+            "policy": policy,
             "neighbors_block_admission": False,
             "unknown_solver_candidates_block_admission": False,
             "large_process_candidates_block_admission": False,
@@ -60,7 +70,7 @@ def _scope(tmp_path: Path, identity: dict | None = None, *, attempt_id="g5test20
         "runtime_paths": {
             "member_lock": str(member),
             "one_shot_reservation": str(reservation),
-            "attempt_cache_root": str(g5_join._attempt_cache_root(attempt_id)),
+            "attempt_cache_root": str(g5_join._attempt_cache_root(attempt_id, profile)),
         },
     }
     path = tmp_path / f"{attempt_id}.scope.json"
@@ -155,6 +165,30 @@ def test_g5_scope_is_exact_and_g5_profile_has_no_fixed_cpu_reservation(tmp_path)
     assert facts["native_execution"]["worker_cpus"] == []
     assert facts["resources"]["parallel_admission_policy"] == "g5_scoped_observational_neighbors_v1"
     assert facts["resources"]["concurrent_neighbor_authorized"] is False
+
+
+def test_g6_scope_is_separate_from_g5_identity_lock_and_cache(tmp_path):
+    g6_profile = g5_join.G6_PROFILE
+    path, digest, value = _scope(
+        tmp_path, attempt_id="g6scope2026", profile=g6_profile,
+    )
+    loaded = g5_join.load_g6_scope(
+        path, digest, profile=g6_profile, run_id=g6_profile,
+        lock_directory=tmp_path,
+    )
+    assert loaded == value
+    with pytest.raises(g5_join.InputError, match="exact profile/run"):
+        g5_join.load_g5_scope(
+            path, digest, profile=g6_profile, run_id=g6_profile,
+            lock_directory=tmp_path,
+        )
+    g5_lock, g5_reservation = g5_join._case_lock_paths(G5_PROFILE, G5_RUN_ID, tmp_path)
+    g6_lock, g6_reservation = g5_join._case_lock_paths(g6_profile, g6_profile, tmp_path)
+    assert g5_lock != g6_lock
+    assert g5_reservation != g6_reservation
+    assert g5_join._attempt_cache_root("g6scope2026", G5_PROFILE) != (
+        g5_join._attempt_cache_root("g6scope2026", g6_profile)
+    )
 
 
 def test_exact_g5_host_floor_observes_other_solvers_and_large_processes_without_blocking(
@@ -412,6 +446,103 @@ def test_run_case_to_native_guard_commits_one_g5_reservation_without_fe(tmp_path
         pytest.raises(admission.InputError, match="one-shot reservation already exists"),
         native_capacity._native_capacity_launch_lock(
             W, G5_PROFILE, G5_RUN_ID,
+            expected_identity=identity, submission_mode="fresh_check",
+        ),
+    ):
+        pass
+
+
+def test_run_case_to_native_guard_commits_one_g6_reservation_without_fe(tmp_path, monkeypatch, capsys):
+    g6_input = W / "input/task40para_phi90_mesh_modes_direct/d07c_g6_m8_nminus64_to1_p6_direct.dat"
+    g6_profile = g5_join.G6_PROFILE
+    specification = load_and_resolve(g6_input)
+    commit = __import__("subprocess").check_output(
+        ["git", "rev-parse", "HEAD"], cwd=W, text=True
+    ).strip()
+    identity = {
+        "profile_identity": g6_profile,
+        "run_id": g6_profile,
+        "input_path": str(specification.source_path.resolve()),
+        "input_sha256": specification.input_sha256,
+        "physical_model_sha256": specification.physical_model_sha256,
+        "resolved_config_sha256": resolved_config_sha256(specification),
+        "resolved_output_parent_absolute": str(specification.expected_output_parent.resolve()),
+        "source_commit": commit,
+    }
+    scope_path, _scope_sha, value = _scope(
+        tmp_path, identity, attempt_id="g6prod2026", profile=g6_profile,
+    )
+    member, reservation = g5_join._case_lock_paths(g6_profile, g6_profile, tmp_path)
+    value["runtime_paths"].update(
+        member_lock=str(member), one_shot_reservation=str(reservation)
+    )
+    raw = (json.dumps(value, indent=2, sort_keys=True) + "\n").encode()
+    scope_path.write_bytes(raw)
+    scope_sha = hashlib.sha256(raw).hexdigest()
+    monkeypatch.setenv("_MYFENICS_NATIVE_QUALIFIED_ACTIVATION", "1")
+    monkeypatch.setenv(g5_join.G6_SCOPE_PATH_ENV, str(scope_path))
+    monkeypatch.setenv(g5_join.G6_SCOPE_SHA_ENV, scope_sha)
+    monkeypatch.setenv("TASK40_D07C_G6_LOCK_DIRECTORY", str(tmp_path))
+    monkeypatch.delenv(g5_join.G5_SCOPE_PATH_ENV, raising=False)
+    monkeypatch.delenv(g5_join.G5_SCOPE_SHA_ENV, raising=False)
+    monkeypatch.delenv("TASK40_PARALLEL_AUTHORIZATION_FILE", raising=False)
+    monkeypatch.delenv("TASK40_PARALLEL_AUTHORIZATION_SHA256", raising=False)
+    monkeypatch.delenv("TASK40_EXACT_PARALLEL_PAIR_SCOPE_PATH", raising=False)
+    monkeypatch.delenv("TASK40_EXACT_PARALLEL_PAIR_SCOPE_SHA256", raising=False)
+    _admission_roots(tmp_path / "host", monkeypatch, candidates=True)
+    monkeypatch.setattr(g5_join, "choose_g6_cpu_reservation", lambda **_kwargs: {
+        "policy": "sampled_low_load_distinct_physical_cores_v1",
+        "sample_seconds": 1.5,
+        "supervisor_cpu": 3,
+        "worker_cpu": 17,
+        "selected_topology": [{"cpu": 3}, {"cpu": 17}],
+        "exclusive_cpu_ownership": False,
+    })
+    monkeypatch.setattr(native_capacity.os, "sched_setaffinity", lambda *_args: None)
+    monkeypatch.setattr(native_capacity, "_launch_swap_snapshot", lambda: {"fake": True})
+    monkeypatch.setattr(native_capacity, "_validate_preexisting_swap", lambda _s, *, observe_only: "observe_only")
+    monkeypatch.setattr(native_capacity, "_cpu_launch_snapshot", lambda _cpus: {"sampled": True})
+
+    import src.runners.task038_launcher as launcher
+    from src.io.execution_plan import build_execution_plan
+
+    run_dir = tmp_path / "fake-g6-launched-run"
+
+    def fake_launch(spec, *, prelaunch_isolation, **_kwargs):
+        run_dir.mkdir()
+        plan = build_execution_plan(
+            spec, run_dir, source_sha=commit,
+            python_executable="/qualified/shared/bin/python",
+            mpiexec_command="/usr/bin/mpiexec",
+            worker_cpus_override=prelaunch_isolation["worker_affinity"],
+        )
+        assert plan.argv[:8] == (
+            "/usr/bin/mpiexec", "-n", "1", "/usr/bin/numactl",
+            "--interleave=0,1", "/usr/bin/taskset", "-c", "17",
+        )
+        assert prelaunch_isolation["native_capacity_lock_scope"] == "g6_case_level_member_lock_no_canonical"
+        assert prelaunch_isolation["native_capacity_heavy_lock"] == str(member.resolve())
+        assert prelaunch_isolation["node_memory_admission"]["g6_parallel_authorized_by_exact_scope"] is True
+        assert prelaunch_isolation["node_memory_admission"]["minimum_available_bytes"] == 64 * 1024**3
+        assert prelaunch_isolation["node_memory_admission"]["rss_hard_limit_bytes"] is None
+        assert prelaunch_isolation["g6_observational_join"]["canonical_heavy_lock_touched"] is False
+        return {"run_directory": str(run_dir), "exit_status": 0, "result_classification": "worker_exit0"}
+
+    monkeypatch.setattr(launcher, "launch_specification", fake_launch)
+    from scripts.run_case import main as run_case_main
+
+    status = run_case_main([str(g6_input)])
+    assert status == 0
+    result_line = capsys.readouterr().out.strip().splitlines()[-1]
+    assert json.loads(result_line)["result_classification"] == "worker_exit0"
+    assert reservation.is_file()
+    submitted = json.loads(reservation.read_text())
+    assert submitted["schema"] == "task40.d07c.g6_one_shot_submission.v1"
+    assert submitted["profile_identity"] == g6_profile
+    with (
+        pytest.raises(admission.InputError, match="one-shot reservation already exists"),
+        native_capacity._native_capacity_launch_lock(
+            W, g6_profile, g6_profile,
             expected_identity=identity, submission_mode="fresh_check",
         ),
     ):

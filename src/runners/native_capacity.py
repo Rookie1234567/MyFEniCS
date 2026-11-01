@@ -45,11 +45,23 @@ def _native_capacity_launch_lock(
     """Keep legacy launches exclusive; share only the reviewed exact pair."""
     from .task40_d07c_g5_join import (
         G5_PROFILE, G5_SCOPE_PATH_ENV, G5_SCOPE_SHA_ENV, g5_runtime_lease,
+        G6_PROFILE, G6_SCOPE_PATH_ENV, G6_SCOPE_SHA_ENV, g6_runtime_lease,
     )
 
     g5_scope_path = os.environ.get(G5_SCOPE_PATH_ENV)
     g5_scope_sha = os.environ.get(G5_SCOPE_SHA_ENV)
-    if profile == G5_PROFILE:
+    g6_scope_path = os.environ.get(G6_SCOPE_PATH_ENV)
+    g6_scope_sha = os.environ.get(G6_SCOPE_SHA_ENV)
+    if profile in {G5_PROFILE, G6_PROFILE}:
+        case = 'G5' if profile == G5_PROFILE else 'G6'
+        own_scope_path, own_scope_sha = (
+            (g5_scope_path, g5_scope_sha)
+            if case == 'G5' else (g6_scope_path, g6_scope_sha)
+        )
+        other_scope_path, other_scope_sha = (
+            (g6_scope_path, g6_scope_sha)
+            if case == 'G5' else (g5_scope_path, g5_scope_sha)
+        )
         from .reviewed_workstation_admission import (
             _TASK40_PARALLEL_AUTH_FILE_ENV, _TASK40_PARALLEL_AUTH_SHA_ENV,
         )
@@ -59,27 +71,38 @@ def _native_capacity_launch_lock(
             _TASK40_PARALLEL_AUTH_FILE_ENV, _TASK40_PARALLEL_AUTH_SHA_ENV,
             PAIR_SCOPE_PATH_ENV, PAIR_SCOPE_SHA_ENV,
         )):
-            raise InputError("G5 admission cannot combine with legacy Task41 or exact-pair scopes")
-        if not g5_scope_path or not g5_scope_sha:
-            raise InputError("exact G5 profile requires its reviewed observational scope")
-        lock_directory = os.environ.get("TASK40_D07C_G5_LOCK_DIRECTORY", "/tmp")
-        with g5_runtime_lease(
-            profile, task_run_id or "", scope_path=g5_scope_path,
-            scope_sha256=g5_scope_sha, expected_identity=expected_identity,
+            raise InputError(f"{case} admission cannot combine with legacy Task41 or exact-pair scopes")
+        if other_scope_path is not None or other_scope_sha is not None:
+            raise InputError(f"{case} admission cannot combine with the other D07C observational scope")
+        if not own_scope_path or not own_scope_sha:
+            raise InputError(f"exact {case} profile requires its reviewed observational scope")
+        lock_env = f"TASK40_D07C_{case}_LOCK_DIRECTORY"
+        lock_directory = os.environ.get(lock_env, "/tmp")
+        lease_factory = g5_runtime_lease if case == 'G5' else g6_runtime_lease
+        with lease_factory(
+            profile, task_run_id or "", scope_path=own_scope_path,
+            scope_sha256=own_scope_sha, expected_identity=expected_identity,
             submission_mode=submission_mode, lock_directory=lock_directory,
         ) as lease:
-            # G5 uses only its one-attempt member lock. The canonical heavy lock
+            # G5/G6 use only their own one-attempt member lock. The canonical heavy lock
             # remains untouched while this exact user-authorized route runs.
             common_repository = root.parent / "task-repository.git"
-            yield lease.member_stream, lease.member_path, common_repository, {
-                "g5_runtime_lease": lease,
+            lease_context = {
+                "observational_runtime_lease": lease,
+                "observational_case": case,
                 "scope_path": str(lease.scope_path),
                 "scope_sha256": lease.scope_sha256,
                 "lock_directory": str(Path(lock_directory).resolve()),
             }
+            lease_context[f"{case.lower()}_runtime_lease"] = lease
+            yield lease.member_stream, lease.member_path, common_repository, {
+                **lease_context,
+            }
         return
-    if g5_scope_path is not None or g5_scope_sha is not None:
-        raise InputError("G5 observational scope cannot authorize a different profile")
+    if any(value is not None for value in (
+        g5_scope_path, g5_scope_sha, g6_scope_path, g6_scope_sha,
+    )):
+        raise InputError("D07C observational scope cannot authorize a different profile")
 
     from src.runners.task40_exact_parallel_pair import (
         CANONICAL_COMMON_REPOSITORY,
@@ -343,9 +366,10 @@ def native_capacity_guard(
         raise InputError('source scripts/activate_myfenics_linux.sh first')
     root = Path(__file__).resolve().parents[2]
     profile_facts = native_profile_facts(profile)
-    from .task40_d07c_g5_join import G5_PROFILE
-    g5_profile = profile == G5_PROFILE
-    if g5_profile:
+    from .task40_d07c_g5_join import G5_PROFILE, G6_PROFILE
+    observational_profile = profile in {G5_PROFILE, G6_PROFILE}
+    observational_case = 'G5' if profile == G5_PROFILE else 'G6' if profile == G6_PROFILE else None
+    if observational_profile:
         supervisor_cpu = None
         worker_cpus = None
     else:
@@ -358,17 +382,22 @@ def native_capacity_guard(
     ) as (
         _lock, lock_path, common_repository, pair_context
     ):
-        g5_context = pair_context if g5_profile else None
-        g5_lease = None if g5_context is None else g5_context.get('g5_runtime_lease')
-        if g5_profile:
-            if g5_lease is None:
-                raise InputError('G5 production guard did not return its scoped runtime lease')
-            cpu_reservation = g5_lease.cpu_reservation
+        observational_context = pair_context if observational_profile else None
+        observational_lease = (
+            None if observational_context is None
+            else observational_context.get('observational_runtime_lease')
+        )
+        if observational_profile:
+            if observational_lease is None:
+                raise InputError(
+                    f'{observational_case} production guard did not return its scoped runtime lease'
+                )
+            cpu_reservation = observational_lease.cpu_reservation
             supervisor_cpu = int(cpu_reservation['supervisor_cpu'])
             worker_cpus = [int(cpu_reservation['worker_cpu'])]
             if memory_policy != 'interleave_nodes0_1':
-                raise InputError('G5 runtime requires interleave_nodes0_1')
-        if pair_context is not None and not g5_profile and (
+                raise InputError(f'{observational_case} runtime requires interleave_nodes0_1')
+        if pair_context is not None and not observational_profile and (
             memory_policy != 'interleave_nodes0_1'
             or profile_facts['resources'].get('resource_stop_policy')
             != 'host_available_floor_v1'
@@ -401,28 +430,38 @@ def native_capacity_guard(
                     parallel_authority_path=os.environ.get(_TASK40_PARALLEL_AUTH_FILE_ENV),
                     parallel_authority_sha256=os.environ.get(_TASK40_PARALLEL_AUTH_SHA_ENV),
                     pair_scope_path=(
-                        None if pair_context is None or g5_profile
+                        None if pair_context is None or observational_profile
                         else pair_context['scope_path']
                     ),
                     pair_scope_sha256=(
-                        None if pair_context is None or g5_profile
+                        None if pair_context is None or observational_profile
                         else pair_context['scope_sha256']
                     ),
                     pair_role=(
-                        None if pair_context is None or g5_profile
+                        None if pair_context is None or observational_profile
                         else pair_context['role']
                     ),
                     current_service_unit=os.environ.get('TASK40_EXACT_PARALLEL_PAIR_SERVICE_UNIT'),
                     supervisor_cpu=supervisor_cpu,
                     g5_observational_scope_path=(
-                        None if g5_context is None else g5_context['scope_path']
+                        None if observational_case != 'G5' else observational_context['scope_path']
                     ),
                     g5_observational_scope_sha256=(
-                        None if g5_context is None else g5_context['scope_sha256']
+                        None if observational_case != 'G5' else observational_context['scope_sha256']
                     ),
                     g5_expected_identity=expected_identity,
                     g5_lock_directory=(
-                        None if g5_context is None else g5_context['lock_directory']
+                        None if observational_case != 'G5' else observational_context['lock_directory']
+                    ),
+                    g6_observational_scope_path=(
+                        None if observational_case != 'G6' else observational_context['scope_path']
+                    ),
+                    g6_observational_scope_sha256=(
+                        None if observational_case != 'G6' else observational_context['scope_sha256']
+                    ),
+                    g6_expected_identity=expected_identity,
+                    g6_lock_directory=(
+                        None if observational_case != 'G6' else observational_context['lock_directory']
                     ),
                 )
             else:
@@ -504,7 +543,9 @@ def native_capacity_guard(
                      'native_capacity_heavy_lock': str(lock_path.resolve()),
                      'native_capacity_lock_scope': (
                          'g5_case_level_member_lock_no_canonical'
-                         if g5_profile else
+                         if profile == G5_PROFILE else
+                         'g6_case_level_member_lock_no_canonical'
+                         if profile == G6_PROFILE else
                          'canonical_host_shared_with_exact_task40_pair'
                          if pair_context is not None else
                          'canonical_host_shared_with_task39_worktrees'
@@ -529,7 +570,7 @@ def native_capacity_guard(
                      'native_capacity_profile': profile,
                      'cpu_launch_snapshot': _cpu_launch_snapshot({supervisor_cpu, *worker_cpus}),
                      'exact_parallel_pair': (
-                         None if g5_profile or pair_context is None else {
+                         None if observational_profile or pair_context is None else {
                              'pair_id': pair_context['scope']['pair_id'],
                              'role': pair_context['role'],
                              'scope_path': pair_context['scope_path'],
@@ -540,11 +581,14 @@ def native_capacity_guard(
                          }
                      ),
                      'g5_observational_join': (
-                         None if g5_lease is None else g5_lease.summary()
+                         None if profile != G5_PROFILE else observational_lease.summary()
+                     ),
+                     'g6_observational_join': (
+                         None if profile != G6_PROFILE else observational_lease.summary()
                      ),
                      'profile_concurrent_neighbor_authorized': profile_facts['resources']['concurrent_neighbor_authorized'],
                      'neighbor_concurrent_heavy_authorized': (
-                         g5_profile
+                         observational_profile
                          or profile_facts['resources']['concurrent_neighbor_authorized']
                          or bool(node_admission and node_admission.get(
                              'user_parallel_window_authorization'
@@ -574,9 +618,9 @@ def native_capacity_guard(
             ):
                 os.environ[name] = threads
         try:
-            if g5_lease is not None and submission_mode == 'runtime':
+            if observational_lease is not None and submission_mode == 'runtime':
                 # The one-shot is durable before run_case can create/launch its worker.
-                g5_lease.commit_runtime_submission()
+                observational_lease.commit_runtime_submission()
             yield root, isolation
         finally:
             for name, value in previous_environment.items():
@@ -600,15 +644,16 @@ def launch_native_capacity(specification, *, setup_only: bool = False):
     if profile is None:
         raise InputError('native capacity launch requires an explicit native profile')
     expected_identity = None
-    from .task40_d07c_g5_join import G5_PROFILE
-    if profile == G5_PROFILE:
+    from .task40_d07c_g5_join import G5_PROFILE, G6_PROFILE
+    if profile in {G5_PROFILE, G6_PROFILE}:
+        case = 'G5' if profile == G5_PROFILE else 'G6'
         root = Path(__file__).resolve().parents[2]
         try:
             source_commit = subprocess.check_output(
                 ['git', 'rev-parse', 'HEAD'], cwd=root, text=True
             ).strip()
         except (OSError, subprocess.CalledProcessError) as exc:
-            raise InputError(f'G5 cannot identify its frozen source commit: {exc}') from exc
+            raise InputError(f'{case} cannot identify its frozen source commit: {exc}') from exc
         input_path = Path(specification.source_path).resolve()
         expected_identity = {
             'profile_identity': profile,
