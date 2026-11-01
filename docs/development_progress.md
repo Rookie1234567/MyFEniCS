@@ -3965,3 +3965,9 @@ Task44 从 Task41 的材料/方位执行分支建立，目标是先为 0.7 nm �
 ## Task44 B6 参考面尝试受控停止（2026-11-01）
 
 第 6/12 次 B `boundary_plane` 参考面比较保持 B 的六层材料、P6 网格、160 个 DtN 模态和凝聚 MUMPS 设置不变。watchdog 在运行 851.931 s 时读到 CPU11 上新出现的窄 affinity claim：PID 189961、parent PID 189960、start ticks 342782816；它触发 `selected_cpu_neighbor_gate_failed`，stop_event 记录 `grace_seconds=10`，但首个 SIGKILL 仅晚约 27 μs，Task44 子进程树随即被清理。service wall 为 868.733 s、CPU 时间 855.593 s；同时进程树 RSS 峰值 5,052,604,416 B、专属 cgroup peak 5,277,028,352 B、swap 0。计算已进入 FFCx/JIT 和 assembly-time condensation builder，但没有 Stage-4 matrix-complete progress、MUMPS/solve 日志、残差或 official R/T/A；builder 内停止子阶段未由证据区分。这是受控监控停止，不是数值失败。细节、源文件 hashes 与未运行项见 [B6 terminal receipt](task44_sixlayer_surrogate_0p7nm/outcomes/b6_boundary_plane_controlled_stop_20261101.md)。此前“等待 Task40 结束”的状态由后续用户明确授权 Task44/Task40 并行所覆盖；Task44 单场串行规则与邻任务保护仍在。B7 计为第 7/12 次，使用新 input/run/output/service/cache 身份。
+
+## Task44 B7 参考面对照受控停止（2026-11-01）
+
+第 7/12 次 B `boundary_plane` 对照使用新 run/output/service/cache 身份。watchdog 在 elapsed 1125.154486 s 首次因 CPU17 邻核 Gate 检出窄 affinity claim 而停止：PID 201653、parent PID 201652、start ticks 342958624、命令 basename `run_convergence.py`、当时 affinity `[17]`。外层 failure 为 `selected_cpu_neighbor_gate_failed`，没有 unreadable process；Task44 自身 service 身份与 affinity Gate 通过。主控停止后从真实 host 观察到同一 PID/start 的 affinity 后来变为宽 mask；这不能倒推 stop 样本或归因任务所有者。
+
+stop_event 后约 44.9 μs 即发首个 SIGKILL；`grace_seconds=10` 未实际等待。worker leader exit -9、systemd ExecMainStatus=1，子树清空。service elapsed 1143.094710 s、CPU 18 min 49.771 s、同时进程树 RSS 峰值 5,056,647,168 B、cgroup memory peak 5,282,217,984 B、cgroup swap 0。最后 progress 仍停在 Stage-4 assembly-time condensation backend 选择，没有矩阵完成、solve、真残差或 official R/T/A。这是监控停止，不是数值失败；精度预算为 7/12，剩余 5。完整身份、计算边界、费用和 raw hashes 见 [B7 terminal receipt](task44_sixlayer_surrogate_0p7nm/outcomes/b7_boundary_plane_controlled_stop_20261101.md)。

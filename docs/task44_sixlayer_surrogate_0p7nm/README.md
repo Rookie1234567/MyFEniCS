@@ -2,7 +2,8 @@
 
 ### 2026-11-01 最新执行增量
 
-B6 是第 6/12 次精度对照，固定 B 的几何、材料、P6、DtN 模态与凝聚求解，只改变入射端口相位参考面至 `boundary_plane`。运行在 Stage-4 assembly-time condensation 路径中因 CPU11 邻核 Gate 首次发现 PID 189961（parent 189960，affinity `[11]`）而受控停止；service wall 868.733 s、同时进程树 RSS 峰值 5,052,604,416 B、cgroup peak 5,277,028,352 B、swap 0。没有残差或 R/T/A 数值结果，不把它分类为数值失败。详细边界、identity 和原始证据 hash 见 [`B6 terminal receipt`](outcomes/b6_boundary_plane_controlled_stop_20261101.md)。最新用户指令明确 Task44 与 Task40 可并行；Task44 自身仍一次运行一个正式算例。下一项为新身份的 B7 boundary-plane 复算。
+B6 是第 6/12 次精度对照，固定 B 的几何、材料、P6、DtN 模态与凝聚求解，只改变入射端口相位参考面至 `boundary_plane`。运行在 Stage-4 assembly-time condensation 路径中因 CPU11 邻核 Gate 首次发现 PID 189961（parent 189960，affinity `[11]`）而受控停止；service wall 868.733 s、同时进程树 RSS 峰值 5,052,604,416 B、cgroup peak 5,277,028,352 B、swap 0。没有残差或 R/T/A 数值结果，不把它分类为数值失败。详细边界、identity 和原始证据 hash 见 [`B6 terminal receipt`](outcomes/b6_boundary_plane_controlled_stop_20261101.md)。Task44 与 Task40 并行已获用户明确授权；Task44 自身仍一次运行一个正式算例。
+B7 是第 7/12 次资格对照，沿用 B6 的 `boundary_plane` 输入差异并使用新 run/output/service/cache 身份。CPU17 邻核 Gate 在 1125.154 s 检出 PID 201653（parent 201652，start ticks 342958624，affinity `[17]`），随后受控停止；service wall 1143.095 s、CPU 18 min 49.771 s、RSS/cgroup 峰值 5,056,647,168 B / 5,282,217,984 B，cgroup swap 0。没有 residual 或 official R/T/A；最后仍停在 Stage-4 assembly-time condensation 路径，不是数值失败。预算为 7/12，剩余 5；首因和 evidence hash 见 [`B7 terminal receipt`](outcomes/b7_boundary_plane_controlled_stop_20261101.md)。
 
 ## 执行身份
 
@@ -70,7 +71,7 @@ B6 是第 6/12 次精度对照，固定 B 的几何、材料、P6、DtN 模态�
 4. 每场正式 PDE 前冻结输入、源码 SHA、材料表、网格/DtN 精度对照、单样本初始 128 GiB cap、service/cgroup 与资源硬门；每个 service 显式绑定自己唯一的 Task44 JIT cache root，并在 preflight、service 与 worker 中验证一致。运行期间按真实进度和资源情况继续，不使用原 30 分钟到点强停。
 5. 完成代表点与精度资格后，根据实测单样本成本、已有独立样本上限和数值证据推进训练点、GP、开发验证与盲测；数据/GP 资格分别判定，不受原 12 小时窗口约束。
 
-当前阶段（2026-10-31）：A–D 四个 P6 condensed-direct + MUMPS exact 样本均通过 full explicit true residual 与能量闭合门。B 的 y 加密 retry 三项输出变化约 `9.2–9.8e-4`，超过 `2e-4` 稳定性门；z 加密三项变化约 `1e-10`，z 方向门通过。DtN 倏逝壳层对照使用 m=4、n=8，完整显式相对残差为 `1.623574709e11`，official R/T/A 未运行，DtN 稳定性未判定。顶部空气由 0.5 增至 1.0 nm 的对照通过真残差与能量闭合，但相对 B 的 `R_total/T_total/R00_total` 变化绝对值分别为 `2.34999e-4 / 2.28409e-4 / 2.35003e-4`，均超过 `2e-4`。精度复算已用 5/12 次，y 与空气间距失败、z 通过、DtN 未判定；A–D 仍为 `gp_eligible=false`。GP/design 软件通过 9 项定向测试和 40 点设计校验；有限元 GP 训练、开发误差、盲测误差和标准尺寸计算尚未运行。详细结果见 [outcomes/summary.md](outcomes/summary.md) 与 [response_v7.md](response_v7.md)。
+当前阶段（2026-11-01）：A–D 四个 P6 condensed-direct + MUMPS exact 样本均通过 full explicit true residual 与能量闭合门。B 的 y 加密对照超出 `2e-4` 稳定性门；z 加密通过；DtN 倏逝壳层 residual 未通过且稳定性未判定；顶部空气间距的三个主输出变化也超限。B6、B7 的 boundary-plane 参考面对照都在 CPU 邻核监控 Gate 后受控停止，没有产生数值结果，不能据此判定数值方法失败或参考面差值。正式精度资格已用 7/12 次，剩余 5 次；y 与空气间距失败、z 通过、DtN 未判定，A–D 仍为 `gp_eligible=false`。GP/design 软件通过 9 项定向测试和 40 点设计校验；有限元 GP 训练、开发误差、盲测误差和标准尺寸计算尚未运行。详细结果见 [outcomes/summary.md](outcomes/summary.md) 与 [response_v7.md](response_v7.md)。
 
 另一次 `global_z` phase-gauge selector 诊断 fresh5 于 2026-10-31 完成矩阵组装、MUMPS 因子分解和线性解，但在完整真残差与结果记录前被 CPU 邻居 Gate 受控停止；没有 residual、official R/T/A 或 `result.json`。这是监控身份问题，不是数值失败或内存停止，也不计入 5/12 精度 attempt。原始事件与 SHA 见 [fresh5 compact record](outcomes/fresh5_controlled_stop_20261031.json)，执行和修复响应见 [response v8](response_v8.md)。
 
