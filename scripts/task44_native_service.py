@@ -340,6 +340,47 @@ def _owned_service_member(
         return False, evidence
 
 
+def _confirm_proc_pid_directory_gone(pid: int, proc_root: Path) -> dict[str, Any]:
+    """Use direct stat calls to distinguish an exited snapshot from unreadable procfs."""
+    try:
+        proc_root.stat()
+    except OSError as exc:
+        return {
+            "status": "unverified",
+            "path": str(proc_root),
+            "error_type": type(exc).__name__,
+            "errno": exc.errno,
+            "error": str(exc),
+        }
+    process_path = proc_root / str(pid)
+    try:
+        process_path.stat()
+    except FileNotFoundError as exc:
+        if exc.errno == errno.ENOENT:
+            return {
+                "status": "gone",
+                "path": str(process_path),
+                "error_type": type(exc).__name__,
+                "errno": exc.errno,
+            }
+        return {
+            "status": "unverified",
+            "path": str(process_path),
+            "error_type": type(exc).__name__,
+            "errno": exc.errno,
+            "error": str(exc),
+        }
+    except OSError as exc:
+        return {
+            "status": "unverified",
+            "path": str(process_path),
+            "error_type": type(exc).__name__,
+            "errno": exc.errno,
+            "error": str(exc),
+        }
+    return {"status": "present", "path": str(process_path)}
+
+
 class _ProcessClaimError(RuntimeError):
     def __init__(self, message: str, evidence: Mapping[str, Any]):
         super().__init__(message)
@@ -439,6 +480,7 @@ def _cpu_neighbor_gate(
     owned_excluded: list[int] = []
     owned_member_proofs: list[dict[str, Any]] = []
     unverified_owned_members: list[dict[str, Any]] = []
+    stale_snapshot_confirmed_gone: list[dict[str, Any]] = []
     claims: list[dict[str, Any]] = []
     unreadable: list[dict[str, Any]] = []
     candidates = _numerical_processes() if numerical_processes is None else numerical_processes
@@ -465,16 +507,27 @@ def _cpu_neighbor_gate(
             if process.get("cgroup_path") == expected_owned_cgroup:
                 owned_member_proofs.append(proof)
                 if not owned:
-                    unverified_owned_members.append(proof)
-                    if "owned_service_member_identity_unverified" not in failures:
-                        failures.append("owned_service_member_identity_unverified")
+                    if proof.get("error_type") == "FileNotFoundError":
+                        confirmation = _confirm_proc_pid_directory_gone(pid, proc_root)
+                    else:
+                        confirmation = {"status": "not_applicable"}
+                    if confirmation["status"] == "gone":
+                        proof["status"] = "stale_snapshot_confirmed_gone"
+                        proof["proc_directory_confirmation"] = confirmation
+                        stale_snapshot_confirmed_gone.append(proof)
+                    else:
+                        proof["proc_directory_confirmation"] = confirmation
+                        unverified_owned_members.append(proof)
+                        if "owned_service_member_identity_unverified" not in failures:
+                            failures.append("owned_service_member_identity_unverified")
             if owned:
                 owned_excluded.append(pid)
                 continue
         try:
             row = _proc_cpu_claim(process, proc_root, host_cpus, selected_cpu)
         except (OSError, ValueError, RuntimeError) as exc:
-            if not (proc_root / str(pid)).exists():
+            process_directory = _confirm_proc_pid_directory_gone(pid, proc_root)
+            if process_directory["status"] == "gone":
                 continue
             unreadable_row = {"pid": pid, "error": f"{type(exc).__name__}: {exc}"}
             unreadable_row["evidence"] = (
@@ -482,6 +535,7 @@ def _cpu_neighbor_gate(
                 if isinstance(exc, _ProcessClaimError)
                 else {"failure_stage": "claim_observation", "error_type": type(exc).__name__, "error": str(exc)}
             )
+            unreadable_row["proc_directory_confirmation"] = process_directory
             unreadable.append(unreadable_row)
             continue
         if row is None:
@@ -542,6 +596,7 @@ def _cpu_neighbor_gate(
         "owned_service_excluded_pids": sorted(owned_excluded),
         "owned_service_member_proofs": owned_member_proofs,
         "unverified_owned_members": unverified_owned_members,
+        "stale_snapshot_confirmed_gone": stale_snapshot_confirmed_gone,
         "performance_not_isolated": bool(authorized),
     }
 
@@ -1304,6 +1359,16 @@ def run_service(
 ) -> int:
     repo_root = Path(__file__).resolve().parents[1]
     verify_task44_root(repo_root, os.environ)
+    diagnostic_phase_gauge = os.environ.get(
+        "MYFENICS_TASK44_DIAGNOSTIC_PHASE_GAUGE", "global_z"
+    )
+    if diagnostic_phase_gauge not in {"global_z", "boundary_plane"}:
+        raise RuntimeError("Task44 diagnostic phase-gauge label is invalid")
+    pre_residual_snapshot = os.environ.get(
+        "MYFENICS_TASK44_PRE_RESIDUAL_SNAPSHOT", "0"
+    )
+    if pre_residual_snapshot not in {"0", "1"}:
+        raise RuntimeError("Task44 pre-residual snapshot selector must be 0 or 1")
     expected_cache_root = (
         Path("/tmp")
         / f"myfenics-task44-native-cache-{os.getuid()}"
@@ -1341,6 +1406,9 @@ def run_service(
     source, inputs, native_environment = _isolated_runtime_facts(
         input_path, repo_root, source, cpu_affinity
     )
+    from src.io import load_and_resolve
+
+    physical_model_sha256 = load_and_resolve(inputs["path"]).physical_model_sha256
     neighbor_gate = _cpu_neighbor_gate(
         selected_cpu=selected_cpu, ignored_cgroup=unit_cgroup,
         owned_service_facts=unit_facts,
@@ -1402,6 +1470,15 @@ def run_service(
             "MYFENICS_NATIVE_COMPLEX_ENV": "1",
             "MYFENICS_TASK44_ROOT": str(repo_root),
             "MYFENICS_TASK44_CACHE_ROOT": str(cache_root),
+            "MYFENICS_TASK44_RUN_ID": str(inputs["run_id"]),
+            "MYFENICS_TASK44_SOURCE_SHA": str(source["source_sha"]),
+            "MYFENICS_TASK44_INPUT_PATH": str(inputs["path"]),
+            "MYFENICS_TASK44_INPUT_SHA256": str(inputs["sha256"]),
+            "MYFENICS_TASK44_PHYSICAL_MODEL_SHA256": str(physical_model_sha256),
+            "MYFENICS_TASK44_PRE_RESIDUAL_SNAPSHOT": (
+                pre_residual_snapshot if not smoke else "0"
+            ),
+            "MYFENICS_TASK44_DIAGNOSTIC_PHASE_GAUGE": diagnostic_phase_gauge,
             "XDG_CACHE_HOME": str(xdg_cache_home),
         },
         source_state={
@@ -1411,7 +1488,12 @@ def run_service(
             "service_identity": identity,
             "input_path": inputs["path"],
             "input_sha256": inputs["sha256"],
+            "physical_model_sha256": physical_model_sha256,
             "execution_mode": "public_runner_dry_run_smoke" if smoke else "public_runner_full3d",
+            "pre_residual_diagnostic_snapshot": (
+                pre_residual_snapshot == "1" and not smoke
+            ),
+            "diagnostic_phase_gauge_label": diagnostic_phase_gauge,
             "native_environment": native_environment,
             "cpu_neighbor_gate": neighbor_gate,
             "performance_not_isolated": neighbor_gate["performance_not_isolated"],

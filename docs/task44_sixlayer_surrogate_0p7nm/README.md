@@ -68,6 +68,8 @@
 
 当前阶段（2026-10-31）：A–D 四个 P6 condensed-direct + MUMPS exact 样本均通过 full explicit true residual 与能量闭合门。B 的 y 加密 retry 三项输出变化约 `9.2–9.8e-4`，超过 `2e-4` 稳定性门；z 加密三项变化约 `1e-10`，z 方向门通过。DtN 倏逝壳层对照使用 m=4、n=8，完整显式相对残差为 `1.623574709e11`，official R/T/A 未运行，DtN 稳定性未判定。顶部空气由 0.5 增至 1.0 nm 的对照通过真残差与能量闭合，但相对 B 的 `R_total/T_total/R00_total` 变化绝对值分别为 `2.34999e-4 / 2.28409e-4 / 2.35003e-4`，均超过 `2e-4`。精度复算已用 5/12 次，y 与空气间距失败、z 通过、DtN 未判定；A–D 仍为 `gp_eligible=false`。GP/design 软件通过 9 项定向测试和 40 点设计校验；有限元 GP 训练、开发误差、盲测误差和标准尺寸计算尚未运行。详细结果见 [outcomes/summary.md](outcomes/summary.md) 与 [response_v7.md](response_v7.md)。
 
+另一次 `global_z` phase-gauge selector 诊断 fresh5 于 2026-10-31 完成矩阵组装、MUMPS 因子分解和线性解，但在完整真残差与结果记录前被 CPU 邻居 Gate 受控停止；没有 residual、official R/T/A 或 `result.json`。这是监控身份问题，不是数值失败或内存停止，也不计入 5/12 精度 attempt。原始事件与 SHA 见 [fresh5 compact record](outcomes/fresh5_controlled_stop_20261031.json)，执行和修复响应见 [response v8](response_v8.md)。
+
 每次正式运行前都从实际 Ubuntu 主机重新读取 CPU、邻任务、内存及 cgroup 状态；通过外层 128 GiB 资源准入和动态选核后的邻居 Gate 后，才启动绑定所选单核、128 GiB / 零 swap 的专属服务。smoke 只执行公共 runner 的 `--dry-run`，不组装或求解有限元系统。正式运行采用共享 subreaper watchdog 的 `observe_only` 时间策略：继续记录运行时间，但不因时钟停止 PDE；动态内存、祖先 cgroup、零 swap 和精确服务身份仍由硬门控制。
 
 ### 历史执行状态（截至 2026-10-30）

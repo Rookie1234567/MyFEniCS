@@ -1,0 +1,205 @@
+{
+  "schema": "task44.phase-gauge-fresh5-controlled-stop.v1",
+  "date": "2026-10-31",
+  "classification": "controlled_stop_after_linear_solve_before_full_residual",
+  "scientific_status": {
+    "linear_system_assembly": "completed",
+    "direct_factorization": "completed",
+    "linear_system_solve": "completed",
+    "full_true_residual": "not_produced",
+    "official_RTA": "not_produced",
+    "result_json": "not_produced",
+    "official_result": false,
+    "solver_numerical_failure": false
+  },
+  "accuracy_attempt_budget": {
+    "count_before": 5,
+    "count_after": 5,
+    "counted_as_accuracy_attempt": false,
+    "reason": "separate phase-gauge selector diagnostic, not one of the 12 formal accuracy comparisons"
+  },
+  "identity": {
+    "branch": "task44_sixlayer_surrogate_0p7nm",
+    "source_sha": "e26e2a6b24fc6c89d637dcb2420bfaff8e2036f7",
+    "input_path": "/home/fenics/Projects/MyFEniCS-task44-sixlayer/input/task44_accuracy_dtn_evanescent_shell_v1.dat",
+    "input_sha256": "f9b05549ca72a0f99bba1083f7fefb62b61ea057c0c77a4c1a7d6f31b3554c99",
+    "phase_gauge": "global_z",
+    "unit": "task44-sample-phase-gauge-global-z-fresh5-20261031.service",
+    "invocation_id": "727558eb5278497082b2dc647fe36733",
+    "selected_cpu": 39,
+    "performance_not_isolated": false,
+    "diagnostic_script": "/tmp/task44_p6_direct_gauge_fixture.py",
+    "diagnostic_script_sha256": "8d24357ca461496e91b7824a71785013bb0e9654589886f2066d9d431bbad019",
+    "fixture": {
+      "mesh_cells": [3, 3, 3],
+      "cell_count": 27,
+      "nedelec_degree": 6,
+      "selected_port_modes": 420,
+      "material_layers_in_diagnostic_fixture": 1,
+      "scope": "reduced selector diagnostic; not a six-layer accuracy result"
+    }
+  },
+  "wall_clock": {
+    "worker_first_case_event_local": "2026-10-31 22:56:40 Asia/Shanghai",
+    "base_matrix_assembly_completed_local": "2026-10-31 23:09:22 Asia/Shanghai",
+    "base_matrix_assembly_elapsed_seconds": 762.8301734193228,
+    "ksp_setup_and_factorization_completed_local": "2026-10-31 23:10:17 Asia/Shanghai",
+    "ksp_setup_elapsed_seconds": 817.1623680819757,
+    "mumps_factorization_log_seconds": 1.5642,
+    "ksp_solve_completed_local": "2026-10-31 23:10:17 Asia/Shanghai",
+    "ksp_solve_elapsed_seconds": 817.2110220100731,
+    "monitor_controlled_stop_utc": "2026-10-31T15:11:17.933053+00:00",
+    "monitor_controlled_stop_local": "2026-10-31T23:11:17.933053+08:00",
+    "worker_start_to_monitor_stop_seconds_approx": 877.933053
+  },
+  "discretization_and_system": {
+    "full_finite_element_dofs": 19494,
+    "floquet_constraints": 1350,
+    "condensed_system_rows": 6414,
+    "condensed_matrix_used_nnz": 4935930,
+    "mumps_factor_entries": 14236514,
+    "swap_bytes": 0
+  },
+  "resource_observation": {
+    "service_memory_cap_bytes": 17179869184,
+    "controlled_stop_threshold_bytes": 16320875724,
+    "maximum_memory_current_bytes": 3550756864,
+    "maximum_memory_peak_bytes": 3584311296,
+    "memory_gate_triggered": false,
+    "service_cleared": true,
+    "cgroup_remaining_processes": []
+  },
+  "monitor_failure": {
+    "reason": "cpu_neighbor_gate_failed:['owned_service_member_identity_unverified']",
+    "unverified_pid": 51758,
+    "comm_at_snapshot": "cc1",
+    "parent_pid_at_snapshot": 51757,
+    "candidate_start_ticks": 338446737,
+    "failure_stage": "proc_identity_before",
+    "error_type": "FileNotFoundError",
+    "missing_path": "/proc/51758/stat",
+    "candidate_cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/task44-sample-phase-gauge-global-z-fresh5-20261031.service",
+    "other_live_owned_members_verified": true,
+    "foreign_claims": [],
+    "unreadable_claims": [],
+    "interpretation": "the candidate snapshot records cc1, then its /proc/PID/stat read returned ENOENT. The old gate later called Path.exists() but did not retain that direct-check result or its errno, so a process-exit race is plausible but not confirmed by the archived evidence. This was a monitoring-gate stop, not a numerical failure or memory stop."
+  },
+  "raw_evidence_directory": "/tmp/task44-phase-gauge-global-z-fresh5-20261031",
+  "raw_evidence_sha256": {
+    "monitor_summary.json": "c3395582c684022ce840df62708ac01f164035014871ae9ac66b84af9c0e99e2",
+    "live_monitor.jsonl": "620546795ed829634587d021b925c09b5ad0bd5fbe700944b0462c0b3aa6ff14",
+    "run/progress_3d.jsonl": "1918715aa200e240f69465c6bbd76bdbd4e38d0933f08f7796c5f0cfcbf005d7",
+    "fresh_run_binding.json": "ec971d02b60a563036f045679173124e991b8aa39de46faebcf30eed007de9b7",
+    "source_identity.json": "d9a258a271fdcc237ccae67db8babc7a9edf256075b6d6b634388f49c8af46b0",
+    "service.log": "b407a6fa8bccf5ee028140ce4fd507deaea96720965b9d66d195bd5c24545192"
+  },
+  "monitor_fix_validation": {
+    "status": "focused_regressions_passed",
+    "test_command": "python -m pytest -q src/test/test_task44_cpu0_neighbor_gate.py src/test/test_task44_pre_residual_snapshot.py",
+    "base_focused_case_count": 23,
+    "added_regression_cases": 11,
+    "final_cases_passed": 34,
+    "final_duration_seconds": 1.41,
+    "first_collection": {
+      "passed": 32,
+      "failed": 2,
+      "stdout_path": "/tmp/task44-phase-gauge-global-z-fresh5-20261031/final_focused_tests.log",
+      "stdout_sha256": "70d83558296d8fb8c3e158d31f3370dadb6f9db1540a934002a4af7fcfdabc00",
+      "classification": "first run exposed the proc-directory PermissionError fallback bug and a fake UFL-action boundary fixture that omitted the required mpc attribute"
+    },
+    "final_collection": {
+      "passed": 34,
+      "failed": 0,
+      "stdout_path": "/tmp/task44-phase-gauge-global-z-fresh5-20261031/final_focused_tests_rerun.log",
+      "stdout_sha256": "73240cdaab3350e1db617e842b82ef4ecec3d2cdf4a6ae90cb8af443127e297b"
+    },
+    "static_checks": {
+      "native_activation_marker": "MYFENICS_NATIVE_COMPLEX_ENV=1",
+      "python": "/home/fenics/Projects/MyFEniCS/.venv/bin/python",
+      "petsc_scalar_type": "complex128",
+      "petsc_int_type": "int32",
+      "mpi_size": 1,
+      "ruff_new_snapshot_module_and_tests": "passed",
+      "ruff_changed_source_undefined_name_rules": "passed",
+      "py_compile": "passed",
+      "bash_n": "passed",
+      "json_parse": "passed",
+      "git_diff_check": "passed"
+    },
+    "pde_or_mpi_run": false
+  },
+  "snapshot_resource_followup": {
+    "status": "focused_checks_and_owned_service_smoke_passed",
+    "test_command": "python -m pytest -q src/test/test_task44_cpu0_neighbor_gate.py src/test/test_task44_pre_residual_snapshot.py",
+    "final_cases_passed": 41,
+    "duration_seconds": 1.41,
+    "stdout_path": "/tmp/task44_snapshot_gate_followup_tests_final_20261101.log",
+    "stdout_sha256": "631a9ee4f80a3ff049bdc693723697461436cbf19b22a53f94d327a986993482",
+    "snapshot_peak_delta_allowance_bytes": 33554432,
+    "fresh5_p6_27_cell_predicted_delta": {
+      "reduced_rows": 6414,
+      "recovered_fe_dofs": 19494,
+      "four_saved_vectors_bytes": 829056,
+      "residual_temporary_and_copy_bytes": 307872,
+      "npz_and_manifest_workspace_bytes": 1048576,
+      "predicted_peak_delta_bytes": 2185504,
+      "classification": "derived_from_exact_vector_sizes; below the 32 MiB peak-delta allowance"
+    },
+    "owned_service_smoke": {
+      "status": "pass",
+      "unit": "task44-sample-snapshot-smoke-20261101-136782.service",
+      "invocation_id": "69f1969d75414cbfa077835b3106b6a3",
+      "main_pid": 136800,
+      "main_start_ticks": 341792963,
+      "selected_cpu": 7,
+      "control_group": "/user.slice/user-1000.slice/user@1000.service/app.slice/task44-sample-snapshot-smoke-20261101-136782.service",
+      "cap_bytes": 17179869184,
+      "warning_threshold_bytes": 15461882265,
+      "controlled_stop_threshold_bytes": 16320875724,
+      "swap_cap_bytes": 0,
+      "whole_job_current_bytes": 42270720,
+      "small_vec_snapshot_delta_bytes": 1049088,
+      "predicted_whole_job_peak_bytes": 43319808,
+      "host_reserve_bytes": 412316860416,
+      "task_buffer_bytes": 8589934592,
+      "ancestor_headroom_after_buffer_bytes": 8547663872,
+      "service_runtime_seconds": 0.54,
+      "snapshot_manifest_sha256": "e18b2009e130f0783847bb269b443f24cb0bcc783547f3cf7751c75a5a5c89d0",
+      "snapshot_vectors_sha256": "0c931b405dc2ea8cfe561c08c26869b68b9ff996939e28482659784687806577",
+      "result_path": "/tmp/task44_owned_snapshot_smoke_20261101.json",
+      "result_sha256": "29e5413a1fcb9242f24cab91455d3ac7034bcd3c4acfdbab72f93abdcc8e6a9b",
+      "natural_exit_child": {
+        "pid": 136811,
+        "ppid": 136800,
+        "comm": "sleep",
+        "start_ticks": 341793002,
+        "exit_status": 0,
+        "monitor_gate": "pass",
+        "stale_snapshot_status": "stale_snapshot_confirmed_gone",
+        "proc_directory_confirmation_errno": 2
+      },
+      "no_fe_ffcx_jit_or_solve": true,
+      "first_attempt_harness_failure": "receipt assembly read missing _unit_facts.main_start_ticks; service cgroup and child were cleaned, then the receipt was fixed to read /proc MainPID identity and smoke passed"
+    },
+    "gauge_wrapper_contract": {
+      "status": "pass",
+      "diagnostic_runner_path": "/tmp/task44_p6_direct_gauge_fixture_snapshot.py",
+      "diagnostic_runner_sha256": "0685c5948ef6d4c204838075a6c3fb44b8092a68308fa239b25d51705a776fce",
+      "contract_result_path": "/tmp/task44_gauge_snapshot_wrapper_contract_20261101.json",
+      "contract_result_sha256": "c700c777724370396346141285a58f7355c3d4f1c3e033ba1f6289a5e31ba35e",
+      "global_z_and_boundary_plane_forward_identity": true,
+      "snapshot_hook_before_later_independent_ufl_audit": true,
+      "fe_or_ufl_jit_or_solve": false,
+      "gauge_labels_are_metadata_only": true
+    },
+    "native_abi": {
+      "marker": "MYFENICS_NATIVE_COMPLEX_ENV=1",
+      "python": "/home/fenics/Projects/MyFEniCS/.venv/bin/python",
+      "petsc_scalar_type": "complex128",
+      "petsc_int_type": "int32",
+      "mpi_size": 1
+    },
+    "full_repository_pytest": false,
+    "pde_or_mpi_run": false
+  }
+}

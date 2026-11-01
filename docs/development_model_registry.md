@@ -12,6 +12,21 @@
 
 此登记仅覆盖所选局部诊断。历史 producer identity 为 UNKNOWN，因而它不是旧 action 的 bitwise replay；完整 PDE 求解、200q、recovery、FGMRES、完整场、A6 与 official R/T/A 都未运行。文档收口账 seq205 为截至 `2026-10-29T08:34:22.092927537Z` 的快照 `5,727.804736941959 s`；后续发布成本未记账，不作为最终 campaign 成本或当前余额。
 
+## Task44 六层缩尺模型登记与 fresh5 监控负结果（2026-10-31）
+
+Task44 研究 0.7 nm 波长下的 1/20 六层 Si/SiGe/Si/SiGe/SiO₂ 结构，用 P6、双 Floquet 周期边界、完整传播 DtN 和 MUMPS direct 生成可审阅的离散样本。静态凝聚先在每个单元内消去不与邻格共享的自由度，缩小全局求解矩阵；求解后要恢复完整场并通过原离散系统真残差和能量闭合，代价是额外局部凝聚/恢复和完整算子检查。
+
+| 登记对象 | 方法和实测值 | 状态与结论 |
+|---|---|---|
+| A–D 正式代表点 | P6、144 hex；全显式真残差 `6.58e-10–5.12e-9`，能量闭合绝对值 `<8.5e-10` | 线性求解和能量门通过；这只是当前离散场，不证明连续精度。 |
+| y 网格加密 | B 的 `[3,6,8]→[3,12,8]`；`abs(ΔR_total)=9.8002e-4`、`abs(ΔT_total)=9.2275e-4`、`abs(ΔR00_total)=9.8001e-4`，限值各 `2e-4` | 真残差/能量闭合通过，但三项离散稳定性均失败。 |
+| z 网格加密 | `[3,6,8]→[3,6,16]`；三项主要功率变化约 `1e-10` | 该方向检查通过，不能抵消 y 方向失败。 |
+| DtN 倏逝模态扩展 | full explicit 相对残差 `1.623574709e11`，限值 `1e-6` | 数值 Gate 失败；official R/T/A 未产生，不能判截断稳定性。 |
+| 顶部空气间距 | `R_total/T_total/R00_total` 变化绝对值 `2.34999e-4/2.28409e-4/2.35003e-4`，各限 `2e-4` | 求解与能量闭合通过，空气间距离散稳定性失败。 |
+| fresh5 `global_z` selector 诊断 | 27 hex、P6；19,494 DoF，1,350 Floquet 约束；凝聚系统6,414行、4,935,930 NNZ；MUMPS因子14,236,514 entries；矩阵组装、因子分解和线性解均已结束 | CPU邻居 Gate 在完整真残差和结果输出前受控停止，触发信息为 `/proc/51758/stat` 的 `ENOENT`。旧监控未保存后续 `Path.exists()` 结果，不能断定是已确认的退出竞态；无完整残差、official R/T/A 或 result JSON。cgroup peak `3,584,311,296 B`，swap `0 B`。此 selector 诊断不计入精度 attempt。 |
+
+当前 Task44 仍为 `in_progress`：正式精度预算使用 `5/12`；y 与空气间距稳定性未通过，DtN 截断未判定，z 单方向通过不提供总体收敛证明。A–D 保持 `gp_eligible=false`，GP 训练、开发评估、盲测和标准尺寸求解均 `not_run`。fresh5 的 source 为 `e26e2a6b24fc6c89d637dcb2420bfaff8e2036f7`，执行分支为 `task44_sixlayer_surrogate_0p7nm`。全部统一结果和边界见 [Task44 outcomes summary](task44_sixlayer_surrogate_0p7nm/outcomes/summary.md)；fresh5 逐项原始证据哈希见 [compact record](task44_sixlayer_surrogate_0p7nm/outcomes/fresh5_controlled_stop_20261031.json) 和其声明的 `/tmp/task44-phase-gauge-global-z-fresh5-20261031` raw evidence。
+
 ## Task41extra V16：完整余差分布与旧star终态绑定（2026-10-27）
 
 在0.7nm、50×50×140nm、phi90、p6/28,000-cell/64,120-mode既有保存数据上：两列Δy=0，变化只在g的trace；原action仍5.7625744836e-11 / 1.21236846436e-10，对1e-11失败。57个互斥MPC incident类别中，tag1/perm0/两incident类别占约71.07%/71.11%剩余能量；两旧star类别仅1.85%/1.83%。其y/g各自精确绑定V15，无新GETRS。最大行1622464→original5218672，cells7873/8014数值块缺失，下一步仅提出完整两cell补证，尚未授权重建。

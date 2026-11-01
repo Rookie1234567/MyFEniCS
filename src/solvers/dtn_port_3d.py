@@ -1104,14 +1104,67 @@ def _assembly_time_full_operator_residual(
     condensed: AssemblyTimeCondensedSystem,
     full_rhs: PETSc.Vec,
     reduced_residual_norm: float | None = None,
+    diagnostic_snapshot_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Audit all eliminated FE equations without allocating the full matrix."""
 
+    snapshot_vectors = {
+        "reduced_solution": reduced_solution,
+        "reduced_rhs": reduced_rhs,
+        "recovered_fe_solution": embedded_fe_solution,
+        "full_rhs": full_rhs,
+    }
+    snapshot_budget = None
+    reduced_ax_minus_b: list[np.ndarray] = []
+    if diagnostic_snapshot_identity is not None:
+        from .task44_residual_snapshot import (
+            preflight_task44_residual_snapshot,
+        )
+
+        snapshot_budget = preflight_task44_residual_snapshot(
+            snapshot_vectors,
+            mpi_size=int(reduced_solution.getComm().getSize()),
+            include_reduced_residual=(
+                reduced_residual_norm is None and reduced_matrix is not None
+            ),
+        )
+    residual_capture = (
+        (
+            lambda vector: reduced_ax_minus_b.append(
+                np.array(vector.getArray(readonly=True), copy=True, order="C")
+            )
+        )
+        if diagnostic_snapshot_identity is not None
+        else None
+    )
     reduced = (
         {"linear_system_residual_norm": float(reduced_residual_norm)}
         if reduced_residual_norm is not None
-        else _linear_residual(reduced_matrix, reduced_rhs, reduced_solution)
+        else _linear_residual(
+            reduced_matrix,
+            reduced_rhs,
+            reduced_solution,
+            residual_capture=residual_capture,
+        )
     )
+    snapshot_receipt = None
+    if diagnostic_snapshot_identity is not None:
+        from .task44_residual_snapshot import (
+            write_task44_pre_residual_snapshot,
+        )
+
+        try:
+            snapshot_receipt = write_task44_pre_residual_snapshot(
+                identity=diagnostic_snapshot_identity,
+                vectors=snapshot_vectors,
+                reduced_metrics=reduced,
+                reduced_ax_minus_b=(
+                    reduced_ax_minus_b[0] if reduced_ax_minus_b else None
+                ),
+                budget=snapshot_budget or {},
+            )
+        finally:
+            reduced_ax_minus_b.clear()
     context = MpcFormActionContext(
         bilinear_form,
         floquet_data.mpc,
@@ -1187,7 +1240,7 @@ def _assembly_time_full_operator_residual(
         full_solution_norm = float(
             np.sqrt(embedded_fe_solution.norm() ** 2 + auxiliary_norm_sq)
         )
-        return {
+        result = {
             "linear_system_rhs_norm": rhs_norm,
             "linear_system_solution_norm": full_solution_norm,
             "linear_system_residual_norm": full_norm,
@@ -1207,6 +1260,9 @@ def _assembly_time_full_operator_residual(
             "full_global_matrix_allocated_for_residual": False,
             "full_trace_matrix_allocated_for_residual": False,
         }
+        if snapshot_receipt is not None:
+            result["pre_residual_diagnostic_snapshot"] = snapshot_receipt
+        return result
     finally:
         action.destroy()
         context.destroy()
@@ -3516,12 +3572,19 @@ def _gather_auxiliary_values(
 
 
 def _linear_residual(
-    A: PETSc.Mat, b: PETSc.Vec, x: PETSc.Vec
+    A: PETSc.Mat,
+    b: PETSc.Vec,
+    x: PETSc.Vec,
+    *,
+    residual_capture: Callable[[PETSc.Vec], None] | None = None,
 ) -> dict[str, float | None]:
+    residual = None
     try:
         residual = b.duplicate()
         A.mult(x, residual)
         residual.axpy(PETSc.ScalarType(-1.0), b)
+        if residual_capture is not None:
+            residual_capture(residual)
         rhs_norm = float(b.norm())
         residual_norm = float(residual.norm())
         return {
@@ -3531,12 +3594,17 @@ def _linear_residual(
             "linear_system_relative_residual": residual_norm / max(rhs_norm, 1.0e-30),
         }
     except Exception:
+        if residual_capture is not None:
+            raise
         return {
             "linear_system_rhs_norm": None,
             "linear_system_solution_norm": None,
             "linear_system_residual_norm": None,
             "linear_system_relative_residual": None,
         }
+    finally:
+        if residual is not None:
+            residual.destroy()
 
 
 def _write_port_outputs(
@@ -5774,6 +5842,22 @@ def _solve_stage4_dtn_port_total_field_impl(
         )
     elif assembly_time_system is not None and embedded_fe_solution is not None:
         residual_started = time.perf_counter()
+        diagnostic_snapshot_identity = None
+        if os.environ.get("MYFENICS_TASK44_PRE_RESIDUAL_SNAPSHOT") == "1":
+            from .task44_residual_snapshot import (
+                build_task44_residual_snapshot_identity,
+            )
+
+            diagnostic_snapshot_identity = build_task44_residual_snapshot_identity(
+                output_directory=out_dir,
+                cfg=cfg,
+                mesh_data=mesh_data,
+                function_space=V,
+                floquet_data=floquet_data,
+                modes=modes,
+                reduced_solution=x_aug,
+                condensed=assembly_time_system,
+            )
         linear_residual = _assembly_time_full_operator_residual(
             a,
             floquet_data,
@@ -5786,6 +5870,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             reduced_residual_norm=(
                 external_snapshot.reduced_residual_norm if released_external else None
             ),
+            diagnostic_snapshot_identity=diagnostic_snapshot_identity,
         )
         embedded_fe_solution.destroy()
         embedded_fe_solution = None

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import errno
 from pathlib import Path
 
 import pytest
 
-import scripts.task44_native_service as task44_native_service
+from scripts import task44_native_service
 from scripts.task44_native_service import (
     AUTHORIZED_CPU0_NEIGHBOR,
     _cpu_neighbor_gate,
@@ -212,7 +213,7 @@ def test_owned_service_member_with_exec_comm_transition_is_excluded_and_affinity
     tmp_path, monkeypatch
 ):
     root = _proc_root(tmp_path)
-    facts, cgroup_fs_root, cgroup = _owned_service(tmp_path, main_pid=6000)
+    facts, cgroup_fs_root, _cgroup = _owned_service(tmp_path, main_pid=6000)
     _process(
         root,
         pid=6000,
@@ -240,6 +241,181 @@ def test_owned_service_member_with_exec_comm_transition_is_excluded_and_affinity
     assert report["owned_service_context"]["affinity_verified"] is True
     assert report["owned_service_excluded_pids"] == [6000]
     assert report["owned_service_member_proofs"][0]["comm_transition_observed"] is True
+
+
+def test_exited_owned_process_snapshot_is_nonfatal_only_after_direct_stat_enoent(
+    tmp_path, monkeypatch
+):
+    root = _proc_root(tmp_path)
+    facts, cgroup_fs_root, _ = _owned_service(tmp_path, main_pid=6015)
+    _process(root, pid=6015, start_ticks=10015, cgroup=facts["control_group"])
+    _patch_owned_service(monkeypatch, facts)
+
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
+        proc_root=root,
+        ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts,
+        cgroup_fs_root=cgroup_fs_root,
+        numerical_processes=[
+            _candidate(
+                6015,
+                command="run_case.py",
+                start_ticks=10015,
+                cgroup_path=facts["control_group"],
+            ),
+            _candidate(6016, start_ticks=10016, cgroup_path=facts["control_group"]),
+        ],
+    )
+
+    assert report["status"] == "pass"
+    assert report["failures"] == []
+    assert report["stale_snapshot_confirmed_gone"][0]["pid"] == 6016
+    assert report["stale_snapshot_confirmed_gone"][0]["status"] == "stale_snapshot_confirmed_gone"
+    assert report["stale_snapshot_confirmed_gone"][0]["proc_directory_confirmation"]["status"] == "gone"
+    assert report["unverified_owned_members"] == []
+
+
+def test_missing_proc_stat_does_not_hide_a_present_owned_pid_directory(tmp_path, monkeypatch):
+    root = _proc_root(tmp_path)
+    facts, cgroup_fs_root, _ = _owned_service(tmp_path, main_pid=6017)
+    _process(root, pid=6017, start_ticks=10017, cgroup=facts["control_group"])
+    _process(root, pid=6018, start_ticks=10018, affinity="0", cgroup=facts["control_group"])
+    (root / "6018" / "stat").unlink()
+    _patch_owned_service(monkeypatch, facts)
+
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
+        proc_root=root,
+        ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts,
+        cgroup_fs_root=cgroup_fs_root,
+        numerical_processes=[
+            _candidate(
+                6017,
+                command="run_case.py",
+                start_ticks=10017,
+                cgroup_path=facts["control_group"],
+            ),
+            _candidate(6018, start_ticks=10018, cgroup_path=facts["control_group"]),
+        ],
+    )
+
+    assert report["status"] == "fail"
+    proof = next(row for row in report["unverified_owned_members"] if row["pid"] == 6018)
+    assert proof["proc_directory_confirmation"]["status"] == "present"
+    assert "owned_service_member_identity_unverified" in report["failures"]
+    assert any(row["pid"] == 6018 for row in report["unreadable_processes"])
+
+
+def test_pid_reuse_after_owned_snapshot_enoent_remains_fail_closed(tmp_path, monkeypatch):
+    root = _proc_root(tmp_path)
+    facts, cgroup_fs_root, _ = _owned_service(tmp_path, main_pid=6019)
+    _process(root, pid=6019, start_ticks=10019, cgroup=facts["control_group"])
+    _patch_owned_service(monkeypatch, facts)
+    original_owned_member = task44_native_service._owned_service_member
+
+    def vanish_then_reuse(process, **kwargs):
+        pid = int(process["pid"])
+        if pid != 6020:
+            return original_owned_member(process, **kwargs)
+        process_dir = root / str(pid)
+        if process_dir.exists():
+            for item in process_dir.iterdir():
+                item.unlink()
+            process_dir.rmdir()
+        _process(
+            root,
+            pid=pid,
+            start_ticks=20020,
+            parent_pid=6019,
+            affinity="0",
+            cgroup=facts["control_group"],
+        )
+        return False, {
+            "pid": pid,
+            "candidate_snapshot": {
+                "ppid": 6019,
+                "comm": "cc1",
+                "start_ticks": 10020,
+                "cgroup_path": facts["control_group"],
+            },
+            "failure_stage": "proc_identity_before",
+            "error_type": "FileNotFoundError",
+            "error": f"[Errno {errno.ENOENT}] No such file or directory: '{root / str(pid) / 'stat'}'",
+        }
+
+    monkeypatch.setattr(task44_native_service, "_owned_service_member", vanish_then_reuse)
+
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
+        proc_root=root,
+        ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts,
+        cgroup_fs_root=cgroup_fs_root,
+        numerical_processes=[
+            _candidate(
+                6019,
+                command="run_case.py",
+                start_ticks=10019,
+                cgroup_path=facts["control_group"],
+            ),
+            _candidate(
+                6020,
+                start_ticks=10020,
+                cgroup_path=facts["control_group"],
+            ),
+        ],
+    )
+
+    assert report["status"] == "fail"
+    proof = next(row for row in report["unverified_owned_members"] if row["pid"] == 6020)
+    assert proof["proc_directory_confirmation"]["status"] == "present"
+    assert report["stale_snapshot_confirmed_gone"] == []
+    assert any(
+        row["pid"] == 6020
+        and row["evidence"]["identity_checks"]["snapshot_start_ticks_matches"] is False
+        for row in report["unreadable_processes"]
+    )
+
+
+def test_proc_directory_stat_permission_error_is_not_treated_as_exit(tmp_path, monkeypatch):
+    root = _proc_root(tmp_path)
+    facts, cgroup_fs_root, _ = _owned_service(tmp_path, main_pid=6021)
+    _process(root, pid=6021, start_ticks=10021, cgroup=facts["control_group"])
+    _patch_owned_service(monkeypatch, facts)
+    process_path = root / "6022"
+    original_stat = Path.stat
+
+    def permission_denied(path, *args, **kwargs):
+        if path == process_path:
+            raise PermissionError(errno.EACCES, "test procfs access denied", str(path))
+        return original_stat(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", permission_denied)
+
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
+        proc_root=root,
+        ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts,
+        cgroup_fs_root=cgroup_fs_root,
+        numerical_processes=[
+            _candidate(
+                6021,
+                command="run_case.py",
+                start_ticks=10021,
+                cgroup_path=facts["control_group"],
+            ),
+            _candidate(6022, start_ticks=10022, cgroup_path=facts["control_group"]),
+        ],
+    )
+
+    assert report["status"] == "fail"
+    proof = next(row for row in report["unverified_owned_members"] if row["pid"] == 6022)
+    assert proof["proc_directory_confirmation"]["status"] == "unverified"
+    assert proof["proc_directory_confirmation"]["error_type"] == "PermissionError"
+    assert report["stale_snapshot_confirmed_gone"] == []
 
 
 def test_same_pid_with_new_start_ticks_is_not_owned(tmp_path, monkeypatch):

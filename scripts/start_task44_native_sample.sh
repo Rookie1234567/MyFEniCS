@@ -8,6 +8,8 @@ max_concurrent="${3:-1}"
 smoke="${4:-}"
 cap_bytes=137438953472
 preflight_cap_bytes=4294967296
+diagnostic_phase_gauge="${MYFENICS_TASK44_DIAGNOSTIC_PHASE_GAUGE:-global_z}"
+pre_residual_snapshot="${MYFENICS_TASK44_PRE_RESIDUAL_SNAPSHOT:-0}"
 
 if [[ -z "$input_path" ]]; then
     echo "Usage: bash scripts/start_task44_native_sample.sh INPUT.dat [UNIT.service] [MAX_CONCURRENT] [--smoke]" >&2
@@ -23,6 +25,14 @@ if [[ "$max_concurrent" != 1 && "$max_concurrent" != 2 ]]; then
 fi
 if [[ -n "$smoke" && "$smoke" != "--smoke" ]]; then
     echo "The optional fifth argument must be --smoke" >&2
+    exit 2
+fi
+if [[ "$diagnostic_phase_gauge" != "global_z" && "$diagnostic_phase_gauge" != "boundary_plane" ]]; then
+    echo "MYFENICS_TASK44_DIAGNOSTIC_PHASE_GAUGE must be global_z or boundary_plane" >&2
+    exit 2
+fi
+if [[ "$pre_residual_snapshot" != "0" && "$pre_residual_snapshot" != "1" ]]; then
+    echo "MYFENICS_TASK44_PRE_RESIDUAL_SNAPSHOT must be 0 or 1" >&2
     exit 2
 fi
 [[ "$input_path" == /* ]] || input_path="$repo_root/$input_path"
@@ -68,6 +78,8 @@ systemd-run --user --wait --pipe --collect --expand-environment=no \
     --property="Environment=XDG_RUNTIME_DIR=/run/user/$UID" \
     --property="Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$UID/bus" \
     --property="Environment=MYFENICS_TASK44_CACHE_ROOT=$cache_root" \
+    --property="Environment=MYFENICS_TASK44_PRE_RESIDUAL_SNAPSHOT=$pre_residual_snapshot" \
+    --property="Environment=MYFENICS_TASK44_DIAGNOSTIC_PHASE_GAUGE=$diagnostic_phase_gauge" \
     /usr/bin/bash -c '
         set -euo pipefail
         cd -- "$1"
@@ -94,6 +106,8 @@ systemd-run --user --no-block --expand-environment=no \
     --property="Environment=XDG_RUNTIME_DIR=/run/user/$UID" \
     --property="Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$UID/bus" \
     --property="Environment=MYFENICS_TASK44_CACHE_ROOT=$cache_root" \
+    --property="Environment=MYFENICS_TASK44_PRE_RESIDUAL_SNAPSHOT=$pre_residual_snapshot" \
+    --property="Environment=MYFENICS_TASK44_DIAGNOSTIC_PHASE_GAUGE=$diagnostic_phase_gauge" \
     /usr/bin/bash -c '
         set -euo pipefail
         cd -- "$1"
