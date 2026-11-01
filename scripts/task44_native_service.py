@@ -343,6 +343,88 @@ def _owned_service_member(
         return False, evidence
 
 
+def _owned_context_member_corroboration(
+    pid: int,
+    *,
+    owned_context: Mapping[str, Any],
+    expected_cgroup: str,
+    proof: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Corroborate an inner membership miss only from this call's verified context."""
+    before = owned_context.get("member_pids_before")
+    after = owned_context.get("member_pids_after")
+    members_before = list(before) if isinstance(before, (list, tuple, set)) else None
+    members_after = list(after) if isinstance(after, (list, tuple, set)) else None
+    systemd_before = owned_context.get("systemd_facts_before")
+    systemd_after = owned_context.get("systemd_facts_after")
+    main_before = owned_context.get("main_pid_identity_before")
+    main_after = owned_context.get("main_pid_identity_after")
+    main_pid = owned_context.get("main_pid")
+    start_before = main_before.get("start_ticks") if isinstance(main_before, Mapping) else None
+    start_after = main_after.get("start_ticks") if isinstance(main_after, Mapping) else None
+    candidate = proof.get("candidate_snapshot") or {}
+    member_checks = proof.get("checks") or {}
+    unit = owned_context.get("unit")
+    invocation = owned_context.get("invocation_id")
+    has_before = members_before is not None and pid in members_before
+    has_after = members_after is not None and pid in members_after
+
+    checks = {
+        "verified_context_and_affinity": (
+            owned_context.get("identity_verified") is True
+            and owned_context.get("affinity_verified") is True
+        ),
+        "same_systemd_invocation": (
+            isinstance(systemd_before, Mapping)
+            and systemd_before == systemd_after
+            and systemd_before.get("unit") == unit
+            and systemd_before.get("invocation_id") == invocation
+            and systemd_before.get("control_group") == expected_cgroup
+            and systemd_before.get("active_state") == "active"
+            and systemd_before.get("main_pid") == main_pid
+        ),
+        "main_pid_start_ticks_stable": (
+            isinstance(main_pid, int)
+            and isinstance(main_before, Mapping)
+            and isinstance(main_after, Mapping)
+            and main_before.get("pid") == main_pid == main_after.get("pid")
+            and isinstance(start_before, int)
+            and start_before > 0
+            and start_before == start_after
+        ),
+        "main_pid_cgroup_and_membership_exact": (
+            owned_context.get("control_group") == expected_cgroup
+            and owned_context.get("main_pid_cgroup_before") == expected_cgroup
+            and owned_context.get("main_pid_cgroup_after") == expected_cgroup
+            and members_before is not None
+            and members_after is not None
+            and main_pid in members_before
+            and main_pid in members_after
+        ),
+        "candidate_context_membership_before": has_before,
+        "candidate_context_membership_after": has_after,
+        "candidate_proc_identity_stable": (
+            candidate.get("cgroup_path") == expected_cgroup
+            and member_checks.get("candidate_start_ticks_match_both_reads") is True
+            and member_checks.get("proc_start_ticks_stable") is True
+            and member_checks.get("cgroup_exact_both_reads") is True
+        ),
+    }
+    binding = {
+        "unit": unit,
+        "invocation_id": invocation,
+        "main_pid": main_pid,
+        "main_pid_start_ticks_before": start_before,
+        "main_pid_start_ticks_after": start_after,
+        "control_group": owned_context.get("control_group"),
+        "main_pid_cgroup_before": owned_context.get("main_pid_cgroup_before"),
+        "main_pid_cgroup_after": owned_context.get("main_pid_cgroup_after"),
+        "member_pids_before": members_before,
+        "member_pids_after": members_after,
+    }
+    return {"used": all(checks.values()), "checks": checks, "binding": binding}
+
+
 def _confirm_proc_pid_directory_gone(pid: int, proc_root: Path) -> dict[str, Any]:
     """Use direct stat calls to distinguish an exited snapshot from unreadable procfs."""
     try:
@@ -723,19 +805,36 @@ def _cpu_neighbor_gate(
             if process.get("cgroup_path") == expected_owned_cgroup:
                 owned_member_proofs.append(proof)
                 if not owned:
-                    if proof.get("error_type") == "FileNotFoundError":
-                        confirmation = _confirm_proc_pid_directory_gone(pid, proc_root)
+                    corroboration = _owned_context_member_corroboration(
+                        pid,
+                        owned_context=owned_context,
+                        expected_cgroup=expected_owned_cgroup,
+                        proof=proof,
+                    )
+                    proof["invocation_context_corroboration"] = corroboration
+                    if corroboration["used"]:
+                        owned = True
+                        proof["ownership_decision"] = (
+                            "verified_invocation_context_membership_plus_stable_proc_identity"
+                        )
                     else:
-                        confirmation = {"status": "not_applicable"}
-                    if confirmation["status"] == "gone":
-                        proof["status"] = "stale_snapshot_confirmed_gone"
-                        proof["proc_directory_confirmation"] = confirmation
-                        stale_snapshot_confirmed_gone.append(proof)
-                    else:
-                        proof["proc_directory_confirmation"] = confirmation
-                        unverified_owned_members.append(proof)
-                        if "owned_service_member_identity_unverified" not in failures:
-                            failures.append("owned_service_member_identity_unverified")
+                        if proof.get("error_type") == "FileNotFoundError":
+                            confirmation = _confirm_proc_pid_directory_gone(pid, proc_root)
+                        else:
+                            confirmation = {"status": "not_applicable"}
+                        if confirmation["status"] == "gone":
+                            proof["status"] = "stale_snapshot_confirmed_gone"
+                            proof["proc_directory_confirmation"] = confirmation
+                            stale_snapshot_confirmed_gone.append(proof)
+                        else:
+                            proof["proc_directory_confirmation"] = confirmation
+                            unverified_owned_members.append(proof)
+                            if "owned_service_member_identity_unverified" not in failures:
+                                failures.append("owned_service_member_identity_unverified")
+                if owned:
+                    proof["ownership_decision"] = proof.get(
+                        "ownership_decision", "direct_member_list_plus_stable_proc_identity"
+                    )
             if owned:
                 owned_excluded.append(pid)
                 continue

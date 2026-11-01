@@ -8,9 +8,9 @@ import pytest
 from scripts import task44_native_service
 from scripts.task44_native_service import (
     AUTHORIZED_CPU0_NEIGHBOR,
-    _CpuNeighborMonitor,
     _combined_performance_not_isolated,
     _cpu_neighbor_gate,
+    _CpuNeighborMonitor,
     _owned_service_context,
 )
 
@@ -477,7 +477,12 @@ def test_same_pid_with_new_start_ticks_is_not_owned(tmp_path, monkeypatch):
 
     assert report["status"] == "fail"
     assert report["owned_service_excluded_pids"] == []
-    assert report["owned_service_member_proofs"][0]["checks"]["candidate_start_ticks_match_both_reads"] is False
+    proof = report["owned_service_member_proofs"][0]
+    assert proof["checks"]["candidate_start_ticks_match_both_reads"] is False
+    assert proof["invocation_context_corroboration"]["checks"][
+        "candidate_context_membership_before"
+    ] is True
+    assert proof["invocation_context_corroboration"]["used"] is False
     assert report["unreadable_processes"][0]["evidence"]["identity_checks"]["snapshot_start_ticks_matches"] is False
 
 
@@ -520,6 +525,135 @@ def test_process_moved_out_of_owned_cgroup_is_not_exempt(tmp_path, monkeypatch):
     assert report["status"] == "fail"
     assert report["owned_service_excluded_pids"] == []
     assert [row["pid"] for row in report["unexpected_claims"]] == [6002]
+
+
+def _b9_owned_service_fixture(tmp_path, monkeypatch):
+    root = _proc_root(tmp_path)
+    (root / "1" / "status").write_text(
+        "Name:\tsystemd\nCpus_allowed_list:\t0-9\n", encoding="utf-8"
+    )
+    unit = "task44-sample-boundary-plane-b9-r1-20261101.service"
+    group = "/user.slice/user-1000.slice/user@1000.service/app.slice/" + unit
+    cgroup_fs_root = tmp_path / "sys-fs-cgroup"
+    cgroup = cgroup_fs_root / group.lstrip("/")
+    cgroup.mkdir(parents=True)
+    main_pid, cc1_pid = 251629, 266703
+    (cgroup / "cgroup.procs").write_text(f"{main_pid}\n{cc1_pid}\n", encoding="ascii")
+    facts = {
+        "unit": unit,
+        "invocation_id": "4cf69115f25442d6a9c5ecad8cae67b0",
+        "control_group": group,
+        "active_state": "active",
+        "main_pid": main_pid,
+        "cpu_affinity": "9",
+    }
+    _process(root, pid=main_pid, start_ticks=344406517, parent_pid=2818,
+             affinity="9", command="task44_native_service.py", cgroup=group)
+    _process(root, pid=cc1_pid, start_ticks=344751437, parent_pid=266702,
+             affinity="9", command="cc1", cgroup=group)
+    stat = root / str(cc1_pid) / "stat"
+    stat.write_text(stat.read_text(encoding="ascii").replace("(python)", "(cc1)", 1), encoding="ascii")
+    _patch_owned_service(monkeypatch, facts, affinity=9)
+    candidates = [
+        _candidate(main_pid, parent_pid=2818, command="task44_native_service.py",
+                   start_ticks=344406517, cgroup_path=group),
+        _candidate(cc1_pid, parent_pid=266702, command="cc1", snapshot_comm="cc1",
+                   start_ticks=344751437, cgroup_path=group),
+    ]
+    return root, facts, cgroup_fs_root, candidates, cc1_pid
+
+
+@pytest.mark.parametrize(
+    ("context_member_before", "context_member_after"),
+    ((True, True), (True, False), (False, True), (False, False)),
+)
+def test_b9_owned_cc1_requires_same_call_context_membership_and_stable_proc_identity(
+    tmp_path, monkeypatch, context_member_before, context_member_after
+):
+    root, facts, cgroup_root, candidates, cc1_pid = _b9_owned_service_fixture(
+        tmp_path, monkeypatch
+    )
+    original_read = task44_native_service._read_direct_cgroup_members
+    reads = 0
+
+    def discrepant_read(path):
+        nonlocal reads
+        reads += 1
+        members = original_read(path)
+        if reads == 1 and not context_member_before:
+            members.discard(cc1_pid)
+        if reads == 2 and not context_member_after:
+            members.discard(cc1_pid)
+        if reads in (5, 6):
+            members.discard(cc1_pid)
+        return members
+
+    monkeypatch.setattr(task44_native_service, "_read_direct_cgroup_members", discrepant_read)
+    report = _cpu_neighbor_gate(
+        selected_cpu=9, proc_root=root, ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts, cgroup_fs_root=cgroup_root,
+        numerical_processes=candidates,
+    )
+
+    proof = next(row for row in report["owned_service_member_proofs"] if row["pid"] == cc1_pid)
+    assert reads == 6
+    assert report["owned_service_context"]["invocation_id"] == facts["invocation_id"]
+    assert proof["checks"]["direct_membership_stable"] is False
+    assert proof["invocation_context_corroboration"]["binding"]["unit"] == facts["unit"]
+    assert proof["invocation_context_corroboration"]["binding"]["main_pid"] == facts["main_pid"]
+    assert proof["invocation_context_corroboration"]["checks"][
+        "candidate_context_membership_before"
+    ] is context_member_before
+    assert proof["invocation_context_corroboration"]["checks"][
+        "candidate_context_membership_after"
+    ] is context_member_after
+    if context_member_before and context_member_after:
+        assert report["status"] == "pass"
+        assert cc1_pid in report["owned_service_excluded_pids"]
+        assert proof["invocation_context_corroboration"]["used"] is True
+        assert proof["ownership_decision"] == (
+            "verified_invocation_context_membership_plus_stable_proc_identity"
+        )
+        assert report["unexpected_claims"] == []
+    else:
+        assert report["status"] == "fail"
+        assert "owned_service_member_identity_unverified" in report["failures"]
+        assert cc1_pid not in report["owned_service_excluded_pids"]
+        assert proof["invocation_context_corroboration"]["used"] is False
+        assert any(row["pid"] == cc1_pid for row in report["unexpected_claims"])
+
+
+def test_context_membership_does_not_override_candidate_proc_cgroup_change(
+    tmp_path, monkeypatch
+):
+    root = _proc_root(tmp_path)
+    facts, cgroup_root, cgroup = _owned_service(tmp_path, main_pid=6030)
+    candidate_pid = 6031
+    moved_group = "/user.slice/user-1000.slice/app.slice/other.service"
+    _process(root, pid=6030, start_ticks=10030, cgroup=facts["control_group"])
+    _process(root, pid=candidate_pid, start_ticks=10031, affinity="0", cgroup=moved_group)
+    (cgroup / "cgroup.procs").write_text("6030\n6031\n", encoding="ascii")
+    _patch_owned_service(monkeypatch, facts)
+
+    report = _cpu_neighbor_gate(
+        selected_cpu=0, proc_root=root, ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts, cgroup_fs_root=cgroup_root,
+        numerical_processes=[
+            _candidate(6030, start_ticks=10030, cgroup_path=facts["control_group"]),
+            _candidate(6031, start_ticks=10031, cgroup_path=facts["control_group"]),
+        ],
+    )
+
+    proof = next(row for row in report["owned_service_member_proofs"] if row["pid"] == candidate_pid)
+    assert report["status"] == "fail"
+    assert candidate_pid not in report["owned_service_excluded_pids"]
+    assert proof["invocation_context_corroboration"]["checks"][
+        "candidate_context_membership_before"
+    ] is True
+    assert proof["invocation_context_corroboration"]["checks"][
+        "candidate_proc_identity_stable"
+    ] is False
+    assert proof["invocation_context_corroboration"]["used"] is False
 
 
 def test_same_cgroup_path_without_direct_membership_is_not_exempt(tmp_path, monkeypatch):
