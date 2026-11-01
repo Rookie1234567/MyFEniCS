@@ -454,12 +454,20 @@ def build_task44_residual_snapshot_identity(
     resolved_gauge = next(
         (
             section.get("dtn_phase_gauge")
-            for key in ("method", "solver", "output")
+            for key in ("boundary", "method", "solver", "output")
             if isinstance((section := resolved_config.get(key)), Mapping)
             and isinstance(section.get("dtn_phase_gauge"), str)
         ),
         None,
     )
+    if (
+        isinstance(cfg_gauge, str)
+        and isinstance(resolved_gauge, str)
+        and cfg_gauge != resolved_gauge
+    ):
+        raise ValueError(
+            "Task44 runtime and resolved input select different DtN phase gauges"
+        )
     runtime_gauge_label = os.environ.get("MYFENICS_TASK44_DIAGNOSTIC_PHASE_GAUGE")
     gauge_source = (
         "SimulationConfig3D.dtn_phase_gauge"
@@ -484,6 +492,11 @@ def build_task44_residual_snapshot_identity(
             "geometry_identity": getattr(cfg, "geometry_identity", None),
             "geometry_kind": str(cfg.geometry_kind),
             "stage_case": str(cfg.stage_case),
+            "dtn_phase_gauge": str(configured_solver_gauge),
+            "dtn_boundary_reference_planes": {
+                "top": float(cfg.physical_z_max),
+                "bottom": float(cfg.physical_z_min),
+            },
             "mesh_cells_resolved": [int(value) for value in mesh_data.mesh_cells_resolved],
             "floquet_phase_x": _complex_pair(floquet_data.phase_x),
             "floquet_phase_y": _complex_pair(floquet_data.phase_y),

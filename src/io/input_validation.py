@@ -2989,6 +2989,43 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
 
     vertical = boundary["vertical_boundary"]
     is_dtn = vertical in {"dtn", "dtn_port"}
+    phase_gauge = boundary.get("dtn_phase_gauge", "global_z")
+    if phase_gauge == "boundary_plane":
+        if dimension != 3 or kind != "full3d_direct":
+            raise _error(
+                "boundary.dtn_phase_gauge",
+                "boundary_plane currently supports only the 3D full3d_direct path",
+            )
+        if vertical != "dtn_port" or boundary.get("dtn_assembly") != "auxiliary":
+            raise _error(
+                "boundary.dtn_phase_gauge",
+                "boundary_plane requires vertical_boundary=dtn_port and dtn_assembly=auxiliary",
+            )
+        if solver.get("linear_solver") != "direct":
+            raise _error(
+                "boundary.dtn_phase_gauge",
+                "boundary_plane currently requires the direct linear solver",
+            )
+        if execution.get("mpi_size", 1) != 1:
+            raise _error(
+                "boundary.dtn_phase_gauge",
+                "boundary_plane currently requires MPI1",
+            )
+        if tuple(materials["n_air"]) != (1.0, 0.0):
+            raise _error(
+                "boundary.dtn_phase_gauge",
+                "boundary_plane currently requires n_air=1 for the incident-port contract",
+            )
+        if boundary.get("dtn_order_policy") == "zero_order":
+            raise _error(
+                "boundary.dtn_phase_gauge",
+                "boundary_plane does not support the zero-order local-Robin shortcut",
+            )
+        if discretization.get("assembly_backend") == "assembly_time_variable_p_condensed":
+            raise _error(
+                "boundary.dtn_phase_gauge",
+                "boundary_plane currently supports fixed-p assembly only",
+            )
     for key in ("dtn_order_policy", "dtn_assembly"):
         if is_dtn and key not in boundary:
             raise _error(f"boundary.{key}", "required for a DtN boundary")
@@ -3347,6 +3384,7 @@ def simulation_config_3d_from_normalized(
         scattering_background=b.get("scattering_background", "layered"),
         stage4_boundary_model=b["vertical_boundary"],
         stage4_dtn_order_policy=b.get("dtn_order_policy", "auto_propagating"),
+        dtn_phase_gauge=b.get("dtn_phase_gauge", "global_z"),
         stage4_dtn_assembly=b.get("dtn_assembly", "auxiliary"),
         use_floquet_xy=b.get("use_floquet_x", False),
         use_pml=b.get("use_pml", False),

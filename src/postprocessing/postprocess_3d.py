@@ -357,6 +357,13 @@ def save_airbox_3d_fields(
         "Poynting_W_per_m2": np.asarray(poynting, dtype=np.float64),
         "electric_field_scale_V_per_m": np.asarray([cfg.electric_field_scale_V_per_m], dtype=np.float64),
         "magnetic_field_scale_A_per_m": np.asarray([cfg.magnetic_field_scale_A_per_m], dtype=np.float64),
+        "dtn_phase_gauge": np.asarray(str(cfg.dtn_phase_gauge)),
+        "dtn_boundary_reference_planes_nm": np.asarray(
+            [cfg.physical_z_max, cfg.physical_z_min], dtype=np.float64
+        ),
+        "field_coordinate_semantics": np.asarray(
+            "physical FE E and curl-H samples; independent of auxiliary modal coefficient gauge"
+        ),
     }
     for name, values in (
         ("E_scattered_V_per_m", e_sca),

@@ -416,10 +416,19 @@ def solver_amplitudes_from_global(values, modes, cfg, gauge):
 
 
 def plane_port_rhs_from_global(values, modes, cfg, gauge):
+    """Convert an unnormalized modal test-function dual RHS to plane gauge.
+
+    The raw covector maps as ``r_plane = r_global / conjugate(s)``.  The
+    direct auxiliary row is separately normalized by its projection
+    denominator; because ``H_plane = H_global / |s|**2``, its normalized
+    residual maps as ``r_plane_aux = s * r_global_aux``.  Do not apply this
+    raw-RHS conversion to an already normalized auxiliary row.
+    """
     return _convert(values, modes, cfg, gauge, divide=True, conjugate=True)
 
 
 def global_port_rhs_from_plane(values, modes, cfg, gauge):
+    """Convert a raw plane-gauge modal dual RHS to global-z coordinates."""
     return _convert(values, modes, cfg, gauge, divide=False, conjugate=True)
 
 

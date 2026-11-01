@@ -133,6 +133,7 @@ python scripts/run_case.py input/path/to/case.dat --dry-run
 | `boundary.vertical_boundary` | `enum` | `none` | yes | `—` | dtn_port, pml, robin0, strong_dirichlet, dtn, robin | 2d/3d | 上下边界模型 | `stage4_boundary_model / port_boundary_model` | 3D uses dtn_port/pml/robin0; airbox strong_dirichlet maps to Stage1/Floquet airbox, Fresnel requires pml; 2d_port uses dtn/robin; 2d_scattered uses pml | `"dtn_port"` |
 | `boundary.scattering_background` | `enum` | `none` | no | `—` | air, layered | 2d/3d | 散射背景的介质层模型 | `scattering_background` | required for 2d_scattered and Stage4 3D; Stage4 currently requires layered; may be omitted for port-only methods | `"layered"` |
 | `boundary.dtn_order_policy` | `enum` | `none` | no | `—` | zero_order, auto_propagating, manual | 2d/3d | DtN 阶次选择策略 | `stage4_dtn_order_policy` | required only when vertical_boundary is dtn or dtn_port; 2D port maps to port_use_diffraction_orders; explicit 2D port accepts zero_order or auto_propagating; 2D TE + dtn currently accepts only zero_order; public manual selection is 3D-only and requires dtn_manual_order_max_m/n; output diffraction_order_max_m/n remain reporting-only | `"auto_propagating"` |
+| `boundary.dtn_phase_gauge` | `enum` | `none` | no | `global_z` | global_z, boundary_plane | full3d_direct | DtN 辅助模态系数的相位参考坐标 | `SimulationConfig3D.dtn_phase_gauge` | boundary_plane: direct auxiliary fixed-p MPI1, n_air=1; default global_z | `"global_z"` |
 | `boundary.dtn_manual_order_max_m` | `integer` | `order` | no | `—` | — | 3d | manual DtN 的 x 阶最大绝对值 | `diffraction_order_max_m for manual DtN selection` | >= 0; required with dtn_order_policy=manual | `8` |
 | `boundary.dtn_manual_order_max_n` | `integer` | `order` | no | `—` | — | 3d | manual DtN 的 y 阶最大绝对值 | `diffraction_order_max_n for manual DtN selection` | >= 0; required with dtn_order_policy=manual | `2` |
 | `boundary.dtn_assembly` | `enum` | `none` | no | `—` | auxiliary, explicit | 2d/3d | DtN 装配方式 | `stage4_dtn_assembly / port_dtn_assembly` | required only when vertical_boundary is dtn or dtn_port | `"auxiliary"` |
@@ -287,6 +288,7 @@ The following marker block is intentionally outside the table so GitHub keeps al
 <!-- schema-field {"key":"boundary.vertical_boundary","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"boundary.scattering_background","unit":"none","applicability":["2d","3d"]} -->
 <!-- schema-field {"key":"boundary.dtn_order_policy","unit":"none","applicability":["2d","3d"]} -->
+<!-- schema-field {"key":"boundary.dtn_phase_gauge","unit":"none","applicability":["full3d_direct"]} -->
 <!-- schema-field {"key":"boundary.dtn_manual_order_max_m","unit":"order","applicability":["3d"]} -->
 <!-- schema-field {"key":"boundary.dtn_manual_order_max_n","unit":"order","applicability":["3d"]} -->
 <!-- schema-field {"key":"boundary.dtn_assembly","unit":"none","applicability":["2d","3d"]} -->

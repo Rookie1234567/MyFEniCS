@@ -91,8 +91,9 @@ def test_save_airbox_exports_science_before_optional_pyvista_skip(tmp_path, monk
     cfg = stage4_block_config(
         stage_case="stage4_block_grating",
         stage4_boundary_model="dtn_port",
-        stage4_dtn_order_policy="zero_order",
+        stage4_dtn_order_policy="auto_propagating",
         stage4_dtn_assembly="auxiliary",
+        dtn_phase_gauge="boundary_plane",
         use_pml=False,
         pml_top_thickness=0.0,
         pml_bottom_thickness=0.0,
@@ -139,4 +140,12 @@ def test_save_airbox_exports_science_before_optional_pyvista_skip(tmp_path, monk
         assert saved["owned_point_mask"].all()
         assert np.isfinite(saved["E_total_V_per_m"]).all()
         assert np.isfinite(saved["H_curl_A_per_m"]).all()
+        assert saved["dtn_phase_gauge"].item() == "boundary_plane"
+        np.testing.assert_array_equal(
+            saved["dtn_boundary_reference_planes_nm"],
+            [cfg.physical_z_max, cfg.physical_z_min],
+        )
+        assert "independent of auxiliary modal coefficient gauge" in saved[
+            "field_coordinate_semantics"
+        ].item()
         assert np.allclose(saved["E_total_code"][:, 0], 1.0)

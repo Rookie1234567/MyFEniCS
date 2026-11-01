@@ -149,6 +149,16 @@ class _FakeConfig:
         return {"case_name": "task44_snapshot_test", "wavelength_nm": 0.7}
 
 
+class _PlaneGaugeFakeConfig(_FakeConfig):
+    dtn_phase_gauge = "boundary_plane"
+
+    def as_jsonable(self):
+        return {
+            **super().as_jsonable(),
+            "dtn_phase_gauge": self.dtn_phase_gauge,
+        }
+
+
 class _FakeFloquetData:
     phase_x = 1.0 + 0.0j
     phase_y = -1.0 + 0.0j
@@ -196,14 +206,14 @@ def _snapshot_inputs(tmp_path: Path):
     return output, vectors, identity
 
 
-def _write_run_identity(run_root: Path):
+def _write_run_identity(run_root: Path, *, phase_gauge: str = "global_z"):
     run_root.mkdir(parents=True)
     raw_input = b"Task44 snapshot test input\n"
     input_sha = hashlib.sha256(raw_input).hexdigest()
     source_sha = "a" * 40
     physical_sha = "b" * 64
     resolved_bytes = json.dumps(
-        {"method": {"dtn_phase_gauge": "global_z"}},
+        {"boundary": {"dtn_phase_gauge": phase_gauge}},
         sort_keys=True,
         separators=(",", ":"),
     ).encode()
@@ -260,6 +270,38 @@ def test_snapshot_identity_binds_run_mesh_modes_and_cell_dofmap(tmp_path):
     assert identity["mode_keys_and_phases"][0]["key"] == ["top", 1, -2, "s"]
     assert identity["mode_keys_and_phases"][0]["boundary_plane_phase"] == [1.0, 0.0]
     assert identity["phase_gauge_identity"]["configured_solver_output_gauge"] == "global_z"
+    assert len(identity["identity_sha256"]) == 64
+
+
+def test_snapshot_identity_binds_explicit_boundary_plane_runtime_and_input_gauge(
+    tmp_path,
+):
+    run_root = tmp_path / "plane-run"
+    _write_run_identity(run_root, phase_gauge="boundary_plane")
+    output = run_root / "numerical_output"
+    output.mkdir()
+
+    identity = residual_snapshot.build_task44_residual_snapshot_identity(
+        output_directory=output,
+        cfg=_PlaneGaugeFakeConfig(),
+        mesh_data=_FakeMeshData(),
+        function_space=_FakeFunctionSpace(),
+        floquet_data=_FakeFloquetData(),
+        modes=[_FakeMode()],
+        reduced_solution=_FakeVector([1.0, 2.0, 3.0]),
+        condensed=_FakeCondensed(),
+    )
+
+    gauge_identity = identity["phase_gauge_identity"]
+    assert gauge_identity["configured_solver_output_gauge"] == "boundary_plane"
+    assert gauge_identity["configured_gauge_source"] == (
+        "SimulationConfig3D.dtn_phase_gauge"
+    )
+    assert identity["runtime_config"]["dtn_phase_gauge"] == "boundary_plane"
+    assert identity["runtime_config"]["dtn_boundary_reference_planes"] == {
+        "top": 1.0,
+        "bottom": -1.0,
+    }
     assert len(identity["identity_sha256"]) == 64
 
 

@@ -834,6 +834,20 @@ FIELD_SPECS: Final = (
         ),
     ),
     _f(
+        "boundary.dtn_phase_gauge",
+        "enum",
+        "none",
+        ("full3d_direct",),
+        "DtN 辅助模态系数的相位参考坐标",
+        "SimulationConfig3D.dtn_phase_gauge",
+        '"global_z"',
+        default="global_z",
+        allowed=("global_z", "boundary_plane"),
+        constraints=(
+            "boundary_plane: direct auxiliary fixed-p MPI1, n_air=1; default global_z",
+        ),
+    ),
+    _f(
         "boundary.dtn_manual_order_max_m",
         "integer",
         "order",

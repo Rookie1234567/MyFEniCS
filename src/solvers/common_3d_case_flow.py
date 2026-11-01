@@ -2081,6 +2081,9 @@ def run_prepared_3d_case_flow(
         "stage4_dtn_assembly": cfg.stage4_dtn_assembly
         if solve_stage4_dtn_port
         else None,
+        "stage4_dtn_phase_gauge": cfg.dtn_phase_gauge
+        if solve_stage4_dtn_port
+        else None,
         "stage4_dtn_num_auxiliary_dofs": None
         if dtn_result is None
         else dtn_result["solver_info"].get("num_auxiliary_dofs"),

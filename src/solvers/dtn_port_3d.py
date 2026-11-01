@@ -2177,6 +2177,58 @@ def _use_zero_order_local_robin_dtn(cfg: SimulationConfig3D) -> bool:
     return cfg.stage4_dtn_order_policy.lower() == "zero_order" and normal_incidence
 
 
+def _validate_dtn_phase_gauge_runtime_scope(
+    cfg: SimulationConfig3D,
+    comm: MPI.Intracomm,
+    *,
+    linear_solver_port: Any,
+    variable_p_live_observer: Any,
+    variable_p_retain_local_schur_for_research: bool,
+    static_retain_local_schur_for_matrix_free: bool,
+    matrix_free_dtn: bool,
+    matrix_free_dtn_probe: bool,
+) -> str:
+    """Fail closed outside the currently qualified public plane-gauge route."""
+
+    from .dtn_boundary_phase_gauge import BOUNDARY_PLANE, validate_phase_gauge
+
+    gauge = validate_phase_gauge(getattr(cfg, "dtn_phase_gauge", "global_z"))
+    if gauge != BOUNDARY_PLANE:
+        return gauge
+    reasons = []
+    if int(comm.size) != 1:
+        reasons.append("MPI1 is required")
+    if complex(cfg.n_air) != 1.0 + 0.0j:
+        reasons.append("n_air=1 is required by the incident projection contract")
+    if cfg.stage4_boundary_model != "dtn_port":
+        reasons.append("stage4_boundary_model='dtn_port' is required")
+    if cfg.stage4_dtn_assembly.lower() != "auxiliary":
+        reasons.append("stage4_dtn_assembly='auxiliary' is required")
+    if cfg.stage4_dtn_order_policy.lower() == "zero_order":
+        reasons.append("the zero-order local-Robin shortcut is unsupported")
+    if (
+        cfg.stage4_full3d_assembly_backend == ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND
+        or cfg.stage4_variable_p_cell_degree_plan is not None
+        or cfg.stage4_local_h_refinement_plan is not None
+        or variable_p_live_observer is not None
+        or variable_p_retain_local_schur_for_research
+    ):
+        reasons.append("variable-p/local-h research assembly is unsupported")
+    if (
+        linear_solver_port is not None
+        or matrix_free_dtn
+        or matrix_free_dtn_probe
+        or static_retain_local_schur_for_matrix_free
+    ):
+        reasons.append("external and matrix-free solver ports are unsupported")
+    if reasons:
+        raise NotImplementedError(
+            "boundary_plane DtN is qualified only for the fixed-p MPI1 air1 "
+            "direct auxiliary route: " + "; ".join(reasons)
+        )
+    return gauge
+
+
 def _mode_projection_from_solution(
     E_total,
     mode: PortMode3D,
@@ -2184,15 +2236,30 @@ def _mode_projection_from_solution(
     cfg: SimulationConfig3D,
     *,
     quadrature_degree: int | None,
+    dtn_phase_gauge: str = "global_z",
 ) -> complex:
     """Project the solved tangential E trace onto one tangential port mode."""
 
+    from .dtn_boundary_phase_gauge import (
+        BOUNDARY_PLANE,
+        assembly_projection_denominator,
+        port_plane_z,
+        validate_phase_gauge,
+    )
+
+    dtn_phase_gauge = validate_phase_gauge(dtn_phase_gauge)
+
     tag = cfg.tags.z_max if mode.side == "top" else cfg.tags.z_min
     x = ufl.SpatialCoordinate(mesh_data.mesh)
+    phase_z = (
+        x[2] - PETSc.ScalarType(port_plane_z(mode, cfg))
+        if dtn_phase_gauge == BOUNDARY_PLANE
+        else x[2]
+    )
     phase = ufl.exp(
         PETSc.ScalarType(1j * mode.alpha) * x[0]
         + PETSc.ScalarType(1j * mode.gamma) * x[1]
-        + PETSc.ScalarType(1j * mode.k_vector[2]) * x[2]
+        + PETSc.ScalarType(1j * mode.k_vector[2]) * phase_z
     )
     tangential_field = ufl.as_vector((E_total[0], E_total[1], PETSc.ScalarType(0.0)))
     tangential_mode = np.asarray(
@@ -2210,7 +2277,11 @@ def _mode_projection_from_solution(
         )
     )
     total = mesh_data.mesh.comm.allreduce(local, op=MPI.SUM)
-    denominator = _mode_projection_denominator(mode, cfg)
+    denominator = (
+        assembly_projection_denominator(mode, cfg, dtn_phase_gauge)
+        if dtn_phase_gauge == BOUNDARY_PLANE
+        else _mode_projection_denominator(mode, cfg)
+    )
     return complex(total / denominator)
 
 
@@ -2264,6 +2335,7 @@ def _auxiliary_direct_tangential_projection_audit(
     cfg: SimulationConfig3D,
     *,
     quadrature_degree: int | None,
+    dtn_phase_gauge: str = "global_z",
 ) -> dict[str, Any]:
     """Compare official auxiliary amplitudes with an independent FE projection."""
 
@@ -2285,6 +2357,7 @@ def _auxiliary_direct_tangential_projection_audit(
             mesh_data,
             cfg,
             quadrature_degree=quadrature_degree,
+            dtn_phase_gauge=dtn_phase_gauge,
         )
         for mode in modes
     ]
@@ -4108,6 +4181,26 @@ def _solve_stage4_dtn_port_total_field_impl(
     ``variable_p_retain_local_schur_for_research`` opt-in.
     """
 
+    dtn_phase_gauge = _validate_dtn_phase_gauge_runtime_scope(
+        cfg,
+        mesh_data.mesh.comm,
+        linear_solver_port=linear_solver_port,
+        variable_p_live_observer=variable_p_live_observer,
+        variable_p_retain_local_schur_for_research=(
+            variable_p_retain_local_schur_for_research
+        ),
+        static_retain_local_schur_for_matrix_free=(
+            static_retain_local_schur_for_matrix_free
+        ),
+        matrix_free_dtn=matrix_free_dtn,
+        matrix_free_dtn_probe=matrix_free_dtn_probe,
+    )
+    from .dtn_boundary_phase_gauge import (
+        BOUNDARY_PLANE,
+        assembly_projection_denominator,
+        incident_projection_in_solver_coordinates,
+    )
+
     assembly_backend_audit = resolve_stage4_full3d_assembly_backend(
         cfg,
         apply=True,
@@ -4773,18 +4866,28 @@ def _solve_stage4_dtn_port_total_field_impl(
     )
 
     incident_projections: list[complex] = []
+
+    def boundary_reference_z(side: str) -> float | None:
+        if dtn_phase_gauge != BOUNDARY_PLANE:
+            return None
+        return float(cfg.physical_z_max if side == "top" else cfg.physical_z_min)
+
     surface_assemblers = {
         ("top", 0): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_max, 0, quadrature_degree=dtn_quadrature_degree
+            V, mesh_data, cfg.tags.z_max, 0, quadrature_degree=dtn_quadrature_degree,
+            boundary_reference_z=boundary_reference_z("top"),
         ),
         ("top", 1): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_max, 1, quadrature_degree=dtn_quadrature_degree
+            V, mesh_data, cfg.tags.z_max, 1, quadrature_degree=dtn_quadrature_degree,
+            boundary_reference_z=boundary_reference_z("top"),
         ),
         ("bottom", 0): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_min, 0, quadrature_degree=dtn_quadrature_degree
+            V, mesh_data, cfg.tags.z_min, 0, quadrature_degree=dtn_quadrature_degree,
+            boundary_reference_z=boundary_reference_z("bottom"),
         ),
         ("bottom", 1): _ReusableSurfaceComponentAssembler(
-            V, mesh_data, cfg.tags.z_min, 1, quadrature_degree=dtn_quadrature_degree
+            V, mesh_data, cfg.tags.z_min, 1, quadrature_degree=dtn_quadrature_degree,
+            boundary_reference_z=boundary_reference_z("bottom"),
         ),
     }
     try:
@@ -4807,7 +4910,7 @@ def _solve_stage4_dtn_port_total_field_impl(
                 encoding="utf-8",
             )
         raise
-    component_key: tuple[str, int, int, complex] | None = None
+    component_key: tuple[str, int, int, complex, str, float | None] | None = None
     component_right_entries: (
         tuple[
             tuple[np.ndarray, np.ndarray],
@@ -4844,7 +4947,14 @@ def _solve_stage4_dtn_port_total_field_impl(
     )
     modal_loop_start = time.perf_counter()
     for aux_index, mode in enumerate(modes):
-        mode_key = (mode.side, int(mode.m), int(mode.n), complex(mode.k_vector[2]))
+        mode_key = (
+            mode.side,
+            int(mode.m),
+            int(mode.n),
+            complex(mode.k_vector[2]),
+            dtn_phase_gauge,
+            boundary_reference_z(mode.side),
+        )
         if mode_key != component_key or component_right_entries is None:
             t_component = time.perf_counter()
             if assembly_time_active:
@@ -4969,8 +5079,16 @@ def _solve_stage4_dtn_port_total_field_impl(
             comm=comm,
         )
         aux_global = n_fe + aux_index
-        denominator = _mode_projection_denominator(mode, cfg)
-        incident_projection = _incident_projection_onto_top_mode(mode, cfg)
+        denominator = (
+            assembly_projection_denominator(mode, cfg, dtn_phase_gauge)
+            if dtn_phase_gauge == BOUNDARY_PLANE
+            else _mode_projection_denominator(mode, cfg)
+        )
+        incident_projection = (
+            incident_projection_in_solver_coordinates(mode, cfg, dtn_phase_gauge)
+            if dtn_phase_gauge == BOUNDARY_PLANE
+            else _incident_projection_onto_top_mode(mode, cfg)
+        )
         incident_projections.append(incident_projection)
         if external_rhs_digest is not None:
             external_rhs_digest.update(
@@ -5884,6 +6002,18 @@ def _solve_stage4_dtn_port_total_field_impl(
         )
     else:
         linear_residual = _linear_residual(A_aug, b_aug, x_aug)
+    linear_residual["dtn_phase_gauge"] = dtn_phase_gauge
+    linear_residual["residual_coordinate_semantics"] = (
+        "actual assembled boundary-plane auxiliary system"
+        if dtn_phase_gauge == BOUNDARY_PLANE
+        else "historical global_z auxiliary system"
+    )
+    linear_residual["normalized_auxiliary_row_transform_from_global_z"] = (
+        "r_plane=s*r_global; raw unnormalized dual RHS instead transforms as "
+        "r_plane_raw=r_global_raw/conj(s)"
+        if dtn_phase_gauge == BOUNDARY_PLANE
+        else "not applicable"
+    )
     task41_native_a6_gate_pass = None
     if task41_native_full_a6 is not None:
         task41_native_a6_gate_pass = _task41_native_a6_passes(
@@ -5970,7 +6100,13 @@ def _solve_stage4_dtn_port_total_field_impl(
     port_metrics = (
         {}
         if external_rta_gate_pass is False
-        else _port_power_metrics(cfg, modes, aux_values, incident_projections)
+        else _port_power_metrics(
+            cfg,
+            modes,
+            aux_values,
+            incident_projections,
+            dtn_phase_gauge=dtn_phase_gauge,
+        )
     )
     if (
         cfg.dtn_auxiliary_direct_projection_audit
@@ -5996,6 +6132,7 @@ def _solve_stage4_dtn_port_total_field_impl(
                 mesh_data,
                 cfg,
                 quadrature_degree=dtn_quadrature_degree,
+                dtn_phase_gauge=dtn_phase_gauge,
             )
         )
         timing_details["stage4_dtn_auxiliary_direct_projection_audit_seconds"] = float(
@@ -6036,6 +6173,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             incident_projections,
             port_metrics,
             comm,
+            dtn_phase_gauge=dtn_phase_gauge,
         )
     _write_progress_event(
         out_dir,
@@ -6140,6 +6278,15 @@ def _solve_stage4_dtn_port_total_field_impl(
         solver_ksp_type = external_snapshot.ksp_type
         solver_pc_type = external_snapshot.pc_type
     solver_info = {
+        "dtn_phase_gauge": dtn_phase_gauge,
+        "dtn_boundary_reference_planes": (
+            {
+                "top": float(cfg.physical_z_max),
+                "bottom": float(cfg.physical_z_min),
+            }
+            if dtn_phase_gauge == BOUNDARY_PLANE
+            else None
+        ),
         "solver_backend": (
             "external static-condensed linear-solver port"
             if external_snapshot is not None
@@ -6499,6 +6646,8 @@ def solve_stage4_dtn_port_total_field(
     )
     observer_flags = comm.allgather(
         (
+            str(getattr(cfg, "dtn_phase_gauge", "global_z")),
+            linear_solver_port is not None,
             variable_p_live_observer is not None,
             bool(variable_p_retain_local_schur_for_research),
             bool(static_retain_local_schur_for_matrix_free),
@@ -6510,9 +6659,23 @@ def solve_stage4_dtn_port_total_field(
     )
     if len(set(observer_flags)) != 1:
         raise ValueError(
-            "the variable-p live observer must be enabled on every MPI rank "
-            "and research flags must match"
+            "DtN phase-gauge, solver-port, observer, and research flags must "
+            "match on every MPI rank"
         )
+    _validate_dtn_phase_gauge_runtime_scope(
+        cfg,
+        comm,
+        linear_solver_port=linear_solver_port,
+        variable_p_live_observer=variable_p_live_observer,
+        variable_p_retain_local_schur_for_research=(
+            variable_p_retain_local_schur_for_research
+        ),
+        static_retain_local_schur_for_matrix_free=(
+            static_retain_local_schur_for_matrix_free
+        ),
+        matrix_free_dtn=matrix_free_dtn,
+        matrix_free_dtn_probe=matrix_free_dtn_probe,
+    )
     recovered_cleanup: list[VariablePRecoveredSolution] = []
     implementation_failed = False
     try:

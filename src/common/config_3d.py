@@ -112,6 +112,10 @@ class SimulationConfig3D:
     stage4_dtn_order_policy: str = (
         "auto_propagating"  # "auto_propagating", "zero_order", or "manual"
     )
+    # Auxiliary port-coefficient coordinates. ``global_z`` preserves the
+    # historical Stage-4 assembly; ``boundary_plane`` is explicitly qualified
+    # only for the fixed-p serial direct auxiliary path.
+    dtn_phase_gauge: str = "global_z"
     stage4_dtn_assembly: str = (
         "auxiliary"  # 3D v1 supports only sparse auxiliary modal unknowns.
     )
