@@ -211,27 +211,76 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             )
             if len(required_evidence_keys) != 6:
                 raise ValueError("Task40 signed-window factor evidence needs six bound mode keys")
-        if truncated:
-            if len(active_rectangle) != 2 or any(value < 1 for value in active_rectangle):
-                raise ValueError("Task40 modal rectangle requires positive m/n bounds")
-            m_max, n_max = active_rectangle
-            policy = str(mode.get("policy", ""))
-            if policy == "explicit_symmetric_subrectangle_from_parent_v1":
-                if m_max != n_max:
-                    raise ValueError("Task40 symmetric selection policy requires equal m/n bounds")
-            elif policy != "explicit_centered_rectangle_subrectangle_from_parent_v1":
-                raise ValueError("Task40 truncated route has an unsupported selection policy")
-            if (
-                active_rectangle[0] > int(mode["parent_rectangle_max_abs_m_n"][0])
-                or active_rectangle[1] > int(mode["parent_rectangle_max_abs_m_n"][1])
-                or active_mode_count != 4 * (2 * m_max + 1) * (2 * n_max + 1)
+        elif mode.get("policy") == "explicit_signed_subrectangle_from_parent_v1":
+            raw_signed_bounds = mode.get("active_signed_bounds_mn")
+            try:
+                signed_bounds = tuple(raw_signed_bounds)
+            except TypeError as exc:
+                raise ValueError("Task40 signed subrectangle requires four active bounds") from exc
+            if len(signed_bounds) != 4 or any(
+                isinstance(value, bool) or not isinstance(value, int)
+                for value in signed_bounds
             ):
-                raise ValueError("Task40 active rectangle count/bounds differ from its finite parent")
+                raise ValueError("Task40 active signed bounds must be four integers")
+            raw_parent_bounds = mode.get("parent_signed_bounds_mn")
+            try:
+                parent_signed_bounds = tuple(raw_parent_bounds)
+            except TypeError as exc:
+                raise ValueError("Task40 signed subrectangle requires four parent bounds") from exc
+            if len(parent_signed_bounds) != 4 or any(
+                isinstance(value, bool) or not isinstance(value, int)
+                for value in parent_signed_bounds
+            ):
+                raise ValueError("Task40 parent signed bounds must be four integers")
+            pm_min, pm_max, pn_min, pn_max = parent_signed_bounds
+            m_min, m_max, n_min, n_max = signed_bounds
+            if (
+                pm_min > pm_max or pn_min > pn_max
+                or m_min < pm_min or m_max > pm_max
+                or n_min < pn_min or n_max > pn_max
+            ):
+                raise ValueError("Task40 active signed window exceeds its finite parent")
+            parent_count_expected = 4 * (pm_max - pm_min + 1) * (pn_max - pn_min + 1)
+            active_count_expected = 4 * (m_max - m_min + 1) * (n_max - n_min + 1)
+            if (
+                parent_mode_count != parent_count_expected
+                or active_mode_count != active_count_expected
+                or active_mode_count >= parent_mode_count
+            ):
+                raise ValueError("Task40 signed subrectangle count differs from its bounds")
+            if mode.get("parent_rectangle_max_abs_m_n") != [
+                max(abs(pm_min), abs(pm_max)), max(abs(pn_min), abs(pn_max))
+            ]:
+                raise ValueError("Task40 signed parent bounds differ from its absolute envelope")
+            if active_rectangle != [max(abs(m_min), abs(m_max)), max(abs(n_min), abs(n_max))]:
+                raise ValueError("Task40 active signed bounds differ from its absolute envelope")
             required_evidence_keys = tuple(
                 key
                 for side in ("top", "bottom")
-                for key in ((side, -m_max, 0, "p"), (side, 0, 0, "s"), (side, m_max, 0, "p"))
+                for key in ((side, m_min, 0, "p"), (side, 0, 0, "s"), (side, m_max, 0, "p"))
             )
+        if truncated:
+            if len(active_rectangle) != 2 or any(value < 1 for value in active_rectangle):
+                raise ValueError("Task40 modal rectangle requires positive m/n bounds")
+            policy = str(mode.get("policy", ""))
+            if policy != "explicit_signed_subrectangle_from_parent_v1":
+                m_max, n_max = active_rectangle
+                if policy == "explicit_symmetric_subrectangle_from_parent_v1":
+                    if m_max != n_max:
+                        raise ValueError("Task40 symmetric selection policy requires equal m/n bounds")
+                elif policy != "explicit_centered_rectangle_subrectangle_from_parent_v1":
+                    raise ValueError("Task40 truncated route has an unsupported selection policy")
+                if (
+                    active_rectangle[0] > int(mode["parent_rectangle_max_abs_m_n"][0])
+                    or active_rectangle[1] > int(mode["parent_rectangle_max_abs_m_n"][1])
+                    or active_mode_count != 4 * (2 * m_max + 1) * (2 * n_max + 1)
+                ):
+                    raise ValueError("Task40 active rectangle count/bounds differ from its finite parent")
+                required_evidence_keys = tuple(
+                    key
+                    for side in ("top", "bottom")
+                    for key in ((side, -m_max, 0, "p"), (side, 0, 0, "s"), (side, m_max, 0, "p"))
+                )
         if (
             evidence.get("schema") != "task40.p6-direct-factor-evidence.v1"
             or evidence_keys != required_evidence_keys
@@ -300,6 +349,11 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "selection_policy": mode["policy"],
             "signed_rectangle_bounds_mn": (
                 list(signed_bounds) if signed_bounds is not None else None
+            ),
+            "parent_signed_bounds_mn": (
+                list(mode["parent_signed_bounds_mn"])
+                if mode.get("parent_signed_bounds_mn") is not None
+                else None
             ),
             "mode_basis_scale_policy": mode.get(
                 "boundary_amplitude_scale_policy"
@@ -729,26 +783,63 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
     policy = str(route.get(
         "selection_policy", "explicit_symmetric_subrectangle_from_parent_v1"
     ))
-    if policy == "explicit_symmetric_subrectangle_from_parent_v1":
-        if m_max != n_max:
-            raise ValueError("Task40 symmetric selection policy requires equal m/n bounds")
-    elif policy != "explicit_centered_rectangle_subrectangle_from_parent_v1":
-        raise ValueError("Task40 rectangle selector received an unsupported policy")
     parent_rectangle = tuple(
         int(value) for value in route["parent_rectangle_max_abs_m_n"]
     )
-    if (
-        len(parent_rectangle) != 2
-        or m_max > parent_rectangle[0]
-        or n_max > parent_rectangle[1]
-    ):
-        raise ValueError("Task40 active rectangle exceeds the exact finite parent")
-    indices = tuple(
-        index
-        for index, mode in enumerate(parent_modes)
-        if abs(int(mode.m)) <= m_max and abs(int(mode.n)) <= n_max
-    )
-    expected_count = 4 * (2 * m_max + 1) * (2 * n_max + 1)
+    active_signed_bounds = None
+    if policy == "explicit_signed_subrectangle_from_parent_v1":
+        active_signed_bounds = tuple(
+            int(value) for value in route["signed_rectangle_bounds_mn"]
+        )
+        parent_signed_bounds = tuple(
+            int(value) for value in route["parent_signed_bounds_mn"]
+        )
+        if len(active_signed_bounds) != 4 or len(parent_signed_bounds) != 4:
+            raise ValueError("Task40 signed subrectangle bounds must have four entries")
+        m_min, m_max, n_min, n_max = active_signed_bounds
+        pm_min, pm_max, pn_min, pn_max = parent_signed_bounds
+        if (
+            m_min < pm_min or m_max > pm_max
+            or n_min < pn_min or n_max > pn_max
+        ):
+            raise ValueError("Task40 active signed rectangle exceeds its finite parent")
+        indices = tuple(
+            index for index, mode in enumerate(parent_modes)
+            if m_min <= int(mode.m) <= m_max and n_min <= int(mode.n) <= n_max
+        )
+        expected_count = 4 * (m_max - m_min + 1) * (n_max - n_min + 1)
+        expected_keys = {
+            (side, m, n, polarization)
+            for side in ("top", "bottom")
+            for polarization in ("s", "p")
+            for m in range(m_min, m_max + 1)
+            for n in range(n_min, n_max + 1)
+        }
+    else:
+        if policy == "explicit_symmetric_subrectangle_from_parent_v1":
+            if m_max != n_max:
+                raise ValueError("Task40 symmetric selection policy requires equal m/n bounds")
+        elif policy != "explicit_centered_rectangle_subrectangle_from_parent_v1":
+            raise ValueError("Task40 rectangle selector received an unsupported policy")
+        if (
+            len(parent_rectangle) != 2
+            or m_max > parent_rectangle[0]
+            or n_max > parent_rectangle[1]
+        ):
+            raise ValueError("Task40 active rectangle exceeds the exact finite parent")
+        indices = tuple(
+            index
+            for index, mode in enumerate(parent_modes)
+            if abs(int(mode.m)) <= m_max and abs(int(mode.n)) <= n_max
+        )
+        expected_count = 4 * (2 * m_max + 1) * (2 * n_max + 1)
+        expected_keys = {
+            (side, m, n, polarization)
+            for side in ("top", "bottom")
+            for polarization in ("s", "p")
+            for m in range(-m_max, m_max + 1)
+            for n in range(-n_max, n_max + 1)
+        }
     if len(indices) != expected_count or len(indices) != int(route["active_count"]):
         raise ValueError("Task40 live rectangle has an unexpected two-port s/p mode count")
 
@@ -767,15 +858,8 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
     if key_sha != route["expected_selected_signed_keys_sha256"]:
         raise ValueError("Task40 selected signed keys differ from the frozen rectangle identity")
     if index_sha != route["expected_selected_parent_indices_sha256"]:
-        raise ValueError("Task40 selected parent indices differ from the frozen Y3 plan")
+        raise ValueError("Task40 selected parent indices differ from the frozen profile contract")
 
-    expected_keys = {
-        (side, m, n, polarization)
-        for side in ("top", "bottom")
-        for polarization in ("s", "p")
-        for m in range(-m_max, m_max + 1)
-        for n in range(-n_max, n_max + 1)
-    }
     actual_keys = {
         (row["side"], row["m"], row["n"], row["polarization"])
         for row in key_rows
@@ -790,7 +874,12 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
         for side in ("bottom", "top")
         for polarization in ("s", "p")
     }
-    per_group = (2 * m_max + 1) * (2 * n_max + 1)
+    per_group = (
+        (active_signed_bounds[1] - active_signed_bounds[0] + 1)
+        * (active_signed_bounds[3] - active_signed_bounds[2] + 1)
+        if active_signed_bounds is not None
+        else (2 * m_max + 1) * (2 * n_max + 1)
+    )
     if set(side_polarization_counts.values()) != {per_group}:
         raise ValueError("Task40 selected rectangle has unequal side/polarization groups")
 
@@ -814,6 +903,9 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
         "selected_signed_keys_order": "preserved_from_exact_parent_inventory",
         "side_polarization_counts": side_polarization_counts,
         "active_rectangle_max_abs_m_n": list(rectangle),
+        "active_signed_bounds_mn": (
+            None if active_signed_bounds is None else list(active_signed_bounds)
+        ),
         "quadrature_inventory": route.get(
             "quadrature_inventory", "full_D15_Y3_R13_parent_inventory"
         ),
@@ -2827,8 +2919,13 @@ def run_p6_condensed_direct(
         if route["family"] == "task40_phi90":
             if route.get("signed_rectangle_bounds_mn") is not None:
                 cfg.stage4_dtn_order_policy = "explicit_signed_rectangle"
+                signed_bounds = (
+                    route["parent_signed_bounds_mn"]
+                    if route["truncated"]
+                    else route["signed_rectangle_bounds_mn"]
+                )
                 cfg.task40_dtn_signed_rectangle_bounds_mn = tuple(
-                    int(value) for value in route["signed_rectangle_bounds_mn"]
+                    int(value) for value in signed_bounds
                 )
             else:
                 # Historical Task40 families keep their centered rectangle.

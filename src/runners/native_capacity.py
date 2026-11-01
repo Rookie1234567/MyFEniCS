@@ -45,15 +45,16 @@ def _native_capacity_launch_lock(
     """Keep legacy launches exclusive; share only the reviewed exact pair."""
     from .task40_d07c_g5_join import (
         G5_PROFILE, G5_SCOPE_PATH_ENV, G5_SCOPE_SHA_ENV, g5_runtime_lease,
-        G6_PROFILE, G6_SCOPE_PATH_ENV, G6_SCOPE_SHA_ENV, g6_runtime_lease,
+        G6_SCOPED_PROFILES, G6_SCOPE_PATH_ENV, G6_SCOPE_SHA_ENV,
+        g6_case_for_profile, g6_runtime_lease,
     )
 
     g5_scope_path = os.environ.get(G5_SCOPE_PATH_ENV)
     g5_scope_sha = os.environ.get(G5_SCOPE_SHA_ENV)
     g6_scope_path = os.environ.get(G6_SCOPE_PATH_ENV)
     g6_scope_sha = os.environ.get(G6_SCOPE_SHA_ENV)
-    if profile in {G5_PROFILE, G6_PROFILE}:
-        case = 'G5' if profile == G5_PROFILE else 'G6'
+    if profile == G5_PROFILE or profile in G6_SCOPED_PROFILES:
+        case = 'G5' if profile == G5_PROFILE else g6_case_for_profile(profile)
         own_scope_path, own_scope_sha = (
             (g5_scope_path, g5_scope_sha)
             if case == 'G5' else (g6_scope_path, g6_scope_sha)
@@ -78,7 +79,7 @@ def _native_capacity_launch_lock(
             raise InputError(f"exact {case} profile requires its reviewed observational scope")
         lock_env = f"TASK40_D07C_{case}_LOCK_DIRECTORY"
         lock_directory = os.environ.get(lock_env, "/tmp")
-        lease_factory = g5_runtime_lease if case == 'G5' else g6_runtime_lease
+        lease_factory = g5_runtime_lease if profile == G5_PROFILE else g6_runtime_lease
         with lease_factory(
             profile, task_run_id or "", scope_path=own_scope_path,
             scope_sha256=own_scope_sha, expected_identity=expected_identity,
@@ -366,9 +367,15 @@ def native_capacity_guard(
         raise InputError('source scripts/activate_myfenics_linux.sh first')
     root = Path(__file__).resolve().parents[2]
     profile_facts = native_profile_facts(profile)
-    from .task40_d07c_g5_join import G5_PROFILE, G6_PROFILE
-    observational_profile = profile in {G5_PROFILE, G6_PROFILE}
-    observational_case = 'G5' if profile == G5_PROFILE else 'G6' if profile == G6_PROFILE else None
+    from .task40_d07c_g5_join import (
+        G5_PROFILE, G6_PROFILE, G6_SCOPED_PROFILES, g6_case_for_profile,
+    )
+    observational_profile = profile == G5_PROFILE or profile in G6_SCOPED_PROFILES
+    observational_case = (
+        'G5' if profile == G5_PROFILE
+        else g6_case_for_profile(profile) if profile in G6_SCOPED_PROFILES
+        else None
+    )
     if observational_profile:
         supervisor_cpu = None
         worker_cpus = None
@@ -454,14 +461,17 @@ def native_capacity_guard(
                         None if observational_case != 'G5' else observational_context['lock_directory']
                     ),
                     g6_observational_scope_path=(
-                        None if observational_case != 'G6' else observational_context['scope_path']
+                        None if not observational_case or not observational_case.startswith('G6')
+                        else observational_context['scope_path']
                     ),
                     g6_observational_scope_sha256=(
-                        None if observational_case != 'G6' else observational_context['scope_sha256']
+                        None if not observational_case or not observational_case.startswith('G6')
+                        else observational_context['scope_sha256']
                     ),
                     g6_expected_identity=expected_identity,
                     g6_lock_directory=(
-                        None if observational_case != 'G6' else observational_context['lock_directory']
+                        None if not observational_case or not observational_case.startswith('G6')
+                        else observational_context['lock_directory']
                     ),
                 )
             else:
@@ -545,7 +555,7 @@ def native_capacity_guard(
                          'g5_case_level_member_lock_no_canonical'
                          if profile == G5_PROFILE else
                          'g6_case_level_member_lock_no_canonical'
-                         if profile == G6_PROFILE else
+                         if profile in G6_SCOPED_PROFILES else
                          'canonical_host_shared_with_exact_task40_pair'
                          if pair_context is not None else
                          'canonical_host_shared_with_task39_worktrees'
@@ -597,6 +607,10 @@ def native_capacity_guard(
                      'neighbor_files_and_processes_modified': False,
                      'disk_free_bytes': shutil.disk_usage(root).free,
                      'inodes_available': filesystem.f_favail}
+        if profile in G6_SCOPED_PROFILES and profile != G6_PROFILE:
+            isolation[f"{observational_case.lower()}_observational_join"] = (
+                observational_lease.summary()
+            )
         env_names = (
             'PHYSICAL_WATCHDOG_PSS_POLICY',
             'OMP_NUM_THREADS',
@@ -644,9 +658,11 @@ def launch_native_capacity(specification, *, setup_only: bool = False):
     if profile is None:
         raise InputError('native capacity launch requires an explicit native profile')
     expected_identity = None
-    from .task40_d07c_g5_join import G5_PROFILE, G6_PROFILE
-    if profile in {G5_PROFILE, G6_PROFILE}:
-        case = 'G5' if profile == G5_PROFILE else 'G6'
+    from .task40_d07c_g5_join import (
+        G5_PROFILE, G6_SCOPED_PROFILES, g6_case_for_profile,
+    )
+    if profile == G5_PROFILE or profile in G6_SCOPED_PROFILES:
+        case = 'G5' if profile == G5_PROFILE else g6_case_for_profile(profile)
         root = Path(__file__).resolve().parents[2]
         try:
             source_commit = subprocess.check_output(

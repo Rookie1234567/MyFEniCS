@@ -34,10 +34,10 @@ def _scope(
     attempt_id="g5test2026",
     profile=G5_PROFILE,
 ):
-    case = "G5" if profile == G5_PROFILE else "G6"
+    case_spec = g5_join._CASE_SPECS[profile]
     run_id = profile
-    schema = getattr(g5_join, f"{case}_SCOPE_SCHEMA")
-    policy = f"{case.lower()}_scoped_observational_neighbors_v1"
+    schema = case_spec["schema"]
+    policy = case_spec["policy"]
     member, reservation = g5_join._case_lock_paths(profile, run_id, tmp_path)
     value = {
         "schema": schema,
@@ -278,6 +278,55 @@ def test_dynamic_execution_plan_places_numactl_then_reserved_taskset_inside_mpie
         )
 
 
+@pytest.mark.parametrize(
+    ("case", "attempt"),
+    (("G6_M8_N32", "g6n32admission"), ("G6_M8_N14", "g6n14admission")),
+)
+def test_g6_modal_truncation_scopes_keep_dynamic_cpu_and_unique_case_locks(
+    tmp_path, monkeypatch, case, attempt
+):
+    profile = g5_join.G6_N32_PROFILE if case.endswith("N32") else g5_join.G6_N14_PROFILE
+    case_spec = g5_join._CASE_SPECS[profile]
+    assert case_spec["case"] == case
+    scope_path, scope_sha, scope = _scope(
+        tmp_path, attempt_id=attempt, profile=profile
+    )
+    reservation = {
+        "policy": "sampled_low_load_distinct_physical_cores_v1",
+        "sample_seconds": 1.5,
+        "supervisor_cpu": 3,
+        "worker_cpu": 17,
+        "selected_topology": [{"cpu": 3}, {"cpu": 17}],
+        "exclusive_cpu_ownership": False,
+    }
+    monkeypatch.setattr(
+        g5_join, "choose_g6_cpu_reservation", lambda **_kwargs: reservation
+    )
+    with g5_join.g6_runtime_lease(
+        profile,
+        profile,
+        scope_path=scope_path,
+        scope_sha256=scope_sha,
+        expected_identity={"profile_identity": profile, "run_id": profile},
+        submission_mode="fresh_check",
+        lock_directory=tmp_path,
+    ) as lease:
+        assert lease.case == case
+        assert lease.cpu_reservation == reservation
+        assert lease.summary()["canonical_heavy_lock_touched"] is False
+        assert lease.summary()["cpu_reservation"]["worker_cpu"] == 17
+    assert scope["runtime_paths"]["attempt_cache_root"].endswith(
+        f"task40_d07c_{case.lower()}_attempt_{attempt}"
+    )
+    n32_locks = g5_join._case_lock_paths(
+        g5_join.G6_N32_PROFILE, g5_join.G6_N32_PROFILE, tmp_path
+    )
+    n14_locks = g5_join._case_lock_paths(
+        g5_join.G6_N14_PROFILE, g5_join.G6_N14_PROFILE, tmp_path
+    )
+    assert set(n32_locks).isdisjoint(n14_locks)
+
+
 def test_g5_cpu_reservation_uses_sampled_load_and_neighbor_affinity(monkeypatch):
     monkeypatch.setattr(g5_join.os, "sched_getaffinity", lambda _pid: {10, 11, 12})
     monkeypatch.setattr(g5_join, "_core", lambda cpu: (0, int(cpu)))
@@ -452,9 +501,29 @@ def test_run_case_to_native_guard_commits_one_g5_reservation_without_fe(tmp_path
         pass
 
 
-def test_run_case_to_native_guard_commits_one_g6_reservation_without_fe(tmp_path, monkeypatch, capsys):
-    g6_input = W / "input/task40para_phi90_mesh_modes_direct/d07c_g6_m8_nminus64_to1_p6_direct.dat"
-    g6_profile = g5_join.G6_PROFILE
+@pytest.mark.parametrize(
+    ("case", "attempt"),
+    (
+        ("G6", "g6prod2026"),
+        ("G6_M8_N32", "g6n32prod2026"),
+        ("G6_M8_N14", "g6n14prod2026"),
+    ),
+)
+def test_run_case_to_native_guard_commits_one_g6_reservation_without_fe(
+    tmp_path, monkeypatch, capsys, case, attempt
+):
+    input_names = {
+        "G6": "d07c_g6_m8_nminus64_to1_p6_direct.dat",
+        "G6_M8_N32": "d07c_g6_m8_nminus32_to1_p6_direct.dat",
+        "G6_M8_N14": "d07c_g6_m8_nminus14_to1_p6_direct.dat",
+    }
+    profiles = {
+        "G6": g5_join.G6_PROFILE,
+        "G6_M8_N32": g5_join.G6_N32_PROFILE,
+        "G6_M8_N14": g5_join.G6_N14_PROFILE,
+    }
+    g6_input = W / "input/task40para_phi90_mesh_modes_direct" / input_names[case]
+    g6_profile = profiles[case]
     specification = load_and_resolve(g6_input)
     commit = __import__("subprocess").check_output(
         ["git", "rev-parse", "HEAD"], cwd=W, text=True
@@ -470,7 +539,7 @@ def test_run_case_to_native_guard_commits_one_g6_reservation_without_fe(tmp_path
         "source_commit": commit,
     }
     scope_path, _scope_sha, value = _scope(
-        tmp_path, identity, attempt_id="g6prod2026", profile=g6_profile,
+        tmp_path, identity, attempt_id=attempt, profile=g6_profile,
     )
     member, reservation = g5_join._case_lock_paths(g6_profile, g6_profile, tmp_path)
     value["runtime_paths"].update(
@@ -482,7 +551,7 @@ def test_run_case_to_native_guard_commits_one_g6_reservation_without_fe(tmp_path
     monkeypatch.setenv("_MYFENICS_NATIVE_QUALIFIED_ACTIVATION", "1")
     monkeypatch.setenv(g5_join.G6_SCOPE_PATH_ENV, str(scope_path))
     monkeypatch.setenv(g5_join.G6_SCOPE_SHA_ENV, scope_sha)
-    monkeypatch.setenv("TASK40_D07C_G6_LOCK_DIRECTORY", str(tmp_path))
+    monkeypatch.setenv(f"TASK40_D07C_{case}_LOCK_DIRECTORY", str(tmp_path))
     monkeypatch.delenv(g5_join.G5_SCOPE_PATH_ENV, raising=False)
     monkeypatch.delenv(g5_join.G5_SCOPE_SHA_ENV, raising=False)
     monkeypatch.delenv("TASK40_PARALLEL_AUTHORIZATION_FILE", raising=False)
@@ -506,7 +575,7 @@ def test_run_case_to_native_guard_commits_one_g6_reservation_without_fe(tmp_path
     import src.runners.task038_launcher as launcher
     from src.io.execution_plan import build_execution_plan
 
-    run_dir = tmp_path / "fake-g6-launched-run"
+    run_dir = tmp_path / f"fake-{case.lower()}-launched-run"
 
     def fake_launch(spec, *, prelaunch_isolation, **_kwargs):
         run_dir.mkdir()
@@ -525,7 +594,8 @@ def test_run_case_to_native_guard_commits_one_g6_reservation_without_fe(tmp_path
         assert prelaunch_isolation["node_memory_admission"]["g6_parallel_authorized_by_exact_scope"] is True
         assert prelaunch_isolation["node_memory_admission"]["minimum_available_bytes"] == 64 * 1024**3
         assert prelaunch_isolation["node_memory_admission"]["rss_hard_limit_bytes"] is None
-        assert prelaunch_isolation["g6_observational_join"]["canonical_heavy_lock_touched"] is False
+        join_key = f"{case.lower()}_observational_join"
+        assert prelaunch_isolation[join_key]["canonical_heavy_lock_touched"] is False
         return {"run_directory": str(run_dir), "exit_status": 0, "result_classification": "worker_exit0"}
 
     monkeypatch.setattr(launcher, "launch_specification", fake_launch)
@@ -537,7 +607,7 @@ def test_run_case_to_native_guard_commits_one_g6_reservation_without_fe(tmp_path
     assert json.loads(result_line)["result_classification"] == "worker_exit0"
     assert reservation.is_file()
     submitted = json.loads(reservation.read_text())
-    assert submitted["schema"] == "task40.d07c.g6_one_shot_submission.v1"
+    assert submitted["schema"] == f"task40.d07c.{case.lower()}_one_shot_submission.v1"
     assert submitted["profile_identity"] == g6_profile
     with (
         pytest.raises(admission.InputError, match="one-shot reservation already exists"),

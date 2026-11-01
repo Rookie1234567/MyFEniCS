@@ -135,6 +135,8 @@ def test_task40_active_fe_outputs_use_port_files_and_never_sampled_dft(monkeypat
         "parent_sha256": "a" * 64,
         "active_count": 4,
         "active_sha256": active_sha,
+        "active_rectangle_max_abs_m_n": [1, 1],
+        "residual_scope": "task40.phi90.box2.active_A6",
         "selection_policy": "explicit_box2_rectangle_v1",
         "selected_parent_indices_sha256": "c" * 64,
         "sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
@@ -154,7 +156,7 @@ def test_task40_active_fe_outputs_use_port_files_and_never_sampled_dft(monkeypat
     )
     monkeypatch.setattr(modes_3d, "incident_power_3d", lambda cfg: 1.0)
     monkeypatch.setattr(
-        postprocess_3d, "save_airbox_3d_fields", lambda *a: {"saved": True}
+        postprocess_3d, "save_airbox_3d_fields", lambda *a, **k: {"saved": True}
     )
     monkeypatch.setattr(
         rta_3d, "compute_volume_absorption_3d", lambda *a, **k: {"A_volume_total": 0.1}

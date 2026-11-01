@@ -166,6 +166,7 @@ TASK40_PHI90_D07C_PROFILE_BY_CASE = {
     for case in (
         "B", "Y1", "Y2", "B_M8", "Y3_M8", "G2_M8", "G3_M8",
         "G3_M8_N64", "G3_M8_N96", "G5_M8_N64", "G6_M8_N64",
+        "G6_M8_N32", "G6_M8_N14",
     )
 }
 TASK40_PHI90_D07C_PROFILES = frozenset(
@@ -1579,6 +1580,8 @@ def _task40_phi90_d07c_profile_facts(identity):
         "G3_M8_N96": (-96, 1),
         "G5_M8_N64": (-64, 1),
         "G6_M8_N64": (-64, 1),
+        "G6_M8_N32": (-32, 1),
+        "G6_M8_N14": (-14, 1),
     }.get(case_label, (-143, 1))
     n_abs_max = max(abs(n_min), abs(n_max))
     mode_facts = {
@@ -1599,6 +1602,18 @@ def _task40_phi90_d07c_profile_facts(identity):
             "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0",
             4360,
             4426,
+        ),
+        (8, -32, 1): (
+            2312,
+            "f81d3ff08f8950abcb4fa17736ee167e860d89c51baebc85a74fbea1b24493a4",
+            2184,
+            2250,
+        ),
+        (8, -14, 1): (
+            1088,
+            "8d7eda75f7bb3476fc2363231c6dde8ff6bdd225876cb41a4112c21a4799b158",
+            960,
+            1026,
         ),
         (8, -96, 1): (
             6664,
@@ -1627,6 +1642,12 @@ def _task40_phi90_d07c_profile_facts(identity):
         for side in ("top", "bottom")
         for m, n, pol in ((-max_m, n_min, "p"), (0, 0, "s"), (max_m, n_max, "p"))
     ]
+    if case_label in {"G6_M8_N32", "G6_M8_N14"}:
+        evidence_keys = [
+            [side, m, 0, pol]
+            for side in ("top", "bottom")
+            for m, pol in ((-max_m, "p"), (0, "s"), (max_m, "p"))
+        ]
     mode_selection = {
         "schema": "task40.dtn-mode-selection.v1",
         "policy": "explicit_signed_rectangle_v1",
@@ -1655,6 +1676,40 @@ def _task40_phi90_d07c_profile_facts(identity):
         "separate_centered_audit_is_production_inventory": False,
         "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
     }
+    if case_label in {"G6_M8_N32", "G6_M8_N14"}:
+        parent_bounds = [-8, 8, -64, 1]
+        parent_mode_sha = (
+            "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0"
+        )
+        selected_parent_sha, selected_keys_sha = {
+            "G6_M8_N32": (
+                "86d4e9d09a0a91680b98814e5a39b07a30910e13622f709cb61fcba654ca17e6",
+                "6c69e73eff8b237ee4d2c2242be5a4a9e7466ceb8a9000eed780dda75f559ded",
+            ),
+            "G6_M8_N14": (
+                "1fc6bb7886a9858e3288ae45ee3ae50fea0bdf75881f03b52f45a26a3fe41fe1",
+                "03c5894de4fd5597da93a2971a1914ffca955b61e39a9f8db173d0fd39beebb0",
+            ),
+        }[case_label]
+        mode_selection.update(
+            policy="explicit_signed_subrectangle_from_parent_v1",
+            reference_mode_label="D07C_G6_M8_N64_PARENT",
+            parent_signed_bounds_mn=parent_bounds,
+            parent_rectangle_max_abs_m_n=[8, 64],
+            parent_inventory_scope=(
+                "D07C_finite_signed_rectangle_M[-8,8]_N[-64,1]_including_evanescent"
+            ),
+            expected_mode_count=4488,
+            expected_mode_sha256=parent_mode_sha,
+            expected_selected_parent_indices_sha256=selected_parent_sha,
+            expected_selected_signed_keys_sha256=selected_keys_sha,
+            expected_mode_count_source="exact_G6_M8_N64_parent_inventory",
+            quadrature_inventory="full_G6_M8_N64_parent_q81",
+            comparison_reference_signed_bounds_mn=parent_bounds,
+            comparison_reference_mode_sha256=parent_mode_sha,
+            comparison_reference_mode_count=4488,
+            cutoff_validation_status="REQUIRES_TRUNCATED_OPERATOR_SOLVE_COMPARISON",
+        )
     base.update(
         identity=identity,
         model_id="si_block_phi90_50x50_17x20_h120",
@@ -1716,10 +1771,9 @@ def _task40_phi90_d07c_profile_facts(identity):
             ),
             outer_taskset_required=False,
         )
-    elif case_label == "G6_M8_N64":
-        # G6 has a distinct, exact-profile observational admission scope. It
-        # uses the same fail-closed host-floor guard shape as G5 without
-        # reusing G5 identity, cache, locks, or one-shot reservation.
+    elif case_label in {"G6_M8_N64", "G6_M8_N32", "G6_M8_N14"}:
+        # Each G6 modal window has an exact-profile observational scope,
+        # attempt cache, member lock, and one-shot reservation.
         base["resources"]["parallel_admission_policy"] = (
             "g6_scoped_observational_neighbors_v1"
         )
@@ -1735,12 +1789,16 @@ def _task40_phi90_d07c_profile_facts(identity):
         )
     options = base["component_options"]
     options["visualization_output_policy"] = {
-        "write_visualization_files": case_label not in {"G5_M8_N64", "G6_M8_N64"},
+        "write_visualization_files": case_label not in {
+            "G5_M8_N64", "G6_M8_N64", "G6_M8_N32", "G6_M8_N14"
+        },
         "retained_field_samples": "full3d_reference_sample_npz",
         "field_recovery_and_energy_metrics": "unchanged",
         "visualization_files": (
             "disabled_by_explicit_G5_profile" if case_label == "G5_M8_N64" else
-            "disabled_by_explicit_G6_profile" if case_label == "G6_M8_N64" else
+            "disabled_by_explicit_G6_profile" if case_label in {
+                "G6_M8_N64", "G6_M8_N32", "G6_M8_N14"
+            } else
             "enabled_by_legacy_profile_default"
         ),
     }
@@ -1803,8 +1861,12 @@ def _task40_phi90_d07c_profile_facts(identity):
         name="task40_phi90_p6_exact_local_condensation_direct_d07c_v1",
         operator_family=f"D07C_{window_label}_finite_signed_rectangle",
         parent_mode_inventory=mode_selection["parent_inventory_scope"],
-        active_mode_inventory="same_as_finite_signed_parent",
-        parent_mode_count=mode_count,
+        active_mode_inventory=(
+            "signed_subrectangle_selected_from_G6_M8_N64_parent"
+            if case_label in {"G6_M8_N32", "G6_M8_N14"}
+            else "same_as_finite_signed_parent"
+        ),
+        parent_mode_count=mode_selection["expected_mode_count"],
         parent_quadrature_degree=81,
         surface_quadrature_envelope_max_abs_m_n=[32, 143],
         omitted_auto_propagating_mode_count=omitted_auto_count,
@@ -1814,11 +1876,13 @@ def _task40_phi90_d07c_profile_facts(identity):
     direct_route.update(
         degree=6,
         d07c_case=case_name,
-        parent_signed_bounds_mn=signed_bounds,
+        parent_signed_bounds_mn=mode_selection["parent_signed_bounds_mn"],
         active_signed_bounds_mn=signed_bounds,
-        parent_rectangle_max_abs_m_n=[max_m, n_abs_max],
+        parent_rectangle_max_abs_m_n=mode_selection[
+            "parent_rectangle_max_abs_m_n"
+        ],
         active_rectangle_max_abs_m_n=[max_m, n_abs_max],
-        parent_mode_count=mode_count,
+        parent_mode_count=mode_selection["expected_mode_count"],
         active_mode_count=mode_count,
         parent_mode_sha256=mode_selection["expected_mode_sha256"],
         active_mode_sha256=mode_selection["expected_active_mode_sha256"],
@@ -1837,7 +1901,9 @@ def _task40_phi90_d07c_profile_facts(identity):
             "symbolic_calls": 1, "numeric_calls": 1, "initial_solve_calls": 1,
             "same_factor_correction_solve_calls_max": 2, "total_solve_calls_max": 3,
         },
-        write_visualization_files=case_label not in {"G5_M8_N64", "G6_M8_N64"},
+        write_visualization_files=case_label not in {
+            "G5_M8_N64", "G6_M8_N64", "G6_M8_N32", "G6_M8_N14"
+        },
     )
     base["campaign_authorization"]["resource_policy"] = {
         "name": "host_available_floor_v1",
@@ -1855,7 +1921,8 @@ def _task40_phi90_d07c_profile_facts(identity):
         "the excluded high-|m| propagating orders remain outside qualification."
     )
     if max_m == 8 and case_label not in {
-        "G3_M8_N64", "G3_M8_N96", "G5_M8_N64", "G6_M8_N64"
+        "G3_M8_N64", "G3_M8_N96", "G5_M8_N64", "G6_M8_N64",
+        "G6_M8_N32", "G6_M8_N14",
     }:
         base["campaign_authorization"]["source"] = (
             "User-authorized 2026-10-29 0.7nm mesh refinement with economical modal truncation: "
@@ -2040,6 +2107,45 @@ def _task40_phi90_d07c_profile_facts(identity):
             "reference. This candidate is not a continuum or full-DtN qualification. "
             "Visualization files remain disabled while the field sample archive, modal "
             "amplitudes/powers, residual, energy, and absorption outputs remain enabled."
+        )
+    elif case_label in {"G6_M8_N32", "G6_M8_N14"}:
+        options["directional_mesh_comparison"].update(
+            display_name=f"D07C-{case_label}-same-G6-grid",
+            changed_axes=["y"],
+            changed_axes_vs_mesh_reference=[],
+            mode_window=window_label,
+            modal_window=f"M[-8,8],N[{n_min},1]",
+            mesh_comparison_reference_case="G6_M8_N64",
+            mesh_comparison_reference_axis_hashes=deepcopy(
+                D07C_AXIS_PLANS["G6"]["axis_sha256_le_f64"]
+            ),
+            finite_window_context_reference_case="G6_M8_N64",
+            same_mesh_modal_reference_case="G6_M8_N64",
+            same_mesh_modal_reference_bounds_mn=[-8, 8, -64, 1],
+            same_mesh_modal_reference_mode_count=4488,
+            same_mesh_modal_reference_mode_sha256=(
+                "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0"
+            ),
+            joint_mesh_and_cutoff_change=False,
+        )
+        mode_selection.update(
+            mesh_comparison_reference_case="G6_M8_N64",
+            mesh_comparison_reference_mode_sha256=(
+                "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0"
+            ),
+            added_or_omitted_mode_count=4488 - mode_count,
+            cutoff_validation_status=(
+                "REQUIRES_TRUNCATED_OPERATOR_SOLVE_COMPARISON; N64 projection screen "
+                "is not a solved truncated-operator error"
+            ),
+        )
+        base["campaign_authorization"]["source"] = (
+            f"User-authorized G6 same-grid modal truncation {case_label}: retain the "
+            "G6 [6,200,8] mesh, all G6 physics, P6 direct route, q81 surface/q15 default "
+            "volume, and relative-only 1e-13 cutoff; only the signed n lower bound changes. "
+            "The active ordered signed keys are verified as a subset of the exact G6 N64 "
+            "parent. Compare only after solving this truncated operator; the N64 projection "
+            "screen is not the truncated-operator error. FULL_DTN_NOT_VERIFIED."
         )
     base["operator_scope"] = operator_scope
     base["full_dtn_status"] = "FULL_DTN_NOT_VERIFIED"
@@ -4356,7 +4462,9 @@ def _validate_task40_phi90_d07c_case(config: dict, identity: str) -> None:
         case for case, profile in TASK40_PHI90_D07C_PROFILE_BY_CASE.items()
         if profile == identity
     )
-    expected_visualization_files = case_label not in {"G5_M8_N64", "G6_M8_N64"}
+    expected_visualization_files = case_label not in {
+        "G5_M8_N64", "G6_M8_N64", "G6_M8_N32", "G6_M8_N14"
+    }
     actual_visualization_files = config.get("output", {}).get(
         "write_visualization_files", True
     )

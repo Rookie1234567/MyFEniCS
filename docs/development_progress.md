@@ -2965,3 +2965,28 @@ Y2→Y3同策略比较的总R差`8.7031e-10`、总T差`9.6121e-11`、A_volume差
 ## 2026-10-31：Task40 D07C G3 M8/N96 静态准备
 
 新增显式 N96 signed-window profile、DAT、formal loader/runner/inventory/manifest-worker 测试及静态计划。production inventory 为 6,664 modes（6,536 propagating，6,602 power-carrying），N64 的 4,488 keys 是有序子集，新增 2,176 个 `n=-96…-65` keys；q81 surface、q15/default volume、relative-only cutoff、P6 direct 和原门保持。focused tests `25 passed in 39.39 s`，新测试 Ruff、相关 compileall 与 `git diff --check` 通过。当前仅做静态准备；尚未 fresh 或启动 N96 FE，待主审审核。
+
+## 2026-11-02：Task40 D07C G6 同网格 N32/N14 截断准备
+
+### 背景与基线
+
+G6 N64 完整场 `20261101T011146.746568Z` 自然结束、exit 0、能量闭合 `-8.405032225766718e-11`，并确认子进程已清场。该 run 给 N32/N14 提供同物理、同网格、同 4,488-mode finite-window 的基线；完整 DtN 仍未验证。
+
+### 方法与结构化结果
+
+新增 G6 N32 与 N14 exact profiles 和输入，只改变 signed n 下界，复用 G6 `[6,200,8]` 网格、q81/q15、P6 direct、relative-only cutoff `1e-13` 和原输出/比较门。生产 loader、profile inventory、parent selector 与 live mesh 检查共同绑定物理/轴/模式身份。
+
+| 项目 | 结果 | 单位 / baseline | 身份 | 证据入口 |
+|---|---|---|---|---|
+| G6 N32 窗口 | `m=-8…8,n=-32…1`；2,312 modes；SHA `f81d3ff0…b24493a4` | count；父 N64=4,488 modes | derived | [静态准备 response](task40para_phi90_mesh_modes_direct/outcomes/response_d07c_g6_modal_truncation_static_preparation_20261102.md) |
+| G6 N14 窗口 | `m=-8…8,n=-14…1`；1,088 modes；SHA `8d7eda75…4799b158` | count；父 N64=4,488 modes | derived | 同上 |
+| nested order | `N14 ⊂ N32 ⊂ N64`；共同 ordered keys 保留父次序 | key set | derived | 同上，modal-window tests |
+| N64 解投影省略 R/T | N32=`1.6064e-12/3.3656e-12`；N14=`5.7723e-10/1.2087e-9` | 无量纲；已求解 N64 场 | derived | `/tmp/task40_g6_final_comparison_and_truncation_screen_20261102.json` |
+| 新 N32/N14 完整场 | not run | 两个独立 case | not_run | 静态准备 response |
+| 测试与静态检查 | focused `20 passed`；Task40 compatibility `56 passed`；Ruff、compileall、diff-check PASS | pytest/checks | measured | 静态准备 response |
+
+### 解释、局限与决策
+
+N64 解的投影尾部仅提供窗口筛选信号；它不估计 N32/N14 截断算子重求解后的变化。新窗口只有在独立求解、single-run residual/energy gates 和相对 N64 的总量/逐模/边界/场比较均通过后才可评为满足工程门。两个结果目录目前不存在；没有执行 full fresh、FE、carrier、factor、solve 或 service submission。
+
+当前决定只冻结静态包并交主审。先准备/运行 N32；其自然终态、门复核和子进程清场后，才独立 fresh N14。两个 profile 均使用独立 scope、锁、one-shot reservation 和 attempt cache；CPU 运行时按低负载物理核动态采样，无独占核承诺。继续保持 `FULL_DTN_NOT_VERIFIED`、不输出 VTK/VTU，并且不触碰独立 Gate-CD。

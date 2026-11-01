@@ -50,7 +50,7 @@
 
 新 Y2 的 `retained_modal_alpha.npy` 是增广解末尾 612 个 modal unknown；`recover_aux` 是 P6 完整场恢复后重新计算的 total projection。按 `auxiliary_index` 将两者逐模对齐，并对两向量逐模乘同一保存的 boundary phase `P`。结果为：
 
-| 口径 | `||alpha||₂` | `||recover_aux||₂` | 差的 `||·||₂` | 相对差（以 alpha 为分母） |
+| 口径 | alpha L2 norm | recovered auxiliary L2 norm | difference L2 norm | 相对差（以 alpha 为分母） |
 |---|---:|---:|---:|---:|
 | raw modal coefficient | `2.3608772383e75` | `2.3608772628e75` | `7.3326494226e67` | `3.1059e-8` |
 | boundary `P × coefficient` | `1.1119343467` | `1.1119343467` | `1.9337e-15` | `1.7390e-15` |
@@ -101,7 +101,7 @@ Y3 的有限 R13 端口—体吸收闭合 `5.7914e-11`，但 official scope 是 
 | measured：Y5-1 | `[6,14,6]` / 504 cells；R/T/A_volume=`0.251354516833 / 0.057128000037 / 0.691517483140`；凝聚 `2.8179e-12`、A6 `1.6969e-10` | workflow `1870.909 s`；同一树RSS峰 `21,435,727,872 B`；task swap峰0，PSS关闭，64 GiB host floor | run `20261021T115035.556208Z`；[Y5/Y6 comparison](records/d15_y5_1_y6_siblings_saved_output_comparison_20261021_v1.json) |
 | measured：Y6-1 | `[6,16,6]` / 576 cells；R/T/A_volume=`0.251354466181 / 0.057128007072 / 0.691517526782`；凝聚 `2.8571e-12`、A6 `2.2717e-10` | workflow `1909.739 s`；同一树RSS峰 `26,919,141,376 B`；task swap峰0；全局pswpin +1页未归因 | run `20261021T123416.289376Z`；同上 JSON |
 | measured：Y6-2 | `[6,16,6]` / 576 cells；R/T/A_volume=`0.251354507926 / 0.057128001222 / 0.691517490858`；凝聚 `3.4068e-12`、A6 `2.8576e-10` | workflow `1545.915 s`；同一树RSS峰 `24,495,742,976 B`；task swap峰0；全局swap变化未观察到 | run `20261021T131331.217615Z`；同上 JSON |
-| comparison：三对 | 最大 `|ΔR|/|ΔT|`：Y5→Y6-1 `5.0652e-8/7.0344e-9`；Y5→Y6-2 `8.9067e-9/1.1849e-9`；Y6-1↔Y6-2 `4.1745e-8/5.8497e-9`；边界/E/H 最大相对差仍低于 `1e-4` | saved-field 同坐标比较；未拟合相位；只代表有限 R13 及保存样本范围 | [JSON](records/d15_y5_1_y6_siblings_saved_output_comparison_20261021_v1.json)、[脚本](records/d15_y5_1_y6_siblings_saved_output_comparison_20261021_v1.py) |
+| comparison：三对 | R/T 最大差：Y5→Y6-1 `5.0652e-8/7.0344e-9`；Y5→Y6-2 `8.9067e-9/1.1849e-9`；Y6-1↔Y6-2 `4.1745e-8/5.8497e-9`；边界/E/H 最大相对差仍低于 `1e-4` | saved-field 同坐标比较；未拟合相位；只代表有限 R13 及保存样本范围 | [JSON](records/d15_y5_1_y6_siblings_saved_output_comparison_20261021_v1.json)、[脚本](records/d15_y5_1_y6_siblings_saved_output_comparison_20261021_v1.py) |
 | static-only：Y5-1 后 z 细化 | Y5-1 实际 x/y 不变；z 由 `[1,4,1]` 改 `[1,6,1]`，候选 `[6,14,8]` / 672 cells，z=`[-10,0,20,40,60,80,100,120,130]` nm；静态 tags air/substrate/grating=`516/84/72` | z 轴不嵌套；没有 live mesh/Jacobian、FE、资源或数值结果 | [static plan](records/d15_y5_1_z_refinement_static_plan_v1.json)、[response](response_d15_y5_z_refinement_static_20261021.md) |
 
 三个 D15 run 的输入、physical、resolved、mode、q、资源和原门身份均在 comparison JSON 中逐场绑定。三场各自有限算子状态仍为 `FULL_DTN_NOT_VERIFIED`，canonical sidewall 为 `NOT_MEASURED`。新 z 候选尚未启动；不得把静态 tags/轴算术写成现场 QA 或容量保证。
@@ -153,3 +153,17 @@ G3 M8/N96 已自然完成；同 G3 网格的 N64→N96 保存输出比较三组�
 N64 参照 run `20261030T132407.592584Z` 自然结束且单场门通过，source `3a0676dd47c7729fa279d74b114aaf2125ec8072`；其峰值整树 RSS 为 `378,244,096,000 B`、task swap 0。该资源事实仅描述 N64，不推算 N96 容量。N96 的 resolved config SHA 为 `49368696418a6e6a52ced944bfb8006aebf869b6ecbb5fa5468cd9baa0d9940f`；轴、模式、父运行身份及门见[静态计划](records/d07c_g3_m8_n96_static_case_plan_v1.json)和[准备说明](response_d07c_g3_m8_n96_preparation_20261031.md)。
 
 生产 loader/runner/inventory/manifest-worker focused batch 为 `25 passed in 39.39 s`；相关 Ruff、compileall、diff-check 通过。此阶段未 fresh、未创建新 FE mesh/carrier/matrix/factor/solve，未启动 FE。当前等待主审审核静态执行包；Task41 若仍活动，按用户选择等待其自然清场，production guard 默认拒绝未知或重复 solver，不授权并行例外。比较门为 global `1e-5`、全 N96 signed 通道 R/T `1e-6`、复边界及同坐标 E/H `1e-4`（无 phase fit）；即使有限 N64/N96 对照通过，也不构成 full-DtN 或完整自动传播库存资格。`FULL_DTN_NOT_VERIFIED`、canonical sidewall `NOT_MEASURED` 保持。
+
+## 2026-11-02：G6 N32/N14 同网格模态截断静态包
+
+| 对象 | 数值或状态 | 单位 / baseline | 数据身份 | 证据 |
+|---|---|---|---|---|
+| G6 N64 基线 | exit 0；energy closure `-8.4050e-11`；已清场 | run `20261101T011146.746568Z` | measured | [G6 基线记录](response_d07c_g6_m8_n64_preparation_20261101.md) |
+| N32 profile | `[6,200,8]` / 9,600 cells；2,312 modes；mode SHA `f81d3ff0…b24493a4` | 同一 G6 网格；父 N64 为 4,488 modes | derived | [截断静态准备](response_d07c_g6_modal_truncation_static_preparation_20261102.md) |
+| N14 profile | `[6,200,8]` / 9,600 cells；1,088 modes；mode SHA `8d7eda75…4799b158` | 同一 G6 网格；父 N64 为 4,488 modes | derived | 同上 |
+| N64 解投影省略 R/T | N32：`1.6064e-12 / 3.3656e-12`；N14：`5.7723e-10 / 1.2087e-9` | 无量纲；已有 N64 solution | derived | `/tmp/task40_g6_final_comparison_and_truncation_screen_20261102.json` |
+| N32/N14 完整场 | not run；fresh、carrier、factor、solve 均未启动 | 两个独立 one-shot case | not_run | [截断静态准备](response_d07c_g6_modal_truncation_static_preparation_20261102.md) |
+
+两个 active 窗口均由生产 loader 从同一 G6 N64 ordered inventory 选择；验证 `N14 ⊂ N32 ⊂ N64`，两个 input 的物理模型 SHA、G6 三轴 SHA、q81/q15、relative-only cutoff、输出与 numerical gates 不变。N64 投影值仅用于筛选，不代表截窗后重求解误差。定向 profile/admission 测试 `20 passed`，Task40 相关兼容组 `56 passed`；Ruff、compileall、`git diff --check` 均通过。两个结果目录准备时均不存在。
+
+下一步为冻结 source、生成分别绑定 N32/N14 profile/run/input/physical/resolved/output/source identity 的 scope、sidecar 与 one-shot service identity，提交给主审。N32 先于 N14；两者均须分别通过 exact-package review 和完整 fresh gate。完整 DtN 与 canonical sidewall 资格仍未建立；`FULL_DTN_NOT_VERIFIED` 保持。

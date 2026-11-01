@@ -28,7 +28,9 @@ from src.io.execution_plan import (
 from src.io.input_loader import InputError
 from src.io.resolved_config import canonical_json_bytes, write_resolved_config
 from src.io.run_specification import RunSpecification
-from src.runners.task40_d07c_g5_join import G5_PROFILE, G6_PROFILE
+from src.runners.task40_d07c_g5_join import (
+    G5_PROFILE, G6_SCOPED_PROFILES, g6_case_for_profile,
+)
 
 
 PopenFactory = Callable[..., Any]
@@ -545,16 +547,19 @@ def launch_specification(
         else {}
     )
     d07c_attempt_cache = None
-    if native_identity in {G5_PROFILE, G6_PROFILE}:
-        case = "G5" if native_identity == G5_PROFILE else "G6"
+    if native_identity == G5_PROFILE or native_identity in G6_SCOPED_PROFILES:
+        case = (
+            "G5" if native_identity == G5_PROFILE
+            else g6_case_for_profile(native_identity)
+        )
         case_key = case.lower()
-        g5_join = (
+        observational_join = (
             None if prelaunch_isolation is None
             else prelaunch_isolation.get(f'{case_key}_observational_join')
         )
-        if not isinstance(g5_join, dict):
+        if not isinstance(observational_join, dict):
             raise InputError(f'{case} standard launcher requires the production observational lease')
-        attempt_id = g5_join.get('attempt_id')
+        attempt_id = observational_join.get('attempt_id')
         expected_cache_root = Path('/tmp') / f'task40_d07c_{case_key}_attempt_{attempt_id}'
         supplied_cache_root = os.environ.get(f'TASK40_D07C_{case}_ATTEMPT_CACHE_ROOT')
         if supplied_cache_root != str(expected_cache_root):
@@ -643,7 +648,10 @@ def launch_specification(
         manifest['attempt_specific_runtime_cache'] = {
             key: str(value.resolve()) for key, value in d07c_attempt_cache.items()
         }
-        case = "G5" if native_identity == G5_PROFILE else "G6"
+        case = (
+            "G5" if native_identity == G5_PROFILE
+            else g6_case_for_profile(native_identity)
+        )
         manifest['attempt_specific_runtime_cache']['owner'] = f'{case}_attempt_only'
         _write_json(run_directory / 'run_manifest.json', manifest)
     if pc_profile is not None:
@@ -677,7 +685,7 @@ def launch_specification(
         manifest['execution_cache'] = dict(path=str(cache_home.resolve()), empty_before_launch=not any(cache_home.iterdir()))
         _write_json(run_directory/'run_manifest.json', manifest)
     d07c_worker_cpus_override = None
-    if native_identity in {G5_PROFILE, G6_PROFILE}:
+    if native_identity == G5_PROFILE or native_identity in G6_SCOPED_PROFILES:
         d07c_worker_cpus_override = list(prelaunch_isolation.get('worker_affinity', []))
     plan = build_execution_plan(
         specification,

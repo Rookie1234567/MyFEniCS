@@ -614,7 +614,7 @@ def task40_host_floor_interleaved_admission(
         raise InputError('Task40 admission requires observe-only swap policy')
 
     from .task40_d07c_g5_join import (
-        G5_PROFILE, G6_PROFILE, load_g5_scope, load_g6_scope,
+        G5_PROFILE, G6_SCOPED_PROFILES, load_g5_scope, load_g6_scope,
     )
     g5_scope = None
     g6_scope = None
@@ -653,7 +653,7 @@ def task40_host_floor_interleaved_admission(
         )
         if g6_scope_present:
             raise InputError('G5 admission cannot combine with a G6 observational scope')
-    elif task_profile == G6_PROFILE:
+    elif task_profile in G6_SCOPED_PROFILES:
         if (
             not g6_scope_present
             or g6_observational_scope_path is None

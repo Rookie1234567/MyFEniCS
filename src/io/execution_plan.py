@@ -181,9 +181,14 @@ def build_execution_plan(
         raise InputError("dynamic G5 worker CPUs cannot override a non-native profile")
     if profile_identity in NATIVE_PROFILES:
         profile_facts = native_profile_facts(profile_identity)
-        from src.runners.task40_d07c_g5_join import G5_PROFILE, G6_PROFILE
-        if profile_identity in {G5_PROFILE, G6_PROFILE}:
-            case = "G5" if profile_identity == G5_PROFILE else "G6"
+        from src.runners.task40_d07c_g5_join import (
+            G5_PROFILE, G6_SCOPED_PROFILES, g6_case_for_profile,
+        )
+        if profile_identity == G5_PROFILE or profile_identity in G6_SCOPED_PROFILES:
+            case = (
+                "G5" if profile_identity == G5_PROFILE
+                else g6_case_for_profile(profile_identity)
+            )
             if (
                 worker_cpus_override is None
                 or len(worker_cpus_override) != 1

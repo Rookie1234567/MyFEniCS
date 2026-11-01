@@ -17,11 +17,13 @@ def _task40_d07c_runtime_cache_evidence(
 ) -> dict[str, Any] | None:
     """Verify the exact G5/G6 worker cache and JIT routing before FE work."""
     profile = manifest.get("native_capacity_profile_identity")
-    from src.runners.task40_d07c_g5_join import G5_PROFILE, G6_PROFILE
+    from src.runners.task40_d07c_g5_join import (
+        G5_PROFILE, G6_SCOPED_PROFILES, g6_case_for_profile,
+    )
 
-    if profile not in {G5_PROFILE, G6_PROFILE}:
+    if profile != G5_PROFILE and profile not in G6_SCOPED_PROFILES:
         return None
-    case = "G5" if profile == G5_PROFILE else "G6"
+    case = "G5" if profile == G5_PROFILE else g6_case_for_profile(profile)
     case_key = case.lower()
     owner = f"{case}_attempt_only"
     scope_key = f"{case_key}_observational_join"
@@ -103,7 +105,9 @@ def _task40_g5_runtime_cache_evidence(
 def _task40_g6_runtime_cache_evidence(
     manifest: dict[str, Any], *, environment=None, jit_options_resolver=None
 ) -> dict[str, Any] | None:
-    if manifest.get("native_capacity_profile_identity") != "task40para_phi90_0p7_D07C_G6_M8_N64_p6_direct_v1":
+    from src.runners.task40_d07c_g5_join import G6_SCOPED_PROFILES
+
+    if manifest.get("native_capacity_profile_identity") not in G6_SCOPED_PROFILES:
         return None
     return _task40_d07c_runtime_cache_evidence(
         manifest, environment=environment, jit_options_resolver=jit_options_resolver
@@ -539,10 +543,15 @@ def main(argv: list[str] | None = None) -> int:
                 resolved_payload.get("method", {}).get("kind"),
                 resolved_payload.get("solver", {}),
             )
-            from src.runners.task40_d07c_g5_join import G5_PROFILE, G6_PROFILE
+            from src.runners.task40_d07c_g5_join import (
+                G5_PROFILE, G6_SCOPED_PROFILES, g6_case_for_profile,
+            )
 
-            if profile_name in {G5_PROFILE, G6_PROFILE}:
-                case = "G5" if profile_name == G5_PROFILE else "G6"
+            if profile_name == G5_PROFILE or profile_name in G6_SCOPED_PROFILES:
+                case = (
+                    "G5" if profile_name == G5_PROFILE
+                    else g6_case_for_profile(profile_name)
+                )
                 manifest_value, _manifest_bytes, manifest_error = _read_json_bytes(
                     args.manifest, f"manifest for {case} runtime cache verification"
                 )

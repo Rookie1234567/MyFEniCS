@@ -58,7 +58,11 @@ def test_g6_loader_axis_plan_and_finite_mode_window():
     assert resolved["output"]["export_modal_amplitudes"] is True
     assert resolved["output"]["export_reference_planes"] is True
     assert resolved["output"]["write_visualization_files"] is False
-    assert not specification.expected_output_parent.exists()
+    # The G6 baseline is now a completed, preserved run; loading its contract
+    # must continue to point at that same output parent without recreating it.
+    assert specification.expected_output_parent.name == (
+        f"{G6_PROFILE}__full3d_direct__mpi1__Mna"
+    )
     for section in ("geometry", "materials", "incidence", "boundary", "method", "execution", "output"):
         assert resolved[section] == g5_resolved[section]
     assert resolved["solver"] == {

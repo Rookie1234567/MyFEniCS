@@ -30,6 +30,10 @@ G6_SCOPE_SCHEMA = "task40.d07c_g6_memory_floor_observational_neighbors.v1"
 G6_SCOPE_PATH_ENV = "TASK40_D07C_G6_SCOPE_PATH"
 G6_SCOPE_SHA_ENV = "TASK40_D07C_G6_SCOPE_SHA256"
 G6_SUBMISSION_MODE_ENV = "TASK40_D07C_G6_SUBMISSION_MODE"
+G6_N32_PROFILE = "task40para_phi90_0p7_D07C_G6_M8_N32_p6_direct_v1"
+G6_N14_PROFILE = "task40para_phi90_0p7_D07C_G6_M8_N14_p6_direct_v1"
+G6_MODAL_TRUNCATION_PROFILES = frozenset({G6_N32_PROFILE, G6_N14_PROFILE})
+G6_SCOPED_PROFILES = frozenset({G6_PROFILE, *G6_MODAL_TRUNCATION_PROFILES})
 _ATTEMPT_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{5,63}$")
 _LIVE_STATES = {"R", "S", "D", "T", "t", "K", "W", "P"}
 
@@ -42,7 +46,23 @@ _CASE_SPECS = {
         "case": "G6", "run_id": G6_RUN_ID, "schema": G6_SCOPE_SCHEMA,
         "policy": "g6_scoped_observational_neighbors_v1",
     },
+    G6_N32_PROFILE: {
+        "case": "G6_M8_N32", "run_id": G6_N32_PROFILE,
+        "schema": "task40.d07c_g6_n32_memory_floor_observational_neighbors.v1",
+        "policy": "g6_scoped_observational_neighbors_v1",
+    },
+    G6_N14_PROFILE: {
+        "case": "G6_M8_N14", "run_id": G6_N14_PROFILE,
+        "schema": "task40.d07c_g6_n14_memory_floor_observational_neighbors.v1",
+        "policy": "g6_scoped_observational_neighbors_v1",
+    },
 }
+
+
+def g6_case_for_profile(profile: str) -> str:
+    if str(profile) not in G6_SCOPED_PROFILES:
+        raise InputError("G6 observational admission requires an exact G6 profile")
+    return _CASE_SPECS[str(profile)]["case"]
 
 
 def _case_spec(profile: str, run_id: str) -> dict:
@@ -149,8 +169,8 @@ def load_g5_scope(scope_path, expected_sha256, **kwargs) -> dict:
 
 
 def load_g6_scope(scope_path, expected_sha256, **kwargs) -> dict:
-    if str(kwargs.get("profile")) != G6_PROFILE:
-        raise InputError("G6 observational admission is restricted to the exact profile/run")
+    if str(kwargs.get("profile")) not in G6_SCOPED_PROFILES:
+        raise InputError("G6 observational admission is restricted to exact G6 profiles/runs")
     return load_observational_scope(scope_path, expected_sha256, **kwargs)
 
 
@@ -448,8 +468,8 @@ def g6_runtime_lease(
     lock_directory: str | Path = "/tmp",
     proc_root: str | Path = "/proc",
 ):
-    if str(profile) != G6_PROFILE:
-        raise InputError("G6 runtime lease is restricted to the exact G6 profile")
+    if str(profile) not in G6_SCOPED_PROFILES:
+        raise InputError("G6 runtime lease is restricted to exact G6 profiles")
     with _runtime_lease(
         profile=profile, run_id=run_id, scope_path=scope_path,
         scope_sha256=scope_sha256, expected_identity=expected_identity,
@@ -468,6 +488,10 @@ __all__ = [
     "G5_SUBMISSION_MODE_ENV",
     "G6_PROFILE",
     "G6_RUN_ID",
+    "G6_N32_PROFILE",
+    "G6_N14_PROFILE",
+    "G6_MODAL_TRUNCATION_PROFILES",
+    "G6_SCOPED_PROFILES",
     "G6_SCOPE_PATH_ENV",
     "G6_SCOPE_SCHEMA",
     "G6_SCOPE_SHA_ENV",
@@ -477,6 +501,7 @@ __all__ = [
     "choose_g6_cpu_reservation",
     "g5_runtime_lease",
     "g6_runtime_lease",
+    "g6_case_for_profile",
     "load_g5_scope",
     "load_g6_scope",
     "load_observational_scope",
