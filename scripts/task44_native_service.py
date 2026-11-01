@@ -6,7 +6,6 @@ import argparse
 import errno
 import hashlib
 import json
-import math
 import os
 import re
 import subprocess
@@ -467,17 +466,11 @@ def _verify_pending_cpu_claim(
         }
 
 
-class _CpuNeighborGrace:
-    """Bound each continuous, identity-bound CPU-neighbor review episode."""
+class _CpuNeighborMonitor:
+    """Track verified runtime CPU sharing while keeping other gates fail-closed."""
 
-    def __init__(self, grace_seconds: float = 15.0):
-        if not isinstance(grace_seconds, (int, float)) or isinstance(grace_seconds, bool):
-            raise TypeError("CPU-neighbor grace must be a finite positive number")
-        if not math.isfinite(float(grace_seconds)) or float(grace_seconds) <= 0:
-            raise ValueError("CPU-neighbor grace must be a finite positive number")
-        self.grace_seconds = float(grace_seconds)
+    def __init__(self):
         self.first_conflict_monotonic: float | None = None
-        self.deadline_monotonic: float | None = None
         self.performance_not_isolated = False
         self.claims: dict[tuple[int, int], dict[str, Any]] = {}
 
@@ -490,7 +483,7 @@ class _CpuNeighborGrace:
         hard_failures: list[str] | None = None,
         now: float | None = None,
     ) -> dict[str, Any]:
-        """Allow only a verified transient neighbor claim to use the grace window."""
+        """Allow only verified runtime CPU neighbors to continue as shared work."""
         timestamp = time.monotonic() if now is None else float(now)
         hard = list(hard_failures or [])
         if hard:
@@ -532,7 +525,6 @@ class _CpuNeighborGrace:
             self.performance_not_isolated = True
             if self.first_conflict_monotonic is None:
                 self.first_conflict_monotonic = timestamp
-                self.deadline_monotonic = timestamp + self.grace_seconds
         current_keys: set[tuple[int, int]] = set()
         for row in rows:
             try:
@@ -575,16 +567,7 @@ class _CpuNeighborGrace:
                 }
 
         active = any(record["status"] == "active" for record in self.claims.values())
-        if active and self.deadline_monotonic is not None and timestamp >= self.deadline_monotonic:
-            return {
-                "status": "review_timeout", "stop": True,
-                "reason": "MONITORING_FAILED", "failures": ["selected_cpu_neighbor_review_timeout"],
-                "performance_not_isolated": self.performance_not_isolated,
-                "first_conflict_monotonic": self.first_conflict_monotonic,
-                "deadline_monotonic": self.deadline_monotonic,
-                "claims": self._claim_evidence(),
-            }
-        status = "waiting" if active else ("released" if self.claims else "clear")
+        status = "shared_cpu" if active else ("released" if self.claims else "clear")
         result = {
             "status": status,
             "stop": False,
@@ -593,16 +576,12 @@ class _CpuNeighborGrace:
                 self.performance_not_isolated or neighbor_gate.get("performance_not_isolated") is True
             ),
             "first_conflict_monotonic": self.first_conflict_monotonic,
-            "deadline_monotonic": self.deadline_monotonic,
-            "next_poll_deadline_monotonic": self.deadline_monotonic if active else None,
             "claims": self._claim_evidence(),
         }
         if not active and neighbor_gate.get("status") == "pass" and self.claims:
             # Close only after the complete inventory passes and all tracked
-            # identities have just been proven released or gone. A later,
-            # separate conflict gets its own bounded review window.
+            # identities have just been proven released or gone.
             self.first_conflict_monotonic = None
-            self.deadline_monotonic = None
             self.claims.clear()
         return result
 
@@ -612,6 +591,16 @@ class _CpuNeighborGrace:
              "last_observation": record.get("last_observation")}
             for _, record in sorted(self.claims.items())
         ]
+
+
+def _combined_performance_not_isolated(
+    startup_neighbor_gate: Mapping[str, Any],
+    runtime_monitor: _CpuNeighborMonitor | None,
+) -> bool:
+    return bool(
+        startup_neighbor_gate.get("performance_not_isolated") is True
+        or (runtime_monitor is not None and runtime_monitor.performance_not_isolated)
+    )
 
 
 def _proc_cpu_claim(
@@ -1428,7 +1417,7 @@ def _admission_facts(cap_bytes: int, max_concurrent: int) -> dict[str, Any]:
 
 def _exact_service_guard(
     unit: str, cap_bytes: int, max_concurrent: int, expected_cpus: set[int],
-    *, cpu_neighbor_grace: _CpuNeighborGrace | None = None,
+    *, cpu_neighbor_monitor: _CpuNeighborMonitor | None = None,
 ) -> dict[str, Any]:
     from benchmarks.task034_wsl_resources import cgroup_snapshot, current_cgroup_path
     from scripts.task44_service_startup import observe_cgroup_cpu_affinity
@@ -1472,11 +1461,11 @@ def _exact_service_guard(
         if affinity_report["stop"]:
             failures.extend(affinity_report.get("failures") or ["service_process_affinity_monitor_failed"])
         neighbor_review = None
-        if cpu_neighbor_grace is None:
+        if cpu_neighbor_monitor is None:
             if neighbor_gate["status"] != "pass":
                 failures.append("selected_cpu_neighbor_gate_failed")
         else:
-            neighbor_review = cpu_neighbor_grace.assess(
+            neighbor_review = cpu_neighbor_monitor.assess(
                 neighbor_gate,
                 selected_cpu=next(iter(expected_cpus)),
                 hard_failures=failures,
@@ -1675,7 +1664,7 @@ def run_service(
     guard = _exact_service_guard(unit, cap_bytes, max_concurrent, cpu_affinity)
     if guard["stop"]:
         raise RuntimeError(f"Task44 exact-service startup gate failed: {guard}")
-    cpu_neighbor_grace = _CpuNeighborGrace(grace_seconds=15.0)
+    cpu_neighbor_monitor = _CpuNeighborMonitor()
     from benchmarks.subreaper_watchdog import (
         PHYSICAL_MEMORY_PRESSURE_POLICY,
         supervise,
@@ -1715,7 +1704,7 @@ def run_service(
         task_cgroup_reserve_bytes=JOB_BUFFER_BYTES,
         external_guard=lambda: _exact_service_guard(
             unit, cap_bytes, max_concurrent, cpu_affinity,
-            cpu_neighbor_grace=cpu_neighbor_grace,
+            cpu_neighbor_monitor=cpu_neighbor_monitor,
         ),
         worker_environment={
             "MYFENICS_NATIVE_COMPLEX_ENV": "1",
@@ -1762,7 +1751,9 @@ def run_service(
         "wall_time_termination": "disabled_by_time_policy_observe_only",
         "smoke": smoke,
         "cpu_neighbor_gate": neighbor_gate,
-        "performance_not_isolated": neighbor_gate["performance_not_isolated"],
+        "performance_not_isolated": _combined_performance_not_isolated(
+            neighbor_gate, cpu_neighbor_monitor
+        ),
     }
     _atomic_write_json(artifacts / "service_summary.json", summary)
     print(

@@ -72,7 +72,11 @@ B8 是第 8/12 次资格对照，沿用 B 的 `boundary_plane` 参考面差异�
 4. 每场正式 PDE 前冻结输入、源码 SHA、材料表、网格/DtN 精度对照、单样本初始 128 GiB cap、service/cgroup 与资源硬门；每个 service 显式绑定自己唯一的 Task44 JIT cache root，并在 preflight、service 与 worker 中验证一致。运行期间按真实进度和资源情况继续，不使用原 30 分钟到点强停。
 5. 完成代表点与精度资格后，根据实测单样本成本、已有独立样本上限和数值证据推进训练点、GP、开发验证与盲测；数据/GP 资格分别判定，不受原 12 小时窗口约束。
 
-当前阶段（2026-11-01）：A–D 四个 P6 condensed-direct + MUMPS exact 样本均通过 full explicit true residual 与能量闭合门。B 的 y 加密对照超出 `2e-4` 稳定性门；z 加密通过；DtN 倏逝壳层 residual 未通过且稳定性未判定；顶部空气间距的三个主输出变化也超限。B6–B8 的 boundary-plane 参考面对照均因 CPU 邻核监控 Gate 受控停止，没有产生数值结果，不能据此判定数值方法失败或参考面差值；B8 的运行期 CPU 共享令整场 `performance_not_isolated=true`。正式精度资格已用 8/12 次，剩余 4 次；y 与空气间距失败、z 通过、DtN 未判定，A–D 仍为 `gp_eligible=false`。GP/design 软件通过 9 项定向测试和 40 点设计校验；有限元 GP 训练、开发误差、盲测误差和标准尺寸计算尚未运行。等待邻核并发处置策略决定前，不自动启动 B9。详细结果见 [outcomes/summary.md](outcomes/summary.md)、[B8 terminal receipt](outcomes/b8_boundary_plane_monitor_grace_timeout_20261101.md) 与 [response_v8.md](response_v8.md)。
+当前阶段（2026-11-01）：A–D 四个 P6 condensed-direct + MUMPS exact 样本均通过 full explicit true residual 与能量闭合门。B 的 y 加密对照超出 `2e-4` 稳定性门；z 加密通过；DtN 倏逝壳层 residual 未通过且稳定性未判定；顶部空气间距的三个主输出变化也超限。B6–B8 的 boundary-plane 参考面对照均因 CPU 邻核监控 Gate 受控停止，没有产生数值结果，不能据此判定数值方法失败或参考面差值；B8 的运行期 CPU 共享令整场 `performance_not_isolated=true`。正式精度资格已用 8/12 次，剩余 4 次；y 与空气间距失败、z 通过、DtN 未判定，A–D 仍为 `gp_eligible=false`。GP/design 软件通过 9 项定向测试和 40 点设计校验；有限元 GP 训练、开发误差、盲测误差和标准尺寸计算尚未运行。用户已批准运行期 CPU 共享策略；下一步为 B9（第 9/12 次），在监控修复提交后重新通过 fresh admission 再启动。详细结果见 [outcomes/summary.md](outcomes/summary.md)、[B8 terminal receipt](outcomes/b8_boundary_plane_monitor_grace_timeout_20261101.md) 与 [response_v8.md](response_v8.md)。
+
+### 运行期 CPU 共享策略（2026-11-01）
+
+用户授权正式服务启动后若出现身份可核验的窄 affinity 邻核占用，Task44 继续运行并持续记录该进程的身份、affinity 与 `performance_not_isolated=true`。启动时仍须动态选择空闲核并通过邻居、ABI 和资源准入；CPU0 原有的精确身份例外保持不变。该许可只改变运行期 CPU 争用的处置：邻居身份读取失败或不匹配、Task44 自身 service/affinity/cgroup 身份异常、内存/祖先余量不足、非零 swap 或 OOM 仍按硬门停止，且 CPU 共享标记不代表数值求解通过。Task44 仍一次运行一个正式算例，并可按用户既有授权与 Task40 并行。
 
 另一次 `global_z` phase-gauge selector 诊断 fresh5 于 2026-10-31 完成矩阵组装、MUMPS 因子分解和线性解，但在完整真残差与结果记录前被 CPU 邻居 Gate 受控停止；没有 residual、official R/T/A 或 `result.json`。这是监控身份问题，不是数值失败或内存停止，也不计入 5/12 精度 attempt。原始事件与 SHA 见 [fresh5 compact record](outcomes/fresh5_controlled_stop_20261031.json)，执行和修复响应见 [response v8](response_v8.md)。
 

@@ -8,7 +8,8 @@ import pytest
 from scripts import task44_native_service
 from scripts.task44_native_service import (
     AUTHORIZED_CPU0_NEIGHBOR,
-    _CpuNeighborGrace,
+    _CpuNeighborMonitor,
+    _combined_performance_not_isolated,
     _cpu_neighbor_gate,
     _owned_service_context,
 )
@@ -735,34 +736,90 @@ def _narrow_candidate(pid: int, start_ticks: int) -> dict[str, object]:
     )
 
 
-def test_runtime_neighbor_grace_accepts_verified_affinity_release(tmp_path):
+def _patch_exact_service_guard(monkeypatch, *, own_cgroup: Path):
+    from benchmarks import task034_wsl_resources
+    from scripts import task44_service_startup
+
+    unit = "task44-sample-monitor-test.service"
+    cap_bytes = 1024
+    facts = {
+        "unit": unit,
+        "active_state": "active",
+        "control_group": "",
+        "memory_max_bytes": cap_bytes,
+        "cgroup_memory_max_bytes": cap_bytes,
+        "swap_max_bytes": 0,
+        "cgroup_swap_max_bytes": 0,
+        "swap_current_bytes": 0,
+        "cpu_affinity": "2",
+        "system_call_filter": task44_native_service.TASK44_SYSTEM_CALL_FILTER,
+        "system_call_error_number": "EPERM",
+    }
+    neighbor_gate = {
+        "status": "fail",
+        "failures": ["unexpected_narrow_selected_cpu_affinity_neighbor"],
+        "unexpected_claims": [],
+        "host_allowed_cpus": [0, 1, 2, 3],
+        "performance_not_isolated": True,
+    }
+    monkeypatch.setattr(task44_native_service, "_active_units", lambda: [unit])
+    monkeypatch.setattr(task44_native_service, "_task44_services", lambda _units: [facts])
+    monkeypatch.setattr(task44_native_service, "_unit_facts", lambda _unit: facts)
+    monkeypatch.setattr(
+        task034_wsl_resources, "current_cgroup_path", lambda _pid: own_cgroup
+    )
+    monkeypatch.setattr(
+        task034_wsl_resources,
+        "cgroup_snapshot",
+        lambda _pid: {
+            "readable": True,
+            "dedicated_job_cgroup": True,
+            "swap_current_bytes": 0,
+        },
+    )
+    monkeypatch.setattr(
+        task44_native_service, "_cpu_neighbor_gate", lambda **_kwargs: neighbor_gate
+    )
+    monkeypatch.setattr(
+        task44_service_startup,
+        "observe_cgroup_cpu_affinity",
+        lambda _cgroup, _cpus: {"stop": False, "service_pid_affinities": {}},
+    )
+    return unit, cap_bytes
+
+
+def test_runtime_neighbor_monitor_accepts_verified_affinity_release(tmp_path):
     root = _proc_root(tmp_path)
     _process(root, pid=6101, start_ticks=10101, affinity="2", command="another_solver.py")
     candidate = _narrow_candidate(6101, 10101)
-    review = _CpuNeighborGrace()
+    review = _CpuNeighborMonitor()
+    startup_gate = {"performance_not_isolated": False}
+    assert _combined_performance_not_isolated(startup_gate, review) is False
 
     initial = review.assess(_selected_cpu_2_gate(root, [candidate]),
                             selected_cpu=2, proc_root=root, now=100.0)
+    assert _combined_performance_not_isolated(startup_gate, review) is True
     (root / "6101" / "status").write_text(
         "Name:\tpython\nCpus_allowed_list:\t0-3\n", encoding="utf-8"
     )
     cleared = review.assess(_selected_cpu_2_gate(root, []),
                             selected_cpu=2, proc_root=root, now=105.0)
 
-    assert initial["status"] == "waiting"
-    assert initial["deadline_monotonic"] == 115.0
+    assert initial["status"] == "shared_cpu"
+    assert initial["first_conflict_monotonic"] == 100.0
     assert cleared["status"] == "released"
     assert cleared["stop"] is False
     assert cleared["performance_not_isolated"] is True
     assert cleared["claims"][0]["last_observation"]["status"] == "released"
-    assert review.deadline_monotonic is None
+    assert review.first_conflict_monotonic is None
+    assert _combined_performance_not_isolated(startup_gate, review) is True
 
 
-def test_runtime_neighbor_grace_accepts_verified_process_exit(tmp_path):
+def test_runtime_neighbor_monitor_accepts_verified_process_exit(tmp_path):
     root = _proc_root(tmp_path)
     _process(root, pid=6102, start_ticks=10102, affinity="2", command="another_solver.py")
     candidate = _narrow_candidate(6102, 10102)
-    review = _CpuNeighborGrace()
+    review = _CpuNeighborMonitor()
     review.assess(_selected_cpu_2_gate(root, [candidate]),
                   selected_cpu=2, proc_root=root, now=100.0)
     for child in (root / "6102").iterdir():
@@ -777,29 +834,31 @@ def test_runtime_neighbor_grace_accepts_verified_process_exit(tmp_path):
     assert cleared["claims"][0]["last_observation"]["status"] == "gone"
 
 
-def test_runtime_neighbor_grace_stops_persistent_claim_at_original_deadline(tmp_path):
+def test_runtime_neighbor_continues_past_former_fifteen_second_deadline(tmp_path):
     root = _proc_root(tmp_path)
     _process(root, pid=6103, start_ticks=10103, affinity="2", command="another_solver.py")
     candidate = _narrow_candidate(6103, 10103)
-    review = _CpuNeighborGrace()
+    review = _CpuNeighborMonitor()
 
     first = review.assess(_selected_cpu_2_gate(root, [candidate]),
                           selected_cpu=2, proc_root=root, now=100.0)
-    before = review.assess(_selected_cpu_2_gate(root, [candidate]),
-                           selected_cpu=2, proc_root=root, now=114.999)
-    expired = review.assess(_selected_cpu_2_gate(root, [candidate]),
-                            selected_cpu=2, proc_root=root, now=115.0)
+    after_former_deadline = review.assess(
+        _selected_cpu_2_gate(root, [candidate]),
+        selected_cpu=2, proc_root=root, now=10_100.0,
+    )
 
-    assert first["deadline_monotonic"] == 115.0
-    assert before["status"] == "waiting" and before["stop"] is False
-    assert expired["status"] == "review_timeout" and expired["stop"] is True
+    assert first["status"] == "shared_cpu" and first["stop"] is False
+    assert after_former_deadline["status"] == "shared_cpu"
+    assert after_former_deadline["stop"] is False
+    assert after_former_deadline["first_conflict_monotonic"] == 100.0
+    assert after_former_deadline["performance_not_isolated"] is True
 
 
 def test_runtime_neighbor_replacement_does_not_renew_deadline(tmp_path):
     root = _proc_root(tmp_path)
     _process(root, pid=6104, start_ticks=10104, affinity="2", command="another_solver.py")
     first_candidate = _narrow_candidate(6104, 10104)
-    review = _CpuNeighborGrace()
+    review = _CpuNeighborMonitor()
     review.assess(_selected_cpu_2_gate(root, [first_candidate]),
                   selected_cpu=2, proc_root=root, now=100.0)
     _process(root, pid=6105, start_ticks=10105, affinity="2", command="another_solver.py")
@@ -808,22 +867,23 @@ def test_runtime_neighbor_replacement_does_not_renew_deadline(tmp_path):
         _selected_cpu_2_gate(root, [first_candidate, _narrow_candidate(6105, 10105)]),
         selected_cpu=2, proc_root=root, now=110.0,
     )
-    expired = review.assess(
+    sustained = review.assess(
         _selected_cpu_2_gate(root, [first_candidate, _narrow_candidate(6105, 10105)]),
-        selected_cpu=2, proc_root=root, now=115.0,
+        selected_cpu=2, proc_root=root, now=10_000.0,
     )
 
-    assert both["status"] == "waiting"
-    assert both["deadline_monotonic"] == 115.0
+    assert both["status"] == "shared_cpu"
+    assert both["first_conflict_monotonic"] == 100.0
     assert len(both["claims"]) == 2
-    assert expired["status"] == "review_timeout" and expired["stop"] is True
+    assert sustained["status"] == "shared_cpu" and sustained["stop"] is False
+    assert len(sustained["claims"]) == 2
 
 
-def test_runtime_neighbor_grace_fails_closed_on_pid_reuse(tmp_path):
+def test_runtime_neighbor_monitor_fails_closed_on_pid_reuse(tmp_path):
     root = _proc_root(tmp_path)
     _process(root, pid=6106, start_ticks=10106, affinity="2", command="another_solver.py")
     candidate = _narrow_candidate(6106, 10106)
-    review = _CpuNeighborGrace()
+    review = _CpuNeighborMonitor()
     review.assess(_selected_cpu_2_gate(root, [candidate]),
                   selected_cpu=2, proc_root=root, now=100.0)
     fields = ["S", "1", *("0" for _ in range(17)), "99999"]
@@ -838,11 +898,11 @@ def test_runtime_neighbor_grace_fails_closed_on_pid_reuse(tmp_path):
     assert result["stop"] is True
 
 
-def test_runtime_neighbor_grace_fails_closed_on_unreadable_identity(tmp_path):
+def test_runtime_neighbor_monitor_fails_closed_on_unreadable_identity(tmp_path):
     root = _proc_root(tmp_path)
     _process(root, pid=6107, start_ticks=10107, affinity="2", command="another_solver.py")
     candidate = _narrow_candidate(6107, 10107)
-    review = _CpuNeighborGrace()
+    review = _CpuNeighborMonitor()
     review.assess(_selected_cpu_2_gate(root, [candidate]),
                   selected_cpu=2, proc_root=root, now=100.0)
     (root / "6107" / "status").unlink()
@@ -854,21 +914,32 @@ def test_runtime_neighbor_grace_fails_closed_on_unreadable_identity(tmp_path):
     assert result["stop"] is True
 
 
-def test_runtime_neighbor_review_does_not_delay_unrelated_hard_gate(tmp_path):
+@pytest.mark.parametrize(
+    "hard_failure",
+    [
+        "service_memory_max_mismatch",
+        "service_swap_nonzero_or_unreadable",
+        "service_cgroup_identity_mismatch",
+    ],
+)
+def test_runtime_neighbor_review_does_not_delay_unrelated_hard_gate(
+    tmp_path, hard_failure
+):
     from benchmarks.subreaper_watchdog import _external_guard_stop_reason
 
     root = _proc_root(tmp_path)
     _process(root, pid=6108, start_ticks=10108, affinity="2", command="another_solver.py")
-    review = _CpuNeighborGrace()
+    review = _CpuNeighborMonitor()
 
     result = review.assess(
         _selected_cpu_2_gate(root, [_narrow_candidate(6108, 10108)]),
-        selected_cpu=2, proc_root=root, hard_failures=["service_swap_nonzero_or_unreadable"],
+        selected_cpu=2, proc_root=root, hard_failures=[hard_failure],
         now=100.0,
     )
 
     assert result["status"] == "hard_gate_failed"
     assert result["stop"] is True
+    assert result["hard_failures"] == [hard_failure]
     assert review.first_conflict_monotonic is None
     waiting_facts = {"stop": False, "reason": None}
     assert _external_guard_stop_reason(
@@ -883,7 +954,7 @@ def test_neighbor_grace_closes_only_after_all_claims_release_then_starts_new_epi
     root = _proc_root(tmp_path)
     _process(root, pid=6109, start_ticks=10109, affinity="2", command="another_solver.py")
     candidate_a = _narrow_candidate(6109, 10109)
-    review = _CpuNeighborGrace()
+    review = _CpuNeighborMonitor()
     review.assess(_selected_cpu_2_gate(root, [candidate_a]),
                   selected_cpu=2, proc_root=root, now=0.0)
     for child in (root / "6109").iterdir():
@@ -903,16 +974,15 @@ def test_neighbor_grace_closes_only_after_all_claims_release_then_starts_new_epi
 
     assert released_a["status"] == "released"
     assert review.first_conflict_monotonic == 100.0
-    assert next_episode["status"] == "waiting"
-    assert next_episode["deadline_monotonic"] == 115.0
-    assert before_new_deadline["status"] == "waiting"
+    assert next_episode["status"] == "shared_cpu"
+    assert before_new_deadline["status"] == "shared_cpu"
 
 
-def test_neighbor_grace_keeps_deadline_while_another_claim_remains(tmp_path):
+def test_neighbor_monitor_tracks_replacement_claims_without_timeout(tmp_path):
     root = _proc_root(tmp_path)
     _process(root, pid=6111, start_ticks=10111, affinity="2", command="another_solver.py")
     candidate_a = _narrow_candidate(6111, 10111)
-    review = _CpuNeighborGrace()
+    review = _CpuNeighborMonitor()
     review.assess(_selected_cpu_2_gate(root, [candidate_a]),
                   selected_cpu=2, proc_root=root, now=0.0)
     _process(root, pid=6112, start_ticks=10112, affinity="2", command="another_solver.py")
@@ -921,21 +991,21 @@ def test_neighbor_grace_keeps_deadline_while_another_claim_remains(tmp_path):
     (root / "6111").rmdir()
     candidate_b = _narrow_candidate(6112, 10112)
 
-    still_conflicted = review.assess(
+    still_shared = review.assess(
         _selected_cpu_2_gate(root, [candidate_b]), selected_cpu=2,
         proc_root=root, now=5.0,
     )
-    expired = review.assess(
+    sustained = review.assess(
         _selected_cpu_2_gate(root, [candidate_b]), selected_cpu=2,
-        proc_root=root, now=15.0,
+        proc_root=root, now=10_000.0,
     )
 
-    assert still_conflicted["status"] == "waiting"
-    assert still_conflicted["deadline_monotonic"] == 15.0
-    assert [row["last_observation"]["status"] for row in still_conflicted["claims"]] == [
+    assert still_shared["status"] == "shared_cpu"
+    assert still_shared["first_conflict_monotonic"] == 0.0
+    assert [row["last_observation"]["status"] for row in still_shared["claims"]] == [
         "gone", "active"
     ]
-    assert expired["status"] == "review_timeout" and expired["stop"] is True
+    assert sustained["status"] == "shared_cpu" and sustained["stop"] is False
 
 
 def test_default_neighbor_gate_fails_fast_and_watchdog_sleep_is_opt_in(tmp_path):
@@ -950,8 +1020,39 @@ def test_default_neighbor_gate_fails_fast_and_watchdog_sleep_is_opt_in(tmp_path)
     assert _external_guard_sleep_duration(5.0, None, now=10.0) == 5.0
     assert _external_guard_sleep_duration(5.0, {}, now=10.0) == 5.0
     assert _external_guard_sleep_duration(
+        5.0, {"cpu_neighbor_grace": {"status": "shared_cpu"}}, now=10.0
+    ) == 5.0
+    assert _external_guard_sleep_duration(
         5.0, {"next_poll_deadline_monotonic": 12.0}, now=10.0
     ) == 2.0
     assert _external_guard_sleep_duration(
         5.0, {"next_poll_deadline_monotonic": 9.0}, now=10.0
     ) == 0.0
+
+
+def test_exact_service_startup_gate_still_rejects_cpu_neighbor(monkeypatch):
+    unit, cap_bytes = _patch_exact_service_guard(
+        monkeypatch, own_cgroup=Path("/sys/fs/cgroup")
+    )
+
+    result = task44_native_service._exact_service_guard(unit, cap_bytes, 1, {2})
+
+    assert result["stop"] is True
+    assert result["failures"] == ["selected_cpu_neighbor_gate_failed"]
+    assert result["cpu_neighbor_grace"] is None
+
+
+def test_runtime_cpu_monitor_does_not_hide_service_identity_failure(
+    monkeypatch, tmp_path
+):
+    unit, cap_bytes = _patch_exact_service_guard(monkeypatch, own_cgroup=tmp_path)
+    monitor = _CpuNeighborMonitor()
+
+    result = task44_native_service._exact_service_guard(
+        unit, cap_bytes, 1, {2}, cpu_neighbor_monitor=monitor
+    )
+
+    assert result["stop"] is True
+    assert result["failures"] == ["service_cgroup_identity_mismatch"]
+    assert result["cpu_neighbor_grace"]["status"] == "hard_gate_failed"
+    assert monitor.first_conflict_monotonic is None
