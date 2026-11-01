@@ -1731,9 +1731,29 @@ def _exact_service_guard(
     from scripts.task44_service_startup import observe_cgroup_cpu_affinity
 
     try:
-        units = _active_units()
-        services = _task44_services(units)
-        facts = _unit_facts(unit)
+        unit_inventory_status = "available"
+        unit_inventory_error = None
+        if cpu_neighbor_monitor is None:
+            # Startup must freshly enumerate services to enforce concurrency.
+            units = _active_units()
+            services = _task44_services(units)
+            facts = _unit_facts(unit)
+        else:
+            # At runtime, verify this exact owned unit before consulting the
+            # optional all-user inventory. Never use startup facts as a cache.
+            facts = _unit_facts(unit)
+            try:
+                units = _active_units()
+            except Exception as exc:  # noqa: BLE001 - inventory is not owned-unit identity.
+                units = None
+                services = None
+                unit_inventory_status = "unknown"
+                unit_inventory_error = {
+                    "exception_type": type(exc).__name__,
+                    "message": str(exc),
+                }
+            else:
+                services = _task44_services(units)
         own_cgroup = current_cgroup_path(os.getpid())
         expected_cgroup = Path("/sys/fs/cgroup") / facts["control_group"].lstrip("/")
         snapshot = cgroup_snapshot(os.getpid())
@@ -1750,9 +1770,10 @@ def _exact_service_guard(
             failures.append("service_swap_nonzero_or_unreadable")
         if snapshot.get("readable") is not True or snapshot.get("dedicated_job_cgroup") is not True:
             failures.append("service_cgroup_unreadable_or_not_dedicated")
-        active_names = {row["unit"] for row in services}
-        if unit not in active_names or len(services) > max_concurrent:
-            failures.append("task44_concurrency_gate_failed")
+        if unit_inventory_status == "available":
+            active_names = {row["unit"] for row in services}
+            if unit not in active_names or len(services) > max_concurrent:
+                failures.append("task44_concurrency_gate_failed")
         if _parse_cpu_list(facts["cpu_affinity"]) != expected_cpus:
             failures.append("service_cpu_affinity_property_mismatch")
         if facts["system_call_filter"].split() != [TASK44_SYSTEM_CALL_FILTER]:
@@ -1791,6 +1812,8 @@ def _exact_service_guard(
             "unit": unit,
             "service": facts,
             "cgroup_snapshot": snapshot,
+            "unit_inventory_status": unit_inventory_status,
+            "unit_inventory_error": unit_inventory_error,
             "active_user_services": units,
             "active_task44_services": services,
             "expected_cpu_affinity": sorted(expected_cpus),

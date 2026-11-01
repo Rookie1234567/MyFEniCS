@@ -14,6 +14,10 @@ from scripts.task44_native_service import (
     _owned_service_context,
 )
 
+_B11_LIST_UNITS_ERROR = (
+    "command failed: systemctl: Failed to list units: 传输端点尚未连接\n"
+)
+
 
 def _proc_root(tmp_path: Path) -> Path:
     root = tmp_path / "proc"
@@ -1341,3 +1345,182 @@ def test_runtime_cpu_monitor_does_not_hide_service_identity_failure(
     assert result["failures"] == ["service_cgroup_identity_mismatch"]
     assert result["cpu_neighbor_grace"]["status"] == "hard_gate_failed"
     assert monitor.first_conflict_monotonic is None
+
+
+def test_runtime_inventory_failure_continues_only_with_fresh_exact_unit(
+    monkeypatch,
+):
+    unit, cap_bytes = _patch_exact_service_guard(
+        monkeypatch, own_cgroup=Path("/sys/fs/cgroup")
+    )
+    exact_facts = task44_native_service._unit_facts
+    calls = []
+    inventory_error = _B11_LIST_UNITS_ERROR
+
+    def read_exact_unit(name):
+        calls.append("exact_unit")
+        return exact_facts(name)
+
+    def fail_global_inventory():
+        calls.append("global_inventory")
+        raise RuntimeError(inventory_error)
+
+    monkeypatch.setattr(task44_native_service, "_unit_facts", read_exact_unit)
+    monkeypatch.setattr(
+        task44_native_service, "_active_units", fail_global_inventory
+    )
+    monkeypatch.setattr(
+        task44_native_service,
+        "_task44_services",
+        lambda *_args: pytest.fail("unknown inventory must not be treated as empty"),
+    )
+    monkeypatch.setattr(
+        task44_native_service,
+        "_cpu_neighbor_gate",
+        lambda **_kwargs: {
+            "status": "pass",
+            "failures": [],
+            "unexpected_claims": [],
+            "host_allowed_cpus": [0, 1, 2, 3],
+            "performance_not_isolated": False,
+        },
+    )
+    monitor = _CpuNeighborMonitor()
+
+    def clear_review(_gate, **kwargs):
+        assert kwargs["hard_failures"] == []
+        return {
+            "stop": False,
+            "status": "clear",
+            "performance_not_isolated": False,
+            "next_poll_deadline_monotonic": None,
+        }
+
+    monkeypatch.setattr(monitor, "assess", clear_review)
+    result = task44_native_service._exact_service_guard(
+        unit, cap_bytes, 1, {2}, cpu_neighbor_monitor=monitor
+    )
+
+    assert calls == ["exact_unit", "global_inventory"]
+    assert result["stop"] is False
+    assert result["unit_inventory_status"] == "unknown"
+    assert result["unit_inventory_error"] == {
+        "exception_type": "RuntimeError",
+        "message": inventory_error,
+    }
+    assert result["active_user_services"] is None
+    assert result["active_task44_services"] is None
+    assert result["service"]["unit"] == unit
+
+
+def test_runtime_inventory_failure_still_fails_closed_if_exact_unit_unavailable(
+    monkeypatch,
+):
+    unit, cap_bytes = _patch_exact_service_guard(
+        monkeypatch, own_cgroup=Path("/sys/fs/cgroup")
+    )
+    calls = []
+    exact_error = "command failed: systemctl show exact unit: Transport endpoint is not connected"
+
+    def fail_exact_unit(name):
+        calls.append(name)
+        raise RuntimeError(exact_error)
+
+    monkeypatch.setattr(task44_native_service, "_unit_facts", fail_exact_unit)
+    monkeypatch.setattr(
+        task44_native_service,
+        "_active_units",
+        lambda: pytest.fail("do not query global inventory without exact identity"),
+    )
+    result = task44_native_service._exact_service_guard(
+        unit, cap_bytes, 1, {2}, cpu_neighbor_monitor=_CpuNeighborMonitor()
+    )
+
+    assert calls == [unit]
+    assert result["stop"] is True
+    assert result["reason"] == "MONITORING_FAILED"
+    assert result["exception_message"] == exact_error
+
+
+def test_runtime_inventory_failure_does_not_hide_hard_swap_gate(
+    monkeypatch,
+):
+    unit, cap_bytes = _patch_exact_service_guard(
+        monkeypatch, own_cgroup=Path("/sys/fs/cgroup")
+    )
+    exact_facts = task44_native_service._unit_facts
+
+    def facts_with_nonzero_swap(name):
+        facts = exact_facts(name)
+        facts["swap_current_bytes"] = 1
+        return facts
+
+    def fail_global_inventory():
+        raise RuntimeError("list-units unavailable")
+
+    monkeypatch.setattr(
+        task44_native_service, "_unit_facts", facts_with_nonzero_swap
+    )
+    monkeypatch.setattr(
+        task44_native_service, "_active_units", fail_global_inventory
+    )
+    monitor = _CpuNeighborMonitor()
+
+    result = task44_native_service._exact_service_guard(
+        unit, cap_bytes, 1, {2}, cpu_neighbor_monitor=monitor
+    )
+
+    assert result["unit_inventory_status"] == "unknown"
+    assert result["stop"] is True
+    assert "service_swap_nonzero_or_unreadable" in result["failures"]
+    assert result["cpu_neighbor_grace"]["status"] == "hard_gate_failed"
+
+
+def test_startup_service_guard_fails_closed_when_global_inventory_unavailable(
+    monkeypatch,
+):
+    unit, cap_bytes = _patch_exact_service_guard(
+        monkeypatch, own_cgroup=Path("/sys/fs/cgroup")
+    )
+
+    def fail_global_inventory():
+        raise RuntimeError("list-units unavailable")
+
+    monkeypatch.setattr(
+        task44_native_service, "_active_units", fail_global_inventory
+    )
+    monkeypatch.setattr(
+        task44_native_service,
+        "_unit_facts",
+        lambda *_args: pytest.fail("startup inventory failure must stop first"),
+    )
+    result = task44_native_service._exact_service_guard(
+        unit, cap_bytes, 1, {2}
+    )
+
+    assert result["stop"] is True
+    assert result["reason"] == "MONITORING_FAILED"
+    assert "list-units unavailable" in result["exception_message"]
+
+
+def test_startup_service_guard_keeps_concurrency_limit_when_inventory_available(
+    monkeypatch,
+):
+    unit, cap_bytes = _patch_exact_service_guard(
+        monkeypatch, own_cgroup=Path("/sys/fs/cgroup")
+    )
+    exact_facts = task44_native_service._unit_facts
+    own_facts = exact_facts(unit)
+    second_service = {**own_facts, "unit": "task44-sample-other.service"}
+    monkeypatch.setattr(
+        task44_native_service,
+        "_task44_services",
+        lambda _units: [own_facts, second_service],
+    )
+
+    result = task44_native_service._exact_service_guard(
+        unit, cap_bytes, 1, {2}
+    )
+
+    assert result["stop"] is True
+    assert "task44_concurrency_gate_failed" in result["failures"]
