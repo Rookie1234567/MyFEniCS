@@ -235,6 +235,7 @@ Task40extra 的活动执行分支为 task40extra_0p7nm_engineering。Review V27 
 | 文件 | 内容 |
 |---|---|
 | [`task44_sixlayer_surrogate_0p7nm/README.md`](task44_sixlayer_surrogate_0p7nm/README.md) 与 [`task.md`](task44_sixlayer_surrogate_0p7nm/task.md) | 六层缩尺模型冻结条件、执行顺序和当前进度 |
-| [`task44_sixlayer_surrogate_0p7nm/outcomes/summary.md`](task44_sixlayer_surrogate_0p7nm/outcomes/summary.md) | A–D 正式数值、资源/缓存、y-refinement 监控负结果和剩余精度门 |
+| [`task44_sixlayer_surrogate_0p7nm/outcomes/summary.md`](task44_sixlayer_surrogate_0p7nm/outcomes/summary.md) | A–D 与 B9–B12 正式/监控结果、字段回读边界、12/12 额度和两场追加提案 |
 | [`task44_sixlayer_surrogate_0p7nm/response_v3.md`](task44_sixlayer_surrogate_0p7nm/response_v3.md) | A–D 的求解/能量资格、场文件身份检查及后续排队安排 |
+| [`task44_sixlayer_surrogate_0p7nm/response_v9.md`](task44_sixlayer_surrogate_0p7nm/response_v9.md) | B9–B12 结账、NPZ/BP 离线核验、`global_z` 窄路径源码核对及两场额度提案 |
 | [`task44_sixlayer_surrogate_0p7nm/materials.md`](task44_sixlayer_surrogate_0p7nm/materials.md) 与 [`source_receipt.json`](task44_sixlayer_surrogate_0p7nm/source_receipt.json) | 材料来源、组成、密度和派生光学常数记录 |

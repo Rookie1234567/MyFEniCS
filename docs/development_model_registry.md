@@ -12,7 +12,7 @@
 
 此登记仅覆盖所选局部诊断。历史 producer identity 为 UNKNOWN，因而它不是旧 action 的 bitwise replay；完整 PDE 求解、200q、recovery、FGMRES、完整场、A6 与 official R/T/A 都未运行。文档收口账 seq205 为截至 `2026-10-29T08:34:22.092927537Z` 的快照 `5,727.804736941959 s`；后续发布成本未记账，不作为最终 campaign 成本或当前余额。
 
-## Task44 六层缩尺模型登记与 fresh5 监控负结果（2026-10-31 快照）
+## Task44 六层缩尺模型登记与 fresh5 监控负结果（2026-10-31 历史快照）
 
 Task44 研究 0.7 nm 波长下的 1/20 六层 Si/SiGe/Si/SiGe/SiO₂ 结构，用 P6、双 Floquet 周期边界、完整传播 DtN 和 MUMPS direct 生成可审阅的离散样本。静态凝聚先在每个单元内消去不与邻格共享的自由度，缩小全局求解矩阵；求解后要恢复完整场并通过原离散系统真残差和能量闭合，代价是额外局部凝聚/恢复和完整算子检查。
 
@@ -37,7 +37,22 @@ Task44 研究 0.7 nm 波长下的 1/20 六层 Si/SiGe/Si/SiGe/SiO₂ 结构，�
 | B7 | CPU17 首次发现窄 claim；service `1143.095 s`，RSS/cgroup peak `5,056,647,168 / 5,282,217,984 B`，swap `0 B` | `MONITORING_FAILED / not_run`；无 residual 或 R/T/A。细节见 [B7 receipt](task44_sixlayer_surrogate_0p7nm/outcomes/b7_boundary_plane_controlled_stop_20261101.md)。 |
 | B8 | CPU22；PID `222707`、start ticks `343385335`、affinity `[22]`；首次冲突后约 `16.273 s` 的样本触发 timeout，比 15 秒 deadline 晚约 `1.273 s`；SIGKILL 在首次冲突后约 `16.297 s` 发出；service `1206.285 s`，RSS/cgroup peak `4,901,117,952 / 5,288,030,208 B`，swap `0 B` | 运行期 `performance_not_isolated=true`，启动回执 false 保留为启动值。`MONITORING_FAILED / not_run`；无 residual 或 R/T/A。详见 [B8 receipt](task44_sixlayer_surrogate_0p7nm/outcomes/b8_boundary_plane_monitor_grace_timeout_20261101.md)。 |
 
-截至 B8，精度资格预算已用 `8/12`，尚余 4 次；A–D 仍 `gp_eligible=false`，已有 y 与空气距稳定性超限、DtN 未判定和 z 单方向通过均不改变。主控需先取得新的邻核并发处置决定，B9 暂不自动运行。三次尝试的完整时序、身份、数值边界和证据 hash 见 [Task44 outcomes summary](task44_sixlayer_surrogate_0p7nm/outcomes/summary.md)。
+在 2026-11-01 B8 收口时，精度资格预算已用 `8/12`，尚余 4 次；当时“B9 暂不自动运行”的安排以及 15 秒复核规则都是历史状态，随后被新的 CPU 共享政策与 B9–B12 记录覆盖。B6–B8 仍保留为监控停止负结果。完整时序、身份、数值边界和证据 hash 见 [Task44 outcomes summary](task44_sixlayer_surrogate_0p7nm/outcomes/summary.md)。
+
+### Task44 B9–B12：监控收口、参考面数值锚点与 BP pending（2026-11-01）
+
+当前运行期政策以外部 claimant 的 PID/start ticks 作为身份键；PPID、comm 变化和外部生命周期信息缺失只作隔离性诊断，并记录 `performance_not_isolated=true` 后继续。运行期全用户 `list-units` inventory 失败时，若精确 owned unit 身份仍通过，也可继续；启动期 inventory 仍须成功。Task44 自身 unit/Invocation、主 PID/start ticks、cgroup、affinity、内存和 swap 硬门仍须通过。该政策覆盖 B6–B8 的早期“立即停”与 15 秒复核规则，不改写既有负结果。
+
+| Attempt | 实测 service wall / RSS / cgroup peak | 状态和具体结论 |
+|---|---|---|
+| B9 | `3688.508 s` / `7,955,501,056 B` / `8,586,076,160 B` | `MONITORING_FAILED / not_run`：两次外层 owned-member 快照均含同一 PID/start 的 `cc1`，内层 membership 却为 false，触发旧监控拒绝；内层 syscall/listing 时序未保存，竞态机制未证实。无 residual 或 official R/T/A。 |
+| B10 | `922.629 s` / `5,034,360,832 B` / `5,278,961,664 B` | `MONITORING_FAILED / not_run`：PID/start、cgroup 和 affinity 稳定，PPID 变化触发旧 frozen-parent 检查；无 residual 或 official R/T/A。 |
+| B11 | `619.444 s` / `4,894,605,312 B` / `5,288,202,240 B` | `MONITORING_FAILED / not_run`：先有一次 `systemctl list-units` 错误，之后独立的 `systemctl show` 也报错；最终子树清理通过，无 residual 或 official R/T/A。 |
+| B12 | `2806.500 s` / `7,891,423,232 B` / `8,588,120,064 B` | `official_result=true`；relative full true residual `8.169724140e-10`，能量闭合误差 `-7.709813898e-10`；在完整数值门内。 |
+
+B12 为 P6、144 hex、MPI1、160 个 DtN auxiliary 行的 B `boundary_plane` 结果，与既有 `global_z` B 基线的 `R_total/T_total/R00_total` 差约 `2.42e-12/7.65e-12/2.42e-12`。它只提供 B 当前网格点的实测锚点，不证明跨网格/跨参数或全源码等价。B9–B12 结清原额度 `12/12`；admission r1/r2 未创建 service、未运行 PDE，不另计。A–D 仍 `gp_eligible=false`，y 与空气距稳定性负结果仍有效；DtN 扩展已由用户取消，旧 residual 失败且截断稳定性未证明，不构成待重跑要求。若以后开展代理建模，须披露其固定 160 模态范围；两场 B 局部对照不能自动使旧粗网格 A/C/D 合格。
+
+NPZ 离线核验通过读取、shape 和 finite 检查，外部由同 RUN manifest 与文件 SHA 绑定。E/H `.bp` 只确认目录存在并保存 tree/data hashes，缺可用 reader，故解码、shape 与 finite 状态为 `pending`。精确 identity、field hashes、监控报告和最多两场的新额度提案见 [response_v9](task44_sixlayer_surrogate_0p7nm/response_v9.md) 与 [Task44 outcomes summary](task44_sixlayer_surrogate_0p7nm/outcomes/summary.md)。
 
 ## Task41extra V16：完整余差分布与旧star终态绑定（2026-10-27）
 

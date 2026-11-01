@@ -1,10 +1,16 @@
 # Task44：六层 0.7 nm 尺度代理模型
 
-### 2026-11-01 最新执行增量
+### 2026-11-01 历史执行增量（B6–B8）
 
 B6 是第 6/12 次精度对照，固定 B 的几何、材料、P6、DtN 模态与凝聚求解，只改变入射端口相位参考面至 `boundary_plane`。运行在 Stage-4 assembly-time condensation 路径中因 CPU11 邻核 Gate 首次发现 PID 189961（parent 189960，affinity `[11]`）而受控停止；service wall 868.733 s、同时进程树 RSS 峰值 5,052,604,416 B、cgroup peak 5,277,028,352 B、swap 0。没有残差或 R/T/A 数值结果，不把它分类为数值失败。详细边界、identity 和原始证据 hash 见 [`B6 terminal receipt`](outcomes/b6_boundary_plane_controlled_stop_20261101.md)。Task44 与 Task40 并行已获用户明确授权；Task44 自身仍一次运行一个正式算例。
 B7 是第 7/12 次资格对照，沿用 B6 的 `boundary_plane` 输入差异并使用新 run/output/service/cache 身份。CPU17 邻核 Gate 在 1125.154 s 检出 PID 201653（parent 201652，start ticks 342958624，affinity `[17]`），随后受控停止；service wall 1143.095 s、CPU 18 min 49.771 s、RSS/cgroup 峰值 5,056,647,168 B / 5,282,217,984 B，cgroup swap 0。没有 residual 或 official R/T/A；最后仍停在 Stage-4 assembly-time condensation 路径，不是数值失败。预算为 7/12，剩余 5；首因和 evidence hash 见 [`B7 terminal receipt`](outcomes/b7_boundary_plane_controlled_stop_20261101.md)。
 B8 是第 8/12 次资格对照，沿用 B 的 `boundary_plane` 参考面差异并固定物理模型与离散。CPU22 邻核 Gate 在 elapsed 1171.672 s 首次发现 PID 222707（parent 222706、start ticks 343385335、affinity `[22]`）；15 秒复核到期后 watchdog 于 elapsed 1187.945 s 因 `review_timeout` 受控停止，首个 SIGKILL 实际发生在首个冲突后 16.297 s。service wall 1206.285 s、systemd CPU 1194.324 s、进程树 RSS/cgroup 峰值 4,901,117,952 B / 5,288,030,208 B，任务 swap 0。运行期共享 CPU 使整场 `performance_not_isolated=true`；启动回执的 false 保留为启动时状态。无 residual 或 official R/T/A，不能判定数值方法失败或参考面差值。预算为 8/12，剩余 4；未获新政策前不自动启动 B9。完整首因、15 秒 deadline 与真实延后、成本及 evidence hash 见 [`B8 terminal receipt`](outcomes/b8_boundary_plane_monitor_grace_timeout_20261101.md)。
+
+此处 B6–B8 的处置是历史记录：B8 的 15 秒复核与“暂不启动 B9”后来已被新的运行期 CPU 共享政策和 B9–B12 记录覆盖；它们保留作负结果证据，不代表当前规则。
+
+### 2026-11-01 最新执行收口（B9–B12）
+
+B9–B11 均为 `MONITORING_FAILED / not_run`，没有完整真残差或官方 R/T/A，不能归类为数值方法失败。B9 的两次外层 owned-member 快照都含同一 PID/start 的 `cc1`，而内层 membership 结果为 false；旧监控器据此拒绝该 claim。内层 listing/syscall 的时序没有保存，具体竞态机制未证实。B10 的 PID/start、cgroup 和 affinity 稳定，PPID 改变触发了旧的 frozen-parent 检查；父进程变化现仅作诊断。B11 先遇到一次 `systemctl list-units` 错误，之后另一次独立 `systemctl show` 也报错；不能合并描述为两次 `list-units` 错误。B12 是第 12/12 次，也是唯一完成的 boundary-plane 数值对照：P6、144 hex、MPI1、160 个 DtN auxiliary 行，正式 full true residual `8.169724140477284e-10` 与能量闭合误差 `-7.709813898415518e-10` 均通过。与历史 B 的 `global_z` 基线相比，`R_total/T_total/R00_total` 变化分别约 `2.42e-12/7.65e-12/2.42e-12`；该实测只说明 B 这一点的两种参考坐标输出相符，不证明全源码等价，也不消除 y、空气稳定性负结果或历史 DtN 残差失败。精度预算已用完 `12/12`，B12 admission r1/r2 未启动 service、未运行 PDE，不重复计数。详见 [outcomes summary](outcomes/summary.md) 与 [response_v9](response_v9.md)。
 
 ## 执行身份
 
@@ -72,13 +78,15 @@ B8 是第 8/12 次资格对照，沿用 B 的 `boundary_plane` 参考面差异�
 4. 每场正式 PDE 前冻结输入、源码 SHA、材料表、网格/DtN 精度对照、单样本初始 128 GiB cap、service/cgroup 与资源硬门；每个 service 显式绑定自己唯一的 Task44 JIT cache root，并在 preflight、service 与 worker 中验证一致。运行期间按真实进度和资源情况继续，不使用原 30 分钟到点强停。
 5. 完成代表点与精度资格后，根据实测单样本成本、已有独立样本上限和数值证据推进训练点、GP、开发验证与盲测；数据/GP 资格分别判定，不受原 12 小时窗口约束。
 
-当前阶段（2026-11-01）：A–D 四个 P6 condensed-direct + MUMPS exact 样本均通过 full explicit true residual 与能量闭合门。B 的 y 加密对照超出 `2e-4` 稳定性门；z 加密通过；DtN 倏逝壳层 residual 未通过且稳定性未判定；顶部空气间距的三个主输出变化也超限。B6–B8 的 boundary-plane 参考面对照均因 CPU 邻核监控 Gate 受控停止，没有产生数值结果，不能据此判定数值方法失败或参考面差值；B8 的运行期 CPU 共享令整场 `performance_not_isolated=true`。正式精度资格已用 8/12 次，剩余 4 次；y 与空气间距失败、z 通过、DtN 未判定，A–D 仍为 `gp_eligible=false`。GP/design 软件通过 9 项定向测试和 40 点设计校验；有限元 GP 训练、开发误差、盲测误差和标准尺寸计算尚未运行。用户已批准运行期 CPU 共享策略；下一步为 B9（第 9/12 次），在监控修复提交后重新通过 fresh admission 再启动。详细结果见 [outcomes/summary.md](outcomes/summary.md)、[B8 terminal receipt](outcomes/b8_boundary_plane_monitor_grace_timeout_20261101.md) 与 [response_v8.md](response_v8.md)。
+当前阶段（2026-11-01）：A–D 四个 P6 condensed-direct + MUMPS exact 样本均通过 full explicit true residual 与能量闭合门。B 的 y 加密对照超出 `2e-4` 稳定性门；z 加密通过；顶部空气间距的三个主输出变化也超限。历史 DtN 倏逝壳层尝试的 residual 未通过，因此截断稳定性没有得到证明；用户已取消继续扩展该壳层的工作，这不是当前待办重跑项。B9–B11 是监控受控停止；B12 boundary-plane 对照通过数值与能量门，但仅证明 B 点两种参考坐标的输出相符。精度资格累计 `12/12`，没有剩余的原始额度；A–D 仍为 `gp_eligible=false`，主要受 y 与顶部空气稳定性负结果约束。GP/design 软件已有 9 项定向测试和 40 点设计校验；有限元 GP 训练、开发误差、盲测误差和标准尺寸计算尚未运行。新一轮最多两场的提案见 [response_v9](response_v9.md)，尚未获新增 PDE 额度，不自动启动；该方案固定 160 个 DtN 模态，若未来形成代理，必须披露这一适用范围，不能据此把粗网格旧 A/C/D 自动标为合格。
 
 ### 运行期 CPU 共享策略（2026-11-01）
 
-用户授权正式服务启动后若出现身份可核验的窄 affinity 邻核占用，Task44 继续运行并持续记录该进程的身份、affinity 与 `performance_not_isolated=true`。启动时仍须动态选择空闲核并通过邻居、ABI 和资源准入；CPU0 原有的精确身份例外保持不变。该许可只改变运行期 CPU 争用的处置：邻居身份读取失败或不匹配、Task44 自身 service/affinity/cgroup 身份异常、内存/祖先余量不足、非零 swap 或 OOM 仍按硬门停止，且 CPU 共享标记不代表数值求解通过。Task44 仍一次运行一个正式算例，并可按用户既有授权与 Task40 并行。
+用户授权正式服务启动后可与外部窄 affinity claimant 共享 CPU，并记录 `performance_not_isolated=true`。运行期外部进程以 PID/start ticks 作为身份键；PPID 或 comm 变化、无法读取外部生命周期信息及运行期全用户 unit inventory 不可用时，记录隔离性诊断并继续。启动时仍须动态选择空闲核并通过严格的邻居、ABI 和资源准入；CPU0 原有的精确身份例外保持不变。Task44 自身的 unit/Invocation、主 PID/start ticks、cgroup、affinity、内存与 swap 硬门必须通过；启动期 service inventory 也须成功。Task44 仍一次运行一个正式算例，并可按用户既有授权与 Task40 并行。
 
-另一次 `global_z` phase-gauge selector 诊断 fresh5 于 2026-10-31 完成矩阵组装、MUMPS 因子分解和线性解，但在完整真残差与结果记录前被 CPU 邻居 Gate 受控停止；没有 residual、official R/T/A 或 `result.json`。这是监控身份问题，不是数值失败或内存停止，也不计入 5/12 精度 attempt。原始事件与 SHA 见 [fresh5 compact record](outcomes/fresh5_controlled_stop_20261031.json)，执行和修复响应见 [response v8](response_v8.md)。
+批准的监控修复（`9fc3728f`、`95087dae`）覆盖早期“发现邻核即停”以及 B8 的 15 秒等待/复核规则。外部 claimant 的 PID/start ticks 决定身份；PPID/comm 变化及其生命周期元数据缺失只作诊断。运行期 `list-units` inventory 失败可在精确 owned unit 身份仍通过时继续；启动期 inventory 仍严格检查。Task44 自身 service 身份或资源硬门失败仍停止。B9–B11 是旧监控器产生的历史失败，保留原分类，不改写成数值通过。
+
+另一次 `global_z` phase-gauge selector 诊断 fresh5 于 2026-10-31 完成矩阵组装、MUMPS 因子分解和线性解，但在完整真残差与结果记录前被 CPU 邻居 Gate 受控停止；没有 residual、official R/T/A 或 `result.json`。这是监控身份问题，不是数值失败或内存停止，也不计入当时的 `5/12` 精度 attempt。原始事件与 SHA 见 [fresh5 compact record](outcomes/fresh5_controlled_stop_20261031.json)，执行和修复响应见 [response v8](response_v8.md)；后续 B9–B12 才将正式精度额度累计至 `12/12`。
 
 每次正式运行前都从实际 Ubuntu 主机重新读取 CPU、邻任务、内存及 cgroup 状态；通过外层 128 GiB 资源准入和动态选核后的邻居 Gate 后，才启动绑定所选单核、128 GiB / 零 swap 的专属服务。smoke 只执行公共 runner 的 `--dry-run`，不组装或求解有限元系统。正式运行采用共享 subreaper watchdog 的 `observe_only` 时间策略：继续记录运行时间，但不因时钟停止 PDE；动态内存、祖先 cgroup、零 swap 和精确服务身份仍由硬门控制。
 

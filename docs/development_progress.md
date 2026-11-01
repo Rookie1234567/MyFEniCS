@@ -3972,8 +3972,25 @@ Task44 从 Task41 的材料/方位执行分支建立，目标是先为 0.7 nm �
 
 stop_event 后约 44.9 μs 即发首个 SIGKILL；`grace_seconds=10` 未实际等待。worker leader exit -9、systemd ExecMainStatus=1，子树清空。service elapsed 1143.094710 s、CPU 18 min 49.771 s、同时进程树 RSS 峰值 5,056,647,168 B、cgroup memory peak 5,282,217,984 B、cgroup swap 0。最后 progress 仍停在 Stage-4 assembly-time condensation backend 选择，没有矩阵完成、solve、真残差或 official R/T/A。这是监控停止，不是数值失败；精度预算为 7/12，剩余 5。完整身份、计算边界、费用和 raw hashes 见 [B7 terminal receipt](task44_sixlayer_surrogate_0p7nm/outcomes/b7_boundary_plane_controlled_stop_20261101.md)。
 
+> 下列 B8 收口文字记录的是当时的 8/12 计数和 15 秒复核政策；随后 B9–B12 与更新后的 CPU 共享规则已覆盖该状态，见文末 Task44 B9–B12 收口。
+
 ## Task44 B8 参考面对照复核超时后受控停止（2026-11-01）
 
 第 8/12 次 B `boundary_plane` 对照保持 B 的六层物理模型、P6 `[3,6,8]` 网格、160 个 DtN 模态和静态凝聚 + MUMPS 设置不变，仅使用新 run/output/service/cache 身份。watchdog 在 elapsed `1171.671914 s` 于 CPU22 检出 PID `222707`（parent `222706`、start ticks `343385335`、`recovery_diagnosis.py` affinity `[22]`）的窄核 claim。复核期限为首次冲突后 15 s；监控在 elapsed `1187.944892 s` 记录 `review_timeout`，首次冲突后约 `16.297 s` 才发出首个 SIGKILL，比 deadline 晚约 `1.297 s`。子树已清空；同一 PID/start 在超时之后以宽 affinity 再现，不反证 timeout 样本，也不能证明其任务归属。
 
 运行期 grace/release 记录的 `performance_not_isolated=true` 表示这场作业曾与 CPU22 的外部 claimant 共享；启动 identity 的 false 是启动时状态，原样保留。service wall `1206.285 s`、systemd CPU `1194.324 s`、进程树 RSS peak `4,901,117,952 B`、cgroup peak `5,288,030,208 B`、任务 swap `0 B`。数值 progress 在 `stage4_full3d_assembly_backend` 结束，未得到矩阵完成、线性解、full true residual 或 official R/T/A；分类为监控受控停止，不是数值失败。B6–B8 均无参考面数值差；正式预算已用 `8/12`，剩余 4 次。等待用户/主控决定新的邻核处置策略前不自动启动 B9。详细首因和原始 hash 见 [B8 terminal receipt](task44_sixlayer_surrogate_0p7nm/outcomes/b8_boundary_plane_monitor_grace_timeout_20261101.md) 与 [Task44 outcomes summary](task44_sixlayer_surrogate_0p7nm/outcomes/summary.md)。
+
+## Task44 B9–B12：12/12 额度结清与字段离线核验（2026-11-01）
+
+B8 中的“15 秒复核”及“等待决定后再启动 B9”是历史规则。批准的监控修复以外部 claimant 的 PID/start ticks 作为运行期身份键；PPID/comm 变化和外部生命周期元数据缺失记为诊断，继续运行并记录 `performance_not_isolated=true`。运行期全用户 `list-units` inventory 失败可容忍，但精确 owned unit 身份仍须通过；启动期 inventory 仍严格检查。Task44 自身 unit/Invocation、主 PID/start ticks、cgroup、affinity、内存和 swap 硬门失败仍停止。该政策覆盖历史等待文本，但不删除 B6–B8 负结果。
+
+| Attempt | service wall | 同时进程树 RSS / cgroup peak | 状态与具体原因 |
+|---|---:|---:|---|
+| B9 | `3688.508 s` | `7,955,501,056 / 8,586,076,160 B` | `MONITORING_FAILED / not_run`：两次外层 owned-member 快照均含同一 PID/start 的 `cc1`，内层 membership 却为 false，旧监控据此拒绝 claim；内层 listing/syscall 时序未保存，竞态机制未证实。无 residual 或 official R/T/A。 |
+| B10 | `922.629 s` | `5,034,360,832 / 5,278,961,664 B` | `MONITORING_FAILED / not_run`：PID/start、cgroup 和 affinity 稳定，PPID 变化触发旧 frozen-parent 检查；无 residual 或 official R/T/A。 |
+| B11 | `619.444 s` | `4,894,605,312 / 5,288,202,240 B` | `MONITORING_FAILED / not_run`：一次 `systemctl list-units` 错误后，独立的 `systemctl show` 也报错；最终 Task44 子树清理通过；无 residual 或 official R/T/A。 |
+| B12 | `2806.500 s` | `7,891,423,232 / 8,588,120,064 B` | `official_result=true`：relative full residual `8.169724140e-10`，能量闭合差 `-7.709813898e-10`，均通过。 |
+
+B12 是 P6、`[3,6,8]`、144 hex、MPI1、160 个 DtN auxiliary 行的单点边界参考面数值锚点；与已有 B `global_z` 结果的 `R_total/T_total/R00_total` 差约 `2.42e-12/7.65e-12/2.42e-12`。它只说明 B 当前离散点上的两种参考坐标输出相符。B12 pre-admission r1/r2 没启动 service、没有 PDE，不另计；原始资格额度至此 `12/12` 结清。
+
+NPZ 文件已解码，点/单元 shape 与有限值检查通过；NPZ 自身不带 source/input SHA，靠同 RUN manifest 与文件 hash 外部绑定。E/H `.bp` 只证明目录和成员存在且 hash 固定，因无可用 reader，数组解码/shape/有限值为 `pending`。y/空气负结果仍有效；旧 DtN 扩展因 residual 失败而未证明截断稳定性，但用户已取消继续扩展，不是待重跑项；z 仅方向性通过。A–D 均 `gp_eligible=false`。若后续形成代理，须披露固定 160 个 DtN 模态的范围；两场候选只形成 B 单点、y12 候选配置在所测方向上的工程稳定性证据，不能自动将旧粗网格 A/C/D 改标为合格。候选额度、精确网格与资源预测见 [Task44 response v9](task44_sixlayer_surrogate_0p7nm/response_v9.md)；尚未获得新 PDE 额度。

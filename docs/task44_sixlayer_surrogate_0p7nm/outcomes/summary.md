@@ -1,16 +1,51 @@
-# Task44 outcomes summary（A–D 已完成；y 与空气间距稳定性未通过，DtN residual 门失败，z 通过）
+# Task44 outcomes summary（12/12 资格尝试已结清；y/空气稳定性未通过，历史 DtN 截断稳定性未证明）
 
 ## 当前状态
 
-2026-10-31，四个冻结厚度点 A–D 均已用 P6、144 个贴体六面体、装配期静态凝聚和 MUMPS exact 完成正式三维计算。四场都通过完整离散算子相对真残差门（≤ `1e-6`）和体吸收能量闭合门（≤ `1e-5`），并保存了全级 DtN 端口 R/T 与场数据。它们是当前有限网格上的正式离散样本，不代表连续解精度，也尚未因空间稳定性核查而取得代理训练资格。
+截至 2026-10-31，四个冻结厚度点 A–D 均已用 P6、144 个贴体六面体、装配期静态凝聚和 MUMPS exact 完成正式三维计算。四场都通过完整离散算子相对真残差门（≤ `1e-6`）和体吸收能量闭合门（≤ `1e-5`），并保存了全级 DtN 端口 R/T 与场数据。它们是当前有限网格上的正式离散样本，不代表连续解精度，也尚未因 y 与顶部空气稳定性核查而取得代理训练资格。历史 DtN 倏逝壳层尝试的真残差失败，导致截断稳定性未获证明；用户已取消继续扩展该壳层，这不是待执行的必要复算。
 
-用户允许 Task44 与 Task40 同时运行；Task44 只监控自身 service 与资源，不停止或修改 Task40。四项精度对照由 Task44 一次运行一个。传播方向 y 加密第一次启动因 service 子进程身份未稳定而受控终止，没有进入矩阵组装或求解，保留为 `MONITORING_FAILED / not_run`；retry 的残差与能量闭合通过，但相对 B 的三个主输出变化均超过 `2e-4`，所以 y 方向稳定性门失败。材料内部 z 加密的残差与能量闭合通过，三项主输出相对 B 的变化约 `1e-10`，z 方向门通过；这不证明 y 方向或连续解已收敛。DtN 倏逝模态扩展的 full explicit 相对残差为 `1.623574709e11`，远超 `1e-6` 门限，official R/T/A 跳过，DtN 截断稳定性未判定。顶部空气间距对照已完成：full true residual `6.752756601e-10` 和端口/体积能量闭合 `-7.221615528e-10` 均通过，但相对 B 的 `R_total`、`T_total`、`R00_total` 变化绝对值分别为 `2.34999e-4`、`2.28409e-4`、`2.35003e-4`，均略高于 `2e-4`，空气间距稳定性门失败。y 与空气间距两个精度门未通过，DtN 精度仍未判定，因此 A–D 均保持 `gp_eligible=false`。
+用户允许 Task44 与 Task40 同时运行；Task44 只监控自身 service 与资源，不停止或修改 Task40。四项精度对照由 Task44 一次运行一个。传播方向 y 加密第一次启动因 service 子进程身份未稳定而受控终止，没有进入矩阵组装或求解，保留为 `MONITORING_FAILED / not_run`；retry 的残差与能量闭合通过，但相对 B 的三个主输出变化均超过 `2e-4`，所以 y 方向稳定性门失败。材料内部 z 加密的残差与能量闭合通过，三项主输出相对 B 的变化约 `1e-10`，z 方向门通过；这不证明 y 方向或连续解已收敛。DtN 倏逝模态扩展的 full explicit 相对残差为 `1.623574709e11`，远超 `1e-6` 门限，official R/T/A 跳过，因此该次尝试没有证明截断稳定性。用户已取消继续扩展 DtN 壳层，不把这项历史负结果列为待重跑要求。顶部空气间距对照已完成：full true residual `6.752756601e-10` 和端口/体积能量闭合 `-7.221615528e-10` 均通过，但相对 B 的 `R_total`、`T_total`、`R00_total` 变化绝对值分别为 `2.34999e-4`、`2.28409e-4`、`2.35003e-4`，均略高于 `2e-4`，空气间距稳定性门失败。y 与空气间距两个精度门未通过，因此 A–D 均保持 `gp_eligible=false`。
 
 2026-11-01 的 B6 `boundary_plane` 参考面对照是第 6/12 次资格尝试。它在 CPU11 邻核 Gate 于 851.931 s 报出新窄 affinity claim 后受控停止；service wall 为 868.733 s，任务 RSS/cgroup 峰值分别为 5,052,604,416 B 和 5,277,028,352 B，swap 为 0。无真残差或官方功率输出，局部凝聚内部停止位置未知，不能分类为数值失败。Task44 与 Task40 并行已获用户明确授权；Task44 自身仍一次运行一个正式算例。完整首因和证据 hash 见 [B6 terminal receipt](b6_boundary_plane_controlled_stop_20261101.md)。
 2026-11-01 的 B7 `boundary_plane` 参考面对照是第 7/12 次资格尝试。watchdog 在 elapsed 1125.154 s 因 CPU17 邻核 Gate 首次发现 PID 201653（parent 201652，start ticks 342958624，affinity `[17]`）而受控停止；service wall 1143.095 s，systemd CPU time 18 min 49.771 s，同时进程树 RSS 峰值 5,056,647,168 B、cgroup memory peak 5,282,217,984 B、cgroup swap 0。没有 residual 或 official R/T/A，不能分类为数值失败。主控之后观察到同一 PID/start 的 affinity 变为宽 mask；这不反证 stop sample，也不证明任务归属。详见 [B7 terminal receipt](b7_boundary_plane_controlled_stop_20261101.md)。
 2026-11-01 的 B8 `boundary_plane` 对照是第 8/12 次资格尝试。elapsed 1171.672 s 首次在 CPU22 发现 PID 222707（parent 222706，start ticks 343385335、`recovery_diagnosis.py`、affinity `[22]`）的稳定窄核 claim；15 秒复核在 deadline 后约 1.273 s 才被采样判为 timeout，worker 子树的首个 SIGKILL 在首次冲突后 16.297 s。service wall 1206.285 s、systemd CPU 1194.324 s、进程树 RSS/cgroup peak 4,901,117,952 / 5,288,030,208 B、任务 swap 0。运行期 grace/release 记录显示 `performance_not_isolated=true`，启动回执 false 只代表启动时尚无冲突。没有 residual、official R/T/A 或数值结果文件；B8 是受控监控停止，不是数值失败。首个 PID/start identity 后来以宽 affinity 再现，不反证先前的窄核样本。详见 [B8 terminal receipt](b8_boundary_plane_monitor_grace_timeout_20261101.md)。
 
-另有一次不计入精度资格复算预算的 `global_z` phase-gauge selector 诊断（fresh5）。它完成 27 格网格、P6 基函数和 420 个端口模态的矩阵组装、MUMPS 因子分解与线性系统求解；随后 worker 在写出可审计数值结果前，被 CPU 邻居监控的进程身份 Gate 受控停止。候选 `cc1` 的 `/proc/51758/stat` 读取返回 `ENOENT`；旧 Gate 后续虽调用 `Path.exists()`，但没有保留该检查结果或 errno，因此“编译子进程刚好退出”只是可能解释，未由当时证据确认。没有完整真残差、official R/T/A 或 `result.json`；这不是求解器数值失败，也不是内存门停止。该历史时点的正式精度 attempt 为 `5/12`；截至当前 B8 收口已登记 `8/12`，当前计数和新增受控停止见上文 B8 执行段。完整紧凑记录和原始文件 SHA 见 [`fresh5 controlled-stop record`](fresh5_controlled_stop_20261031.json)；原始目录保留在 `/tmp/task44-phase-gauge-global-z-fresh5-20261031`。
+另有一次不计入精度资格复算预算的 `global_z` phase-gauge selector 诊断（fresh5）。它完成 27 格网格、P6 基函数和 420 个端口模态的矩阵组装、MUMPS 因子分解与线性系统求解；随后 worker 在写出可审计数值结果前，被 CPU 邻居监控的进程身份 Gate 受控停止。候选 `cc1` 的 `/proc/51758/stat` 读取返回 `ENOENT`；旧 Gate 后续虽调用 `Path.exists()`，但没有保留该检查结果或 errno，因此“编译子进程刚好退出”只是可能解释，未由当时证据确认。没有完整真残差、official R/T/A 或 `result.json`；这不是求解器数值失败，也不是内存门停止。fresh5 当时的正式 attempt 为 `5/12`，且不计入后续计数；当前 `12/12` 由 B9–B12 执行段结清。完整紧凑记录和原始文件 SHA 见 [`fresh5 controlled-stop record`](fresh5_controlled_stop_20261031.json)；原始目录保留在 `/tmp/task44-phase-gauge-global-fresh5-20261031`。
+
+### 2026-11-01 B9–B12 boundary-plane 执行与额度结清
+
+批准的监控修复（`9fc3728f`、`95087dae`）规定：运行期外部 claimant 以 PID/start ticks 作为身份键；PPID、comm 变化及外部生命周期信息缺失作为性能隔离诊断，记录 `performance_not_isolated=true` 后继续。运行期全用户 `list-units` inventory 失败可在精确 owned unit 身份仍通过时容忍；启动期 inventory 仍须严格成功。Task44 自身 unit/Invocation、主 PID/start ticks、cgroup、affinity、内存与 swap 硬门失败仍停止。此规则覆盖 B6–B8 的“发现 claim 即停”与 15 秒复核行为。B9–B11 保留为旧监控器产生的监控受控停止，不能改写为数值负结果或成功结果。
+
+| Attempt | 运行与资源实测 | 结果分类与具体边界 |
+|---|---|---|
+| B9 | service wall `3688.507526768837 s`；进程树 RSS / cgroup peak `7,955,501,056 / 8,586,076,160 B`；swap 0 | `MONITORING_FAILED / not_run`。CPU9 上两次外层 owned-member 快照均含同一 PID/start 的 `cc1`，但内层 membership 结果为 false，旧监控器据此拒绝 claim。内层 listing/syscall 时序没有保存，具体竞态机制未证实。无 residual 或 official R/T/A。证据：`benchmarks/artifacts/task44_native_services/task44-sample-boundary-plane-b9-r1-20261101.service/` 与 [run summary](../../../results/task44_boundary_plane_attempt9/task44_sixlayer_0p7nm/sample_B_boundary_plane_20261101_attempt9__full3d_direct__mpi1__Mna/20261101T074434.221630Z/run_summary.json)。 |
+| B10 | service wall `922.6288379072212 s`；进程树 RSS / cgroup peak `5,034,360,832 / 5,278,961,664 B`；swap 0 | `MONITORING_FAILED / not_run`。候选 PID 的 PID/start、cgroup 和 affinity 稳定，PPID 变化触发旧 frozen-parent 检查；不属于 generic unknown identity。无 residual 或 official R/T/A。证据：`benchmarks/artifacts/task44_native_services/task44-sample-boundary-plane-b10-r1-20261101.service/` 与 [run summary](../../../results/task44_boundary_plane_attempt10/task44_sixlayer_0p7nm/sample_B_boundary_plane_20261101_attempt10__full3d_direct__mpi1__Mna/20261101T090718.653646Z/run_summary.json)。 |
+| B11 | service wall `619.4444286893122 s`；进程树 RSS / cgroup peak `4,894,605,312 / 5,288,202,240 B`；swap 0 | `MONITORING_FAILED / not_run`。首次触发是一次 `systemctl list-units` 错误；之后独立的 `systemctl show` 也报错。不是两次 `list-units` 错误。最终清理回执确认子树已清空。无 residual 或 official R/T/A；属于监控/服务查询失败，不是数值失败。证据：`benchmarks/artifacts/task44_native_services/task44-sample-boundary-plane-b11-r1-20261101.service/` 与 [run summary](../../../results/task44_boundary_plane_attempt11/task44_sixlayer_0p7nm/sample_B_boundary_plane_20261101_attempt11__full3d_direct__mpi1__Mna/20261101T093652.424155Z/run_summary.json)。 |
+| B12 | service wall `2806.5004601851106 s`；worker `2727.062757624779 s`；进程树 RSS / cgroup peak `7,891,423,232 / 8,588,120,064 B`；swap 0 | `official_result=true`；完整真残差与能量门通过。B12 是 12/12。详细数据见下表。 |
+
+B12 的正式 run 身份为 source SHA `dab67e47cc1feb7da1bc1018cae66e1d18b93ff5`、input SHA-256 `7c96752bd34cba4c33562e761b93854e92b989fd63952a3fa5c1c33d84e6a643`、physical-model SHA-256 `d97fe809c536ba0c73439cef4da855c636dc41b8fc3805a95a9e81d21678b131`、resolved-config SHA-256 `2a0e38709530ecb584f7b6510de1f3967a8c66e9702b6695e64a2272ac4b098c`。样本目录：`results/task44_boundary_plane_attempt12/task44_sixlayer_0p7nm/sample_B_boundary_plane_20261101_attempt12__full3d_direct__mpi1__Mna/20261101T110836.357672Z/`。网格为 P6 `[3,6,8]`、144 hex；全 FE DoF `99,894`、active trace rows `29,808`、DtN auxiliary rows `160`、矩阵 NNZ `24,315,568`；每侧 80 个 DtN 模态。
+
+| 正式量 | B12 measured | Gate / 解释 |
+|---|---:|---|
+| full explicit true residual（relative） | `8.169724140477284e-10` | `≤1e-6`，pass |
+| `R_total` / `T_total` | `0.09521909449777169` / `0.8831311299149318` | 完整传播 DtN 端口功率 |
+| `R00_s` / `R00_p` / `R00_total` | `0.09521864873059795` / `1.0432294028174373e-23` / `0.09521864873059795` | `R00_total=R00_s+R00_p` |
+| `A_balance` / `A_volume_total` | `0.021649775587296527` / `0.021649774816315158` | 端口吸收与材料体积吸收 |
+| `R+T+A_volume−1` | `−7.709813898415518e-10` | `abs(·)≤1e-5`，pass |
+
+与已有 B `global_z` 基线相比，B12 的 `ΔR_total=+2.42119e-12`、`ΔT_total=+7.654e-12`、`ΔR00_total=+2.42085e-12`。这是一项 B 点、当前模型与网格上的实测锚点；不能从它推断其他厚度或网格的全源码数值等价。y 和空气距稳定性失败仍有效；历史 DtN residual 失败代表截断稳定性未获证明，但继续扩展已由用户取消；z 单向通过不代表整体精度通过。A–D 仍全部 `gp_eligible=false`。
+
+### B12 输出文件离线核验
+
+`airbox_fields_3d_scientific.npz` 能由 NumPy 读取，size `685,195 B`，SHA-256 `cbb0f0acaf8d22bce73a698e146a166de45508a7670c048fa874fef328c2b494`。坐标为 `(3888,3)`，点和单元数组尺寸与 144 hex 对应；`E_total_code`、`E_total_V_per_m`、`H_curl_A_per_m` 为 `(3888,3) complex128`，Poynting 为 `(3888,3) float64`，其余标签、类型、mask 和入射 E 数组均符合记录维度，数值数组全为有限值。NPZ 不自带 source/input SHA；本次绑定依赖唯一 RUN 目录内的 `run_manifest.json`、`run_summary.json`、输入/配置身份与 NPZ 文件 SHA，并且 NPZ 元数据中的 `boundary_plane`、参考面 `[-0.5,5.0] nm`、MPI1、144 cells、3888 points 与该 RUN 相符。
+
+E `.bp` 目录存在且成员已逐个 hash：tree SHA-256 `efc9e6cae3b02684d64ea0cdcd8bb632d84513d7c272c4d99b3fa9eed3b2ca89`，`data.0` SHA-256 `a260a90fdc12df68e5874137628f1ead43c3814bbb87969b64d14b85871ad01a`。H `.bp` tree SHA-256 `20e823ff63e4b564c36b97fdc8315e062d52d5e13fb2ef69e74c7648cb32bde8`，`data.0` SHA-256 `372060bfc65f8b0387ed0dbc463d2829e9cbce1c89cf49a3f3a835a503557e9f`。当前环境没有可用的 ADIOS2 Python reader 或 `bpls`；本机 C++ 读者编译又缺少 `ADIOSConfig.h`。因此这些 BP 只证明文件存在且 hash 固定，E/H 数组解码、维度和有限性状态是 `pending`，不得写成回读通过；不安装包、不增加读取框架。
+
+### 运行期 CPU 共享政策与额度
+
+当前政策是：启动仍须通过 fresh CPU/邻任务/ABI/资源准入；正式运行期间外部 claimant 以 PID/start ticks 为身份键。PPID/comm 变化和外部 lifecycle 元数据不可读记为诊断，允许继续并记录 `performance_not_isolated=true`。运行期 `list-units` inventory 错误可在精确 owned unit 仍可核验时容忍；启动期 inventory 严格检查。Task44 自身 unit/Invocation、主 PID/start ticks、cgroup、affinity、内存/祖先余量和 swap 硬门仍须通过；OOM 仍停止。此规则覆盖 B6–B8 的旧“立即停止/15 秒复核”行为。
+
+B9、B10、B11 的 service-summary SHA-256 依次为 `5e3a4efd491b52e8b76c1dbfe2c00f58803ef847fddc26b8491c4d3adeee5d66`、`1bd1d65be2fae519653d1eb39d1318bcdf3fb974dbdf57fdfca1d1eef0e64122`、`f0209038d799aac64f03e1c551deacfb435ee23276f09a0f92d4bb75dda1336e`。B12 service 为 `task44-sample-boundary-plane-b12-r3-20261101.service`，Invocation `7f7b6407725d44188e3068d53b64cedf`，完成且退出 0，进程清理通过。B12 的 pre-admission r1 因 CPU selector 读取 PID 298254 失败且后续进程已消失，未启动 service；r2 未找到 busy fraction 严格小于 20% 的核，也未启动 service。两次都没有 PDE 计算或结果目录，不计入额度。原始 admission receipt `/tmp/task44_b12_admission_failures_20261101.json` 的 SHA-256 为 `7cd601366509671c088e260b6913dcb59fb6973b0ad6d3d96ae713c2c4cf62aa`。至此 B9–B12 完成预算中的第 9 至第 12 次，原额度 `12/12` 已结清。
 
 固定 seed `440731` 的首轮设计已冻结为 20 training / 10 development / 10 blind test，见 [`sample_design_v1.json`](../sample_design_v1.json)。训练候选含 A–D 和 16 个六维分层覆盖点；A–D 标签仍为 `gp_eligible=false`。40 个几何输入字节、解析物理模型和离散签名哈希已登记，未求解候选的结果保持 `null`。开发和盲测几何均不与训练重合；盲测样本没有标签字段。GP 软件已通过 9 项定向测试和 40 点设计校验；有限元训练、模型选择、开发评估、盲测和标准尺寸仍为 `not_run`。
 
@@ -114,7 +149,7 @@ DtN 端口用边界上的模态关系表示空气和基底半空间中的出射�
 
 完整证据见 [numerical run summary](../../../results/task44_sixlayer_0p7nm/task44_accuracy_dtn_evanescent_shell_20261031__full3d_direct__mpi1__Mna/20261031T110232.922585Z/numerical_output/run_summary.json)、[外层 run summary](../../../results/task44_sixlayer_0p7nm/task44_accuracy_dtn_evanescent_shell_20261031__full3d_direct__mpi1__Mna/20261031T110232.922585Z/run_summary.json)、[service summary](../../../benchmarks/artifacts/task44_native_services/task44-sample-accuracy-dtn-shell1.service/service_summary.json)、[watchdog summary](../../../benchmarks/artifacts/task44_native_services/task44-sample-accuracy-dtn-shell1.service/watchdog/summary.json)、[progress log](../../../results/task44_sixlayer_0p7nm/task44_accuracy_dtn_evanescent_shell_20261031__full3d_direct__mpi1__Mna/20261031T110232.922585Z/numerical_output/progress_3d.jsonl)、[worker output](../../../results/task44_sixlayer_0p7nm/task44_accuracy_dtn_evanescent_shell_20261031__full3d_direct__mpi1__Mna/20261031T110232.922585Z/worker_stdout.txt) 和 [输入](../../../input/task44_accuracy_dtn_evanescent_shell_v1.dat)。
 
-精度资格最多 12 次额外 attempt；目前登记 8 次：两次 y attempt（一次监控失败、一次稳定性超限）、一次 z 通过、一次 DtN 真残差失败、一次空气间距稳定性超限，以及 B6、B7、B8 三次 boundary-plane 监控停止；剩余 4 次预算。B6–B8 均无有限元数值结果，不改变精度差值或 A–D 资格；y 和空气间距的稳定性负结果必须保留，DtN 没有 official R/T/A、模态稳定性仍未判定。B8 的复核 deadline 是 15 秒，但观测到超期采样和 SIGKILL 延后；运行期 `performance_not_isolated=true`，启动时 false 的原始回执保留。不得将 z 单方向通过扩大解释为总精度通过；继续复算须先由用户/主控决定邻核冲突的处置策略，不自动进入 B9。
+截至 B8 收口时，精度资格最多 12 次额外 attempt，已登记 8 次、剩余 4 次。该历史快照包括两次 y attempt（一次监控失败、一次稳定性超限）、一次 z 通过、一次 DtN 真残差失败、一次空气间距稳定性超限，以及 B6–B8 三次 boundary-plane 监控停止。B8 的 15 秒复核与当时“不自动进入 B9”安排已被后续运行期 CPU 共享政策覆盖；B9–B12 的最终计数和首因见本 summary 前面的更新执行段。y、空气稳定性负结果仍有效；历史 DtN 尝试没有证明截断稳定性，用户已取消继续扩展；z 单方向通过不构成总精度通过。
 
 GP 的 Matérn 5/2 ARD 核把相近的六层厚度组合视为更可能产生相近功率结果，并为六个厚度分别拟合影响范围；这样可以表达某一层厚度比另一层更敏感的情况。代价是要从有限训练点估计多个尺度参数，预测标准差仍只是模型内部的不确定度，不是真实误差上界。输入使用冻结的 `[0.5,1.0] nm` 范围归一化；输出均值和尺度只从训练数据取得。实现同时保留训练均值和线性拟合基线，并把误差还原到原始功率比单位。
 
@@ -165,7 +200,7 @@ B/C/D 记录的源码 SHA 相同，preflight 的 Python 路径、complex128、PE
 | DtN 倏逝模态扩展 | B 基线增加手动倏逝壳层 m=4、n=8 | R_total、T_total、R00_total 各自变化目标 ≤ 2e-4；本次差值无法计算 | 求解完成但真残差门失败；official R/T/A 未运行，DtN 稳定性未判定 | [输入](../../../input/task44_accuracy_dtn_evanescent_shell_v1.dat)、[数值摘要](../../../results/task44_sixlayer_0p7nm/task44_accuracy_dtn_evanescent_shell_20261031__full3d_direct__mpi1__Mna/20261031T110232.922585Z/numerical_output/run_summary.json)、[响应 v6](../response_v6.md) |
 | 顶部空气间距 | 空气高度 0.5 → 1.0 nm，基底底面固定 `z=-0.5 nm`；为延伸顶部空气区域，z 网格由 8 段增至 9 段 | `R_total`：0.0952190944953505 → 0.0949840957114875，`Δ=-2.349987839e-4`；`T_total`：0.8831311299072778 → 0.8833595386823099，`Δ=+2.284087750e-4`；`R00_total`：0.0952186487281771 → 0.09498364561553266，`Δ=-2.350031126e-4` | 解与能量门通过；三项 `abs(Δ)>2e-4`，判 `accuracy_gate_failed` | [输入](../../../input/task44_accuracy_air_gap_1nm_v1.dat)、[数值摘要](../../../results/task44_sixlayer_0p7nm/task44_accuracy_air_gap_1nm_20261031__full3d_direct__mpi1__Mna/20261031T114301.012893Z/numerical_output/run_summary.json)、[service summary](../../../benchmarks/artifacts/task44_native_services/task44-sample-accuracy-airgap1.service/service_summary.json)、[response v7](../response_v7.md) |
 
-该 `2e-4` 门只说明已对照离散之间的工程稳定性，不是连续解误差保证。资格复算上限为 12 次；当前登记 8 次 attempt：两次 y attempt（一次未进入求解的 monitor failure、一次空间稳定性失败）、一次 z 求解通过、一次 DtN full explicit residual 失败、一次空气间距对照（解与闭合通过，但三项稳定性变化超限），以及 B6、B7、B8 三次 B boundary-plane 参考面对照受控停止。剩余预算为 4 次；三次参考面尝试均无有限元数值结果，B8 的邻核复核 deadline、真实 timeout 延后、整场共享状态与费用见 [B8 terminal receipt](b8_boundary_plane_monitor_grace_timeout_20261101.md)。DtN 因没有 official R/T/A，模态截断稳定性仍未判定；y 和空气间距稳定性失败仍有效。不得把 z 单方向通过扩大解释为总精度通过。
+该 `2e-4` 门只说明已对照离散之间的工程稳定性，不是连续解误差保证。以下仍是截至 B8 的历史 attempt 账：两次 y attempt（一次未进入求解的 monitor failure、一次空间稳定性失败）、一次 z 求解通过、一次 DtN full explicit residual 失败、一次空气间距对照（解与闭合通过但稳定性变化超限），以及 B6–B8 三次 B boundary-plane 监控停止。B8 的 deadline 与延后细节见 [B8 terminal receipt](b8_boundary_plane_monitor_grace_timeout_20261101.md)；它们不再代表当前 CPU 共享政策。B9–B12 使累计额度达到 `12/12`，详见本 summary 的更新执行段。历史 DtN 尝试因没有 official R/T/A 而未证明模态截断稳定性，且用户已取消继续扩展；y 和空气间距稳定性失败仍有效；不能把 z 单方向通过扩大解释为总精度通过。
 
 ## A 的材料吸收分布与主功率诊断补充
 
@@ -233,7 +268,7 @@ A 的正式 service 为 `task44-sample-a-condensed-cachefix.service`，Invocatio
 ## 下一步
 
 1. Task44 与 Task40 并行已获用户明确授权。Task44 只观测自己的 service 和资源，不发送信号或修改 Task40；Task44 的重型对照仍一次运行一个。
-2. 四项精度对照均已完成：y 与顶部空气间距的稳定性变化超限；z 对照通过；DtN 倏逝壳层因 full true residual 失败而无法判定稳定性。后续任何复算都须保留这些负结果，并先核对 ABI、邻任务、CPU、宿主/祖先 cgroup、内存、swap 和 service 身份，再按完整残差、能量闭合、R/T/R00 与进程清场逐项判定。
-3. 以 B 为基线，当前证据不满足总精度门；不把 A–D 标记为 `gp_eligible`，也不将未通过结果混入同精度训练集。剩余 4 次资格复算预算。B6–B8 均没有参考面数值结果；在用户/主控决定新的邻核并发处置策略前不自动启动 B9，也不改变 15 秒复核期限。保留全部前次负结果。
+2. 四项精度对照均已完成：y 与顶部空气间距的稳定性变化超限；z 对照通过；历史 DtN 倏逝壳层运行的真残差失败，截断稳定性没有得到证明。用户已取消继续扩展 DtN 壳层，不列为待重跑项。若获准进行其他复算，须保留现有正负结果，并先核对 ABI、邻任务、CPU、宿主/祖先 cgroup、内存、swap 和 service 身份，再按完整残差、能量闭合、R/T/R00 与进程清场逐项判定。
+3. 以 B 为基线，y 与空气距稳定性门失败，所以当前证据不支持 A–D 作为合格 GP 标签；不把未通过结果混入同精度训练集。原始精度额度已用完 `12/12`。B9–B11 是监控受控停止，B12 是单点参考面数值锚点；保留所有正负结果。新一轮最多两场方案尚未获 PDE 授权，固定 160 个 DtN 模态；即使两场通过，也只形成 B 单点、y12 候选配置在所测方向上的工程稳定性证据，不自动将粗网格旧 A/C/D 改标，也不证明 DtN 模态截断收敛。未来代理范围须明确披露固定 160 模态。
 4. A–D worker 实测为 1653.708–1836.503 s（27.6–30.6 min）；空气间距 worker 为 1877.662 s，服务全生命周期为 1944.634 s。该服务同时进程树 RSS 峰值为 8,538,501,120 B，专属 cgroup memory peak 为 9,228,845,056 B，swap 峰值为 0 B。不预设批量性能已达到目标，也不因单样本较慢直接判断 GP 不可行；GP 训练、开发评估、盲测和标准尺寸仍为 `not_run`。
 5. 当前 execution branch 保持显式凝聚 direct 研究路线，不改 ordinary solver default，不合并 `master`；结果与未运行范围进入下一轮 review。
