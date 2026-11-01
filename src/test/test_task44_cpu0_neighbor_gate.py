@@ -368,6 +368,200 @@ def test_owned_candidate_exit_during_bounded_gap_recheck_is_nonfatal(
     assert proof["proc_directory_confirmation"]["status"] == "gone"
 
 
+def test_train_007_transient_assembler_exit_uses_one_fresh_context_query(
+    tmp_path, monkeypatch
+):
+    """Reproduce train_007's 3.872 ms tail query after an assembler exits.
+
+    Factual identity: service task44-sample-train-007-v2.service,
+    InvocationID 7ea92ca5d7724a24b2a6770f46108875, MainPID 394010 at
+    start ticks 348483132; transient GNU as PID 406525 at start ticks
+    349033677, parent 406312. See outcomes/training_results_v2.md and the
+    preserved service_summary.json for the run-bound evidence.
+    """
+    root = _proc_root(tmp_path)
+    unit = "task44-sample-train-007-v2.service"
+    facts, cgroup_fs_root, cgroup = _owned_service(tmp_path, main_pid=394010, unit=unit)
+    facts.update({
+        "invocation_id": "7ea92ca5d7724a24b2a6770f46108875",
+        "cpu_affinity": "0",
+    })
+    (cgroup / "cgroup.procs").write_text("394010\n406525\n", encoding="ascii")
+    _process(
+        root, pid=394010, start_ticks=348483132, parent_pid=2818, affinity="0",
+        command="task44_native_service.py", cgroup=facts["control_group"],
+    )
+    _process(
+        root, pid=406525, start_ticks=349033677, parent_pid=406312,
+        affinity="0", command="as", proc_comm="as",
+        cgroup=facts["control_group"],
+    )
+    _patch_owned_service(monkeypatch, facts)
+
+    clock = [0.0]
+    monkeypatch.setattr(task44_native_service.time, "monotonic", lambda: clock[0])
+    signature = task44_native_service._unit_identity_signature(facts)
+    query_budgets = []
+
+    def systemd_query_with_observed_tail(unit, *, timeout_seconds):
+        query_budgets.append(timeout_seconds)
+        if timeout_seconds <= 0.003872454632073641:
+            clock[0] += timeout_seconds
+            raise task44_native_service.subprocess.TimeoutExpired(
+                ["systemctl", "--user", "show", unit], timeout_seconds
+            )
+        if len(query_budgets) == 2:
+            # The old context bracket completed with only the observed 3.872 ms left.
+            clock[0] = 0.05 - 0.003872454632073641
+        return signature
+
+    monkeypatch.setattr(
+        task44_native_service, "_unit_identity_signature_with_timeout",
+        systemd_query_with_observed_tail,
+    )
+    original_member = task44_native_service._owned_service_member
+
+    def exit_transient_assembler(process, **kwargs):
+        if int(process["pid"]) != 406525:
+            return original_member(process, **kwargs)
+        process_dir = root / "406525"
+        for item in process_dir.iterdir():
+            item.unlink()
+        process_dir.rmdir()
+        (cgroup / "cgroup.procs").write_text("394010\n", encoding="ascii")
+        return False, {
+            "pid": 406525,
+            "candidate_snapshot": {
+                "ppid": 406312,
+                "comm": "as",
+                "start_ticks": 349033677,
+                "cgroup_path": facts["control_group"],
+            },
+            "failure_stage": "proc_identity_before",
+            "error_type": "FileNotFoundError",
+            "errno": errno.ENOENT,
+            "error": "[Errno 2] No such file or directory: '/proc/406525/stat'",
+        }
+
+    monkeypatch.setattr(task44_native_service, "_owned_service_member", exit_transient_assembler)
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
+        proc_root=root,
+        ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts,
+        cgroup_fs_root=cgroup_fs_root,
+        numerical_processes=[
+            _candidate(
+                394010, parent_pid=2818, command="task44_native_service.py",
+                start_ticks=348483132, cgroup_path=facts["control_group"],
+            ),
+            _candidate(
+                406525, parent_pid=406312, command="as", snapshot_comm="as",
+                start_ticks=349033677, cgroup_path=facts["control_group"],
+            ),
+        ],
+    )
+
+    assert report["status"] == "pass"
+    assert report["failures"] == []
+    proof = report["stale_snapshot_confirmed_gone"][0]
+    assert proof["pid"] == 406525
+    assert proof["member_gap_recheck"]["status"] == "gone"
+    assert proof["member_gap_recheck"]["attempt_count"] == 1
+    assert query_budgets == [0.05]
+
+
+@pytest.mark.parametrize(
+    ("drift", "expected_status"),
+    (("invocation", "invocation_changed"), ("pid_reuse", "pid_reused")),
+)
+def test_gone_owned_candidate_still_fails_closed_on_identity_drift(
+    tmp_path, monkeypatch, drift, expected_status
+):
+    root = _proc_root(tmp_path)
+    facts, cgroup_fs_root, cgroup = _owned_service(tmp_path, main_pid=6042)
+    _process(root, pid=6042, start_ticks=10042, cgroup=facts["control_group"])
+    _process(root, pid=6043, start_ticks=10043, cgroup=facts["control_group"])
+    _patch_owned_service(monkeypatch, facts)
+    original_member = task44_native_service._owned_service_member
+    original_signature = task44_native_service._unit_identity_signature(facts)
+
+    def exit_candidate(process, **kwargs):
+        if int(process["pid"]) != 6043:
+            return original_member(process, **kwargs)
+        process_dir = root / "6043"
+        for item in process_dir.iterdir():
+            item.unlink()
+        process_dir.rmdir()
+        (cgroup / "cgroup.procs").write_text("6042\n", encoding="ascii")
+        return False, {
+            "pid": 6043,
+            "candidate_snapshot": {
+                "ppid": 6042,
+                "comm": "cc1",
+                "start_ticks": 10043,
+                "cgroup_path": facts["control_group"],
+            },
+            "failure_stage": "proc_identity_before",
+            "error_type": "FileNotFoundError",
+            "errno": errno.ENOENT,
+            "error": "[Errno 2] No such file or directory: '/proc/6043/stat'",
+        }
+
+    monkeypatch.setattr(task44_native_service, "_owned_service_member", exit_candidate)
+    if drift == "invocation":
+        monkeypatch.setattr(
+            task44_native_service,
+            "_unit_identity_signature_with_timeout",
+            lambda unit, *, timeout_seconds: {
+                **original_signature,
+                "invocation_id": "f" * 32,
+            },
+        )
+    else:
+        original_confirmation = task44_native_service._confirm_proc_pid_directory_gone
+        confirmation_calls = 0
+
+        def reuse_after_gone(pid, proc_root):
+            nonlocal confirmation_calls
+            if pid == 6043:
+                confirmation_calls += 1
+                if confirmation_calls == 3:
+                    _process(
+                        root, pid=6043, start_ticks=20043, parent_pid=6042,
+                        affinity="0", cgroup=facts["control_group"],
+                    )
+                    (cgroup / "cgroup.procs").write_text("6042\n6043\n", encoding="ascii")
+            return original_confirmation(pid, proc_root)
+
+        monkeypatch.setattr(
+            task44_native_service, "_confirm_proc_pid_directory_gone", reuse_after_gone
+        )
+
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
+        proc_root=root,
+        ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts,
+        cgroup_fs_root=cgroup_fs_root,
+        numerical_processes=[
+            _candidate(6042, start_ticks=10042, cgroup_path=facts["control_group"]),
+            _candidate(6043, parent_pid=6042, start_ticks=10043,
+                       cgroup_path=facts["control_group"]),
+        ],
+    )
+
+    assert report["status"] == "fail"
+    assert report["stale_snapshot_confirmed_gone"] == []
+    proof = next(row for row in report["unverified_owned_members"] if row["pid"] == 6043)
+    assert proof["member_gap_recheck"]["status"] == expected_status
+    assert "owned_service_member_identity_unverified" in report["failures"]
+    if drift == "invocation":
+        assert "owned_service_invocation_identity_unverified" in report["failures"]
+    else:
+        assert "owned_service_invocation_identity_unverified" not in report["failures"]
+
+
 def test_pid_reuse_during_bounded_gap_recheck_is_not_treated_as_exit(
     tmp_path, monkeypatch
 ):
@@ -758,7 +952,8 @@ def test_terminal_candidate_is_rejected_when_recheck_deadline_has_elapsed(
     def cross_deadline_on_final_systemd_read(unit, *, timeout_seconds):
         nonlocal systemd_reads
         systemd_reads += 1
-        if systemd_reads == 4:
+        expected_final_read = 1 if candidate_state == "gone" else 4
+        if systemd_reads == expected_final_read:
             clock[0] = task44_native_service._OWNED_MEMBER_GAP_RECHECK_DEADLINE_SECONDS + 0.001
         return dict(signature)
 
@@ -781,7 +976,7 @@ def test_terminal_candidate_is_rejected_when_recheck_deadline_has_elapsed(
     )
 
     assert report["status"] == "fail"
-    assert systemd_reads == 4
+    assert systemd_reads == (1 if candidate_state == "gone" else 4)
     assert report["stale_snapshot_confirmed_gone"] == []
     assert target_pid not in report["owned_service_excluded_pids"]
     proof = next(row for row in report["unverified_owned_members"] if row["pid"] == target_pid)

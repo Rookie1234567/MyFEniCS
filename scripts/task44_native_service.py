@@ -518,33 +518,56 @@ def _owned_gap_context_observation(
     cgroup: Path,
     proc_root: Path,
     deadline: float,
+    gone_candidate: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Verify the same active invocation, MainPID identity, cgroup, and affinity."""
+    """Verify the active invocation and MainPID; bracket a gone candidate with one read."""
     unit = str(owned_context["unit"])
     main_pid = int(owned_context["main_pid"])
     group = owned_context["control_group"]
     expected_facts = owned_context["systemd_facts_after"]
     expected_start = owned_context["main_pid_identity_before"]["start_ticks"]
+    single_read = gone_candidate is not None
+    candidate_pid = int(gone_candidate["pid"]) if single_read else None
     try:
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            return {"status": "deadline_expired"}
-        before = _unit_identity_signature_with_timeout(unit, timeout_seconds=remaining)
+        before = None
+        if not single_read:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return {"status": "deadline_expired"}
+            before = _unit_identity_signature_with_timeout(unit, timeout_seconds=remaining)
         members_before = _read_direct_cgroup_members(cgroup)
+        candidate_before = (
+            _confirm_proc_pid_directory_gone(candidate_pid, proc_root)
+            if single_read else None
+        )
         main_before = _proc_identity(main_pid, proc_root)
         group_before = _proc_cgroup_path(main_pid, proc_root)
         affinity = set(os.sched_getaffinity(main_pid))
+
+        if single_read:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return {"status": "deadline_expired"}
+            after = _unit_identity_signature_with_timeout(unit, timeout_seconds=remaining)
+
         main_after = _proc_identity(main_pid, proc_root)
         group_after = _proc_cgroup_path(main_pid, proc_root)
         members_after = _read_direct_cgroup_members(cgroup)
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            return {"status": "deadline_expired"}
-        after = _unit_identity_signature_with_timeout(unit, timeout_seconds=remaining)
+        candidate_after = (
+            _confirm_proc_pid_directory_gone(candidate_pid, proc_root)
+            if single_read else None
+        )
+        if not single_read:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return {"status": "deadline_expired"}
+            after = _unit_identity_signature_with_timeout(unit, timeout_seconds=remaining)
         if time.monotonic() >= deadline:
             return {"status": "deadline_expired", "systemd_after": after}
         checks = {
-            "invocation_and_main_pid": before == expected_facts == after,
+            "invocation_and_main_pid": (
+                after == expected_facts if single_read else before == expected_facts == after
+            ),
             "main_pid_start_ticks": (
                 main_before["start_ticks"] == expected_start == main_after["start_ticks"]
             ),
@@ -560,7 +583,48 @@ def _owned_gap_context_observation(
             else "context_affinity_changed" if not checks["main_pid_affinity"]
             else "context_membership_unverified"
         )
-        return {"status": status, "checks": checks, "systemd_before": before, "systemd_after": after}
+        report: dict[str, Any] = {
+            "status": status,
+            "checks": checks,
+            "systemd_before": before,
+            "systemd_after": after,
+        }
+        if status != "stable" or not single_read:
+            return report
+
+        snapshot_start = gone_candidate.get("start_ticks")
+        candidate = {
+            "pid": candidate_pid,
+            "snapshot_start_ticks": snapshot_start,
+            "proc_directory_confirmation_before": candidate_before,
+            "proc_directory_confirmation_after": candidate_after,
+            "member_before": candidate_pid in members_before,
+            "member_after": candidate_pid in members_after,
+        }
+        report["candidate"] = candidate
+        if candidate_before["status"] == "unverified" or candidate_after["status"] == "unverified":
+            report["status"] = "unverified"
+        elif candidate_before["status"] == "present" or candidate_after["status"] == "present":
+            try:
+                identity = _proc_identity(candidate_pid, proc_root)
+                candidate_group = _proc_cgroup_path(candidate_pid, proc_root)
+            except (OSError, ValueError, RuntimeError) as exc:
+                report.update({"status": "unverified", "error_type": type(exc).__name__, "error": str(exc)})
+            else:
+                candidate.update({"identity": identity, "cgroup": candidate_group})
+                if not isinstance(snapshot_start, int) or identity["start_ticks"] != snapshot_start:
+                    report["status"] = "pid_reused"
+                elif candidate_group != group:
+                    report["status"] = "cgroup_changed"
+                else:
+                    report["status"] = "candidate_reappeared"
+        elif candidate_pid in members_before or candidate_pid in members_after:
+            report["status"] = "candidate_reappeared"
+        elif not isinstance(snapshot_start, int):
+            report["status"] = "unverified"
+        else:
+            report["status"] = "gone"
+        return report
     except (KeyError, OSError, TypeError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
         return {"status": "unverified", "error_type": type(exc).__name__, "error": str(exc)}
 
@@ -686,6 +750,60 @@ def _recheck_owned_member_gap(
         if time.monotonic() >= deadline:
             break
         attempts_started += 1
+        candidate_pid = int(process["pid"])
+        candidate_confirmation = _confirm_proc_pid_directory_gone(candidate_pid, proc_root)
+        if candidate_confirmation["status"] == "unverified":
+            candidate_probe = {
+                "status": "unverified",
+                "candidate": {
+                    "pid": candidate_pid,
+                    "proc_directory_confirmation_before": candidate_confirmation,
+                },
+            }
+            attempts.append({"attempt": number, "candidate": candidate_probe})
+            result = {
+                "status": "unverified",
+                "candidate": candidate_probe["candidate"],
+                "context_after": candidate_probe,
+            }
+            break
+        if candidate_confirmation["status"] == "gone":
+            context = _owned_gap_context_observation(
+                owned_context, selected_cpu=selected_cpu, cgroup=cgroup,
+                proc_root=proc_root, deadline=deadline, gone_candidate=process,
+            )
+            candidate_probe = {
+                "status": "gone",
+                "candidate": context.get("candidate", {
+                    "pid": candidate_pid,
+                    "proc_directory_confirmation_before": candidate_confirmation,
+                }),
+            }
+            attempts.append({
+                "attempt": number,
+                "candidate": candidate_probe,
+                "context_after": context,
+            })
+            if time.monotonic() >= deadline or context["status"] == "deadline_expired":
+                result = {
+                    "status": "deadline_expired",
+                    "candidate": candidate_probe["candidate"],
+                    "context_after": context,
+                }
+            elif context["status"] == "gone":
+                result = {
+                    "status": "gone",
+                    "candidate": candidate_probe["candidate"],
+                    "gone_context": context,
+                }
+            else:
+                result = {
+                    "status": context["status"],
+                    "candidate": candidate_probe["candidate"],
+                    "context_after": context,
+                }
+            break
+
         before = _owned_gap_context_observation(
             owned_context, selected_cpu=selected_cpu, cgroup=cgroup,
             proc_root=proc_root, deadline=deadline,
