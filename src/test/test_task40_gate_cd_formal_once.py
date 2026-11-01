@@ -399,6 +399,140 @@ def test_prelaunch_output_parent_rejects_identity_drift(tmp_path):
         _verify_prelaunch_output_parent(output_parent, package, expected_identity)
 
 
+def test_prelaunch_output_parent_accepts_exact_bootstrap_and_cleared_mesh_failure(tmp_path):
+    import hashlib
+
+    output_parent, package, expected_identity = _make_bootstrap_residue(tmp_path)
+    bootstrap = package["prelaunch_output_residue_allowlist"]
+    failed_id = "20261101T101730.329471Z"
+    failed_dir = output_parent / failed_id
+    (failed_dir / "numerical_output").mkdir(parents=True)
+    (failed_dir / "watchdog").mkdir()
+    prior_source = "b" * 40
+    input_path = expected_identity["input_path"]
+    input_sha = expected_identity["input_sha256"]
+    physical_sha = expected_identity["physical_model_sha256"]
+    resolved_sha = expected_identity["resolved_config_sha256"]
+    resolved_bytes = (output_parent / bootstrap["attempt_id"] / "resolved_config.json").read_bytes()
+    manifest = {
+        "run_id": expected_identity["run_id"],
+        "source_sha": prior_source,
+        "input_path": input_path,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "native_capacity_profile_identity": expected_identity["profile_identity"],
+        "output_directory": str(failed_dir.resolve()),
+    }
+    summary = {
+        "status": "finished",
+        "run_id": expected_identity["run_id"],
+        "exit_status": 4,
+        "result_classification": "WORKER_FAILED",
+        "output_directory": str(failed_dir.resolve()),
+        "numerical_output_directory": str((failed_dir / "numerical_output").resolve()),
+        "resource_authority": {
+            "classification": "WORKER_FAILED",
+            "descendants_cleared": True,
+            "remaining_child_pids": [],
+        },
+    }
+    workflow = {
+        "phase": "setup",
+        "facts": {
+            "failed_stage": "p6_direct_mesh_setup_started",
+            "exception_type": "ValueError",
+            "exception_message": (
+                "invalid frozen mesh input: R13 input does not identify the frozen mesh plan"
+            ),
+        },
+    }
+    direct_summary = {
+        "status": "FAILED",
+        "run_id": expected_identity["run_id"],
+        "profile": expected_identity["profile_identity"],
+        "source_sha": prior_source,
+        "failed_stage": "p6_direct_mesh_setup_started",
+        "outer_ksp": "NOT_BUILT",
+        "p4_factor": "NOT_BUILT",
+        "p4_operator": "NOT_BUILT",
+    }
+    files = {
+        "gate_cd_runtime_environment.json": b'{"schema":"test"}\n',
+        "input_original.dat": b"frozen input bytes\n",
+        "input_sha256.txt": f"{input_sha}\n".encode(),
+        "p6_condensed_direct_summary.json": json.dumps(direct_summary).encode() + b"\n",
+        "physical_model_sha256.txt": f"{physical_sha}\n".encode(),
+        "resolved_config.json": resolved_bytes,
+        "run_manifest.json": json.dumps(manifest).encode() + b"\n",
+        "run_summary.json": json.dumps(summary).encode() + b"\n",
+        "source_sha.txt": f"{prior_source}\n".encode(),
+        "stages.jsonl": b'{"stage":"mesh_setup_started"}\n',
+        "workflow_phase.json": json.dumps(workflow).encode() + b"\n",
+        "workstation_isolation.json": b'{"schema":"test"}\n',
+        "watchdog/resources.jsonl": b'{"sample":1}\n',
+        "watchdog/summary.json": b'{"descendants_cleared":true}\n',
+        "watchdog/worker.log": b"worker failed during mapped mesh setup\n",
+    }
+    for relative, content in files.items():
+        target = failed_dir / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+
+    package["prelaunch_output_residue_allowlist"] = {
+        "schema": "task40.gate_cd.prelaunch_output_residue_allowlist.v2",
+        "attempts": [
+            {
+                **bootstrap,
+                "classification": "bootstrap_only_preworker",
+                "directories": [],
+                "prior_service": {"unit": "gate-cd-a2.service", "exec_main_status": 2},
+            },
+            {
+                "attempt_id": failed_id,
+                "attempt_directory": str(failed_dir.resolve()),
+                "prior_source_commit": prior_source,
+                "classification": "worker_failed_gate_cd_mesh_setup",
+                "files": {
+                    relative: hashlib.sha256(content).hexdigest()
+                    for relative, content in files.items()
+                },
+                "directories": ["numerical_output", "watchdog"],
+                "prior_service": {
+                    "unit": "gate-cd-a4.service",
+                    "invocation_id": "c" * 32,
+                    "exec_main_status": 3,
+                },
+            },
+        ],
+    }
+    result = _verify_prelaunch_output_parent(output_parent, package, expected_identity)
+    assert result["status"] == "accepted_exact_prelaunch_residue_set"
+    assert [item["attempt_id"] for item in result["residues"]] == [
+        bootstrap["attempt_id"], failed_id
+    ]
+    assert result["residues"][1]["classification"] == (
+        "worker_failed_gate_cd_mesh_setup"
+    )
+
+
+def test_prelaunch_output_parent_rejects_unlisted_attempt_in_residue_set(tmp_path):
+    output_parent, package, expected_identity = _make_bootstrap_residue(tmp_path)
+    package["prelaunch_output_residue_allowlist"] = {
+        "schema": "task40.gate_cd.prelaunch_output_residue_allowlist.v2",
+        "attempts": [
+            {
+                **package["prelaunch_output_residue_allowlist"],
+                "classification": "bootstrap_only_preworker",
+                "directories": [],
+            }
+        ],
+    }
+    (output_parent / "unreviewed-attempt").mkdir()
+    with pytest.raises(ValueError, match="unapproved attempt directory"):
+        _verify_prelaunch_output_parent(output_parent, package, expected_identity)
+
+
 def test_submission_consumes_exactly_one_marker_even_on_systemd_error(
     tmp_path, monkeypatch
 ):

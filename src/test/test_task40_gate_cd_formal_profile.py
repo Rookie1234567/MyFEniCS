@@ -10,6 +10,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from mpi4py import MPI
 
 from scripts.gate_cd_formal_once import _expected_identity
 from src.common.gate_cd_materials import GATE_CD_REGION_TAGS
@@ -438,6 +439,40 @@ def test_formal_profile_drives_the_real_finite_m8n64_production_inventory():
         for mode in modes
     ) == 66
     assert _dtn_surface_quadrature_degree(cfg, list(modes)) == 81
+
+
+def test_real_loader_to_same_mesh_setup_uses_gate_cd_mapped_mesh_without_assembly():
+    """Exercise production mesh dispatch/QA; no form, matrix, or factor is built."""
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_global import (
+        _build_same_mesh_levels,
+    )
+
+    specification = load_and_resolve(_INPUT)
+    cfg = simulation_config_3d_from_normalized(specification.as_jsonable())
+    route = _direct_run_contract(TASK40_GATE_CD_M8N64_P6_DIRECT_PROFILE)
+
+    # The same level builder is used by the direct runner.  Build the actual
+    # P6 space/MPC to reach its live mesh QA boundary; no form or matrix is
+    # assembled by this test.
+    levels = _build_same_mesh_levels(
+        cfg, MPI.COMM_WORLD, (6,), include_positive_coefficients=False
+    )
+    try:
+        evidence = _task40_gate_cd_mesh_evidence(levels, cfg, route)
+        assert evidence["status"] == "PASS"
+        assert evidence["scope"] == "LIVE_MAPPED_MESH_AND_P6_SPACE_NO_MATRIX_OR_FACTOR"
+        assert evidence["owned_cells"] == 27_600
+        assert evidence["cell_tag_counts_by_tag"] == _EXPECTED_TAGS
+        assert evidence["axis_hashes_sha256_le_f64"] == route[
+            "task40_expected_axis_sha256_le_f64"
+        ]
+        assert evidence["global_p6_dof_rows"] == 18_378_528
+        assert evidence["global_matrix_built"] is False
+        assert evidence["factor_built"] is False
+    finally:
+        levels["floquets"].clear()
+        levels["spaces"].clear()
+        del levels
 
 def test_formal_gate_cd_dat_rejects_run_id_and_reporting_envelope_drift(tmp_path):
     source = _INPUT.read_text()

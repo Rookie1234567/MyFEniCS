@@ -198,19 +198,39 @@ def _build_same_mesh_levels(
     )
     from .fullspace_lor_native_hx_fixture import _piecewise_positive_coefficients
 
-    plan = _stage4_axis_plan(cfg, comm.size)
-    mesh = _structured_hexa_mesh(
-        comm,
-        plan.x_values,
-        plan.y_values,
-        plan.z_values,
-        preserve_input_partition=cfg.stage4_preserve_structured_input_partition,
-    )
-    facet_tags, _ = _mark_boundary_facets(mesh, cfg)
-    cell_tags = _mark_cells(mesh, cfg)
-    mesh_data = SimpleNamespace(
-        mesh=mesh, cell_tags=cell_tags, facet_tags=facet_tags
-    )
+    if cfg.geometry_kind == "task40_gate_cd_mapped":
+        if tuple(int(degree) for degree in degrees) != (6,):
+            raise ValueError("Gate-CD same-mesh setup is restricted to its P6-only route")
+        from src.geometry.mesh_builder_3d import build_gate_cd_mapped_airbox_mesh
+
+        # The Gate-CD route is a swept, z-dependent mapped mesh.  It must use
+        # the same validated builder as the formal direct-run mesh path; the
+        # generic stage-4 tensor-axis planner cannot represent these sections.
+        mapped = build_gate_cd_mapped_airbox_mesh(cfg, comm)
+        mesh = mapped.mesh
+        cell_tags = mapped.cell_tags
+        mesh_data = SimpleNamespace(
+            mesh=mesh,
+            cell_tags=cell_tags,
+            facet_tags=mapped.facet_tags,
+            boundary_facets=mapped.boundary_facets,
+            mesh_cell_type_resolved=mapped.mesh_cell_type_resolved,
+            mesh_spacing_mode_resolved=mapped.mesh_spacing_mode_resolved,
+        )
+    else:
+        plan = _stage4_axis_plan(cfg, comm.size)
+        mesh = _structured_hexa_mesh(
+            comm,
+            plan.x_values,
+            plan.y_values,
+            plan.z_values,
+            preserve_input_partition=cfg.stage4_preserve_structured_input_partition,
+        )
+        facet_tags, _ = _mark_boundary_facets(mesh, cfg)
+        cell_tags = _mark_cells(mesh, cfg)
+        mesh_data = SimpleNamespace(
+            mesh=mesh, cell_tags=cell_tags, facet_tags=facet_tags
+        )
     spaces: dict[int, Any] = {}
     floquets: dict[int, Any] = {}
     for degree in degrees:

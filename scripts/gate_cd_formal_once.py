@@ -332,7 +332,7 @@ def _expected_identity(specification, profile: str, source_commit: str) -> dict:
 def _verify_prelaunch_output_parent(
     output_parent: Path, package: dict, expected_identity: dict
 ) -> dict:
-    """Accept an empty output parent or one exact, hash-bound bootstrap residue."""
+    """Accept empty output or the exact hash-bound prior attempts only."""
     if not output_parent.exists():
         return {"status": "empty_or_not_yet_created", "residue": None}
     if not output_parent.is_dir() or output_parent.is_symlink():
@@ -344,29 +344,6 @@ def _verify_prelaunch_output_parent(
     allowlist = package.get("prelaunch_output_residue_allowlist")
     if not isinstance(allowlist, dict):
         raise TypeError("formal output parent is nonempty without an exact residue allowlist")
-    expected_attempt = allowlist.get("attempt_id")
-    expected_directory = allowlist.get("attempt_directory")
-    prior_source = allowlist.get("prior_source_commit")
-    expected_files = allowlist.get("files")
-    if (
-        not isinstance(expected_attempt, str)
-        or not expected_attempt
-        or not isinstance(expected_directory, str)
-        or not isinstance(prior_source, str)
-        or not isinstance(expected_files, dict)
-    ):
-        raise ValueError("prelaunch residue allowlist is incomplete")
-    attempt_dir = (output_parent / expected_attempt).resolve()
-    if (
-        expected_directory != str(attempt_dir)
-        or attempt_dir.parent != output_parent.resolve()
-        or len(children) != 1
-        or children[0].name != expected_attempt
-        or children[0].is_symlink()
-        or not children[0].is_dir()
-    ):
-        raise ValueError("formal output parent contains an unapproved attempt directory")
-
     required_files = {
         "input_original.dat",
         "input_sha256.txt",
@@ -376,89 +353,227 @@ def _verify_prelaunch_output_parent(
         "run_summary.json",
         "source_sha.txt",
     }
-    if set(expected_files) != required_files:
-        raise ValueError("prelaunch residue must bind the exact seven bootstrap files")
-    entries = sorted(attempt_dir.iterdir(), key=lambda item: item.name)
-    if {item.name for item in entries} != required_files or any(
-        not item.is_file() or item.is_symlink() for item in entries
+    legacy_single = "attempt_id" in allowlist
+    if legacy_single:
+        attempts = [allowlist]
+    elif (
+        allowlist.get("schema")
+        == "task40.gate_cd.prelaunch_output_residue_allowlist.v2"
+        and isinstance(allowlist.get("attempts"), list)
     ):
-        raise ValueError("prelaunch attempt contains missing, extra, or non-file entries")
-    for item in entries:
-        expected_hash = expected_files.get(item.name)
-        if not isinstance(expected_hash, str) or sha256_file(item) != expected_hash:
-            raise ValueError(f"prelaunch bootstrap file hash changed: {item.name}")
+        attempts = allowlist["attempts"]
+    else:
+        raise ValueError("prelaunch residue allowlist schema is unsupported")
+    if not attempts or not all(isinstance(item, dict) for item in attempts):
+        raise ValueError("prelaunch residue allowlist has no exact attempt records")
+    attempt_ids = [item.get("attempt_id") for item in attempts]
+    if (
+        not all(isinstance(name, str) and name for name in attempt_ids)
+        or len(set(attempt_ids)) != len(attempt_ids)
+        or {child.name for child in children} != set(attempt_ids)
+        or any(child.is_symlink() or not child.is_dir() for child in children)
+    ):
+        raise ValueError("formal output parent contains an unapproved attempt directory")
 
-    manifest = _load_json(attempt_dir / "run_manifest.json")
-    summary = _load_json(attempt_dir / "run_summary.json")
-    resolved = _load_json(attempt_dir / "resolved_config.json")
-    expected_values = {
-        "run_id": expected_identity["run_id"],
-        "input_sha256": expected_identity["input_sha256"],
-        "physical_model_sha256": expected_identity["physical_model_sha256"],
-        "resolved_config_sha256": expected_identity["resolved_config_sha256"],
-    }
-    for key, value in expected_values.items():
-        if manifest.get(key) != value:
-            raise ValueError(f"prelaunch residue identity differs for {key}")
-    if summary.get("run_id") != expected_identity["run_id"]:
-        raise ValueError("prelaunch summary run identity differs from the formal loader")
-    if (
-        manifest.get("source_sha") != prior_source
-        or (attempt_dir / "source_sha.txt").read_text().strip() != prior_source
-        or manifest.get("native_capacity_profile_identity")
-        != expected_identity["profile_identity"]
-        or manifest.get("output_directory") != str(attempt_dir)
-        or manifest.get("input_path") != expected_identity["input_path"]
-        or summary.get("output_directory") != str(attempt_dir)
-    ):
-        raise ValueError("prelaunch residue source/profile/output identity mismatch")
-    if (
-        (attempt_dir / "input_sha256.txt").read_text().strip()
-        != expected_identity["input_sha256"]
-        or sha256_file(attempt_dir / "input_original.dat")
-        != expected_identity["input_sha256"]
-        or (attempt_dir / "physical_model_sha256.txt").read_text().strip()
-        != expected_identity["physical_model_sha256"]
-        or sha256_file(attempt_dir / "resolved_config.json")
-        != expected_identity["resolved_config_sha256"]
-    ):
-        raise ValueError("prelaunch identity sidecars differ from the formal loader")
-    if (
-        resolved.get("run_id") != expected_identity["run_id"]
-        or resolved.get("solver", {}).get("native_capacity_profile")
-        != expected_identity["profile_identity"]
-        or resolved.get("provenance", {}).get("input_sha256")
-        != expected_identity["input_sha256"]
-        or resolved.get("provenance", {}).get("physical_model_sha256")
-        != expected_identity["physical_model_sha256"]
-    ):
-        raise ValueError("prelaunch resolved configuration identity mismatch")
-    if (
-        summary.get("status") != "launching"
-        or summary.get("result_classification") != "not_run"
-        or summary.get("exit_status") is not None
-        or summary.get("resource_authority", {}).get("status") != "not_sampled"
-    ):
-        raise ValueError("prelaunch residue is not the recorded non-FE launcher failure")
-    numerical_output = Path(summary.get("numerical_output_directory", ""))
-    if numerical_output.exists() or any(
-        (attempt_dir / name).exists()
-        for name in ("workflow_phase.json", "stages.jsonl", "numerical_output")
-    ):
-        raise ValueError("prelaunch residue unexpectedly contains FE-stage outputs")
-    resolved_parent = Path(
-        resolved.get("provenance", {}).get("expected_output_parent", "")
-    )
-    if not resolved_parent.is_absolute():
-        resolved_parent = (REPO_ROOT / resolved_parent).resolve()
-    if str(resolved_parent) != expected_identity["resolved_output_parent_absolute"]:
-        raise ValueError("prelaunch resolved output-parent identity mismatch")
+    reviewed_attempts: list[dict] = []
+    for record in attempts:
+        attempt_id = record.get("attempt_id")
+        expected_directory = record.get("attempt_directory")
+        prior_source = record.get("prior_source_commit")
+        classification = record.get("classification", "bootstrap_only_preworker")
+        expected_files = record.get("files")
+        expected_directories = record.get("directories", [])
+        if (
+            not isinstance(expected_directory, str)
+            or not isinstance(prior_source, str)
+            or len(prior_source) != 40
+            or not isinstance(classification, str)
+            or not isinstance(expected_files, dict)
+            or not isinstance(expected_directories, list)
+            or not all(isinstance(item, str) and item for item in expected_directories)
+        ):
+            raise ValueError("prelaunch residue attempt record is incomplete")
+        attempt_dir = (output_parent / attempt_id).resolve()
+        if (
+            expected_directory != str(attempt_dir)
+            or attempt_dir.parent != output_parent.resolve()
+        ):
+            raise ValueError("prelaunch residue attempt path differs from its allowlist")
+
+        expected_file_names = set(expected_files)
+        expected_dir_names = set(expected_directories)
+        if len(expected_dir_names) != len(expected_directories):
+            raise ValueError("prelaunch residue directory allowlist has duplicates")
+        if any(
+            Path(name).is_absolute()
+            or ".." in Path(name).parts
+            or Path(name).as_posix() != name
+            for name in expected_file_names | expected_dir_names
+        ):
+            raise ValueError("prelaunch residue contains an unsafe relative path")
+        actual_file_names: set[str] = set()
+        actual_dir_names: set[str] = set()
+        for item in attempt_dir.rglob("*"):
+            if item.is_symlink():
+                raise ValueError("prelaunch residue tree contains a symlink")
+            relative = item.relative_to(attempt_dir).as_posix()
+            if item.is_dir():
+                actual_dir_names.add(relative)
+            elif item.is_file():
+                actual_file_names.add(relative)
+            else:
+                raise ValueError("prelaunch residue tree contains a special file")
+        if (
+            actual_file_names != expected_file_names
+            or actual_dir_names != expected_dir_names
+        ):
+            raise ValueError("prelaunch attempt tree has missing, extra, or unlisted entries")
+        for relative, expected_hash in expected_files.items():
+            if (
+                not isinstance(expected_hash, str)
+                or len(expected_hash) != 64
+                or sha256_file(attempt_dir / relative) != expected_hash
+            ):
+                raise ValueError(f"prelaunch attempt file hash changed: {relative}")
+
+        if classification == "bootstrap_only_preworker":
+            if expected_file_names != required_files or expected_dir_names:
+                raise ValueError("bootstrap residue must be exactly seven root files")
+        elif classification == "worker_failed_gate_cd_mesh_setup":
+            required_setup_files = required_files | {
+                "gate_cd_runtime_environment.json",
+                "p6_condensed_direct_summary.json",
+                "stages.jsonl",
+                "workflow_phase.json",
+                "workstation_isolation.json",
+                "watchdog/resources.jsonl",
+                "watchdog/summary.json",
+                "watchdog/worker.log",
+            }
+            if (
+                not required_setup_files.issubset(expected_file_names)
+                or "numerical_output" not in expected_dir_names
+                or "watchdog" not in expected_dir_names
+                or any(name.startswith("numerical_output/") for name in expected_file_names)
+            ):
+                raise ValueError("mesh-setup failure residue lacks exact terminal evidence")
+        else:
+            raise ValueError("prelaunch residue classification is unsupported")
+
+        manifest = _load_json(attempt_dir / "run_manifest.json")
+        summary = _load_json(attempt_dir / "run_summary.json")
+        resolved = _load_json(attempt_dir / "resolved_config.json")
+        expected_values = {
+            "run_id": expected_identity["run_id"],
+            "input_sha256": expected_identity["input_sha256"],
+            "physical_model_sha256": expected_identity["physical_model_sha256"],
+            "resolved_config_sha256": expected_identity["resolved_config_sha256"],
+        }
+        for key, value in expected_values.items():
+            if manifest.get(key) != value:
+                raise ValueError(f"prelaunch residue identity differs for {key}")
+        if summary.get("run_id") != expected_identity["run_id"]:
+            raise ValueError("prelaunch summary run identity differs from the formal loader")
+        if (
+            manifest.get("source_sha") != prior_source
+            or (attempt_dir / "source_sha.txt").read_text().strip() != prior_source
+            or manifest.get("native_capacity_profile_identity")
+            != expected_identity["profile_identity"]
+            or manifest.get("output_directory") != str(attempt_dir)
+            or manifest.get("input_path") != expected_identity["input_path"]
+            or summary.get("output_directory") != str(attempt_dir)
+        ):
+            raise ValueError("prelaunch residue source/profile/output identity mismatch")
+        if (
+            (attempt_dir / "input_sha256.txt").read_text().strip()
+            != expected_identity["input_sha256"]
+            or sha256_file(attempt_dir / "input_original.dat")
+            != expected_identity["input_sha256"]
+            or (attempt_dir / "physical_model_sha256.txt").read_text().strip()
+            != expected_identity["physical_model_sha256"]
+            or sha256_file(attempt_dir / "resolved_config.json")
+            != expected_identity["resolved_config_sha256"]
+        ):
+            raise ValueError("prelaunch identity sidecars differ from the formal loader")
+        if (
+            resolved.get("run_id") != expected_identity["run_id"]
+            or resolved.get("solver", {}).get("native_capacity_profile")
+            != expected_identity["profile_identity"]
+            or resolved.get("provenance", {}).get("input_sha256")
+            != expected_identity["input_sha256"]
+            or resolved.get("provenance", {}).get("physical_model_sha256")
+            != expected_identity["physical_model_sha256"]
+        ):
+            raise ValueError("prelaunch resolved configuration identity mismatch")
+        resolved_parent = Path(
+            resolved.get("provenance", {}).get("expected_output_parent", "")
+        )
+        if not resolved_parent.is_absolute():
+            resolved_parent = (REPO_ROOT / resolved_parent).resolve()
+        if str(resolved_parent) != expected_identity["resolved_output_parent_absolute"]:
+            raise ValueError("prelaunch resolved output-parent identity mismatch")
+
+        if classification == "bootstrap_only_preworker":
+            if (
+                summary.get("status") != "launching"
+                or summary.get("result_classification") != "not_run"
+                or summary.get("exit_status") is not None
+                or summary.get("resource_authority", {}).get("status") != "not_sampled"
+            ):
+                raise ValueError("bootstrap residue is not the recorded non-FE launcher failure")
+        else:
+            workflow = _load_json(attempt_dir / "workflow_phase.json")
+            direct_summary = _load_json(
+                attempt_dir / "p6_condensed_direct_summary.json"
+            )
+            authority = summary.get("resource_authority", {})
+            if (
+                summary.get("status") != "finished"
+                or summary.get("exit_status") != 4
+                or summary.get("result_classification") != "WORKER_FAILED"
+                or authority.get("classification") != "WORKER_FAILED"
+                or authority.get("descendants_cleared") is not True
+                or authority.get("remaining_child_pids") != []
+                or workflow.get("phase") != "setup"
+                or workflow.get("facts", {}).get("failed_stage")
+                != "p6_direct_mesh_setup_started"
+                or workflow.get("facts", {}).get("exception_type") != "ValueError"
+                or workflow.get("facts", {}).get("exception_message")
+                != "invalid frozen mesh input: R13 input does not identify the frozen mesh plan"
+                or direct_summary.get("status") != "FAILED"
+                or direct_summary.get("run_id") != expected_identity["run_id"]
+                or direct_summary.get("profile") != expected_identity["profile_identity"]
+                or direct_summary.get("source_sha") != prior_source
+                or direct_summary.get("failed_stage") != "p6_direct_mesh_setup_started"
+                or direct_summary.get("outer_ksp") != "NOT_BUILT"
+                or direct_summary.get("p4_factor") != "NOT_BUILT"
+                or direct_summary.get("p4_operator") != "NOT_BUILT"
+            ):
+                raise ValueError("mesh-setup residue is not the exact cleared pre-matrix failure")
+
+        reviewed_attempts.append(
+            {
+                "attempt_id": attempt_id,
+                "attempt_directory": str(attempt_dir),
+                "prior_source_commit": prior_source,
+                "classification": classification,
+                "files": expected_files,
+                "directories": sorted(expected_dir_names),
+                "prior_service": record.get("prior_service"),
+            }
+        )
+    if legacy_single:
+        record = reviewed_attempts[0]
+        return {
+            "status": "accepted_exact_prelaunch_bootstrap_only",
+            "attempt_id": record["attempt_id"],
+            "attempt_directory": record["attempt_directory"],
+            "prior_source_commit": record["prior_source_commit"],
+            "files": record["files"],
+        }
     return {
-        "status": "accepted_exact_prelaunch_bootstrap_only",
-        "attempt_id": expected_attempt,
-        "attempt_directory": str(attempt_dir),
-        "prior_source_commit": prior_source,
-        "files": expected_files,
+        "status": "accepted_exact_prelaunch_residue_set",
+        "residues": reviewed_attempts,
     }
 
 

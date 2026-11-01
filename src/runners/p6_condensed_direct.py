@@ -1419,6 +1419,7 @@ def _task40_gate_cd_mesh_evidence(
             f"actual Gate-CD P6 local element dimension changed: {p6_local_dimension}"
         )
     facts.update(
+        scope="LIVE_MAPPED_MESH_AND_P6_SPACE_NO_MATRIX_OR_FACTOR",
         profile_identity=route["profile_identity"],
         operator_scope=route["operator_scope"],
         full_dtn_status="FULL_DTN_NOT_VERIFIED",

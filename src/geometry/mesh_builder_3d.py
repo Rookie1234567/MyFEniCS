@@ -1057,6 +1057,89 @@ def _validate_stage4_hexa_geometry(cfg: SimulationConfig3D) -> None:
             raise ValueError("Stage-4 grating z bounds must lie inside the physical z domain.")
 
 
+def build_gate_cd_mapped_airbox_mesh(
+    cfg: SimulationConfig3D, comm: MPI.Comm
+) -> AirBox3DMesh:
+    """Build the frozen Gate-CD mapped mesh through its production QA path."""
+    from ..common.gate_cd_materials import validate_gate_cd_region_entries
+    from .task40_gate_cd_mesh_plan import (
+        GATE_CD_CELLS,
+        GATE_CD_REGION_TAGS,
+        build_gate_cd_mesh,
+        build_gate_cd_plan,
+        gate_cd_live_mesh_facts,
+    )
+
+    if (
+        cfg.geometry_kind != "task40_gate_cd_mapped"
+        or cfg.stage_case != "stage4_block_grating"
+        or cfg.mesh_cell_type_resolved != "hexahedron"
+        or not cfg.use_floquet_xy
+        or cfg.use_pml
+        or cfg.period_x != 50.0
+        or cfg.period_y != 50.0
+        or cfg.physical_z_min != -10.0
+        or cfg.physical_z_max != 240.0
+        or cfg.domain_z_min != -10.0
+        or cfg.domain_z_max != 240.0
+    ):
+        raise ValueError("gate_cd mesh builder requires its frozen no-PML periodic geometry")
+    if cfg.mesh_axis_cell_counts_requested not in {None, GATE_CD_CELLS}:
+        raise ValueError("gate_cd axis counts differ from the frozen mapped mesh plan")
+    entries = validate_gate_cd_region_entries(cfg.physical_material_regions)
+    if tuple(int(entry["tag"]) for entry in entries) != tuple(
+        int(GATE_CD_REGION_TAGS[str(entry["label"])]) for entry in entries
+    ):
+        raise ValueError("gate_cd resolved physical region tags differ from the frozen map")
+
+    plan = build_gate_cd_plan()
+    msh, cell_tags, plan = build_gate_cd_mesh(comm, plan)
+    msh.name = cfg.case_name
+    msh.topology.create_connectivity(msh.topology.dim - 1, msh.topology.dim)
+    facet_tags, boundary_facets = _mark_boundary_facets(msh, cfg)
+    live_facts = gate_cd_live_mesh_facts(msh, cell_tags, plan)
+    x_widths = np.diff(plan.x_sections, axis=1)
+    y_widths = np.diff(plan.y_sections, axis=1)
+    axis_stats = {
+        "x": {
+            "num_cells_per_section": int(x_widths.shape[1]),
+            "section_count": int(x_widths.shape[0]),
+            "minimum_nm": float(np.min(x_widths)),
+            "maximum_nm": float(np.max(x_widths)),
+        },
+        "y": {
+            "num_cells_per_section": int(y_widths.shape[1]),
+            "section_count": int(y_widths.shape[0]),
+            "minimum_nm": float(np.min(y_widths)),
+            "maximum_nm": float(np.max(y_widths)),
+        },
+        "z": {
+            "num_cells": int(len(plan.z) - 1),
+            "minimum_nm": float(np.min(np.diff(plan.z))),
+            "maximum_nm": float(np.max(np.diff(plan.z))),
+        },
+    }
+    return AirBox3DMesh(
+        mesh=msh,
+        cell_tags=cell_tags,
+        facet_tags=facet_tags,
+        boundary_facets=boundary_facets,
+        mesh_cell_type_resolved="hexahedron",
+        mesh_cells_resolved=GATE_CD_CELLS,
+        z_alignment_warnings=[],
+        mesh_spacing_mode_resolved="gate_cd_mapped_exact",
+        mesh_axis_cell_stats=axis_stats,
+        material_plane_alignment={
+            "all_required_material_coordinates_are_plan_sections": True,
+            "required_z_planes_nm": plan.z.tolist(),
+            "gate_cd_live_axis_sha256_le_f64": live_facts[
+                "axis_hashes_sha256_le_f64"
+            ],
+        },
+        local_refinement_regions={"x": [], "y": [], "z": []},
+    )
+
+
 def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh:
     """Build a structured 3D box mesh for staged verification.
 
@@ -1066,84 +1149,7 @@ def build_airbox_mesh_3d(cfg: SimulationConfig3D, out_dir: Path) -> AirBox3DMesh
     out_dir.mkdir(parents=True, exist_ok=True)
     comm = MPI.COMM_WORLD
     if cfg.geometry_kind == "task40_gate_cd_mapped":
-        from ..common.gate_cd_materials import (
-            validate_gate_cd_region_entries,
-        )
-        from .task40_gate_cd_mesh_plan import (
-            GATE_CD_CELLS,
-            GATE_CD_REGION_TAGS,
-            build_gate_cd_mesh,
-            build_gate_cd_plan,
-            gate_cd_live_mesh_facts,
-        )
-
-        if (
-            cfg.stage_case != "stage4_block_grating"
-            or cfg.mesh_cell_type_resolved != "hexahedron"
-            or not cfg.use_floquet_xy
-            or cfg.use_pml
-            or cfg.period_x != 50.0
-            or cfg.period_y != 50.0
-            or cfg.physical_z_min != -10.0
-            or cfg.physical_z_max != 240.0
-            or cfg.domain_z_min != -10.0
-            or cfg.domain_z_max != 240.0
-        ):
-            raise ValueError("gate_cd mesh builder requires its frozen no-PML periodic geometry")
-        if cfg.mesh_axis_cell_counts_requested not in {None, GATE_CD_CELLS}:
-            raise ValueError("gate_cd axis counts differ from the frozen mapped mesh plan")
-        entries = validate_gate_cd_region_entries(cfg.physical_material_regions)
-        if tuple(int(entry["tag"]) for entry in entries) != tuple(
-            int(GATE_CD_REGION_TAGS[str(entry["label"])]) for entry in entries
-        ):
-            raise ValueError("gate_cd resolved physical region tags differ from the frozen map")
-
-        plan = build_gate_cd_plan()
-        msh, cell_tags, plan = build_gate_cd_mesh(comm, plan)
-        msh.name = cfg.case_name
-        msh.topology.create_connectivity(msh.topology.dim - 1, msh.topology.dim)
-        facet_tags, boundary_facets = _mark_boundary_facets(msh, cfg)
-        live_facts = gate_cd_live_mesh_facts(msh, cell_tags, plan)
-        x_widths = np.diff(plan.x_sections, axis=1)
-        y_widths = np.diff(plan.y_sections, axis=1)
-        axis_stats = {
-            "x": {
-                "num_cells_per_section": int(x_widths.shape[1]),
-                "section_count": int(x_widths.shape[0]),
-                "minimum_nm": float(np.min(x_widths)),
-                "maximum_nm": float(np.max(x_widths)),
-            },
-            "y": {
-                "num_cells_per_section": int(y_widths.shape[1]),
-                "section_count": int(y_widths.shape[0]),
-                "minimum_nm": float(np.min(y_widths)),
-                "maximum_nm": float(np.max(y_widths)),
-            },
-            "z": {
-                "num_cells": int(len(plan.z) - 1),
-                "minimum_nm": float(np.min(np.diff(plan.z))),
-                "maximum_nm": float(np.max(np.diff(plan.z))),
-            },
-        }
-        return AirBox3DMesh(
-            mesh=msh,
-            cell_tags=cell_tags,
-            facet_tags=facet_tags,
-            boundary_facets=boundary_facets,
-            mesh_cell_type_resolved="hexahedron",
-            mesh_cells_resolved=GATE_CD_CELLS,
-            z_alignment_warnings=[],
-            mesh_spacing_mode_resolved="gate_cd_mapped_exact",
-            mesh_axis_cell_stats=axis_stats,
-            material_plane_alignment={
-                "all_required_material_coordinates_are_plan_sections": True,
-                "required_z_planes_nm": plan.z.tolist(),
-                "gate_cd_live_axis_sha256_le_f64": live_facts[
-                    "axis_hashes_sha256_le_f64"
-                ],
-            },
-            local_refinement_regions={"x": [], "y": [], "z": []},
-        )
+        return build_gate_cd_mapped_airbox_mesh(cfg, comm)
     mesh_cell_type_resolved = cfg.mesh_cell_type_resolved
     hexa_axis_plan: HexaAxisPlan | None = None
     if cfg.geometry_kind == "rectangular_block_grating" and (
