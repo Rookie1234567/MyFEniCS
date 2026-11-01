@@ -1,0 +1,75 @@
+{
+  "record_type": "bounded_mapped_hcurl_validation_scope",
+  "status": "prepared_not_started",
+  "worktree": "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_slope_exec",
+  "branch": "task40para_phi90_gate_cd_slope",
+  "base_head": "6232ea6daacea31a83867dd7725823ffcefdc1fb",
+  "source_file_sha256": {
+    "src/solvers/hcurl_assembly_time_condensation.py": "1da481fd1b1f246205b5277ddd29c386d4dd3ed9bb034efde131a3a28cd2ef8b",
+    "src/geometry/swept_hex_mesh.py": "59d31609ade950ab48638e163b5ac3268b5f8327521c734ef8f349a33bebae43",
+    "src/test/test_task40_gate_cd_swept_hex_geometry.py": "bbf00b0a01033c022ac501435ba31e147717539c521d06e9cf75dd93ee13249a",
+    "src/test/test_task40_gate_cd_mapped_p6_condensation.py": "24f9ef29a355131ecf2ad658cf41fa6e13f137b7d7d728b0d9d3b5a19dbe088f"
+  },
+  "purpose": "validate exact z-swept Q1 geometry handling in assembly-time P6 H(curl) condensation before considering any gate_cd-size case",
+  "mesh": {
+    "cell_count": 8,
+    "structured_shape": [2, 2, 2],
+    "z_planes_nm": [-10.0, 0.0, 130.0],
+    "x_sections_nm_by_z": [[0.0, 25.0, 50.0], [0.0, 23.5, 50.0], [0.0, 22.0, 50.0]],
+    "y_sections_nm_by_z": [[0.0, 12.5, 25.0], [0.0, 13.0, 25.0], [0.0, 13.5, 25.0]],
+    "outer_periodic_faces": "fixed x=0/50 and y=0/25 planes; matching translated coordinates at every z section",
+    "coordinate_order": "DOLFINx first-order hexahedron local vertex order, not coordinate-sorted",
+    "geometry_family": "separable axis-aligned z-swept Q1 hex only",
+    "mesh_size": "MPI.COMM_SELF only",
+    "vtk_output": false
+  },
+  "discretization": {
+    "family": "N1curl",
+    "degree": 6,
+    "cell_dimension": 882,
+    "cell_trace_dofs": 432,
+    "cell_interior_dofs": 450,
+    "unconstrained_global_dof_estimate": 6084,
+    "floquet": "production build_double_floquet_mpc, oblique nontrivial x and y phase, both periodic face families",
+    "form": "complex curl-curl plus lossy complex mass, one explicit cell tag",
+    "quadrature_degrees": [15, 21, 27],
+    "translation_normalization": "disabled; physical coordinates are in the exact map key unless a later caller proves and opts into position invariance"
+  },
+  "independent_checks": [
+    "ordinary DOLFINx/FFCx assembled sparse full operator versus mapped direct cell-tensor Schur matrix",
+    "independent full-matrix explicit cell condensation then production Floquet slave-row elimination versus mapped Schur",
+    "manufactured MPC-compatible field generates a full RHS with nonzero cell-interior entries",
+    "reduced Schur action on the exact active trace equals the condensed RHS",
+    "interior recovery with nonzero interior RHS reproduces the manufactured field and its full assembled residual",
+    "q15/q21 and q21/q27 Schur relative differences recorded on the same mapped cells",
+    "exact mapped-coordinate cache identity, actual mesh vertex ordering, positive analytic Jacobian certificate and 27-point cross-check"
+  ],
+  "explicitly_out_of_scope": [
+    "no gate_cd full mesh",
+    "no global factorization, KSP or PC",
+    "no DtN inventory or port matrix",
+    "no full-space global dense matrix/solve",
+    "no VTK/VTU/VTX/PVD output",
+    "no change to established affine geometry behavior or solver gates"
+  ],
+  "expected_local_storage": {
+    "one_complex128_882_by_882_cell_tensor_bytes": 12446784,
+    "eight_cell_tensor_contribution_bytes_before_sharing": 99574272,
+    "one_complex128_450_by_450_cell_interior_block_bytes": 3240000,
+    "interpretation": "array-size estimates only, not a peak-RSS or global sparse-matrix bound; host admission/watchdog remains authoritative"
+  },
+  "host_contract": {
+    "parent_cpu": 9,
+    "worker_cpu": 24,
+    "mpi_ranks": 1,
+    "math_threads": 1,
+    "numa": "interleave 0-1",
+    "pss_uss_smaps": "disabled",
+    "available_memory_floor_bytes": 68719476736,
+    "fixed_task_rss_cap": null,
+    "swap": "observe only",
+    "fresh_required_before_run": true
+  },
+  "qualified_command": "TASK40_GATE_CD_VALIDATION_REPORT=/tmp/task40_gate_cd_mapped_p6_validation_v1.json source scripts/activate_task40_phi90_pord64.sh && TASK40_GATE_CD_VALIDATION_REPORT=/tmp/task40_gate_cd_mapped_p6_validation_v1.json python -m pytest -s -q src/test/test_task40_gate_cd_swept_hex_geometry.py src/test/test_task40_gate_cd_mapped_p6_condensation.py",
+  "scope_review": "Main approved the bounded COMM_SELF mapped-P6 validation scope in /tmp/task40_gate_cd_mapped_scope_main_review_v1.json; this record pins the concrete test geometry, source hashes and memory estimate for the fresh review."
+}

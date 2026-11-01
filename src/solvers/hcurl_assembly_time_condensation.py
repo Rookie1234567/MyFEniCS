@@ -1,4 +1,4 @@
-"""Assembly-time cell-interior condensation for affine H(curl) hexahedra.
+"""Assembly-time cell-interior condensation for H(curl) hexahedra.
 
 The established Task035b condensation path starts from a fully assembled
 operator.  This module instead calls the compiled FFCx cell kernel directly,
@@ -8,24 +8,26 @@ complement, and inserts only trace rows into PETSc.
 The first implementation is deliberately narrow and fail-closed:
 
 * complex128, scalar-blocked H(curl);
-* first-order, axis-aligned affine hexahedral geometry;
+* first-order, axis-aligned affine hexahedral geometry by default;
+* an explicit ``mapped_exact`` opt-in for first-order trilinear swept hexes;
 * cell integrals with embedded constants and no runtime coefficients;
 * every locally owned cell must have an explicit integral subdomain tag.
 
-Identical ``(material tag, cell widths, orientation)`` classes reuse the
-condensed tensor and the interior-recovery operator.  Ordinary assembly remains
-the default elsewhere.
+The ordinary geometry policy reuses identical ``(material tag, cell widths,
+orientation)`` classes.  ``mapped_exact`` instead keys every cache by all eight
+canonicalized geometry vertices, so differing slopes cannot share a local
+tensor or recovery factor. Ordinary assembly remains the default elsewhere.
 """
 
 from __future__ import annotations
 
+import hashlib
+import warnings
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-import hashlib
 from time import perf_counter
 from types import MappingProxyType
-from typing import Any, Callable
-import warnings
+from typing import Any
 
 import numpy as np
 from mpi4py import MPI
@@ -838,6 +840,174 @@ def _canonical_axis_aligned_coordinates(
     return np.ascontiguousarray(canonical.ravel()), identity_widths
 
 
+_HEX_REFERENCE_VERTICES = np.asarray(
+    (
+        (0.0, 0.0, 0.0),
+        (1.0, 0.0, 0.0),
+        (0.0, 1.0, 0.0),
+        (1.0, 1.0, 0.0),
+        (0.0, 0.0, 1.0),
+        (1.0, 0.0, 1.0),
+        (0.0, 1.0, 1.0),
+        (1.0, 1.0, 1.0),
+    ),
+    dtype=np.float64,
+)
+
+
+def _trilinear_hex_jacobian_determinants(
+    coordinates: np.ndarray,
+) -> np.ndarray:
+    """Evaluate the Q1 hex Jacobian at the 3x3x3 tensor sample grid."""
+
+    values = np.asarray(coordinates, dtype=np.float64)
+    if values.shape != (8, 3):
+        raise ValueError("mapped hex geometry requires exactly 8 three-vectors")
+    if not np.all(np.isfinite(values)):
+        raise FloatingPointError("mapped hex geometry contains non-finite coordinates")
+    axis = np.asarray((0.0, 0.5, 1.0), dtype=np.float64)
+    sample_points = np.asarray(
+        [(xi, eta, zeta) for xi in axis for eta in axis for zeta in axis],
+        dtype=np.float64,
+    )
+    gradients = np.empty((len(sample_points), 8, 3), dtype=np.float64)
+    for vertex, (rx, ry, rz) in enumerate(_HEX_REFERENCE_VERTICES):
+        sx = 1.0 if rx else -1.0
+        sy = 1.0 if ry else -1.0
+        sz = 1.0 if rz else -1.0
+        xi, eta, zeta = sample_points.T
+        fx = xi if rx else 1.0 - xi
+        fy = eta if ry else 1.0 - eta
+        fz = zeta if rz else 1.0 - zeta
+        gradients[:, vertex, 0] = sx * fy * fz
+        gradients[:, vertex, 1] = sy * fx * fz
+        gradients[:, vertex, 2] = sz * fx * fy
+    jacobians = np.einsum("vi,qvj->qij", values, gradients, optimize=True)
+    return np.linalg.det(jacobians)
+
+
+def _canonical_swept_hex_coordinates(
+    mesh,
+    cell: int,
+    *,
+    tolerance: float,
+    translation_invariant_form: bool,
+) -> tuple[np.ndarray, tuple[float, ...], dict[str, float]]:
+    """Validate the exact z-swept axis-aligned Q1 family and return its key.
+
+    In the reference-node order used by DOLFINx's first-order hexahedron, x
+    may depend on reference x and z only, y on reference y and z only, and z
+    on reference z only. Thus
+
+    ``det(J)(zeta) = dz * wx(zeta) * wy(zeta)``
+
+    exactly, with positive affine widths. This accepts the gate_cd planar
+    tapers and rejects arbitrary warped/trilinear Q1 cells. Translation is
+    removed only when the caller explicitly establishes a position-invariant
+    bilinear form; otherwise the physical vertex coordinates enter both the
+    FFCx kernel and cache key unchanged.
+    """
+
+    geometry_dofs = np.asarray(mesh.geometry.dofmap[cell], dtype=np.int32)
+    coordinates = np.asarray(mesh.geometry.x[geometry_dofs], dtype=np.float64)
+    if coordinates.shape != (8, 3):
+        raise ValueError(
+            "mapped_exact condensation requires first-order 8-node hexahedra"
+        )
+    cmap = getattr(mesh.geometry, "cmap", None)
+    degree = getattr(cmap, "degree", 1)
+    if callable(degree):
+        degree = degree()
+    if int(degree) != 1:
+        raise ValueError("mapped_exact condensation requires first-order geometry")
+    if not np.all(np.isfinite(coordinates)):
+        raise FloatingPointError("mapped hex geometry contains non-finite coordinates")
+    lower = coordinates.min(axis=0)
+    upper = coordinates.max(axis=0)
+    widths = upper - lower
+    if np.any(widths <= float(tolerance)):
+        raise ValueError("mapped hex geometry has a nonpositive bounding-box width")
+    origin = lower if translation_invariant_form else np.zeros(3, dtype=np.float64)
+    canonical = np.ascontiguousarray(coordinates - origin[None, :])
+    canonical[canonical == 0.0] = 0.0  # canonicalize negative zero only
+    if len({tuple(row) for row in canonical}) != 8:
+        raise ValueError("mapped hex geometry does not contain eight unique vertices")
+    vertices = canonical.reshape(8, 3)
+    bottom = vertices[:4]
+    top = vertices[4:]
+    endpoint_tolerance = max(
+        float(tolerance),
+        32.0 * np.finfo(np.float64).eps * max(float(np.max(np.abs(vertices))), 1.0),
+    )
+    if (
+        np.ptp(bottom[:, 2]) > endpoint_tolerance
+        or np.ptp(top[:, 2]) > endpoint_tolerance
+        or float(np.mean(top[:, 2]) - np.mean(bottom[:, 2])) <= endpoint_tolerance
+    ):
+        raise ValueError(
+            "mapped_exact accepts only z-swept hexes with planar z endpoint faces"
+        )
+    for section in (bottom, top):
+        if (
+            abs(float(section[0, 0] - section[2, 0])) > endpoint_tolerance
+            or abs(float(section[1, 0] - section[3, 0])) > endpoint_tolerance
+            or abs(float(section[0, 1] - section[1, 1])) > endpoint_tolerance
+            or abs(float(section[2, 1] - section[3, 1])) > endpoint_tolerance
+        ):
+            raise ValueError(
+                "mapped_exact rejects non-separable x/y cross-sections"
+            )
+    z_thickness = float(np.mean(top[:, 2]) - np.mean(bottom[:, 2]))
+    x_widths = (
+        float(bottom[1, 0] - bottom[0, 0]),
+        float(top[1, 0] - top[0, 0]),
+    )
+    y_widths = (
+        float(bottom[2, 1] - bottom[0, 1]),
+        float(top[2, 1] - top[0, 1]),
+    )
+    if min(*x_widths, *y_widths) <= endpoint_tolerance:
+        raise ValueError("mapped swept hex has a nonpositive endpoint width")
+    exact_minimum = z_thickness * min(
+        x_widths[0] * y_widths[0],
+        x_widths[1] * y_widths[1],
+    )
+    determinants = _trilinear_hex_jacobian_determinants(canonical.reshape(8, 3))
+    determinant_scale = max(float(np.prod(widths)), np.finfo(np.float64).tiny)
+    determinant_floor = 64.0 * np.finfo(np.float64).eps * determinant_scale
+    minimum = float(np.min(determinants))
+    maximum = float(np.max(determinants))
+    if (
+        not np.all(np.isfinite(determinants))
+        or minimum <= determinant_floor
+        or not np.isclose(
+            minimum,
+            exact_minimum,
+            rtol=5.0e-13,
+            atol=determinant_floor,
+        )
+        or np.any(determinants < -determinant_floor)
+    ):
+        raise ValueError(
+            "mapped swept hex Jacobian check disagrees with its analytic "
+            "positive-width certificate "
+            f"on the 3x3x3 check grid: min_detJ={minimum:.17g}, "
+            f"analytic_min={exact_minimum:.17g}, floor={determinant_floor:.17g}"
+        )
+    identity = tuple(float(value) for value in canonical.reshape(-1))
+    return canonical.reshape(-1), identity, {
+        "min_detJ_sampled": minimum,
+        "max_detJ_sampled": maximum,
+        "detJ_sample_count": float(len(determinants)),
+        "min_detJ_analytic": float(exact_minimum),
+        "z_thickness": z_thickness,
+        "x_width_z0": x_widths[0],
+        "x_width_z1": x_widths[1],
+        "y_width_z0": y_widths[0],
+        "y_width_z1": y_widths[1],
+    }
+
+
 def _lexicographic_min_coordinates(
     first: np.ndarray,
     second: np.ndarray,
@@ -1101,7 +1271,18 @@ def _global_raw_tensor_cache(
             {
                 "policy": str(key[0]),
                 "material_tag": int(key[1]),
-                "cell_widths": [float(value) for value in key[2:]],
+                "geometry_identity_kind": (
+                    "cell_widths" if len(key) == 5 else "canonical_q1_hex_vertices"
+                ),
+                "cell_widths": (
+                    [float(value) for value in key[2:]] if len(key) == 5 else None
+                ),
+                "canonical_vertex_coordinate_count": (
+                    int(len(key) - 2) if len(key) == 26 else None
+                ),
+                "geometry_identity_sha256": hashlib.sha256(
+                    np.ascontiguousarray(key[2:], dtype=np.float64).tobytes()
+                ).hexdigest(),
                 "dimension": int(policy_forms[str(key[0])][2]),
                 "active_kernel_ids": [
                     kernel_id
@@ -1215,6 +1396,7 @@ def build_unconstrained_assembly_time_condensation(
     materialize_global_matrix: bool = True,
     geometry_tolerance: float = 1.0e-11,
     geometry_identity_policy: str = "rounded_12",
+    mapped_geometry_translation_invariant: bool = False,
     share_identity_cache: bool = False,
     raw_tensor_evaluator: Any | None = None,
 ) -> AssemblyTimeCondensedSystem:
@@ -1239,10 +1421,18 @@ def build_unconstrained_assembly_time_condensation(
         "rounded_12",
         "raw_unrounded",
         "rounded_12_representative",
+        "mapped_exact",
     }:
         raise ValueError(
             "geometry_identity_policy must be rounded_12, raw_unrounded, "
-            "or rounded_12_representative"
+            "rounded_12_representative, or mapped_exact"
+        )
+    if (
+        mapped_geometry_translation_invariant
+        and geometry_identity_policy != "mapped_exact"
+    ):
+        raise ValueError(
+            "mapped_geometry_translation_invariant is only valid with mapped_exact"
         )
     materialize_global_matrix = bool(materialize_global_matrix)
     if not materialize_global_matrix and not retain_local_schur_for_matrix_free:
@@ -1366,29 +1556,61 @@ def build_unconstrained_assembly_time_condensation(
     local_class_coordinates: dict[tuple[Any, ...], np.ndarray] = {}
     cell_raw_metadata: list[tuple[tuple[Any, ...], tuple[Any, ...]]] = []
     local_raw_geometry_classes: set[tuple[Any, ...]] = set()
+    local_mapped_jacobian_min = float("inf")
+    local_mapped_jacobian_max = float("-inf")
+    local_mapped_jacobian_analytic_min = float("inf")
+    local_mapped_cell_count = 0
     local_metadata_error = None
     try:
         for cell in range(owned_cells):
-            canonical_coordinates, widths = _canonical_axis_aligned_coordinates(
-                mesh,
-                cell,
-                tolerance=geometry_tolerance,
-                geometry_identity_policy=(
-                    "raw_unrounded"
-                    if representative_tensor_groups
-                    else geometry_identity_policy
-                ),
-            )
+            mapped_facts = None
+            if geometry_identity_policy == "mapped_exact":
+                canonical_coordinates, geometry_identity, mapped_facts = (
+                    _canonical_swept_hex_coordinates(
+                        mesh,
+                        cell,
+                        tolerance=geometry_tolerance,
+                        translation_invariant_form=bool(
+                            mapped_geometry_translation_invariant
+                        ),
+                    )
+                )
+                local_mapped_jacobian_min = min(
+                    local_mapped_jacobian_min,
+                    mapped_facts["min_detJ_sampled"],
+                )
+                local_mapped_jacobian_max = max(
+                    local_mapped_jacobian_max,
+                    mapped_facts["max_detJ_sampled"],
+                )
+                local_mapped_jacobian_analytic_min = min(
+                    local_mapped_jacobian_analytic_min,
+                    mapped_facts["min_detJ_analytic"],
+                )
+                local_mapped_cell_count += 1
+            else:
+                canonical_coordinates, geometry_identity = (
+                    _canonical_axis_aligned_coordinates(
+                        mesh,
+                        cell,
+                        tolerance=geometry_tolerance,
+                        geometry_identity_policy=(
+                            "raw_unrounded"
+                            if representative_tensor_groups
+                            else geometry_identity_policy
+                        ),
+                    )
+                )
             tag = int(tags[cell])
-            raw_key = (tag, *widths)
+            raw_key = (tag, *geometry_identity)
             if representative_tensor_groups:
                 local_raw_geometry_classes.add(raw_key)
-            tensor_group_widths = (
-                tuple(float(np.round(value, 12)) for value in widths)
+            tensor_group_identity = (
+                tuple(float(np.round(value, 12)) for value in geometry_identity)
                 if representative_tensor_groups
-                else widths
+                else geometry_identity
             )
-            tensor_group_key = ("actual_space", tag, *tensor_group_widths)
+            tensor_group_key = ("actual_space", tag, *tensor_group_identity)
             previous = local_class_coordinates.get(tensor_group_key)
             if previous is not None and not np.array_equal(
                 previous,
@@ -1481,6 +1703,40 @@ def build_unconstrained_assembly_time_condensation(
             "tensor_group_kernel_coordinates_unrounded": True,
             "schur_lu_recovery_cache_key": "raw_float64_widths_plus_orientation",
             "mpc_expansion_applied_per_cell": True,
+        }
+    mapped_geometry_audit: dict[str, Any] = {}
+    if geometry_identity_policy == "mapped_exact":
+        mapped_geometry_audit = {
+            "mapped_hex_cell_count_global": int(
+                comm.allreduce(local_mapped_cell_count, op=MPI.SUM)
+            ),
+            "mapped_hex_jacobian_check": (
+                "separable z-swept Q1 family: detJ=dz*wx(zeta)*wy(zeta); "
+                "positive endpoint widths certify positivity throughout the "
+                "reference cell; 27 samples cross-check the analytic formula"
+            ),
+            "mapped_hex_geometry_family": "separable_axis_aligned_z_swept_q1",
+            "mapped_hex_detJ_sample_min": float(
+                comm.allreduce(local_mapped_jacobian_min, op=MPI.MIN)
+            ),
+            "mapped_hex_detJ_sample_max": float(
+                comm.allreduce(local_mapped_jacobian_max, op=MPI.MAX)
+            ),
+            "mapped_hex_detJ_analytic_min": float(
+                comm.allreduce(local_mapped_jacobian_analytic_min, op=MPI.MIN)
+            ),
+            "mapped_hex_geometry_cache_identity": (
+                "exact float64 8x3 canonical vertex coordinates "
+                + (
+                    "after explicitly authorized cellwise translation removal"
+                    if mapped_geometry_translation_invariant
+                    else "in physical coordinates; no translation removal"
+                )
+                + "; no coordinate or slope rounding"
+            ),
+            "mapped_hex_geometry_cache_is_approximate": False,
+            "mapped_hex_orientation_is_separate_cache_component": True,
+            "mapped_hex_material_tag_is_separate_cache_component": True,
         }
     schur_cache: dict[tuple[Any, ...], np.ndarray] = {}
     recovery_cache: dict[tuple[Any, ...], np.ndarray] = {}
@@ -1767,13 +2023,30 @@ def build_unconstrained_assembly_time_condensation(
             "final_matrix_assembly_deferred_for_appended_rows": bool(
                 materialize_global_matrix and defer_final_assembly
             ),
-            "axis_aligned_affine_geometry_verified": True,
+            "axis_aligned_affine_geometry_verified": (
+                geometry_identity_policy != "mapped_exact"
+            ),
+            "mapped_hex_geometry_policy_enabled": (
+                geometry_identity_policy == "mapped_exact"
+            ),
+            "mapped_hex_translation_removed": bool(
+                geometry_identity_policy == "mapped_exact"
+                and mapped_geometry_translation_invariant
+            ),
+            "mapped_hex_translation_invariance": (
+                "explicit caller assertion required for translation-normalized "
+                "cell-tensor reuse"
+                if geometry_identity_policy == "mapped_exact"
+                else "not_applicable"
+            ),
             "geometry_identity_policy": geometry_identity_policy,
             "geometry_identity_rounding": (
                 "decimal_12"
                 if geometry_identity_policy == "rounded_12"
                 else "tensor_group_key_only; coordinates remain unrounded"
                 if representative_tensor_groups
+                else "none_full_canonical_q1_vertex_coordinates"
+                if geometry_identity_policy == "mapped_exact"
                 else "none"
             ),
             "retained_local_schur_enabled": bool(retain_local_schur_for_matrix_free),
@@ -1820,6 +2093,7 @@ def build_unconstrained_assembly_time_condensation(
             "trace_preallocation": preallocation_audit,
             "trace_constraints": trace_constraints.build_audit,
             **geometry_identity_audit,
+            **mapped_geometry_audit,
             "total_build_seconds": float(
                 comm.allreduce(perf_counter() - started, op=MPI.MAX)
             ),
