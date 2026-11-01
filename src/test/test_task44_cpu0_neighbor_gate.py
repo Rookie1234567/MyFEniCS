@@ -9,6 +9,7 @@ from scripts import task44_native_service
 from scripts.task44_native_service import (
     AUTHORIZED_CPU0_NEIGHBOR,
     _cpu_neighbor_gate,
+    _owned_service_context,
 )
 
 
@@ -73,8 +74,9 @@ def _candidate(
     return result
 
 
-def _owned_service(tmp_path: Path, *, main_pid: int) -> tuple[dict[str, object], Path, Path]:
-    unit = "task44-sample-owned.service"
+def _owned_service(
+    tmp_path: Path, *, main_pid: int, unit: str = "task44-sample-owned.service"
+) -> tuple[dict[str, object], Path, Path]:
     control_group = f"/user.slice/user-1000.slice/app.slice/{unit}"
     cgroup_fs_root = tmp_path / "sys-fs-cgroup"
     cgroup = cgroup_fs_root / control_group.lstrip("/")
@@ -209,11 +211,20 @@ def test_second_narrow_cpu0_process_is_rejected(tmp_path):
     assert [row["pid"] for row in report["unexpected_claims"]] == [5000]
 
 
+@pytest.mark.parametrize(
+    "unit",
+    (
+        "task44-sample-owned.service",
+        "task44-preflight-owned-1234.service",
+    ),
+)
 def test_owned_service_member_with_exec_comm_transition_is_excluded_and_affinity_is_checked(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, unit
 ):
     root = _proc_root(tmp_path)
-    facts, cgroup_fs_root, _cgroup = _owned_service(tmp_path, main_pid=6000)
+    facts, cgroup_fs_root, _cgroup = _owned_service(
+        tmp_path, main_pid=6000, unit=unit
+    )
     _process(
         root,
         pid=6000,
@@ -241,6 +252,36 @@ def test_owned_service_member_with_exec_comm_transition_is_excluded_and_affinity
     assert report["owned_service_context"]["affinity_verified"] is True
     assert report["owned_service_excluded_pids"] == [6000]
     assert report["owned_service_member_proofs"][0]["comm_transition_observed"] is True
+
+
+@pytest.mark.parametrize(
+    "unit",
+    (
+        "task44-preflight.service",
+        "task44-other-owned.service",
+        "task44-preflight-owned_bad.service",
+    ),
+)
+def test_owned_service_identity_rejects_unrecognized_or_malformed_unit_names(
+    tmp_path, unit
+):
+    root = _proc_root(tmp_path)
+    facts, cgroup_fs_root, _cgroup = _owned_service(
+        tmp_path, main_pid=6000, unit=unit
+    )
+
+    report = _owned_service_context(
+        facts,
+        ignored_cgroup=facts["control_group"],
+        selected_cpu=0,
+        proc_root=root,
+        cgroup_fs_root=cgroup_fs_root,
+    )
+
+    assert report["identity_verified"] is False
+    assert report["failures"] == ["owned_service_context_observation_failed"]
+    assert report["failure_stage"] == "input_validation"
+    assert report["error"] == "service facts do not identify the active selected-CPU invocation"
 
 
 def test_exited_owned_process_snapshot_is_nonfatal_only_after_direct_stat_enoent(

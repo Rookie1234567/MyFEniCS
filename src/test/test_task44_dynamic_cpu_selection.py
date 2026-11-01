@@ -127,6 +127,24 @@ def test_filtered_abi_preflight_does_not_run_formal_memory_admission(
     assert "resources" not in report
 
 
+def test_filtered_preflight_unit_is_not_counted_as_formal_sample_service(monkeypatch):
+    monkeypatch.setattr(
+        native_service,
+        "_unit_facts",
+        lambda unit: {"unit": unit},
+    )
+
+    services = native_service._task44_services(
+        [
+            "task44-sample-b6.service",
+            "task44-preflight-b6-1234.service",
+            "task44-other.service",
+        ]
+    )
+
+    assert services == [{"unit": "task44-sample-b6.service"}]
+
+
 def test_dynamic_selection_excludes_cpu0_while_authorized_supervisor_claims_it(
     monkeypatch,
 ):

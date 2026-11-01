@@ -33,6 +33,9 @@ TASK44_SYSTEM_CALL_ERROR_NUMBER = "EPERM"
 PREFLIGHT_CAP_BYTES = 4 * GIB
 MAX_IDLE_CPU_BUSY_PERCENT = 20.0
 CPU_SAMPLE_SECONDS = 0.5
+_OWNED_TASK44_UNIT_PATTERN = re.compile(
+    r"task44-(?:sample|preflight)-[a-z0-9-]+\.service\Z"
+)
 AUTHORIZED_CPU0_NEIGHBOR = {
     "pid": 3893658,
     "start_ticks": 324107938,
@@ -239,7 +242,7 @@ def _owned_service_context(
         unit, invocation, group = expected["unit"], expected["invocation_id"], expected["control_group"]
         main_pid = expected["main_pid"]
         if (
-            not isinstance(unit, str) or not unit.startswith("task44-sample-") or not unit.endswith(".service")
+            not isinstance(unit, str) or _OWNED_TASK44_UNIT_PATTERN.fullmatch(unit) is None
             or not isinstance(invocation, str) or re.fullmatch(r"[0-9a-f]{32}", invocation) is None
             or not isinstance(group, str) or not group.startswith("/user.slice/")
             or Path(group).name != unit or ".." in Path(group).parts
