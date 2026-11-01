@@ -38,15 +38,16 @@ def _process(
     affinity: str = "0",
     command: str = AUTHORIZED_CPU0_NEIGHBOR["command_basename"],
     cgroup: str = "/user.slice/user-1000.slice/session-4665.scope",
+    proc_comm: str = "python",
 ) -> None:
     process = root / str(pid)
     process.mkdir()
     fields = ["S", str(parent_pid), *("0" for _ in range(17)), str(start_ticks)]
     (process / "stat").write_text(
-        f"{pid} (python) {' '.join(fields)}\n", encoding="ascii"
+        f"{pid} ({proc_comm}) {' '.join(fields)}\n", encoding="ascii"
     )
     (process / "status").write_text(
-        f"Name:\tpython\nCpus_allowed_list:\t{affinity}\n", encoding="utf-8"
+        f"Name:\t{proc_comm}\nCpus_allowed_list:\t{affinity}\n", encoding="utf-8"
     )
     (process / "cmdline").write_bytes(
         f"/usr/bin/python3\0/opt/Metrology/{command}\0".encode()
@@ -863,9 +864,19 @@ def _selected_cpu_2_gate(root: Path, candidates: list[dict[str, object]]) -> dic
     )
 
 
-def _narrow_candidate(pid: int, start_ticks: int) -> dict[str, object]:
+def _narrow_candidate(
+    pid: int,
+    start_ticks: int,
+    *,
+    parent_pid: int = 1,
+    snapshot_comm: str = "python",
+) -> dict[str, object]:
     return _candidate(
-        pid, start_ticks=start_ticks, command="another_solver.py",
+        pid,
+        parent_pid=parent_pid,
+        start_ticks=start_ticks,
+        command="another_solver.py",
+        snapshot_comm=snapshot_comm,
         cgroup_path="/user.slice/user-1000.slice/session-4665.scope",
     )
 
@@ -1013,39 +1024,179 @@ def test_runtime_neighbor_replacement_does_not_renew_deadline(tmp_path):
     assert len(sustained["claims"]) == 2
 
 
-def test_runtime_neighbor_monitor_fails_closed_on_pid_reuse(tmp_path):
+def test_runtime_neighbor_monitor_separates_reused_pid_from_old_claim(tmp_path):
     root = _proc_root(tmp_path)
     _process(root, pid=6106, start_ticks=10106, affinity="2", command="another_solver.py")
-    candidate = _narrow_candidate(6106, 10106)
     review = _CpuNeighborMonitor()
-    review.assess(_selected_cpu_2_gate(root, [candidate]),
-                  selected_cpu=2, proc_root=root, now=100.0)
-    fields = ["S", "1", *("0" for _ in range(17)), "99999"]
-    (root / "6106" / "stat").write_text(
-        f"6106 (python) {' '.join(fields)}\n", encoding="ascii"
+    review.assess(
+        _selected_cpu_2_gate(root, [_narrow_candidate(6106, 10106)]),
+        selected_cpu=2,
+        proc_root=root,
+        now=100.0,
+    )
+    for child in (root / "6106").iterdir():
+        child.unlink()
+    (root / "6106").rmdir()
+    _process(root, pid=6106, start_ticks=99999, affinity="2", command="another_solver.py")
+
+    result = review.assess(
+        _selected_cpu_2_gate(root, [_narrow_candidate(6106, 99999)]),
+        selected_cpu=2,
+        proc_root=root,
+        now=101.0,
     )
 
-    result = review.assess(_selected_cpu_2_gate(root, []),
-                           selected_cpu=2, proc_root=root, now=101.0)
+    assert result["status"] == "shared_cpu"
+    assert result["stop"] is False
+    assert result["performance_not_isolated"] is True
+    assert [claim["identity"]["start_ticks"] for claim in result["claims"]] == [
+        10106,
+        99999,
+    ]
+    assert [claim["status"] for claim in result["claims"]] == ["replaced", "active"]
+    assert result["claims"][0]["last_observation"]["status"] == "replaced"
 
-    assert result["status"] == "identity_unverified"
-    assert result["stop"] is True
+
+def test_runtime_neighbor_monitor_records_b10_reparenting_without_stopping(tmp_path):
+    root = _proc_root(tmp_path)
+    pid = 276683
+    start_ticks = 344964110
+    _process(
+        root,
+        pid=pid,
+        start_ticks=start_ticks,
+        parent_pid=276682,
+        affinity="2",
+        command="another_solver.py",
+    )
+    review = _CpuNeighborMonitor()
+    first = review.assess(
+        _selected_cpu_2_gate(
+            root, [_narrow_candidate(pid, start_ticks, parent_pid=276682)]
+        ),
+        selected_cpu=2,
+        proc_root=root,
+        now=100.0,
+    )
+    fields = ["S", "275870", *("0" for _ in range(17)), str(start_ticks)]
+    (root / str(pid) / "stat").write_text(
+        f"{pid} (python) {' '.join(fields)}\n", encoding="ascii"
+    )
+
+    current = review.assess(
+        _selected_cpu_2_gate(
+            root, [_narrow_candidate(pid, start_ticks, parent_pid=275870)]
+        ),
+        selected_cpu=2,
+        proc_root=root,
+        now=101.0,
+    )
+
+    assert first["status"] == "shared_cpu" and first["stop"] is False
+    assert current["status"] == "shared_cpu"
+    assert current["stop"] is False
+    assert current["performance_not_isolated"] is True
+    claim = current["claims"][0]
+    assert claim["identity"] == {"pid": pid, "start_ticks": start_ticks}
+    assert claim["first_observation"]["parent_pid"] == 276682
+    assert claim["latest_candidate_observation"]["parent_pid"] == 275870
+    lifecycle = claim["last_observation"]["evidence"]["lifecycle_changes"]["parent_pid"]
+    assert lifecycle["changed_since_first_observation"] is True
+    assert lifecycle["changed_during_read"] is False
 
 
-def test_runtime_neighbor_monitor_fails_closed_on_unreadable_identity(tmp_path):
+def test_runtime_neighbor_monitor_records_exec_comm_change_without_stopping(tmp_path):
+    root = _proc_root(tmp_path)
+    pid = 6110
+    start_ticks = 10110
+    _process(
+        root,
+        pid=pid,
+        start_ticks=start_ticks,
+        affinity="2",
+        command="another_solver.py",
+    )
+    review = _CpuNeighborMonitor()
+    review.assess(
+        _selected_cpu_2_gate(root, [_narrow_candidate(pid, start_ticks)]),
+        selected_cpu=2,
+        proc_root=root,
+        now=100.0,
+    )
+    fields = ["S", "1", *("0" for _ in range(17)), str(start_ticks)]
+    (root / str(pid) / "stat").write_text(
+        f"{pid} (solver) {' '.join(fields)}\n", encoding="ascii"
+    )
+
+    current = review.assess(
+        _selected_cpu_2_gate(
+            root, [_narrow_candidate(pid, start_ticks, snapshot_comm="solver")]
+        ),
+        selected_cpu=2,
+        proc_root=root,
+        now=101.0,
+    )
+
+    assert current["status"] == "shared_cpu"
+    assert current["stop"] is False
+    assert current["claims"][0]["identity"] == {
+        "pid": pid,
+        "start_ticks": start_ticks,
+    }
+    lifecycle = current["claims"][0]["last_observation"]["evidence"]["lifecycle_changes"]["comm"]
+    assert lifecycle["changed_since_first_observation"] is True
+    assert lifecycle["changed_during_read"] is False
+
+
+def test_runtime_neighbor_monitor_records_unreadable_identity_as_unknown(tmp_path):
     root = _proc_root(tmp_path)
     _process(root, pid=6107, start_ticks=10107, affinity="2", command="another_solver.py")
     candidate = _narrow_candidate(6107, 10107)
     review = _CpuNeighborMonitor()
-    review.assess(_selected_cpu_2_gate(root, [candidate]),
-                  selected_cpu=2, proc_root=root, now=100.0)
+    review.assess(
+        _selected_cpu_2_gate(root, [candidate]),
+        selected_cpu=2,
+        proc_root=root,
+        now=100.0,
+    )
     (root / "6107" / "status").unlink()
 
-    result = review.assess(_selected_cpu_2_gate(root, []),
-                           selected_cpu=2, proc_root=root, now=101.0)
+    result = review.assess(
+        _selected_cpu_2_gate(root, []),
+        selected_cpu=2,
+        proc_root=root,
+        now=101.0,
+    )
 
-    assert result["status"] == "identity_unverified"
+    assert result["status"] == "unknown"
+    assert result["stop"] is False
+    assert result["performance_not_isolated"] is True
+    assert result["diagnostic_uncertainty"]
+    assert result["claims"][0]["observation_status"] == "unknown"
+    assert result["claims"][0]["last_observation"]["status"] == "unknown"
+
+
+def test_runtime_neighbor_monitor_keeps_owned_context_identity_hard(tmp_path):
+    root = _proc_root(tmp_path)
+    gate = _selected_cpu_2_gate(root, [])
+    gate["owned_service_context"] = {
+        "identity_verified": False,
+        "affinity_verified": True,
+        "failures": ["owned_service_invocation_identity_unverified"],
+    }
+    gate["unverified_owned_members"] = []
+    review = _CpuNeighborMonitor()
+
+    result = review.assess(
+        gate,
+        selected_cpu=2,
+        proc_root=root,
+        require_owned_context=True,
+    )
+
+    assert result["status"] == "hard_gate_failed"
     assert result["stop"] is True
+    assert result["failures"] == ["owned_service_invocation_identity_unverified"]
 
 
 @pytest.mark.parametrize(

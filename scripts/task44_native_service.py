@@ -475,12 +475,15 @@ class _ProcessClaimError(RuntimeError):
 def _verify_pending_cpu_claim(
     expected: Mapping[str, Any],
     *,
+    first_observation: Mapping[str, Any],
+    expected_cgroup: str | None,
     selected_cpu: int,
     host_cpus: set[int],
     proc_root: Path,
 ) -> dict[str, Any]:
-    """Re-read one previously observed neighbor before granting monitor grace."""
+    """Re-read a runtime CPU neighbor using PID/start-tick as its identity."""
     pid = int(expected["pid"])
+    expected_start_ticks = int(expected["start_ticks"])
     try:
         before = _proc_identity(pid, proc_root)
         affinity_before = _status_fields(proc_root / str(pid) / "status").get(
@@ -497,35 +500,71 @@ def _verify_pending_cpu_claim(
         affinity = _parse_cpu_list(affinity_after)
         checks = {
             "pid_stable": before["pid"] == after["pid"] == pid,
+            "start_ticks_stable": before["start_ticks"] == after["start_ticks"],
             "start_ticks_match_observed_identity": (
-                before["start_ticks"] == after["start_ticks"]
-                == int(expected["start_ticks"])
+                before["start_ticks"] == after["start_ticks"] == expected_start_ticks
             ),
-            "parent_pid_matches_observed_identity": (
-                before["parent_pid"] == after["parent_pid"]
-                == int(expected["parent_pid"])
-            ),
-            "comm_matches_observed_identity": (
-                before["comm"] == after["comm"] == str(expected["comm"])
-            ),
-            "cgroup_matches_observed_identity": (
-                cgroup_before == cgroup_after == str(expected["cgroup"])
-            ),
-            "affinity_stable": affinity_before == affinity_after,
+        }
+        lifecycle_changes = {
+            "parent_pid": {
+                "first_observed": first_observation.get("parent_pid"),
+                "before": before["parent_pid"],
+                "after": after["parent_pid"],
+                "changed_since_first_observation": (
+                    first_observation.get("parent_pid") != before["parent_pid"]
+                    or first_observation.get("parent_pid") != after["parent_pid"]
+                ),
+                "changed_during_read": before["parent_pid"] != after["parent_pid"],
+            },
+            "comm": {
+                "first_observed": first_observation.get("comm"),
+                "before": before["comm"],
+                "after": after["comm"],
+                "changed_since_first_observation": (
+                    first_observation.get("comm") != before["comm"]
+                    or first_observation.get("comm") != after["comm"]
+                ),
+                "changed_during_read": before["comm"] != after["comm"],
+            },
         }
         evidence = {
+            "identity_key": {"pid": pid, "start_ticks": expected_start_ticks},
             "identity_before": before,
             "identity_after": after,
             "cpu_affinity_before": affinity_before,
             "cpu_affinity_after": affinity_after,
             "cgroup_before": cgroup_before,
             "cgroup_after": cgroup_after,
+            "expected_cgroup": expected_cgroup,
             "identity_checks": checks,
+            "lifecycle_changes": lifecycle_changes,
         }
-        if not all(checks.values()):
-            return {"status": "unverified", "pid": pid, "evidence": evidence}
-        if before["state"] in {"Z", "X"}:
+        if not checks["pid_stable"] or not checks["start_ticks_stable"]:
+            return {"status": "unknown", "pid": pid, "evidence": evidence}
+        if before["start_ticks"] != expected_start_ticks:
+            return {
+                "status": "replaced",
+                "pid": pid,
+                "replacement_identity": {
+                    "pid": pid,
+                    "start_ticks": before["start_ticks"],
+                },
+                "evidence": evidence,
+            }
+        if before["state"] in {"Z", "X"} or after["state"] in {"Z", "X"}:
             return {"status": "released", "pid": pid, "evidence": evidence}
+
+        checks.update(
+            cgroup_stable=cgroup_before == cgroup_after,
+            cgroup_matches_latest_candidate=(
+                isinstance(expected_cgroup, str)
+                and cgroup_before == expected_cgroup == cgroup_after
+            ),
+            affinity_stable=affinity_before == affinity_after,
+        )
+        evidence["identity_checks"].update(checks)
+        if not all(checks.values()):
+            return {"status": "unknown", "pid": pid, "evidence": evidence}
         active = selected_cpu in affinity and affinity != host_cpus
         return {
             "status": "active" if active else "released",
@@ -538,7 +577,7 @@ def _verify_pending_cpu_claim(
         if confirmation["status"] == "gone":
             return {"status": "gone", "pid": pid, "evidence": confirmation}
         return {
-            "status": "unverified",
+            "status": "unknown",
             "pid": pid,
             "evidence": {
                 "error_type": type(exc).__name__,
@@ -549,12 +588,33 @@ def _verify_pending_cpu_claim(
 
 
 class _CpuNeighborMonitor:
-    """Track verified runtime CPU sharing while keeping other gates fail-closed."""
+    """Track runtime CPU sharing while keeping owned-service gates fail-closed."""
 
     def __init__(self):
         self.first_conflict_monotonic: float | None = None
         self.performance_not_isolated = False
         self.claims: dict[tuple[int, int], dict[str, Any]] = {}
+
+    def _diagnostic_unknown(
+        self, timestamp: float, reason: str, evidence: Mapping[str, Any] | None = None
+    ) -> dict[str, Any]:
+        self.performance_not_isolated = True
+        if self.first_conflict_monotonic is None:
+            self.first_conflict_monotonic = timestamp
+        for record in self.claims.values():
+            record["observation_status"] = "unknown"
+        return {
+            "status": "unknown",
+            "stop": False,
+            "reason": None,
+            "failures": [],
+            "diagnostic_uncertainty": [
+                {"reason": reason, "evidence": dict(evidence or {})}
+            ],
+            "performance_not_isolated": True,
+            "first_conflict_monotonic": self.first_conflict_monotonic,
+            "claims": self._claim_evidence(),
+        }
 
     def assess(
         self,
@@ -564,8 +624,9 @@ class _CpuNeighborMonitor:
         proc_root: Path = Path("/proc"),
         hard_failures: list[str] | None = None,
         now: float | None = None,
+        require_owned_context: bool = False,
     ) -> dict[str, Any]:
-        """Allow only verified runtime CPU neighbors to continue as shared work."""
+        """Record CPU-neighbor uncertainty without masking owned-service failures."""
         timestamp = time.monotonic() if now is None else float(now)
         hard = list(hard_failures or [])
         if hard:
@@ -577,100 +638,248 @@ class _CpuNeighborMonitor:
                 "performance_not_isolated": self.performance_not_isolated,
             }
         if not isinstance(neighbor_gate, Mapping):
-            return {"status": "unverified", "stop": True,
-                    "reason": "MONITORING_FAILED", "failures": ["neighbor_gate_unreadable"]}
+            if require_owned_context:
+                return {
+                    "status": "hard_gate_failed",
+                    "stop": True,
+                    "reason": "MONITORING_FAILED",
+                    "failures": ["owned_service_context_unreadable"],
+                    "performance_not_isolated": self.performance_not_isolated,
+                }
+            return self._diagnostic_unknown(timestamp, "neighbor_gate_unreadable")
+
+        owned_context = neighbor_gate.get("owned_service_context")
+        if require_owned_context and not isinstance(owned_context, Mapping):
+            return {
+                "status": "hard_gate_failed",
+                "stop": True,
+                "reason": "MONITORING_FAILED",
+                "failures": ["owned_service_context_unreadable"],
+                "performance_not_isolated": self.performance_not_isolated,
+            }
+        if isinstance(owned_context, Mapping):
+            context_failures = owned_context.get("failures")
+            if (
+                owned_context.get("identity_verified") is not True
+                or owned_context.get("affinity_verified") is not True
+                or not isinstance(context_failures, list)
+                or context_failures
+            ):
+                failures = (
+                    [str(value) for value in context_failures]
+                    if isinstance(context_failures, list) and context_failures
+                    else ["owned_service_context_identity_unverified"]
+                )
+                return {
+                    "status": "hard_gate_failed",
+                    "stop": True,
+                    "reason": "MONITORING_FAILED",
+                    "failures": failures,
+                    "performance_not_isolated": self.performance_not_isolated,
+                }
+
+        unverified_owned_members = neighbor_gate.get("unverified_owned_members")
+        if require_owned_context and not isinstance(unverified_owned_members, list):
+            return {
+                "status": "hard_gate_failed",
+                "stop": True,
+                "reason": "MONITORING_FAILED",
+                "failures": ["owned_service_member_inventory_unreadable"],
+                "performance_not_isolated": self.performance_not_isolated,
+            }
+        if isinstance(unverified_owned_members, list) and unverified_owned_members:
+            return {
+                "status": "hard_gate_failed",
+                "stop": True,
+                "reason": "MONITORING_FAILED",
+                "failures": ["owned_service_member_identity_unverified"],
+                "performance_not_isolated": self.performance_not_isolated,
+            }
+
         gate_failures = neighbor_gate.get("failures")
+        if isinstance(gate_failures, list) and any(
+            isinstance(failure, str) and failure.startswith("owned_service_")
+            for failure in gate_failures
+        ):
+            return {
+                "status": "hard_gate_failed",
+                "stop": True,
+                "reason": "MONITORING_FAILED",
+                "failures": [
+                    failure
+                    for failure in gate_failures
+                    if isinstance(failure, str) and failure.startswith("owned_service_")
+                ],
+                "performance_not_isolated": self.performance_not_isolated,
+            }
+
+        diagnostic_uncertainty: list[dict[str, Any]] = []
         if not isinstance(gate_failures, list):
-            return {"status": "unverified", "stop": True,
-                    "reason": "MONITORING_FAILED", "failures": ["neighbor_gate_failures_unreadable"]}
+            diagnostic_uncertainty.append({"reason": "neighbor_gate_failures_unreadable"})
+            gate_failures = []
         allowed_failure = "unexpected_narrow_selected_cpu_affinity_neighbor"
-        if neighbor_gate.get("status") not in {"pass", "fail"}:
-            return {"status": "unverified", "stop": True,
-                    "reason": "MONITORING_FAILED", "failures": ["neighbor_gate_status_unreadable"]}
-        if neighbor_gate.get("status") == "pass" and gate_failures:
-            return {"status": "unverified", "stop": True,
-                    "reason": "MONITORING_FAILED", "failures": ["neighbor_gate_status_inconsistent"]}
-        if neighbor_gate.get("status") == "fail" and set(gate_failures) != {allowed_failure}:
-            return {"status": "hard_gate_failed", "stop": True,
-                    "reason": "MONITORING_FAILED", "failures": list(gate_failures)}
+        gate_status = neighbor_gate.get("status")
+        if gate_status not in {"pass", "fail"}:
+            diagnostic_uncertainty.append({"reason": "neighbor_gate_status_unreadable"})
+        elif gate_status == "pass" and gate_failures:
+            diagnostic_uncertainty.append({"reason": "neighbor_gate_status_inconsistent"})
+        elif gate_status == "fail" and gate_failures != [allowed_failure]:
+            diagnostic_uncertainty.append({
+                "reason": "neighbor_gate_external_diagnostic_incomplete",
+                "evidence": {"failures": list(gate_failures)},
+            })
         if neighbor_gate.get("performance_not_isolated") is True:
             self.performance_not_isolated = True
 
         rows = neighbor_gate.get("unexpected_claims", [])
         if not isinstance(rows, list):
-            return {"status": "unverified", "stop": True,
-                    "reason": "MONITORING_FAILED", "failures": ["neighbor_claims_unreadable"]}
-        if neighbor_gate.get("status") == "fail" and not rows:
-            return {"status": "unverified", "stop": True,
-                    "reason": "MONITORING_FAILED", "failures": ["neighbor_claim_identity_missing"]}
+            diagnostic_uncertainty.append({"reason": "neighbor_claims_unreadable"})
+            rows = []
+        if gate_status == "fail" and not rows:
+            diagnostic_uncertainty.append({"reason": "neighbor_claim_identity_missing"})
+        unreadable_processes = neighbor_gate.get("unreadable_processes", [])
+        if not isinstance(unreadable_processes, list):
+            diagnostic_uncertainty.append({"reason": "neighbor_unreadable_inventory_invalid"})
+        elif unreadable_processes:
+            diagnostic_uncertainty.append({
+                "reason": "neighbor_process_identity_unreadable",
+                "evidence": {"count": len(unreadable_processes)},
+            })
         if rows:
             self.performance_not_isolated = True
             if self.first_conflict_monotonic is None:
                 self.first_conflict_monotonic = timestamp
+
         current_keys: set[tuple[int, int]] = set()
         for row in rows:
             try:
+                if not isinstance(row, Mapping):
+                    raise TypeError("neighbor claim is not a mapping")
                 pid = int(row["pid"])
                 start_ticks = int(row["start_ticks"])
+                cgroup = row.get("cgroup")
+                if (
+                    pid <= 0
+                    or start_ticks <= 0
+                    or not isinstance(cgroup, str)
+                    or not cgroup.startswith("/")
+                ):
+                    raise ValueError("neighbor claim lacks stable PID/start-tick/cgroup data")
+                parent_pid = row.get("parent_pid")
+                comm = row.get("comm")
                 identity = {
-                    key: row[key]
-                    for key in ("pid", "start_ticks", "parent_pid", "comm", "cgroup")
+                    "pid": pid,
+                    "start_ticks": start_ticks,
+                    "parent_pid": parent_pid if type(parent_pid) is int else None,
+                    "comm": comm if isinstance(comm, str) and comm else None,
+                    "cgroup": cgroup,
                 }
-                identity.update(pid=pid, start_ticks=start_ticks)
-            except (KeyError, TypeError, ValueError):
-                return {"status": "unverified", "stop": True,
-                        "reason": "MONITORING_FAILED",
-                        "failures": ["neighbor_claim_identity_missing"],
-                        "performance_not_isolated": True}
+                if identity["parent_pid"] is None or identity["comm"] is None:
+                    diagnostic_uncertainty.append({
+                        "reason": "neighbor_claim_lifecycle_metadata_unreadable",
+                        "evidence": {"pid": pid, "start_ticks": start_ticks},
+                    })
+            except (KeyError, TypeError, ValueError) as exc:
+                diagnostic_uncertainty.append({
+                    "reason": "neighbor_claim_identity_unreadable",
+                    "evidence": {"error_type": type(exc).__name__, "error": str(exc)},
+                })
+                continue
             key = (pid, start_ticks)
             current_keys.add(key)
-            self.claims.setdefault(key, {"identity": identity, "status": "pending"})
+            record = self.claims.setdefault(
+                key,
+                {
+                    "identity": {"pid": pid, "start_ticks": start_ticks},
+                    "first_observation": identity,
+                    "latest_candidate_observation": identity,
+                    "status": "pending",
+                    "observation_status": "pending",
+                },
+            )
+            record["latest_candidate_observation"] = identity
 
         host_cpus = neighbor_gate.get("host_allowed_cpus")
-        if not isinstance(host_cpus, list) or any(type(cpu) is not int for cpu in host_cpus):
-            return {"status": "unverified", "stop": True,
-                    "reason": "MONITORING_FAILED", "failures": ["host_cpu_inventory_unreadable"],
-                    "performance_not_isolated": self.performance_not_isolated}
+        if (
+            not isinstance(host_cpus, list)
+            or not host_cpus
+            or any(type(cpu) is not int for cpu in host_cpus)
+        ):
+            return self._diagnostic_unknown(
+                timestamp,
+                "host_cpu_inventory_unreadable",
+                {"unexpected_claims_count": len(rows)},
+            )
+        if diagnostic_uncertainty:
+            self.performance_not_isolated = True
+            if self.first_conflict_monotonic is None:
+                self.first_conflict_monotonic = timestamp
+
         for key, record in self.claims.items():
-            if record["status"] in {"released", "gone"} and key not in current_keys:
+            if record["status"] in {"released", "gone", "replaced"} and key not in current_keys:
                 continue
+            latest = record.get("latest_candidate_observation", {})
             observation = _verify_pending_cpu_claim(
-                record["identity"], selected_cpu=selected_cpu,
-                host_cpus=set(host_cpus), proc_root=proc_root,
+                record["identity"],
+                first_observation=record["first_observation"],
+                expected_cgroup=latest.get("cgroup"),
+                selected_cpu=selected_cpu,
+                host_cpus=set(host_cpus),
+                proc_root=proc_root,
             )
             record["status"] = observation["status"]
+            record["observation_status"] = observation["status"]
             record["last_observation"] = observation
-            if observation["status"] == "unverified":
-                return {
-                    "status": "identity_unverified", "stop": True,
-                    "reason": "MONITORING_FAILED", "failures": ["pending_neighbor_identity_unverified"],
-                    "performance_not_isolated": self.performance_not_isolated,
-                    "claims": self._claim_evidence(),
-                }
+            if observation["status"] == "unknown":
+                diagnostic_uncertainty.append({
+                    "reason": "neighbor_claim_observation_unknown",
+                    "evidence": observation.get("evidence", {}),
+                })
 
         active = any(record["status"] == "active" for record in self.claims.values())
-        status = "shared_cpu" if active else ("released" if self.claims else "clear")
+        unknown = bool(diagnostic_uncertainty) or any(
+            record["status"] == "unknown" for record in self.claims.values()
+        )
+        status = (
+            "unknown" if unknown else
+            "shared_cpu" if active else
+            "released" if self.claims else
+            "clear"
+        )
+        if diagnostic_uncertainty:
+            self.performance_not_isolated = True
+            if self.first_conflict_monotonic is None:
+                self.first_conflict_monotonic = timestamp
         result = {
             "status": status,
             "stop": False,
             "reason": None,
+            "failures": [],
+            "diagnostic_uncertainty": diagnostic_uncertainty,
             "performance_not_isolated": bool(
-                self.performance_not_isolated or neighbor_gate.get("performance_not_isolated") is True
+                self.performance_not_isolated
+                or neighbor_gate.get("performance_not_isolated") is True
             ),
             "first_conflict_monotonic": self.first_conflict_monotonic,
             "claims": self._claim_evidence(),
         }
-        if not active and neighbor_gate.get("status") == "pass" and self.claims:
+        if not active and not unknown and gate_status == "pass" and self.claims:
             # Close only after the complete inventory passes and all tracked
-            # identities have just been proven released or gone.
+            # identities have just been proven released, gone, or replaced.
             self.first_conflict_monotonic = None
             self.claims.clear()
         return result
 
     def _claim_evidence(self) -> list[dict[str, Any]]:
         return [
-            {"identity": record["identity"], "status": record["status"],
-             "last_observation": record.get("last_observation")}
+            {
+                "identity": record["identity"],
+                "first_observation": record["first_observation"],
+                "latest_candidate_observation": record["latest_candidate_observation"],
+                "status": record["status"],
+                "observation_status": record.get("observation_status", record["status"]),
+                "last_observation": record.get("last_observation"),
+            }
             for _, record in sorted(self.claims.items())
         ]
 
@@ -1568,6 +1777,7 @@ def _exact_service_guard(
                 neighbor_gate,
                 selected_cpu=next(iter(expected_cpus)),
                 hard_failures=failures,
+                require_owned_context=True,
             )
             if neighbor_review["stop"] and not failures:
                 failures.extend(
