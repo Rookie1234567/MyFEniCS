@@ -4,6 +4,7 @@
 
 B6 是第 6/12 次精度对照，固定 B 的几何、材料、P6、DtN 模态与凝聚求解，只改变入射端口相位参考面至 `boundary_plane`。运行在 Stage-4 assembly-time condensation 路径中因 CPU11 邻核 Gate 首次发现 PID 189961（parent 189960，affinity `[11]`）而受控停止；service wall 868.733 s、同时进程树 RSS 峰值 5,052,604,416 B、cgroup peak 5,277,028,352 B、swap 0。没有残差或 R/T/A 数值结果，不把它分类为数值失败。详细边界、identity 和原始证据 hash 见 [`B6 terminal receipt`](outcomes/b6_boundary_plane_controlled_stop_20261101.md)。Task44 与 Task40 并行已获用户明确授权；Task44 自身仍一次运行一个正式算例。
 B7 是第 7/12 次资格对照，沿用 B6 的 `boundary_plane` 输入差异并使用新 run/output/service/cache 身份。CPU17 邻核 Gate 在 1125.154 s 检出 PID 201653（parent 201652，start ticks 342958624，affinity `[17]`），随后受控停止；service wall 1143.095 s、CPU 18 min 49.771 s、RSS/cgroup 峰值 5,056,647,168 B / 5,282,217,984 B，cgroup swap 0。没有 residual 或 official R/T/A；最后仍停在 Stage-4 assembly-time condensation 路径，不是数值失败。预算为 7/12，剩余 5；首因和 evidence hash 见 [`B7 terminal receipt`](outcomes/b7_boundary_plane_controlled_stop_20261101.md)。
+B8 是第 8/12 次资格对照，沿用 B 的 `boundary_plane` 参考面差异并固定物理模型与离散。CPU22 邻核 Gate 在 elapsed 1171.672 s 首次发现 PID 222707（parent 222706、start ticks 343385335、affinity `[22]`）；15 秒复核到期后 watchdog 于 elapsed 1187.945 s 因 `review_timeout` 受控停止，首个 SIGKILL 实际发生在首个冲突后 16.297 s。service wall 1206.285 s、systemd CPU 1194.324 s、进程树 RSS/cgroup 峰值 4,901,117,952 B / 5,288,030,208 B，任务 swap 0。运行期共享 CPU 使整场 `performance_not_isolated=true`；启动回执的 false 保留为启动时状态。无 residual 或 official R/T/A，不能判定数值方法失败或参考面差值。预算为 8/12，剩余 4；未获新政策前不自动启动 B9。完整首因、15 秒 deadline 与真实延后、成本及 evidence hash 见 [`B8 terminal receipt`](outcomes/b8_boundary_plane_monitor_grace_timeout_20261101.md)。
 
 ## 执行身份
 
@@ -71,7 +72,7 @@ B7 是第 7/12 次资格对照，沿用 B6 的 `boundary_plane` 输入差异并�
 4. 每场正式 PDE 前冻结输入、源码 SHA、材料表、网格/DtN 精度对照、单样本初始 128 GiB cap、service/cgroup 与资源硬门；每个 service 显式绑定自己唯一的 Task44 JIT cache root，并在 preflight、service 与 worker 中验证一致。运行期间按真实进度和资源情况继续，不使用原 30 分钟到点强停。
 5. 完成代表点与精度资格后，根据实测单样本成本、已有独立样本上限和数值证据推进训练点、GP、开发验证与盲测；数据/GP 资格分别判定，不受原 12 小时窗口约束。
 
-当前阶段（2026-11-01）：A–D 四个 P6 condensed-direct + MUMPS exact 样本均通过 full explicit true residual 与能量闭合门。B 的 y 加密对照超出 `2e-4` 稳定性门；z 加密通过；DtN 倏逝壳层 residual 未通过且稳定性未判定；顶部空气间距的三个主输出变化也超限。B6、B7 的 boundary-plane 参考面对照都在 CPU 邻核监控 Gate 后受控停止，没有产生数值结果，不能据此判定数值方法失败或参考面差值。正式精度资格已用 7/12 次，剩余 5 次；y 与空气间距失败、z 通过、DtN 未判定，A–D 仍为 `gp_eligible=false`。GP/design 软件通过 9 项定向测试和 40 点设计校验；有限元 GP 训练、开发误差、盲测误差和标准尺寸计算尚未运行。详细结果见 [outcomes/summary.md](outcomes/summary.md) 与 [response_v7.md](response_v7.md)。
+当前阶段（2026-11-01）：A–D 四个 P6 condensed-direct + MUMPS exact 样本均通过 full explicit true residual 与能量闭合门。B 的 y 加密对照超出 `2e-4` 稳定性门；z 加密通过；DtN 倏逝壳层 residual 未通过且稳定性未判定；顶部空气间距的三个主输出变化也超限。B6–B8 的 boundary-plane 参考面对照均因 CPU 邻核监控 Gate 受控停止，没有产生数值结果，不能据此判定数值方法失败或参考面差值；B8 的运行期 CPU 共享令整场 `performance_not_isolated=true`。正式精度资格已用 8/12 次，剩余 4 次；y 与空气间距失败、z 通过、DtN 未判定，A–D 仍为 `gp_eligible=false`。GP/design 软件通过 9 项定向测试和 40 点设计校验；有限元 GP 训练、开发误差、盲测误差和标准尺寸计算尚未运行。等待邻核并发处置策略决定前，不自动启动 B9。详细结果见 [outcomes/summary.md](outcomes/summary.md)、[B8 terminal receipt](outcomes/b8_boundary_plane_monitor_grace_timeout_20261101.md) 与 [response_v8.md](response_v8.md)。
 
 另一次 `global_z` phase-gauge selector 诊断 fresh5 于 2026-10-31 完成矩阵组装、MUMPS 因子分解和线性解，但在完整真残差与结果记录前被 CPU 邻居 Gate 受控停止；没有 residual、official R/T/A 或 `result.json`。这是监控身份问题，不是数值失败或内存停止，也不计入 5/12 精度 attempt。原始事件与 SHA 见 [fresh5 compact record](outcomes/fresh5_controlled_stop_20261031.json)，执行和修复响应见 [response v8](response_v8.md)。
 

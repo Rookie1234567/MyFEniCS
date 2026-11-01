@@ -12,7 +12,7 @@
 
 此登记仅覆盖所选局部诊断。历史 producer identity 为 UNKNOWN，因而它不是旧 action 的 bitwise replay；完整 PDE 求解、200q、recovery、FGMRES、完整场、A6 与 official R/T/A 都未运行。文档收口账 seq205 为截至 `2026-10-29T08:34:22.092927537Z` 的快照 `5,727.804736941959 s`；后续发布成本未记账，不作为最终 campaign 成本或当前余额。
 
-## Task44 六层缩尺模型登记与 fresh5 监控负结果（2026-10-31）
+## Task44 六层缩尺模型登记与 fresh5 监控负结果（2026-10-31 快照）
 
 Task44 研究 0.7 nm 波长下的 1/20 六层 Si/SiGe/Si/SiGe/SiO₂ 结构，用 P6、双 Floquet 周期边界、完整传播 DtN 和 MUMPS direct 生成可审阅的离散样本。静态凝聚先在每个单元内消去不与邻格共享的自由度，缩小全局求解矩阵；求解后要恢复完整场并通过原离散系统真残差和能量闭合，代价是额外局部凝聚/恢复和完整算子检查。
 
@@ -25,7 +25,19 @@ Task44 研究 0.7 nm 波长下的 1/20 六层 Si/SiGe/Si/SiGe/SiO₂ 结构，�
 | 顶部空气间距 | `R_total/T_total/R00_total` 变化绝对值 `2.34999e-4/2.28409e-4/2.35003e-4`，各限 `2e-4` | 求解与能量闭合通过，空气间距离散稳定性失败。 |
 | fresh5 `global_z` selector 诊断 | 27 hex、P6；19,494 DoF，1,350 Floquet 约束；凝聚系统6,414行、4,935,930 NNZ；MUMPS因子14,236,514 entries；矩阵组装、因子分解和线性解均已结束 | CPU邻居 Gate 在完整真残差和结果输出前受控停止，触发信息为 `/proc/51758/stat` 的 `ENOENT`。旧监控未保存后续 `Path.exists()` 结果，不能断定是已确认的退出竞态；无完整残差、official R/T/A 或 result JSON。cgroup peak `3,584,311,296 B`，swap `0 B`。此 selector 诊断不计入精度 attempt。 |
 
-当前 Task44 仍为 `in_progress`：正式精度预算使用 `5/12`；y 与空气间距稳定性未通过，DtN 截断未判定，z 单方向通过不提供总体收敛证明。A–D 保持 `gp_eligible=false`，GP 训练、开发评估、盲测和标准尺寸求解均 `not_run`。fresh5 的 source 为 `e26e2a6b24fc6c89d637dcb2420bfaff8e2036f7`，执行分支为 `task44_sixlayer_surrogate_0p7nm`。全部统一结果和边界见 [Task44 outcomes summary](task44_sixlayer_surrogate_0p7nm/outcomes/summary.md)；fresh5 逐项原始证据哈希见 [compact record](task44_sixlayer_surrogate_0p7nm/outcomes/fresh5_controlled_stop_20261031.json) 和其声明的 `/tmp/task44-phase-gauge-global-z-fresh5-20261031` raw evidence。
+在 2026-10-31 fresh5 收口时，Task44 正式精度预算为 `5/12`：y 与空气间距稳定性未通过，DtN 截断未判定，z 单方向通过不提供总体收敛证明。A–D 保持 `gp_eligible=false`，GP 训练、开发评估、盲测和标准尺寸求解均 `not_run`。fresh5 的 source 为 `e26e2a6b24fc6c89d637dcb2420bfaff8e2036f7`，执行分支为 `task44_sixlayer_surrogate_0p7nm`。当时的统一结果和边界见 [Task44 outcomes summary](task44_sixlayer_surrogate_0p7nm/outcomes/summary.md)；fresh5 逐项原始证据哈希见 [compact record](task44_sixlayer_surrogate_0p7nm/outcomes/fresh5_controlled_stop_20261031.json) 和其声明的 `/tmp/task44-phase-gauge-global-z-fresh5-20261031` raw evidence。
+
+### Task44 B6–B8：boundary-plane 监控受控停止（2026-11-01）
+
+三次对照均固定 B 的六层物理模型、P6 `[3,6,8]` 网格、160 个 DtN 模态及静态凝聚 + MUMPS，只改变 `boundary_plane` 参考面和独立运行身份。进程身份 Gate 用于判断所选 CPU 是否被其他窄 affinity 进程占用；B6、B7 在首次观察到冲突时即停止。B8 使用 15 秒复核期限，在期限内等待 claimant 释放，超时后清理本 Task44 子树。该复核保护并发任务，但会延长运行；期限后的采样和清理时间不是硬实时保证。
+
+| Attempt | 监控与资源实测 | 数值边界与当前结论 |
+|---|---|---|
+| B6 | CPU11 首次发现窄 claim；service `868.733 s`，RSS/cgroup peak `5,052,604,416 / 5,277,028,352 B`，swap `0 B` | `MONITORING_FAILED / not_run`；无 residual 或 R/T/A。细节见 [B6 receipt](task44_sixlayer_surrogate_0p7nm/outcomes/b6_boundary_plane_controlled_stop_20261101.md)。 |
+| B7 | CPU17 首次发现窄 claim；service `1143.095 s`，RSS/cgroup peak `5,056,647,168 / 5,282,217,984 B`，swap `0 B` | `MONITORING_FAILED / not_run`；无 residual 或 R/T/A。细节见 [B7 receipt](task44_sixlayer_surrogate_0p7nm/outcomes/b7_boundary_plane_controlled_stop_20261101.md)。 |
+| B8 | CPU22；PID `222707`、start ticks `343385335`、affinity `[22]`；首次冲突后约 `16.273 s` 的样本触发 timeout，比 15 秒 deadline 晚约 `1.273 s`；SIGKILL 在首次冲突后约 `16.297 s` 发出；service `1206.285 s`，RSS/cgroup peak `4,901,117,952 / 5,288,030,208 B`，swap `0 B` | 运行期 `performance_not_isolated=true`，启动回执 false 保留为启动值。`MONITORING_FAILED / not_run`；无 residual 或 R/T/A。详见 [B8 receipt](task44_sixlayer_surrogate_0p7nm/outcomes/b8_boundary_plane_monitor_grace_timeout_20261101.md)。 |
+
+截至 B8，精度资格预算已用 `8/12`，尚余 4 次；A–D 仍 `gp_eligible=false`，已有 y 与空气距稳定性超限、DtN 未判定和 z 单方向通过均不改变。主控需先取得新的邻核并发处置决定，B9 暂不自动运行。三次尝试的完整时序、身份、数值边界和证据 hash 见 [Task44 outcomes summary](task44_sixlayer_surrogate_0p7nm/outcomes/summary.md)。
 
 ## Task41extra V16：完整余差分布与旧star终态绑定（2026-10-27）
 
