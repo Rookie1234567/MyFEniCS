@@ -38,6 +38,7 @@ def _process(
     *,
     pid: int,
     start_ticks: int,
+    state: str = "S",
     parent_pid: int = 1,
     affinity: str = "0",
     command: str = AUTHORIZED_CPU0_NEIGHBOR["command_basename"],
@@ -46,7 +47,7 @@ def _process(
 ) -> None:
     process = root / str(pid)
     process.mkdir()
-    fields = ["S", str(parent_pid), *("0" for _ in range(17)), str(start_ticks)]
+    fields = [state, str(parent_pid), *("0" for _ in range(17)), str(start_ticks)]
     (process / "stat").write_text(
         f"{pid} ({proc_comm}) {' '.join(fields)}\n", encoding="ascii"
     )
@@ -468,7 +469,7 @@ def test_train_007_transient_assembler_exit_uses_one_fresh_context_query(
     assert proof["pid"] == 406525
     assert proof["member_gap_recheck"]["status"] == "gone"
     assert proof["member_gap_recheck"]["attempt_count"] == 1
-    assert query_budgets == [0.05]
+    assert query_budgets == [task44_native_service._OWNED_MEMBER_GAP_SYSTEMD_QUERY_TIMEOUT_SECONDS]
 
 
 @pytest.mark.parametrize(
@@ -920,49 +921,133 @@ def test_initial_identity_conflict_cannot_be_overridden_by_later_snapshot(
     assert proof["member_gap_recheck"]["attempt_count"] == 0
 
 
-@pytest.mark.parametrize("candidate_state", ("gone", "member_reconfirmed"))
-def test_terminal_candidate_is_rejected_when_recheck_deadline_has_elapsed(
-    tmp_path, monkeypatch, candidate_state
+
+@pytest.mark.parametrize(
+    "candidate_status",
+    ("pid_reused", "cgroup_changed", "candidate_affinity_changed"),
+)
+def test_confirmed_candidate_drift_is_not_hidden_by_later_identity_query_timeout(
+    tmp_path, monkeypatch, candidate_status
 ):
     root = _proc_root(tmp_path)
-    facts, cgroup_fs_root, cgroup = _owned_service(tmp_path, main_pid=6040)
-    target_pid = 6041
-    _process(root, pid=6040, start_ticks=10040, cgroup=facts["control_group"])
-    if candidate_state == "member_reconfirmed":
-        _process(root, pid=target_pid, start_ticks=10041, cgroup=facts["control_group"])
+    facts, cgroup_fs_root, _ = _owned_service(tmp_path, main_pid=6050)
+    target_pid = 6051
+    _process(root, pid=6050, start_ticks=10050, cgroup=facts["control_group"])
+    _process(root, pid=target_pid, start_ticks=10051, cgroup=facts["control_group"])
     _patch_owned_service(monkeypatch, facts)
-    original_member = task44_native_service._owned_service_member
-    if candidate_state == "member_reconfirmed":
-        def add_direct_membership_after_initial_gap(process, **kwargs):
-            owned, proof = original_member(process, **kwargs)
-            if int(process["pid"]) == target_pid:
-                (cgroup / "cgroup.procs").write_text("6040\n6041\n", encoding="ascii")
-            return owned, proof
-
-        monkeypatch.setattr(
-            task44_native_service,
-            "_owned_service_member",
-            add_direct_membership_after_initial_gap,
-        )
-
-    clock = [0.0]
-    systemd_reads = 0
     signature = task44_native_service._unit_identity_signature(facts)
+    systemd_reads = 0
 
-    def cross_deadline_on_final_systemd_read(unit, *, timeout_seconds):
+    def stable_then_timeout(unit, *, timeout_seconds):
         nonlocal systemd_reads
         systemd_reads += 1
-        expected_final_read = 1 if candidate_state == "gone" else 4
-        if systemd_reads == expected_final_read:
-            clock[0] = task44_native_service._OWNED_MEMBER_GAP_RECHECK_DEADLINE_SECONDS + 0.001
+        if systemd_reads == 4:
+            raise task44_native_service.subprocess.TimeoutExpired(
+                ["systemctl", "--user", "show", unit], timeout_seconds
+            )
         return dict(signature)
 
-    monkeypatch.setattr(task44_native_service.time, "monotonic", lambda: clock[0])
+    def confirmed_drift(process, **kwargs):
+        assert int(process["pid"]) == target_pid
+        return {"status": candidate_status, "candidate": {"pid": target_pid}}
+
     monkeypatch.setattr(
-        task44_native_service,
-        "_unit_identity_signature_with_timeout",
-        cross_deadline_on_final_systemd_read,
+        task44_native_service, "_unit_identity_signature_with_timeout", stable_then_timeout
     )
+    monkeypatch.setattr(
+        task44_native_service, "_owned_gap_candidate_observation", confirmed_drift
+    )
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
+        proc_root=root,
+        ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts,
+        cgroup_fs_root=cgroup_fs_root,
+        numerical_processes=[
+            _candidate(6050, start_ticks=10050, cgroup_path=facts["control_group"]),
+            _candidate(target_pid, start_ticks=10051, cgroup_path=facts["control_group"]),
+        ],
+    )
+
+    assert report["status"] == "fail"
+    proof = next(row for row in report["unverified_owned_members"] if row["pid"] == target_pid)
+    recheck = proof["member_gap_recheck"]
+    assert recheck["status"] == candidate_status
+    assert recheck["context_after"]["status"] == "identity_query_unavailable"
+    assert recheck["attempt_count"] == 1
+    assert recheck["systemd_query_count"] == 4
+    assert recheck["max_systemd_query_count"] == 12
+    assert recheck["systemd_query_count_max_per_attempt"] == 4
+    assert recheck["max_systemd_query_wait_seconds"] == 3 * 4 * 0.25
+    assert systemd_reads == 4
+
+
+def test_first_confirmed_invocation_drift_is_not_hidden_by_query_timeout(
+    tmp_path, monkeypatch
+):
+    root = _proc_root(tmp_path)
+    facts, cgroup_fs_root, _ = _owned_service(tmp_path, main_pid=6052)
+    target_pid = 6053
+    _process(root, pid=6052, start_ticks=10052, cgroup=facts["control_group"])
+    _process(root, pid=target_pid, start_ticks=10053, cgroup=facts["control_group"])
+    _patch_owned_service(monkeypatch, facts)
+    signature = task44_native_service._unit_identity_signature(facts)
+    systemd_reads = 0
+
+    def drift_then_timeout(unit, *, timeout_seconds):
+        nonlocal systemd_reads
+        systemd_reads += 1
+        if systemd_reads == 1:
+            return {**signature, "invocation_id": "f" * 32}
+        raise task44_native_service.subprocess.TimeoutExpired(
+            ["systemctl", "--user", "show", unit], timeout_seconds
+        )
+
+    monkeypatch.setattr(
+        task44_native_service, "_unit_identity_signature_with_timeout", drift_then_timeout
+    )
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
+        proc_root=root,
+        ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts,
+        cgroup_fs_root=cgroup_fs_root,
+        numerical_processes=[
+            _candidate(6052, start_ticks=10052, cgroup_path=facts["control_group"]),
+            _candidate(target_pid, start_ticks=10053, cgroup_path=facts["control_group"]),
+        ],
+    )
+
+    assert report["status"] == "fail"
+    proof = next(row for row in report["unverified_owned_members"] if row["pid"] == target_pid)
+    recheck = proof["member_gap_recheck"]
+    assert recheck["status"] == "invocation_changed"
+    assert recheck["context_before"]["systemd_queries"][0]["status"] == "ok"
+    assert recheck["attempt_count"] == 1
+    assert recheck["systemd_query_count"] == 1
+    assert systemd_reads == 1
+
+
+def test_gone_candidate_identity_query_timeout_is_retried_with_fixed_budget(
+    tmp_path, monkeypatch
+):
+    root = _proc_root(tmp_path)
+    facts, cgroup_fs_root, _ = _owned_service(tmp_path, main_pid=6040)
+    target_pid = 6041
+    _process(root, pid=6040, start_ticks=10040, cgroup=facts["control_group"])
+    _patch_owned_service(monkeypatch, facts)
+    query_budgets = []
+    signature = task44_native_service._unit_identity_signature(facts)
+
+    def timeout_then_success(unit, *, timeout_seconds):
+        query_budgets.append(timeout_seconds)
+        if len(query_budgets) == 1:
+            raise task44_native_service.subprocess.TimeoutExpired(
+                ["systemctl", "--user", "show", unit], timeout_seconds
+            )
+        return dict(signature)
+
+    monkeypatch.setattr(task44_native_service, "_unit_identity_signature_with_timeout", timeout_then_success)
     report = _cpu_neighbor_gate(
         selected_cpu=0,
         proc_root=root,
@@ -975,16 +1060,100 @@ def test_terminal_candidate_is_rejected_when_recheck_deadline_has_elapsed(
         ],
     )
 
+    assert report["status"] == "pass"
+    assert report["failures"] == []
+    proof = next(row for row in report["stale_snapshot_confirmed_gone"] if row["pid"] == target_pid)
+    recheck = proof["member_gap_recheck"]
+    assert recheck["status"] == "gone"
+    assert recheck["attempt_count"] == 2
+    assert recheck["systemd_query_count"] == 2
+    assert recheck["systemd_query_timeout_count"] == 1
+    assert query_budgets == [
+        task44_native_service._OWNED_MEMBER_GAP_SYSTEMD_QUERY_TIMEOUT_SECONDS,
+        task44_native_service._OWNED_MEMBER_GAP_SYSTEMD_QUERY_TIMEOUT_SECONDS,
+    ]
+    assert [query["status"] for query in recheck["systemd_queries"]] == ["timeout", "ok"]
+
+
+def test_exhausted_systemd_identity_query_retries_remain_unavailable(
+    tmp_path, monkeypatch
+):
+    root = _proc_root(tmp_path)
+    facts, cgroup_fs_root, _ = _owned_service(tmp_path, main_pid=6044)
+    _process(root, pid=6044, start_ticks=10044, cgroup=facts["control_group"])
+    _patch_owned_service(monkeypatch, facts)
+    query_budgets = []
+
+    def systemd_query_unavailable(unit, *, timeout_seconds):
+        query_budgets.append(timeout_seconds)
+        raise task44_native_service.subprocess.TimeoutExpired(
+            ["systemctl", "--user", "show", unit], timeout_seconds
+        )
+
+    monkeypatch.setattr(
+        task44_native_service,
+        "_unit_identity_signature_with_timeout",
+        systemd_query_unavailable,
+    )
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
+        proc_root=root,
+        ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts,
+        cgroup_fs_root=cgroup_fs_root,
+        numerical_processes=[
+            _candidate(6044, start_ticks=10044, cgroup_path=facts["control_group"]),
+            _candidate(6045, start_ticks=10045, cgroup_path=facts["control_group"]),
+        ],
+    )
+
     assert report["status"] == "fail"
-    assert systemd_reads == (1 if candidate_state == "gone" else 4)
-    assert report["stale_snapshot_confirmed_gone"] == []
-    assert target_pid not in report["owned_service_excluded_pids"]
-    proof = next(row for row in report["unverified_owned_members"] if row["pid"] == target_pid)
-    assert proof["member_gap_recheck"]["status"] == "deadline_expired"
-    assert proof["member_gap_recheck"]["attempt_count"] == 1
-    assert proof["member_gap_recheck"]["deadline_expired"] is True
-    seen_candidate = proof["member_gap_recheck"]["attempts"][0]["candidate"]
-    assert seen_candidate["status"] == candidate_state
+    proof = next(row for row in report["unverified_owned_members"] if row["pid"] == 6045)
+    recheck = proof["member_gap_recheck"]
+    assert recheck["status"] == "identity_query_unavailable"
+    assert recheck["attempt_count"] == 3
+    assert recheck["systemd_query_count"] == 3
+    assert recheck["systemd_query_timeout_count"] == 3
+    assert len(query_budgets) == 3
+    assert all(
+        timeout == task44_native_service._OWNED_MEMBER_GAP_SYSTEMD_QUERY_TIMEOUT_SECONDS
+        for timeout in query_budgets
+    )
+
+
+def test_confirmed_zombie_exit_from_owned_cgroup_is_stale_after_context_recheck(
+    tmp_path, monkeypatch
+):
+    root = _proc_root(tmp_path)
+    facts, cgroup_fs_root, _ = _owned_service(tmp_path, main_pid=6046)
+    target_pid = 6047
+    _process(root, pid=6046, start_ticks=10046, cgroup=facts["control_group"])
+    _process(root, pid=target_pid, start_ticks=10047, state="Z", cgroup=facts["control_group"])
+    _patch_owned_service(monkeypatch, facts)
+
+    report = _cpu_neighbor_gate(
+        selected_cpu=0,
+        proc_root=root,
+        ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts,
+        cgroup_fs_root=cgroup_fs_root,
+        numerical_processes=[
+            _candidate(6046, start_ticks=10046, cgroup_path=facts["control_group"]),
+            _candidate(6047, command="run_case.py", start_ticks=10047,
+                       cgroup_path=facts["control_group"]),
+        ],
+    )
+
+    assert report["status"] == "pass"
+    proof = next(row for row in report["stale_snapshot_confirmed_gone"] if row["pid"] == target_pid)
+    recheck = proof["member_gap_recheck"]
+    assert recheck["status"] == "gone"
+    assert recheck["candidate_exit_reason"] == "confirmed_zombie_exit"
+    exit_confirmation = recheck["candidate"]["exit_confirmation"]
+    assert exit_confirmation["kind"] == "stable_zombie_without_direct_membership"
+    assert exit_confirmation["states"] == ["Z", "Z", "Z"]
+    assert exit_confirmation["direct_membership_before"] is False
+    assert exit_confirmation["direct_membership_after"] is False
 
 
 def test_process_moved_out_of_owned_cgroup_is_not_exempt(tmp_path, monkeypatch):

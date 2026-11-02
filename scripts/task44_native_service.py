@@ -35,7 +35,8 @@ MAX_IDLE_CPU_BUSY_PERCENT = 20.0
 CPU_SAMPLE_SECONDS = 0.5
 _OWNED_MEMBER_GAP_RECHECK_MAX_ATTEMPTS = 3
 _OWNED_MEMBER_GAP_RECHECK_INTERVAL_SECONDS = 0.01
-_OWNED_MEMBER_GAP_RECHECK_DEADLINE_SECONDS = 0.05
+_OWNED_MEMBER_GAP_SYSTEMD_QUERY_TIMEOUT_SECONDS = 0.25
+_OWNED_MEMBER_GAP_MAX_SYSTEMD_QUERIES_PER_ATTEMPT = 4
 _OWNED_TASK44_UNIT_PATTERN = re.compile(
     r"task44-(?:sample|preflight)-[a-z0-9-]+\.service\Z"
 )
@@ -511,13 +512,47 @@ def _unit_identity_signature_with_timeout(unit: str, *, timeout_seconds: float) 
     })
 
 
+def _owned_gap_systemd_identity_query(
+    unit: str, *, query_number: int
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """Run one separately bounded systemd identity read and retain its timing."""
+    started = time.monotonic()
+    evidence: dict[str, Any] = {
+        "query_number": query_number,
+        "requested_timeout_seconds": _OWNED_MEMBER_GAP_SYSTEMD_QUERY_TIMEOUT_SECONDS,
+    }
+    try:
+        signature = _unit_identity_signature_with_timeout(
+            unit, timeout_seconds=_OWNED_MEMBER_GAP_SYSTEMD_QUERY_TIMEOUT_SECONDS
+        )
+    except subprocess.TimeoutExpired as exc:
+        evidence.update({
+            "status": "timeout",
+            "exception_type": type(exc).__name__,
+            "error": str(exc),
+        })
+        signature = None
+    except (OSError, subprocess.SubprocessError, RuntimeError, TypeError, ValueError) as exc:
+        evidence.update({
+            "status": "unavailable",
+            "exception_type": type(exc).__name__,
+            "errno": getattr(exc, "errno", None),
+            "error": str(exc),
+        })
+        signature = None
+    else:
+        evidence.update({"status": "ok", "identity_signature": signature})
+    evidence["elapsed_seconds"] = max(0.0, time.monotonic() - started)
+    return signature, evidence
+
+
 def _owned_gap_context_observation(
     owned_context: Mapping[str, Any],
     *,
     selected_cpu: int,
     cgroup: Path,
     proc_root: Path,
-    deadline: float,
+    query_number_start: int,
     gone_candidate: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Verify the active invocation and MainPID; bracket a gone candidate with one read."""
@@ -528,13 +563,34 @@ def _owned_gap_context_observation(
     expected_start = owned_context["main_pid_identity_before"]["start_ticks"]
     single_read = gone_candidate is not None
     candidate_pid = int(gone_candidate["pid"]) if single_read else None
+    systemd_queries: list[dict[str, Any]] = []
+
+    def read_systemd_identity() -> dict[str, Any] | None:
+        signature, query = _owned_gap_systemd_identity_query(
+            unit, query_number=query_number_start + len(systemd_queries)
+        )
+        systemd_queries.append(query)
+        return signature
+
     try:
         before = None
         if not single_read:
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                return {"status": "deadline_expired"}
-            before = _unit_identity_signature_with_timeout(unit, timeout_seconds=remaining)
+            before = read_systemd_identity()
+            if before is None:
+                return {
+                    "status": "identity_query_unavailable",
+                    "systemd_before": None,
+                    "systemd_queries": systemd_queries,
+                }
+            if before != expected_facts:
+                return {
+                    "status": "invocation_changed",
+                    "checks": {"invocation_and_main_pid": False},
+                    "systemd_before": before,
+                    "systemd_after": None,
+                    "systemd_queries": systemd_queries,
+                }
+
         members_before = _read_direct_cgroup_members(cgroup)
         candidate_before = (
             _confirm_proc_pid_directory_gone(candidate_pid, proc_root)
@@ -543,13 +599,6 @@ def _owned_gap_context_observation(
         main_before = _proc_identity(main_pid, proc_root)
         group_before = _proc_cgroup_path(main_pid, proc_root)
         affinity = set(os.sched_getaffinity(main_pid))
-
-        if single_read:
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                return {"status": "deadline_expired"}
-            after = _unit_identity_signature_with_timeout(unit, timeout_seconds=remaining)
-
         main_after = _proc_identity(main_pid, proc_root)
         group_after = _proc_cgroup_path(main_pid, proc_root)
         members_after = _read_direct_cgroup_members(cgroup)
@@ -557,17 +606,7 @@ def _owned_gap_context_observation(
             _confirm_proc_pid_directory_gone(candidate_pid, proc_root)
             if single_read else None
         )
-        if not single_read:
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                return {"status": "deadline_expired"}
-            after = _unit_identity_signature_with_timeout(unit, timeout_seconds=remaining)
-        if time.monotonic() >= deadline:
-            return {"status": "deadline_expired", "systemd_after": after}
         checks = {
-            "invocation_and_main_pid": (
-                after == expected_facts if single_read else before == expected_facts == after
-            ),
             "main_pid_start_ticks": (
                 main_before["start_ticks"] == expected_start == main_after["start_ticks"]
             ),
@@ -575,6 +614,34 @@ def _owned_gap_context_observation(
             "main_pid_membership": main_pid in members_before and main_pid in members_after,
             "main_pid_affinity": affinity == {selected_cpu},
         }
+        local_conflict_status = (
+            "main_pid_changed" if not checks["main_pid_start_ticks"]
+            else "context_cgroup_changed" if not checks["main_pid_cgroup"]
+            else "context_affinity_changed" if not checks["main_pid_affinity"]
+            else "context_membership_unverified" if not checks["main_pid_membership"]
+            else None
+        )
+        if local_conflict_status is not None:
+            return {
+                "status": local_conflict_status,
+                "checks": checks,
+                "systemd_before": before,
+                "systemd_after": None,
+                "systemd_queries": systemd_queries,
+            }
+
+        after = read_systemd_identity()
+        if after is None:
+            return {
+                "status": "identity_query_unavailable",
+                "checks": checks,
+                "systemd_before": before,
+                "systemd_after": None,
+                "systemd_queries": systemd_queries,
+            }
+        checks["invocation_and_main_pid"] = (
+            after == expected_facts if single_read else before == expected_facts == after
+        )
         status = (
             "stable" if all(checks.values())
             else "invocation_changed" if not checks["invocation_and_main_pid"]
@@ -588,6 +655,7 @@ def _owned_gap_context_observation(
             "checks": checks,
             "systemd_before": before,
             "systemd_after": after,
+            "systemd_queries": systemd_queries,
         }
         if status != "stable" or not single_read:
             return report
@@ -626,8 +694,10 @@ def _owned_gap_context_observation(
             report["status"] = "gone"
         return report
     except (KeyError, OSError, TypeError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
-        return {"status": "unverified", "error_type": type(exc).__name__, "error": str(exc)}
-
+        return {
+            "status": "unverified", "systemd_queries": systemd_queries,
+            "error_type": type(exc).__name__, "error": str(exc),
+        }
 
 def _owned_gap_candidate_observation(
     process: Mapping[str, Any],
@@ -700,6 +770,36 @@ def _owned_gap_candidate_observation(
             return {"status": "pid_reused", "candidate": candidate}
         if current_group != expected_cgroup:
             return {"status": "cgroup_changed", "candidate": candidate}
+        proof_before = proof.get("identity_before", {})
+        proof_after = proof.get("identity_after", {})
+        proof_checks = proof.get("checks", {})
+        zombie_exit_confirmed = (
+            confirmation_after["status"] == "present"
+            and proof_before.get("state") == "Z"
+            and proof_after.get("state") == "Z"
+            and identity.get("state") == "Z"
+            and proof_before.get("start_ticks") == snapshot_start
+            and proof_after.get("start_ticks") == snapshot_start
+            and proof_checks.get("candidate_start_ticks_match_both_reads") is True
+            and proof_checks.get("proc_start_ticks_stable") is True
+            and proof_checks.get("cgroup_exact_both_reads") is True
+            and proof.get("cgroup_before") == expected_cgroup
+            and proof.get("cgroup_after") == expected_cgroup
+            and proof.get("member_before") is False
+            and proof.get("member_after") is False
+            and pid not in members_before
+            and pid not in members_after
+        )
+        if zombie_exit_confirmed:
+            candidate["exit_confirmation"] = {
+                "kind": "stable_zombie_without_direct_membership",
+                "states": [proof_before["state"], proof_after["state"], identity["state"]],
+                "start_ticks": snapshot_start,
+                "cgroup_path": current_group,
+                "direct_membership_before": False,
+                "direct_membership_after": False,
+            }
+            return {"status": "zombie_exit_confirmed", "candidate": candidate}
         if owned and confirmation_after["status"] == "present":
             affinity = sorted(_parse_cpu_list(
                 _status_fields(proc_root / str(pid) / "status").get("Cpus_allowed_list", "")
@@ -740,15 +840,25 @@ def _recheck_owned_member_gap(
     cgroup: Path,
     proc_root: Path,
 ) -> dict[str, Any]:
-    """Recheck a same-cgroup membership gap with a strict count and deadline."""
+    """Recheck a same-cgroup gap with fixed query timeouts and a strict call count."""
     started = time.monotonic()
-    deadline = started + _OWNED_MEMBER_GAP_RECHECK_DEADLINE_SECONDS
     attempts: list[dict[str, Any]] = []
+    systemd_queries: list[dict[str, Any]] = []
     attempts_started = 0
     result: dict[str, Any] = {"status": "unverified"}
+
+    def retain_queries(observation: Mapping[str, Any]) -> None:
+        queries = observation.get("systemd_queries")
+        if isinstance(queries, list):
+            systemd_queries.extend(queries)
+
+    def retry_if_available(number: int) -> bool:
+        if number >= _OWNED_MEMBER_GAP_RECHECK_MAX_ATTEMPTS:
+            return False
+        time.sleep(_OWNED_MEMBER_GAP_RECHECK_INTERVAL_SECONDS)
+        return True
+
     for number in range(1, _OWNED_MEMBER_GAP_RECHECK_MAX_ATTEMPTS + 1):
-        if time.monotonic() >= deadline:
-            break
         attempts_started += 1
         candidate_pid = int(process["pid"])
         candidate_confirmation = _confirm_proc_pid_directory_gone(candidate_pid, proc_root)
@@ -770,8 +880,10 @@ def _recheck_owned_member_gap(
         if candidate_confirmation["status"] == "gone":
             context = _owned_gap_context_observation(
                 owned_context, selected_cpu=selected_cpu, cgroup=cgroup,
-                proc_root=proc_root, deadline=deadline, gone_candidate=process,
+                proc_root=proc_root, query_number_start=len(systemd_queries) + 1,
+                gone_candidate=process,
             )
+            retain_queries(context)
             candidate_probe = {
                 "status": "gone",
                 "candidate": context.get("candidate", {
@@ -784,18 +896,21 @@ def _recheck_owned_member_gap(
                 "candidate": candidate_probe,
                 "context_after": context,
             })
-            if time.monotonic() >= deadline or context["status"] == "deadline_expired":
-                result = {
-                    "status": "deadline_expired",
-                    "candidate": candidate_probe["candidate"],
-                    "context_after": context,
-                }
-            elif context["status"] == "gone":
+            if context["status"] == "gone":
                 result = {
                     "status": "gone",
                     "candidate": candidate_probe["candidate"],
                     "gone_context": context,
                 }
+                break
+            if context["status"] == "identity_query_unavailable":
+                result = {
+                    "status": "identity_query_unavailable",
+                    "candidate": candidate_probe["candidate"],
+                    "context_after": context,
+                }
+                if retry_if_available(number):
+                    continue
             else:
                 result = {
                     "status": context["status"],
@@ -806,8 +921,15 @@ def _recheck_owned_member_gap(
 
         before = _owned_gap_context_observation(
             owned_context, selected_cpu=selected_cpu, cgroup=cgroup,
-            proc_root=proc_root, deadline=deadline,
+            proc_root=proc_root, query_number_start=len(systemd_queries) + 1,
         )
+        retain_queries(before)
+        if before["status"] == "identity_query_unavailable":
+            attempts.append({"attempt": number, "context_before": before})
+            result = {"status": "identity_query_unavailable", "context_before": before}
+            if retry_if_available(number):
+                continue
+            break
         if before["status"] != "stable":
             attempts.append({"attempt": number, "context_before": before})
             result = {"status": before["status"], "context_before": before}
@@ -818,20 +940,40 @@ def _recheck_owned_member_gap(
         )
         after = _owned_gap_context_observation(
             owned_context, selected_cpu=selected_cpu, cgroup=cgroup,
-            proc_root=proc_root, deadline=deadline,
+            proc_root=proc_root, query_number_start=len(systemd_queries) + 1,
         )
+        retain_queries(after)
         attempts.append({"attempt": number, "context_before": before,
                          "candidate": observation, "context_after": after})
-        if time.monotonic() >= deadline:
+        if observation["status"] in {
+            "pid_reused", "cgroup_changed", "candidate_affinity_changed"
+        }:
             result = {
-                "status": "deadline_expired",
+                "status": observation["status"],
                 "candidate": observation.get("candidate"),
                 "context_after": after,
             }
             break
+        if after["status"] == "identity_query_unavailable":
+            result = {
+                "status": "identity_query_unavailable",
+                "candidate": observation.get("candidate"),
+                "context_after": after,
+            }
+            if retry_if_available(number):
+                continue
+            break
         if after["status"] != "stable":
             result = {"status": after["status"], "candidate": observation,
                       "context_after": after}
+            break
+        if observation["status"] == "zombie_exit_confirmed":
+            candidate = observation["candidate"]
+            result = {
+                "status": "gone",
+                "candidate": candidate,
+                "candidate_exit_reason": "confirmed_zombie_exit",
+            }
             break
         if observation["status"] in {"gone", "member_reconfirmed"}:
             result = {"status": observation["status"],
@@ -840,16 +982,33 @@ def _recheck_owned_member_gap(
         result = {"status": observation["status"], "candidate": observation["candidate"]}
         if observation["status"] != "still_present_without_direct_membership":
             break
-        remaining = deadline - time.monotonic()
-        if number < _OWNED_MEMBER_GAP_RECHECK_MAX_ATTEMPTS and remaining > 0:
-            time.sleep(min(_OWNED_MEMBER_GAP_RECHECK_INTERVAL_SECONDS, remaining))
+        retry_if_available(number)
     result.update({
         "attempt_count": attempts_started,
         "attempts": attempts,
         "max_attempts": _OWNED_MEMBER_GAP_RECHECK_MAX_ATTEMPTS,
-        "deadline_seconds": _OWNED_MEMBER_GAP_RECHECK_DEADLINE_SECONDS,
+        "systemd_query_timeout_seconds": _OWNED_MEMBER_GAP_SYSTEMD_QUERY_TIMEOUT_SECONDS,
+        "systemd_query_count_max_per_attempt": (
+            _OWNED_MEMBER_GAP_MAX_SYSTEMD_QUERIES_PER_ATTEMPT
+        ),
+        "max_systemd_query_count": (
+            _OWNED_MEMBER_GAP_RECHECK_MAX_ATTEMPTS
+            * _OWNED_MEMBER_GAP_MAX_SYSTEMD_QUERIES_PER_ATTEMPT
+        ),
+        "max_systemd_query_wait_seconds": (
+            _OWNED_MEMBER_GAP_RECHECK_MAX_ATTEMPTS
+            * _OWNED_MEMBER_GAP_MAX_SYSTEMD_QUERIES_PER_ATTEMPT
+            * _OWNED_MEMBER_GAP_SYSTEMD_QUERY_TIMEOUT_SECONDS
+        ),
+        "systemd_query_count": len(systemd_queries),
+        "systemd_query_timeout_count": sum(
+            query.get("status") == "timeout" for query in systemd_queries
+        ),
+        "systemd_queries": systemd_queries,
+        "systemd_query_elapsed_seconds": sum(
+            float(query.get("elapsed_seconds", 0.0)) for query in systemd_queries
+        ),
         "elapsed_seconds": max(0.0, time.monotonic() - started),
-        "deadline_expired": time.monotonic() >= deadline,
     })
     return result
 
@@ -1466,9 +1625,26 @@ def _cpu_neighbor_gate(
                             "attempt_count": 0,
                             "attempts": [],
                             "max_attempts": _OWNED_MEMBER_GAP_RECHECK_MAX_ATTEMPTS,
-                            "deadline_seconds": _OWNED_MEMBER_GAP_RECHECK_DEADLINE_SECONDS,
+                            "systemd_query_timeout_seconds": (
+                                _OWNED_MEMBER_GAP_SYSTEMD_QUERY_TIMEOUT_SECONDS
+                            ),
+                            "systemd_query_count_max_per_attempt": (
+                                _OWNED_MEMBER_GAP_MAX_SYSTEMD_QUERIES_PER_ATTEMPT
+                            ),
+                            "max_systemd_query_count": (
+                                _OWNED_MEMBER_GAP_RECHECK_MAX_ATTEMPTS
+                                * _OWNED_MEMBER_GAP_MAX_SYSTEMD_QUERIES_PER_ATTEMPT
+                            ),
+                            "max_systemd_query_wait_seconds": (
+                                _OWNED_MEMBER_GAP_RECHECK_MAX_ATTEMPTS
+                                * _OWNED_MEMBER_GAP_MAX_SYSTEMD_QUERIES_PER_ATTEMPT
+                                * _OWNED_MEMBER_GAP_SYSTEMD_QUERY_TIMEOUT_SECONDS
+                            ),
+                            "systemd_query_count": 0,
+                            "systemd_query_timeout_count": 0,
+                            "systemd_queries": [],
+                            "systemd_query_elapsed_seconds": 0.0,
                             "elapsed_seconds": 0.0,
-                            "deadline_expired": False,
                         }
                     proof["member_gap_recheck"] = recheck
                     candidate_recheck = recheck.get("candidate")
