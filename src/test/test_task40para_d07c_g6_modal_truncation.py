@@ -6,6 +6,8 @@ import shutil
 import uuid
 from pathlib import Path
 
+import pytest
+
 from src.geometry.mesh_builder_3d import build_airbox_mesh_3d
 from src.geometry.task40_phi90_d07c_axis_plan import d07c_axis_plan
 from src.io.execution_plan import build_execution_plan
@@ -87,6 +89,79 @@ def _argument(argv, option):
     return argv[argv.index(option) + 1]
 
 
+@pytest.mark.parametrize(
+    ("label", "active_count", "active_propagating", "active_power"),
+    (("N32", 2312, 2184, 2250), ("N14", 1088, 960, 1026)),
+)
+def test_g6_modal_formal_loader_to_physical_bundle_preflight_without_fe(
+    label, active_count, active_propagating, active_power
+):
+    from src.runners.p6_condensed_direct import _preflight_task40_mode_inventories
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        _expected_operator_parent_indices,
+    )
+
+    _specification, _resolved, _profile, route, cfg = _resolved_case(label)
+    preflight = _preflight_task40_mode_inventories(cfg, route)
+    parent = preflight["parent_inventory"]
+    active = preflight["active_inventory"]
+    selection = preflight["operator_selection"]
+    indices = preflight["selected_parent_indices"]
+
+    assert len(parent[0]) == len(parent[1]) == route["parent_count"] == 4488
+    assert parent[2] == route["expected_mode_sha256"]
+    assert preflight["parent_propagating_count"] == 4360
+    assert preflight["parent_power_carrying_count"] == 4426
+    assert route["expected_parent_propagating_count"] == 4360
+    assert route["expected_parent_power_carrying_count"] == 4426
+
+    assert len(active[0]) == len(active[1]) == route["active_count"] == active_count
+    assert active[2] == route["active_sha256"]
+    assert preflight["active_propagating_count"] == active_propagating
+    assert preflight["active_power_carrying_count"] == active_power
+    assert route["expected_active_propagating_count"] == active_propagating
+    assert route["expected_active_power_carrying_count"] == active_power
+    assert selection["policy"] == "explicit_signed_subrectangle_from_parent_v1"
+    assert selection["active_signed_bounds_mn"] == list(route["signed_rectangle_bounds_mn"])
+    assert selection["parent_signed_bounds_mn"] == list(route["parent_signed_bounds_mn"])
+
+    physical_preflight = preflight["physical_bundle_preflight"]
+    assert physical_preflight["quadrature_mode_count"] == len(parent[0])
+    assert physical_preflight["quadrature_mode_sha256"] == parent[2]
+    assert physical_preflight["selected_parent_indices"] == indices
+    assert _expected_operator_parent_indices(parent[1], selection) == indices
+
+
+@pytest.mark.parametrize(
+    ("active_bounds", "parent_bounds", "message"),
+    (
+        (None, [-8, 8, -64, 1], "malformed"),
+        ([-8, 8, -32], [-8, 8, -64, 1], "malformed"),
+        ([True, 8, -32, 1], [-8, 8, -64, 1], "malformed"),
+        ([-8, 8, -32.0, 1], [-8, 8, -64, 1], "malformed"),
+        ([8, -8, -32, 1], [-8, 8, -64, 1], "reversed"),
+        ([-8, 8, -65, 1], [-8, 8, -64, 1], "exceed"),
+    ),
+)
+def test_g6_signed_physical_parent_filter_rejects_invalid_bounds(
+    active_bounds, parent_bounds, message
+):
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        _expected_operator_parent_indices,
+    )
+
+    rows = ({"mode_index": 0, "side": "top", "m": 0, "n": 0, "polarization": "s"},)
+    with pytest.raises(ValueError, match=message):
+        _expected_operator_parent_indices(
+            rows,
+            {
+                "policy": "explicit_signed_subrectangle_from_parent_v1",
+                "active_signed_bounds_mn": active_bounds,
+                "parent_signed_bounds_mn": parent_bounds,
+            },
+        )
+
+
 def test_g6_modal_windows_are_nested_signed_subsets_on_the_exact_g6_mesh():
     base_spec, base_resolved, _base_profile, base_route, base_cfg = _resolved_case("N64")
     parent_inventory = build_dynamic_mode_inventory(base_cfg)
@@ -114,8 +189,8 @@ def test_g6_modal_windows_are_nested_signed_subsets_on_the_exact_g6_mesh():
         assert route["expected_selected_signed_keys_sha256"] == expected[
             "signed_keys_sha"
         ]
-        assert route["propagating_count"] == expected["propagating"]
-        assert route["power_carrying_count"] == expected["power_carrying"]
+        assert route["active_propagating_count"] == expected["propagating"]
+        assert route["active_power_carrying_count"] == expected["power_carrying"]
 
         active_inventory, selection, indices = _build_task40_rectangle_inventory(
             parent_inventory, cfg, route

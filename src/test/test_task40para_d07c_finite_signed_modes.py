@@ -364,8 +364,10 @@ def test_d07c_g3_m8_n64_loader_mesh_selector_and_q81_contract(tmp_path):
     assert route["expected_mode_sha256"] == (
         "e4cef2ecadaab2563a46592dfe31df04aa47bc113f3a69e1ac0ecd70cebf2ef0"
     )
-    assert route["expected_propagating_count"] == 4360
-    assert route["expected_power_carrying_count"] == 4426
+    assert route["expected_parent_propagating_count"] == 4360
+    assert route["expected_parent_power_carrying_count"] == 4426
+    assert route["expected_active_propagating_count"] == 4360
+    assert route["expected_active_power_carrying_count"] == 4426
     assert options["surface_quadrature"]["degree"] == route["surface_quadrature_degree"] == 81
     assert options["volume_quadrature"] == {
         "degree": 15,

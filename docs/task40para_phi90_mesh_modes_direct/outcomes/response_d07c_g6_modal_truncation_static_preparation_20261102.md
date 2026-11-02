@@ -31,3 +31,11 @@ N64 已求解结果投影到 N32 时，省略通道 R/T 合计为 `1.60635820354
 | N32/N14 formal loader 与 output parent 检查 | PASS | 两个 result parent 均不存在；未创建 |
 
 目前未执行 full fresh、FE assembly/carrier、factor、PDE solve 或 systemd submission。N32/N14 scope、sidecar、service-unit identity 将绑定最终 clean source commit 后另行形成 hash-bound 主审包。执行顺序固定 N32 后 N14；每个 case 需主审对其 exact package 给出 PASS，并完成该 case 的完整 fresh PASS 后才可启动。N32 自然终态且清场后，再独立 fresh N14。Gate-CD 与本静态包无关。
+
+## 2026-11-02 主审反馈：parent/active inventory 启动阻断修复
+
+主审对启动顺序的检查发现，旧 route 将 N32/N14 的 active propagation 统计（2184/2250、960/1026）放在通用字段中，而 runner 在 signed subrectangle 选择前拿该字段检查 N64 parent（4360/4426）。现已把 parent 与 active 计数字段分开；N32/N14 parent 预期明确绑定 N64 的 4360/4426，active 计数在选择后独立核验。D07C 其他截断路由不再把 active 统计当作 parent 统计；parent 数量与 SHA 仍按各自冻结 profile 检查。
+
+第二处问题是物理 bundle 预检不支持 `explicit_signed_subrectangle_from_parent_v1`。该入口现按精确有符号 m/n bounds 过滤，并拒绝缺项、非整数/布尔、反向及超出 parent 的 bounds。runner 与实际 bundle builder 共用同一无 FE inventory preflight；因此选择索引、active rows、parent rows 和 index SHA 在编译表单前完成核对。
+
+新增的连续路径回归从正式 N32/N14 loader 开始，执行实际 4,488-mode N64 parent inventory 检查、2312/1088-mode signed selector 和物理 bundle preflight；并覆盖旧 D5C/D15 selector 兼容。定向回归为 14 passed；compileall、E/F 诊断及 `git diff --check` 通过。未 fresh，未创建 FE mesh/carrier/matrix/factor，未求解，未启动 systemd。几何、材料、入射、离散、边界、q81/q15、稀疏 cutoff 和输出条件未变；后续只使用旧包的副本生成新 source-bound package，旧包保留作历史。

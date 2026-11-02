@@ -127,8 +127,8 @@ def test_d5c_y7_modal_input_and_profile_preserve_parent_physics_and_r5(label):
     assert route["residual_scope"] != "A6_full_R5"
     assert route["full_dtn_status"] == "FULL_DTN_NOT_VERIFIED"
     assert route["omitted_boundary_relative_l2_lower_bound"] == lower_bound
-    assert route["propagating_count"] == prop
-    assert route["power_carrying_count"] == power
+    assert route["active_propagating_count"] == prop
+    assert route["active_power_carrying_count"] == power
     output = _direct_output_policy(route)
     assert output["dtn_output_mode_count"] == expected_count
     assert output["omitted_dtn_channels"] == "NOT_COMPUTED"

@@ -316,6 +316,23 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         reference_label = str(mode.get("reference_mode_label", "R13"))
         expected_mode_count = parent_mode_count
         expected_active_mode_count = active_mode_count
+        expected_active_propagating_count = mode.get(
+            "expected_active_propagating_count"
+        )
+        expected_active_power_carrying_count = mode.get(
+            "expected_active_power_carrying_count"
+        )
+        expected_parent_propagating_count = mode.get(
+            "expected_parent_propagating_count"
+        )
+        expected_parent_power_carrying_count = mode.get(
+            "expected_parent_power_carrying_count"
+        )
+        if not truncated:
+            if expected_parent_propagating_count is None:
+                expected_parent_propagating_count = expected_active_propagating_count
+            if expected_parent_power_carrying_count is None:
+                expected_parent_power_carrying_count = expected_active_power_carrying_count
         parent_rectangle = list(mode["parent_rectangle_max_abs_m_n"])
         active_rectangle = list(active_rectangle)
         expected_active_mode_sha256 = mode.get(
@@ -377,8 +394,8 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "expected_selected_signed_keys_sha256": mode.get(
                 "expected_selected_signed_keys_sha256"
             ),
-            "propagating_count": mode.get("expected_active_propagating_count"),
-            "power_carrying_count": mode.get("expected_active_power_carrying_count"),
+            "active_propagating_count": expected_active_propagating_count,
+            "active_power_carrying_count": expected_active_power_carrying_count,
             "omitted_boundary_relative_l2_lower_bound": options.get(
                 "modal_truncation", {}
             ).get("omitted_boundary_relative_l2_lower_bound"),
@@ -401,8 +418,10 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "surface_quadrature_reference_degree": options[
                 "surface_quadrature"
             ].get("reference_degree"),
-            "expected_propagating_count": mode.get("expected_active_propagating_count"),
-            "expected_power_carrying_count": mode.get("expected_active_power_carrying_count"),
+            "expected_parent_propagating_count": expected_parent_propagating_count,
+            "expected_parent_power_carrying_count": expected_parent_power_carrying_count,
+            "expected_active_propagating_count": expected_active_propagating_count,
+            "expected_active_power_carrying_count": expected_active_power_carrying_count,
             "surface_quadrature_envelope_max_abs_m_n": [
                 options["surface_quadrature"]["fixed_comparison_envelope"]["max_abs_m"],
                 options["surface_quadrature"]["fixed_comparison_envelope"]["max_abs_n"],
@@ -903,6 +922,11 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
         "selected_signed_keys_order": "preserved_from_exact_parent_inventory",
         "side_polarization_counts": side_polarization_counts,
         "active_rectangle_max_abs_m_n": list(rectangle),
+        "parent_signed_bounds_mn": (
+            list(route["parent_signed_bounds_mn"])
+            if active_signed_bounds is not None
+            else None
+        ),
         "active_signed_bounds_mn": (
             None if active_signed_bounds is None else list(active_signed_bounds)
         ),
@@ -912,6 +936,128 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
         "operator_scope": route["operator_scope"],
     }
     return (active_modes, tuple(active_rows), active_sha), selection, indices
+
+
+def _preflight_task40_mode_inventories(cfg, route):
+    """Run Task40 parent/active inventory gates before any FE carrier work."""
+
+    from src.solvers.fullspace_dtn_action import build_dynamic_mode_inventory
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        _preflight_same_mesh_physical_inventory_selection,
+    )
+
+    if route.get("family") != "task40_phi90":
+        raise ValueError("Task40 inventory preflight requires a Task40 direct route")
+    parent_inventory = build_dynamic_mode_inventory(cfg)
+    parent_modes, parent_rows, parent_sha = parent_inventory
+    if len(parent_modes) != route["parent_count"] or len(parent_rows) != route["parent_count"]:
+        raise ValueError(
+            "live Task40 "
+            f"{route['reference_mode_label']} inventory has {len(parent_modes)} modes; expected "
+            f"{route['parent_count']} for rectangle {route['parent_rectangle_max_abs_m_n']}"
+        )
+    expected_parent_sha = route.get("expected_mode_sha256")
+    if expected_parent_sha is not None and str(parent_sha) != str(expected_parent_sha):
+        raise ValueError(
+            f"live Task40 {route['reference_mode_label']} mode SHA differs "
+            "from the frozen metadata inventory"
+        )
+    for index, (mode, row) in enumerate(zip(parent_modes, parent_rows, strict=True)):
+        if (
+            not isinstance(row, Mapping)
+            or int(row.get("mode_index", -1)) != index
+            or int(row.get("m", 999999)) != int(mode.m)
+            or int(row.get("n", 999999)) != int(mode.n)
+            or str(row.get("side")) != str(mode.side)
+            or str(row.get("polarization")) != str(mode.polarization)
+        ):
+            raise ValueError("Task40 finite-parent rows do not match live mode objects")
+
+    parent_propagating_count = sum(bool(mode.propagating) for mode in parent_modes)
+    parent_power_carrying_count = sum(
+        float(mode.power_per_unit_amplitude) > 0.0 for mode in parent_modes
+    )
+    expected_parent_propagating_count = route.get(
+        "expected_parent_propagating_count"
+    )
+    expected_parent_power_carrying_count = route.get(
+        "expected_parent_power_carrying_count"
+    )
+    if (
+        expected_parent_propagating_count is not None
+        and parent_propagating_count != int(expected_parent_propagating_count)
+    ):
+        raise ValueError("live Task40 parent propagating count differs from the frozen inventory")
+    if (
+        expected_parent_power_carrying_count is not None
+        and parent_power_carrying_count != int(expected_parent_power_carrying_count)
+    ):
+        raise ValueError("live Task40 parent power-carrying count differs from the frozen inventory")
+
+    route["parent_sha256"] = str(parent_sha)
+    if route["truncated"]:
+        active_inventory, operator_selection, selected_parent_indices = (
+            _build_task40_rectangle_inventory(parent_inventory, cfg, route)
+        )
+        _bind_task40_selected_parent_index_identity(route, operator_selection)
+    else:
+        route["active_count"] = len(parent_modes)
+        route["active_sha256"] = str(parent_sha)
+        active_inventory = parent_inventory
+        operator_selection = None
+        selected_parent_indices = tuple(range(len(parent_modes)))
+
+    active_modes, active_rows, active_sha = active_inventory
+    if (
+        len(active_modes) != route["active_count"]
+        or len(active_rows) != route["active_count"]
+        or str(active_sha) != str(route["active_sha256"])
+        or (
+            route["truncated"]
+            and len(selected_parent_indices) != route["active_count"]
+        )
+    ):
+        raise ValueError("live active inventory differs from its direct profile identity")
+    active_propagating_count = sum(bool(mode.propagating) for mode in active_modes)
+    active_power_carrying_count = sum(
+        float(mode.power_per_unit_amplitude) > 0.0 for mode in active_modes
+    )
+    expected_active_propagating_count = route.get(
+        "expected_active_propagating_count"
+    )
+    expected_active_power_carrying_count = route.get(
+        "expected_active_power_carrying_count"
+    )
+    if (
+        expected_active_propagating_count is not None
+        and active_propagating_count != int(expected_active_propagating_count)
+    ):
+        raise ValueError("live Task40 active propagating count differs from its frozen selection")
+    if (
+        expected_active_power_carrying_count is not None
+        and active_power_carrying_count != int(expected_active_power_carrying_count)
+    ):
+        raise ValueError("live Task40 active power-carrying count differs from its frozen selection")
+
+    physical_bundle_preflight = _preflight_same_mesh_physical_inventory_selection(
+        active_inventory,
+        quadrature_mode_inventory=(parent_inventory if route["truncated"] else None),
+        operator_selection=operator_selection,
+        selected_parent_indices=(
+            selected_parent_indices if route["truncated"] else None
+        ),
+    )
+    return {
+        "parent_inventory": parent_inventory,
+        "active_inventory": active_inventory,
+        "operator_selection": operator_selection,
+        "selected_parent_indices": selected_parent_indices,
+        "parent_propagating_count": parent_propagating_count,
+        "parent_power_carrying_count": parent_power_carrying_count,
+        "active_propagating_count": active_propagating_count,
+        "active_power_carrying_count": active_power_carrying_count,
+        "physical_bundle_preflight": physical_bundle_preflight,
+    }
 
 
 def _bind_task40_selected_parent_index_identity(
@@ -3021,35 +3167,14 @@ def run_p6_condensed_direct(
         summary["mesh_evidence"] = mesh_evidence
         ledger.marker("p6_direct_actual_mesh_qa_complete", mesh_evidence)
 
-        parent_inventory = build_dynamic_mode_inventory(cfg)
         if route["family"] == "task40_phi90":
-            if len(parent_inventory[0]) != route["parent_count"] or len(parent_inventory[1]) != route["parent_count"]:
-                raise ValueError(
-                    "live Task40 "
-                    f"{route['reference_mode_label']} inventory has "
-                    f"{len(parent_inventory[0])} modes; expected "
-                    f"{route['parent_count']} for rectangle "
-                    f"{route['parent_rectangle_max_abs_m_n']}"
-                )
-            expected_mode_sha = route.get("expected_mode_sha256")
-            if (
-                expected_mode_sha is not None
-                and str(parent_inventory[2]) != str(expected_mode_sha)
-            ):
-                raise ValueError(
-                    f"live Task40 {route['reference_mode_label']} mode SHA differs "
-                    "from the frozen metadata inventory"
-                )
-            route["parent_sha256"] = str(parent_inventory[2])
-            if not route["truncated"]:
-                route["active_count"] = len(parent_inventory[0])
-                route["active_sha256"] = str(parent_inventory[2])
-            expected_prop = route.get("expected_propagating_count")
-            expected_power = route.get("expected_power_carrying_count")
-            if expected_prop is not None and sum(bool(mode.propagating) for mode in parent_inventory[0]) != int(expected_prop):
-                raise ValueError("live Task40 propagating mode count differs from the frozen inventory")
-            if expected_power is not None and sum(float(mode.power_per_unit_amplitude) > 0.0 for mode in parent_inventory[0]) != int(expected_power):
-                raise ValueError("live Task40 power-carrying mode count differs from the frozen inventory")
+            inventory_preflight = _preflight_task40_mode_inventories(cfg, route)
+            parent_inventory = inventory_preflight["parent_inventory"]
+            active_inventory = inventory_preflight["active_inventory"]
+            operator_selection = inventory_preflight["operator_selection"]
+            selected_parent_indices = inventory_preflight["selected_parent_indices"]
+        else:
+            parent_inventory = build_dynamic_mode_inventory(cfg)
         if route["family"] == "dispersion_flat":
             if (
                 not parent_inventory[0]
@@ -3064,28 +3189,24 @@ def run_p6_condensed_direct(
                 active_count=len(parent_inventory[0]),
                 active_sha256=str(parent_inventory[2]),
             )
-        elif (
+        elif route["family"] != "task40_phi90" and (
             len(parent_inventory[0]) != route["parent_count"]
             or parent_inventory[2] != route["parent_sha256"]
         ):
             raise ValueError("live full parent inventory differs from the selected direct profile")
-        if route["family"] == "task40_phi90" and route["truncated"]:
-            active_inventory, operator_selection, selected_parent_indices = (
-                _build_task40_rectangle_inventory(parent_inventory, cfg, route)
-            )
-        elif route["family"] == "v7_aniso_n0":
+        if route["family"] != "task40_phi90" and route["family"] == "v7_aniso_n0":
             active_inventory, operator_selection, selected_parent_indices = (
                 build_n0_mode_inventory(parent_inventory, cfg)
             )
-        elif route["truncated"]:
+        elif route["family"] != "task40_phi90" and route["truncated"]:
             active_inventory, operator_selection, selected_parent_indices = (
                 _build_f5_n0_inventory(parent_inventory, cfg)
             )
-        else:
+        elif route["family"] != "task40_phi90":
             active_inventory = parent_inventory
             operator_selection = None
             selected_parent_indices = tuple(range(len(parent_inventory[0])))
-        if (
+        if route["family"] != "task40_phi90" and (
             len(active_inventory[0]) != route["active_count"]
             or active_inventory[2] != route["active_sha256"]
             or (
@@ -3094,8 +3215,6 @@ def run_p6_condensed_direct(
             )
         ):
             raise ValueError("live active inventory differs from its direct profile identity")
-        if route["family"] == "task40_phi90" and route["truncated"]:
-            _bind_task40_selected_parent_index_identity(route, operator_selection)
         active_modes_by_side = _inventory_mode_counts_by_side(
             active_inventory[1], expected_total=route["active_count"]
         )

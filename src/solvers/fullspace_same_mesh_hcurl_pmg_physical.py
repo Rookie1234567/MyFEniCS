@@ -78,7 +78,138 @@ def _expected_operator_parent_indices(
             if abs(int(row.get("m", 999999))) <= max_m
             and abs(int(row.get("n", 999999))) <= max_n
         )
+    if policy == "explicit_signed_subrectangle_from_parent_v1":
+        def signed_bounds(name: str) -> tuple[int, int, int, int]:
+            try:
+                raw_bounds = tuple(operator_selection.get(name, ()))
+            except TypeError as exc:
+                raise ValueError("operator selection signed bounds are malformed") from exc
+            if (
+                len(raw_bounds) != 4
+                or any(
+                    isinstance(value, bool)
+                    or not isinstance(value, (int, np.integer))
+                    for value in raw_bounds
+                )
+            ):
+                raise ValueError("operator selection signed bounds are malformed")
+            bounds = tuple(int(value) for value in raw_bounds)
+            m_min, m_max, n_min, n_max = bounds
+            if m_min > m_max or n_min > n_max:
+                raise ValueError("operator selection signed bounds are reversed")
+            return bounds
+
+        m_min, m_max, n_min, n_max = signed_bounds("active_signed_bounds_mn")
+        pm_min, pm_max, pn_min, pn_max = signed_bounds("parent_signed_bounds_mn")
+        if (
+            m_min < pm_min or m_max > pm_max
+            or n_min < pn_min or n_max > pn_max
+        ):
+            raise ValueError("operator selection signed bounds exceed the finite parent")
+        return tuple(
+            index
+            for index, row in enumerate(parent_mode_rows)
+            if m_min <= int(row.get("m", 999999)) <= m_max
+            and n_min <= int(row.get("n", 999999)) <= n_max
+        )
     raise ValueError("operator selection policy is unsupported")
+
+
+def _preflight_same_mesh_physical_inventory_selection(
+    mode_inventory: tuple[Any, Any, Any],
+    *,
+    quadrature_mode_inventory: tuple[Any, Any, Any] | None = None,
+    operator_selection: Mapping[str, Any] | None = None,
+    selected_parent_indices: tuple[int, ...] | None = None,
+) -> dict[str, Any]:
+    """Validate active/parent identities before compiling any physical forms."""
+
+    if len(mode_inventory) != 3:
+        raise ValueError("mode_inventory must contain modes, rows, and SHA")
+    modes, mode_rows, mode_sha = mode_inventory
+    modes = tuple(modes)
+    mode_rows = tuple(mode_rows)
+    mode_sha = str(mode_sha)
+    if not modes or len(mode_rows) != len(modes):
+        raise ValueError("same-mesh physical mode inventory is incomplete")
+
+    if quadrature_mode_inventory is None:
+        if operator_selection is not None:
+            raise ValueError(
+                "operator selection requires its explicit parent quadrature inventory"
+            )
+        if selected_parent_indices is not None:
+            raise ValueError(
+                "selected parent indices require an operator selection identity"
+            )
+        return {
+            "quadrature_modes": modes,
+            "quadrature_mode_sha256": mode_sha,
+            "parent_mode_rows": mode_rows,
+            "selected_parent_indices": None,
+            "quadrature_mode_count": len(modes),
+        }
+
+    if len(quadrature_mode_inventory) != 3:
+        raise ValueError("quadrature_mode_inventory must contain modes, rows, and SHA")
+    quadrature_modes, quadrature_rows, quadrature_mode_sha = quadrature_mode_inventory
+    quadrature_modes = tuple(quadrature_modes)
+    quadrature_rows = tuple(quadrature_rows)
+    parent_mode_rows = tuple(quadrature_rows)
+    quadrature_mode_sha = str(quadrature_mode_sha)
+    if not quadrature_modes or len(quadrature_modes) != len(quadrature_rows):
+        raise ValueError("quadrature parent inventory is incomplete")
+    if operator_selection is None:
+        raise ValueError(
+            "a distinct quadrature inventory requires an operator selection identity"
+        )
+    if (
+        int(operator_selection.get("parent_mode_count", -1)) != len(quadrature_modes)
+        or operator_selection.get("parent_mode_sha256") != quadrature_mode_sha
+        or int(operator_selection.get("active_mode_count", -1)) != len(modes)
+        or operator_selection.get("active_mode_sha256") != mode_sha
+    ):
+        raise ValueError("active and quadrature inventories do not match operator selection")
+    if selected_parent_indices is None:
+        raise ValueError("operator selection requires its exact parent index map")
+    selected_parent_indices = tuple(int(index) for index in selected_parent_indices)
+    if (
+        len(selected_parent_indices) != len(modes)
+        or any(index < 0 or index >= len(quadrature_modes) for index in selected_parent_indices)
+        or any(right <= left for left, right in pairwise(selected_parent_indices))
+    ):
+        raise ValueError("operator selection parent indices are invalid")
+    expected_parent_indices = _expected_operator_parent_indices(
+        parent_mode_rows, operator_selection
+    )
+    if selected_parent_indices != expected_parent_indices:
+        raise ValueError("operator selection indices do not match its live parent filter")
+    for active_index, parent_index in enumerate(selected_parent_indices):
+        parent_row = dict(parent_mode_rows[parent_index])
+        parent_row["mode_index"] = active_index
+        if parent_row != dict(mode_rows[active_index]):
+            raise ValueError("active mode row differs from its selected parent mode row")
+
+    import hashlib
+    import json
+
+    index_sha = hashlib.sha256(
+        json.dumps(
+            list(selected_parent_indices),
+            ensure_ascii=True,
+            allow_nan=False,
+            separators=(",", ":"),
+        ).encode("ascii")
+    ).hexdigest()
+    if index_sha != operator_selection.get("selected_parent_indices_sha256"):
+        raise ValueError("operator selection parent-index hash differs")
+    return {
+        "quadrature_modes": quadrature_modes,
+        "quadrature_mode_sha256": quadrature_mode_sha,
+        "parent_mode_rows": parent_mode_rows,
+        "selected_parent_indices": selected_parent_indices,
+        "quadrature_mode_count": len(quadrature_modes),
+    }
 
 
 def _notify_stage(
@@ -371,82 +502,18 @@ def build_same_mesh_physical_action(
                 },
             )
     modes = tuple(modes)
-    if not modes or len(mode_rows) != len(modes):
-        raise ValueError("same-mesh physical mode inventory is incomplete")
     options = SAME_MESH_JIT_OPTIONS if jit_options is None else jit_options
-    if quadrature_mode_inventory is None:
-        if operator_selection is not None:
-            raise ValueError(
-                "operator selection requires its explicit parent quadrature inventory"
-            )
-        if selected_parent_indices is not None:
-            raise ValueError(
-                "selected parent indices require an operator selection identity"
-            )
-        quadrature_modes = modes
-        quadrature_mode_count = len(modes)
-        quadrature_mode_sha = mode_sha
-        parent_mode_rows = tuple(mode_rows)
-    else:
-        if len(quadrature_mode_inventory) != 3:
-            raise ValueError("quadrature_mode_inventory must contain modes, rows, and SHA")
-        quadrature_modes, quadrature_rows, quadrature_mode_sha = quadrature_mode_inventory
-        quadrature_modes = tuple(quadrature_modes)
-        quadrature_rows = tuple(quadrature_rows)
-        parent_mode_rows = tuple(quadrature_rows)
-        quadrature_mode_sha = str(quadrature_mode_sha)
-        if not quadrature_modes or len(quadrature_modes) != len(quadrature_rows):
-            raise ValueError("quadrature parent inventory is incomplete")
-        if operator_selection is None:
-            raise ValueError("a distinct quadrature inventory requires an operator selection identity")
-        if (
-            int(operator_selection.get("parent_mode_count", -1)) != len(quadrature_modes)
-            or operator_selection.get("parent_mode_sha256") != quadrature_mode_sha
-            or int(operator_selection.get("active_mode_count", -1)) != len(modes)
-            or operator_selection.get("active_mode_sha256") != mode_sha
-        ):
-            raise ValueError("active and quadrature inventories do not match operator selection")
-        if selected_parent_indices is None:
-            raise ValueError("operator selection requires its exact parent index map")
-        selected_parent_indices = tuple(int(index) for index in selected_parent_indices)
-        if (
-            len(selected_parent_indices) != len(modes)
-            or any(
-                index < 0 or index >= len(quadrature_modes)
-                for index in selected_parent_indices
-            )
-            or any(
-                right <= left
-                for left, right in pairwise(selected_parent_indices)
-            )
-        ):
-            raise ValueError("operator selection parent indices are invalid")
-        expected_parent_indices = _expected_operator_parent_indices(
-            parent_mode_rows, operator_selection
-        )
-        if selected_parent_indices != expected_parent_indices:
-            raise ValueError("operator selection indices do not match its live parent filter")
-        for active_index, parent_index in enumerate(selected_parent_indices):
-            parent_row = dict(parent_mode_rows[parent_index])
-            parent_row["mode_index"] = active_index
-            if parent_row != dict(mode_rows[active_index]):
-                raise ValueError(
-                    "active mode row differs from its selected parent mode row"
-                )
-        import hashlib
-        import json
-
-        index_sha = hashlib.sha256(
-            json.dumps(
-                list(selected_parent_indices),
-                ensure_ascii=True,
-                allow_nan=False,
-                separators=(",", ":"),
-            ).encode("ascii")
-        ).hexdigest()
-        if index_sha != operator_selection.get("selected_parent_indices_sha256"):
-            raise ValueError("operator selection parent-index hash differs")
-        quadrature_mode_count = len(quadrature_modes)
+    selection_preflight = _preflight_same_mesh_physical_inventory_selection(
+        (modes, mode_rows, mode_sha),
+        quadrature_mode_inventory=quadrature_mode_inventory,
+        operator_selection=operator_selection,
+        selected_parent_indices=selected_parent_indices,
+    )
+    quadrature_modes = selection_preflight["quadrature_modes"]
+    quadrature_mode_count = selection_preflight["quadrature_mode_count"]
+    quadrature_mode_sha = selection_preflight["quadrature_mode_sha256"]
+    parent_mode_rows = selection_preflight["parent_mode_rows"]
+    selected_parent_indices = selection_preflight["selected_parent_indices"]
     qdegree = _dtn_surface_quadrature_degree(cfg, list(quadrature_modes))
     if surface_weighted_moment_contraction is not None:
         from .fullspace_surface_legendre import validate_weighted_moment_contraction

@@ -1663,6 +1663,12 @@ def _task40_phi90_d07c_profile_facts(identity):
         "expected_active_mode_count": mode_count,
         "expected_mode_sha256": mode_sha,
         "expected_active_mode_sha256": mode_sha,
+        "expected_parent_propagating_count": (
+            4360 if case_label in {"G6_M8_N32", "G6_M8_N14"} else propagating_count
+        ),
+        "expected_parent_power_carrying_count": (
+            4426 if case_label in {"G6_M8_N32", "G6_M8_N14"} else power_count
+        ),
         "expected_active_propagating_count": propagating_count,
         "expected_active_power_carrying_count": power_count,
         "boundary_amplitude_scale_policy": "boundary_magnitude_scaled_r5_v1",
