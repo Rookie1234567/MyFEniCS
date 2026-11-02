@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import errno
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -80,6 +81,17 @@ def _candidate(
     if cgroup_path is not None:
         result["cgroup_path"] = cgroup_path
     return result
+
+
+def _set_member_observation_members(observation, members):
+    member_pids = sorted(set(members))
+    raw = "".join(f"{pid}\n" for pid in member_pids).encode("ascii")
+    return {
+        **observation,
+        "member_pids": member_pids,
+        "raw_text": raw.decode("ascii"),
+        "raw_sha256": hashlib.sha256(raw).hexdigest(),
+    }
 
 
 def _owned_service(
@@ -941,22 +953,57 @@ def test_confirmed_candidate_drift_is_not_hidden_by_later_identity_query_timeout
     def stable_then_timeout(unit, *, timeout_seconds):
         nonlocal systemd_reads
         systemd_reads += 1
-        if systemd_reads == 4:
+        if systemd_reads == 2:
             raise task44_native_service.subprocess.TimeoutExpired(
                 ["systemctl", "--user", "show", unit], timeout_seconds
             )
         return dict(signature)
 
-    def confirmed_drift(process, **kwargs):
-        assert int(process["pid"]) == target_pid
-        return {"status": candidate_status, "candidate": {"pid": target_pid}}
-
     monkeypatch.setattr(
         task44_native_service, "_unit_identity_signature_with_timeout", stable_then_timeout
     )
-    monkeypatch.setattr(
-        task44_native_service, "_owned_gap_candidate_observation", confirmed_drift
-    )
+    original_identity = task44_native_service._proc_identity
+    identity_reads = 0
+
+    def drift_start_ticks(pid, proc_root):
+        nonlocal identity_reads
+        identity = original_identity(pid, proc_root)
+        if pid == target_pid:
+            identity_reads += 1
+            if candidate_status == "pid_reused" and identity_reads == 4:
+                return {**identity, "start_ticks": identity["start_ticks"] + 1}
+        return identity
+
+    monkeypatch.setattr(task44_native_service, "_proc_identity", drift_start_ticks)
+
+    original_cgroup = task44_native_service._proc_cgroup_path
+    cgroup_reads = 0
+    moved_group = "/user.slice/user-1000.slice/app.slice/other.service"
+
+    def drift_cgroup(pid, proc_root):
+        nonlocal cgroup_reads
+        path = original_cgroup(pid, proc_root)
+        if pid == target_pid:
+            cgroup_reads += 1
+            if candidate_status == "cgroup_changed" and cgroup_reads == 4:
+                return moved_group
+        return path
+
+    monkeypatch.setattr(task44_native_service, "_proc_cgroup_path", drift_cgroup)
+
+    original_affinity = task44_native_service.os.sched_getaffinity
+    affinity_reads = 0
+
+    def drift_affinity(pid):
+        nonlocal affinity_reads
+        affinity = original_affinity(pid)
+        if pid == target_pid:
+            affinity_reads += 1
+            if candidate_status == "candidate_affinity_changed" and affinity_reads == 4:
+                return {1}
+        return affinity
+
+    monkeypatch.setattr(task44_native_service.os, "sched_getaffinity", drift_affinity)
     report = _cpu_neighbor_gate(
         selected_cpu=0,
         proc_root=root,
@@ -973,13 +1020,13 @@ def test_confirmed_candidate_drift_is_not_hidden_by_later_identity_query_timeout
     proof = next(row for row in report["unverified_owned_members"] if row["pid"] == target_pid)
     recheck = proof["member_gap_recheck"]
     assert recheck["status"] == candidate_status
-    assert recheck["context_after"]["status"] == "identity_query_unavailable"
     assert recheck["attempt_count"] == 1
-    assert recheck["systemd_query_count"] == 4
+    assert recheck["systemd_query_count"] == 2
+    assert recheck["systemd_query_timeout_count"] == 1
     assert recheck["max_systemd_query_count"] == 12
     assert recheck["systemd_query_count_max_per_attempt"] == 4
     assert recheck["max_systemd_query_wait_seconds"] == 3 * 4 * 0.25
-    assert systemd_reads == 4
+    assert systemd_reads == 2
 
 
 def test_first_confirmed_invocation_drift_is_not_hidden_by_query_timeout(
@@ -1022,7 +1069,7 @@ def test_first_confirmed_invocation_drift_is_not_hidden_by_query_timeout(
     proof = next(row for row in report["unverified_owned_members"] if row["pid"] == target_pid)
     recheck = proof["member_gap_recheck"]
     assert recheck["status"] == "invocation_changed"
-    assert recheck["context_before"]["systemd_queries"][0]["status"] == "ok"
+    assert recheck["fresh_candidate_bracket"]["systemd_queries"][0]["status"] == "ok"
     assert recheck["attempt_count"] == 1
     assert recheck["systemd_query_count"] == 1
     assert systemd_reads == 1
@@ -1216,28 +1263,31 @@ def _b9_owned_service_fixture(tmp_path, monkeypatch):
     ("context_member_before", "context_member_after"),
     ((True, True), (True, False), (False, True), (False, False)),
 )
-def test_b9_owned_cc1_requires_same_call_context_membership_and_stable_proc_identity(
+def test_fresh_candidate_bracket_reconfirms_gap_independent_of_early_context_membership(
     tmp_path, monkeypatch, context_member_before, context_member_after
 ):
     root, facts, cgroup_root, candidates, cc1_pid = _b9_owned_service_fixture(
         tmp_path, monkeypatch
     )
-    original_read = task44_native_service._read_direct_cgroup_members
+    original_read = task44_native_service._read_direct_cgroup_members_evidence
     reads = 0
 
     def discrepant_read(path):
         nonlocal reads
         reads += 1
-        members = original_read(path)
+        observation = original_read(path)
+        members = set(observation["member_pids"])
         if reads == 1 and not context_member_before:
             members.discard(cc1_pid)
         if reads == 2 and not context_member_after:
             members.discard(cc1_pid)
         if reads in (5, 6):
             members.discard(cc1_pid)
-        return members
+        return _set_member_observation_members(observation, members)
 
-    monkeypatch.setattr(task44_native_service, "_read_direct_cgroup_members", discrepant_read)
+    monkeypatch.setattr(
+        task44_native_service, "_read_direct_cgroup_members_evidence", discrepant_read
+    )
     report = _cpu_neighbor_gate(
         selected_cpu=9, proc_root=root, ignored_cgroup=facts["control_group"],
         owned_service_facts=facts, cgroup_fs_root=cgroup_root,
@@ -1245,7 +1295,7 @@ def test_b9_owned_cc1_requires_same_call_context_membership_and_stable_proc_iden
     )
 
     proof = next(row for row in report["owned_service_member_proofs"] if row["pid"] == cc1_pid)
-    assert reads >= 6
+    assert reads == 8
     assert report["owned_service_context"]["invocation_id"] == facts["invocation_id"]
     assert proof["checks"]["direct_membership_stable"] is False
     assert proof["invocation_context_corroboration"]["binding"]["unit"] == facts["unit"]
@@ -1262,9 +1312,13 @@ def test_b9_owned_cc1_requires_same_call_context_membership_and_stable_proc_iden
         assert proof["invocation_context_corroboration"]["used"] is False
         assert proof["invocation_context_corroboration"]["context_corroborated"] is True
         assert proof["ownership_decision"] == (
-            "bounded_recheck_direct_membership_plus_stable_proc_identity"
+            "bounded_recheck_fresh_candidate_bracket"
         )
         assert proof["member_gap_recheck"]["status"] == "member_reconfirmed"
+        bracket = proof["member_gap_recheck"]["fresh_candidate_bracket"]
+        assert bracket["checks"]["candidate_direct_membership_stable"] is True
+        assert bracket["candidate"]["direct_member_observations"][0]["raw_text"]
+        assert bracket["candidate"]["direct_member_observations"][0]["observation_is_atomic"] is False
         assert report["unexpected_claims"] == []
     else:
         # A fresh direct-member proof may resolve the original snapshot gap;
@@ -1274,6 +1328,375 @@ def test_b9_owned_cc1_requires_same_call_context_membership_and_stable_proc_iden
         assert proof["invocation_context_corroboration"]["used"] is False
         assert proof["invocation_context_corroboration"]["context_corroborated"] is False
         assert proof["member_gap_recheck"]["status"] == "member_reconfirmed"
+
+
+def test_early_context_membership_cannot_replace_persistent_fresh_absence(tmp_path, monkeypatch):
+    root, facts, cgroup_root, candidates, cc1_pid = _b9_owned_service_fixture(
+        tmp_path, monkeypatch
+    )
+    original_read = task44_native_service._read_direct_cgroup_members_evidence
+    reads = 0
+
+    def persistent_gap(path):
+        nonlocal reads
+        reads += 1
+        observation = original_read(path)
+        members = set(observation["member_pids"])
+        if reads in (5, 6) or reads >= 7:
+            members.discard(cc1_pid)
+        return _set_member_observation_members(observation, members)
+
+    monkeypatch.setattr(
+        task44_native_service, "_read_direct_cgroup_members_evidence", persistent_gap
+    )
+    report = _cpu_neighbor_gate(
+        selected_cpu=9, proc_root=root, ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts, cgroup_fs_root=cgroup_root,
+        numerical_processes=candidates,
+    )
+
+    proof = next(row for row in report["unverified_owned_members"]
+                 if row["pid"] == cc1_pid)
+    recheck = proof["member_gap_recheck"]
+    assert reads == 12
+    assert proof["invocation_context_corroboration"]["context_corroborated"] is True
+    assert proof["invocation_context_corroboration"]["used"] is False
+    assert recheck["status"] == "still_present_without_direct_membership"
+    assert recheck["attempt_count"] == 3
+    assert recheck["systemd_query_count"] == 6
+    assert cc1_pid not in report["owned_service_excluded_pids"]
+    assert report["status"] == "fail"
+
+
+def test_one_sided_fresh_membership_is_rejected_without_another_attempt(tmp_path, monkeypatch):
+    facts, cgroup_root, cgroup = _owned_service(tmp_path, main_pid=6032)
+    root = _proc_root(tmp_path)
+    candidate_pid = 6033
+    _process(root, pid=6032, start_ticks=10032, cgroup=facts["control_group"])
+    _process(root, pid=candidate_pid, start_ticks=10033,
+             cgroup=facts["control_group"])
+    (cgroup / "cgroup.procs").write_text("6032\n6033\n", encoding="ascii")
+    _patch_owned_service(monkeypatch, facts)
+    original_read = task44_native_service._read_direct_cgroup_members_evidence
+    reads = 0
+
+    def one_sided(path):
+        nonlocal reads
+        reads += 1
+        observation = original_read(path)
+        members = set(observation["member_pids"])
+        if reads in (5, 6):
+            members.discard(candidate_pid)
+        elif reads == 8:
+            members.discard(candidate_pid)
+        return _set_member_observation_members(observation, members)
+
+    monkeypatch.setattr(
+        task44_native_service, "_read_direct_cgroup_members_evidence", one_sided
+    )
+    report = _cpu_neighbor_gate(
+        selected_cpu=0, proc_root=root, ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts, cgroup_fs_root=cgroup_root,
+        numerical_processes=[
+            _candidate(6032, start_ticks=10032, cgroup_path=facts["control_group"]),
+            _candidate(candidate_pid, start_ticks=10033,
+                       cgroup_path=facts["control_group"]),
+        ],
+    )
+
+    proof = next(row for row in report["unverified_owned_members"]
+                 if row["pid"] == candidate_pid)
+    recheck = proof["member_gap_recheck"]
+    assert recheck["status"] == "one_sided_direct_membership"
+    assert recheck["attempt_count"] == 1
+    assert recheck["fresh_candidate_bracket"]["candidate"]["member_before"] is True
+    assert recheck["fresh_candidate_bracket"]["candidate"]["member_after"] is False
+    assert candidate_pid not in report["owned_service_excluded_pids"]
+    assert report["status"] == "fail"
+
+
+def test_fresh_candidate_membership_read_failure_fails_closed(tmp_path, monkeypatch):
+    facts, cgroup_root, cgroup = _owned_service(tmp_path, main_pid=6036)
+    root = _proc_root(tmp_path)
+    candidate_pid = 6037
+    _process(root, pid=6036, start_ticks=10036, cgroup=facts["control_group"])
+    _process(root, pid=candidate_pid, start_ticks=10037,
+             cgroup=facts["control_group"])
+    (cgroup / "cgroup.procs").write_text("6036\n", encoding="ascii")
+    _patch_owned_service(monkeypatch, facts)
+    original_read = task44_native_service._read_direct_cgroup_members_evidence
+    reads = 0
+
+    def unreadable_fresh_read(path):
+        nonlocal reads
+        reads += 1
+        if reads == 7:
+            return {
+                "status": "unreadable",
+                "path": str(path / "cgroup.procs"),
+                "monotonic_start_ns": 1,
+                "monotonic_end_ns": 2,
+                "observation_is_atomic": False,
+                "error_type": "PermissionError",
+                "errno": 13,
+                "error": "fixture unreadable",
+            }
+        return original_read(path)
+
+    monkeypatch.setattr(
+        task44_native_service, "_read_direct_cgroup_members_evidence", unreadable_fresh_read
+    )
+    report = _cpu_neighbor_gate(
+        selected_cpu=0, proc_root=root, ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts, cgroup_fs_root=cgroup_root,
+        numerical_processes=[
+            _candidate(6036, start_ticks=10036, cgroup_path=facts["control_group"]),
+            _candidate(candidate_pid, start_ticks=10037,
+                       cgroup_path=facts["control_group"]),
+        ],
+    )
+
+    proof = next(row for row in report["unverified_owned_members"]
+                 if row["pid"] == candidate_pid)
+    recheck = proof["member_gap_recheck"]
+    assert recheck["status"] == "unverified"
+    assert recheck["attempt_count"] == 1
+    assert recheck["fresh_candidate_bracket"]["direct_member_observations"][0][
+        "error_type"
+    ] == "PermissionError"
+    assert candidate_pid not in report["owned_service_excluded_pids"]
+    assert report["status"] == "fail"
+
+
+def test_candidate_cgroup_drift_survives_following_membership_read_failure(
+    tmp_path, monkeypatch
+):
+    facts, cgroup_root, cgroup = _owned_service(tmp_path, main_pid=6048)
+    root = _proc_root(tmp_path)
+    candidate_pid = 6049
+    _process(root, pid=6048, start_ticks=10048, cgroup=facts["control_group"])
+    _process(root, pid=candidate_pid, start_ticks=10049,
+             cgroup=facts["control_group"])
+    (cgroup / "cgroup.procs").write_text("6048\n", encoding="ascii")
+    _patch_owned_service(monkeypatch, facts)
+
+    original_read = task44_native_service._read_direct_cgroup_members_evidence
+    member_reads = 0
+
+    def fail_second_fresh_membership_read(path):
+        nonlocal member_reads
+        member_reads += 1
+        if member_reads == 8:
+            return {
+                "status": "unreadable",
+                "path": str(path / "cgroup.procs"),
+                "monotonic_start_ns": 10,
+                "monotonic_end_ns": 20,
+                "observation_is_atomic": False,
+                "error_type": "PermissionError",
+                "errno": 13,
+                "error": "fixture unreadable after candidate drift",
+            }
+        return original_read(path)
+
+    monkeypatch.setattr(
+        task44_native_service, "_read_direct_cgroup_members_evidence",
+        fail_second_fresh_membership_read,
+    )
+    original_cgroup = task44_native_service._proc_cgroup_path
+    candidate_cgroup_reads = 0
+    moved_group = "/user.slice/user-1000.slice/app.slice/moved.service"
+
+    def move_candidate_for_first_fresh_read(pid, proc_root):
+        nonlocal candidate_cgroup_reads
+        group = original_cgroup(pid, proc_root)
+        if pid == candidate_pid:
+            candidate_cgroup_reads += 1
+            if candidate_cgroup_reads == 3:
+                return moved_group
+        return group
+
+    monkeypatch.setattr(
+        task44_native_service, "_proc_cgroup_path", move_candidate_for_first_fresh_read
+    )
+    report = _cpu_neighbor_gate(
+        selected_cpu=0, proc_root=root, ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts, cgroup_fs_root=cgroup_root,
+        numerical_processes=[
+            _candidate(6048, start_ticks=10048, cgroup_path=facts["control_group"]),
+            _candidate(candidate_pid, start_ticks=10049,
+                       cgroup_path=facts["control_group"]),
+        ],
+    )
+
+    proof = next(row for row in report["unverified_owned_members"]
+                 if row["pid"] == candidate_pid)
+    bracket = proof["member_gap_recheck"]["fresh_candidate_bracket"]
+    assert proof["member_gap_recheck"]["status"] == "cgroup_changed"
+    assert proof["member_gap_recheck"]["attempt_count"] == 1
+    assert bracket["candidate"]["cgroup_before"] == moved_group
+    assert bracket["direct_member_observations"][1]["error_type"] == "PermissionError"
+    assert bracket["observed_hard_conflicts"][0]["status"] == "cgroup_changed"
+    assert candidate_pid not in report["owned_service_excluded_pids"]
+    assert report["status"] == "fail"
+
+
+def test_candidate_present_then_gone_inside_fresh_bracket_is_stale(
+    tmp_path, monkeypatch
+):
+    facts, cgroup_root, cgroup = _owned_service(tmp_path, main_pid=6056)
+    root = _proc_root(tmp_path)
+    candidate_pid = 6057
+    _process(root, pid=6056, start_ticks=10056, cgroup=facts["control_group"])
+    _process(root, pid=candidate_pid, start_ticks=10057,
+             cgroup=facts["control_group"])
+    (cgroup / "cgroup.procs").write_text("6056\n", encoding="ascii")
+    _patch_owned_service(monkeypatch, facts)
+    original_confirmation = task44_native_service._confirm_proc_pid_directory_gone
+    candidate_confirmations = 0
+
+    def disappear_during_bracket(pid, proc_root):
+        nonlocal candidate_confirmations
+        if pid == candidate_pid:
+            candidate_confirmations += 1
+            if candidate_confirmations == 3:
+                process_path = root / str(candidate_pid)
+                for child in process_path.iterdir():
+                    child.unlink()
+                process_path.rmdir()
+        return original_confirmation(pid, proc_root)
+
+    monkeypatch.setattr(
+        task44_native_service, "_confirm_proc_pid_directory_gone", disappear_during_bracket
+    )
+    report = _cpu_neighbor_gate(
+        selected_cpu=0, proc_root=root, ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts, cgroup_fs_root=cgroup_root,
+        numerical_processes=[
+            _candidate(6056, start_ticks=10056, cgroup_path=facts["control_group"]),
+            _candidate(candidate_pid, start_ticks=10057,
+                       cgroup_path=facts["control_group"]),
+        ],
+    )
+
+    proof = next(row for row in report["stale_snapshot_confirmed_gone"]
+                 if row["pid"] == candidate_pid)
+    recheck = proof["member_gap_recheck"]
+    bracket = recheck["gone_context"]
+    assert report["status"] == "pass"
+    assert candidate_confirmations == 3
+    assert recheck["status"] == "gone"
+    assert recheck["attempt_count"] == 1
+    assert bracket["candidate"]["proc_directory_confirmation_before"]["status"] == "present"
+    assert bracket["candidate"]["proc_directory_confirmation_after"]["status"] == "gone"
+    assert bracket["candidate"]["member_before"] is False
+    assert bracket["candidate"]["member_after"] is False
+    assert candidate_pid not in report["owned_service_excluded_pids"]
+
+
+def test_candidate_disappearing_during_second_identity_read_uses_gone_context(
+    tmp_path, monkeypatch
+):
+    facts, cgroup_root, cgroup = _owned_service(tmp_path, main_pid=6064)
+    root = _proc_root(tmp_path)
+    candidate_pid = 6065
+    _process(root, pid=6064, start_ticks=10064, cgroup=facts["control_group"])
+    _process(root, pid=candidate_pid, start_ticks=10065,
+             cgroup=facts["control_group"])
+    (cgroup / "cgroup.procs").write_text("6064\n", encoding="ascii")
+    _patch_owned_service(monkeypatch, facts)
+    original_identity = task44_native_service._proc_identity
+    candidate_identity_reads = 0
+
+    def disappear_during_second_candidate_stat(pid, proc_root):
+        nonlocal candidate_identity_reads
+        if pid == candidate_pid:
+            candidate_identity_reads += 1
+            if candidate_identity_reads == 4:
+                process_path = root / str(candidate_pid)
+                for child in process_path.iterdir():
+                    child.unlink()
+                process_path.rmdir()
+        return original_identity(pid, proc_root)
+
+    monkeypatch.setattr(
+        task44_native_service, "_proc_identity", disappear_during_second_candidate_stat
+    )
+    report = _cpu_neighbor_gate(
+        selected_cpu=0, proc_root=root, ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts, cgroup_fs_root=cgroup_root,
+        numerical_processes=[
+            _candidate(6064, start_ticks=10064, cgroup_path=facts["control_group"]),
+            _candidate(candidate_pid, start_ticks=10065,
+                       cgroup_path=facts["control_group"]),
+        ],
+    )
+
+    proof = next(row for row in report["stale_snapshot_confirmed_gone"]
+                 if row["pid"] == candidate_pid)
+    recheck = proof["member_gap_recheck"]
+    fresh = recheck["fresh_candidate_bracket"]
+    context = recheck["gone_context"]
+    assert report["status"] == "pass"
+    assert candidate_identity_reads >= 4
+    assert recheck["status"] == "gone"
+    assert recheck["candidate_exit_reason"] == "candidate_exited_during_identity_read"
+    assert recheck["attempt_count"] == 1
+    assert fresh["status"] == "candidate_exit_race"
+    assert fresh["failure_stage"] == "candidate_identity_after"
+    assert fresh["candidate_exit_race_confirmation"]["status"] == "gone"
+    assert context["status"] == "gone"
+    assert context["checks"]["invocation_and_main_pid"] is True
+    assert context["candidate"]["member_before"] is False
+    assert context["candidate"]["member_after"] is False
+
+
+def test_candidate_identity_permission_error_does_not_use_gone_fallback(
+    tmp_path, monkeypatch
+):
+    facts, cgroup_root, cgroup = _owned_service(tmp_path, main_pid=6072)
+    root = _proc_root(tmp_path)
+    candidate_pid = 6073
+    _process(root, pid=6072, start_ticks=10072, cgroup=facts["control_group"])
+    _process(root, pid=candidate_pid, start_ticks=10073,
+             cgroup=facts["control_group"])
+    (cgroup / "cgroup.procs").write_text("6072\n", encoding="ascii")
+    _patch_owned_service(monkeypatch, facts)
+    original_identity = task44_native_service._proc_identity
+    candidate_identity_reads = 0
+
+    def deny_second_candidate_stat(pid, proc_root):
+        nonlocal candidate_identity_reads
+        if pid == candidate_pid:
+            candidate_identity_reads += 1
+            if candidate_identity_reads == 4:
+                raise PermissionError(errno.EACCES, "fixture proc identity denied")
+        return original_identity(pid, proc_root)
+
+    monkeypatch.setattr(task44_native_service, "_proc_identity", deny_second_candidate_stat)
+    report = _cpu_neighbor_gate(
+        selected_cpu=0, proc_root=root, ignored_cgroup=facts["control_group"],
+        owned_service_facts=facts, cgroup_fs_root=cgroup_root,
+        numerical_processes=[
+            _candidate(6072, start_ticks=10072, cgroup_path=facts["control_group"]),
+            _candidate(candidate_pid, start_ticks=10073,
+                       cgroup_path=facts["control_group"]),
+        ],
+    )
+
+    proof = next(row for row in report["unverified_owned_members"]
+                 if row["pid"] == candidate_pid)
+    recheck = proof["member_gap_recheck"]
+    fresh = recheck["fresh_candidate_bracket"]
+    assert report["status"] == "fail"
+    assert candidate_identity_reads >= 4
+    assert recheck["status"] == "unverified"
+    assert recheck["attempt_count"] == 1
+    assert fresh["failure_stage"] == "candidate_identity_after"
+    assert fresh["error_type"] == "PermissionError"
+    assert fresh["errno"] == errno.EACCES
+    assert "gone_context" not in recheck
+    assert candidate_pid not in report["owned_service_excluded_pids"]
 
 
 def test_context_membership_does_not_override_candidate_proc_cgroup_change(

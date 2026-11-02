@@ -219,10 +219,75 @@ def _proc_cgroup_path(pid: int, proc_root: Path) -> str:
 
 
 def _read_direct_cgroup_members(cgroup: Path) -> set[int]:
-    return {
-        int(value)
-        for value in (cgroup / "cgroup.procs").read_text(encoding="ascii").split()
-    }
+    observation = _read_direct_cgroup_members_evidence(cgroup)
+    if observation["status"] != "ok":
+        raise OSError(
+            observation.get("errno"),
+            observation.get("error", "cannot read cgroup.procs"),
+            observation["path"],
+        )
+    return set(observation["member_pids"])
+
+
+def _read_direct_cgroup_members_evidence(cgroup: Path) -> dict[str, Any]:
+    """Read one direct member list and retain enough detail to audit that read."""
+    path = cgroup / "cgroup.procs"
+    started = time.monotonic_ns()
+    fd: int | None = None
+    try:
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_CLOEXEC", 0))
+        opened = os.fstat(fd)
+        chunks: list[bytes] = []
+        while True:
+            chunk = os.read(fd, 65536)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        closed = os.fstat(fd)
+        finished = time.monotonic_ns()
+        raw = b"".join(chunks)
+        text = raw.decode("ascii")
+        members = sorted({int(value) for value in text.split()})
+        identity_before = {
+            "device": opened.st_dev,
+            "inode": opened.st_ino,
+            "mode": opened.st_mode,
+        }
+        identity_after = {
+            "device": closed.st_dev,
+            "inode": closed.st_ino,
+            "mode": closed.st_mode,
+        }
+        return {
+            "status": "ok",
+            "path": str(path),
+            "monotonic_start_ns": started,
+            "monotonic_end_ns": finished,
+            "duration_ns": max(0, finished - started),
+            "observation_is_atomic": False,
+            "raw_text": text,
+            "raw_sha256": hashlib.sha256(raw).hexdigest(),
+            "member_pids": members,
+            "file_identity_before": identity_before,
+            "file_identity_after": identity_after,
+            "file_identity_stable": identity_before == identity_after,
+        }
+    except (OSError, UnicodeError, ValueError) as exc:
+        finished = time.monotonic_ns()
+        return {
+            "status": "unreadable",
+            "path": str(path),
+            "monotonic_start_ns": started,
+            "monotonic_end_ns": finished,
+            "duration_ns": max(0, finished - started),
+            "observation_is_atomic": False,
+            "error_type": type(exc).__name__,
+            "errno": getattr(exc, "errno", None),
+            "error": str(exc),
+        }
+    finally:
+        if fd is not None:
+            os.close(fd)
 
 
 def _unit_identity_signature(facts: Mapping[str, Any]) -> dict[str, Any]:
@@ -241,7 +306,12 @@ def _owned_service_context(
     cgroup_fs_root: Path,
 ) -> dict[str, Any]:
     """Bind the exclusion to one live systemd invocation and check its affinity."""
-    report: dict[str, Any] = {"identity_verified": False, "affinity_verified": False, "failures": []}
+    report: dict[str, Any] = {
+        "identity_verified": False,
+        "affinity_verified": False,
+        "failures": [],
+        "direct_member_observations": [],
+    }
     if facts is None:
         report["failures"] = ["owned_service_invocation_facts_missing"]
         return report
@@ -270,7 +340,11 @@ def _owned_service_context(
         stage = "systemd_facts_before"
         systemd_before = _unit_identity_signature(_unit_facts(unit))
         stage = "main_process_before"
-        members_before = _read_direct_cgroup_members(cgroup)
+        member_before = _read_direct_cgroup_members_evidence(cgroup)
+        report["direct_member_observations"].append(member_before)
+        if member_before["status"] != "ok":
+            raise OSError(member_before.get("errno"), member_before.get("error"))
+        members_before = set(member_before["member_pids"])
         main_before = _proc_identity(main_pid, proc_root)
         cgroup_before = _proc_cgroup_path(main_pid, proc_root)
         from scripts.task44_service_startup import observe_cgroup_cpu_affinity
@@ -279,13 +353,24 @@ def _owned_service_context(
         stage = "main_process_after"
         main_after = _proc_identity(main_pid, proc_root)
         cgroup_after = _proc_cgroup_path(main_pid, proc_root)
-        members_after = _read_direct_cgroup_members(cgroup)
+        member_after = _read_direct_cgroup_members_evidence(cgroup)
+        report["direct_member_observations"].append(member_after)
+        if member_after["status"] != "ok":
+            raise OSError(member_after.get("errno"), member_after.get("error"))
+        members_after = set(member_after["member_pids"])
         systemd_after = _unit_identity_signature(_unit_facts(unit))
+        member_file_identity_stable = (
+            member_before.get("file_identity_stable") is True
+            and member_after.get("file_identity_stable") is True
+            and member_before.get("file_identity_before")
+            == member_after.get("file_identity_before")
+        )
         identity_checks = {
             "systemd_facts_match_invocation": systemd_before == expected == systemd_after,
             "main_pid_start_ticks_stable": main_before["start_ticks"] == main_after["start_ticks"],
             "main_pid_cgroup_exact": cgroup_before == group == cgroup_after,
             "main_pid_member_stable": main_pid in members_before and main_pid in members_after,
+            "member_file_identity_stable": member_file_identity_stable,
         }
         report.update({
             "identity_verified": all(identity_checks.values()),
@@ -299,6 +384,7 @@ def _owned_service_context(
             "main_pid_cgroup_after": cgroup_after,
             "member_pids_before": sorted(members_before),
             "member_pids_after": sorted(members_after),
+            "direct_member_file_identity_stable": member_file_identity_stable,
             "service_affinity_observation": affinity,
         })
         if not report["identity_verified"]:
@@ -312,24 +398,37 @@ def _owned_service_context(
 
 
 def _owned_service_member(
-    process: Mapping[str, Any], *, expected_cgroup: str, cgroup: Path, proc_root: Path
+    process: Mapping[str, Any], *, expected_cgroup: str, selected_cpu: int,
+    cgroup: Path, proc_root: Path
 ) -> tuple[bool, dict[str, Any]]:
-    """Confirm PID/start-tick/exact-cgroup membership twice; comm may change on exec."""
+    """Confirm direct membership and stable process identity, group, and affinity."""
     pid = int(process["pid"])
     snapshot = {key: process.get(key) for key in ("ppid", "comm", "start_ticks", "cgroup_path")}
     if snapshot["cgroup_path"] != expected_cgroup:
         return False, {"pid": pid, "status": "not_owned", "candidate_snapshot": snapshot}
-    stage = "cgroup_members_before"
     evidence: dict[str, Any] = {"pid": pid, "candidate_snapshot": snapshot}
+    member_observations: list[dict[str, Any]] = []
+    stage = "cgroup_members_before"
     try:
-        members_before = _read_direct_cgroup_members(cgroup)
+        member_before = _read_direct_cgroup_members_evidence(cgroup)
+        member_observations.append(member_before)
+        if member_before["status"] != "ok":
+            raise OSError(member_before.get("errno"), member_before.get("error"))
+        members_before = set(member_before["member_pids"])
         stage = "proc_identity_before"
         before = _proc_identity(pid, proc_root)
         cgroup_before = _proc_cgroup_path(pid, proc_root)
+        affinity_before = sorted(os.sched_getaffinity(pid))
         stage = "proc_identity_after"
         after = _proc_identity(pid, proc_root)
         cgroup_after = _proc_cgroup_path(pid, proc_root)
-        members_after = _read_direct_cgroup_members(cgroup)
+        affinity_after = sorted(os.sched_getaffinity(pid))
+        stage = "cgroup_members_after"
+        member_after = _read_direct_cgroup_members_evidence(cgroup)
+        member_observations.append(member_after)
+        if member_after["status"] != "ok":
+            raise OSError(member_after.get("errno"), member_after.get("error"))
+        members_after = set(member_after["member_pids"])
         checks = {
             "candidate_start_ticks_match_both_reads": (
                 isinstance(snapshot["start_ticks"], int)
@@ -338,17 +437,30 @@ def _owned_service_member(
             "proc_start_ticks_stable": before["start_ticks"] == after["start_ticks"],
             "cgroup_exact_both_reads": cgroup_before == expected_cgroup == cgroup_after,
             "direct_membership_stable": pid in members_before and pid in members_after,
+            "direct_member_file_identity_stable": (
+                member_before.get("file_identity_stable") is True
+                and member_after.get("file_identity_stable") is True
+                and member_before.get("file_identity_before")
+                == member_after.get("file_identity_before")
+            ),
+            "candidate_affinity_stable_on_selected_cpu": (
+                affinity_before == [selected_cpu] == affinity_after
+            ),
         }
         evidence.update({
             "identity_before": before, "identity_after": after,
             "cgroup_before": cgroup_before, "cgroup_after": cgroup_after,
+            "candidate_affinity_before": affinity_before,
+            "candidate_affinity_after": affinity_after,
             "member_before": pid in members_before, "member_after": pid in members_after,
+            "direct_member_observations": member_observations,
             "comm_transition_observed": snapshot["comm"] != before["comm"] or before["comm"] != after["comm"],
             "checks": checks,
         })
         return all(checks.values()), evidence
     except (OSError, ValueError, RuntimeError) as exc:
         evidence.update({
+            "direct_member_observations": member_observations,
             "failure_stage": stage,
             "error_type": type(exc).__name__,
             "errno": getattr(exc, "errno", None),
@@ -564,6 +676,7 @@ def _owned_gap_context_observation(
     single_read = gone_candidate is not None
     candidate_pid = int(gone_candidate["pid"]) if single_read else None
     systemd_queries: list[dict[str, Any]] = []
+    member_observations: list[dict[str, Any]] = []
 
     def read_systemd_identity() -> dict[str, Any] | None:
         signature, query = _owned_gap_systemd_identity_query(
@@ -581,6 +694,7 @@ def _owned_gap_context_observation(
                     "status": "identity_query_unavailable",
                     "systemd_before": None,
                     "systemd_queries": systemd_queries,
+                    "direct_member_observations": member_observations,
                 }
             if before != expected_facts:
                 return {
@@ -589,9 +703,20 @@ def _owned_gap_context_observation(
                     "systemd_before": before,
                     "systemd_after": None,
                     "systemd_queries": systemd_queries,
+                    "direct_member_observations": member_observations,
                 }
 
-        members_before = _read_direct_cgroup_members(cgroup)
+        member_before = _read_direct_cgroup_members_evidence(cgroup)
+        member_observations.append(member_before)
+        if member_before["status"] != "ok":
+            return {
+                "status": "unverified",
+                "systemd_before": before,
+                "systemd_after": None,
+                "systemd_queries": systemd_queries,
+                "direct_member_observations": member_observations,
+            }
+        members_before = set(member_before["member_pids"])
         candidate_before = (
             _confirm_proc_pid_directory_gone(candidate_pid, proc_root)
             if single_read else None
@@ -601,7 +726,17 @@ def _owned_gap_context_observation(
         affinity = set(os.sched_getaffinity(main_pid))
         main_after = _proc_identity(main_pid, proc_root)
         group_after = _proc_cgroup_path(main_pid, proc_root)
-        members_after = _read_direct_cgroup_members(cgroup)
+        member_after = _read_direct_cgroup_members_evidence(cgroup)
+        member_observations.append(member_after)
+        if member_after["status"] != "ok":
+            return {
+                "status": "unverified",
+                "systemd_before": before,
+                "systemd_after": None,
+                "systemd_queries": systemd_queries,
+                "direct_member_observations": member_observations,
+            }
+        members_after = set(member_after["member_pids"])
         candidate_after = (
             _confirm_proc_pid_directory_gone(candidate_pid, proc_root)
             if single_read else None
@@ -612,13 +747,22 @@ def _owned_gap_context_observation(
             ),
             "main_pid_cgroup": group_before == group == group_after,
             "main_pid_membership": main_pid in members_before and main_pid in members_after,
+            "direct_member_file_identity_stable": (
+                member_before.get("file_identity_stable") is True
+                and member_after.get("file_identity_stable") is True
+                and member_before.get("file_identity_before")
+                == member_after.get("file_identity_before")
+            ),
             "main_pid_affinity": affinity == {selected_cpu},
         }
         local_conflict_status = (
             "main_pid_changed" if not checks["main_pid_start_ticks"]
             else "context_cgroup_changed" if not checks["main_pid_cgroup"]
             else "context_affinity_changed" if not checks["main_pid_affinity"]
-            else "context_membership_unverified" if not checks["main_pid_membership"]
+            else "context_membership_unverified" if (
+                not checks["main_pid_membership"]
+                or not checks["direct_member_file_identity_stable"]
+            )
             else None
         )
         if local_conflict_status is not None:
@@ -628,6 +772,9 @@ def _owned_gap_context_observation(
                 "systemd_before": before,
                 "systemd_after": None,
                 "systemd_queries": systemd_queries,
+                "member_pids_before": sorted(members_before),
+                "member_pids_after": sorted(members_after),
+                "direct_member_observations": member_observations,
             }
 
         after = read_systemd_identity()
@@ -638,6 +785,9 @@ def _owned_gap_context_observation(
                 "systemd_before": before,
                 "systemd_after": None,
                 "systemd_queries": systemd_queries,
+                "member_pids_before": sorted(members_before),
+                "member_pids_after": sorted(members_after),
+                "direct_member_observations": member_observations,
             }
         checks["invocation_and_main_pid"] = (
             after == expected_facts if single_read else before == expected_facts == after
@@ -656,6 +806,9 @@ def _owned_gap_context_observation(
             "systemd_before": before,
             "systemd_after": after,
             "systemd_queries": systemd_queries,
+            "member_pids_before": sorted(members_before),
+            "member_pids_after": sorted(members_after),
+            "direct_member_observations": member_observations,
         }
         if status != "stable" or not single_read:
             return report
@@ -696,145 +849,468 @@ def _owned_gap_context_observation(
     except (KeyError, OSError, TypeError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
         return {
             "status": "unverified", "systemd_queries": systemd_queries,
+            "direct_member_observations": member_observations,
             "error_type": type(exc).__name__, "error": str(exc),
         }
 
 def _owned_gap_candidate_observation(
     process: Mapping[str, Any],
     *,
+    owned_context: Mapping[str, Any],
+    initial_member_proof: Mapping[str, Any],
     expected_cgroup: str,
     selected_cpu: int,
     cgroup: Path,
     proc_root: Path,
+    query_number_start: int,
 ) -> dict[str, Any]:
-    """Recheck direct membership and stable PID/cgroup identity without guessing exit."""
+    """Bracket two direct membership reads with stable service and candidate identity."""
     pid = int(process["pid"])
     snapshot_start = process.get("start_ticks")
-    candidate: dict[str, Any] = {"pid": pid, "snapshot_start_ticks": snapshot_start}
-    try:
-        members_before = _read_direct_cgroup_members(cgroup)
-        confirmation_before = _confirm_proc_pid_directory_gone(pid, proc_root)
-        candidate.update({
-            "member_before": pid in members_before,
-            "proc_directory_confirmation_before": confirmation_before,
-        })
-        if confirmation_before["status"] == "unverified":
-            return {"status": "unverified", "candidate": candidate}
-        if confirmation_before["status"] == "gone":
-            members_after = _read_direct_cgroup_members(cgroup)
-            confirmation_after = _confirm_proc_pid_directory_gone(pid, proc_root)
-            candidate.update({
-                "member_after": pid in members_after,
-                "proc_directory_confirmation_after": confirmation_after,
+    unit = str(owned_context["unit"])
+    main_pid = int(owned_context["main_pid"])
+    expected_facts = owned_context["systemd_facts_after"]
+    expected_main_start = owned_context["main_pid_identity_before"]["start_ticks"]
+    started_ns = time.monotonic_ns()
+    queries: list[dict[str, Any]] = []
+    member_observations: list[dict[str, Any]] = []
+    candidate_affinity_errors: list[dict[str, Any]] = []
+    hard_conflicts: list[dict[str, Any]] = []
+    hard_status: str | None = None
+    failure_stage = "systemd_identity_before"
+    candidate: dict[str, Any] = {
+        "pid": pid,
+        "snapshot_start_ticks": snapshot_start,
+        "direct_member_observations": member_observations,
+    }
+
+    def remember_hard_conflict(status: str, stage: str, **evidence: Any) -> None:
+        nonlocal hard_status
+        hard_conflicts.append({"status": status, "stage": stage, **evidence})
+        candidate["observed_hard_conflicts"] = list(hard_conflicts)
+        if hard_status is None:
+            hard_status = status
+
+    def identity_query() -> dict[str, Any] | None:
+        signature, query = _owned_gap_systemd_identity_query(
+            unit, query_number=query_number_start + len(queries)
+        )
+        queries.append(query)
+        return signature
+
+    def candidate_affinity(identity: Mapping[str, Any]) -> list[int] | None:
+        try:
+            return sorted(os.sched_getaffinity(pid))
+        except OSError as exc:
+            if identity.get("state") != "Z":
+                raise
+            candidate_affinity_errors.append({
+                "errno": exc.errno,
+                "error_type": type(exc).__name__,
+                "error": str(exc),
             })
-            if (
-                confirmation_after["status"] == "gone"
-                and pid not in members_before and pid not in members_after
-            ):
-                return {"status": "gone", "candidate": candidate}
-            if confirmation_after["status"] == "present":
-                identity = _proc_identity(pid, proc_root)
-                current_group = _proc_cgroup_path(pid, proc_root)
-                candidate.update({"identity_after": identity, "cgroup_after": current_group})
-                status = (
-                    "pid_reused" if identity["start_ticks"] != snapshot_start
-                    else "cgroup_changed" if current_group != expected_cgroup
-                    else "still_present_without_direct_membership"
-                )
-                return {"status": status, "candidate": candidate}
-            return {"status": "unverified", "candidate": candidate}
+            candidate["candidate_affinity_errors"] = list(candidate_affinity_errors)
+            return None
 
-        owned, proof = _owned_service_member(
-            process, expected_cgroup=expected_cgroup, cgroup=cgroup, proc_root=proc_root
+    def report(status: str, **extra: Any) -> dict[str, Any]:
+        return {
+            "status": status,
+            "candidate": candidate,
+            "systemd_queries": queries,
+            "observation_is_atomic": False,
+            "monotonic_start_ns": started_ns,
+            "monotonic_end_ns": time.monotonic_ns(),
+            "direct_member_observations": member_observations,
+            "observed_hard_conflicts": list(hard_conflicts),
+            **extra,
+        }
+
+    systemd_before = identity_query()
+    if systemd_before is None:
+        return report("identity_query_unavailable", systemd_before=None)
+    if systemd_before != expected_facts:
+        return report(
+            "invocation_changed", systemd_before=systemd_before,
+            checks={"invocation_stable": False},
         )
-        members_after = _read_direct_cgroup_members(cgroup)
-        confirmation_after = _confirm_proc_pid_directory_gone(pid, proc_root)
-        candidate.update({
-            "member_after": pid in members_after,
-            "member_proof": proof,
-            "proc_directory_confirmation_after": confirmation_after,
-        })
+
+    try:
+        failure_stage = "main_process_before"
+        main_before = _proc_identity(main_pid, proc_root)
+        candidate["main_pid_identity_before"] = main_before
         if (
-            confirmation_after["status"] == "gone"
-            and pid not in members_before and pid not in members_after
-            and proof.get("error_type") == "FileNotFoundError"
+            main_before["pid"] != main_pid
+            or main_before["start_ticks"] != expected_main_start
         ):
-            return {"status": "gone", "candidate": candidate}
-        if confirmation_after["status"] == "unverified":
-            return {"status": "unverified", "candidate": candidate}
+            remember_hard_conflict(
+                "main_pid_changed", "main_process_before",
+                observed_start_ticks=main_before.get("start_ticks"),
+                expected_start_ticks=expected_main_start,
+            )
+        failure_stage = "main_cgroup_before"
+        main_group_before = _proc_cgroup_path(main_pid, proc_root)
+        candidate["main_pid_cgroup_before"] = main_group_before
+        if main_group_before != expected_cgroup:
+            remember_hard_conflict(
+                "context_cgroup_changed", "main_cgroup_before",
+                observed_cgroup=main_group_before, expected_cgroup=expected_cgroup,
+            )
+        failure_stage = "main_affinity_before"
+        main_affinity_before = sorted(os.sched_getaffinity(main_pid))
+        candidate["main_pid_affinity_before"] = main_affinity_before
+        if main_affinity_before != [selected_cpu]:
+            remember_hard_conflict(
+                "context_affinity_changed", "main_affinity_before",
+                observed_affinity=main_affinity_before, selected_cpu=selected_cpu,
+            )
 
-        identity = _proc_identity(pid, proc_root)
-        current_group = _proc_cgroup_path(pid, proc_root)
-        candidate.update({"identity_after": identity, "cgroup_after": current_group})
-        if identity["start_ticks"] != snapshot_start:
-            return {"status": "pid_reused", "candidate": candidate}
-        if current_group != expected_cgroup:
-            return {"status": "cgroup_changed", "candidate": candidate}
-        proof_before = proof.get("identity_before", {})
-        proof_after = proof.get("identity_after", {})
-        proof_checks = proof.get("checks", {})
-        zombie_exit_confirmed = (
-            confirmation_after["status"] == "present"
-            and proof_before.get("state") == "Z"
-            and proof_after.get("state") == "Z"
-            and identity.get("state") == "Z"
-            and proof_before.get("start_ticks") == snapshot_start
-            and proof_after.get("start_ticks") == snapshot_start
-            and proof_checks.get("candidate_start_ticks_match_both_reads") is True
-            and proof_checks.get("proc_start_ticks_stable") is True
-            and proof_checks.get("cgroup_exact_both_reads") is True
-            and proof.get("cgroup_before") == expected_cgroup
-            and proof.get("cgroup_after") == expected_cgroup
-            and proof.get("member_before") is False
-            and proof.get("member_after") is False
-            and pid not in members_before
-            and pid not in members_after
+        failure_stage = "cgroup_members_before"
+        member_before = _read_direct_cgroup_members_evidence(cgroup)
+        member_observations.append(member_before)
+        if member_before["status"] != "ok":
+            return report(hard_status or "unverified", failure_stage="cgroup_members_before")
+        members_before = set(member_before["member_pids"])
+
+        failure_stage = "candidate_proc_before"
+        confirmation_before = _confirm_proc_pid_directory_gone(pid, proc_root)
+        candidate["proc_directory_confirmation_before"] = confirmation_before
+        if confirmation_before["status"] == "unverified":
+            return report(hard_status or "unverified", failure_stage="candidate_proc_before")
+
+        identity_before = None
+        group_before = None
+        affinity_before = None
+        identity_after = None
+        group_after = None
+        affinity_after = None
+        if confirmation_before["status"] == "present":
+            failure_stage = "candidate_identity_before"
+            identity_before = _proc_identity(pid, proc_root)
+            candidate["identity_before"] = identity_before
+            if (
+                not isinstance(snapshot_start, int)
+                or identity_before["start_ticks"] != snapshot_start
+            ):
+                remember_hard_conflict(
+                    "pid_reused", "candidate_identity_before",
+                    observed_start_ticks=identity_before.get("start_ticks"),
+                    snapshot_start_ticks=snapshot_start,
+                )
+            failure_stage = "candidate_cgroup_before"
+            group_before = _proc_cgroup_path(pid, proc_root)
+            candidate["cgroup_before"] = group_before
+            if group_before != expected_cgroup:
+                remember_hard_conflict(
+                    "cgroup_changed", "candidate_cgroup_before",
+                    observed_cgroup=group_before, expected_cgroup=expected_cgroup,
+                )
+            failure_stage = "candidate_affinity_before"
+            affinity_before = candidate_affinity(identity_before)
+            candidate["candidate_affinity_before"] = affinity_before
+            if affinity_before is not None and affinity_before != [selected_cpu]:
+                remember_hard_conflict(
+                    "candidate_affinity_changed", "candidate_affinity_before",
+                    observed_affinity=affinity_before, selected_cpu=selected_cpu,
+                )
+            failure_stage = "candidate_identity_after"
+            identity_after = _proc_identity(pid, proc_root)
+            candidate["identity_after"] = identity_after
+            if (
+                not isinstance(snapshot_start, int)
+                or identity_after["start_ticks"] != snapshot_start
+                or identity_after["start_ticks"] != identity_before["start_ticks"]
+            ):
+                remember_hard_conflict(
+                    "pid_reused", "candidate_identity_after",
+                    observed_start_ticks=identity_after.get("start_ticks"),
+                    initial_start_ticks=identity_before.get("start_ticks"),
+                    snapshot_start_ticks=snapshot_start,
+                )
+            failure_stage = "candidate_cgroup_after"
+            group_after = _proc_cgroup_path(pid, proc_root)
+            candidate["cgroup_after"] = group_after
+            if group_after != expected_cgroup:
+                remember_hard_conflict(
+                    "cgroup_changed", "candidate_cgroup_after",
+                    observed_cgroup=group_after, expected_cgroup=expected_cgroup,
+                )
+            failure_stage = "candidate_affinity_after"
+            affinity_after = candidate_affinity(identity_after)
+            candidate["candidate_affinity_after"] = affinity_after
+            if affinity_after is not None and affinity_after != [selected_cpu]:
+                remember_hard_conflict(
+                    "candidate_affinity_changed", "candidate_affinity_after",
+                    observed_affinity=affinity_after, selected_cpu=selected_cpu,
+                )
+
+        failure_stage = "cgroup_members_after"
+        member_after = _read_direct_cgroup_members_evidence(cgroup)
+        member_observations.append(member_after)
+        if member_after["status"] != "ok":
+            return report(hard_status or "unverified", failure_stage="cgroup_members_after")
+        members_after = set(member_after["member_pids"])
+        member_before_pid = pid in members_before
+        member_after_pid = pid in members_after
+        candidate.update({"member_before": member_before_pid, "member_after": member_after_pid})
+        if member_before_pid != member_after_pid:
+            remember_hard_conflict(
+                "one_sided_direct_membership", "candidate_direct_membership",
+                member_before=member_before_pid, member_after=member_after_pid,
+            )
+        failure_stage = "candidate_proc_after"
+        confirmation_after = _confirm_proc_pid_directory_gone(pid, proc_root)
+        candidate["proc_directory_confirmation_after"] = confirmation_after
+        if confirmation_after["status"] == "unverified":
+            return report(hard_status or "unverified", failure_stage="candidate_proc_after")
+
+        failure_stage = "main_process_after"
+        main_after = _proc_identity(main_pid, proc_root)
+        candidate["main_pid_identity_after"] = main_after
+        if (
+            main_after["pid"] != main_pid
+            or main_after["start_ticks"] != expected_main_start
+            or main_after["start_ticks"] != main_before["start_ticks"]
+        ):
+            remember_hard_conflict(
+                "main_pid_changed", "main_process_after",
+                observed_start_ticks=main_after.get("start_ticks"),
+                initial_start_ticks=main_before.get("start_ticks"),
+                expected_start_ticks=expected_main_start,
+            )
+        failure_stage = "main_cgroup_after"
+        main_group_after = _proc_cgroup_path(main_pid, proc_root)
+        candidate["main_pid_cgroup_after"] = main_group_after
+        if main_group_after != expected_cgroup:
+            remember_hard_conflict(
+                "context_cgroup_changed", "main_cgroup_after",
+                observed_cgroup=main_group_after, expected_cgroup=expected_cgroup,
+            )
+        failure_stage = "main_affinity_after"
+        main_affinity_after = sorted(os.sched_getaffinity(main_pid))
+        candidate["main_pid_affinity_after"] = main_affinity_after
+        if main_affinity_after != [selected_cpu]:
+            remember_hard_conflict(
+                "context_affinity_changed", "main_affinity_after",
+                observed_affinity=main_affinity_after, selected_cpu=selected_cpu,
+            )
+        failure_stage = "systemd_identity_after"
+        systemd_after = identity_query()
+
+        candidate.update({
+            "member_before": member_before_pid,
+            "member_after": member_after_pid,
+            "identity_before": identity_before,
+            "identity_after": identity_after,
+            "cgroup_before": group_before,
+            "cgroup_after": group_after,
+            "candidate_affinity_before": affinity_before,
+            "candidate_affinity_after": affinity_after,
+            "candidate_affinity_errors": candidate_affinity_errors,
+        })
+        checks = {
+            "invocation_stable": systemd_before == expected_facts == systemd_after,
+            "main_pid_start_ticks_stable": (
+                main_before["pid"] == main_pid == main_after["pid"]
+                and main_before["start_ticks"] == expected_main_start == main_after["start_ticks"]
+            ),
+            "main_pid_cgroup_exact": (
+                main_group_before == expected_cgroup == main_group_after
+            ),
+            "main_pid_affinity_stable_on_selected_cpu": (
+                main_affinity_before == [selected_cpu] == main_affinity_after
+            ),
+            "main_pid_direct_membership_stable": (
+                main_pid in members_before and main_pid in members_after
+            ),
+            "direct_member_file_identity_stable": (
+                member_before.get("file_identity_stable") is True
+                and member_after.get("file_identity_stable") is True
+                and member_before.get("file_identity_before")
+                == member_after.get("file_identity_before")
+            ),
+            "candidate_start_ticks_match_both_reads": (
+                isinstance(snapshot_start, int)
+                and identity_before is not None
+                and identity_after is not None
+                and identity_before["start_ticks"] == snapshot_start == identity_after["start_ticks"]
+            ),
+            "candidate_cgroup_exact_both_reads": (
+                group_before == expected_cgroup == group_after
+            ),
+            "candidate_affinity_stable_on_selected_cpu": (
+                affinity_before == [selected_cpu] == affinity_after
+            ),
+            "candidate_direct_membership_stable": member_before_pid and member_after_pid,
+        }
+        if not checks["main_pid_direct_membership_stable"] or not checks[
+            "direct_member_file_identity_stable"
+        ]:
+            remember_hard_conflict(
+                "context_membership_unverified", "main_direct_membership",
+                main_pid_before=main_pid in members_before,
+                main_pid_after=main_pid in members_after,
+                member_file_identity_stable=checks["direct_member_file_identity_stable"],
+            )
+        candidate["checks"] = checks
+        candidate["cgroup_before"] = group_before
+        candidate["cgroup_after"] = group_after
+        candidate["cpu_affinity_before"] = affinity_before
+        candidate["cpu_affinity_after"] = affinity_after
+        initial_identity_before = initial_member_proof.get("identity_before", {})
+        initial_identity_after = initial_member_proof.get("identity_after", {})
+        initial_checks = initial_member_proof.get("checks", {})
+
+        # Identity and membership conflicts are kept even if the final systemd query times out.
+        if systemd_after is not None and systemd_after != expected_facts:
+            remember_hard_conflict(
+                "invocation_changed", "systemd_facts_after",
+                observed_invocation=systemd_after.get("invocation_id"),
+                expected_invocation=expected_facts.get("invocation_id"),
+            )
+        status = hard_status or (
+            "invocation_changed" if systemd_after is not None and systemd_after != expected_facts
+            else "main_pid_changed" if not checks["main_pid_start_ticks_stable"]
+            else "context_cgroup_changed" if not checks["main_pid_cgroup_exact"]
+            else "context_affinity_changed" if not checks["main_pid_affinity_stable_on_selected_cpu"]
+            else "context_membership_unverified" if (
+                not checks["main_pid_direct_membership_stable"]
+                or not checks["direct_member_file_identity_stable"]
+            )
+            else "pid_reused" if (
+                identity_before is not None
+                and identity_after is not None
+                and (
+                    identity_before["start_ticks"] != identity_after["start_ticks"]
+                    or identity_before["start_ticks"] != snapshot_start
+                )
+            )
+            else "cgroup_changed" if (
+                (group_before is not None and group_before != expected_cgroup)
+                or (group_after is not None and group_after != expected_cgroup)
+            )
+            else "one_sided_direct_membership" if member_before_pid != member_after_pid
+            else "candidate_affinity_changed" if (
+                identity_before is not None
+                and identity_after is not None
+                and (
+                    affinity_before != [selected_cpu]
+                    or affinity_after != [selected_cpu]
+                )
+            )
+            else "identity_query_unavailable" if systemd_after is None
+            else "invocation_changed" if not checks["invocation_stable"]
+            else "gone" if (
+                confirmation_before["status"] == "gone"
+                and confirmation_after["status"] == "gone"
+                and not member_before_pid and not member_after_pid
+            )
+            else "gone" if (
+                confirmation_after["status"] == "gone"
+                and not member_before_pid and not member_after_pid
+                and identity_before is not None
+                and identity_before["start_ticks"] == snapshot_start
+            )
+            else "zombie_exit_confirmed" if (
+                confirmation_before["status"] == "present"
+                and confirmation_after["status"] == "present"
+                and isinstance(initial_identity_before, Mapping)
+                and isinstance(initial_identity_after, Mapping)
+                and initial_identity_before.get("state") == "Z"
+                and initial_identity_after.get("state") == "Z"
+                and identity_before is not None
+                and identity_after is not None
+                and identity_before["state"] == "Z"
+                and identity_after["state"] == "Z"
+                and initial_identity_before.get("start_ticks") == snapshot_start
+                and initial_identity_after.get("start_ticks") == snapshot_start
+                and identity_before["start_ticks"] == snapshot_start
+                and identity_after["start_ticks"] == snapshot_start
+                and isinstance(initial_checks, Mapping)
+                and initial_checks.get("candidate_start_ticks_match_both_reads") is True
+                and initial_checks.get("proc_start_ticks_stable") is True
+                and initial_checks.get("cgroup_exact_both_reads") is True
+                and initial_member_proof.get("cgroup_before") == expected_cgroup
+                and initial_member_proof.get("cgroup_after") == expected_cgroup
+                and initial_member_proof.get("member_before") is False
+                and initial_member_proof.get("member_after") is False
+                and not member_before_pid and not member_after_pid
+            )
+            else "member_reconfirmed" if (
+                confirmation_before["status"] == "present"
+                and confirmation_after["status"] == "present"
+                and all(checks[key] for key in (
+                    "candidate_start_ticks_match_both_reads",
+                    "candidate_cgroup_exact_both_reads",
+                    "candidate_affinity_stable_on_selected_cpu",
+                    "candidate_direct_membership_stable",
+                    "direct_member_file_identity_stable",
+                ))
+            )
+            else "still_present_without_direct_membership" if (
+                confirmation_before["status"] == "present"
+                and confirmation_after["status"] == "present"
+                and not member_before_pid and not member_after_pid
+            )
+            else "unverified"
         )
-        if zombie_exit_confirmed:
+        if status == "zombie_exit_confirmed":
             candidate["exit_confirmation"] = {
                 "kind": "stable_zombie_without_direct_membership",
-                "states": [proof_before["state"], proof_after["state"], identity["state"]],
+                "states": [
+                    initial_identity_before["state"],
+                    initial_identity_after["state"],
+                    identity_after["state"],
+                ],
                 "start_ticks": snapshot_start,
-                "cgroup_path": current_group,
-                "direct_membership_before": False,
-                "direct_membership_after": False,
+                "cgroup_path": group_after,
+                "direct_membership_before": member_before_pid,
+                "direct_membership_after": member_after_pid,
             }
-            return {"status": "zombie_exit_confirmed", "candidate": candidate}
-        if owned and confirmation_after["status"] == "present":
-            affinity = sorted(_parse_cpu_list(
-                _status_fields(proc_root / str(pid) / "status").get("Cpus_allowed_list", "")
-            ))
-            candidate["cpu_affinity"] = affinity
-            status = (
-                "member_reconfirmed"
-                if affinity == [selected_cpu] and pid in members_before and pid in members_after
-                else "candidate_affinity_changed"
-            )
-            return {"status": status, "candidate": candidate}
-        checks = proof.get("checks", {})
-        if (
-            confirmation_after["status"] == "present"
-            and checks.get("candidate_start_ticks_match_both_reads") is True
-            and checks.get("proc_start_ticks_stable") is True
-            and checks.get("cgroup_exact_both_reads") is True
-            and checks.get("direct_membership_stable") is False
-        ):
-            return {"status": "still_present_without_direct_membership", "candidate": candidate}
-        return {"status": "unverified", "candidate": candidate}
+        return report(
+            status,
+            systemd_before=systemd_before,
+            systemd_after=systemd_after,
+            checks=checks,
+            main_context={
+                "main_pid_identity_before": main_before,
+                "main_pid_identity_after": main_after,
+                "main_pid_cgroup_before": main_group_before,
+                "main_pid_cgroup_after": main_group_after,
+                "main_pid_affinity_before": main_affinity_before,
+                "main_pid_affinity_after": main_affinity_after,
+            },
+        )
     except (KeyError, OSError, TypeError, ValueError, RuntimeError) as exc:
-        candidate.update({
-            "status": "unverified",
-            "proc_directory_confirmation_after": _confirm_proc_pid_directory_gone(pid, proc_root),
-            "error_type": type(exc).__name__,
-            "error": str(exc),
-        })
-        return {"status": "unverified", "candidate": candidate}
+        error_number = getattr(exc, "errno", None)
+        if hard_status is None and failure_stage.startswith("candidate_") and error_number in {
+            errno.ENOENT,
+            errno.ESRCH,
+        }:
+            confirmation = _confirm_proc_pid_directory_gone(pid, proc_root)
+            candidate["candidate_exit_race_confirmation"] = confirmation
+            if confirmation.get("status") == "gone":
+                return report(
+                    "candidate_exit_race",
+                    failure_stage=failure_stage,
+                    error_type=type(exc).__name__,
+                    errno=error_number,
+                    error=str(exc),
+                    candidate_exit_race_confirmation=confirmation,
+                )
+        return report(
+            hard_status or "unverified",
+            failure_stage=failure_stage,
+            error_type=type(exc).__name__,
+            errno=error_number,
+            error=str(exc),
+        )
 
 
 def _recheck_owned_member_gap(
     process: Mapping[str, Any],
     *,
     owned_context: Mapping[str, Any],
+    initial_member_proof: Mapping[str, Any],
     expected_cgroup: str,
     selected_cpu: int,
     cgroup: Path,
@@ -919,70 +1395,104 @@ def _recheck_owned_member_gap(
                 }
             break
 
-        before = _owned_gap_context_observation(
-            owned_context, selected_cpu=selected_cpu, cgroup=cgroup,
-            proc_root=proc_root, query_number_start=len(systemd_queries) + 1,
-        )
-        retain_queries(before)
-        if before["status"] == "identity_query_unavailable":
-            attempts.append({"attempt": number, "context_before": before})
-            result = {"status": "identity_query_unavailable", "context_before": before}
-            if retry_if_available(number):
-                continue
-            break
-        if before["status"] != "stable":
-            attempts.append({"attempt": number, "context_before": before})
-            result = {"status": before["status"], "context_before": before}
-            break
         observation = _owned_gap_candidate_observation(
-            process, expected_cgroup=expected_cgroup, selected_cpu=selected_cpu,
+            process, owned_context=owned_context,
+            initial_member_proof=initial_member_proof,
+            expected_cgroup=expected_cgroup, selected_cpu=selected_cpu,
             cgroup=cgroup, proc_root=proc_root,
+            query_number_start=len(systemd_queries) + 1,
         )
-        after = _owned_gap_context_observation(
-            owned_context, selected_cpu=selected_cpu, cgroup=cgroup,
-            proc_root=proc_root, query_number_start=len(systemd_queries) + 1,
-        )
-        retain_queries(after)
-        attempts.append({"attempt": number, "context_before": before,
-                         "candidate": observation, "context_after": after})
+        retain_queries(observation)
+        attempts.append({
+            "attempt": number,
+            "candidate": observation.get("candidate"),
+            "fresh_candidate_bracket": observation,
+        })
         if observation["status"] in {
-            "pid_reused", "cgroup_changed", "candidate_affinity_changed"
+            "pid_reused", "cgroup_changed", "candidate_affinity_changed",
+            "invocation_changed", "main_pid_changed", "context_cgroup_changed",
+            "context_affinity_changed", "context_membership_unverified",
+            "one_sided_direct_membership",
         }:
             result = {
                 "status": observation["status"],
                 "candidate": observation.get("candidate"),
-                "context_after": after,
+                "fresh_candidate_bracket": observation,
             }
             break
-        if after["status"] == "identity_query_unavailable":
+        if observation["status"] == "candidate_exit_race":
+            context = _owned_gap_context_observation(
+                owned_context, selected_cpu=selected_cpu, cgroup=cgroup,
+                proc_root=proc_root, query_number_start=len(systemd_queries) + 1,
+                gone_candidate=process,
+            )
+            retain_queries(context)
+            attempts[-1]["gone_context"] = context
+            if context["status"] == "gone":
+                result = {
+                    "status": "gone",
+                    "candidate": observation.get("candidate"),
+                    "candidate_exit_reason": "candidate_exited_during_identity_read",
+                    "fresh_candidate_bracket": observation,
+                    "gone_context": context,
+                }
+                break
+            if context["status"] == "identity_query_unavailable":
+                result = {
+                    "status": "identity_query_unavailable",
+                    "candidate": observation.get("candidate"),
+                    "fresh_candidate_bracket": observation,
+                    "context_after": context,
+                }
+                if retry_if_available(number):
+                    continue
+                break
+            result = {
+                "status": context["status"],
+                "candidate": observation.get("candidate"),
+                "fresh_candidate_bracket": observation,
+                "context_after": context,
+            }
+            break
+        if observation["status"] == "identity_query_unavailable":
             result = {
                 "status": "identity_query_unavailable",
                 "candidate": observation.get("candidate"),
-                "context_after": after,
+                "fresh_candidate_bracket": observation,
             }
             if retry_if_available(number):
                 continue
             break
-        if after["status"] != "stable":
-            result = {"status": after["status"], "candidate": observation,
-                      "context_after": after}
+        if observation["status"] == "gone":
+            result = {
+                "status": "gone",
+                "candidate": observation.get("candidate"),
+                "gone_context": observation,
+            }
             break
         if observation["status"] == "zombie_exit_confirmed":
-            candidate = observation["candidate"]
+            candidate = observation.get("candidate")
             result = {
                 "status": "gone",
                 "candidate": candidate,
                 "candidate_exit_reason": "confirmed_zombie_exit",
+                "fresh_candidate_bracket": observation,
             }
             break
-        if observation["status"] in {"gone", "member_reconfirmed"}:
+        if observation["status"] == "member_reconfirmed":
             result = {"status": observation["status"],
-                      "candidate": observation["candidate"]}
+                      "candidate": observation.get("candidate"),
+                      "fresh_candidate_bracket": observation}
             break
-        result = {"status": observation["status"], "candidate": observation["candidate"]}
+        result = {
+            "status": observation["status"],
+            "candidate": observation.get("candidate"),
+            "fresh_candidate_bracket": observation,
+        }
         if observation["status"] != "still_present_without_direct_membership":
             break
-        retry_if_available(number)
+        if not retry_if_available(number):
+            break
     result.update({
         "attempt_count": attempts_started,
         "attempts": attempts,
@@ -1555,6 +2065,7 @@ def _cpu_neighbor_gate(
             owned, proof = _owned_service_member(
                 process,
                 expected_cgroup=expected_owned_cgroup,
+                selected_cpu=selected_cpu,
                 cgroup=cgroup_fs_root / expected_owned_cgroup.lstrip("/"),
                 proc_root=proc_root,
             )
@@ -1588,12 +2099,23 @@ def _cpu_neighbor_gate(
                     elif checks.get("cgroup_exact_both_reads") is False:
                         blocked_status = "cgroup_changed"
                         recheck_reason = "initial_cgroup_conflict"
+                    elif checks.get("candidate_affinity_stable_on_selected_cpu") is False:
+                        blocked_status = "candidate_affinity_changed"
+                        recheck_reason = "initial_candidate_affinity_conflict"
+                    elif (
+                        checks.get("direct_membership_stable") is False
+                        and proof.get("member_before") is not proof.get("member_after")
+                    ):
+                        blocked_status = "one_sided_direct_membership"
+                        recheck_reason = "initial_one_sided_direct_membership"
                     elif (
                         isinstance(snapshot_start, int)
                         and checks.get("candidate_start_ticks_match_both_reads") is True
                         and checks.get("proc_start_ticks_stable") is True
                         and checks.get("cgroup_exact_both_reads") is True
                         and checks.get("direct_membership_stable") is False
+                        and proof.get("member_before") is False
+                        and proof.get("member_after") is False
                     ):
                         recheck_allowed = True
                         recheck_reason = "stable_identity_direct_membership_gap"
@@ -1612,6 +2134,7 @@ def _cpu_neighbor_gate(
                         recheck = _recheck_owned_member_gap(
                             process,
                             owned_context=owned_context,
+                            initial_member_proof=proof,
                             expected_cgroup=expected_owned_cgroup,
                             selected_cpu=selected_cpu,
                             cgroup=cgroup_fs_root / expected_owned_cgroup.lstrip("/"),
@@ -1658,7 +2181,7 @@ def _cpu_neighbor_gate(
                     if recheck["status"] == "member_reconfirmed":
                         owned = True
                         proof["ownership_decision"] = (
-                            "bounded_recheck_direct_membership_plus_stable_proc_identity"
+                            "bounded_recheck_fresh_candidate_bracket"
                         )
                     elif recheck["status"] == "gone":
                         proof["status"] = "stale_snapshot_confirmed_gone"
