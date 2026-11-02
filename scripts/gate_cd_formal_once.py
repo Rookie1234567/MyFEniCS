@@ -51,6 +51,13 @@ _CAPTURE_ENV = {
     "TASK40_EXACT_CACHE_ATTEMPT_ID",
     "TASK40_EXACT_CACHE_RUNTIME_TEMPLATE_SHA256",
 }
+_MATH_THREAD_ENV = {
+    "OMP_NUM_THREADS",
+    "OPENBLAS_NUM_THREADS",
+    "MKL_NUM_THREADS",
+    "BLIS_NUM_THREADS",
+    "NUMEXPR_NUM_THREADS",
+}
 
 
 def sha256_file(path: str | Path) -> str:
@@ -1161,11 +1168,7 @@ def _require_live_capture(
         raise ValueError("worker NUMA interleave:0-1 has not been observed")
     if worker["environment"].get("OMP_NUM_THREADS") != "1":
         raise ValueError("worker math-thread contract has not been read back")
-    if any(worker["environment"].get(name) != "1" for name in _CAPTURE_ENV - {
-        "_MYFENICS_NATIVE_QUALIFIED_ACTIVATION",
-        "TASK39EXTRA_INT64_ACTIVATION",
-        "TASK39EXTRA_PORD64_ACTIVATION",
-    }):
+    if any(worker["environment"].get(name) != "1" for name in _MATH_THREAD_ENV):
         raise ValueError("worker math environment differs from one-thread contract")
     if any(
         worker["environment"].get(name) != "1"

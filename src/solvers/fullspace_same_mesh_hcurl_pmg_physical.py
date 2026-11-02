@@ -78,6 +78,67 @@ def _expected_operator_parent_indices(
             if abs(int(row.get("m", 999999))) <= max_m
             and abs(int(row.get("n", 999999))) <= max_n
         )
+    if policy == "explicit_signed_subrectangle_from_parent_v1":
+        def signed_bounds(name: str) -> tuple[int, int, int, int]:
+            try:
+                raw_bounds = tuple(operator_selection.get(name, ()))
+            except TypeError as exc:
+                raise ValueError(f"operator selection {name} is malformed") from exc
+            if (
+                len(raw_bounds) != 4
+                or any(
+                    isinstance(value, bool)
+                    or not isinstance(value, (int, np.integer))
+                    for value in raw_bounds
+                )
+            ):
+                raise ValueError(f"operator selection {name} is malformed")
+            bounds = tuple(int(value) for value in raw_bounds)
+            if bounds[0] > bounds[1] or bounds[2] > bounds[3]:
+                raise ValueError(f"operator selection {name} is reversed")
+            return bounds
+
+        active_bounds = signed_bounds("active_signed_bounds_mn")
+        parent_bounds = signed_bounds("parent_signed_bounds_mn")
+        m_min, m_max, n_min, n_max = active_bounds
+        parent_m_min, parent_m_max, parent_n_min, parent_n_max = parent_bounds
+        if (
+            m_min < parent_m_min
+            or m_max > parent_m_max
+            or n_min < parent_n_min
+            or n_max > parent_n_max
+        ):
+            raise ValueError("operator selection signed bounds exceed its parent")
+        try:
+            raw_rectangle = tuple(
+                operator_selection.get("active_rectangle_max_abs_m_n", ())
+            )
+        except TypeError as exc:
+            raise ValueError("operator selection rectangle is malformed") from exc
+        expected_envelope = [
+            max(abs(m_min), abs(m_max)),
+            max(abs(n_min), abs(n_max)),
+        ]
+        if (
+            len(raw_rectangle) != 2
+            or any(
+                isinstance(value, bool)
+                or not isinstance(value, (int, np.integer))
+                for value in raw_rectangle
+            )
+            or [int(value) for value in raw_rectangle] != expected_envelope
+        ):
+            raise ValueError("operator selection rectangle differs from signed bounds")
+        selected = tuple(
+            index
+            for index, row in enumerate(parent_mode_rows)
+            if m_min <= int(row.get("m", 999999)) <= m_max
+            and n_min <= int(row.get("n", 999999)) <= n_max
+        )
+        expected_count = 4 * (m_max - m_min + 1) * (n_max - n_min + 1)
+        if len(selected) != expected_count:
+            raise ValueError("operator selection signed rectangle is incomplete")
+        return selected
     raise ValueError("operator selection policy is unsupported")
 
 
