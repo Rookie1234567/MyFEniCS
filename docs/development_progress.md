@@ -1,3 +1,18 @@
+## 2026-11-02：Gate-CD 精确局部积分多核与缓存有界验证
+
+将独立单元的积分分发给新进程，并把相同数值身份的结果落盘，减少后续重复积分；全局矩阵和MUMPS流程不并行改写。当前Gate-CD/N32/N14保持原运行。
+
+| 范围 | 实测结果 | 边界 |
+|---|---|---|
+| 32个真实P6/q21单元类，4/8/16/32核冷计算 | 1444.49 / 729.28 / 368.03 / 199.81 s；树RSS峰0.738 / 1.417 / 2.754 / 5.388 GB | 各档32张量逐字节相同；不是全模型耗时/峰值 |
+| 八单元实际mapped/MPC对照 | 串行1573.50 s、四核冷构建371.17 s；矩阵/RHS/恢复相对差均0 | 更高档该小网格为缓存命中接线检查，冷扩展性由上行另测 |
+| P6/q81端口断点缓存 | 前2模态恢复至4模态，逐字节一致；全部命中时不重新组装 | 完整mesh/DoF/MPC/q/cutoff/源码/ABI身份绑定；不跨网格盲复用 |
+| 最终聚焦回归 | 46 passed；所有有界run自然退出并清场，任务swap0 | 无新增全局PDE/factor/RTA；FULL_DTN_NOT_VERIFIED保留 |
+
+实现显式opt-in，默认关闭；后续正式case仍须正常审阅和fresh。详细数据、源码绑定、失败保留和使用方式见[结果与说明](task40para_phi90_mesh_modes_direct/outcomes/response_exact_parallel_cache_20261102.md)。历史正文完整保留如下。
+
+---
+
 # Task39extra_para 2026-10-16：色散方向离线收口与原光栅 D 诊断
 
 V0/V1/V2 的离线整理支持 Hx 色散机制；随后只运行用户授权的候选 D 一场。D 的 R/T/A_volume 接近已归档 RCWA 报告总量，但同时改变 x 和 z，且源码身份与旧 A 不同。它是 `CROSS_CHANGED_GRID_DIAGNOSTIC`，不是单轴收敛或连续精度证明。V0 原始 `EVIDENCE_INCOMPLETE` provenance 保留；V1 实际 Basix N1E 与 FFCx 规则、V2 同平层 Nx2/4/8 和 D 的输出比较分别记录。

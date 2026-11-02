@@ -782,6 +782,7 @@ def build_fullspace_dtn_carrier_from_surface(
     progress_interval: int = 1024,
     quadrature_degree: int | None = None,
     functional_store_config: Mapping[str, Any] | None = None,
+    carrier_checkpoint_config: Mapping[str, Any] | None = None,
     operator_selection: Mapping[str, Any] | None = None,
     parent_mode_rows: Sequence[Mapping[str, Any]] | None = None,
     selected_parent_indices: Sequence[int] | None = None,
@@ -990,6 +991,42 @@ def build_fullspace_dtn_carrier_from_surface(
         except Exception:
             functional_store.close()
             raise
+    checkpoint = None
+    checkpoint_modes = None
+    if carrier_checkpoint_config is not None:
+        if (
+            functional_store_config is not None
+            or degree is None
+            or quadrature_degree is None
+        ):
+            raise ValueError("carrier checkpoint requires explicit degree/q and no legacy store")
+        from .carrier_checkpoint import CarrierCheckpoint, live_context
+
+        context = live_context(
+            mpc, cfg, surface_assemblers,
+            mode_manifest_sha256=manifest_sha,
+            degree=degree,
+            quadrature_degree=quadrature_degree,
+            cutoff_policy=sparse_cutoff_policy,
+            cutoff_relative_tolerance=sparse_cutoff_relative_tolerance,
+            numerical_source_sha256=carrier_checkpoint_config["numerical_source_sha256"],
+        )
+        checkpoint = CarrierCheckpoint(carrier_checkpoint_config["root"], context)
+        checkpoint_modes = [
+            {"side": str(mode.side), "m": int(mode.m), "n": int(mode.n),
+             "polarization": str(mode.polarization)}
+            for mode in modes
+        ]
+        for index, stored in enumerate(checkpoint.restore_prefix(checkpoint_modes)):
+            mode = modes[index]
+            entries.append(
+                FullspaceDtnModeFunctional(
+                    mode_key=(index, str(mode.side), int(mode.m), int(mode.n), str(mode.polarization)),
+                    normalization_h=stored["normalization_h"],
+                    mode_identity=manifest_rows[index],
+                    **stored["arrays"],
+                )
+            )
     resume_prefix_count = len(entries)
     remaining_uses = (
         _remaining_dtn_component_phase_uses(modes, resume_prefix_count)
@@ -1218,6 +1255,10 @@ def build_fullspace_dtn_carrier_from_surface(
                         functional_store.record_active_store_commit_seconds(
                             time.perf_counter() - commit_started
                         )
+            if checkpoint is not None:
+                checkpoint.commit(index, checkpoint_modes[index], {
+                    name: getattr(entry,name) for name in ("coupling_rows","coupling_values","projection_rows","projection_values")
+                }, entry.normalization_h)
             entries.append(entry)
             if remaining_uses is not None:
                 remaining_uses[phase_key] -= 1
@@ -1310,6 +1351,12 @@ def build_fullspace_dtn_carrier_from_surface(
                 "mode_count": len(modes),
                 "mode_sha256": manifest_sha,
                 "normalized_entries": len(carrier.entries),
+                "carrier_checkpoint": None if checkpoint is None else {
+                    "context_sha256": checkpoint.context_sha,
+                    "restored_prefix": resume_prefix_count,
+                    "new_modes": len(entries)-resume_prefix_count,
+                    "root": str(checkpoint.root),
+                },
                 **(
                     {"timing_seconds": dict(workspace.timing_totals)}
                     if workspace is not None and workspace.timing_totals is not None

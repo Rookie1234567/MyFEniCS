@@ -3065,6 +3065,20 @@ def run_p6_condensed_direct(
         profile_facts = _validate_resolved_profile(resolved_payload)
         _reject_unqualified_gate_cd_full_solve(profile_facts)
         route = _direct_run_contract(str(profile_facts["identity"]))
+        exact_cache_options = None
+        exact_cache_path = os.environ.get("TASK40_EXACT_CACHE_CONTRACT")
+        if exact_cache_path:
+            if route.get("gate_cd_case") is not True:
+                raise ValueError("exact-cache opt-in is currently limited to Gate-CD")
+            from .exact_cache_contract import load_exact_cache_contract
+
+            exact_cache_options = load_exact_cache_contract(
+                exact_cache_path,
+                os.environ.get("TASK40_EXACT_CACHE_CONTRACT_SHA256"),
+                source_sha=source_sha,
+                resolved_payload=resolved_payload,
+            )
+            summary["exact_cache_execution"] = exact_cache_options
         route.setdefault("sparse_cutoff_policy", "absolute_floor_relative_v1")
         route.setdefault("sparse_cutoff_relative_tolerance", 1.0e-13)
         if route["family"] == "task40_phi90" and route["sparse_cutoff_policy"] != (
@@ -3504,6 +3518,9 @@ def run_p6_condensed_direct(
                 volume_quadrature_metadata=volume_quadrature_metadata,
                 reuse_surface_vector=True,
                 functional_store_config=None,
+                carrier_checkpoint_config=(
+                    None if exact_cache_options is None else exact_cache_options["carrier"]
+                ),
                 stage_callback=ledger.marker,
                 surface_progress_interval=1024,
                 **parent_surface_kwargs,
@@ -3675,6 +3692,15 @@ def run_p6_condensed_direct(
             materialize_global_matrix=True,
             **_condensation_geometry_cache_kwargs({"condensed_route": route}),
             share_identity_cache=True,
+            raw_tensor_execution_config=(
+                None if exact_cache_options is None else {
+                    **exact_cache_options["raw"],
+                    "progress": lambda done, total, result: ledger.marker(
+                        "p6_direct_raw_tensor_class_progress",
+                        {"done": done, "total": total, "last_class": result},
+                    ),
+                }
+            ),
         )
         if condensed.matrix is None:
             raise RuntimeError("p6 direct condensation did not materialize its one PETSc AIJ")

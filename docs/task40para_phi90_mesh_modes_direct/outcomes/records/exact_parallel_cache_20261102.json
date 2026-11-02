@@ -1,0 +1,817 @@
+{
+  "status": "BOUNDED_PARALLEL_AND_PERSISTENT_CACHE_VALIDATION_PASS",
+  "base_sha": "fab43f513f1696ed161e1fcbf43a9018ad54b4db",
+  "branch": "task40para_phi90_gate_cd_parallel_cache",
+  "numerical_source_digest": "0b4233ed80b39536dcb601bd02e531e50c26fd6761fa3566afc2c00a4b3f6bd6",
+  "source_file_sha256": {
+    "benchmarks/exact_cache_supervisor.py": "5d457d4425bfa3f5656dda4781f6293e206a4ac5bc4b2b8332fd2dd50f0e5709",
+    "benchmarks/exact_tensor_scaling.py": "615dabe115001c4a91031a1b98b5fd41a1816b374d24c4d872b96f837adf7593",
+    "benchmarks/parallel_tensor_cache_validation.py": "4aab89e006ff15bb2c59b530371d50eaf911268300d2e0aca2a746c29d24729f",
+    "benchmarks/prepare_exact_cache_contract.py": "38ccb322a7240bcd6f0c501ac2d30bf6ff91b20e6ab5b38a58f97435d7a4f333",
+    "benchmarks/summarize_exact_cache_resources.py": "538aa97a0188a00c8b9fe6147341e1b3675e01fc6e0ee3f74de7edd713e737b4",
+    "src/runners/exact_cache_admission.py": "e25ad3b43a09df48463dc4d9ccef56ceba787b2d0c5f825f1d13bed3df2c4a7b",
+    "src/runners/exact_cache_contract.py": "e6455af9ef877fd3d496eb37ad917a1a4bc5ad0b55c3b7ad84e6cf9d38dd4cf0",
+    "src/runners/p6_condensed_direct.py": "30c6e0b19317f49dce5023c90c851854ab341652bc3b02faa9877e1ec0941991",
+    "src/solvers/carrier_checkpoint.py": "6ec0d2a9e50a51d4ca6122e11ec11935e4141de741daeb2692d3933196a61e69",
+    "src/solvers/fullspace_dtn_action.py": "4de8f3ce081360ca79d63f966860ac4ed364f5e4b978c9a800571b959f73524a",
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": "092681e3f5979ec6914704096be64981108d8e356cdcdfa114071cb1b63a1bd9",
+    "src/solvers/hcurl_assembly_time_condensation.py": "9d0f977dd5f1a76f1195cf5fd2e74e18f5befa4c75280c9bc38d1dbd74988de7",
+    "src/solvers/parallel_tensor_cache.py": "db029d0043c7b7824f3778d88071b488c3c6ce0bd47cd86c8fc817fe71d0765b",
+    "src/solvers/raw_tensor_execution.py": "61881fbaaecf361cf055e9c10dcc7e8f4deeb5b27d93ec7c781d223e9471cbc1",
+    "src/test/test_carrier_checkpoint.py": "72064f1fb630a8aa6aef4a7587940d61c758e639a5cff9118eadda1c77d7cc3a",
+    "src/test/test_carrier_checkpoint_live.py": "5d63cfd671898baf83b647267403eb2c4325901b1f22851744069ffd3e95fae2",
+    "src/test/test_exact_cache_admission.py": "e5483ce0be82f367855c0264cdf69f1011ea6cfc2668ed442523e748f1cb17b6",
+    "src/test/test_exact_cache_contract.py": "7cd80e78a3e1739dc6e9509a61319dee18478e8fb74e2c8373ad1ac8d75f45e0",
+    "src/test/test_exact_cache_formal_profile.py": "9639e50995c3562a8401ed77da9b8fe2bd5eddbc965f539e4515cffef9911c38",
+    "src/test/test_exact_cache_resources.py": "327b2ec26d50369d5e3c29a50e4a38a166176c6a4a0491be6b0261b9e8fca5ee",
+    "src/test/test_parallel_tensor_cache.py": "0fbeee976cf63594288a981683f68d895f347561e9a8910811e3672cc2eab22a",
+    "src/test/test_raw_tensor_execution_guard.py": "ee5ddb3232fb9c5f25623a0abfec403b7343a9c1e367b8a4053fd2b72928c39e"
+  },
+  "numerical_ast_preservation_after_format": {
+    "src/solvers/parallel_tensor_cache.py": {
+      "pre_format_ast_sha256": "e83cdc0c96d28edcb37afe7f0f7836c03e7ef24b5fbf9917d4378a38406c4bcb",
+      "final_ast_sha256": "e83cdc0c96d28edcb37afe7f0f7836c03e7ef24b5fbf9917d4378a38406c4bcb",
+      "ast_equal": true
+    },
+    "src/solvers/raw_tensor_execution.py": {
+      "pre_format_ast_sha256": "f230509f3428e2a5ddb7ac3d6fa419f31f547eaff9ce6433b122c4ba7c729a18",
+      "final_ast_sha256": "f230509f3428e2a5ddb7ac3d6fa419f31f547eaff9ce6433b122c4ba7c729a18",
+      "ast_equal": true
+    },
+    "src/solvers/carrier_checkpoint.py": {
+      "pre_format_ast_sha256": "5cbab4924909dd03c8d6a76ba00d2b12a6347a3c0f58069036367c54b9f90f66",
+      "final_ast_sha256": "5cbab4924909dd03c8d6a76ba00d2b12a6347a3c0f58069036367c54b9f90f66",
+      "ast_equal": true
+    },
+    "src/solvers/fullspace_dtn_action.py": {
+      "pre_format_ast_sha256": "3206d858199ef620304cc4269c252b8e3ee829e24c712fb94650a627b0b8424c",
+      "final_ast_sha256": "3206d858199ef620304cc4269c252b8e3ee829e24c712fb94650a627b0b8424c",
+      "ast_equal": true
+    },
+    "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py": {
+      "pre_format_ast_sha256": "71f1c357888fe05478375e1f87f0822fa6fb7d128629a8fedf676cef707defb3",
+      "final_ast_sha256": "71f1c357888fe05478375e1f87f0822fa6fb7d128629a8fedf676cef707defb3",
+      "ast_equal": true
+    },
+    "src/runners/p6_condensed_direct.py": {
+      "pre_format_ast_sha256": "98ee5e5b1eddac30038c1f1d26c05aa035363dc67ab69bc6495b613178d422f1",
+      "final_ast_sha256": "98ee5e5b1eddac30038c1f1d26c05aa035363dc67ab69bc6495b613178d422f1",
+      "ast_equal": true
+    },
+    "src/solvers/hcurl_assembly_time_condensation.py": {
+      "pre_format_ast_sha256": "6fd89164791421f828c5725a97cf028eb95c780766b69348bf5328d0c1be0f04",
+      "final_ast_sha256": "6fe0281d288e1341986a7a8a794f9215e1e9de656bf3713ab9996dfd0d60808b",
+      "ast_equal": false,
+      "equivalent_boolean_guard_expansion_ast_equal": true
+    }
+  },
+  "scaling": {
+    "benchmark_status": "PASS_32_REAL_CLASSES_SCALING_AND_DISK_REUSE",
+    "pss": "disabled; RSS sums can include shared pages more than once",
+    "report_sha256": "5a104e943b9c7e4ea3a181dd32cc7746464a200137afddc76e2b691cbf34e962",
+    "resources_sha256": "ee0d5a050b35962c9baff5f6f82c8c79afbef952501465c24f6cc3fcc76e0f7f",
+    "runs": [
+      {
+        "all_32_bitwise_equal": true,
+        "cold_cache_hits": 0,
+        "cold_seconds": 1444.4880345240235,
+        "cpus": [
+          {
+            "busy_fraction": 0.01672240802675584,
+            "cpu": 9
+          },
+          {
+            "busy_fraction": 0.02006688963210701,
+            "cpu": 27
+          },
+          {
+            "busy_fraction": 0.023489932885906062,
+            "cpu": 7
+          },
+          {
+            "busy_fraction": 0.02684563758389258,
+            "cpu": 47
+          }
+        ],
+        "ended_ns": 1793597709714025334,
+        "kernel_cpu_sum_seconds": 5367.11759933,
+        "resources": {
+          "all_samples_readable": true,
+          "any_warning": false,
+          "maximum_live_exec_workers": 4,
+          "minimum_effective_available_bytes": 1658476744704,
+          "phase_clock": "recorded wall timestamp_ns",
+          "samples": 1294,
+          "scope": "same-instant supervisor plus descendants; not sum of per-process peaks",
+          "simultaneous_tree_rss_peak_bytes": 738209792,
+          "simultaneous_tree_swap_peak_bytes": 0,
+          "status": "SAMPLED"
+        },
+        "started_ns": 1793596265225989507,
+        "warm_ended_ns": 1793597712623487241,
+        "warm_resources": {
+          "samples": 0,
+          "status": "NOT_SAMPLED"
+        },
+        "warm_seconds": 0.6059048981405795,
+        "warm_started_ns": 1793597712017558961,
+        "warning": "worker_peak_max is not simultaneous process-tree RSS; use watchdog interval samples",
+        "worker_peak_max_bytes": 178405376,
+        "workers": 4
+      },
+      {
+        "all_32_bitwise_equal": true,
+        "cold_cache_hits": 0,
+        "cold_seconds": 729.2761819842272,
+        "cpus": [
+          {
+            "busy_fraction": 0.017064846416382284,
+            "cpu": 8
+          },
+          {
+            "busy_fraction": 0.02341137123745818,
+            "cpu": 28
+          },
+          {
+            "busy_fraction": 0.023569023569023573,
+            "cpu": 30
+          },
+          {
+            "busy_fraction": 0.023648648648648685,
+            "cpu": 27
+          },
+          {
+            "busy_fraction": 0.023809523809523836,
+            "cpu": 47
+          },
+          {
+            "busy_fraction": 0.023890784982935176,
+            "cpu": 21
+          },
+          {
+            "busy_fraction": 0.027118644067796627,
+            "cpu": 7
+          },
+          {
+            "busy_fraction": 0.027118644067796627,
+            "cpu": 33
+          }
+        ],
+        "ended_ns": 1793598444912397859,
+        "kernel_cpu_sum_seconds": 5649.223121669,
+        "resources": {
+          "all_samples_readable": true,
+          "any_warning": false,
+          "maximum_live_exec_workers": 8,
+          "minimum_effective_available_bytes": 1628544212992,
+          "phase_clock": "recorded wall timestamp_ns",
+          "samples": 649,
+          "scope": "same-instant supervisor plus descendants; not sum of per-process peaks",
+          "simultaneous_tree_rss_peak_bytes": 1417289728,
+          "simultaneous_tree_swap_peak_bytes": 0,
+          "status": "SAMPLED"
+        },
+        "started_ns": 1793597715636216085,
+        "warm_ended_ns": 1793598447708024933,
+        "warm_resources": {
+          "all_samples_readable": true,
+          "any_warning": false,
+          "maximum_live_exec_workers": 0,
+          "minimum_effective_available_bytes": 1628057944064,
+          "phase_clock": "recorded wall timestamp_ns",
+          "samples": 1,
+          "scope": "same-instant supervisor plus descendants; not sum of per-process peaks",
+          "simultaneous_tree_rss_peak_bytes": 77955072,
+          "simultaneous_tree_swap_peak_bytes": 0,
+          "status": "SAMPLED"
+        },
+        "warm_seconds": 0.47730440786108375,
+        "warm_started_ns": 1793598447230700636,
+        "warning": "worker_peak_max is not simultaneous process-tree RSS; use watchdog interval samples",
+        "worker_peak_max_bytes": 178270208,
+        "workers": 8
+      },
+      {
+        "all_32_bitwise_equal": true,
+        "cold_cache_hits": 0,
+        "cold_seconds": 368.02791406819597,
+        "cpus": [
+          {
+            "busy_fraction": 0.009966777408637828,
+            "cpu": 33
+          },
+          {
+            "busy_fraction": 0.010033444816053505,
+            "cpu": 43
+          },
+          {
+            "busy_fraction": 0.013377926421404673,
+            "cpu": 39
+          },
+          {
+            "busy_fraction": 0.020134228187919434,
+            "cpu": 42
+          },
+          {
+            "busy_fraction": 0.023255813953488413,
+            "cpu": 32
+          },
+          {
+            "busy_fraction": 0.023255813953488413,
+            "cpu": 35
+          },
+          {
+            "busy_fraction": 0.023333333333333317,
+            "cpu": 28
+          },
+          {
+            "busy_fraction": 0.026755852842809347,
+            "cpu": 3
+          },
+          {
+            "busy_fraction": 0.030201342281879207,
+            "cpu": 41
+          },
+          {
+            "busy_fraction": 0.03344481605351168,
+            "cpu": 29
+          },
+          {
+            "busy_fraction": 0.03654485049833889,
+            "cpu": 14
+          },
+          {
+            "busy_fraction": 0.03678929765886285,
+            "cpu": 15
+          },
+          {
+            "busy_fraction": 0.03678929765886285,
+            "cpu": 19
+          },
+          {
+            "busy_fraction": 0.040000000000000036,
+            "cpu": 22
+          },
+          {
+            "busy_fraction": 0.040000000000000036,
+            "cpu": 45
+          },
+          {
+            "busy_fraction": 0.04013377926421402,
+            "cpu": 23
+          }
+        ],
+        "ended_ns": 1793598818752098804,
+        "kernel_cpu_sum_seconds": 5774.984468513,
+        "resources": {
+          "all_samples_readable": true,
+          "any_warning": false,
+          "maximum_live_exec_workers": 16,
+          "minimum_effective_available_bytes": 1612876382208,
+          "phase_clock": "recorded wall timestamp_ns",
+          "samples": 327,
+          "scope": "same-instant supervisor plus descendants; not sum of per-process peaks",
+          "simultaneous_tree_rss_peak_bytes": 2754138112,
+          "simultaneous_tree_swap_peak_bytes": 0,
+          "status": "SAMPLED"
+        },
+        "started_ns": 1793598450724184896,
+        "warm_ended_ns": 1793598821527332962,
+        "warm_resources": {
+          "samples": 0,
+          "status": "NOT_SAMPLED"
+        },
+        "warm_seconds": 0.4072029902599752,
+        "warm_started_ns": 1793598821120108501,
+        "warning": "worker_peak_max is not simultaneous process-tree RSS; use watchdog interval samples",
+        "worker_peak_max_bytes": 178237440,
+        "workers": 16
+      },
+      {
+        "all_32_bitwise_equal": true,
+        "cold_cache_hits": 0,
+        "cold_seconds": 199.8110403981991,
+        "cpus": [
+          {
+            "busy_fraction": 0.0033222591362126463,
+            "cpu": 20
+          },
+          {
+            "busy_fraction": 0.0033333333333332993,
+            "cpu": 21
+          },
+          {
+            "busy_fraction": 0.006688963210702337,
+            "cpu": 13
+          },
+          {
+            "busy_fraction": 0.006688963210702337,
+            "cpu": 15
+          },
+          {
+            "busy_fraction": 0.006779661016949157,
+            "cpu": 16
+          },
+          {
+            "busy_fraction": 0.016891891891891886,
+            "cpu": 14
+          },
+          {
+            "busy_fraction": 0.020134228187919434,
+            "cpu": 19
+          },
+          {
+            "busy_fraction": 0.02020202020202022,
+            "cpu": 38
+          },
+          {
+            "busy_fraction": 0.023569023569023573,
+            "cpu": 8
+          },
+          {
+            "busy_fraction": 0.023809523809523836,
+            "cpu": 33
+          },
+          {
+            "busy_fraction": 0.023890784982935176,
+            "cpu": 41
+          },
+          {
+            "busy_fraction": 0.02491103202846978,
+            "cpu": 0
+          },
+          {
+            "busy_fraction": 0.027118644067796627,
+            "cpu": 3
+          },
+          {
+            "busy_fraction": 0.027118644067796627,
+            "cpu": 40
+          },
+          {
+            "busy_fraction": 0.027118644067796627,
+            "cpu": 45
+          },
+          {
+            "busy_fraction": 0.027118644067796627,
+            "cpu": 46
+          },
+          {
+            "busy_fraction": 0.027210884353741527,
+            "cpu": 23
+          },
+          {
+            "busy_fraction": 0.027210884353741527,
+            "cpu": 32
+          },
+          {
+            "busy_fraction": 0.027210884353741527,
+            "cpu": 35
+          },
+          {
+            "busy_fraction": 0.027210884353741527,
+            "cpu": 37
+          },
+          {
+            "busy_fraction": 0.027210884353741527,
+            "cpu": 43
+          },
+          {
+            "busy_fraction": 0.027303754266211566,
+            "cpu": 36
+          },
+          {
+            "busy_fraction": 0.030405405405405372,
+            "cpu": 28
+          },
+          {
+            "busy_fraction": 0.030405405405405372,
+            "cpu": 30
+          },
+          {
+            "busy_fraction": 0.030405405405405372,
+            "cpu": 39
+          },
+          {
+            "busy_fraction": 0.03050847457627115,
+            "cpu": 26
+          },
+          {
+            "busy_fraction": 0.03050847457627115,
+            "cpu": 27
+          },
+          {
+            "busy_fraction": 0.03050847457627115,
+            "cpu": 42
+          },
+          {
+            "busy_fraction": 0.03367003367003363,
+            "cpu": 47
+          },
+          {
+            "busy_fraction": 0.03378378378378377,
+            "cpu": 25
+          },
+          {
+            "busy_fraction": 0.03378378378378377,
+            "cpu": 29
+          },
+          {
+            "busy_fraction": 0.03389830508474578,
+            "cpu": 22
+          }
+        ],
+        "ended_ns": 1793599024360883731,
+        "kernel_cpu_sum_seconds": 6182.921454539,
+        "resources": {
+          "all_samples_readable": true,
+          "any_warning": false,
+          "maximum_live_exec_workers": 32,
+          "minimum_effective_available_bytes": 1603898109952,
+          "phase_clock": "recorded wall timestamp_ns",
+          "samples": 176,
+          "scope": "same-instant supervisor plus descendants; not sum of per-process peaks",
+          "simultaneous_tree_rss_peak_bytes": 5387722752,
+          "simultaneous_tree_swap_peak_bytes": 0,
+          "status": "SAMPLED"
+        },
+        "started_ns": 1793598824549843381,
+        "warm_ended_ns": 1793599026898449502,
+        "warm_resources": {
+          "samples": 0,
+          "status": "NOT_SAMPLED"
+        },
+        "warm_seconds": 0.3617557492107153,
+        "warm_started_ns": 1793599026536677589,
+        "warning": "worker_peak_max is not simultaneous process-tree RSS; use watchdog interval samples",
+        "worker_peak_max_bytes": 178311168,
+        "workers": 32
+      }
+    ]
+  },
+  "small_mapped_mesh": {
+    "benchmark_status": "PASS_SMALL_MAPPED_ASSEMBLY_EQUIVALENCE",
+    "pss": "disabled; RSS sums can include shared pages more than once",
+    "report_sha256": "cd7d1cbfe5dfe18e650a6047ec01400091435958a4b017384ff21cff6ed0dfc9",
+    "resources_sha256": "731ea62ea6fac0c26d97939f4d755d9a91501cf8e7337a614742cedd1fd8de34",
+    "runs": [
+      {
+        "audit": null,
+        "ended_monotonic": 3522597.764913852,
+        "matrix_relative": 0.0,
+        "recovery_relative": 0.0,
+        "requested_workers": 1,
+        "resources": {
+          "all_samples_readable": true,
+          "any_warning": false,
+          "maximum_live_exec_workers": 0,
+          "minimum_effective_available_bytes": 1662787428352,
+          "phase_clock": "watchdog elapsed calibrated to initial fresh NUMA monotonic observation; sub-sample timing approximation",
+          "samples": 1329,
+          "scope": "same-instant supervisor plus descendants; not sum of per-process peaks",
+          "simultaneous_tree_rss_peak_bytes": 801488896,
+          "simultaneous_tree_swap_peak_bytes": 0,
+          "status": "SAMPLED"
+        },
+        "rhs_relative": 0.0,
+        "serial_baseline": true,
+        "started_monotonic": 3521024.157856233,
+        "wall_seconds": 1573.5023963809945
+      },
+      {
+        "audit": {
+          "backend": "exact_exec_tensor_cache_v1",
+          "cache_hits": 0,
+          "computed_classes": 8,
+          "cpus": [
+            2,
+            12,
+            31,
+            1
+          ],
+          "effective_max_workers": 4,
+          "global_insertion_order": "unchanged_canonical_order",
+          "kernel_cpu_seconds_sum": 1414.940466904,
+          "payload_keys": [
+            "23510901c5690afd7154130ee39d57cbfafb79266c8a08845381ad1b14db8a26",
+            "0dcc534be091d9a03306102504b2138b63e3f0a14c3c716520290f1596cd981a",
+            "83ceef1db8b484d83ca20913d5836eb86763d76a247fd6bbb7bcae6b4fd6a245",
+            "a2d8df34f9d449423762dd4cdc95662cfba1ba87f4ec1f51341a0406069b3458",
+            "7373ccb79d34324347a4ce09822ebe534964003f019f98c545d5409117163da5",
+            "1f97516a2304ef8a301a809991138b968a1841e92d0b37bcda49ab73664a4ea5",
+            "41a96717067ef665fb9f9d90104f3378dfd66024d877433028904884227b6e9f",
+            "3add9c64a616c695cb76c9ebc333b294b6c9718ab07a2aa736695a5f0def2414"
+          ],
+          "requested_workers": 4,
+          "root": "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_parallel_exec/tmp/parallel-cache-p6-v2/evidence/parallel-cache",
+          "unique_classes": 8,
+          "wall_seconds": 369.4556283261627
+        },
+        "ended_monotonic": 3522969.144880769,
+        "matrix_relative": 0.0,
+        "recovery_relative": 0.0,
+        "requested_workers": 4,
+        "resources": {
+          "all_samples_readable": true,
+          "any_warning": false,
+          "maximum_live_exec_workers": 4,
+          "minimum_effective_available_bytes": 1648520798208,
+          "phase_clock": "watchdog elapsed calibrated to initial fresh NUMA monotonic observation; sub-sample timing approximation",
+          "samples": 329,
+          "scope": "same-instant supervisor plus descendants; not sum of per-process peaks",
+          "simultaneous_tree_rss_peak_bytes": 1475661824,
+          "simultaneous_tree_swap_peak_bytes": 0,
+          "status": "SAMPLED"
+        },
+        "rhs_relative": 0.0,
+        "serial_baseline": false,
+        "started_monotonic": 3522597.819804635,
+        "wall_seconds": 371.1697921403684
+      },
+      {
+        "audit": {
+          "backend": "exact_exec_tensor_cache_v1",
+          "cache_hits": 8,
+          "computed_classes": 0,
+          "cpus": [
+            2,
+            12,
+            31,
+            1,
+            17,
+            3,
+            45,
+            8
+          ],
+          "effective_max_workers": 8,
+          "global_insertion_order": "unchanged_canonical_order",
+          "kernel_cpu_seconds_sum": 0,
+          "payload_keys": [
+            "23510901c5690afd7154130ee39d57cbfafb79266c8a08845381ad1b14db8a26",
+            "0dcc534be091d9a03306102504b2138b63e3f0a14c3c716520290f1596cd981a",
+            "83ceef1db8b484d83ca20913d5836eb86763d76a247fd6bbb7bcae6b4fd6a245",
+            "a2d8df34f9d449423762dd4cdc95662cfba1ba87f4ec1f51341a0406069b3458",
+            "7373ccb79d34324347a4ce09822ebe534964003f019f98c545d5409117163da5",
+            "1f97516a2304ef8a301a809991138b968a1841e92d0b37bcda49ab73664a4ea5",
+            "41a96717067ef665fb9f9d90104f3378dfd66024d877433028904884227b6e9f",
+            "3add9c64a616c695cb76c9ebc333b294b6c9718ab07a2aa736695a5f0def2414"
+          ],
+          "requested_workers": 8,
+          "root": "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_parallel_exec/tmp/parallel-cache-p6-v2/evidence/parallel-cache",
+          "unique_classes": 8,
+          "wall_seconds": 0.9425377771258354
+        },
+        "ended_monotonic": 3522972.006737595,
+        "matrix_relative": 0.0,
+        "recovery_relative": 0.0,
+        "requested_workers": 8,
+        "resources": {
+          "all_samples_readable": true,
+          "any_warning": false,
+          "maximum_live_exec_workers": 0,
+          "minimum_effective_available_bytes": 1648406962176,
+          "phase_clock": "watchdog elapsed calibrated to initial fresh NUMA monotonic observation; sub-sample timing approximation",
+          "samples": 2,
+          "scope": "same-instant supervisor plus descendants; not sum of per-process peaks",
+          "simultaneous_tree_rss_peak_bytes": 919900160,
+          "simultaneous_tree_swap_peak_bytes": 0,
+          "status": "SAMPLED"
+        },
+        "rhs_relative": 0.0,
+        "serial_baseline": false,
+        "started_monotonic": 3522969.194819418,
+        "wall_seconds": 2.6739637129940093
+      },
+      {
+        "audit": {
+          "backend": "exact_exec_tensor_cache_v1",
+          "cache_hits": 8,
+          "computed_classes": 0,
+          "cpus": [
+            2,
+            12,
+            31,
+            1,
+            17,
+            3,
+            45,
+            8,
+            46,
+            32,
+            40,
+            42,
+            28,
+            13,
+            14,
+            23
+          ],
+          "effective_max_workers": 8,
+          "global_insertion_order": "unchanged_canonical_order",
+          "kernel_cpu_seconds_sum": 0,
+          "payload_keys": [
+            "23510901c5690afd7154130ee39d57cbfafb79266c8a08845381ad1b14db8a26",
+            "0dcc534be091d9a03306102504b2138b63e3f0a14c3c716520290f1596cd981a",
+            "83ceef1db8b484d83ca20913d5836eb86763d76a247fd6bbb7bcae6b4fd6a245",
+            "a2d8df34f9d449423762dd4cdc95662cfba1ba87f4ec1f51341a0406069b3458",
+            "7373ccb79d34324347a4ce09822ebe534964003f019f98c545d5409117163da5",
+            "1f97516a2304ef8a301a809991138b968a1841e92d0b37bcda49ab73664a4ea5",
+            "41a96717067ef665fb9f9d90104f3378dfd66024d877433028904884227b6e9f",
+            "3add9c64a616c695cb76c9ebc333b294b6c9718ab07a2aa736695a5f0def2414"
+          ],
+          "requested_workers": 16,
+          "root": "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_parallel_exec/tmp/parallel-cache-p6-v2/evidence/parallel-cache",
+          "unique_classes": 8,
+          "wall_seconds": 0.9368707481771708
+        },
+        "ended_monotonic": 3522974.972781514,
+        "matrix_relative": 0.0,
+        "recovery_relative": 0.0,
+        "requested_workers": 16,
+        "resources": {
+          "all_samples_readable": true,
+          "any_warning": false,
+          "maximum_live_exec_workers": 0,
+          "minimum_effective_available_bytes": 1648309256192,
+          "phase_clock": "watchdog elapsed calibrated to initial fresh NUMA monotonic observation; sub-sample timing approximation",
+          "samples": 2,
+          "scope": "same-instant supervisor plus descendants; not sum of per-process peaks",
+          "simultaneous_tree_rss_peak_bytes": 858230784,
+          "simultaneous_tree_swap_peak_bytes": 0,
+          "status": "SAMPLED"
+        },
+        "rhs_relative": 0.0,
+        "serial_baseline": false,
+        "started_monotonic": 3522972.055884769,
+        "wall_seconds": 2.684808427002281
+      },
+      {
+        "audit": {
+          "backend": "exact_exec_tensor_cache_v1",
+          "cache_hits": 8,
+          "computed_classes": 0,
+          "cpus": [
+            2,
+            12,
+            31,
+            1,
+            17,
+            3,
+            45,
+            8,
+            46,
+            32,
+            40,
+            42,
+            28,
+            13,
+            14,
+            23,
+            25,
+            24,
+            47,
+            15,
+            29,
+            30,
+            26,
+            38,
+            16,
+            20,
+            22,
+            7,
+            27,
+            33,
+            34,
+            9
+          ],
+          "effective_max_workers": 8,
+          "global_insertion_order": "unchanged_canonical_order",
+          "kernel_cpu_seconds_sum": 0,
+          "payload_keys": [
+            "23510901c5690afd7154130ee39d57cbfafb79266c8a08845381ad1b14db8a26",
+            "0dcc534be091d9a03306102504b2138b63e3f0a14c3c716520290f1596cd981a",
+            "83ceef1db8b484d83ca20913d5836eb86763d76a247fd6bbb7bcae6b4fd6a245",
+            "a2d8df34f9d449423762dd4cdc95662cfba1ba87f4ec1f51341a0406069b3458",
+            "7373ccb79d34324347a4ce09822ebe534964003f019f98c545d5409117163da5",
+            "1f97516a2304ef8a301a809991138b968a1841e92d0b37bcda49ab73664a4ea5",
+            "41a96717067ef665fb9f9d90104f3378dfd66024d877433028904884227b6e9f",
+            "3add9c64a616c695cb76c9ebc333b294b6c9718ab07a2aa736695a5f0def2414"
+          ],
+          "requested_workers": 32,
+          "root": "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_parallel_exec/tmp/parallel-cache-p6-v2/evidence/parallel-cache",
+          "unique_classes": 8,
+          "wall_seconds": 0.9409234500490129
+        },
+        "ended_monotonic": 3522977.819092633,
+        "matrix_relative": 0.0,
+        "recovery_relative": 0.0,
+        "requested_workers": 32,
+        "resources": {
+          "all_samples_readable": true,
+          "any_warning": false,
+          "maximum_live_exec_workers": 0,
+          "minimum_effective_available_bytes": 1647727558656,
+          "phase_clock": "watchdog elapsed calibrated to initial fresh NUMA monotonic observation; sub-sample timing approximation",
+          "samples": 2,
+          "scope": "same-instant supervisor plus descendants; not sum of per-process peaks",
+          "simultaneous_tree_rss_peak_bytes": 925196288,
+          "simultaneous_tree_swap_peak_bytes": 0,
+          "status": "SAMPLED"
+        },
+        "rhs_relative": 0.0,
+        "serial_baseline": false,
+        "started_monotonic": 3522975.02661763,
+        "wall_seconds": 2.656320319045335
+      }
+    ]
+  },
+  "carrier": {
+    "degree": 6,
+    "q": 81,
+    "modes": 4,
+    "restored_prefix": 2,
+    "bitwise_equal": true,
+    "warm_surface_calls": 0
+  },
+  "sampled_material_tag_histogram": {
+    "101": 1,
+    "102": 1,
+    "103": 9,
+    "104": 18,
+    "105": 1,
+    "110": 1,
+    "123": 1
+  },
+  "artifacts": {
+    "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_parallel_exec/tmp/exact-tensor-scaling-v1/evidence/report.json": {
+      "sha256": "5a104e943b9c7e4ea3a181dd32cc7746464a200137afddc76e2b691cbf34e962",
+      "bytes": 8082
+    },
+    "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_parallel_exec/tmp/exact-tensor-scaling-v1/evidence/jobs.json": {
+      "sha256": "5c7d2f09cbaef9ff03320f4713c6dcf2542d4059059d58887bc741ce242127f2",
+      "bytes": 42386
+    },
+    "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_parallel_exec/tmp/exact-tensor-scaling-v1/watchdog/summary.json": {
+      "sha256": "66c569353850c3226a094c46885bc78e5f68e10c29a17f7989de3080cedf3711",
+      "bytes": 3478
+    },
+    "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_parallel_exec/tmp/exact-tensor-scaling-v1/worker_policy_sample.json": {
+      "sha256": "5e418ba8497b59b69ef5f0dbeedc7b825df713b85fd59206999e83b7c3c3225e",
+      "bytes": 1845
+    },
+    "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_parallel_exec/tmp/parallel-cache-p6-v2/evidence/report.json": {
+      "sha256": "cd7d1cbfe5dfe18e650a6047ec01400091435958a4b017384ff21cff6ed0dfc9",
+      "bytes": 7417
+    },
+    "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_parallel_exec/tmp/parallel-cache-p6-v2/watchdog/summary.json": {
+      "sha256": "47ceea1cd82b9f46f91021c3f2472cff25f786cee8f71de330d67d3849f5c212",
+      "bytes": 2087
+    },
+    "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_parallel_exec/tmp/carrier-checkpoint-p6-final-report.json": {
+      "sha256": "8a582fa1375783d582095546eaa986479ea941759a1fc08c0bd8e7da4b2775c6",
+      "bytes": 119
+    },
+    "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_parallel_exec/tmp/carrier-checkpoint-p6-final-watchdog/summary.json": {
+      "sha256": "9a5334f2c6b8ff3a70cbc0e3dbf33e14aa087c157b9233da80b13aaf5191796a",
+      "bytes": 1951
+    },
+    "/tmp/task40_gate_cd_parallel_cache_validation_20261102/receipt.json": {
+      "sha256": "ed383156e84e59f08b6a749b798c3a11a70b38417a0143e02caf20362f051868",
+      "bytes": 7081
+    },
+    "/tmp/task40_parallel_carrier_baseline_failures.log": {
+      "sha256": "4b59452f83260be4ea2962263e917429c164d0c3b2407be5d1d8cca8c2c50a18",
+      "bytes": 66270
+    },
+    "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_parallel_exec/tmp/final-exact-cache-regression-watchdog/summary.json": {
+      "sha256": "58baee3bb9c58d64505fd71913b911b57f2cee72960c7b87d92f2a6649ea159d",
+      "bytes": 1951
+    },
+    "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_parallel_exec/tmp/final-exact-cache-regression-watchdog/worker.log": {
+      "sha256": "29ae57972f1bf856ec2632a0f48c3e990fbf5bc80f3fe7905657c282dda32cf0",
+      "bytes": 99
+    }
+  },
+  "qualification_limits": [
+    "32 of 808 raw classes measured; not all 842 oriented Schur classes",
+    "small mesh has 8 classes; only 4-worker run cold, higher counts warm integration tests",
+    "no global factor/solve or RTA in this validation",
+    "FULL_DTN_NOT_VERIFIED; default path unchanged; current live runs not modified"
+  ],
+  "final_regression": {
+    "passed": 46,
+    "pytest_seconds": 3.97,
+    "classification": "COMPLETED",
+    "descendants_cleared": true,
+    "simultaneous_tree_rss_peak_bytes": 481185792,
+    "task_swap_peak_bytes": 0,
+    "full_repository_suite": "NOT_RUN; targeted numerical/core checks only",
+    "unrelated_fixture_failures": "5 legacy fake-context failures separately reproduced on unmodified fab43f51; preserved, not claimed fixed"
+  },
+  "static_checks": {
+    "new_modules_and_tests_ruff": "PASS",
+    "modified_existing_modules_ruff_preexisting_count": 35,
+    "ruff_findings_on_edited_lines": 0,
+    "py_compile": "PASS",
+    "git_diff_check": "PASS"
+  }
+}

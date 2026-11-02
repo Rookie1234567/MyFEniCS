@@ -230,6 +230,7 @@ def build_same_mesh_physical_action(
     surface_weighted_moment_contraction: str | None = None,
     prepare_surface_trace_contraction: bool = False,
     functional_store_config: Mapping[str, Any] | None = None,
+    carrier_checkpoint_config: Mapping[str, Any] | None = None,
     surface_assembly_backend: str | None = None,
     sparse_cutoff_policy: str = LEGACY_DTN_SPARSE_CUTOFF_POLICY,
     sparse_cutoff_relative_tolerance: float = 1.0e-13,
@@ -530,6 +531,7 @@ def build_same_mesh_physical_action(
             progress_interval=surface_progress_interval,
             quadrature_degree=qdegree,
             functional_store_config=functional_store_config,
+            carrier_checkpoint_config=carrier_checkpoint_config,
             operator_selection=operator_selection,
             parent_mode_rows=(
                 parent_mode_rows if operator_selection is not None else None

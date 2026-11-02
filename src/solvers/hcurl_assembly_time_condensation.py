@@ -1081,6 +1081,7 @@ def _global_raw_tensor_cache(
     *,
     select_lexicographic_representative: bool = False,
     raw_tensor_evaluator: Any | None = None,
+    raw_tensor_execution_config: dict[str, Any] | None = None,
 ) -> tuple[dict[tuple[Any, ...], np.ndarray], dict[str, Any], float]:
     """Evaluate each tensor-cache class once globally, then broadcast it.
 
@@ -1092,6 +1093,13 @@ def _global_raw_tensor_cache(
     packet, independent of cell or MPI traversal order.
     """
 
+    if raw_tensor_execution_config is not None and (
+        comm.size != 1 or raw_tensor_evaluator is not None
+    ):
+        raise ValueError(
+            "parallel disk cache requires MPI1 and the original exact evaluator"
+        )
+    execution_audit = None
     local_policy_signature = {
         "raw_tensor_evaluator": (None if raw_tensor_evaluator is None else {
             "identity": raw_tensor_evaluator.identity,
@@ -1179,7 +1187,17 @@ def _global_raw_tensor_cache(
     locally_evaluated: dict[tuple[Any, ...], np.ndarray] = {}
     local_kernel_error = None
     try:
-        for key in ordered_keys:
+        evaluation_keys = ordered_keys
+        if raw_tensor_execution_config is not None:
+            from .raw_tensor_execution import evaluate_raw_classes
+
+            locally_evaluated, execution_audit = evaluate_raw_classes(
+                policy_forms, global_coordinates, ordered_keys, raw_tensor_execution_config
+            )
+            local_evaluations = len(locally_evaluated)
+            local_kernel_seconds = execution_audit["wall_seconds"]
+            evaluation_keys = ()
+        for key in evaluation_keys:
             if comm.rank != owner_by_class[key]:
                 continue
             policy = str(key[0])
@@ -1227,7 +1245,8 @@ def _global_raw_tensor_cache(
                 dtype=np.complex128,
             )
         broadcast_started = perf_counter()
-        comm.Bcast(tensor, root=owner)
+        if comm.size > 1:
+            comm.Bcast(tensor, root=owner)
         local_broadcast_seconds += perf_counter() - broadcast_started
         logical_broadcast_bytes += int(tensor.nbytes * (comm.size - 1))
         if key in local_keys:
@@ -1243,6 +1262,7 @@ def _global_raw_tensor_cache(
     if set(cache) != local_keys:
         raise RuntimeError("global raw tensor cache is incomplete on this rank")
     cache_audit = {
+        "raw_tensor_execution": execution_audit,
         "raw_tensor_evaluator": (None if raw_tensor_evaluator is None
                                  else raw_tensor_evaluator.audit()),
         "raw_tensor_class_count_sum": evaluation_count,
@@ -1399,6 +1419,7 @@ def build_unconstrained_assembly_time_condensation(
     mapped_geometry_translation_invariant: bool = False,
     share_identity_cache: bool = False,
     raw_tensor_evaluator: Any | None = None,
+    raw_tensor_execution_config: dict[str, Any] | None = None,
 ) -> AssemblyTimeCondensedSystem:
     """Assemble only the independent H(curl) trace Schur matrix.
 
@@ -1669,6 +1690,7 @@ def build_unconstrained_assembly_time_condensation(
             policy_forms,
             select_lexicographic_representative=representative_tensor_groups,
             raw_tensor_evaluator=raw_tensor_evaluator,
+            raw_tensor_execution_config=raw_tensor_execution_config,
         )
     except Exception:
         if condensed is not None:
