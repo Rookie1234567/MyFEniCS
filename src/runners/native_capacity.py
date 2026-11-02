@@ -44,11 +44,11 @@ def _native_capacity_launch_lock(
 ):
     """Keep legacy launches exclusive; share only reviewed exact scopes."""
     from .task40_gate_cd_formal_admission import (
-        GATE_CD_FORMAL_PROFILE, GATE_CD_SCOPE_PATH_ENV,
+        GATE_CD_EXECUTION_PROFILES, GATE_CD_SCOPE_PATH_ENV,
         GATE_CD_SCOPE_SHA_ENV, GATE_CD_SUBMISSION_MODE_ENV,
         GATE_CD_LOCK_DIRECTORY_ENV, gate_cd_runtime_lease,
     )
-    if profile == GATE_CD_FORMAL_PROFILE:
+    if profile in GATE_CD_EXECUTION_PROFILES:
         from .reviewed_workstation_admission import (
             _TASK40_PARALLEL_AUTH_FILE_ENV, _TASK40_PARALLEL_AUTH_SHA_ENV,
         )
@@ -387,7 +387,7 @@ def native_capacity_guard(
         native_profile_facts,
     )
     from .task40_gate_cd_formal_admission import (
-        GATE_CD_FORMAL_PROFILE, GATE_CD_ATTEMPT_CACHE_ENV,
+        GATE_CD_EXECUTION_PROFILES, GATE_CD_ATTEMPT_CACHE_ENV,
     )
 
     memory_prefix = native_memory_policy_prefix(memory_policy)
@@ -397,7 +397,7 @@ def native_capacity_guard(
     profile_facts = native_profile_facts(profile)
     from .task40_d07c_g5_join import G5_PROFILE
     g5_profile = profile == G5_PROFILE
-    gate_cd_profile = profile == GATE_CD_FORMAL_PROFILE
+    gate_cd_profile = profile in GATE_CD_EXECUTION_PROFILES
     if g5_profile or gate_cd_profile:
         supervisor_cpu = None
         worker_cpus = None
@@ -641,6 +641,11 @@ def native_capacity_guard(
             GATE_CD_ATTEMPT_CACHE_ENV,
             'TMPDIR', 'TMP', 'TEMP', 'XDG_CACHE_HOME',
             'PYTHONPYCACHEPREFIX', 'MPLCONFIGDIR',
+            'TASK40_EXACT_CACHE_CONTRACT',
+            'TASK40_EXACT_CACHE_CONTRACT_SHA256',
+            'TASK40_EXACT_CACHE_WORKER_CPUS',
+            'TASK40_EXACT_CACHE_ATTEMPT_ID',
+            'TASK40_EXACT_CACHE_RUNTIME_TEMPLATE_SHA256',
             'OMP_NUM_THREADS',
             'OPENBLAS_NUM_THREADS',
             'MKL_NUM_THREADS',
@@ -706,15 +711,18 @@ def launch_native_capacity(specification, *, setup_only: bool = False):
         raise InputError('native capacity launch requires an explicit native profile')
     expected_identity = None
     from .task40_d07c_g5_join import G5_PROFILE
-    from .task40_gate_cd_formal_admission import GATE_CD_FORMAL_PROFILE
-    if profile in {G5_PROFILE, GATE_CD_FORMAL_PROFILE}:
+    from .task40_gate_cd_formal_admission import (
+        GATE_CD_EXECUTION_PROFILES,
+        GATE_CD_PARALLEL32_PROFILE,
+    )
+    if profile == G5_PROFILE or profile in GATE_CD_EXECUTION_PROFILES:
         root = Path(__file__).resolve().parents[2]
         try:
             source_commit = subprocess.check_output(
                 ['git', 'rev-parse', 'HEAD'], cwd=root, text=True
             ).strip()
         except (OSError, subprocess.CalledProcessError) as exc:
-            raise InputError(f'G5 cannot identify its frozen source commit: {exc}') from exc
+            raise InputError(f'native case cannot identify its frozen source commit: {exc}') from exc
         input_path = Path(specification.source_path).resolve()
         expected_identity = {
             'profile_identity': profile,
@@ -728,10 +736,20 @@ def launch_native_capacity(specification, *, setup_only: bool = False):
             ),
             'source_commit': source_commit,
         }
-        if profile == GATE_CD_FORMAL_PROFILE:
-            expected_identity['direct_route_contract'] = native_profile_facts(
-                profile
-            )['campaign_authorization']['direct_route']
+        if profile in GATE_CD_EXECUTION_PROFILES:
+            direct_route = dict(
+                native_profile_facts(profile)['campaign_authorization']['direct_route']
+            )
+            if profile == GATE_CD_PARALLEL32_PROFILE:
+                template_sha = os.environ.get('TASK40_EXACT_CACHE_TEMPLATE_SHA256')
+                if (
+                    not isinstance(template_sha, str)
+                    or len(template_sha) != 64
+                    or any(character not in '0123456789abcdef' for character in template_sha)
+                ):
+                    raise InputError('Gate-CD N14 requires the reviewed exact-cache template SHA256')
+                direct_route['exact_cache_contract_template_sha256'] = template_sha
+            expected_identity['direct_route_contract'] = direct_route
     with native_capacity_guard(
         profile,
         memory_policy=memory_policy,

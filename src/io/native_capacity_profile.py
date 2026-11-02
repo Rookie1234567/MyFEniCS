@@ -179,8 +179,17 @@ TASK40_GATE_CD_STAGED_PROFILES = frozenset({TASK40_GATE_CD_P6_DIRECT_PROFILE})
 TASK40_GATE_CD_M8N64_P6_DIRECT_PROFILE = (
     "task40_gate_cd_0p7_mapped_m8n64_p6_direct_v1"
 )
+TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE = (
+    "task40_gate_cd_0p7_mapped_m8n14_p6_direct_parallel32_v1"
+)
 TASK40_GATE_CD_FORMAL_PROFILES = frozenset(
-    {TASK40_GATE_CD_M8N64_P6_DIRECT_PROFILE}
+    {
+        TASK40_GATE_CD_M8N64_P6_DIRECT_PROFILE,
+        TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE,
+    }
+)
+TASK40_GATE_CD_PARALLEL32_PROFILES = frozenset(
+    {TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE}
 )
 TASK40_GATE_CD_P6_DIRECT_PROFILES = frozenset(
     {*TASK40_GATE_CD_STAGED_PROFILES, *TASK40_GATE_CD_FORMAL_PROFILES}
@@ -2523,6 +2532,140 @@ def _task40_gate_cd_m8n64_profile_facts(identity):
     return base
 
 
+def _task40_gate_cd_m8n14_profile_facts(identity):
+    """Freeze the 1088-mode M8/N14 subrectangle and 32-worker raw-cache route."""
+    if identity != TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE:
+        raise ValueError(f"unsupported formal gate_cd profile: {identity}")
+
+    # Keep the already-witnessed Gate-CD geometry, material, q81/q21,
+    # mapped-cell cache, and M8N64 parent inventory byte-for-byte identified.
+    # The new route changes only the active signed mode rectangle and the
+    # opt-in execution policy for coefficient-free cell tensors.
+    base = _task40_gate_cd_m8n64_profile_facts(
+        TASK40_GATE_CD_M8N64_P6_DIRECT_PROFILE
+    )
+    scope = "task40_gate_cd_mapped_M8N14_from_M8N64_parent_p6_direct"
+    options = base["component_options"]
+    mode = options["mode_selection"]
+    mode.update(
+        reference_mode_label="M8N14",
+        parent_reference_mode_label="M8N64",
+        policy="explicit_signed_subrectangle_from_parent_v1",
+        active_inventory_scope=(
+            "signed m[-8,8], n[-14,1] subrectangle selected in preserved order "
+            "from the finite Gate-CD M8N64 parent"
+        ),
+        active_signed_bounds_mn=[-8, 8, -14, 1],
+        active_rectangle_max_abs_m_n=[8, 14],
+        expected_active_mode_count=1088,
+        expected_active_mode_sha256=(
+            "333e201cd5bd368a6f1a70a02949ff3099fdb2c8f6c05e93fc419a77430be353"
+        ),
+        expected_active_propagating_count=960,
+        expected_active_power_carrying_count=1026,
+        expected_parent_propagating_count=4360,
+        expected_parent_power_carrying_count=4426,
+        expected_selected_parent_indices_sha256=(
+            "1fc6bb7886a9858e3288ae45ee3ae50fea0bdf75881f03b52f45a26a3fe41fe1"
+        ),
+        expected_selected_signed_keys_sha256=(
+            "03c5894de4fd5597da93a2971a1914ffca955b61e39a9f8db173d0fd39beebb0"
+        ),
+        active_port_propagating_count_by_side={"top": 482, "bottom": 478},
+        active_port_power_carrying_count_by_side={"top": 482, "bottom": 544},
+        quadrature_inventory="gate_cd_finite_M8N64_parent",
+        quadrature_reference_label="Gate-CD_M8N64_finite_parent",
+    )
+    options.update(
+        task_family="task40_gate_cd_mapped_m8n14_p6_direct_parallel32",
+        full_solve_block_reason=(
+            "The finite M8N14 route is not full-DtN qualified; an exact reviewed "
+            "package and a passing fresh host admission are required before its run."
+        ),
+    )
+    options["directional_mesh_comparison"].update(
+        case="M8N14",
+        parent_case="M8N64",
+    )
+    options["direct_factor_evidence"].update(
+        mode_keys=[
+            [side, m, 0, pol]
+            for side in ("top", "bottom")
+            for m, pol in ((-8, "p"), (0, "s"), (8, "p"))
+        ],
+        active_mode_scope=(
+            "finite M8N14 subrectangle selected from the Gate-CD M8N64 parent; "
+            "not the auto/full DtN inventory"
+        ),
+    )
+    options["route_readiness"]["required"].append(
+        "exact_M8N14_signed_subrectangle_count_sha_and_parent_indices"
+    )
+    options["route_readiness"]["completed_bounded_witnesses"].append(
+        "exact_M8N14_signed_subrectangle_count_sha_and_parent_indices"
+    )
+
+    base.update(
+        identity=identity,
+        route="TASK40_GATE_CD_MAPPED_M8N14_P6_CONDENSED_DIRECT_PARALLEL32",
+        operator_scope=scope,
+        native_execution={
+            **base["native_execution"],
+            "tensor_worker_count": 32,
+            "worker_cpu_count": 32,
+            "raw_tensor_execution": "exact_cache_exec_tensor_workers_v1",
+            "lu_execution": "serial_single_mpi_rank_v1",
+        },
+    )
+    base["condensed_route"].update(
+        name="task40_gate_cd_m8n14_p6_exact_local_condensation_parallel32_v1",
+        operator_family="gate_cd_M8N14_finite_signed_subrectangle_from_M8N64",
+        operator_scope=scope,
+        active_mode_inventory=(
+            "finite M8N14 both ports s/p; selected in order from the verified M8N64 parent"
+        ),
+    )
+    direct = dict(base["campaign_authorization"]["direct_route"])
+    direct.update(
+        profile_identity=identity,
+        operator_scope=scope,
+        selection_policy="explicit_signed_subrectangle_from_parent_v1",
+        active_signed_bounds_mn=[-8, 8, -14, 1],
+        active_mode_count=1088,
+        active_mode_sha256=mode["expected_active_mode_sha256"],
+        selected_parent_indices_sha256=mode[
+            "expected_selected_parent_indices_sha256"
+        ],
+        selected_signed_keys_sha256=mode[
+            "expected_selected_signed_keys_sha256"
+        ],
+        raw_tensor_execution="exact_cache_exec_tensor_workers_v1",
+        raw_tensor_worker_count=32,
+        mpi_size=1,
+        math_threads=1,
+        lu_execution="serial_single_mpi_rank_v1",
+        exact_cache_contract_required=True,
+        exact_cache_source_policy="clean_commit_and_resolved_payload_hash_bound_v1",
+    )
+    base["campaign_authorization"]["direct_route"] = direct
+    base["backend"].update(
+        operator_scope=scope,
+        p6="P6_CONDENSED_DIRECT_M8N14_FROM_M8N64_Q21_PARALLEL32_RAW_TENSORS",
+        independent_residual="original_full_p6_A6_active_M8N14_finite_subrectangle",
+    )
+    base["campaign_authorization"].update(
+        source=(
+            "User-preserved Gate-CD mapped model with the exact signed M8N14 "
+            "subrectangle selected from the verified M8N64 parent. Raw P6 q21 "
+            "cell tensors may use 32 independent exact-cache workers; MPI remains "
+            "one and the existing global assembly/LU route stays serial. This is "
+            "not full-DtN qualification; exact package review and fresh admission "
+            "remain required."
+        )
+    )
+    return base
+
+
 def _task40_phi90_d5c_modal_profile_facts(identity):
     """Freeze one same-grid D5C-Y7 subrectangle against its finite R5 parent."""
     from copy import deepcopy
@@ -3099,6 +3242,8 @@ def native_profile_facts(identity):
     if identity in TASK40_GATE_CD_STAGED_PROFILES:
         return _task40_gate_cd_profile_facts(identity)
     if identity in TASK40_GATE_CD_FORMAL_PROFILES:
+        if identity == TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE:
+            return _task40_gate_cd_m8n14_profile_facts(identity)
         return _task40_gate_cd_m8n64_profile_facts(identity)
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
         if identity in TASK40_PHI90_D5C_PROFILES:
@@ -4722,20 +4867,46 @@ def _validate_task40_gate_cd_case(config: dict, identity: str) -> None:
 
     if identity in TASK40_GATE_CD_FORMAL_PROFILES:
         mode = facts['component_options']['mode_selection']
+        parent_mode_sha = '6cf60807239dffc209b47336581e8bb50a5f4d986cba5bbdc06500f6271d3865'
+        if identity == TASK40_GATE_CD_M8N64_P6_DIRECT_PROFILE:
+            malformed = (
+                mode.get('policy') != 'explicit_signed_rectangle_v1'
+                or tuple(mode.get('active_signed_bounds_mn') or ()) != (-8, 8, -64, 1)
+                or tuple(mode.get('parent_signed_bounds_mn') or ()) != (-8, 8, -64, 1)
+                or int(mode.get('expected_mode_count', -1)) != 4488
+                or int(mode.get('expected_active_mode_count', -1)) != 4488
+                or mode.get('expected_mode_sha256') != parent_mode_sha
+                or mode.get('expected_active_mode_sha256') != parent_mode_sha
+                or int(mode.get('expected_active_propagating_count', -1)) != 4360
+                or int(mode.get('expected_active_power_carrying_count', -1)) != 4426
+            )
+        else:
+            malformed = (
+                identity != TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE
+                or mode.get('policy') != 'explicit_signed_subrectangle_from_parent_v1'
+                or tuple(mode.get('parent_signed_bounds_mn') or ()) != (-8, 8, -64, 1)
+                or tuple(mode.get('active_signed_bounds_mn') or ()) != (-8, 8, -14, 1)
+                or int(mode.get('expected_mode_count', -1)) != 4488
+                or int(mode.get('expected_active_mode_count', -1)) != 1088
+                or mode.get('expected_mode_sha256') != parent_mode_sha
+                or mode.get('expected_active_mode_sha256') != '333e201cd5bd368a6f1a70a02949ff3099fdb2c8f6c05e93fc419a77430be353'
+                or int(mode.get('expected_active_propagating_count', -1)) != 960
+                or int(mode.get('expected_active_power_carrying_count', -1)) != 1026
+                or mode.get('expected_selected_parent_indices_sha256') != '1fc6bb7886a9858e3288ae45ee3ae50fea0bdf75881f03b52f45a26a3fe41fe1'
+                or mode.get('expected_selected_signed_keys_sha256') != '03c5894de4fd5597da93a2971a1914ffca955b61e39a9f8db173d0fd39beebb0'
+                or mode.get('active_port_propagating_count_by_side') != {'top': 482, 'bottom': 478}
+                or mode.get('active_port_power_carrying_count_by_side') != {'top': 482, 'bottom': 544}
+                or facts.get('native_execution', {}).get('tensor_worker_count') != 32
+                or facts.get('native_execution', {}).get('mpi_size') != 1
+                or facts.get('native_execution', {}).get('math_threads') != 1
+                or facts.get('campaign_authorization', {}).get('direct_route', {}).get('exact_cache_contract_required') is not True
+            )
         if (
-            mode.get('policy') != 'explicit_signed_rectangle_v1'
-            or tuple(mode.get('active_signed_bounds_mn') or ()) != (-8, 8, -64, 1)
-            or tuple(mode.get('parent_signed_bounds_mn') or ()) != (-8, 8, -64, 1)
-            or int(mode.get('expected_mode_count', -1)) != 4488
-            or int(mode.get('expected_active_mode_count', -1)) != 4488
-            or mode.get('expected_mode_sha256') != '6cf60807239dffc209b47336581e8bb50a5f4d986cba5bbdc06500f6271d3865'
-            or mode.get('expected_active_mode_sha256') != '6cf60807239dffc209b47336581e8bb50a5f4d986cba5bbdc06500f6271d3865'
-            or int(mode.get('expected_active_propagating_count', -1)) != 4360
-            or int(mode.get('expected_active_power_carrying_count', -1)) != 4426
+            malformed
             or mode.get('full_dtn_status') != 'FULL_DTN_NOT_VERIFIED'
             or facts.get('full_dtn_status') != 'FULL_DTN_NOT_VERIFIED'
         ):
-            raise InputError(f'{identity} finite signed M8N64 mode contract is malformed')
+            raise InputError(f'{identity} finite signed mode contract is malformed')
         if (
             facts['component_options']['surface_quadrature'].get('degree') != 81
             or facts['component_options']['surface_quadrature'].get('reference_degree') != 161
@@ -4810,12 +4981,17 @@ def _validate_task40_gate_cd_case(config: dict, identity: str) -> None:
         raise InputError(f'{identity} keeps large canonical-vector exports disabled')
     if int(output.get('sample_count_y', 0)) < 64:
         raise InputError(f'{identity} requires at least 64 y samples for grazing-phase outputs')
+    expected_report_mn = (
+        (8, 14)
+        if identity == TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE
+        else (8, 64)
+    )
     if identity in TASK40_GATE_CD_FORMAL_PROFILES and (
-        output.get('diffraction_order_max_m') != 8
-        or output.get('diffraction_order_max_n') != 64
+        output.get('diffraction_order_max_m') != expected_report_mn[0]
+        or output.get('diffraction_order_max_n') != expected_report_mn[1]
     ):
         raise InputError(
-            f'{identity} reporting envelope must remain the explicit M8N64 rectangle'
+            f'{identity} reporting envelope must remain the explicit M8N{expected_report_mn[1]} rectangle'
         )
 
 

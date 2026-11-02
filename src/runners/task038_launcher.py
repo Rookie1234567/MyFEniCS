@@ -30,7 +30,9 @@ from src.io.resolved_config import canonical_json_bytes, write_resolved_config
 from src.io.run_specification import RunSpecification
 from src.runners.task40_d07c_g5_join import G5_PROFILE
 from src.runners.task40_gate_cd_formal_admission import (
-    GATE_CD_FORMAL_PROFILE, GATE_CD_ATTEMPT_CACHE_ENV,
+    GATE_CD_EXECUTION_PROFILES,
+    GATE_CD_PARALLEL32_PROFILE,
+    GATE_CD_ATTEMPT_CACHE_ENV,
 )
 
 
@@ -558,6 +560,7 @@ def launch_specification(
     )
     g5_attempt_cache = None
     gate_cd_attempt_cache = None
+    gate_cd_exact_cache_runtime = None
     if native_identity == G5_PROFILE:
         g5_join = (
             None if prelaunch_isolation is None
@@ -593,7 +596,7 @@ def launch_specification(
         if any(os.environ.get(name) != value for name, value in expected_cache_environment.items()):
             raise InputError('G5 attempt-specific cache environment differs from its reviewed attempt')
         g5_attempt_cache = cache_paths
-    if native_identity == GATE_CD_FORMAL_PROFILE:
+    if native_identity in GATE_CD_EXECUTION_PROFILES:
         isolation = prelaunch_isolation
         lease = isolation.get('gate_cd_formal_admission') if isinstance(isolation, dict) else None
         attempt_cache = lease.get('attempt_cache') if isinstance(lease, dict) else None
@@ -606,6 +609,11 @@ def launch_specification(
             raise InputError('Gate-CD attempt cache root differs from its exact one-shot lease')
         cache_paths = {key: expected_root / key for key in ('tmp', 'xdg', 'pycache', 'mpl')}
         cache_paths['root'] = expected_root
+        if native_identity == GATE_CD_PARALLEL32_PROFILE:
+            cache_paths.update(
+                tensor=expected_root / 'tensor',
+                carrier=expected_root / 'carrier',
+            )
         if any(Path(attempt_cache.get(key, '')).resolve() != path.resolve()
                for key, path in cache_paths.items()):
             raise InputError('Gate-CD attempt cache paths differ from the lease evidence')
@@ -668,6 +676,73 @@ def launch_specification(
         adapter_identity=adapter,
         start_time=start_time,
     )
+    if native_identity == GATE_CD_PARALLEL32_PROFILE:
+        if not isinstance(prelaunch_isolation, dict):
+            raise InputError('Gate-CD N14 exact-cache requires the dynamic CPU lease')
+        lease = prelaunch_isolation.get('gate_cd_formal_admission')
+        if not isinstance(lease, dict):
+            raise InputError('Gate-CD N14 exact-cache lease is missing from launch evidence')
+        cpu_reservation = lease.get('cpu_reservation')
+        if not isinstance(cpu_reservation, dict):
+            raise InputError('Gate-CD N14 exact-cache lease lacks its CPU reservation')
+        worker_cpus = cpu_reservation.get('worker_cpus')
+        if (
+            not isinstance(worker_cpus, list)
+            or len(worker_cpus) != 32
+            or any(type(cpu) is not int or cpu < 0 for cpu in worker_cpus)
+            or len(set(worker_cpus)) != 32
+            or cpu_reservation.get('active_solver_affinity_avoidance') is not True
+        ):
+            raise InputError('Gate-CD N14 exact-cache needs 32 distinct lease CPUs')
+        attempt_cache_root = Path(lease.get('attempt_cache_root', '')).resolve()
+        attempt_id = lease.get('attempt_id')
+        scope_path = Path(lease.get('scope_path', '')).resolve(strict=True)
+        scope_raw = scope_path.read_bytes()
+        if hashlib.sha256(scope_raw).hexdigest() != lease.get('scope_sha256'):
+            raise InputError('Gate-CD N14 runtime scope changed after CPU admission')
+        try:
+            scope_document = json.loads(scope_raw)
+        except json.JSONDecodeError as exc:
+            raise InputError('Gate-CD N14 runtime scope is malformed') from exc
+        route_contract = (
+            scope_document.get('identity', {}).get('direct_route_contract', {})
+        )
+        expected_template_sha = route_contract.get(
+            'exact_cache_contract_template_sha256'
+        )
+        template_path = os.environ.get('TASK40_EXACT_CACHE_TEMPLATE_PATH')
+        supplied_template_sha = os.environ.get('TASK40_EXACT_CACHE_TEMPLATE_SHA256')
+        if (
+            not isinstance(expected_template_sha, str)
+            or expected_template_sha != supplied_template_sha
+            or not template_path
+        ):
+            raise InputError('Gate-CD N14 exact-cache template differs from the reviewed scope')
+        from .exact_cache_contract import materialize_gate_cd_exact_cache_contract
+        try:
+            gate_cd_exact_cache_runtime = materialize_gate_cd_exact_cache_contract(
+                template_path,
+                supplied_template_sha,
+                target_path=run_directory / 'exact_cache_runtime_contract.json',
+                source_sha=source,
+                resolved_payload=specification.as_jsonable(),
+                runtime_cache_root=attempt_cache_root,
+                worker_cpus=worker_cpus,
+                attempt_id=str(attempt_id),
+            )
+        except (OSError, TypeError, ValueError) as exc:
+            raise InputError(f'Gate-CD N14 exact-cache contract failed: {exc}') from exc
+        manifest['exact_cache_runtime_contract'] = gate_cd_exact_cache_runtime
+        manifest['exact_cache_runtime_contract']['policy'] = (
+            'gate_cd_lease_selected_32_distinct_physical_cores_v1'
+        )
+        os.environ['TASK40_EXACT_CACHE_CONTRACT'] = gate_cd_exact_cache_runtime['path']
+        os.environ['TASK40_EXACT_CACHE_CONTRACT_SHA256'] = gate_cd_exact_cache_runtime['sha256']
+        os.environ['TASK40_EXACT_CACHE_WORKER_CPUS'] = json.dumps(
+            worker_cpus, separators=(',', ':')
+        )
+        os.environ['TASK40_EXACT_CACHE_ATTEMPT_ID'] = str(attempt_id)
+        os.environ['TASK40_EXACT_CACHE_RUNTIME_TEMPLATE_SHA256'] = supplied_template_sha
     if setup_only:
         manifest['execution_mode'] = 'setup_only'
         manifest['setup_only_contract'] = {
@@ -726,9 +801,7 @@ def launch_specification(
         manifest['execution_cache'] = dict(path=str(cache_home.resolve()), empty_before_launch=not any(cache_home.iterdir()))
         _write_json(run_directory/'run_manifest.json', manifest)
     g5_worker_cpus_override = None
-    if native_identity == G5_PROFILE:
-        g5_worker_cpus_override = list(prelaunch_isolation.get('worker_affinity', []))
-    elif native_identity == GATE_CD_FORMAL_PROFILE:
+    if native_identity == G5_PROFILE or native_identity in GATE_CD_EXECUTION_PROFILES:
         g5_worker_cpus_override = list(prelaunch_isolation.get('worker_affinity', []))
     plan = build_execution_plan(
         specification,

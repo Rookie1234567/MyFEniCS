@@ -237,7 +237,10 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         ]
         truncated = active_mode_count != parent_mode_count
         signed_bounds = None
-        if mode.get("policy") == "explicit_signed_rectangle_v1":
+        if mode.get("policy") in {
+            "explicit_signed_rectangle_v1",
+            "explicit_signed_subrectangle_from_parent_v1",
+        }:
             raw_signed_bounds = mode.get("active_signed_bounds_mn")
             try:
                 signed_bounds = tuple(raw_signed_bounds)
@@ -252,11 +255,31 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             if m_min > m_max or n_min > n_max:
                 raise ValueError("Task40 signed rectangle bounds are reversed")
             parent_signed_bounds = tuple(mode.get("parent_signed_bounds_mn", ()))
-            if signed_bounds != parent_signed_bounds:
-                raise ValueError("untruncated Task40 signed inventory must equal its finite parent")
             expected_signed_count = 4 * (m_max - m_min + 1) * (n_max - n_min + 1)
-            if parent_mode_count != expected_signed_count or active_mode_count != expected_signed_count:
-                raise ValueError("Task40 signed inventory count differs from its frozen bounds")
+            if mode.get("policy") == "explicit_signed_rectangle_v1":
+                if signed_bounds != parent_signed_bounds:
+                    raise ValueError("untruncated Task40 signed inventory must equal its finite parent")
+                if parent_mode_count != expected_signed_count or active_mode_count != expected_signed_count:
+                    raise ValueError("Task40 signed inventory count differs from its frozen bounds")
+            else:
+                parent_m_min, parent_m_max, parent_n_min, parent_n_max = parent_signed_bounds
+                if (
+                    parent_signed_bounds
+                    != (
+                        -int(mode["parent_rectangle_max_abs_m_n"][0]),
+                        int(mode["parent_rectangle_max_abs_m_n"][0]),
+                        -int(mode["parent_rectangle_max_abs_m_n"][1]),
+                        1,
+                    )
+                    or m_min < parent_m_min
+                    or m_max > parent_m_max
+                    or n_min < parent_n_min
+                    or n_max > parent_n_max
+                    or parent_mode_count
+                    != 4 * (parent_m_max - parent_m_min + 1) * (parent_n_max - parent_n_min + 1)
+                    or active_mode_count != expected_signed_count
+                ):
+                    raise ValueError("Task40 signed subrectangle differs from its exact finite parent")
             if active_rectangle != [max(abs(m_min), abs(m_max)), max(abs(n_min), abs(n_max))]:
                 raise ValueError("Task40 signed bounds differ from the recorded absolute envelope")
             required_evidence_keys = tuple(
@@ -273,12 +296,22 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             if policy == "explicit_symmetric_subrectangle_from_parent_v1":
                 if m_max != n_max:
                     raise ValueError("Task40 symmetric selection policy requires equal m/n bounds")
-            elif policy != "explicit_centered_rectangle_subrectangle_from_parent_v1":
+            elif policy not in {
+                "explicit_centered_rectangle_subrectangle_from_parent_v1",
+                "explicit_signed_subrectangle_from_parent_v1",
+            }:
                 raise ValueError("Task40 truncated route has an unsupported selection policy")
+            expected_selection_count = (
+                4 * (signed_bounds[1] - signed_bounds[0] + 1)
+                * (signed_bounds[3] - signed_bounds[2] + 1)
+                if policy == "explicit_signed_subrectangle_from_parent_v1"
+                and signed_bounds is not None
+                else 4 * (2 * m_max + 1) * (2 * n_max + 1)
+            )
             if (
                 active_rectangle[0] > int(mode["parent_rectangle_max_abs_m_n"][0])
                 or active_rectangle[1] > int(mode["parent_rectangle_max_abs_m_n"][1])
-                or active_mode_count != 4 * (2 * m_max + 1) * (2 * n_max + 1)
+                or active_mode_count != expected_selection_count
             ):
                 raise ValueError("Task40 active rectangle count/bounds differ from its finite parent")
             required_evidence_keys = tuple(
@@ -319,7 +352,12 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         base_axis_hashes = dict(mesh_case["base_axis_sha256_le_f64"])
         expected_axis_hashes = dict(mesh_case["expected_axis_sha256_le_f64"])
         expected_tag_counts = dict(mesh_case["expected_material_tag_counts"])
-        reference_label = str(mode.get("reference_mode_label", "R13"))
+        reference_label = str(
+            mode.get(
+                "parent_reference_mode_label",
+                mode.get("reference_mode_label", "R13"),
+            )
+        )
         expected_mode_count = parent_mode_count
         expected_active_mode_count = active_mode_count
         parent_rectangle = list(mode["parent_rectangle_max_abs_m_n"])
@@ -334,7 +372,12 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             # operator-scope, run labels, and finite modal identity.
             "family": "task40_phi90",
             "comparison_family": (
-                "GATE_CD_M8N64_FINITE_SIGNED_RECTANGLE"
+                (
+                    "GATE_CD_M8N14_SIGNED_SUBRECTANGLE_FROM_M8N64_PARENT"
+                    if profile_identity
+                    == "task40_gate_cd_0p7_mapped_m8n14_p6_direct_parallel32_v1"
+                    else "GATE_CD_M8N64_FINITE_SIGNED_RECTANGLE"
+                )
                 if gate_cd_case
                 else "task40_phi90"
             ),
@@ -374,6 +417,11 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "signed_rectangle_bounds_mn": (
                 list(signed_bounds) if signed_bounds is not None else None
             ),
+            "parent_signed_bounds_mn": (
+                list(mode.get("parent_signed_bounds_mn"))
+                if mode.get("parent_signed_bounds_mn") is not None
+                else None
+            ),
             "mode_basis_scale_policy": mode.get(
                 "boundary_amplitude_scale_policy"
             ),
@@ -396,8 +444,14 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "expected_selected_signed_keys_sha256": mode.get(
                 "expected_selected_signed_keys_sha256"
             ),
-            "propagating_count": mode.get("expected_active_propagating_count"),
-            "power_carrying_count": mode.get("expected_active_power_carrying_count"),
+            "propagating_count": mode.get(
+                "expected_parent_propagating_count",
+                mode.get("expected_active_propagating_count"),
+            ),
+            "power_carrying_count": mode.get(
+                "expected_parent_power_carrying_count",
+                mode.get("expected_active_power_carrying_count"),
+            ),
             "omitted_boundary_relative_l2_lower_bound": options.get(
                 "modal_truncation", {}
             ).get("omitted_boundary_relative_l2_lower_bound"),
@@ -425,8 +479,26 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
                 "surface_quadrature"
             ].get("reference_degree"),
             "volume_quadrature": dict(options.get("volume_quadrature", {})),
-            "expected_propagating_count": mode.get("expected_active_propagating_count"),
-            "expected_power_carrying_count": mode.get("expected_active_power_carrying_count"),
+            "expected_propagating_count": mode.get(
+                "expected_parent_propagating_count",
+                mode.get("expected_active_propagating_count"),
+            ),
+            "expected_power_carrying_count": mode.get(
+                "expected_parent_power_carrying_count",
+                mode.get("expected_active_power_carrying_count"),
+            ),
+            "expected_active_propagating_count": mode.get(
+                "expected_active_propagating_count"
+            ),
+            "expected_active_power_carrying_count": mode.get(
+                "expected_active_power_carrying_count"
+            ),
+            "expected_active_propagating_count_by_side": dict(
+                mode.get("active_port_propagating_count_by_side", {})
+            ),
+            "expected_active_power_carrying_count_by_side": dict(
+                mode.get("active_port_power_carrying_count_by_side", {})
+            ),
             "expected_propagating_count_by_side": dict(
                 mode.get("port_propagating_count_by_side", {})
             ),
@@ -860,7 +932,22 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
     policy = str(route.get(
         "selection_policy", "explicit_symmetric_subrectangle_from_parent_v1"
     ))
-    if policy == "explicit_symmetric_subrectangle_from_parent_v1":
+    signed_bounds = None
+    if policy == "explicit_signed_subrectangle_from_parent_v1":
+        signed_bounds = tuple(
+            int(value) for value in route.get("signed_rectangle_bounds_mn", ())
+        )
+        if len(signed_bounds) != 4:
+            raise ValueError("Task40 signed subrectangle is missing its exact bounds")
+        m_min, signed_m_max, n_min, signed_n_max = signed_bounds
+        if (
+            signed_m_max < m_min
+            or signed_n_max < n_min
+            or [max(abs(m_min), abs(signed_m_max)), max(abs(n_min), abs(signed_n_max))]
+            != list(rectangle)
+        ):
+            raise ValueError("Task40 signed subrectangle bounds differ from its envelope")
+    elif policy == "explicit_symmetric_subrectangle_from_parent_v1":
         if m_max != n_max:
             raise ValueError("Task40 symmetric selection policy requires equal m/n bounds")
     elif policy != "explicit_centered_rectangle_subrectangle_from_parent_v1":
@@ -868,18 +955,32 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
     parent_rectangle = tuple(
         int(value) for value in route["parent_rectangle_max_abs_m_n"]
     )
-    if (
-        len(parent_rectangle) != 2
-        or m_max > parent_rectangle[0]
-        or n_max > parent_rectangle[1]
-    ):
+    if len(parent_rectangle) != 2 or m_max > parent_rectangle[0] or n_max > parent_rectangle[1]:
         raise ValueError("Task40 active rectangle exceeds the exact finite parent")
-    indices = tuple(
-        index
-        for index, mode in enumerate(parent_modes)
-        if abs(int(mode.m)) <= m_max and abs(int(mode.n)) <= n_max
-    )
-    expected_count = 4 * (2 * m_max + 1) * (2 * n_max + 1)
+    if signed_bounds is not None:
+        parent_bounds = tuple(int(value) for value in route.get("parent_signed_bounds_mn", ()))
+        if (
+            len(parent_bounds) != 4
+            or signed_bounds[0] < parent_bounds[0]
+            or signed_bounds[1] > parent_bounds[1]
+            or signed_bounds[2] < parent_bounds[2]
+            or signed_bounds[3] > parent_bounds[3]
+        ):
+            raise ValueError("Task40 signed subrectangle exceeds its exact finite parent")
+        m_min, m_max_signed, n_min, n_max_signed = signed_bounds
+        indices = tuple(
+            index for index, mode in enumerate(parent_modes)
+            if m_min <= int(mode.m) <= m_max_signed
+            and n_min <= int(mode.n) <= n_max_signed
+        )
+        expected_count = 4 * (m_max_signed - m_min + 1) * (n_max_signed - n_min + 1)
+    else:
+        indices = tuple(
+            index
+            for index, mode in enumerate(parent_modes)
+            if abs(int(mode.m)) <= m_max and abs(int(mode.n)) <= n_max
+        )
+        expected_count = 4 * (2 * m_max + 1) * (2 * n_max + 1)
     if len(indices) != expected_count or len(indices) != int(route["active_count"]):
         raise ValueError("Task40 live rectangle has an unexpected two-port s/p mode count")
 
@@ -900,12 +1001,18 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
     if index_sha != route["expected_selected_parent_indices_sha256"]:
         raise ValueError("Task40 selected parent indices differ from the frozen Y3 plan")
 
+    if signed_bounds is None:
+        m_values = range(-m_max, m_max + 1)
+        n_values = range(-n_max, n_max + 1)
+    else:
+        m_values = range(signed_bounds[0], signed_bounds[1] + 1)
+        n_values = range(signed_bounds[2], signed_bounds[3] + 1)
     expected_keys = {
         (side, m, n, polarization)
         for side in ("top", "bottom")
         for polarization in ("s", "p")
-        for m in range(-m_max, m_max + 1)
-        for n in range(-n_max, n_max + 1)
+        for m in m_values
+        for n in n_values
     }
     actual_keys = {
         (row["side"], row["m"], row["n"], row["polarization"])
@@ -921,9 +1028,44 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
         for side in ("bottom", "top")
         for polarization in ("s", "p")
     }
-    per_group = (2 * m_max + 1) * (2 * n_max + 1)
+    per_group = len(m_values) * len(n_values)
     if set(side_polarization_counts.values()) != {per_group}:
         raise ValueError("Task40 selected rectangle has unequal side/polarization groups")
+
+    active_propagating_by_side = {
+        side: sum(str(mode.side) == side and bool(mode.propagating) for mode in active_modes)
+        for side in ("top", "bottom")
+    }
+    active_power_by_side = {
+        side: sum(
+            str(mode.side) == side and float(mode.power_per_unit_amplitude) > 0.0
+            for mode in active_modes
+        )
+        for side in ("top", "bottom")
+    }
+    if (
+        route.get("expected_active_propagating_count") is not None
+        and sum(bool(mode.propagating) for mode in active_modes)
+        != int(route["expected_active_propagating_count"])
+    ):
+        raise ValueError("Task40 selected propagating count differs from its profile")
+    if (
+        route.get("expected_active_power_carrying_count") is not None
+        and sum(float(mode.power_per_unit_amplitude) > 0.0 for mode in active_modes)
+        != int(route["expected_active_power_carrying_count"])
+    ):
+        raise ValueError("Task40 selected power-carrying count differs from its profile")
+    if (
+        route.get("expected_active_propagating_count_by_side")
+        and active_propagating_by_side
+        != route["expected_active_propagating_count_by_side"]
+    ):
+        raise ValueError("Task40 selected propagating counts by port differ from profile")
+    if (
+        route.get("expected_active_power_carrying_count_by_side")
+        and active_power_by_side != route["expected_active_power_carrying_count_by_side"]
+    ):
+        raise ValueError("Task40 selected power-carrying counts by port differ from profile")
 
     active_rows, _encoded, active_sha = build_ordered_mode_manifest(active_modes, cfg)
     if (
@@ -3067,16 +3209,47 @@ def run_p6_condensed_direct(
         route = _direct_run_contract(str(profile_facts["identity"]))
         exact_cache_options = None
         exact_cache_path = os.environ.get("TASK40_EXACT_CACHE_CONTRACT")
+        from src.runners.task40_gate_cd_formal_admission import GATE_CD_PARALLEL32_PROFILE
+        if (
+            profile_facts["identity"] == GATE_CD_PARALLEL32_PROFILE
+            and not exact_cache_path
+        ):
+            raise ValueError("Gate-CD N14 requires its lease-bound exact-cache contract")
         if exact_cache_path:
             if route.get("gate_cd_case") is not True:
                 raise ValueError("exact-cache opt-in is currently limited to Gate-CD")
             from .exact_cache_contract import load_exact_cache_contract
+
+            expected_worker_cpus = None
+            expected_attempt_id = None
+            expected_template_sha256 = None
+            expected_cache_root = None
+            if profile_facts["identity"] == GATE_CD_PARALLEL32_PROFILE:
+                try:
+                    expected_worker_cpus = json.loads(
+                        os.environ["TASK40_EXACT_CACHE_WORKER_CPUS"]
+                    )
+                except (KeyError, json.JSONDecodeError) as exc:
+                    raise ValueError(
+                        "Gate-CD N14 exact-cache lease CPU list is missing or malformed"
+                    ) from exc
+                expected_attempt_id = os.environ.get("TASK40_EXACT_CACHE_ATTEMPT_ID")
+                expected_template_sha256 = os.environ.get(
+                    "TASK40_EXACT_CACHE_RUNTIME_TEMPLATE_SHA256"
+                )
+                expected_cache_root = os.environ.get(
+                    "TASK40_GATE_CD_ATTEMPT_CACHE_ROOT"
+                )
 
             exact_cache_options = load_exact_cache_contract(
                 exact_cache_path,
                 os.environ.get("TASK40_EXACT_CACHE_CONTRACT_SHA256"),
                 source_sha=source_sha,
                 resolved_payload=resolved_payload,
+                expected_worker_cpus=expected_worker_cpus,
+                expected_attempt_id=expected_attempt_id,
+                expected_template_sha256=expected_template_sha256,
+                expected_cache_root=expected_cache_root,
             )
             summary["exact_cache_execution"] = exact_cache_options
         route.setdefault("sparse_cutoff_policy", "absolute_floor_relative_v1")
@@ -3150,7 +3323,15 @@ def run_p6_condensed_direct(
         if not isinstance(cfg, SimulationConfig3D):
             raise TypeError("resolved direct input did not create SimulationConfig3D")
         if route["family"] == "task40_phi90":
-            if route.get("signed_rectangle_bounds_mn") is not None:
+            if route.get("selection_policy") == "explicit_signed_subrectangle_from_parent_v1":
+                # Build the exact frozen M8N64 parent first.  The N14 active
+                # operator is then selected by signed bounds, preserving the
+                # parent mode order and quadrature authority.
+                cfg.stage4_dtn_order_policy = "explicit_signed_rectangle"
+                cfg.task40_dtn_signed_rectangle_bounds_mn = tuple(
+                    int(value) for value in route["parent_signed_bounds_mn"]
+                )
+            elif route.get("signed_rectangle_bounds_mn") is not None:
                 cfg.stage4_dtn_order_policy = "explicit_signed_rectangle"
                 cfg.task40_dtn_signed_rectangle_bounds_mn = tuple(
                     int(value) for value in route["signed_rectangle_bounds_mn"]

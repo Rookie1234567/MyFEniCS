@@ -2980,3 +2980,7 @@ Y2→Y3同策略比较的总R差`8.7031e-10`、总T差`9.6121e-11`、A_volume差
 ## 2026-10-31：Task40 D07C G3 M8/N96 静态准备
 
 新增显式 N96 signed-window profile、DAT、formal loader/runner/inventory/manifest-worker 测试及静态计划。production inventory 为 6,664 modes（6,536 propagating，6,602 power-carrying），N64 的 4,488 keys 是有序子集，新增 2,176 个 `n=-96…-65` keys；q81 surface、q15/default volume、relative-only cutoff、P6 direct 和原门保持。focused tests `25 passed in 39.39 s`，新测试 Ruff、相关 compileall 与 `git diff --check` 通过。当前仅做静态准备；尚未 fresh 或启动 N96 FE，待主审审核。
+
+## 2026-11-02：Gate-CD M8/N14 32-worker route 静态准备
+
+在单独 executor worktree 中新增 Gate-CD 的有限 M8/N14 profile/input。活动1,088个有符号模式按原顺序从M8N64父库存选择；仅raw-cell-tensor积分可用32个动态物理核，MPI仍为1，父进程的Schur凝聚、全局矩阵与LU维持串行。exact-cache模板绑定源码、resolved payload、worker CPU lease和独立attempt根目录。`FULL_DTN_NOT_VERIFIED`保持，且尚未fresh或提交systemd。资格化MPI ABI preflight在当前sandbox因socket/PMIx创建限制失败，故最终pytest未运行；阶段记录见[Gate-CD M8/N14静态准备](task40para_phi90_mesh_modes_direct/outcomes/response_gate_cd_m8n14_parallel32_static_preparation_20261102.md)。

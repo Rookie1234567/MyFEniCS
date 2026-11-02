@@ -611,7 +611,7 @@ def task40_host_floor_interleaved_admission(
         raise InputError('Task40 admission requires observe-only swap policy')
 
     from .task40_d07c_g5_join import G5_PROFILE, load_g5_scope
-    from .task40_gate_cd_formal_admission import GATE_CD_FORMAL_PROFILE
+    from .task40_gate_cd_formal_admission import GATE_CD_EXECUTION_PROFILES
     g5_scope = None
     gate_cd_observational_scope = None
     g5_scope_present = (
@@ -643,7 +643,7 @@ def task40_host_floor_interleaved_admission(
             expected_identity=g5_expected_identity,
             lock_directory=g5_lock_directory,
         )
-    elif task_profile == GATE_CD_FORMAL_PROFILE:
+    elif task_profile in GATE_CD_EXECUTION_PROFILES:
         if (
             not isinstance(gate_cd_scope, dict)
             or gate_cd_scope.get('schema') != 'task40.gate_cd_formal_exact_execution_scope.v1'

@@ -19,6 +19,13 @@ from pathlib import Path
 from src.io.input_loader import InputError
 
 GATE_CD_FORMAL_PROFILE = "task40_gate_cd_0p7_mapped_m8n64_p6_direct_v1"
+GATE_CD_PARALLEL32_PROFILE = (
+    "task40_gate_cd_0p7_mapped_m8n14_p6_direct_parallel32_v1"
+)
+GATE_CD_EXECUTION_PROFILES = frozenset(
+    {GATE_CD_FORMAL_PROFILE, GATE_CD_PARALLEL32_PROFILE}
+)
+GATE_CD_PARALLEL32_WORKERS = 32
 GATE_CD_SCOPE_SCHEMA = "task40.gate_cd_formal_exact_execution_scope.v1"
 GATE_CD_SCOPE_PATH_ENV = "TASK40_GATE_CD_SCOPE_PATH"
 GATE_CD_SCOPE_SHA_ENV = "TASK40_GATE_CD_SCOPE_SHA256"
@@ -85,8 +92,8 @@ def _validate_gate_cd_scope(scope_path: str | Path, expected_sha256: str,
                             *, profile: str, run_id: str,
                             expected_identity: dict | None,
                             lock_directory: str | Path = "/tmp") -> tuple[dict, Path, str]:
-    if (profile, run_id) != (GATE_CD_FORMAL_PROFILE, GATE_CD_FORMAL_PROFILE):
-        raise InputError("Gate-CD formal scope is restricted to the exact M8N64 profile/run")
+    if profile not in GATE_CD_EXECUTION_PROFILES or run_id != profile:
+        raise InputError("Gate-CD formal scope is restricted to an exact reviewed profile/run")
     path = Path(scope_path).resolve()
     try:
         raw = path.read_bytes()
@@ -120,11 +127,27 @@ def _validate_gate_cd_scope(scope_path: str | Path, expected_sha256: str,
     ):
         raise InputError("Gate-CD scope changes the 64 GiB/no-RSS-cap host-floor contract")
     cpu = scope.get("cpu_policy")
+    required_worker_count = (
+        GATE_CD_PARALLEL32_WORKERS
+        if profile == GATE_CD_PARALLEL32_PROFILE
+        else 1
+    )
+    observed_worker_count = (
+        cpu.get("worker_count", required_worker_count)
+        if isinstance(cpu, dict)
+        else None
+    )
     if not isinstance(cpu, dict) or (
         cpu.get("selection") != "sampled_low_load_distinct_physical_cores_v1"
         or float(cpu.get("sample_seconds", 0)) < 1.0
         or cpu.get("busy_fallback_allowed") is not True
         or cpu.get("exclusive_cpu_ownership") is not False
+        or type(observed_worker_count) is not int
+        or observed_worker_count != required_worker_count
+        or (
+            required_worker_count == GATE_CD_PARALLEL32_WORKERS
+            and cpu.get("avoid_active_solver_affinity_overlap") is not True
+        )
     ):
         raise InputError("Gate-CD scope lacks its reviewed dynamic shared-CPU policy")
     attempt_id = scope.get("attempt_id")
@@ -146,16 +169,70 @@ def _validate_gate_cd_scope(scope_path: str | Path, expected_sha256: str,
     return scope, path, digest
 
 
-def _choose_cpu_reservation(sample_seconds: float, proc_root: str | Path) -> dict:
+def _choose_cpu_reservation(
+    sample_seconds: float,
+    proc_root: str | Path,
+    *,
+    worker_count: int = 1,
+) -> dict:
     # Reuse the already reviewed dynamic sampler, preserving its CPU-load,
     # affinity observation, distinct-core, and non-exclusive semantics.
-    from .task40_d07c_g5_join import choose_g5_cpu_reservation
+    from .task40_d07c_g5_join import _core, choose_g5_cpu_reservation
 
     sampled = choose_g5_cpu_reservation(
         sample_seconds=float(sample_seconds), proc_root=proc_root
     )
+    if worker_count == GATE_CD_PARALLEL32_WORKERS:
+        candidates = list(sampled.get("candidate_topology_and_load", ()))
+        neighbor_observation = sampled.get("neighbor_observation", {})
+        active_solver_cpus = {
+            int(cpu)
+            for row in neighbor_observation.get("processes", ())
+            if row.get("solver_role_observation")
+            for cpu in row.get("affinity", ())
+        }
+        active_solver_cores = {
+            tuple(_core(cpu)) for cpu in active_solver_cpus
+        }
+        eligible = [
+            row for row in candidates
+            if (int(row["package"]), int(row["core"])) not in active_solver_cores
+        ]
+        eligible.sort(key=lambda row: (
+            float(row["sampled_utilization"]),
+            bool(row["heavy_neighbor_affinity_overlap"]),
+            int(row["cpu"]),
+        ))
+        if len(eligible) < GATE_CD_PARALLEL32_WORKERS + 1:
+            raise InputError(
+                "Gate-CD N14 admission needs 32 distinct worker cores plus one "
+                "supervisor core after excluding active solver affinities"
+            )
+        selected = eligible[: GATE_CD_PARALLEL32_WORKERS + 1]
+        supervisor_cpu = int(selected[0]["cpu"])
+        worker_cpus = [int(row["cpu"]) for row in selected[1:]]
+        if len(set(worker_cpus)) != GATE_CD_PARALLEL32_WORKERS:
+            raise InputError("Gate-CD N14 dynamic CPU admission returned duplicate workers")
+        return {
+            **sampled,
+            "policy": "sampled_low_load_distinct_physical_cores_v1",
+            "worker_count": GATE_CD_PARALLEL32_WORKERS,
+            "supervisor_cpu": supervisor_cpu,
+            "worker_cpu": worker_cpus[0],
+            "worker_cpus": worker_cpus,
+            "selected_topology": selected,
+            "excluded_active_solver_cpus": sorted(active_solver_cpus),
+            "excluded_active_solver_cores": [
+                list(core) for core in sorted(active_solver_cores)
+            ],
+            "active_solver_affinity_avoidance": True,
+            "exclusive_cpu_ownership": False,
+        }
+    if worker_count != 1:
+        raise InputError("Gate-CD formal admission received an unsupported worker count")
     return {
         **sampled,
+        "worker_count": 1,
         "worker_cpus": [int(sampled["worker_cpu"])],
         "route": "gate_cd_formal_dynamic_cpu_adapter_to_reviewed_task40_sampler",
         "exclusive_cpu_ownership": False,
@@ -173,10 +250,11 @@ class GateCDRuntimeLease:
         self._committed = False
 
     def summary(self) -> dict:
+        profile = self.scope["identity"]["profile_identity"]
         return {
             "policy": "gate_cd_exact_one_shot_host_floor_v1",
-            "profile_identity": GATE_CD_FORMAL_PROFILE,
-            "run_id": GATE_CD_FORMAL_PROFILE,
+            "profile_identity": profile,
+            "run_id": profile,
             "attempt_id": self.scope["attempt_id"],
             "scope_path": str(self.scope_path),
             "scope_sha256": self.scope_sha256,
@@ -199,6 +277,11 @@ class GateCDRuntimeLease:
             path = root / name
             path.mkdir(mode=0o700)
             dirs[name] = path
+        if self.scope["cpu_policy"].get("worker_count") == GATE_CD_PARALLEL32_WORKERS:
+            for name in ("tensor", "carrier"):
+                path = root / name
+                path.mkdir(mode=0o700)
+                dirs[name] = path
         if any(path.is_symlink() for path in dirs.values()):
             raise InputError("Gate-CD attempt cache paths must not be symlinks")
         return dirs
@@ -210,8 +293,8 @@ class GateCDRuntimeLease:
             raise InputError("Gate-CD one-shot lease was already committed")
         payload = {
             "schema": "task40.gate_cd.formal_one_shot_submission.v1",
-            "profile_identity": GATE_CD_FORMAL_PROFILE,
-            "run_id": GATE_CD_FORMAL_PROFILE,
+            "profile_identity": self.scope["identity"]["profile_identity"],
+            "run_id": self.scope["identity"]["run_id"],
             "attempt_id": self.scope["attempt_id"],
             "scope_sha256": self.scope_sha256,
             "cpu_reservation": self.cpu_reservation,
@@ -259,9 +342,26 @@ def gate_cd_runtime_lease(profile: str, run_id: str, *, scope_path: str | Path,
             raise InputError("Gate-CD exact profile/run lease is already held") from exc
         if reservation_path.exists():
             raise InputError("Gate-CD one-shot reservation appeared during admission")
-        reservation = cpu_selector(
-            float(scope["cpu_policy"]["sample_seconds"]), proc_root
-        )
+        worker_count = int(scope["cpu_policy"].get("worker_count", 1))
+        if worker_count == 1:
+            reservation = cpu_selector(
+                float(scope["cpu_policy"]["sample_seconds"]), proc_root
+            )
+        else:
+            reservation = cpu_selector(
+                float(scope["cpu_policy"]["sample_seconds"]),
+                proc_root,
+                worker_count=worker_count,
+            )
+        cpus = reservation.get("worker_cpus", ())
+        supervisor_cpu = reservation.get("supervisor_cpu")
+        if (
+            len(cpus) != worker_count
+            or len(set(map(int, cpus))) != worker_count
+            or type(supervisor_cpu) is not int
+            or supervisor_cpu in set(map(int, cpus))
+        ):
+            raise InputError("Gate-CD CPU lease does not match the exact worker count")
         lease = GateCDRuntimeLease(
             scope, path, digest, member, lock_path, reservation_path,
             reservation, cache_root, submission_mode,

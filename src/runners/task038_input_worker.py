@@ -100,9 +100,13 @@ def _task40_gate_cd_runtime_cache_evidence(
     manifest: dict[str, Any], *, environment=None, jit_options_resolver=None
 ) -> dict[str, Any] | None:
     """Validate Gate-CD's exact one-shot cache paths before worker dispatch."""
-    from src.runners.task40_gate_cd_formal_admission import GATE_CD_FORMAL_PROFILE
+    from src.runners.task40_gate_cd_formal_admission import (
+        GATE_CD_EXECUTION_PROFILES,
+        GATE_CD_PARALLEL32_PROFILE,
+    )
 
-    if manifest.get("native_capacity_profile_identity") != GATE_CD_FORMAL_PROFILE:
+    profile = manifest.get("native_capacity_profile_identity")
+    if profile not in GATE_CD_EXECUTION_PROFILES:
         return None
     env = os.environ if environment is None else environment
     isolation = manifest.get("native_capacity_isolation")
@@ -125,6 +129,11 @@ def _task40_gate_cd_runtime_cache_evidence(
         "pycache": expected_root / "pycache",
         "mpl": expected_root / "mpl",
     }
+    if profile == GATE_CD_PARALLEL32_PROFILE:
+        expected_paths.update(
+            tensor=expected_root / "tensor",
+            carrier=expected_root / "carrier",
+        )
     for key, path in expected_paths.items():
         if Path(cache.get(key, "")).resolve() != path.resolve():
             raise ValueError(f"Gate-CD cache path differs at {key}")
@@ -152,7 +161,7 @@ def _task40_gate_cd_runtime_cache_evidence(
     expected_jit_cache = (expected_paths["xdg"] / "fenics").resolve()
     if actual_jit_cache != expected_jit_cache:
         raise ValueError("Gate-CD DOLFINx JIT cache escaped the attempt XDG cache")
-    return {
+    evidence = {
         "schema": "task40.gate_cd.formal_worker_cache_runtime.v1",
         "attempt_id": attempt_id,
         "owner": "GateCD_formal_attempt_only",
@@ -160,6 +169,57 @@ def _task40_gate_cd_runtime_cache_evidence(
         "dolfinx_jit_cache_dir": str(actual_jit_cache),
         "cache_paths_verified_before_FE_dispatch": True,
     }
+    if profile == GATE_CD_PARALLEL32_PROFILE:
+        runtime_contract = manifest.get("exact_cache_runtime_contract")
+        reservation = lease.get("cpu_reservation")
+        expected_cpus = (
+            reservation.get("worker_cpus") if isinstance(reservation, dict) else None
+        )
+        contract_path = env.get("TASK40_EXACT_CACHE_CONTRACT")
+        contract_sha = env.get("TASK40_EXACT_CACHE_CONTRACT_SHA256")
+        template_sha = env.get("TASK40_EXACT_CACHE_RUNTIME_TEMPLATE_SHA256")
+        try:
+            worker_cpus = json.loads(env.get("TASK40_EXACT_CACHE_WORKER_CPUS", ""))
+        except json.JSONDecodeError as exc:
+            raise ValueError("Gate-CD N14 exact-cache CPU environment is malformed") from exc
+        if (
+            not isinstance(runtime_contract, dict)
+            or not isinstance(reservation, dict)
+            or runtime_contract.get("attempt_id") != attempt_id
+            or runtime_contract.get("worker_cpus") != expected_cpus
+            or worker_cpus != expected_cpus
+            or runtime_contract.get("template_sha256") != template_sha
+            or runtime_contract.get("path") != contract_path
+            or runtime_contract.get("sha256") != contract_sha
+            or runtime_contract.get("policy")
+            != "gate_cd_lease_selected_32_distinct_physical_cores_v1"
+            or len(expected_cpus or ()) != 32
+            or len(set(expected_cpus or ())) != 32
+        ):
+            raise ValueError("Gate-CD N14 exact-cache evidence differs from its runtime lease")
+        path = Path(str(contract_path)).resolve(strict=True)
+        raw = path.read_bytes()
+        if hashlib.sha256(raw).hexdigest() != contract_sha:
+            raise ValueError("Gate-CD N14 exact-cache runtime contract SHA256 mismatch")
+        document = json.loads(raw)
+        if (
+            document.get("attempt_id") != attempt_id
+            or document.get("template_sha256") != template_sha
+            or document.get("worker_cpus") != expected_cpus
+            or Path(document.get("attempt_cache_root", "")).resolve() != expected_root
+            or Path(document.get("tensor_root", "")).resolve() != expected_root / "tensor"
+            or Path(document.get("carrier_root", "")).resolve() != expected_root / "carrier"
+        ):
+            raise ValueError("Gate-CD N14 exact-cache runtime contract fields differ from lease")
+        evidence["exact_cache_contract"] = {
+            "path": str(path),
+            "sha256": contract_sha,
+            "template_sha256": template_sha,
+            "worker_count": 32,
+            "worker_cpus": expected_cpus,
+            "runtime_lease_match_verified": True,
+        }
+    return evidence
 
 
 def _write_gate_cd_runtime_cache_evidence(output_directory: str | Path, evidence: dict) -> Path:
@@ -594,7 +654,7 @@ def main(argv: list[str] | None = None) -> int:
                 resolved_payload.get("solver", {}),
             )
             from src.runners.task40_d07c_g5_join import G5_PROFILE
-            from src.runners.task40_gate_cd_formal_admission import GATE_CD_FORMAL_PROFILE
+            from src.runners.task40_gate_cd_formal_admission import GATE_CD_EXECUTION_PROFILES
 
             if profile_name == G5_PROFILE:
                 manifest_value, _manifest_bytes, manifest_error = _read_json_bytes(
@@ -603,7 +663,7 @@ def main(argv: list[str] | None = None) -> int:
                 if manifest_error or manifest_value is None:
                     raise ValueError(manifest_error or "G5 manifest is unavailable")
                 runtime_cache_evidence = _task40_g5_runtime_cache_evidence(manifest_value)
-            elif profile_name == GATE_CD_FORMAL_PROFILE:
+            elif profile_name in GATE_CD_EXECUTION_PROFILES:
                 manifest_value, _manifest_bytes, manifest_error = _read_json_bytes(
                     args.manifest, "manifest for Gate-CD runtime cache verification"
                 )

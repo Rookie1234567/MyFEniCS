@@ -168,3 +168,7 @@ G3 M8/N96 已自然完成；同 G3 网格的 N64→N96 保存输出比较三组�
 N64 参照 run `20261030T132407.592584Z` 自然结束且单场门通过，source `3a0676dd47c7729fa279d74b114aaf2125ec8072`；其峰值整树 RSS 为 `378,244,096,000 B`、task swap 0。该资源事实仅描述 N64，不推算 N96 容量。N96 的 resolved config SHA 为 `49368696418a6e6a52ced944bfb8006aebf869b6ecbb5fa5468cd9baa0d9940f`；轴、模式、父运行身份及门见[静态计划](records/d07c_g3_m8_n96_static_case_plan_v1.json)和[准备说明](response_d07c_g3_m8_n96_preparation_20261031.md)。
 
 生产 loader/runner/inventory/manifest-worker focused batch 为 `25 passed in 39.39 s`；相关 Ruff、compileall、diff-check 通过。此阶段未 fresh、未创建新 FE mesh/carrier/matrix/factor/solve，未启动 FE。当前等待主审审核静态执行包；Task41 若仍活动，按用户选择等待其自然清场，production guard 默认拒绝未知或重复 solver，不授权并行例外。比较门为 global `1e-5`、全 N96 signed 通道 R/T `1e-6`、复边界及同坐标 E/H `1e-4`（无 phase fit）；即使有限 N64/N96 对照通过，也不构成 full-DtN 或完整自动传播库存资格。`FULL_DTN_NOT_VERIFIED`、canonical sidewall `NOT_MEASURED` 保持。
+
+## 2026-11-02：Gate-CD M8/N14 并行积分静态准备
+
+当前 executor worktree 已新增独立 Gate-CD M8/N14 profile/input：从有限 M8N64 父库存保序选出1,088个有符号模态，加入32个动态物理核上的独立精确 raw-cell-tensor worker，并保持 MPI1、串行凝聚/全局装配/LU。父/活动模态、父索引与signed key的SHA及有限-DtN边界见[静态准备记录](response_gate_cd_m8n14_parallel32_static_preparation_20261102.md)。源改动已在隔离worktree本地提交，外部精确审核包正在生成；fresh与systemd/FE尚未启动。资格化ABI preflight在sandbox的MPI socket初始化阶段失败，故最终pytest suite未运行；不宣称fresh、PDE、因子或物理输出通过。

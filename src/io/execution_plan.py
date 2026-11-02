@@ -182,16 +182,33 @@ def build_execution_plan(
     if profile_identity in NATIVE_PROFILES:
         profile_facts = native_profile_facts(profile_identity)
         from src.runners.task40_d07c_g5_join import G5_PROFILE
-        from src.runners.task40_gate_cd_formal_admission import GATE_CD_FORMAL_PROFILE
-        if profile_identity in {G5_PROFILE, GATE_CD_FORMAL_PROFILE}:
+        from src.runners.task40_gate_cd_formal_admission import (
+            GATE_CD_EXECUTION_PROFILES,
+        )
+        if profile_identity == G5_PROFILE or profile_identity in GATE_CD_EXECUTION_PROFILES:
+            required_worker_count = (
+                1
+                if profile_identity == G5_PROFILE
+                else int(
+                    profile_facts.get("native_execution", {}).get(
+                        "worker_cpu_count", 1
+                    )
+                )
+            )
             if (
                 worker_cpus_override is None
-                or len(worker_cpus_override) != 1
+                or len(worker_cpus_override) != required_worker_count
                 or type(worker_cpus_override[0]) is not int
-                or worker_cpus_override[0] < 0
+                or any(type(cpu) is not int or cpu < 0 for cpu in worker_cpus_override)
+                or len(set(worker_cpus_override)) != required_worker_count
             ):
+                reservation_label = (
+                    "dynamic one-CPU reservation"
+                    if required_worker_count == 1
+                    else f"dynamic {required_worker_count}-CPU reservation"
+                )
                 raise InputError(
-                    "G5 and Gate-CD execution plans require their dynamic one-CPU reservation"
+                    f"G5/Gate-CD execution plans require their exact {reservation_label}"
                 )
             worker_cpus = list(worker_cpus_override)
             if specification.execution.get("native_memory_policy") != "interleave_nodes0_1":

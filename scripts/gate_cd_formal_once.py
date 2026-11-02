@@ -20,6 +20,15 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+GATE_CD_FORMAL_PROFILE = "task40_gate_cd_0p7_mapped_m8n64_p6_direct_v1"
+GATE_CD_PARALLEL32_PROFILE = (
+    "task40_gate_cd_0p7_mapped_m8n14_p6_direct_parallel32_v1"
+)
+GATE_CD_FORMAL_PROFILES = frozenset(
+    {GATE_CD_FORMAL_PROFILE, GATE_CD_PARALLEL32_PROFILE}
+)
+GATE_CD_PARALLEL32_WORKERS = 32
+
 _SERVICE_PROPERTIES = {
     "Type": "exec",
     "Restart": "no",
@@ -36,6 +45,11 @@ _CAPTURE_ENV = {
     "_MYFENICS_NATIVE_QUALIFIED_ACTIVATION",
     "TASK39EXTRA_INT64_ACTIVATION",
     "TASK39EXTRA_PORD64_ACTIVATION",
+    "TASK40_EXACT_CACHE_CONTRACT",
+    "TASK40_EXACT_CACHE_CONTRACT_SHA256",
+    "TASK40_EXACT_CACHE_WORKER_CPUS",
+    "TASK40_EXACT_CACHE_ATTEMPT_ID",
+    "TASK40_EXACT_CACHE_RUNTIME_TEMPLATE_SHA256",
 }
 
 
@@ -109,6 +123,8 @@ def _require_systemd_unit_not_loaded(unit: str, *, timeout_seconds: float = 5.0)
 def _require_final_package(package: dict) -> None:
     if package.get("schema") != "task40.gate_cd.formal_package.v1":
         raise ValueError("unsupported Gate-CD final package schema")
+    if package.get("profile_identity") not in GATE_CD_FORMAL_PROFILES:
+        raise ValueError("package does not name a supported exact Gate-CD profile")
     if package.get("execution_authorized") is not True:
         raise ValueError("draft package is not executable")
     readiness = package.get("route_readiness")
@@ -144,6 +160,23 @@ def _require_final_package(package: dict) -> None:
         raise ValueError(
             "translation-normalized cache requires the reviewed bounded witness"
         )
+    if package.get("profile_identity") == GATE_CD_PARALLEL32_PROFILE:
+        execution = package.get("execution_contract")
+        exact_cache = package.get("exact_cache_contract")
+        if (
+            not isinstance(execution, dict)
+            or execution.get("mpi_size") != 1
+            or execution.get("worker_cpu_count") != GATE_CD_PARALLEL32_WORKERS
+            or execution.get("math_threads") != 1
+            or execution.get("global_assembly") != "serial_single_mpi_rank_v1"
+            or execution.get("global_lu") != "serial_single_mpi_rank_v1"
+            or not isinstance(exact_cache, dict)
+            or exact_cache.get("worker_count") != GATE_CD_PARALLEL32_WORKERS
+            or exact_cache.get("operator_identity")
+            != {"scalar": "complex128", "q": 21, "degree": 6}
+            or package.get("full_dtn_status") != "FULL_DTN_NOT_VERIFIED"
+        ):
+            raise ValueError("Gate-CD M8N14 execution/cache contract is malformed")
 
 
 def _validate_live_profile_contract(package: dict, facts: dict) -> None:
@@ -189,6 +222,38 @@ def _validate_live_profile_contract(package: dict, facts: dict) -> None:
         is not cache.get("mapped_geometry_translation_invariant")
     ):
         raise ValueError("live route cache identity differs from package/profile")
+    if package.get("profile_identity") == GATE_CD_PARALLEL32_PROFILE:
+        mode = options.get("mode_selection", {})
+        operator = package.get("finite_operator", {})
+        checks = {
+            "active_mode_count": mode.get("expected_active_mode_count"),
+            "active_mode_sha256": mode.get("expected_active_mode_sha256"),
+            "active_signed_bounds_mn": mode.get("active_signed_bounds_mn"),
+            "parent_mode_count": mode.get("expected_mode_count"),
+            "parent_mode_sha256": mode.get("expected_mode_sha256"),
+            "parent_signed_bounds_mn": mode.get("parent_signed_bounds_mn"),
+            "selected_parent_indices_sha256": mode.get(
+                "expected_selected_parent_indices_sha256"
+            ),
+            "selected_signed_keys_sha256": mode.get(
+                "expected_selected_signed_keys_sha256"
+            ),
+            "propagating_mode_count": mode.get(
+                "expected_active_propagating_count"
+            ),
+            "power_carrying_mode_count": mode.get(
+                "expected_active_power_carrying_count"
+            ),
+        }
+        mismatches = {
+            key: {"package": operator.get(key), "profile": value}
+            for key, value in checks.items()
+            if operator.get(key) != value
+        }
+        if mismatches:
+            raise ValueError(
+                f"Gate-CD M8N14 finite operator differs from live profile: {mismatches}"
+            )
 
 
 def _runtime_reservation_path(sidecar: dict) -> tuple[dict, Path, str]:
@@ -268,13 +333,49 @@ def _wait_for_runtime_cpu_reservation(
             worker_cpus = [worker]
         if any(not isinstance(value, int) or value < 0 for value in worker_cpus):
             raise ValueError("runtime worker CPU reservation is invalid")
-        if len(worker_cpus) != 1:
-            raise ValueError("Gate-CD runtime lease must reserve exactly one worker CPU")
+        expected_worker_count = (
+            GATE_CD_PARALLEL32_WORKERS
+            if package.get("profile_identity") == GATE_CD_PARALLEL32_PROFILE
+            else 1
+        )
+        if (
+            len(worker_cpus) != expected_worker_count
+            or len(set(worker_cpus)) != expected_worker_count
+        ):
+            raise ValueError(
+                f"Gate-CD runtime lease must reserve exactly {expected_worker_count} distinct worker CPUs"
+            )
         if cpu.get("worker_cpu") != worker_cpus[0]:
             raise ValueError("runtime worker_cpu and worker_cpus disagree")
         supervisor_cpu = cpu.get("supervisor_cpu")
-        if not isinstance(supervisor_cpu, int) or supervisor_cpu == worker_cpus[0]:
+        if not isinstance(supervisor_cpu, int) or supervisor_cpu in set(worker_cpus):
             raise ValueError("runtime supervisor/worker CPU reservation is invalid")
+        if expected_worker_count == GATE_CD_PARALLEL32_WORKERS:
+            topology = cpu.get("selected_topology")
+            excluded_cores = {
+                tuple(int(value) for value in row)
+                for row in cpu.get("excluded_active_solver_cores", ())
+            }
+            if (
+                cpu.get("active_solver_affinity_avoidance") is not True
+                or not isinstance(topology, list)
+                or len(topology) != GATE_CD_PARALLEL32_WORKERS + 1
+                or [int(row.get("cpu", -1)) for row in topology]
+                != [supervisor_cpu, *worker_cpus]
+            ):
+                raise ValueError("Gate-CD N14 runtime lease lacks its physical-core topology proof")
+            topology_cores = [
+                (int(row.get("package", -1)), int(row.get("core", -1)))
+                for row in topology
+            ]
+            if (
+                len(set(topology_cores)) != len(topology_cores)
+                or set(topology_cores) & excluded_cores
+                or set(worker_cpus) & {
+                    int(value) for value in cpu.get("excluded_active_solver_cpus", ())
+                }
+            ):
+                raise ValueError("Gate-CD N14 worker/supervisor overlaps an active solver core")
         return reservation, hashlib.sha256(raw).hexdigest(), scope_sha
 
 
@@ -290,6 +391,8 @@ def validate_package_sidecar(
     _require_final_package(package)
     if sidecar.get("schema") != "task40.gate_cd.formal_sidecar.v1":
         raise ValueError("unsupported Gate-CD sidecar schema")
+    if sidecar.get("profile_identity") != package.get("profile_identity"):
+        raise ValueError("package/sidecar profile identity mismatch")
     if sidecar.get("package_sha256") != package_sha:
         raise ValueError("sidecar does not bind the exact package bytes")
     if sidecar.get("source_commit") != package.get("source_commit"):
@@ -300,6 +403,50 @@ def validate_package_sidecar(
         raise ValueError("package/sidecar physical identity mismatch")
     if sidecar.get("resolved_config_sha256") != package.get("resolved_config_sha256"):
         raise ValueError("package/sidecar resolved identity mismatch")
+    if package.get("profile_identity") == GATE_CD_PARALLEL32_PROFILE:
+        exact_cache = package.get("exact_cache_contract", {})
+        template_path = Path(
+            sidecar.get("exact_cache_template_path", "")
+        ).resolve(strict=True)
+        template_sha = sidecar.get("exact_cache_template_sha256")
+        if (
+            not isinstance(exact_cache, dict)
+            or str(template_path) != exact_cache.get("template_path")
+            or template_sha != exact_cache.get("template_sha256")
+            or sha256_file(template_path) != template_sha
+            or package.get("identity", {}).get("direct_route_contract", {}).get(
+                "exact_cache_contract_template_sha256"
+            ) != template_sha
+        ):
+            raise ValueError("package/sidecar exact-cache template binding mismatch")
+        template = _load_json(template_path)
+        if (
+            template.get("source_sha") != package.get("source_commit")
+            or template.get("resolved_payload_sha256")
+            != package.get("resolved_payload_sha256")
+            or template.get("worker_count") != GATE_CD_PARALLEL32_WORKERS
+            or template.get("operator_identity")
+            != {"scalar": "complex128", "q": 21, "degree": 6}
+        ):
+            raise ValueError("exact-cache template differs from the final case identity")
+        scope_path = Path(sidecar.get("scope_path", "")).resolve(strict=True)
+        scope_raw = scope_path.read_bytes()
+        scope_sha = hashlib.sha256(scope_raw).hexdigest()
+        if scope_sha != sidecar.get("scope_sha256"):
+            raise ValueError("sidecar scope SHA256 mismatch")
+        scope = json.loads(scope_raw)
+        runtime_paths = scope.get("runtime_paths", {})
+        if (
+            scope.get("identity") != package.get("identity")
+            or scope.get("attempt_id") != package.get("attempt_id")
+            or scope.get("planned_systemd_user_unit") != sidecar.get("service_unit")
+            or runtime_paths.get("attempt_cache_root")
+            != sidecar.get("attempt_cache_root")
+            or runtime_paths.get("lock_directory") != sidecar.get("lock_directory")
+            or scope.get("cpu_policy", {}).get("worker_count")
+            != GATE_CD_PARALLEL32_WORKERS
+        ):
+            raise ValueError("M8N14 scope does not bind the exact package/sidecar/cache lease")
     return package, sidecar, package_sha, sidecar_sha
 
 
@@ -307,11 +454,30 @@ def _git_text(root: Path, *args: str) -> str:
     return subprocess.check_output(["git", *args], cwd=root, text=True).strip()
 
 
-def _expected_identity(specification, profile: str, source_commit: str) -> dict:
+def _expected_identity(
+    specification,
+    profile: str,
+    source_commit: str,
+    *,
+    exact_cache_template_sha256: str | None = None,
+) -> dict:
     from src.io.input_validation import _jsonable
     from src.io.native_capacity_profile import native_profile_facts
     from src.io.resolved_config import resolved_config_sha256
 
+    direct_route = _jsonable(
+        native_profile_facts(profile)["campaign_authorization"]["direct_route"]
+    )
+    if profile == GATE_CD_PARALLEL32_PROFILE:
+        if (
+            not isinstance(exact_cache_template_sha256, str)
+            or len(exact_cache_template_sha256) != 64
+            or any(c not in "0123456789abcdef" for c in exact_cache_template_sha256)
+        ):
+            raise ValueError("Gate-CD M8N14 identity requires its reviewed cache-template SHA")
+        direct_route["exact_cache_contract_template_sha256"] = (
+            exact_cache_template_sha256
+        )
     return {
         "profile_identity": profile,
         "run_id": specification.identity.get("run_id"),
@@ -323,9 +489,7 @@ def _expected_identity(specification, profile: str, source_commit: str) -> dict:
             specification.expected_output_parent.resolve()
         ),
         "source_commit": source_commit,
-        "direct_route_contract": _jsonable(
-            native_profile_facts(profile)["campaign_authorization"]["direct_route"]
-        ),
+        "direct_route_contract": direct_route,
     }
 
 
@@ -601,7 +765,6 @@ def fresh_acceptance(
     )
     from src.runners.native_capacity import native_capacity_guard
     from src.runners.task40_gate_cd_formal_admission import (
-        GATE_CD_FORMAL_PROFILE,
         GATE_CD_LOCK_DIRECTORY_ENV,
         GATE_CD_SCOPE_PATH_ENV,
         GATE_CD_SCOPE_SHA_ENV,
@@ -615,14 +778,24 @@ def fresh_acceptance(
     profile = native_capacity_profile_identity(
         specification.method.get("kind"), specification.solver
     )
-    if profile != GATE_CD_FORMAL_PROFILE or profile != package.get("profile_identity"):
+    if profile not in GATE_CD_FORMAL_PROFILES or profile != package.get("profile_identity"):
         raise ValueError("resolved input is not the exact Gate-CD formal profile")
     facts = native_profile_facts(profile)
     readiness = facts.get("component_options", {}).get("route_readiness", {})
     if readiness.get("launchable") is not True:
         raise ValueError("live profile readiness is still fail-closed")
     _validate_live_profile_contract(package, facts)
-    actual = _expected_identity(specification, profile, source_commit)
+    exact_cache_template_sha256 = (
+        sidecar.get("exact_cache_template_sha256")
+        if profile == GATE_CD_PARALLEL32_PROFILE
+        else None
+    )
+    actual = _expected_identity(
+        specification,
+        profile,
+        source_commit,
+        exact_cache_template_sha256=exact_cache_template_sha256,
+    )
     if actual != package.get("identity"):
         raise ValueError("actual standard-loader identity differs from the package")
     if actual["physical_model_sha256"] != package.get("physical_model_sha256"):
@@ -736,6 +909,30 @@ def _validate_systemd_argv(sidecar: dict) -> list[str]:
             raise ValueError(f"sidecar launch environment differs for {key}")
         if f"--setenv={key}={expected}" not in argv:
             raise ValueError(f"systemd argv does not pass exact environment {key}")
+    if sidecar.get("profile_identity") == GATE_CD_PARALLEL32_PROFILE:
+        scope_path = Path(sidecar.get("scope_path", "")).resolve(strict=True)
+        scope = _load_json(scope_path)
+        exact_env = {
+            "TASK40_GATE_CD_ATTEMPT_CACHE_ROOT": sidecar.get("attempt_cache_root"),
+            "TASK40_EXACT_CACHE_TEMPLATE_PATH": sidecar.get(
+                "exact_cache_template_path"
+            ),
+            "TASK40_EXACT_CACHE_TEMPLATE_SHA256": sidecar.get(
+                "exact_cache_template_sha256"
+            ),
+        }
+        if (
+            scope.get("runtime_paths", {}).get("attempt_cache_root")
+            != exact_env["TASK40_GATE_CD_ATTEMPT_CACHE_ROOT"]
+        ):
+            raise ValueError("sidecar attempt cache root differs from its exact scope")
+        for key, expected in exact_env.items():
+            if (
+                not isinstance(expected, str)
+                or environment.get(key) != expected
+                or f"--setenv={key}={expected}" not in argv
+            ):
+                raise ValueError(f"sidecar exact-cache launch environment differs for {key}")
     activation_env = (
         "_MYFENICS_NATIVE_QUALIFIED_ACTIVATION",
         "TASK39EXTRA_INT64_ACTIVATION",
@@ -895,8 +1092,27 @@ def capture_unit(unit: str) -> dict:
     }
 
 
+def _parse_cpu_list(value: str) -> set[int]:
+    cpus: set[int] = set()
+    for field in value.split(","):
+        bounds = field.split("-", 1)
+        if not all(part.isdecimal() for part in bounds):
+            raise ValueError(f"invalid Linux CPU list: {value!r}")
+        start = int(bounds[0])
+        end = int(bounds[-1])
+        if end < start:
+            raise ValueError(f"invalid Linux CPU range: {value!r}")
+        cpus.update(range(start, end + 1))
+    return cpus
+
+
 def _require_live_capture(
-    capture: dict, repo_root: Path, expected_worker_cpus: list[int], math_threads: int
+    capture: dict,
+    repo_root: Path,
+    expected_worker_cpus: list[int],
+    math_threads: int,
+    *,
+    package: dict | None = None,
 ) -> None:
     props = capture["unit_properties"]
     root = capture["roles"]["root"]
@@ -917,11 +1133,15 @@ def _require_live_capture(
     if not any(item["ppid"] in mpi_pids for item in workers):
         raise ValueError("worker is not a child of the observed MPI launcher")
     worker = workers[0]
-    expected_cpu_text = ",".join(str(cpu) for cpu in expected_worker_cpus)
-    if worker["cpus_allowed_list"] != expected_cpu_text:
+    expected_cpu_set = set(expected_worker_cpus)
+    if (
+        len(expected_cpu_set) != len(expected_worker_cpus)
+        or _parse_cpu_list(worker["cpus_allowed_list"]) != expected_cpu_set
+    ):
         raise ValueError("worker CPU affinity differs from committed runtime CPU lease")
     if not worker["threads"] or any(
-        row["cpus_allowed_list"] != expected_cpu_text for row in worker["threads"]
+        _parse_cpu_list(row["cpus_allowed_list"]) != expected_cpu_set
+        for row in worker["threads"]
     ):
         raise ValueError("worker thread CPU affinity differs from committed runtime lease")
     if len(worker["threads"]) < math_threads:
@@ -947,6 +1167,44 @@ def _require_live_capture(
         )
     ):
         raise ValueError("worker qualified ABI activation markers are incomplete")
+    if len(expected_worker_cpus) == GATE_CD_PARALLEL32_WORKERS:
+        if not isinstance(package, dict):
+            raise ValueError("Gate-CD N14 live capture needs its exact case package")
+        exact = package.get("exact_cache_contract", {})
+        try:
+            bound_cpus = json.loads(
+                worker["environment"].get("TASK40_EXACT_CACHE_WORKER_CPUS", "")
+            )
+        except json.JSONDecodeError as exc:
+            raise ValueError("worker exact-cache CPU binding is malformed") from exc
+        environment = worker["environment"]
+        if (
+            bound_cpus != expected_worker_cpus
+            or environment.get("TASK40_EXACT_CACHE_ATTEMPT_ID")
+            != package.get("attempt_id")
+            or environment.get("TASK40_EXACT_CACHE_RUNTIME_TEMPLATE_SHA256")
+            != exact.get("template_sha256")
+        ):
+            raise ValueError("worker exact-cache lease/template environment differs from package")
+        contract_path = Path(
+            environment.get("TASK40_EXACT_CACHE_CONTRACT", "")
+        ).resolve(strict=True)
+        contract_raw = contract_path.read_bytes()
+        if hashlib.sha256(contract_raw).hexdigest() != environment.get(
+            "TASK40_EXACT_CACHE_CONTRACT_SHA256"
+        ):
+            raise ValueError("worker exact-cache runtime contract hash differs")
+        contract = json.loads(contract_raw)
+        if (
+            contract.get("worker_cpus") != expected_worker_cpus
+            or contract.get("attempt_id") != package.get("attempt_id")
+            or contract.get("template_sha256") != exact.get("template_sha256")
+            or Path(contract.get("tensor_root", "")).resolve()
+            != Path(contract.get("attempt_cache_root", "")).resolve() / "tensor"
+            or Path(contract.get("carrier_root", "")).resolve()
+            != Path(contract.get("attempt_cache_root", "")).resolve() / "carrier"
+        ):
+            raise ValueError("worker exact-cache runtime contract differs from package/lease")
 
 
 def _write_once_marker(marker: Path, data: dict) -> None:
@@ -1083,6 +1341,7 @@ def submit_once(
             REPO_ROOT,
             worker_cpus,
             int(package.get("math_threads", 1)),
+            package=package,
         )
         _atomic_json(live_receipt_path, capture)
         start["live_identity_verified"] = True
