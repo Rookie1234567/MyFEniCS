@@ -172,3 +172,8 @@ N64 参照 run `20261030T132407.592584Z` 自然结束且单场门通过，source
 ## 2026-11-02：Gate-CD M8/N14 并行积分静态准备
 
 当前 executor worktree 已新增独立 Gate-CD M8/N14 profile/input：从有限 M8N64 父库存保序选出1,088个有符号模态，加入32个动态物理核上的独立精确 raw-cell-tensor worker，并保持 MPI1、串行凝聚/全局装配/LU。父/活动模态、父索引与signed key的SHA及有限-DtN边界见[静态准备记录](response_gate_cd_m8n14_parallel32_static_preparation_20261102.md)。源改动已在隔离worktree本地提交，外部精确审核包正在生成；fresh与systemd/FE尚未启动。资格化ABI preflight在sandbox的MPI socket初始化阶段失败，故最终pytest suite未运行；不宣称fresh、PDE、因子或物理输出通过。
+
+
+## 2026-11-02：Gate-CD M8/N14 qualified ABI 与 no-FE 回归
+
+在宿主 qualified activation 下，Open MPI 4.1.6 初始化成功且 MPI size 为1；PETSc 3.19.6 初始化、DOLFINx 0.10.0 导入成功。聚焦 `test_task40_gate_cd_m8n14_profile.py`、`test_task40_gate_cd_formal_admission.py` 与 `test_task40_gate_cd_formal_once.py` 最终 `26 passed / 1.14 s`。前两轮分别发现6个旧包fixture断言顺序差异、1个旧live-capture monkeypatch签名不兼容；按只扩展N14、保留M8N64调用形态修复后全组通过。未运行全仓pytest、fresh、systemd或FE；审核包需以最终clean source SHA重绑。

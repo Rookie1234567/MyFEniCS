@@ -25,11 +25,11 @@ The service must begin with the normal full host CPU affinity available to the a
 
 | Gate | Status | Evidence / limitation |
 |---|---|---|
-| Input/profile and parent-to-active mode wiring | bounded smoke passed before the final admission/cache tests were added | 3 pure-Python tests passed under `/usr/bin/python3`; not a qualified ABI run |
+| Profile, parent-to-active mode selection, lease, cache, and fresh/once helper | PASS | The final focused no-FE batch passed 26 tests in 1.14 s under the qualified activation. Two earlier attempts exposed compatibility issues in the helper; both were fixed before the final pass. |
 | Syntax | passed | qualified interpreter `py_compile` over changed modules and the new test file |
 | Lint | bounded static checks passed | Ruff passed for the new test file and undefined-name checks across changed files; full-file Ruff reports existing repository findings |
-| Qualified ABI preflight | blocked in this sandbox | PETSc/MPI initialization failed because socket creation was denied (`errno=1`, PMIx listener failure) |
-| Final pytest suite | not run | repository rules stop tests after the qualified MPI preflight fails |
+| Qualified ABI preflight | PASS on the host | Qualified activation; Open MPI 4.1.6, MPI size 1, PETSc 3.19.6 initialized, DOLFINx 0.10.0 imported. No FE dispatch. |
+| Focused pytest suite | 26 passed / 1.14 s | `test_task40_gate_cd_m8n14_profile.py`, `test_task40_gate_cd_formal_admission.py`, and `test_task40_gate_cd_formal_once.py`; the full repository suite was not run. |
 | Fresh admission, systemd submission, FE mesh/carrier/matrix/factor/solve | not run | awaiting exact package review and a new passing full fresh check |
 
-No FE or systemd unit was started. The package must retain `launch_authorized=false` and `fresh_status=NOT_RUN_PENDING_MAIN_REVIEW`. No R/T/A, runtime, or memory result is claimed. The mode truncation is independent of the previously completed G6 N14 comparison and does not inherit its physics identity or qualification.
+No FE or systemd unit was started. The package retains `launch_authorized=false` and `fresh_status=NOT_RUN_PENDING_MAIN_REVIEW`. No R/T/A, runtime, or memory result is claimed. The mode truncation is independent of the previously completed G6 N14 comparison and does not inherit its physics identity or qualification.

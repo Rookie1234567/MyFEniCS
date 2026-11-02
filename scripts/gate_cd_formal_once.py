@@ -123,8 +123,6 @@ def _require_systemd_unit_not_loaded(unit: str, *, timeout_seconds: float = 5.0)
 def _require_final_package(package: dict) -> None:
     if package.get("schema") != "task40.gate_cd.formal_package.v1":
         raise ValueError("unsupported Gate-CD final package schema")
-    if package.get("profile_identity") not in GATE_CD_FORMAL_PROFILES:
-        raise ValueError("package does not name a supported exact Gate-CD profile")
     if package.get("execution_authorized") is not True:
         raise ValueError("draft package is not executable")
     readiness = package.get("route_readiness")
@@ -160,7 +158,10 @@ def _require_final_package(package: dict) -> None:
         raise ValueError(
             "translation-normalized cache requires the reviewed bounded witness"
         )
-    if package.get("profile_identity") == GATE_CD_PARALLEL32_PROFILE:
+    profile = package.get("profile_identity", GATE_CD_FORMAL_PROFILE)
+    if profile not in GATE_CD_FORMAL_PROFILES:
+        raise ValueError("package does not name a supported exact Gate-CD profile")
+    if profile == GATE_CD_PARALLEL32_PROFILE:
         execution = package.get("execution_contract")
         exact_cache = package.get("exact_cache_contract")
         if (
@@ -391,7 +392,15 @@ def validate_package_sidecar(
     _require_final_package(package)
     if sidecar.get("schema") != "task40.gate_cd.formal_sidecar.v1":
         raise ValueError("unsupported Gate-CD sidecar schema")
-    if sidecar.get("profile_identity") != package.get("profile_identity"):
+    package_profile = package.get("profile_identity", GATE_CD_FORMAL_PROFILE)
+    sidecar_profile = sidecar.get("profile_identity")
+    if (
+        sidecar_profile is not None
+        and sidecar_profile != package_profile
+    ) or (
+        package_profile == GATE_CD_PARALLEL32_PROFILE
+        and sidecar_profile != GATE_CD_PARALLEL32_PROFILE
+    ):
         raise ValueError("package/sidecar profile identity mismatch")
     if sidecar.get("package_sha256") != package_sha:
         raise ValueError("sidecar does not bind the exact package bytes")
@@ -1336,13 +1345,16 @@ def submit_once(
         capture["runtime_cpu_reservation"] = runtime_reservation
         capture["runtime_cpu_reservation_sha256"] = reservation_sha
         capture["fresh_worker_affinity_sample_is_not_authoritative"] = True
-        _require_live_capture(
+        capture_arguments = (
             capture,
             REPO_ROOT,
             worker_cpus,
             int(package.get("math_threads", 1)),
-            package=package,
         )
+        if package.get("profile_identity") == GATE_CD_PARALLEL32_PROFILE:
+            _require_live_capture(*capture_arguments, package=package)
+        else:
+            _require_live_capture(*capture_arguments)
         _atomic_json(live_receipt_path, capture)
         start["live_identity_verified"] = True
         start["live_receipt_sha256"] = sha256_file(live_receipt_path)

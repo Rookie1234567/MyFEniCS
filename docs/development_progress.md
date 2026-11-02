@@ -2984,3 +2984,8 @@ Y2→Y3同策略比较的总R差`8.7031e-10`、总T差`9.6121e-11`、A_volume差
 ## 2026-11-02：Gate-CD M8/N14 32-worker route 静态准备
 
 在单独 executor worktree 中新增 Gate-CD 的有限 M8/N14 profile/input。活动1,088个有符号模式按原顺序从M8N64父库存选择；仅raw-cell-tensor积分可用32个动态物理核，MPI仍为1，父进程的Schur凝聚、全局矩阵与LU维持串行。exact-cache模板绑定源码、resolved payload、worker CPU lease和独立attempt根目录。`FULL_DTN_NOT_VERIFIED`保持，且尚未fresh或提交systemd。资格化MPI ABI preflight在当前sandbox因socket/PMIx创建限制失败，故最终pytest未运行；阶段记录见[Gate-CD M8/N14静态准备](task40para_phi90_mesh_modes_direct/outcomes/response_gate_cd_m8n14_parallel32_static_preparation_20261102.md)。
+
+
+## 2026-11-02：Gate-CD M8/N14 qualified ABI 与 no-FE 回归
+
+宿主qualified activation下Open MPI 4.1.6/MPI1、PETSc 3.19.6、DOLFINx 0.10.0 preflight通过；三组聚焦profile/admission/formal-once no-FE测试 `26 passed / 1.14 s`。旧M8N64包fixture兼容失败均已窄修。没有运行全仓pytest、fresh、systemd或FE；源码与静态审核包将以新clean提交SHA重绑。
