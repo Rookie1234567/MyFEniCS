@@ -1094,7 +1094,7 @@ def _build_task40_rectangle_inventory(parent_inventory, cfg, route):
     }
     if signed_bounds is not None:
         selection["active_signed_bounds_mn"] = list(signed_bounds)
-        selection["parent_signed_bounds_mn"] = list(parent_signed_bounds)
+        selection["parent_signed_bounds_mn"] = list(parent_bounds)
     return (active_modes, tuple(active_rows), active_sha), selection, indices
 
 

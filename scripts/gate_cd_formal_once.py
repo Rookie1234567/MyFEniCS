@@ -58,6 +58,16 @@ _MATH_THREAD_ENV = {
     "BLIS_NUM_THREADS",
     "NUMEXPR_NUM_THREADS",
 }
+_GATE_CD_SIGNED_SELECTION_RESIDUE = {
+    "attempt_id": "20261102T151803.010130Z",
+    "source_commit": "6eeb980f5ac5f2e6ce285f7b98f95dbd9864e259",
+    "service_unit": "task40-gate-cd-m8n14-p32-6eeb980f-d57fa6d1.service",
+    "invocation_id": "6ed350f3cae74627b422f72940ced056",
+    "journal_main_exit_status": 3,
+    "journal_main_exit_text": "3/NOTIMPLEMENTED",
+    "journal_unit_result": "exit-code",
+    "worker_exit_status": 4,
+}
 
 
 def sha256_file(path: str | Path) -> str:
@@ -637,6 +647,84 @@ def _verify_prelaunch_output_parent(
                 or any(name.startswith("numerical_output/") for name in expected_file_names)
             ):
                 raise ValueError("mesh-setup failure residue lacks exact terminal evidence")
+        elif classification == "worker_failed_gate_cd_signed_mode_selection":
+            prior_service = record.get("prior_service")
+            historical = _GATE_CD_SIGNED_SELECTION_RESIDUE
+            live_capture_path = Path(
+                prior_service.get("live_capture_path", "")
+                if isinstance(prior_service, dict)
+                else ""
+            )
+            start_receipt_path = Path(
+                prior_service.get("start_receipt_path", "")
+                if isinstance(prior_service, dict)
+                else ""
+            )
+            live_capture_sha256 = (
+                prior_service.get("live_capture_sha256")
+                if isinstance(prior_service, dict)
+                else None
+            )
+            start_receipt_sha256 = (
+                prior_service.get("start_receipt_sha256")
+                if isinstance(prior_service, dict)
+                else None
+            )
+            if (
+                attempt_id != historical["attempt_id"]
+                or prior_source != historical["source_commit"]
+                or not isinstance(prior_service, dict)
+                or prior_service.get("unit") != historical["service_unit"]
+                or prior_service.get("invocation_id") != historical["invocation_id"]
+                or prior_service.get("observed_after_gc") is not True
+                or prior_service.get("active_state_after_gc") != "inactive"
+                or prior_service.get("sub_state_after_gc") != "dead"
+                or prior_service.get("journal_main_exit_status")
+                != historical["journal_main_exit_status"]
+                or prior_service.get("journal_main_exit_text")
+                != historical["journal_main_exit_text"]
+                or prior_service.get("journal_unit_result")
+                != historical["journal_unit_result"]
+                or prior_service.get("worker_exit_status")
+                != historical["worker_exit_status"]
+                or prior_service.get("n_restarts") != 0
+                or not live_capture_path.is_absolute()
+                or not start_receipt_path.is_absolute()
+                or not isinstance(live_capture_sha256, str)
+                or len(live_capture_sha256) != 64
+                or not isinstance(start_receipt_sha256, str)
+                or len(start_receipt_sha256) != 64
+                or sha256_file(live_capture_path) != live_capture_sha256
+                or sha256_file(start_receipt_path) != start_receipt_sha256
+            ):
+                raise ValueError(
+                    "signed-selection residue prior systemd identity differs from the exact failed run"
+                )
+            required_selection_files = required_files | {
+                "exact_cache_runtime_contract.json",
+                "gate_cd_runtime_environment.json",
+                "p6_condensed_direct_summary.json",
+                "stages.jsonl",
+                "task40_gate-cd_m8n64_finite_parent_parent_mode_manifest.json",
+                "task40_m8n64_active_mode_manifest.json",
+                "task40_m8n64_mode_index_map.json",
+                "workflow_phase.json",
+                "workstation_isolation.json",
+                "watchdog/resources.jsonl",
+                "watchdog/summary.json",
+                "watchdog/worker.log",
+            }
+            if (
+                expected_file_names != required_selection_files
+                or expected_dir_names != {"numerical_output", "watchdog"}
+                or any(
+                    name.startswith("numerical_output/")
+                    for name in expected_file_names
+                )
+            ):
+                raise ValueError(
+                    "signed-selection failure residue must match its exact file/directory set"
+                )
         else:
             raise ValueError("prelaunch residue classification is unsupported")
 
@@ -701,7 +789,7 @@ def _verify_prelaunch_output_parent(
                 or summary.get("resource_authority", {}).get("status") != "not_sampled"
             ):
                 raise ValueError("bootstrap residue is not the recorded non-FE launcher failure")
-        else:
+        elif classification == "worker_failed_gate_cd_mesh_setup":
             workflow = _load_json(attempt_dir / "workflow_phase.json")
             direct_summary = _load_json(
                 attempt_dir / "p6_condensed_direct_summary.json"
@@ -730,6 +818,112 @@ def _verify_prelaunch_output_parent(
                 or direct_summary.get("p4_operator") != "NOT_BUILT"
             ):
                 raise ValueError("mesh-setup residue is not the exact cleared pre-matrix failure")
+        else:
+            workflow = _load_json(attempt_dir / "workflow_phase.json")
+            direct_summary = _load_json(
+                attempt_dir / "p6_condensed_direct_summary.json"
+            )
+            watchdog = _load_json(attempt_dir / "watchdog/summary.json")
+            authority = summary.get("resource_authority", {})
+            facts = workflow.get("facts", {})
+            mesh = direct_summary.get("mesh_evidence", {})
+            mode_inventory = direct_summary.get("mode_inventory", {})
+            service = record.get("prior_service")
+            stages = [
+                json.loads(line)
+                for line in (attempt_dir / "stages.jsonl")
+                .read_text(encoding="utf-8")
+                .splitlines()
+                if line.strip()
+            ]
+            stage_names = [item.get("stage") for item in stages]
+            expected_stages = [
+                "workflow_started",
+                "p6_direct_resolved_profile_bound",
+                "p6_direct_mesh_setup_started",
+                "p6_direct_actual_mesh_qa_complete",
+                "p6_direct_gate_cd_finite_mode_identity_complete",
+                "p6_direct_mode_inventory_complete",
+                "physical_mode_inventory_reused",
+                "TASK40_GATE_CD_M8N14_P6_DIRECT_M8N64_FAILED",
+            ]
+            expected_failure = "operator selection policy is unsupported"
+            if (
+                not isinstance(service, dict)
+                or not isinstance(service.get("unit"), str)
+                or not service.get("unit", "").endswith(".service")
+                or not isinstance(service.get("invocation_id"), str)
+                or len(service.get("invocation_id", "")) != 32
+                or any(
+                    character not in "0123456789abcdef"
+                    for character in service.get("invocation_id", "")
+                )
+                or service.get("observed_after_gc") is not True
+                or service.get("active_state_after_gc") != "inactive"
+                or service.get("sub_state_after_gc") != "dead"
+                or service.get("journal_main_exit_status") != 3
+                or service.get("journal_main_exit_text") != "3/NOTIMPLEMENTED"
+                or service.get("journal_unit_result") != "exit-code"
+                or service.get("worker_exit_status") != 4
+                or service.get("n_restarts") != 0
+                or manifest.get("status") != "finished"
+                or manifest.get("exit_status") != 4
+                or manifest.get("result_classification") != "WORKER_FAILED"
+                or summary.get("status") != "finished"
+                or summary.get("exit_status") != 4
+                or summary.get("result_classification") != "WORKER_FAILED"
+                or authority.get("classification") != "WORKER_FAILED"
+                or authority.get("descendants_cleared") is not True
+                or authority.get("remaining_child_pids") != []
+                or watchdog.get("classification") != "WORKER_FAILED"
+                or watchdog.get("descendants_cleared") is not True
+                or watchdog.get("remaining_child_pids") != []
+                or workflow.get("phase") != "setup"
+                or facts.get("failed_stage") != "physical_mode_inventory_reused"
+                or facts.get("exception_type") != "ValueError"
+                or facts.get("exception_message") != expected_failure
+                or direct_summary.get("status") != "FAILED"
+                or direct_summary.get("result_classification")
+                != "TASK40_GATE_CD_M8N14_P6_DIRECT_M8N64_FAILED"
+                or direct_summary.get("run_id") != expected_identity["run_id"]
+                or direct_summary.get("profile")
+                != expected_identity["profile_identity"]
+                or direct_summary.get("source_sha") != prior_source
+                or direct_summary.get("failed_stage")
+                != "physical_mode_inventory_reused"
+                or direct_summary.get("failed_phase") != "setup"
+                or direct_summary.get("exception_type") != "ValueError"
+                or direct_summary.get("exception_message") != expected_failure
+                or direct_summary.get("full_dtn_status")
+                != "FULL_DTN_NOT_VERIFIED"
+                or mode_inventory.get("active_mode_count") != 1088
+                or mode_inventory.get("active_mode_sha256")
+                != "333e201cd5bd368a6f1a70a02949ff3099fdb2c8f6c05e93fc419a77430be353"
+                or mesh.get("status") != "PASS"
+                or mesh.get("scope") != "LIVE_MAPPED_MESH_AND_P6_SPACE_NO_MATRIX_OR_FACTOR"
+                or mesh.get("global_matrix_built") is not False
+                or mesh.get("factor_built") is not False
+                or direct_summary.get("outer_ksp") != "NOT_BUILT"
+                or direct_summary.get("p4_factor") != "NOT_BUILT"
+                or direct_summary.get("p4_operator") != "NOT_BUILT"
+                or stage_names != expected_stages
+                or stages[3].get("facts", {}).get("status") != "PASS"
+                or stages[5].get("facts", {}).get("active_mode_count") != 1088
+                or stages[5].get("facts", {}).get("active_mode_sha256")
+                != mode_inventory.get("active_mode_sha256")
+                or stages[6].get("facts", {}).get("mode_count") != 1088
+                or stages[6].get("facts", {}).get("mode_sha256")
+                != mode_inventory.get("active_mode_sha256")
+                or stages[7].get("facts", {}).get("failed_stage")
+                != "physical_mode_inventory_reused"
+                or stages[7].get("facts", {}).get("exception_type")
+                != "ValueError"
+                or stages[7].get("facts", {}).get("exception_message")
+                != expected_failure
+            ):
+                raise ValueError(
+                    "signed-selection residue is not the exact cleared pre-carrier failure"
+                )
 
         reviewed_attempts.append(
             {

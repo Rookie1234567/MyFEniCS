@@ -80,6 +80,11 @@ def test_loader_binds_exact_1088_mode_profile_without_finite_dtn_claim():
 
 
 def test_actual_mode_objects_select_the_parent_ordered_signed_subrectangle(monkeypatch):
+    from src.solvers import fullspace_same_mesh_hcurl_pmg_physical as physical_action
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        _expected_operator_parent_indices,
+    )
+
     specification = load_and_resolve(INPUT)
     payload = specification.as_jsonable()
     route = _direct_run_contract(PROFILE)
@@ -115,7 +120,16 @@ def test_actual_mode_objects_select_the_parent_ordered_signed_subrectangle(monke
     def manifest_builder(modes, _cfg):
         assert len(modes) == 1088
         assert all(-8 <= int(mode.m) <= 8 and -14 <= int(mode.n) <= 1 for mode in modes)
-        return tuple({"mode_index": index} for index, _mode in enumerate(modes)), b"", ACTIVE_SHA
+        return tuple(
+            {
+                "mode_index": index,
+                "side": str(mode.side),
+                "m": int(mode.m),
+                "n": int(mode.n),
+                "polarization": str(mode.polarization),
+            }
+            for index, mode in enumerate(modes)
+        ), b"", ACTIVE_SHA
 
     manifest_module.build_ordered_mode_manifest = manifest_builder
     monkeypatch.setitem(sys.modules, "src.solvers.fullspace_dtn_action", manifest_module)
@@ -127,9 +141,66 @@ def test_actual_mode_objects_select_the_parent_ordered_signed_subrectangle(monke
     assert active[2] == ACTIVE_SHA
     assert selection["selected_parent_indices_sha256"] == INDICES_SHA
     assert selection["selected_signed_keys_sha256"] == KEYS_SHA
+    assert selection["active_signed_bounds_mn"] == [-8, 8, -14, 1]
+    assert selection["parent_signed_bounds_mn"] == [-8, 8, -64, 1]
     assert len(indices) == 1088
+    assert _expected_operator_parent_indices(parent_rows, selection) == indices
     assert sum(mode.propagating for mode in active[0]) == 960
     assert sum(mode.power_per_unit_amplitude > 0 for mode in active[0]) == 1026
+
+    invalid_signed_bounds = dict(selection)
+    invalid_signed_bounds["active_signed_bounds_mn"] = [-8, 8, -14, 14]
+    with pytest.raises(ValueError, match="exceed its parent"):
+        _expected_operator_parent_indices(parent_rows, invalid_signed_bounds)
+
+    carrier_calls = []
+
+    class CarrierEntryReached(Exception):
+        pass
+
+    def carrier_entry(modes, _assemblers, _mpc, _cfg, **kwargs):
+        carrier_calls.append((tuple(modes), kwargs))
+        raise CarrierEntryReached
+
+    manifest_module.build_dynamic_mode_inventory = lambda _cfg: None
+    manifest_module.build_fullspace_dtn_action = lambda *_a, **_k: None
+    manifest_module.build_fullspace_dtn_carrier_from_surface = carrier_entry
+    monkeypatch.setattr(
+        physical_action, "_surface_assemblers", lambda *_a, **_k: {}
+    )
+    setup = {
+        "spaces": {6: object()},
+        "floquets": {6: types.SimpleNamespace(mpc=object())},
+        "mesh_data": object(),
+    }
+    with pytest.raises(CarrierEntryReached):
+        physical_action.build_same_mesh_physical_action(
+            setup,
+            cfg,
+            6,
+            mode_inventory=active,
+            quadrature_mode_inventory=(parent_modes, parent_rows, PARENT_SHA),
+            operator_selection=selection,
+            selected_parent_indices=indices,
+        )
+    assert len(carrier_calls) == 1
+    assert carrier_calls[0][1]["operator_selection"] == selection
+    assert carrier_calls[0][1]["parent_mode_rows"] == parent_rows
+    assert carrier_calls[0][1]["selected_parent_indices"] == indices
+
+    bad_index_identity = dict(selection)
+    bad_index_identity["selected_parent_indices_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="parent-index hash differs"):
+        physical_action.build_same_mesh_physical_action(
+            setup,
+            cfg,
+            6,
+            mode_inventory=active,
+            quadrature_mode_inventory=(parent_modes, parent_rows, PARENT_SHA),
+            operator_selection=bad_index_identity,
+            selected_parent_indices=indices,
+        )
+    assert len(carrier_calls) == 1
 
 
 def test_execution_plan_uses_one_mpi_rank_with_32_exact_dynamic_cpus(tmp_path):

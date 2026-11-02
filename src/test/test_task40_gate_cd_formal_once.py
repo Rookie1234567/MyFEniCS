@@ -369,6 +369,204 @@ def _make_bootstrap_residue(tmp_path):
     return output_parent, package, expected_identity
 
 
+def _make_signed_mode_selection_residue(tmp_path):
+    import hashlib
+
+    from scripts.gate_cd_formal_once import _GATE_CD_SIGNED_SELECTION_RESIDUE
+
+    output_parent = tmp_path / "output-parent"
+    attempt_id = _GATE_CD_SIGNED_SELECTION_RESIDUE["attempt_id"]
+    attempt = output_parent / attempt_id
+    (attempt / "numerical_output").mkdir(parents=True)
+    (attempt / "watchdog").mkdir()
+    profile = "task40_gate_cd_0p7_mapped_m8n14_p6_direct_parallel32_v1"
+    run_id = profile
+    prior_source = _GATE_CD_SIGNED_SELECTION_RESIDUE["source_commit"]
+    input_path = str((tmp_path / "input.dat").resolve())
+    input_bytes = b"Gate-CD M8N14 signed-window input\n"
+    input_sha = hashlib.sha256(input_bytes).hexdigest()
+    physical_sha = "a" * 64
+    resolved = {
+        "run_id": run_id,
+        "solver": {"native_capacity_profile": profile},
+        "provenance": {
+            "input_sha256": input_sha,
+            "physical_model_sha256": physical_sha,
+            "expected_output_parent": str(output_parent.resolve()),
+        },
+    }
+    resolved_bytes = (json.dumps(resolved, sort_keys=True, indent=2) + "\n").encode()
+    resolved_sha = hashlib.sha256(resolved_bytes).hexdigest()
+    manifest = {
+        "run_id": run_id,
+        "source_sha": prior_source,
+        "input_path": input_path,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "native_capacity_profile_identity": profile,
+        "output_directory": str(attempt.resolve()),
+        "status": "finished",
+        "exit_status": 4,
+        "result_classification": "WORKER_FAILED",
+    }
+    summary = {
+        "run_id": run_id,
+        "status": "finished",
+        "exit_status": 4,
+        "result_classification": "WORKER_FAILED",
+        "output_directory": str(attempt.resolve()),
+        "numerical_output_directory": str((attempt / "numerical_output").resolve()),
+        "resource_authority": {
+            "classification": "WORKER_FAILED",
+            "descendants_cleared": True,
+            "remaining_child_pids": [],
+            "leader_exit_code": 4,
+        },
+    }
+    workflow = {
+        "phase": "setup",
+        "facts": {
+            "failed_stage": "physical_mode_inventory_reused",
+            "exception_type": "ValueError",
+            "exception_message": "operator selection policy is unsupported",
+        },
+    }
+    mode_inventory = {
+        "active_mode_count": 1088,
+        "active_mode_sha256": (
+            "333e201cd5bd368a6f1a70a02949ff3099fdb2c8f6c05e93fc419a77430be353"
+        ),
+    }
+    direct_summary = {
+        "status": "FAILED",
+        "result_classification": "TASK40_GATE_CD_M8N14_P6_DIRECT_M8N64_FAILED",
+        "run_id": run_id,
+        "profile": profile,
+        "source_sha": prior_source,
+        "failed_phase": "setup",
+        "failed_stage": "physical_mode_inventory_reused",
+        "exception_type": "ValueError",
+        "exception_message": "operator selection policy is unsupported",
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "mode_inventory": mode_inventory,
+        "mesh_evidence": {
+            "status": "PASS",
+            "scope": "LIVE_MAPPED_MESH_AND_P6_SPACE_NO_MATRIX_OR_FACTOR",
+            "global_matrix_built": False,
+            "factor_built": False,
+        },
+        "outer_ksp": "NOT_BUILT",
+        "p4_factor": "NOT_BUILT",
+        "p4_operator": "NOT_BUILT",
+    }
+    stages = [
+        {"stage": "workflow_started", "facts": {}},
+        {"stage": "p6_direct_resolved_profile_bound", "facts": {}},
+        {"stage": "p6_direct_mesh_setup_started", "facts": {}},
+        {"stage": "p6_direct_actual_mesh_qa_complete", "facts": {"status": "PASS"}},
+        {"stage": "p6_direct_gate_cd_finite_mode_identity_complete", "facts": {}},
+        {"stage": "p6_direct_mode_inventory_complete", "facts": mode_inventory},
+        {
+            "stage": "physical_mode_inventory_reused",
+            "facts": {
+                "mode_count": 1088,
+                "mode_sha256": mode_inventory["active_mode_sha256"],
+            },
+        },
+        {
+            "stage": "TASK40_GATE_CD_M8N14_P6_DIRECT_M8N64_FAILED",
+            "facts": workflow["facts"],
+        },
+    ]
+    watchdog = {
+        "classification": "WORKER_FAILED",
+        "descendants_cleared": True,
+        "remaining_child_pids": [],
+    }
+    files = {
+        "exact_cache_runtime_contract.json": b'{"schema":"exact-cache-test"}\n',
+        "gate_cd_runtime_environment.json": b'{"schema":"runtime-env-test"}\n',
+        "input_original.dat": input_bytes,
+        "input_sha256.txt": f"{input_sha}\n".encode(),
+        "p6_condensed_direct_summary.json": json.dumps(direct_summary).encode() + b"\n",
+        "physical_model_sha256.txt": f"{physical_sha}\n".encode(),
+        "resolved_config.json": resolved_bytes,
+        "run_manifest.json": json.dumps(manifest).encode() + b"\n",
+        "run_summary.json": json.dumps(summary).encode() + b"\n",
+        "source_sha.txt": f"{prior_source}\n".encode(),
+        "stages.jsonl": b"".join(
+            json.dumps(item).encode() + b"\n" for item in stages
+        ),
+        "task40_gate-cd_m8n64_finite_parent_parent_mode_manifest.json": b"{}\n",
+        "task40_m8n64_active_mode_manifest.json": b"{}\n",
+        "task40_m8n64_mode_index_map.json": b"{}\n",
+        "workflow_phase.json": json.dumps(workflow).encode() + b"\n",
+        "workstation_isolation.json": b'{"schema":"isolation-test"}\n',
+        "watchdog/resources.jsonl": b'{"sample":1}\n',
+        "watchdog/summary.json": json.dumps(watchdog).encode() + b"\n",
+        "watchdog/worker.log": b"exact signed-mode selector error\n",
+    }
+    for relative, content in files.items():
+        (attempt / relative).write_bytes(content)
+
+    live_capture_path = tmp_path / "live-capture.json"
+    start_receipt_path = tmp_path / "start-receipt.json"
+    live_capture_path.write_text('{"invocation_id":"captured"}\n')
+    start_receipt_path.write_text('{"submitted":true}\n')
+    prior_service = {
+        "unit": _GATE_CD_SIGNED_SELECTION_RESIDUE["service_unit"],
+        "invocation_id": _GATE_CD_SIGNED_SELECTION_RESIDUE["invocation_id"],
+        "observed_after_gc": True,
+        "active_state_after_gc": "inactive",
+        "sub_state_after_gc": "dead",
+        "journal_main_exit_status": 3,
+        "journal_main_exit_text": "3/NOTIMPLEMENTED",
+        "journal_unit_result": "exit-code",
+        "worker_exit_status": 4,
+        "n_restarts": 0,
+        "live_capture_path": str(live_capture_path.resolve()),
+        "live_capture_sha256": hashlib.sha256(live_capture_path.read_bytes()).hexdigest(),
+        "start_receipt_path": str(start_receipt_path.resolve()),
+        "start_receipt_sha256": hashlib.sha256(start_receipt_path.read_bytes()).hexdigest(),
+    }
+    package = {
+        "profile_identity": profile,
+        "run_id": run_id,
+        "source_commit": "d" * 40,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "prelaunch_output_residue_allowlist": {
+            "schema": "task40.gate_cd.prelaunch_output_residue_allowlist.v2",
+            "attempts": [
+                {
+                    "attempt_id": attempt_id,
+                    "attempt_directory": str(attempt.resolve()),
+                    "prior_source_commit": prior_source,
+                    "classification": "worker_failed_gate_cd_signed_mode_selection",
+                    "files": {
+                        relative: hashlib.sha256(content).hexdigest()
+                        for relative, content in files.items()
+                    },
+                    "directories": ["numerical_output", "watchdog"],
+                    "prior_service": prior_service,
+                }
+            ],
+        },
+    }
+    expected_identity = {
+        "profile_identity": profile,
+        "run_id": run_id,
+        "input_path": input_path,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "resolved_output_parent_absolute": str(output_parent.resolve()),
+    }
+    return output_parent, package, expected_identity
+
+
 def test_prelaunch_output_parent_accepts_only_exact_hashed_bootstrap_residue(tmp_path):
     output_parent, package, expected_identity = _make_bootstrap_residue(tmp_path)
     result = _verify_prelaunch_output_parent(
@@ -396,6 +594,57 @@ def test_prelaunch_output_parent_rejects_identity_drift(tmp_path):
     output_parent, package, expected_identity = _make_bootstrap_residue(tmp_path)
     expected_identity["run_id"] = "different-run"
     with pytest.raises(ValueError, match="identity differs"):
+        _verify_prelaunch_output_parent(output_parent, package, expected_identity)
+
+
+def test_prelaunch_output_parent_accepts_only_exact_signed_mode_selection_failure(tmp_path):
+    import hashlib
+
+    output_parent, package, expected_identity = _make_signed_mode_selection_residue(
+        tmp_path / "accepted"
+    )
+    result = _verify_prelaunch_output_parent(
+        output_parent, package, expected_identity
+    )
+    assert result["status"] == "accepted_exact_prelaunch_residue_set"
+    record = result["residues"][0]
+    assert record["attempt_id"] == "20261102T151803.010130Z"
+    assert record["classification"] == "worker_failed_gate_cd_signed_mode_selection"
+    assert len(record["files"]) == 19
+    assert record["directories"] == ["numerical_output", "watchdog"]
+    assert record["prior_service"]["journal_main_exit_status"] == 3
+    assert record["prior_service"]["worker_exit_status"] == 4
+    assert record["prior_service"]["observed_after_gc"] is True
+
+    output_parent, package, expected_identity = _make_signed_mode_selection_residue(
+        tmp_path / "wrong-classification"
+    )
+    package["prelaunch_output_residue_allowlist"]["attempts"][0][
+        "classification"
+    ] = "worker_failed_gate_cd_mesh_setup"
+    with pytest.raises(ValueError, match="mesh-setup residue"):
+        _verify_prelaunch_output_parent(output_parent, package, expected_identity)
+
+    output_parent, package, expected_identity = _make_signed_mode_selection_residue(
+        tmp_path / "wrong-stage"
+    )
+    attempt = output_parent / "20261102T151803.010130Z"
+    workflow_path = attempt / "workflow_phase.json"
+    workflow = json.loads(workflow_path.read_text())
+    workflow["facts"]["failed_stage"] = "p6_direct_mesh_setup_started"
+    workflow_path.write_text(json.dumps(workflow) + "\n")
+    package["prelaunch_output_residue_allowlist"]["attempts"][0]["files"][
+        "workflow_phase.json"
+    ] = hashlib.sha256(workflow_path.read_bytes()).hexdigest()
+    with pytest.raises(ValueError, match="exact cleared pre-carrier failure"):
+        _verify_prelaunch_output_parent(output_parent, package, expected_identity)
+
+    output_parent, package, expected_identity = _make_signed_mode_selection_residue(
+        tmp_path / "extra-entry"
+    )
+    attempt = output_parent / "20261102T151803.010130Z"
+    (attempt / "unexpected.json").write_text("{}\n")
+    with pytest.raises(ValueError, match="missing, extra, or unlisted entries"):
         _verify_prelaunch_output_parent(output_parent, package, expected_identity)
 
 
@@ -792,3 +1041,95 @@ def test_runtime_cpu_affinity_comes_from_committed_runtime_lease(tmp_path, monke
     assert result["affinity_authority"] == (
         "committed_runtime_one_shot_reservation_not_fresh_sample"
     )
+
+
+def test_live_capture_accepts_bound_exact_cache_values_and_rejects_drift(tmp_path):
+    import copy
+    import hashlib
+
+    worker_cpus = list(range(32))
+    attempt_id = "gcd1088-live-capture-test"
+    template_sha = "a" * 64
+    cache_root = (tmp_path / "attempt-cache").resolve()
+    contract = {
+        "attempt_id": attempt_id,
+        "worker_cpus": worker_cpus,
+        "template_sha256": template_sha,
+        "attempt_cache_root": str(cache_root),
+        "tensor_root": str(cache_root / "tensor"),
+        "carrier_root": str(cache_root / "carrier"),
+    }
+    contract_path = tmp_path / "exact-cache-contract.json"
+    contract_raw = json.dumps(contract, sort_keys=True).encode() + b"\n"
+    contract_path.write_bytes(contract_raw)
+    contract_sha = hashlib.sha256(contract_raw).hexdigest()
+    environment = {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "BLIS_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "_MYFENICS_NATIVE_QUALIFIED_ACTIVATION": "1",
+        "TASK39EXTRA_INT64_ACTIVATION": "1",
+        "TASK39EXTRA_PORD64_ACTIVATION": "1",
+        "TASK40_EXACT_CACHE_ATTEMPT_ID": attempt_id,
+        "TASK40_EXACT_CACHE_CONTRACT": str(contract_path.resolve()),
+        "TASK40_EXACT_CACHE_CONTRACT_SHA256": contract_sha,
+        "TASK40_EXACT_CACHE_RUNTIME_TEMPLATE_SHA256": template_sha,
+        "TASK40_EXACT_CACHE_WORKER_CPUS": json.dumps(
+            worker_cpus, separators=(",", ":")
+        ),
+    }
+    capture = {
+        "unit": "gate-cd-test.service",
+        "unit_properties": {
+            "MainPID": "101",
+            "InvocationID": "b" * 32,
+            "ControlGroup": "/user.slice/test.service",
+        },
+        "main_pid_identity": {"ppid": 81},
+        "roles": {
+            "root": [
+                {"pid": 101, "ppid": 81, "cwd": str(tmp_path.resolve())}
+            ],
+            "mpi": [{"pid": 102, "ppid": 101}],
+            "worker": [
+                {
+                    "pid": 103,
+                    "ppid": 102,
+                    "cpus_allowed_list": "0-31",
+                    "threads": [{"cpus_allowed_list": "0-31"}],
+                    "libpetsc_mappings": [
+                        "/qualified/pord64-overlay/petsc/lib/libpetsc.so"
+                    ],
+                    "numa_maps_summary": {"interleave_0_1_vmas": 1},
+                    "environment": environment,
+                }
+            ],
+        },
+    }
+    package = {
+        "attempt_id": attempt_id,
+        "exact_cache_contract": {"template_sha256": template_sha},
+    }
+    execution_helper._require_live_capture(
+        capture, tmp_path, worker_cpus, 1, package=package
+    )
+
+    bad_affinity = copy.deepcopy(capture)
+    bad_affinity["roles"]["worker"][0]["environment"][
+        "TASK40_EXACT_CACHE_WORKER_CPUS"
+    ] = json.dumps(worker_cpus[:-1], separators=(",", ":"))
+    with pytest.raises(ValueError, match="lease/template environment differs"):
+        execution_helper._require_live_capture(
+            bad_affinity, tmp_path, worker_cpus, 1, package=package
+        )
+
+    bad_contract = copy.deepcopy(capture)
+    bad_contract["roles"]["worker"][0]["environment"][
+        "TASK40_EXACT_CACHE_CONTRACT_SHA256"
+    ] = "f" * 64
+    with pytest.raises(ValueError, match="runtime contract hash differs"):
+        execution_helper._require_live_capture(
+            bad_contract, tmp_path, worker_cpus, 1, package=package
+        )
