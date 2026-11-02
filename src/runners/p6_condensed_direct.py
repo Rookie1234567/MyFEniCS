@@ -192,12 +192,12 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
 
     from src.io.native_capacity_profile import (
         DISPERSION_FLAT_P6_PROFILES,
+        TASK40_GATE_CD_FORMAL_PROFILES,
         TASK40_PHI90_D07C_PROFILES,
         TASK40_PHI90_D5_PROFILES,
         TASK40_PHI90_D5C_PROFILES,
         TASK40_PHI90_D15_PROFILES,
         TASK40_PHI90_H15_PROFILES,
-        TASK40_GATE_CD_FORMAL_PROFILES,
         TASK40_PHI90_P6_DIRECT_PROFILES,
         V6_F5_P6_DIRECT_FULL600_PROFILE,
         V6_F5_P6_DIRECT_N0_PROFILE,
@@ -3212,7 +3212,9 @@ def run_p6_condensed_direct(
         route = _direct_run_contract(str(profile_facts["identity"]))
         exact_cache_options = None
         exact_cache_path = os.environ.get("TASK40_EXACT_CACHE_CONTRACT")
-        from src.runners.task40_gate_cd_formal_admission import GATE_CD_PARALLEL32_PROFILE
+        from src.runners.task40_gate_cd_formal_admission import (
+            GATE_CD_PARALLEL32_PROFILE,
+        )
         if (
             profile_facts["identity"] == GATE_CD_PARALLEL32_PROFILE
             and not exact_cache_path
