@@ -29,6 +29,9 @@ GATE_CD_M8N2_PROFILE = "task40_gate_cd_0p7_mapped_m8n2_p6_direct_v1"
 GATE_CD_SIGNED_SUBRECTANGLE_PROFILES = frozenset(
     {GATE_CD_M8N6_PROFILE, GATE_CD_M8N2_PROFILE}
 )
+GATE_CD_PARALLEL32_PROFILES = frozenset(
+    {GATE_CD_PARALLEL32_PROFILE, *GATE_CD_SIGNED_SUBRECTANGLE_PROFILES}
+)
 GATE_CD_FORMAL_PROFILES = frozenset(
     {
         GATE_CD_FORMAL_PROFILE,
@@ -37,6 +40,10 @@ GATE_CD_FORMAL_PROFILES = frozenset(
     }
 )
 GATE_CD_PARALLEL32_WORKERS = 32
+from src.runners.task40_gate_cd_formal_admission import (
+    GATE_CD_RAW_POOL_LOCK_PATH,
+    GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+)
 
 _SERVICE_PROPERTIES = {
     "Type": "exec",
@@ -187,7 +194,7 @@ def _require_final_package(package: dict) -> None:
     profile = package.get("profile_identity", GATE_CD_FORMAL_PROFILE)
     if profile not in GATE_CD_FORMAL_PROFILES:
         raise ValueError("package does not name a supported exact Gate-CD profile")
-    if profile == GATE_CD_PARALLEL32_PROFILE:
+    if profile in GATE_CD_PARALLEL32_PROFILES:
         execution = package.get("execution_contract")
         exact_cache = package.get("exact_cache_contract")
         if (
@@ -199,8 +206,16 @@ def _require_final_package(package: dict) -> None:
             or execution.get("global_lu") != "serial_single_mpi_rank_v1"
             or not isinstance(exact_cache, dict)
             or exact_cache.get("worker_count") != GATE_CD_PARALLEL32_WORKERS
+            or exact_cache.get("profile_identity") != profile
+            or exact_cache.get("run_id") != package.get("run_id")
             or exact_cache.get("operator_identity")
             != {"scalar": "complex128", "q": 21, "degree": 6}
+            or exact_cache.get("raw_tensor_pool_scheduler") != {
+                "policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+                "lock_path": GATE_CD_RAW_POOL_LOCK_PATH,
+                "serialized_region": "raw_tensor_execution.run_batch_only",
+                "whole_run_serialization": False,
+            }
             or package.get("full_dtn_status") != "FULL_DTN_NOT_VERIFIED"
         ):
             raise ValueError("Gate-CD M8N14 execution/cache contract is malformed")
@@ -249,10 +264,7 @@ def _validate_live_profile_contract(package: dict, facts: dict) -> None:
         is not cache.get("mapped_geometry_translation_invariant")
     ):
         raise ValueError("live route cache identity differs from package/profile")
-    if package.get("profile_identity") in {
-        GATE_CD_PARALLEL32_PROFILE,
-        *GATE_CD_SIGNED_SUBRECTANGLE_PROFILES,
-    }:
+    if package.get("profile_identity") in GATE_CD_PARALLEL32_PROFILES:
         mode = options.get("mode_selection", {})
         operator = package.get("finite_operator", {})
         checks = {
@@ -284,6 +296,55 @@ def _validate_live_profile_contract(package: dict, facts: dict) -> None:
             raise ValueError(
                 f"Gate-CD {mode.get('reference_mode_label')} finite operator differs "
                 f"from live profile: {mismatches}"
+            )
+    if package.get("profile_identity") in GATE_CD_PARALLEL32_PROFILES:
+        execution = package.get("execution_contract", {})
+        exact_cache = package.get("exact_cache_contract", {})
+        native = facts.get("native_execution", {})
+        required = {
+            "worker_cpu_count": 32,
+            "mpi_size": 1,
+            "math_threads": 1,
+            "raw_tensor_execution": "exact_cache_exec_tensor_workers_v1",
+            "global_assembly": "serial_single_mpi_rank_v1",
+            "global_lu": "serial_single_mpi_rank_v1",
+        }
+        observed = {
+            "worker_cpu_count": native.get("worker_cpu_count"),
+            "mpi_size": native.get("mpi_size"),
+            "math_threads": native.get("math_threads"),
+            "raw_tensor_execution": native.get("raw_tensor_execution"),
+            "lu_execution": native.get("lu_execution"),
+        }
+        expected_observed = {
+            "worker_cpu_count": 32,
+            "mpi_size": 1,
+            "math_threads": 1,
+            "raw_tensor_execution": "exact_cache_exec_tensor_workers_v1",
+            "lu_execution": "serial_single_mpi_rank_v1",
+        }
+        if (
+            execution != required
+            or observed != expected_observed
+            or exact_cache.get("worker_count") != 32
+            or exact_cache.get("profile_identity") != package.get("profile_identity")
+            or exact_cache.get("run_id") != package.get("run_id")
+            or exact_cache.get("operator_identity")
+            != {"scalar": "complex128", "q": 21, "degree": 6}
+            or exact_cache.get("raw_tensor_pool_scheduler")
+            != {
+                "policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+                "lock_path": GATE_CD_RAW_POOL_LOCK_PATH,
+                "serialized_region": "raw_tensor_execution.run_batch_only",
+                "whole_run_serialization": False,
+            }
+            or route.get("exact_cache_contract_required") is not True
+            or route.get("raw_tensor_worker_count") != 32
+            or route.get("exact_cache_source_policy")
+            != "clean_commit_and_resolved_payload_hash_bound_v1"
+        ):
+            raise ValueError(
+                "Gate-CD parallel32 package/profile execution or exact-cache identity differs"
             )
 
 
@@ -366,7 +427,7 @@ def _wait_for_runtime_cpu_reservation(
             raise ValueError("runtime worker CPU reservation is invalid")
         expected_worker_count = (
             GATE_CD_PARALLEL32_WORKERS
-            if package.get("profile_identity") == GATE_CD_PARALLEL32_PROFILE
+            if package.get("profile_identity") in GATE_CD_PARALLEL32_PROFILES
             else 1
         )
         if (
@@ -383,30 +444,47 @@ def _wait_for_runtime_cpu_reservation(
             raise ValueError("runtime supervisor/worker CPU reservation is invalid")
         if expected_worker_count == GATE_CD_PARALLEL32_WORKERS:
             topology = cpu.get("selected_topology")
-            excluded_cores = {
+            observed_active_cores = {
                 tuple(int(value) for value in row)
-                for row in cpu.get("excluded_active_solver_cores", ())
+                for row in cpu.get("observed_active_solver_cores", ())
+                if isinstance(row, list) and len(row) == 2
             }
+            candidate_rows = cpu.get("candidate_topology_and_load")
             if (
-                cpu.get("active_solver_affinity_avoidance") is not True
+                cpu.get("active_solver_core_avoidance_when_capacity_allows") is not True
                 or not isinstance(topology, list)
                 or len(topology) != GATE_CD_PARALLEL32_WORKERS + 1
                 or [int(row.get("cpu", -1)) for row in topology]
                 != [supervisor_cpu, *worker_cpus]
+                or not isinstance(candidate_rows, list)
             ):
-                raise ValueError("Gate-CD N14 runtime lease lacks its physical-core topology proof")
+                raise ValueError("Gate-CD parallel32 runtime lease lacks its sampled-core reservation proof")
             topology_cores = [
                 (int(row.get("package", -1)), int(row.get("core", -1)))
                 for row in topology
             ]
+            candidate_cores = {
+                (int(row.get("package", -1)), int(row.get("core", -1)))
+                for row in candidate_rows
+            }
+            inactive_count = len(candidate_cores - observed_active_cores)
+            fallback_required = inactive_count < GATE_CD_PARALLEL32_WORKERS + 1
+            selected_active_cores = sorted(set(topology_cores) & observed_active_cores)
+            reported_selected = sorted(
+                tuple(int(value) for value in row)
+                for row in cpu.get("selected_observed_active_solver_cores", ())
+            )
             if (
                 len(set(topology_cores)) != len(topology_cores)
-                or set(topology_cores) & excluded_cores
-                or set(worker_cpus) & {
-                    int(value) for value in cpu.get("excluded_active_solver_cpus", ())
-                }
+                or type(cpu.get("avoidance_fallback_used")) is not bool
+                or cpu.get("avoidance_fallback_used") is not fallback_required
+                or reported_selected != selected_active_cores
+                or (not fallback_required and selected_active_cores)
+                or (fallback_required and not selected_active_cores)
             ):
-                raise ValueError("Gate-CD N14 worker/supervisor overlaps an active solver core")
+                raise ValueError(
+                    "Gate-CD parallel32 CPU selection contradicts the sampled active-core capacity"
+                )
         return reservation, hashlib.sha256(raw).hexdigest(), scope_sha
 
 
@@ -428,8 +506,8 @@ def validate_package_sidecar(
         sidecar_profile is not None
         and sidecar_profile != package_profile
     ) or (
-        package_profile == GATE_CD_PARALLEL32_PROFILE
-        and sidecar_profile != GATE_CD_PARALLEL32_PROFILE
+        package_profile in GATE_CD_PARALLEL32_PROFILES
+        and sidecar_profile != package_profile
     ):
         raise ValueError("package/sidecar profile identity mismatch")
     if sidecar.get("package_sha256") != package_sha:
@@ -442,7 +520,7 @@ def validate_package_sidecar(
         raise ValueError("package/sidecar physical identity mismatch")
     if sidecar.get("resolved_config_sha256") != package.get("resolved_config_sha256"):
         raise ValueError("package/sidecar resolved identity mismatch")
-    if package.get("profile_identity") == GATE_CD_PARALLEL32_PROFILE:
+    if package.get("profile_identity") in GATE_CD_PARALLEL32_PROFILES:
         exact_cache = package.get("exact_cache_contract", {})
         template_path = Path(
             sidecar.get("exact_cache_template_path", "")
@@ -463,6 +541,8 @@ def validate_package_sidecar(
             template.get("source_sha") != package.get("source_commit")
             or template.get("resolved_payload_sha256")
             != package.get("resolved_payload_sha256")
+            or template.get("profile_identity") != package.get("profile_identity")
+            or template.get("run_id") != package.get("run_id")
             or template.get("worker_count") != GATE_CD_PARALLEL32_WORKERS
             or template.get("operator_identity")
             != {"scalar": "complex128", "q": 21, "degree": 6}
@@ -478,6 +558,13 @@ def validate_package_sidecar(
         if (
             scope.get("identity") != package.get("identity")
             or scope.get("attempt_id") != package.get("attempt_id")
+            or scope.get("raw_tensor_pool_scheduler")
+            != {
+                "policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+                "lock_path": GATE_CD_RAW_POOL_LOCK_PATH,
+                "serialized_region": "raw_tensor_execution.run_batch_only",
+                "whole_run_serialization": False,
+            }
             or scope.get("planned_systemd_user_unit") != sidecar.get("service_unit")
             or runtime_paths.get("attempt_cache_root")
             != sidecar.get("attempt_cache_root")
@@ -485,7 +572,7 @@ def validate_package_sidecar(
             or scope.get("cpu_policy", {}).get("worker_count")
             != GATE_CD_PARALLEL32_WORKERS
         ):
-            raise ValueError("M8N14 scope does not bind the exact package/sidecar/cache lease")
+            raise ValueError("Gate-CD parallel32 scope does not bind the exact package/sidecar/cache lease")
     return package, sidecar, package_sha, sidecar_sha
 
 
@@ -507,7 +594,7 @@ def _expected_identity(
     direct_route = _jsonable(
         native_profile_facts(profile)["campaign_authorization"]["direct_route"]
     )
-    if profile == GATE_CD_PARALLEL32_PROFILE:
+    if profile in GATE_CD_PARALLEL32_PROFILES:
         if (
             not isinstance(exact_cache_template_sha256, str)
             or len(exact_cache_template_sha256) != 64
@@ -1010,7 +1097,7 @@ def fresh_acceptance(
     _validate_live_profile_contract(package, facts)
     exact_cache_template_sha256 = (
         sidecar.get("exact_cache_template_sha256")
-        if profile == GATE_CD_PARALLEL32_PROFILE
+        if profile in GATE_CD_PARALLEL32_PROFILES
         else None
     )
     actual = _expected_identity(
@@ -1132,7 +1219,7 @@ def _validate_systemd_argv(sidecar: dict) -> list[str]:
             raise ValueError(f"sidecar launch environment differs for {key}")
         if f"--setenv={key}={expected}" not in argv:
             raise ValueError(f"systemd argv does not pass exact environment {key}")
-    if sidecar.get("profile_identity") == GATE_CD_PARALLEL32_PROFILE:
+    if sidecar.get("profile_identity") in GATE_CD_PARALLEL32_PROFILES:
         scope_path = Path(sidecar.get("scope_path", "")).resolve(strict=True)
         scope = _load_json(scope_path)
         exact_env = {
@@ -1561,7 +1648,7 @@ def submit_once(
             worker_cpus,
             int(package.get("math_threads", 1)),
         )
-        if package.get("profile_identity") == GATE_CD_PARALLEL32_PROFILE:
+        if package.get("profile_identity") in GATE_CD_PARALLEL32_PROFILES:
             _require_live_capture(*capture_arguments, package=package)
         else:
             _require_live_capture(*capture_arguments)

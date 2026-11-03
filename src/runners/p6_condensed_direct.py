@@ -387,6 +387,18 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
                 else "task40_phi90"
             ),
             "gate_cd_case": gate_cd_case,
+            "raw_tensor_execution": profile["campaign_authorization"]
+            .get("direct_route", {})
+            .get("raw_tensor_execution"),
+            "raw_tensor_worker_count": profile["campaign_authorization"]
+            .get("direct_route", {})
+            .get("raw_tensor_worker_count"),
+            "exact_cache_contract_required": profile["campaign_authorization"]
+            .get("direct_route", {})
+            .get("exact_cache_contract_required", False),
+            "exact_cache_source_policy": profile["campaign_authorization"]
+            .get("direct_route", {})
+            .get("exact_cache_source_policy"),
             "task40_mesh_plan_family": family_label,
             "task40_mesh_case": case_name,
             "task40_changed_axis": mesh_case["changed_axis"],
@@ -572,6 +584,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         )
         return route
 
+
     if profile_identity == V7_ANISO_N0_P6_DIRECT_PROFILE:
         return {
             "family": "v7_aniso_n0",
@@ -636,6 +649,20 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "summary_prefix": "v6_f5_p6_condensed_direct_n0",
         }
     raise ValueError(f"unsupported p6 condensed-direct profile: {profile_identity}")
+
+
+def _require_exact_cache_contract_for_profile(
+    profile_facts: Mapping[str, Any], exact_cache_path: str | None
+) -> None:
+    """Enforce the profile's explicit exact-cache requirement before assembly."""
+    route = _direct_run_contract(str(profile_facts.get("identity", "")))
+    required = route.get("exact_cache_contract_required") is True
+    if required and not exact_cache_path:
+        raise ValueError(
+            "Gate-CD parallel32 requires its lease-bound exact-cache contract"
+        )
+    if exact_cache_path and route.get("gate_cd_case") is not True:
+        raise ValueError("exact-cache opt-in is currently limited to Gate-CD")
 
 
 def _task40_gate_cd_volume_quadrature_metadata(
@@ -3217,24 +3244,19 @@ def run_p6_condensed_direct(
         route = _direct_run_contract(str(profile_facts["identity"]))
         exact_cache_options = None
         exact_cache_path = os.environ.get("TASK40_EXACT_CACHE_CONTRACT")
+        _require_exact_cache_contract_for_profile(profile_facts, exact_cache_path)
         from src.runners.task40_gate_cd_formal_admission import (
-            GATE_CD_PARALLEL32_PROFILE,
+            GATE_CD_PARALLEL32_PROFILES,
         )
-        if (
-            profile_facts["identity"] == GATE_CD_PARALLEL32_PROFILE
-            and not exact_cache_path
-        ):
-            raise ValueError("Gate-CD N14 requires its lease-bound exact-cache contract")
+
         if exact_cache_path:
-            if route.get("gate_cd_case") is not True:
-                raise ValueError("exact-cache opt-in is currently limited to Gate-CD")
             from .exact_cache_contract import load_exact_cache_contract
 
             expected_worker_cpus = None
             expected_attempt_id = None
             expected_template_sha256 = None
             expected_cache_root = None
-            if profile_facts["identity"] == GATE_CD_PARALLEL32_PROFILE:
+            if profile_facts["identity"] in GATE_CD_PARALLEL32_PROFILES:
                 try:
                     expected_worker_cpus = json.loads(
                         os.environ["TASK40_EXACT_CACHE_WORKER_CPUS"]
@@ -3260,6 +3282,8 @@ def run_p6_condensed_direct(
                 expected_attempt_id=expected_attempt_id,
                 expected_template_sha256=expected_template_sha256,
                 expected_cache_root=expected_cache_root,
+                expected_profile_identity=profile_facts["identity"],
+                expected_run_id=resolved_payload.get("identity", {}).get("run_id"),
             )
             summary["exact_cache_execution"] = exact_cache_options
         route.setdefault("sparse_cutoff_policy", "absolute_floor_relative_v1")
@@ -3889,6 +3913,11 @@ def run_p6_condensed_direct(
                     "progress": lambda done, total, result: ledger.marker(
                         "p6_direct_raw_tensor_class_progress",
                         {"done": done, "total": total, "last_class": result},
+                    ),
+                    "pool_progress": lambda event: ledger.marker(
+                        "p6_direct_raw_tensor_pool_lock",
+                        event,
+                        allow_stop=True,
                     ),
                 }
             ),

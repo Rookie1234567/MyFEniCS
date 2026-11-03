@@ -171,11 +171,15 @@ def _observe_process_affinities(proc_root: str | Path = "/proc") -> dict:
             argv = [x.decode("utf-8", "replace") for x in
                     (proc / "cmdline").read_bytes().split(b"\0") if x]
             affinity = sorted(os.sched_getaffinity(pid))
-            is_solver = any(
-                token.endswith("scripts/run_case.py")
-                or token == "src.runners.task038_input_worker"
-                or token == "src.runners.task038_launcher"
-                for token in argv
+            has_task038_module = any(token.startswith("src.runners.task038_") for token in argv)
+            executable = Path(argv[0]).name if argv else ""
+            is_solver = (
+                any(token.endswith("scripts/run_case.py") for token in argv)
+                or has_task038_module
+                or (
+                    executable in {"mpiexec", "mpirun"}
+                    and has_task038_module
+                )
             )
             if rss >= 1_000_000_000 or is_solver:
                 rows.append({

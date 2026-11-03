@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+import time
 import types
 from dataclasses import replace
 from pathlib import Path
@@ -34,6 +35,8 @@ from src.runners.p6_condensed_direct import (
 from src.runners.task40_gate_cd_formal_admission import (
     GATE_CD_PARALLEL32_PROFILE,
     GATE_CD_PARALLEL32_WORKERS,
+    GATE_CD_RAW_POOL_LOCK_PATH,
+    GATE_CD_RAW_POOL_SCHEDULER_POLICY,
     GATE_CD_SCOPE_SCHEMA,
     _choose_cpu_reservation,
     _runtime_paths,
@@ -283,7 +286,7 @@ def _parallel32_scope(tmp_path, template_sha256, *, worker_count=32, avoid=True)
             "busy_fallback_allowed": True,
             "exclusive_cpu_ownership": False,
             "worker_count": worker_count,
-            "avoid_active_solver_affinity_overlap": avoid,
+            "avoid_observed_active_solver_cores_when_capacity_allows": avoid,
         },
         "parallel_neighbors": {
             "policy": "gate_cd_observational_neighbors_v1",
@@ -291,6 +294,12 @@ def _parallel32_scope(tmp_path, template_sha256, *, worker_count=32, avoid=True)
             "unknown_solver_candidates_block_admission": False,
             "large_process_candidates_block_admission": False,
             "neighbors_modified": False,
+        },
+        "raw_tensor_pool_scheduler": {
+            "policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+            "lock_path": GATE_CD_RAW_POOL_LOCK_PATH,
+            "serialized_region": "raw_tensor_execution.run_batch_only",
+            "whole_run_serialization": False,
         },
         "runtime_paths": _runtime_paths(
             GATE_CD_PARALLEL32_PROFILE,
@@ -328,7 +337,7 @@ def test_parallel32_scope_and_fresh_lease_require_32_distinct_cpus(tmp_path):
             "supervisor_cpu": 32,
             "worker_cpus": selected_cpus,
             "worker_count": worker_count,
-            "active_solver_affinity_avoidance": True,
+            "active_solver_core_avoidance_when_capacity_allows": True,
             "exclusive_cpu_ownership": False,
         }
 
@@ -372,12 +381,29 @@ def test_parallel32_scope_and_fresh_lease_require_32_distinct_cpus(tmp_path):
             expected_identity=bad_identity,
             lock_directory=tmp_path / "no_avoidance",
         )
+    bad_path, bad_sha, _, bad_identity = _parallel32_scope(
+        tmp_path / "wrong_pool_lock", template_sha256
+    )
+    scope = json.loads(bad_path.read_text())
+    scope["raw_tensor_pool_scheduler"]["lock_path"] = str(
+        tmp_path / "not-the-shared-pool.lock"
+    )
+    raw = (json.dumps(scope, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    bad_path.write_bytes(raw)
+    with pytest.raises(Exception, match="shared raw tensor pool scheduler"):
+        _validate_gate_cd_scope(
+            bad_path,
+            hashlib.sha256(raw).hexdigest(),
+            profile=GATE_CD_PARALLEL32_PROFILE,
+            run_id=GATE_CD_PARALLEL32_PROFILE,
+            expected_identity=bad_identity,
+            lock_directory=tmp_path / "wrong_pool_lock",
+        )
 
 
-def test_cpu_selector_avoids_active_solver_cores_and_keeps_supervisor_distinct(
-    monkeypatch,
-):
+def test_cpu_selector_avoids_sampled_active_cores_when_capacity_allows(monkeypatch):
     from src.runners import task40_d07c_g5_join as g5
+    from src.runners import task40_gate_cd_formal_admission as admission
 
     candidates = [
         {
@@ -393,25 +419,210 @@ def test_cpu_selector_avoids_active_solver_cores_and_keeps_supervisor_distinct(
         "candidate_topology_and_load": candidates,
         "neighbor_observation": {
             "processes": [
-                {"solver_role_observation": True, "affinity": [4, 5]},
+                {"solver_role_observation": True, "affinity": [10]},
             ]
         },
     }
-    monkeypatch.setattr(g5, "_core", lambda cpu: (0, int(cpu)))
-    monkeypatch.setattr(
-        g5,
-        "choose_g5_cpu_reservation",
-        lambda **_kwargs: sampled,
+    live_processes = [
+        {"pid": 569868, "start_ticks": 356658523, "role": "run_case"},
+        {"pid": 569896, "start_ticks": 356658878, "role": "mpi"},
+        {"pid": 569899, "start_ticks": 356658899,
+         "role": "task038_input_worker:M8N14"},
+        {"pid": 600001, "start_ticks": 1,
+         "role": "task038_input_worker:M8N6"},
+        {"pid": 600002, "start_ticks": 2,
+         "role": "task038_input_worker:M8N2"},
+    ]
+    rows = (
+        (live_processes[2], 569899, 356658899, 4),
+        (live_processes[3], 600001, 1, 5),
+        (live_processes[4], 600002, 2, 6),
     )
+    before_threads = {
+        (pid, start, pid): {
+            "cpu_ticks": 100,
+            "last_cpu": cpu,
+            "state": "S",
+            "role": row["role"],
+        }
+        for row, pid, start, cpu in rows
+    }
+    after_threads = {
+        key: {
+            **value,
+            "cpu_ticks": value["cpu_ticks"] + 1,
+            "last_cpu": value["last_cpu"] + 1,
+        }
+        for key, value in before_threads.items()
+    }
+    snapshots = iter((
+        {"solver_processes": live_processes, "threads": before_threads},
+        {"solver_processes": live_processes, "threads": after_threads},
+    ))
+    monkeypatch.setattr(admission, "_solver_thread_snapshot", lambda _root: next(snapshots))
+    monkeypatch.setattr(g5, "_core", lambda cpu: (0, int(cpu)))
+    monkeypatch.setattr(g5, "choose_g5_cpu_reservation", lambda **_kwargs: sampled)
+
     reservation = _choose_cpu_reservation(
         1.5, "/unused", worker_count=GATE_CD_PARALLEL32_WORKERS
     )
     assert len(reservation["worker_cpus"]) == 32
     assert len(set(reservation["worker_cpus"])) == 32
     assert reservation["supervisor_cpu"] not in reservation["worker_cpus"]
-    assert not ({4, 5} & set(reservation["worker_cpus"]))
-    assert not ({4, 5} & {reservation["supervisor_cpu"]})
-    assert reservation["active_solver_affinity_avoidance"] is True
+    selected = set(reservation["worker_cpus"] + [reservation["supervisor_cpu"]])
+    assert not ({4, 5, 6, 7} & selected)
+    assert 10 in selected  # affinity is observed, not treated as an exclusion
+    assert reservation["active_solver_core_avoidance_when_capacity_allows"] is True
+    assert reservation["avoidance_fallback_used"] is False
+    assert {
+        row["role"]
+        for row in reservation["active_solver_thread_sample"]["solver_processes_before"]
+    } >= {
+        "run_case", "mpi", "task038_input_worker:M8N14",
+        "task038_input_worker:M8N6", "task038_input_worker:M8N2",
+    }
+
+
+def test_cpu_selector_reports_active_core_overlap_when_capacity_is_short(monkeypatch):
+    from src.runners import task40_d07c_g5_join as g5
+    from src.runners import task40_gate_cd_formal_admission as admission
+
+    candidates = [
+        {
+            "cpu": cpu,
+            "package": 0,
+            "core": cpu,
+            "sampled_utilization": cpu / 1000,
+            "heavy_neighbor_affinity_overlap": False,
+        }
+        for cpu in range(40)
+    ]
+    monkeypatch.setattr(
+        g5,
+        "choose_g5_cpu_reservation",
+        lambda **_kwargs: {
+            "candidate_topology_and_load": candidates,
+            "neighbor_observation": {"processes": []},
+        },
+    )
+    before = {"solver_processes": [], "threads": {}}
+    after = {
+        "solver_processes": [],
+        "threads": {
+            (101, 10, 101 + cpu): {
+                "cpu_ticks": 1,
+                "last_cpu": cpu,
+                "state": "S",
+                "role": "task038_input_worker",
+            }
+            for cpu in range(8)
+        },
+    }
+    snapshots = iter((before, after))
+    monkeypatch.setattr(admission, "_solver_thread_snapshot", lambda _root: next(snapshots))
+    monkeypatch.setattr(g5, "_core", lambda cpu: (0, int(cpu)))
+
+    reservation = _choose_cpu_reservation(
+        1.5, "/unused", worker_count=GATE_CD_PARALLEL32_WORKERS
+    )
+    assert len(reservation["worker_cpus"]) == 32
+    assert reservation["avoidance_fallback_used"] is True
+    assert len(reservation["selected_observed_active_solver_cores"]) == 1
+    assert reservation["exclusive_cpu_ownership"] is False
+
+
+def test_parallel32_raw_tensor_pool_lock_serializes_only_run_batch(tmp_path, monkeypatch):
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+
+    from src.runners import task40_gate_cd_formal_admission as admission
+    from src.solvers.raw_tensor_execution import _run_batch_with_pool_lock
+
+    lock_path = tmp_path / "shared-raw-pool.lock"
+    monkeypatch.setattr(admission, "GATE_CD_RAW_POOL_LOCK_PATH", str(lock_path))
+    config = {
+        "pool_scheduler_policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+        "pool_lock_path": str(lock_path),
+    }
+    rendezvous = threading.Barrier(2)
+    state_lock = threading.Lock()
+    active = 0
+    peak_active = 0
+
+    def batch_runner(jobs, _root, _cpus, **_kwargs):
+        nonlocal active, peak_active
+        with state_lock:
+            active += 1
+            peak_active = max(peak_active, active)
+        time.sleep(0.08)
+        with state_lock:
+            active -= 1
+        return {"batch": jobs}
+
+    def run(index):
+        rendezvous.wait(timeout=2)
+        result, timing = _run_batch_with_pool_lock(
+            batch_runner,
+            [index],
+            tmp_path,
+            list(range(32)),
+            config,
+        )
+        return result, timing
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        completed = list(executor.map(run, (1, 2)))
+    assert peak_active == 1
+    assert {result["batch"][0] for result, _timing in completed} == {1, 2}
+    assert all(timing["serialized_region"] == "run_batch_only" for _result, timing in completed)
+    assert all(timing["whole_run_serialization"] is False for _result, timing in completed)
+    assert max(timing["wait_seconds"] for _result, timing in completed) >= 0.05
+
+
+def test_parallel32_pool_lock_records_wait_acquire_release_and_unlocks_on_error(
+    tmp_path, monkeypatch
+):
+    from src.runners import task40_gate_cd_formal_admission as admission
+    from src.solvers.raw_tensor_execution import _run_batch_with_pool_lock
+
+    lock_path = tmp_path / "error-release-pool.lock"
+    monkeypatch.setattr(admission, "GATE_CD_RAW_POOL_LOCK_PATH", str(lock_path))
+    events = []
+    config = {
+        "pool_scheduler_policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+        "pool_lock_path": str(lock_path),
+        "pool_progress": events.append,
+    }
+
+    def fail_batch(*_args, **_kwargs):
+        raise RuntimeError("controlled test failure")
+
+    with pytest.raises(RuntimeError, match="controlled test failure"):
+        _run_batch_with_pool_lock(
+            fail_batch, ["failed"], tmp_path, list(range(32)), config
+        )
+    assert [event["event_type"] for event in events] == [
+        "raw_tensor_pool_lock_wait_started",
+        "raw_tensor_pool_lock_acquired",
+        "raw_tensor_pool_lock_released",
+    ]
+    assert events[-1]["batch_completed"] is False
+
+    result, timing = _run_batch_with_pool_lock(
+        lambda jobs, *_args, **_kwargs: {"batch": jobs},
+        ["after-error"],
+        tmp_path,
+        list(range(32)),
+        config,
+    )
+    assert result == {"batch": ["after-error"]}
+    assert timing["serialized_region"] == "run_batch_only"
+    assert [event["event_type"] for event in events[3:]] == [
+        "raw_tensor_pool_lock_wait_started",
+        "raw_tensor_pool_lock_acquired",
+        "raw_tensor_pool_lock_released",
+    ]
+    assert events[-1]["batch_completed"] is True
 
 
 def test_exact_cache_template_materializes_and_loads_attempt_bound_contract(tmp_path):
@@ -432,6 +643,8 @@ def test_exact_cache_template_materializes_and_loads_attempt_bound_contract(tmp_
         "schema": EXACT_CACHE_TEMPLATE_SCHEMA,
         "source_sha": source_sha,
         "resolved_payload_sha256": payload_sha256,
+        "profile_identity": GATE_CD_PARALLEL32_PROFILE,
+        "run_id": GATE_CD_PARALLEL32_PROFILE,
         "worker_cpu_policy": GATE_CD_EXACT_CACHE_WORKER_POLICY,
         "worker_count": 32,
         "tensor_root_policy": "attempt_cache_root/tensor",
@@ -451,6 +664,14 @@ def test_exact_cache_template_materializes_and_loads_attempt_bound_contract(tmp_
         runtime_cache_root=attempt_root,
         worker_cpus=worker_cpus,
         attempt_id="n14attempt0001",
+        profile_identity=GATE_CD_PARALLEL32_PROFILE,
+        run_id=GATE_CD_PARALLEL32_PROFILE,
+        raw_tensor_pool_scheduler={
+            "policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+            "lock_path": GATE_CD_RAW_POOL_LOCK_PATH,
+            "serialized_region": "raw_tensor_execution.run_batch_only",
+            "whole_run_serialization": False,
+        },
     )
     loaded = load_exact_cache_contract(
         runtime["path"],
@@ -461,10 +682,13 @@ def test_exact_cache_template_materializes_and_loads_attempt_bound_contract(tmp_
         expected_attempt_id="n14attempt0001",
         expected_template_sha256=template_sha256,
         expected_cache_root=attempt_root,
+        expected_profile_identity=GATE_CD_PARALLEL32_PROFILE,
+        expected_run_id=GATE_CD_PARALLEL32_PROFILE,
     )
     assert loaded["raw"]["cpus"] == worker_cpus
     assert Path(loaded["raw"]["root"]) == attempt_root / "tensor"
     assert Path(loaded["carrier"]["root"]) == attempt_root / "carrier"
+    assert loaded["raw"]["pool_lock_path"] == GATE_CD_RAW_POOL_LOCK_PATH
     with pytest.raises(ValueError, match="CPU list differs"):
         load_exact_cache_contract(
             runtime["path"],
@@ -475,6 +699,8 @@ def test_exact_cache_template_materializes_and_loads_attempt_bound_contract(tmp_
             expected_attempt_id="n14attempt0001",
             expected_template_sha256=template_sha256,
             expected_cache_root=attempt_root,
+            expected_profile_identity=GATE_CD_PARALLEL32_PROFILE,
+            expected_run_id=GATE_CD_PARALLEL32_PROFILE,
         )
 
 
@@ -494,9 +720,19 @@ def test_formal_helper_accepts_the_exact_32_cpu_runtime_reservation(tmp_path):
         "supervisor_cpu": 32,
         "worker_cpu": worker_cpus[0],
         "worker_cpus": worker_cpus,
-        "active_solver_affinity_avoidance": True,
-        "excluded_active_solver_cpus": [39],
-        "excluded_active_solver_cores": [[0, 39]],
+        "active_solver_core_avoidance_when_capacity_allows": True,
+        "observed_active_solver_cores": [[0, 39]],
+        "selected_observed_active_solver_cores": [],
+        "avoidance_fallback_used": False,
+        "candidate_topology_and_load": [
+            {
+                "cpu": cpu,
+                "package": 0,
+                "core": cpu,
+                "sampled_utilization": 0.0,
+            }
+            for cpu in range(40)
+        ],
         "selected_topology": [
             {"cpu": cpu, "package": 0, "core": cpu}
             for cpu in [32, *worker_cpus]

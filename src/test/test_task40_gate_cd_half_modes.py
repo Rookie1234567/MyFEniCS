@@ -40,6 +40,11 @@ from src.runners.task038_input_worker import (
     _parser as worker_parser,
 )
 from src.runners.task038_launcher import _write_bootstrap
+from src.runners.task40_gate_cd_formal_admission import (
+    GATE_CD_PARALLEL32_WORKERS,
+    GATE_CD_RAW_POOL_LOCK_PATH,
+    GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+)
 from src.solvers.fullspace_dtn_action import build_dynamic_mode_inventory
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -109,7 +114,18 @@ def test_loader_and_direct_contract_bind_each_exact_small_rectangle(profile, exp
     )
     assert facts["campaign_authorization"]["direct_route"][
         "exact_cache_contract_required"
-    ] is False
+    ] is True
+    assert facts["campaign_authorization"]["direct_route"][
+        "raw_tensor_execution"
+    ] == "exact_cache_exec_tensor_workers_v1"
+    assert facts["campaign_authorization"]["direct_route"][
+        "raw_tensor_worker_count"
+    ] == GATE_CD_PARALLEL32_WORKERS
+    assert facts["native_execution"]["worker_cpu_count"] == GATE_CD_PARALLEL32_WORKERS
+    assert facts["native_execution"]["tensor_worker_count"] == GATE_CD_PARALLEL32_WORKERS
+    assert facts["native_execution"]["mpi_size"] == 1
+    assert facts["native_execution"]["math_threads"] == 1
+    assert facts["native_execution"]["lu_execution"] == "serial_single_mpi_rank_v1"
 
 
 @pytest.mark.parametrize("profile,expected", CASES.items())
@@ -171,27 +187,29 @@ def test_loader_manifest_and_worker_payload_roundtrip(profile, expected, tmp_pat
     run_directory.mkdir()
     specification = replace(specification, expected_output_parent=tmp_path)
     source_sha = "a" * 64
+    worker_cpus = list(range(GATE_CD_PARALLEL32_WORKERS))
     execution = build_execution_plan(
         specification,
         run_directory,
         source_sha=source_sha,
         python_executable=sys.executable,
         mpiexec_command="/usr/bin/mpiexec",
-        worker_cpus_override=[43],
+        worker_cpus_override=worker_cpus,
     )
     assert execution.argv[:11] == (
         "/usr/bin/mpiexec", "-n", "1", "/usr/bin/numactl",
-        "--interleave=0,1", "/usr/bin/taskset", "-c", "43",
+        "--interleave=0,1", "/usr/bin/taskset", "-c",
+        ",".join(str(cpu) for cpu in worker_cpus),
         sys.executable, "-m", "src.runners.task038_input_worker",
     )
-    with pytest.raises(Exception, match="dynamic one-CPU reservation"):
+    with pytest.raises(Exception, match="dynamic 32-CPU reservation"):
         build_execution_plan(
             specification,
             run_directory,
             source_sha=source_sha,
             python_executable=sys.executable,
             mpiexec_command="/usr/bin/mpiexec",
-            worker_cpus_override=[43, 44],
+            worker_cpus_override=[43],
         )
     manifest, _resolved_sha = _write_bootstrap(
         specification,
@@ -232,6 +250,15 @@ def test_loader_manifest_and_worker_payload_roundtrip(profile, expected, tmp_pat
     assert manifest["native_capacity_contract"]["direct_route"][
         "active_mode_sha256"
     ] == expected["active_sha256"]
+    assert manifest["native_capacity_contract"]["direct_route"][
+        "raw_tensor_execution"
+    ] == "exact_cache_exec_tensor_workers_v1"
+    assert manifest["native_capacity_contract"]["direct_route"][
+        "raw_tensor_worker_count"
+    ] == GATE_CD_PARALLEL32_WORKERS
+    assert manifest["native_capacity_contract"]["direct_route"][
+        "exact_cache_contract_required"
+    ] is True
 
     manifest["native_capacity_contract"]["direct_route"][
         "active_mode_count"
@@ -270,6 +297,27 @@ def test_formal_package_validator_binds_the_live_signed_operator(profile, expect
     mode = facts["component_options"]["mode_selection"]
     package = {
         "profile_identity": profile,
+        "run_id": profile,
+        "execution_contract": {
+            "worker_cpu_count": GATE_CD_PARALLEL32_WORKERS,
+            "mpi_size": 1,
+            "math_threads": 1,
+            "raw_tensor_execution": "exact_cache_exec_tensor_workers_v1",
+            "global_assembly": "serial_single_mpi_rank_v1",
+            "global_lu": "serial_single_mpi_rank_v1",
+        },
+        "exact_cache_contract": {
+            "worker_count": GATE_CD_PARALLEL32_WORKERS,
+            "profile_identity": profile,
+            "run_id": profile,
+            "operator_identity": {"scalar": "complex128", "q": 21, "degree": 6},
+            "raw_tensor_pool_scheduler": {
+                "policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+                "lock_path": GATE_CD_RAW_POOL_LOCK_PATH,
+                "serialized_region": "raw_tensor_execution.run_batch_only",
+                "whole_run_serialization": False,
+            },
+        },
         "quadrature_contract": {
             "surface_degree": facts["component_options"]["surface_quadrature"]["degree"],
             "surface_rule": facts["component_options"]["surface_quadrature"]["rule"],
@@ -308,7 +356,15 @@ def test_formal_package_validator_binds_the_live_signed_operator(profile, expect
 
 
 @pytest.mark.parametrize("profile,expected", CASES.items())
-def test_one_worker_admission_and_runtime_cache_contract(profile, expected, tmp_path):
+def test_parallel32_admission_and_exact_cache_worker_dispatch(profile, expected, tmp_path):
+    from src.runners.exact_cache_contract import (
+        EXACT_CACHE_TEMPLATE_SCHEMA,
+        GATE_CD_EXACT_CACHE_WORKER_POLICY,
+        materialize_gate_cd_exact_cache_contract,
+    )
+    from src.runners.p6_condensed_direct import (
+        _require_exact_cache_contract_for_profile,
+    )
     from src.runners.task038_input_worker import _task40_gate_cd_runtime_cache_evidence
     from src.runners.task40_gate_cd_formal_admission import (
         GATE_CD_SCOPE_SCHEMA,
@@ -318,6 +374,10 @@ def test_one_worker_admission_and_runtime_cache_contract(profile, expected, tmp_
 
     specification = load_and_resolve(expected["input"])
     facts = native_profile_facts(profile)
+    _require_exact_cache_contract_for_profile(facts, "/reviewed/runtime-cache.json")
+    with pytest.raises(ValueError, match="requires its lease-bound exact-cache"):
+        _require_exact_cache_contract_for_profile(facts, None)
+    worker_cpus = list(range(GATE_CD_PARALLEL32_WORKERS))
     identity = _jsonable(
         {
             "profile_identity": profile,
@@ -354,7 +414,8 @@ def test_one_worker_admission_and_runtime_cache_contract(profile, expected, tmp_
             "sample_seconds": 1.5,
             "busy_fallback_allowed": True,
             "exclusive_cpu_ownership": False,
-            "worker_count": 1,
+            "worker_count": GATE_CD_PARALLEL32_WORKERS,
+            "avoid_observed_active_solver_cores_when_capacity_allows": True,
         },
         "parallel_neighbors": {
             "policy": "gate_cd_observational_neighbors_v1",
@@ -362,6 +423,12 @@ def test_one_worker_admission_and_runtime_cache_contract(profile, expected, tmp_
             "unknown_solver_candidates_block_admission": False,
             "large_process_candidates_block_admission": False,
             "neighbors_modified": False,
+        },
+        "raw_tensor_pool_scheduler": {
+            "policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+            "lock_path": GATE_CD_RAW_POOL_LOCK_PATH,
+            "serialized_region": "raw_tensor_execution.run_batch_only",
+            "whole_run_serialization": False,
         },
         "runtime_paths": _runtime_paths(profile, profile, attempt_id, tmp_path),
     }
@@ -377,29 +444,69 @@ def test_one_worker_admission_and_runtime_cache_contract(profile, expected, tmp_
         expected_identity=identity,
         lock_directory=tmp_path,
     )
-    with pytest.raises(Exception, match="exact reviewed profile/run"):
+    bad_scope = dict(scope)
+    bad_scope["cpu_policy"] = {**scope["cpu_policy"], "worker_count": 1}
+    bad_scope_path = tmp_path / f"{profile}.bad-scope.json"
+    bad_scope_raw = (json.dumps(bad_scope, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    bad_scope_path.write_bytes(bad_scope_raw)
+    with pytest.raises(Exception, match="reviewed dynamic shared-CPU policy"):
         _validate_gate_cd_scope(
-            scope_path,
-            scope_sha,
+            bad_scope_path,
+            hashlib.sha256(bad_scope_raw).hexdigest(),
             profile=profile,
-            run_id=f"{profile}-wrong",
+            run_id=profile,
             expected_identity=identity,
             lock_directory=tmp_path,
         )
 
+    resolved_payload = specification.as_jsonable()
+    payload_sha = hashlib.sha256(
+        json.dumps(resolved_payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+    ).hexdigest()
     cache_root = tmp_path / f"{profile}.attempt-cache"
     cache_root.mkdir()
     cache_paths = {"root": cache_root}
-    for key in ("tmp", "xdg", "pycache", "mpl"):
+    for key in ("tmp", "xdg", "pycache", "mpl", "tensor", "carrier"):
         cache_paths[key] = cache_root / key
         cache_paths[key].mkdir()
     (cache_paths["xdg"] / "fenics").mkdir()
+    template = {
+        "schema": EXACT_CACHE_TEMPLATE_SCHEMA,
+        "source_sha": "b" * 40,
+        "resolved_payload_sha256": payload_sha,
+        "profile_identity": profile,
+        "run_id": profile,
+        "worker_cpu_policy": GATE_CD_EXACT_CACHE_WORKER_POLICY,
+        "worker_count": GATE_CD_PARALLEL32_WORKERS,
+        "tensor_root_policy": "attempt_cache_root/tensor",
+        "carrier_root_policy": "attempt_cache_root/carrier",
+        "operator_identity": {"scalar": "complex128", "q": 21, "degree": 6},
+    }
+    template_path = tmp_path / f"{profile}.template.json"
+    template_path.write_text(json.dumps(template, sort_keys=True, separators=(",", ":")))
+    template_sha = hashlib.sha256(template_path.read_bytes()).hexdigest()
+    runtime_contract = materialize_gate_cd_exact_cache_contract(
+        template_path,
+        template_sha,
+        target_path=tmp_path / f"{profile}.runtime" / "exact-cache.json",
+        source_sha="b" * 40,
+        resolved_payload=resolved_payload,
+        runtime_cache_root=cache_root,
+        worker_cpus=worker_cpus,
+        attempt_id=attempt_id,
+        profile_identity=profile,
+        run_id=profile,
+        raw_tensor_pool_scheduler=scope["raw_tensor_pool_scheduler"],
+    )
+    runtime_contract["policy"] = "gate_cd_lease_selected_32_distinct_physical_cores_v1"
     manifest = {
+        "run_id": profile,
         "native_capacity_profile_identity": profile,
         "native_capacity_isolation": {
             "gate_cd_formal_admission": {
                 "attempt_id": attempt_id,
                 "attempt_cache_root": str(cache_root),
+                "cpu_reservation": {"worker_cpus": worker_cpus},
             }
         },
         "attempt_specific_runtime_cache": {
@@ -407,6 +514,7 @@ def test_one_worker_admission_and_runtime_cache_contract(profile, expected, tmp_
             "attempt_id": attempt_id,
             **{key: str(path) for key, path in cache_paths.items()},
         },
+        "exact_cache_runtime_contract": runtime_contract,
     }
     environment = {
         "TMPDIR": str(cache_paths["tmp"]),
@@ -415,6 +523,10 @@ def test_one_worker_admission_and_runtime_cache_contract(profile, expected, tmp_
         "XDG_CACHE_HOME": str(cache_paths["xdg"]),
         "PYTHONPYCACHEPREFIX": str(cache_paths["pycache"]),
         "MPLCONFIGDIR": str(cache_paths["mpl"]),
+        "TASK40_EXACT_CACHE_CONTRACT": runtime_contract["path"],
+        "TASK40_EXACT_CACHE_CONTRACT_SHA256": runtime_contract["sha256"],
+        "TASK40_EXACT_CACHE_RUNTIME_TEMPLATE_SHA256": template_sha,
+        "TASK40_EXACT_CACHE_WORKER_CPUS": json.dumps(worker_cpus, separators=(",", ":")),
     }
     evidence = _task40_gate_cd_runtime_cache_evidence(
         manifest,
@@ -424,5 +536,16 @@ def test_one_worker_admission_and_runtime_cache_contract(profile, expected, tmp_
         },
     )
     assert evidence["cache_paths_verified_before_FE_dispatch"] is True
-    assert "exact_cache_contract" not in evidence
-    assert "tensor" not in evidence["environment"]
+    assert evidence["exact_cache_contract"]["worker_count"] == GATE_CD_PARALLEL32_WORKERS
+    assert evidence["exact_cache_contract"]["worker_cpus"] == worker_cpus
+    assert evidence["exact_cache_contract"]["runtime_lease_match_verified"] is True
+    assert Path(evidence["exact_cache_contract"]["path"]).is_file()
+
+    with pytest.raises(ValueError, match="evidence differs from its runtime lease"):
+        _task40_gate_cd_runtime_cache_evidence(
+            manifest,
+            environment={**environment, "TASK40_EXACT_CACHE_WORKER_CPUS": "43"},
+            jit_options_resolver=lambda: {
+                "cache_dir": str(cache_paths["xdg"] / "fenics")
+            },
+        )

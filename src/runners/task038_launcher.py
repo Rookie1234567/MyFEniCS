@@ -31,7 +31,7 @@ from src.io.run_specification import RunSpecification
 from src.runners.task40_d07c_g5_join import G5_PROFILE
 from src.runners.task40_gate_cd_formal_admission import (
     GATE_CD_EXECUTION_PROFILES,
-    GATE_CD_PARALLEL32_PROFILE,
+    GATE_CD_PARALLEL32_PROFILES,
     GATE_CD_ATTEMPT_CACHE_ENV,
 )
 
@@ -609,7 +609,7 @@ def launch_specification(
             raise InputError('Gate-CD attempt cache root differs from its exact one-shot lease')
         cache_paths = {key: expected_root / key for key in ('tmp', 'xdg', 'pycache', 'mpl')}
         cache_paths['root'] = expected_root
-        if native_identity == GATE_CD_PARALLEL32_PROFILE:
+        if native_identity in GATE_CD_PARALLEL32_PROFILES:
             cache_paths.update(
                 tensor=expected_root / 'tensor',
                 carrier=expected_root / 'carrier',
@@ -676,34 +676,36 @@ def launch_specification(
         adapter_identity=adapter,
         start_time=start_time,
     )
-    if native_identity == GATE_CD_PARALLEL32_PROFILE:
+    if native_identity in GATE_CD_PARALLEL32_PROFILES:
         if not isinstance(prelaunch_isolation, dict):
-            raise InputError('Gate-CD N14 exact-cache requires the dynamic CPU lease')
+            raise InputError('Gate-CD parallel32 exact-cache requires the dynamic CPU lease')
         lease = prelaunch_isolation.get('gate_cd_formal_admission')
         if not isinstance(lease, dict):
-            raise InputError('Gate-CD N14 exact-cache lease is missing from launch evidence')
+            raise InputError('Gate-CD parallel32 exact-cache lease is missing from launch evidence')
         cpu_reservation = lease.get('cpu_reservation')
         if not isinstance(cpu_reservation, dict):
-            raise InputError('Gate-CD N14 exact-cache lease lacks its CPU reservation')
+            raise InputError('Gate-CD parallel32 exact-cache lease lacks its CPU reservation')
         worker_cpus = cpu_reservation.get('worker_cpus')
         if (
             not isinstance(worker_cpus, list)
             or len(worker_cpus) != 32
             or any(type(cpu) is not int or cpu < 0 for cpu in worker_cpus)
             or len(set(worker_cpus)) != 32
-            or cpu_reservation.get('active_solver_affinity_avoidance') is not True
+            or cpu_reservation.get(
+                'active_solver_core_avoidance_when_capacity_allows'
+            ) is not True
         ):
-            raise InputError('Gate-CD N14 exact-cache needs 32 distinct lease CPUs')
+            raise InputError('Gate-CD parallel32 exact-cache needs 32 distinct lease CPUs')
         attempt_cache_root = Path(lease.get('attempt_cache_root', '')).resolve()
         attempt_id = lease.get('attempt_id')
         scope_path = Path(lease.get('scope_path', '')).resolve(strict=True)
         scope_raw = scope_path.read_bytes()
         if hashlib.sha256(scope_raw).hexdigest() != lease.get('scope_sha256'):
-            raise InputError('Gate-CD N14 runtime scope changed after CPU admission')
+            raise InputError('Gate-CD parallel32 runtime scope changed after CPU admission')
         try:
             scope_document = json.loads(scope_raw)
         except json.JSONDecodeError as exc:
-            raise InputError('Gate-CD N14 runtime scope is malformed') from exc
+            raise InputError('Gate-CD parallel32 runtime scope is malformed') from exc
         route_contract = (
             scope_document.get('identity', {}).get('direct_route_contract', {})
         )
@@ -717,7 +719,7 @@ def launch_specification(
             or expected_template_sha != supplied_template_sha
             or not template_path
         ):
-            raise InputError('Gate-CD N14 exact-cache template differs from the reviewed scope')
+            raise InputError('Gate-CD parallel32 exact-cache template differs from the reviewed scope')
         from .exact_cache_contract import materialize_gate_cd_exact_cache_contract
         try:
             gate_cd_exact_cache_runtime = materialize_gate_cd_exact_cache_contract(
@@ -729,9 +731,14 @@ def launch_specification(
                 runtime_cache_root=attempt_cache_root,
                 worker_cpus=worker_cpus,
                 attempt_id=str(attempt_id),
+                profile_identity=native_identity,
+                run_id=str(specification.identity.get('run_id')),
+                raw_tensor_pool_scheduler=scope_document.get(
+                    'raw_tensor_pool_scheduler'
+                ),
             )
         except (OSError, TypeError, ValueError) as exc:
-            raise InputError(f'Gate-CD N14 exact-cache contract failed: {exc}') from exc
+            raise InputError(f'Gate-CD parallel32 exact-cache contract failed: {exc}') from exc
         manifest['exact_cache_runtime_contract'] = gate_cd_exact_cache_runtime
         manifest['exact_cache_runtime_contract']['policy'] = (
             'gate_cd_lease_selected_32_distinct_physical_cores_v1'

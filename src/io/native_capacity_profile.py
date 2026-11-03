@@ -202,7 +202,11 @@ TASK40_GATE_CD_FORMAL_PROFILES = frozenset(
     }
 )
 TASK40_GATE_CD_PARALLEL32_PROFILES = frozenset(
-    {TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE}
+    {
+        TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE,
+        TASK40_GATE_CD_M8N6_P6_DIRECT_PROFILE,
+        TASK40_GATE_CD_M8N2_P6_DIRECT_PROFILE,
+    }
 )
 TASK40_GATE_CD_P6_DIRECT_PROFILES = frozenset(
     {*TASK40_GATE_CD_STAGED_PROFILES, *TASK40_GATE_CD_FORMAL_PROFILES}
@@ -2792,6 +2796,15 @@ def _task40_gate_cd_signed_subrectangle_profile_facts(identity):
         route=f"TASK40_GATE_CD_MAPPED_{label}_P6_CONDENSED_DIRECT",
         operator_scope=scope,
         full_dtn_status="FULL_DTN_NOT_VERIFIED",
+        native_execution={
+            **base["native_execution"],
+            "tensor_worker_count": 32,
+            "worker_cpu_count": 32,
+            "raw_tensor_execution": "exact_cache_exec_tensor_workers_v1",
+            "mpi_size": 1,
+            "math_threads": 1,
+            "lu_execution": "serial_single_mpi_rank_v1",
+        },
     )
     base["condensed_route"].update(
         name=f"task40_gate_cd_{label.lower()}_p6_exact_local_condensation_direct_v1",
@@ -2813,23 +2826,26 @@ def _task40_gate_cd_signed_subrectangle_profile_facts(identity):
         active_mode_sha256=selection["mode_sha256"],
         selected_parent_indices_sha256=selection["indices_sha256"],
         selected_signed_keys_sha256=selection["keys_sha256"],
-        raw_tensor_execution="serial_single_mpi_rank_v1",
+        raw_tensor_execution="exact_cache_exec_tensor_workers_v1",
+        raw_tensor_worker_count=32,
         mpi_size=1,
         math_threads=1,
         lu_execution="serial_single_mpi_rank_v1",
-        exact_cache_contract_required=False,
+        exact_cache_contract_required=True,
+        exact_cache_source_policy="clean_commit_and_resolved_payload_hash_bound_v1",
     )
     base["campaign_authorization"]["direct_route"] = direct
     base["backend"].update(
         operator_scope=scope,
-        p6=f"P6_CONDENSED_DIRECT_{label}_FROM_M8N64_Q21_SERIAL_RAW_TENSORS",
+        p6=f"P6_CONDENSED_DIRECT_{label}_FROM_M8N64_Q21_PARALLEL32_RAW_TENSORS",
         independent_residual=f"original_full_p6_A6_active_{label}_finite_subrectangle",
     )
     base["campaign_authorization"].update(
         source=(
             f"Gate-CD finite signed {label} subrectangle selected in exact order from "
-            "the M8N64 parent. Single-rank raw tensor assembly and serial direct LU; "
-            "this remains FULL_DTN_NOT_VERIFIED."
+            "the M8N64 parent. Raw tensor assembly uses the reviewed 32-worker "
+            "exact-cache execution route; MPI remains one and direct LU remains "
+            "serial. This remains FULL_DTN_NOT_VERIFIED."
         )
     )
     return base
@@ -5099,7 +5115,18 @@ def _validate_task40_gate_cd_case(config: dict, identity: str) -> None:
                 != selection['power_carrying_by_side']
                 or facts.get('native_execution', {}).get('mpi_size') != 1
                 or facts.get('native_execution', {}).get('math_threads') != 1
-                or facts.get('campaign_authorization', {}).get('direct_route', {}).get('exact_cache_contract_required') is not False
+                or facts.get('native_execution', {}).get('tensor_worker_count') != 32
+                or facts.get('native_execution', {}).get('worker_cpu_count') != 32
+                or facts.get('native_execution', {}).get('raw_tensor_execution')
+                != 'exact_cache_exec_tensor_workers_v1'
+                or facts.get('native_execution', {}).get('lu_execution')
+                != 'serial_single_mpi_rank_v1'
+                or facts.get('campaign_authorization', {}).get('direct_route', {}).get('raw_tensor_execution')
+                != 'exact_cache_exec_tensor_workers_v1'
+                or facts.get('campaign_authorization', {}).get('direct_route', {}).get('raw_tensor_worker_count') != 32
+                or facts.get('campaign_authorization', {}).get('direct_route', {}).get('exact_cache_contract_required') is not True
+                or facts.get('campaign_authorization', {}).get('direct_route', {}).get('exact_cache_source_policy')
+                != 'clean_commit_and_resolved_payload_hash_bound_v1'
             )
         if (
             malformed

@@ -611,7 +611,13 @@ def task40_host_floor_interleaved_admission(
         raise InputError('Task40 admission requires observe-only swap policy')
 
     from .task40_d07c_g5_join import G5_PROFILE, load_g5_scope
-    from .task40_gate_cd_formal_admission import GATE_CD_EXECUTION_PROFILES
+    from .task40_gate_cd_formal_admission import (
+        GATE_CD_EXECUTION_PROFILES,
+        GATE_CD_PARALLEL32_PROFILES,
+        GATE_CD_RAW_POOL_LOCK_PATH,
+        GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+        GATE_CD_SCOPE_SCHEMA,
+    )
     g5_scope = None
     gate_cd_observational_scope = None
     g5_scope_present = (
@@ -646,7 +652,7 @@ def task40_host_floor_interleaved_admission(
     elif task_profile in GATE_CD_EXECUTION_PROFILES:
         if (
             not isinstance(gate_cd_scope, dict)
-            or gate_cd_scope.get('schema') != 'task40.gate_cd_formal_exact_execution_scope.v1'
+            or gate_cd_scope.get('schema') != GATE_CD_SCOPE_SCHEMA
             or gate_cd_scope.get('identity', {}).get('profile_identity') != task_profile
             or gate_cd_scope.get('identity', {}).get('run_id') != task_run_id
             or resources.get('parallel_admission_policy')
@@ -671,6 +677,15 @@ def task40_host_floor_interleaved_admission(
             or gate_cd_policy.get('neighbors_modified') is not False
         ):
             raise InputError('Gate-CD scope must allow parallel jobs as observational neighbors')
+        if task_profile in GATE_CD_PARALLEL32_PROFILES and gate_cd_scope.get(
+            'raw_tensor_pool_scheduler'
+        ) != {
+            'policy': GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+            'lock_path': GATE_CD_RAW_POOL_LOCK_PATH,
+            'serialized_region': 'raw_tensor_execution.run_batch_only',
+            'whole_run_serialization': False,
+        }:
+            raise InputError('Gate-CD parallel32 scope lacks its raw tensor pool lock')
         gate_cd_observational_scope = gate_cd_scope
     elif g5_scope_present:
         raise InputError('G5 observational scope cannot authorize another profile')

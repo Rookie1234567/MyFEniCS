@@ -7,7 +7,11 @@ import json
 import os
 from pathlib import Path
 
-from .task40_gate_cd_formal_admission import GATE_CD_PARALLEL32_WORKERS
+from .task40_gate_cd_formal_admission import (
+    GATE_CD_PARALLEL32_WORKERS,
+    GATE_CD_RAW_POOL_LOCK_PATH,
+    GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+)
 
 EXACT_CACHE_TEMPLATE_SCHEMA = "exact-cache-execution-template.v1"
 GATE_CD_EXACT_CACHE_WORKER_POLICY = (
@@ -69,6 +73,9 @@ def materialize_gate_cd_exact_cache_contract(
     runtime_cache_root,
     worker_cpus,
     attempt_id,
+    profile_identity,
+    run_id,
+    raw_tensor_pool_scheduler,
 ):
     """Bind a reviewed policy template to one exact lease and dynamic CPU set."""
     template_path = Path(template_path).resolve(strict=True)
@@ -84,10 +91,18 @@ def materialize_gate_cd_exact_cache_contract(
         or template.get("resolved_payload_sha256") != payload_sha256
         or template.get("worker_cpu_policy") != GATE_CD_EXACT_CACHE_WORKER_POLICY
         or template.get("worker_count") != GATE_CD_PARALLEL32_WORKERS
+        or template.get("profile_identity") != profile_identity
+        or template.get("run_id") != run_id
         or template.get("tensor_root_policy") != "attempt_cache_root/tensor"
         or template.get("carrier_root_policy") != "attempt_cache_root/carrier"
         or template.get("operator_identity")
         != {"scalar": "complex128", "q": 21, "degree": 6}
+        or raw_tensor_pool_scheduler != {
+            "policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+            "lock_path": GATE_CD_RAW_POOL_LOCK_PATH,
+            "serialized_region": "raw_tensor_execution.run_batch_only",
+            "whole_run_serialization": False,
+        }
     ):
         raise ValueError("Gate-CD exact-cache template differs from its reviewed contract")
     if (
@@ -123,6 +138,8 @@ def materialize_gate_cd_exact_cache_contract(
         "resolved_payload_sha256": payload_sha256,
         "worker_cpu_policy": GATE_CD_EXACT_CACHE_WORKER_POLICY,
         "worker_count": GATE_CD_PARALLEL32_WORKERS,
+        "profile_identity": profile_identity,
+        "run_id": run_id,
         "worker_cpus": cpus,
         "tensor_root": str(tensor_root),
         "carrier_root": str(carrier_root),
@@ -130,6 +147,7 @@ def materialize_gate_cd_exact_cache_contract(
         "attempt_id": attempt_id,
         "attempt_cache_root": str(root),
         "template_sha256": template_sha256,
+        "raw_tensor_pool_scheduler": raw_tensor_pool_scheduler,
     }
     encoded = (
         json.dumps(document, sort_keys=True, separators=(",", ":"), allow_nan=False)
@@ -149,10 +167,13 @@ def materialize_gate_cd_exact_cache_contract(
         "sha256": hashlib.sha256(encoded).hexdigest(),
         "template_path": str(template_path),
         "template_sha256": template_sha256,
+        "profile_identity": profile_identity,
+        "run_id": run_id,
         "attempt_id": attempt_id,
         "worker_cpus": cpus,
         "tensor_root": str(tensor_root),
         "carrier_root": str(carrier_root),
+        "raw_tensor_pool_scheduler": raw_tensor_pool_scheduler,
     }
 
 
@@ -166,6 +187,8 @@ def load_exact_cache_contract(
     expected_attempt_id=None,
     expected_template_sha256=None,
     expected_cache_root=None,
+    expected_profile_identity=None,
+    expected_run_id=None,
 ):
     if (
         not isinstance(source_sha, str)
@@ -185,6 +208,12 @@ def load_exact_cache_contract(
     payload_sha = _payload_sha256(resolved_payload)
     if document.get("resolved_payload_sha256") != payload_sha:
         raise ValueError("exact-cache resolved payload mismatch")
+    if expected_profile_identity is not None and (
+        document.get("profile_identity") != expected_profile_identity
+    ):
+        raise ValueError("exact-cache profile identity mismatch")
+    if expected_run_id is not None and document.get("run_id") != expected_run_id:
+        raise ValueError("exact-cache run identity mismatch")
     cpus = document.get("worker_cpus", [])
     if (
         len(cpus) not in (1, 4, 8, 16, 32)
@@ -203,6 +232,13 @@ def load_exact_cache_contract(
             != {"scalar": "complex128", "q": 21, "degree": 6}
         ):
             raise ValueError("Gate-CD exact-cache runtime policy is malformed")
+        if document.get("raw_tensor_pool_scheduler") != {
+            "policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+            "lock_path": GATE_CD_RAW_POOL_LOCK_PATH,
+            "serialized_region": "raw_tensor_execution.run_batch_only",
+            "whole_run_serialization": False,
+        }:
+            raise ValueError("Gate-CD exact-cache raw pool scheduler is malformed")
         if expected_attempt_id is not None and document.get("attempt_id") != expected_attempt_id:
             raise ValueError("Gate-CD exact-cache attempt id differs from its lease")
         if (
@@ -237,6 +273,9 @@ def load_exact_cache_contract(
                 "degree": 6,
             },
             "minimum_available_bytes": 68719476736,
+            "pool_scheduler_policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+            "pool_lock_path": GATE_CD_RAW_POOL_LOCK_PATH,
+            "pool_serialized_region": "raw_tensor_execution.run_batch_only",
         },
         "carrier": {
             "root": document["carrier_root"],

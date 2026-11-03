@@ -713,7 +713,7 @@ def launch_native_capacity(specification, *, setup_only: bool = False):
     from .task40_d07c_g5_join import G5_PROFILE
     from .task40_gate_cd_formal_admission import (
         GATE_CD_EXECUTION_PROFILES,
-        GATE_CD_PARALLEL32_PROFILE,
+        GATE_CD_PARALLEL32_PROFILES,
     )
     if profile == G5_PROFILE or profile in GATE_CD_EXECUTION_PROFILES:
         root = Path(__file__).resolve().parents[2]
@@ -740,14 +740,14 @@ def launch_native_capacity(specification, *, setup_only: bool = False):
             direct_route = dict(
                 native_profile_facts(profile)['campaign_authorization']['direct_route']
             )
-            if profile == GATE_CD_PARALLEL32_PROFILE:
+            if profile in GATE_CD_PARALLEL32_PROFILES:
                 template_sha = os.environ.get('TASK40_EXACT_CACHE_TEMPLATE_SHA256')
                 if (
                     not isinstance(template_sha, str)
                     or len(template_sha) != 64
                     or any(character not in '0123456789abcdef' for character in template_sha)
                 ):
-                    raise InputError('Gate-CD N14 requires the reviewed exact-cache template SHA256')
+                    raise InputError('Gate-CD parallel32 requires the reviewed exact-cache template SHA256')
                 direct_route['exact_cache_contract_template_sha256'] = template_sha
             expected_identity['direct_route_contract'] = direct_route
     with native_capacity_guard(

@@ -14,6 +14,11 @@ from src.runners.reviewed_workstation_admission import (
 )
 from src.runners.task40_gate_cd_formal_admission import (
     GATE_CD_FORMAL_PROFILE,
+    GATE_CD_M8N6_PROFILE,
+    GATE_CD_M8N2_PROFILE,
+    GATE_CD_PARALLEL32_WORKERS,
+    GATE_CD_RAW_POOL_LOCK_PATH,
+    GATE_CD_RAW_POOL_SCHEDULER_POLICY,
     GATE_CD_SCOPE_SCHEMA,
     _runtime_paths,
     _validate_gate_cd_scope,
@@ -21,10 +26,10 @@ from src.runners.task40_gate_cd_formal_admission import (
 )
 
 
-def _identity():
+def _identity(profile=GATE_CD_FORMAL_PROFILE):
     return {
-        "profile_identity": GATE_CD_FORMAL_PROFILE,
-        "run_id": GATE_CD_FORMAL_PROFILE,
+        "profile_identity": profile,
+        "run_id": profile,
         "input_path": "/tmp/gate_cd/input.dat",
         "input_sha256": "1" * 64,
         "physical_model_sha256": "2" * 64,
@@ -35,12 +40,11 @@ def _identity():
     }
 
 
-def _scope(tmp_path, attempt="admtest0001"):
-    profile = GATE_CD_FORMAL_PROFILE
+def _scope(tmp_path, attempt="admtest0001", profile=GATE_CD_FORMAL_PROFILE):
     scope = {
         "schema": GATE_CD_SCOPE_SCHEMA,
         "attempt_id": attempt,
-        "identity": _identity(),
+        "identity": _identity(profile),
         "formal_route_readiness": {"launchable": True},
         "resource_contract": {
             "policy": "host_available_floor_v1",
@@ -57,6 +61,14 @@ def _scope(tmp_path, attempt="admtest0001"):
             "sample_seconds": 1.5,
             "busy_fallback_allowed": True,
             "exclusive_cpu_ownership": False,
+            **(
+                {
+                    "worker_count": GATE_CD_PARALLEL32_WORKERS,
+                    "avoid_observed_active_solver_cores_when_capacity_allows": True,
+                }
+                if profile in {GATE_CD_M8N6_PROFILE, GATE_CD_M8N2_PROFILE}
+                else {}
+            ),
         },
         "parallel_neighbors": {
             "policy": "gate_cd_observational_neighbors_v1",
@@ -65,6 +77,18 @@ def _scope(tmp_path, attempt="admtest0001"):
             "large_process_candidates_block_admission": False,
             "neighbors_modified": False,
         },
+        **(
+            {
+                "raw_tensor_pool_scheduler": {
+                    "policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+                    "lock_path": GATE_CD_RAW_POOL_LOCK_PATH,
+                    "serialized_region": "raw_tensor_execution.run_batch_only",
+                    "whole_run_serialization": False,
+                }
+            }
+            if profile in {GATE_CD_M8N6_PROFILE, GATE_CD_M8N2_PROFILE}
+            else {}
+        ),
         "runtime_paths": _runtime_paths(profile, profile, attempt, tmp_path),
     }
     path = tmp_path / f"{attempt}.scope.json"
@@ -164,8 +188,12 @@ def test_scope_is_exact_and_one_shot_is_runtime_only(tmp_path):
         pass
 
 
+@pytest.mark.parametrize(
+    "profile",
+    (GATE_CD_FORMAL_PROFILE, GATE_CD_M8N6_PROFILE, GATE_CD_M8N2_PROFILE),
+)
 def test_production_host_floor_guard_observes_neighbors_but_only_floor_blocks(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, profile
 ):
     from benchmarks import subreaper_watchdog, task034_wsl_resources
     from src.runners import reviewed_workstation_admission as admission
@@ -175,7 +203,7 @@ def test_production_host_floor_guard_observes_neighbors_but_only_floor_blocks(
     _fake_proc(proc_root)
     _fake_sys(sys_root)
     cgroup = sys_root / "fs" / "cgroup" / "task40"
-    _, _, scope = _scope(tmp_path, "hostfloor0001")
+    _, _, scope = _scope(tmp_path, f"hostfloor{len(profile):04d}", profile)
     monkeypatch.setattr(admission, "_proc_root", lambda: proc_root)
     monkeypatch.setattr(admission, "_sys_root", lambda: sys_root)
     monkeypatch.setattr(admission.os, "getpid", lambda: 10)
@@ -185,13 +213,13 @@ def test_production_host_floor_guard_observes_neighbors_but_only_floor_blocks(
         subreaper_watchdog, "memory_envelope",
         lambda: {"effective_available_bytes": 128 * 1024**3},
     )
-    resources = native_profile_facts(GATE_CD_FORMAL_PROFILE)["resources"]
+    resources = native_profile_facts(profile)["resources"]
     assert resources["parallel_admission_policy"] == (
         "gate_cd_exact_scope_one_shot_host_floor_v1"
     )
     admitted = task40_host_floor_interleaved_admission(
-        resources, [24], task_profile=GATE_CD_FORMAL_PROFILE,
-        task_run_id=GATE_CD_FORMAL_PROFILE, supervisor_cpu=9,
+        resources, [24], task_profile=profile,
+        task_run_id=profile, supervisor_cpu=9,
         gate_cd_scope=scope,
     )
     assert admitted["resource_stop_policy"] == "host_available_floor_v1"
@@ -211,8 +239,8 @@ def test_production_host_floor_guard_observes_neighbors_but_only_floor_blocks(
     )
     with pytest.raises(Exception, match="below its explicit floor"):
         task40_host_floor_interleaved_admission(
-            resources, [24], task_profile=GATE_CD_FORMAL_PROFILE,
-            task_run_id=GATE_CD_FORMAL_PROFILE, supervisor_cpu=9,
+            resources, [24], task_profile=profile,
+            task_run_id=profile, supervisor_cpu=9,
             gate_cd_scope=scope,
         )
 

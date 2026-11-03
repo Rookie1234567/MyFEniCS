@@ -2,12 +2,128 @@
 
 from __future__ import annotations
 
+import fcntl
+import os
+import stat
 import time
 from pathlib import Path
 
 import numpy as np
 
 from .parallel_tensor_cache import digest, key_for, load_shard, run_batch
+
+
+def _emit_pool_event(config, event_type, **facts):
+    callback = config.get("pool_progress")
+    if callback is not None:
+        callback(
+            {
+                "event_type": str(event_type),
+                "monotonic_seconds": time.monotonic(),
+                **facts,
+            }
+        )
+
+
+def _run_batch_with_pool_lock(batch_runner, jobs, root, cpus, config):
+    """Lock only the shared raw-tensor worker pool, never later FE/LU work."""
+    pool_policy = config.get("pool_scheduler_policy")
+    lock_path_value = config.get("pool_lock_path")
+    if len(cpus) != 32:
+        if pool_policy is not None or lock_path_value is not None:
+            raise ValueError("the shared 32-worker pool lock is only valid for 32 workers")
+        started = time.perf_counter()
+        result = batch_runner(
+            jobs,
+            root,
+            cpus,
+            timeout=config.get("job_timeout_seconds"),
+            progress=config.get("progress"),
+            available_floor=int(config.get("minimum_available_bytes", 68719476736)),
+            disk_reserve=int(config.get("disk_reserve_bytes", 10737418240)),
+        )
+        return result, {
+            "policy": "no_shared_pool_lock_for_serial_raw_execution",
+            "wait_seconds": 0.0,
+            "hold_seconds": time.perf_counter() - started,
+            "lock_path": None,
+        }
+
+    from src.runners.task40_gate_cd_formal_admission import (
+        GATE_CD_RAW_POOL_LOCK_PATH,
+        GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+    )
+
+    if (
+        pool_policy != GATE_CD_RAW_POOL_SCHEDULER_POLICY
+        or lock_path_value != GATE_CD_RAW_POOL_LOCK_PATH
+    ):
+        raise ValueError("32-worker raw execution lacks its reviewed shared-pool lock")
+    path = Path(lock_path_value)
+    flags = os.O_CREAT | os.O_RDWR | getattr(os, "O_CLOEXEC", 0)
+    flags |= getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(path, flags, 0o600)
+    wait_started = time.perf_counter()
+    lock_acquired = False
+    batch_completed = False
+    acquired_at = None
+    try:
+        _emit_pool_event(
+            config,
+            "raw_tensor_pool_lock_wait_started",
+            lock_path=str(path),
+            requested_workers=len(cpus),
+            batch_classes=len(jobs),
+        )
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode) & 0o077:
+            raise ValueError("shared raw tensor pool lock must be a private regular file")
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        lock_acquired = True
+        acquired_at = time.perf_counter()
+        _emit_pool_event(
+            config,
+            "raw_tensor_pool_lock_acquired",
+            lock_path=str(path),
+            wait_seconds=acquired_at - wait_started,
+            requested_workers=len(cpus),
+            batch_classes=len(jobs),
+        )
+        result = batch_runner(
+            jobs,
+            root,
+            cpus,
+            timeout=config.get("job_timeout_seconds"),
+            progress=config.get("progress"),
+            available_floor=int(config.get("minimum_available_bytes", 68719476736)),
+            disk_reserve=int(config.get("disk_reserve_bytes", 10737418240)),
+        )
+        batch_completed = True
+        hold_seconds = time.perf_counter() - acquired_at
+        return result, {
+            "policy": pool_policy,
+            "lock_path": str(path),
+            "wait_seconds": acquired_at - wait_started,
+            "hold_seconds": hold_seconds,
+            "serialized_region": "run_batch_only",
+            "whole_run_serialization": False,
+        }
+    finally:
+        try:
+            if lock_acquired:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+        finally:
+            os.close(fd)
+        if lock_acquired:
+            _emit_pool_event(
+                config,
+                "raw_tensor_pool_lock_released",
+                lock_path=str(path),
+                hold_seconds=time.perf_counter() - acquired_at,
+                batch_completed=batch_completed,
+                requested_workers=len(cpus),
+                batch_classes=len(jobs),
+            )
 
 
 def evaluate_raw_classes(policy_forms, coordinates, ordered_keys, config):
@@ -72,14 +188,8 @@ def evaluate_raw_classes(policy_forms, coordinates, ordered_keys, config):
             }
         )
     started = time.perf_counter()
-    result = run_batch(
-        jobs,
-        root,
-        cpus,
-        timeout=config.get("job_timeout_seconds"),
-        progress=config.get("progress"),
-        available_floor=int(config.get("minimum_available_bytes", 68719476736)),
-        disk_reserve=int(config.get("disk_reserve_bytes", 10737418240)),
+    result, pool_scheduler = _run_batch_with_pool_lock(
+        run_batch, jobs, root, cpus, config
     )
     arrays = {}
     for key, job in zip(ordered_keys, jobs, strict=True):
@@ -94,6 +204,7 @@ def evaluate_raw_classes(policy_forms, coordinates, ordered_keys, config):
         "cache_hits": sum(bool(item["cache_hit"]) for item in result.values()),
         "computed_classes": sum(not item["cache_hit"] for item in result.values()),
         "wall_seconds": time.perf_counter() - started,
+        "pool_scheduler": pool_scheduler,
         "kernel_cpu_seconds_sum": sum(
             item.get("kernel_cpu_seconds", 0) for item in result.values()
         ),

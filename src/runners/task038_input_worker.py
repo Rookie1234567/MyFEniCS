@@ -102,7 +102,9 @@ def _task40_gate_cd_runtime_cache_evidence(
     """Validate Gate-CD's exact one-shot cache paths before worker dispatch."""
     from src.runners.task40_gate_cd_formal_admission import (
         GATE_CD_EXECUTION_PROFILES,
-        GATE_CD_PARALLEL32_PROFILE,
+        GATE_CD_PARALLEL32_PROFILES,
+        GATE_CD_RAW_POOL_LOCK_PATH,
+        GATE_CD_RAW_POOL_SCHEDULER_POLICY,
     )
 
     profile = manifest.get("native_capacity_profile_identity")
@@ -129,7 +131,7 @@ def _task40_gate_cd_runtime_cache_evidence(
         "pycache": expected_root / "pycache",
         "mpl": expected_root / "mpl",
     }
-    if profile == GATE_CD_PARALLEL32_PROFILE:
+    if profile in GATE_CD_PARALLEL32_PROFILES:
         expected_paths.update(
             tensor=expected_root / "tensor",
             carrier=expected_root / "carrier",
@@ -169,7 +171,7 @@ def _task40_gate_cd_runtime_cache_evidence(
         "dolfinx_jit_cache_dir": str(actual_jit_cache),
         "cache_paths_verified_before_FE_dispatch": True,
     }
-    if profile == GATE_CD_PARALLEL32_PROFILE:
+    if profile in GATE_CD_PARALLEL32_PROFILES:
         runtime_contract = manifest.get("exact_cache_runtime_contract")
         reservation = lease.get("cpu_reservation")
         expected_cpus = (
@@ -189,10 +191,18 @@ def _task40_gate_cd_runtime_cache_evidence(
             or runtime_contract.get("worker_cpus") != expected_cpus
             or worker_cpus != expected_cpus
             or runtime_contract.get("template_sha256") != template_sha
+            or runtime_contract.get("profile_identity") != profile
+            or runtime_contract.get("run_id") != manifest.get("run_id")
             or runtime_contract.get("path") != contract_path
             or runtime_contract.get("sha256") != contract_sha
             or runtime_contract.get("policy")
             != "gate_cd_lease_selected_32_distinct_physical_cores_v1"
+            or runtime_contract.get("raw_tensor_pool_scheduler") != {
+                "policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+                "lock_path": GATE_CD_RAW_POOL_LOCK_PATH,
+                "serialized_region": "raw_tensor_execution.run_batch_only",
+                "whole_run_serialization": False,
+            }
             or len(expected_cpus or ()) != 32
             or len(set(expected_cpus or ())) != 32
         ):
@@ -205,10 +215,14 @@ def _task40_gate_cd_runtime_cache_evidence(
         if (
             document.get("attempt_id") != attempt_id
             or document.get("template_sha256") != template_sha
+            or document.get("profile_identity") != profile
+            or document.get("run_id") != manifest.get("run_id")
             or document.get("worker_cpus") != expected_cpus
             or Path(document.get("attempt_cache_root", "")).resolve() != expected_root
             or Path(document.get("tensor_root", "")).resolve() != expected_root / "tensor"
             or Path(document.get("carrier_root", "")).resolve() != expected_root / "carrier"
+            or document.get("raw_tensor_pool_scheduler")
+            != runtime_contract.get("raw_tensor_pool_scheduler")
         ):
             raise ValueError("Gate-CD N14 exact-cache runtime contract fields differ from lease")
         evidence["exact_cache_contract"] = {
@@ -218,6 +232,7 @@ def _task40_gate_cd_runtime_cache_evidence(
             "worker_count": 32,
             "worker_cpus": expected_cpus,
             "runtime_lease_match_verified": True,
+            "raw_tensor_pool_scheduler": document["raw_tensor_pool_scheduler"],
         }
     return evidence
 

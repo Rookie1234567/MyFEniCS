@@ -24,6 +24,9 @@ GATE_CD_PARALLEL32_PROFILE = (
 )
 GATE_CD_M8N6_PROFILE = "task40_gate_cd_0p7_mapped_m8n6_p6_direct_v1"
 GATE_CD_M8N2_PROFILE = "task40_gate_cd_0p7_mapped_m8n2_p6_direct_v1"
+GATE_CD_PARALLEL32_PROFILES = frozenset(
+    {GATE_CD_PARALLEL32_PROFILE, GATE_CD_M8N6_PROFILE, GATE_CD_M8N2_PROFILE}
+)
 GATE_CD_EXECUTION_PROFILES = frozenset(
     {
         GATE_CD_FORMAL_PROFILE,
@@ -33,7 +36,9 @@ GATE_CD_EXECUTION_PROFILES = frozenset(
     }
 )
 GATE_CD_PARALLEL32_WORKERS = 32
-GATE_CD_SCOPE_SCHEMA = "task40.gate_cd_formal_exact_execution_scope.v1"
+GATE_CD_SCOPE_SCHEMA = "task40.gate_cd_formal_exact_execution_scope.v2"
+GATE_CD_RAW_POOL_SCHEDULER_POLICY = "task40_shared_parallel32_raw_tensor_pool_v1"
+GATE_CD_RAW_POOL_LOCK_PATH = "/tmp/task40_gate_cd_parallel32_raw_tensor_pool.lock"
 GATE_CD_SCOPE_PATH_ENV = "TASK40_GATE_CD_SCOPE_PATH"
 GATE_CD_SCOPE_SHA_ENV = "TASK40_GATE_CD_SCOPE_SHA256"
 GATE_CD_SUBMISSION_MODE_ENV = "TASK40_GATE_CD_SUBMISSION_MODE"
@@ -136,7 +141,7 @@ def _validate_gate_cd_scope(scope_path: str | Path, expected_sha256: str,
     cpu = scope.get("cpu_policy")
     required_worker_count = (
         GATE_CD_PARALLEL32_WORKERS
-        if profile == GATE_CD_PARALLEL32_PROFILE
+        if profile in GATE_CD_PARALLEL32_PROFILES
         else 1
     )
     observed_worker_count = (
@@ -153,7 +158,7 @@ def _validate_gate_cd_scope(scope_path: str | Path, expected_sha256: str,
         or observed_worker_count != required_worker_count
         or (
             required_worker_count == GATE_CD_PARALLEL32_WORKERS
-            and cpu.get("avoid_active_solver_affinity_overlap") is not True
+            and cpu.get("avoid_observed_active_solver_cores_when_capacity_allows") is not True
         )
     ):
         raise InputError("Gate-CD scope lacks its reviewed dynamic shared-CPU policy")
@@ -173,7 +178,176 @@ def _validate_gate_cd_scope(scope_path: str | Path, expected_sha256: str,
         or neighbors.get("neighbors_modified") is not False
     ):
         raise InputError("Gate-CD scope must keep parallel processes observational, not blocking")
+    raw_pool = scope.get("raw_tensor_pool_scheduler")
+    if profile in GATE_CD_PARALLEL32_PROFILES:
+        if not isinstance(raw_pool, dict) or raw_pool != {
+            "policy": GATE_CD_RAW_POOL_SCHEDULER_POLICY,
+            "lock_path": GATE_CD_RAW_POOL_LOCK_PATH,
+            "serialized_region": "raw_tensor_execution.run_batch_only",
+            "whole_run_serialization": False,
+        }:
+            raise InputError(
+                "Gate-CD parallel32 scope lacks the shared raw tensor pool scheduler"
+            )
+    elif raw_pool is not None:
+        raise InputError("serial Gate-CD profile must not request a parallel raw pool lock")
     return scope, path, digest
+
+
+def _solver_thread_snapshot(proc_root: str | Path) -> dict:
+    """Read solver-role processes and descendants with PID/start-tick identity."""
+    root = Path(proc_root)
+    process_rows = {}
+    unreadable = 0
+    for proc in root.glob("[0-9]*"):
+        if not proc.name.isdigit():
+            continue
+        pid = int(proc.name)
+        try:
+            raw = (proc / "stat").read_text()
+            fields = raw[raw.rfind(")") + 2 :].split()
+            argv = [
+                value.decode("utf-8", "replace")
+                for value in (proc / "cmdline").read_bytes().split(bytes([0])) if value
+            ]
+            modules = [
+                value for value in argv
+                if value.startswith("src.runners.task038_")
+            ]
+            executable = Path(argv[0]).name if argv else ""
+            if any(value.endswith("scripts/run_case.py") for value in argv):
+                role = "run_case"
+            elif executable in {"mpiexec", "mpirun"} and modules:
+                role = "mpi"
+            elif modules:
+                role = modules[0].removeprefix("src.runners.")
+            else:
+                role = None
+            cgroup = None
+            try:
+                for line in (proc / "cgroup").read_text().splitlines():
+                    parts = line.split(":", 2)
+                    if len(parts) == 3 and parts[0] == "0":
+                        cgroup = parts[2]
+                        break
+            except OSError:
+                pass
+            try:
+                cwd = str((proc / "cwd").resolve())
+            except OSError:
+                cwd = None
+            try:
+                affinity = sorted(os.sched_getaffinity(pid))
+            except (OSError, ProcessLookupError, PermissionError):
+                affinity = None
+            process_rows[pid] = {
+                "pid": pid,
+                "start_ticks": int(fields[19]),
+                "ppid": int(fields[1]),
+                "state": fields[0],
+                "role": role,
+                "argv": argv,
+                "cwd": cwd,
+                "cgroup_path": cgroup,
+                "affinity": affinity,
+            }
+        except (OSError, ValueError, IndexError, ProcessLookupError, PermissionError):
+            unreadable += 1
+    roots = {pid for pid, row in process_rows.items() if row["role"] is not None}
+    tree = set(roots)
+    changed = True
+    while changed:
+        changed = False
+        for pid, row in process_rows.items():
+            if pid not in tree and row["ppid"] in tree:
+                tree.add(pid)
+                changed = True
+    selected = {pid: process_rows[pid] for pid in sorted(tree) if pid in process_rows}
+    threads = {}
+    thread_unreadable = 0
+    for pid, row in selected.items():
+        task_path = root / str(pid) / "task"
+        try:
+            tids = sorted(int(path.name) for path in task_path.iterdir() if path.name.isdigit())
+        except OSError:
+            tids = [pid]
+        for tid in tids:
+            try:
+                stat_path = task_path / str(tid) / "stat"
+                raw = stat_path.read_text()
+                fields = raw[raw.rfind(")") + 2 :].split()
+                threads[(pid, row["start_ticks"], tid)] = {
+                    "cpu_ticks": int(fields[11]) + int(fields[12]),
+                    "last_cpu": int(fields[36]),
+                    "state": fields[0],
+                    "role": row["role"],
+                }
+            except (OSError, ValueError, IndexError, ProcessLookupError):
+                thread_unreadable += 1
+    return {
+        "captured_utc_epoch_ns": time.time_ns(),
+        "solver_processes": list(selected.values()),
+        "threads": threads,
+        "unreadable_process_count": unreadable,
+        "unreadable_thread_count": thread_unreadable,
+        "processes_modified": False,
+    }
+
+
+def _active_solver_cpu_ids(before: dict, after: dict) -> tuple[set[int], dict]:
+    before_threads = before.get("threads", {})
+    after_threads = after.get("threads", {})
+    active_cpu_ids = set()
+    active_threads = []
+    all_keys = set(before_threads) | set(after_threads)
+    for key in sorted(all_keys):
+        first = before_threads.get(key)
+        last = after_threads.get(key)
+        appeared_or_vanished = first is None or last is None
+        tick_delta = (
+            None if first is None or last is None
+            else int(last["cpu_ticks"]) - int(first["cpu_ticks"])
+        )
+        is_active = appeared_or_vanished or (tick_delta is not None and tick_delta > 0) or (
+            (first is not None and first["state"] == "R")
+            or (last is not None and last["state"] == "R")
+        )
+        if not is_active:
+            continue
+        cpus = sorted({
+            int(item["last_cpu"])
+            for item in (first, last)
+            if item is not None and int(item["last_cpu"]) >= 0
+        })
+        active_cpu_ids.update(cpus)
+        active_threads.append({
+            "pid": key[0],
+            "start_ticks": key[1],
+            "tid": key[2],
+            "tick_delta": tick_delta,
+            "appeared_or_vanished_during_sample": appeared_or_vanished,
+            "last_cpu_ids_observed": cpus,
+            "state_before": None if first is None else first["state"],
+            "state_after": None if last is None else last["state"],
+            "role": (last or first or {}).get("role"),
+        })
+    return active_cpu_ids, {
+        "policy": "solver_tree_thread_ticks_last_cpu_endpoint_v1",
+        "sampled_process_count_before": len(before.get("solver_processes", ())),
+        "sampled_process_count_after": len(after.get("solver_processes", ())),
+        "sampled_thread_count_before": len(before_threads),
+        "sampled_thread_count_after": len(after_threads),
+        "active_thread_count": len(active_threads),
+        "active_cpu_ids": sorted(active_cpu_ids),
+        "active_threads": active_threads,
+        "solver_processes_before": before.get("solver_processes", ()),
+        "solver_processes_after": after.get("solver_processes", ()),
+        "unreadable_process_count_before": before.get("unreadable_process_count", 0),
+        "unreadable_process_count_after": after.get("unreadable_process_count", 0),
+        "unreadable_thread_count_before": before.get("unreadable_thread_count", 0),
+        "unreadable_thread_count_after": after.get("unreadable_thread_count", 0),
+        "last_cpu_is_endpoint_observation_not_full_cpu_history": True,
+    }
 
 
 def _choose_cpu_reservation(
@@ -182,44 +356,60 @@ def _choose_cpu_reservation(
     *,
     worker_count: int = 1,
 ) -> dict:
-    # Reuse the already reviewed dynamic sampler, preserving its CPU-load,
-    # affinity observation, distinct-core, and non-exclusive semantics.
+    # Reuse the reviewed host-load sampler; add a per-thread sample over that
+    # same bounded window. Affinity masks remain observational, never a claim
+    # of exclusive CPU ownership.
     from .task40_d07c_g5_join import _core, choose_g5_cpu_reservation
 
+    before = _solver_thread_snapshot(proc_root) if worker_count == GATE_CD_PARALLEL32_WORKERS else None
     sampled = choose_g5_cpu_reservation(
         sample_seconds=float(sample_seconds), proc_root=proc_root
     )
     if worker_count == GATE_CD_PARALLEL32_WORKERS:
+        after = _solver_thread_snapshot(proc_root)
+        active_solver_cpus, activity = _active_solver_cpu_ids(before or {}, after)
+        active_solver_cores = {tuple(_core(cpu)) for cpu in active_solver_cpus}
         candidates = list(sampled.get("candidate_topology_and_load", ()))
+        nonactive = [
+            row for row in candidates
+            if (int(row["package"]), int(row["core"])) not in active_solver_cores
+        ]
+        nonactive.sort(key=lambda row: (
+            float(row["sampled_utilization"]),
+            bool(row["heavy_neighbor_affinity_overlap"]),
+            int(row["cpu"]),
+        ))
+        all_sorted = sorted(candidates, key=lambda row: (
+            (int(row["package"]), int(row["core"])) in active_solver_cores,
+            float(row["sampled_utilization"]),
+            bool(row["heavy_neighbor_affinity_overlap"]),
+            int(row["cpu"]),
+        ))
+        if len(candidates) < GATE_CD_PARALLEL32_WORKERS + 1:
+            raise InputError(
+                "Gate-CD parallel32 admission needs 32 distinct worker cores plus one supervisor core"
+            )
+        selected = (
+            nonactive[: GATE_CD_PARALLEL32_WORKERS + 1]
+            if len(nonactive) >= GATE_CD_PARALLEL32_WORKERS + 1
+            else all_sorted[: GATE_CD_PARALLEL32_WORKERS + 1]
+        )
+        supervisor_cpu = int(selected[0]["cpu"])
+        worker_cpus = [int(row["cpu"]) for row in selected[1:]]
+        if len(set(worker_cpus)) != GATE_CD_PARALLEL32_WORKERS:
+            raise InputError("Gate-CD parallel32 dynamic CPU admission returned duplicate workers")
+        selected_active_cores = sorted({
+            (int(row["package"]), int(row["core"]))
+            for row in selected
+            if (int(row["package"]), int(row["core"])) in active_solver_cores
+        })
         neighbor_observation = sampled.get("neighbor_observation", {})
-        active_solver_cpus = {
+        solver_affinity_cpus = {
             int(cpu)
             for row in neighbor_observation.get("processes", ())
             if row.get("solver_role_observation")
             for cpu in row.get("affinity", ())
         }
-        active_solver_cores = {
-            tuple(_core(cpu)) for cpu in active_solver_cpus
-        }
-        eligible = [
-            row for row in candidates
-            if (int(row["package"]), int(row["core"])) not in active_solver_cores
-        ]
-        eligible.sort(key=lambda row: (
-            float(row["sampled_utilization"]),
-            bool(row["heavy_neighbor_affinity_overlap"]),
-            int(row["cpu"]),
-        ))
-        if len(eligible) < GATE_CD_PARALLEL32_WORKERS + 1:
-            raise InputError(
-                "Gate-CD N14 admission needs 32 distinct worker cores plus one "
-                "supervisor core after excluding active solver affinities"
-            )
-        selected = eligible[: GATE_CD_PARALLEL32_WORKERS + 1]
-        supervisor_cpu = int(selected[0]["cpu"])
-        worker_cpus = [int(row["cpu"]) for row in selected[1:]]
-        if len(set(worker_cpus)) != GATE_CD_PARALLEL32_WORKERS:
-            raise InputError("Gate-CD N14 dynamic CPU admission returned duplicate workers")
         return {
             **sampled,
             "policy": "sampled_low_load_distinct_physical_cores_v1",
@@ -228,11 +418,15 @@ def _choose_cpu_reservation(
             "worker_cpu": worker_cpus[0],
             "worker_cpus": worker_cpus,
             "selected_topology": selected,
-            "excluded_active_solver_cpus": sorted(active_solver_cpus),
-            "excluded_active_solver_cores": [
-                list(core) for core in sorted(active_solver_cores)
-            ],
-            "active_solver_affinity_avoidance": True,
+            "observed_active_solver_cpus": sorted(active_solver_cpus),
+            "observed_active_solver_cores": [list(core) for core in sorted(active_solver_cores)],
+            "selected_observed_active_solver_cores": [list(core) for core in selected_active_cores],
+            "avoidance_fallback_used": bool(selected_active_cores),
+            "active_solver_core_avoidance_when_capacity_allows": True,
+            "active_solver_thread_sample": activity,
+            "selected_solver_affinity_overlap_observed_only": sorted(
+                set(worker_cpus + [supervisor_cpu]) & solver_affinity_cpus
+            ),
             "exclusive_cpu_ownership": False,
         }
     if worker_count != 1:
