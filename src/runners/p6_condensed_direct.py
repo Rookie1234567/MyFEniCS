@@ -376,7 +376,12 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
                     "GATE_CD_M8N14_SIGNED_SUBRECTANGLE_FROM_M8N64_PARENT"
                     if profile_identity
                     == "task40_gate_cd_0p7_mapped_m8n14_p6_direct_parallel32_v1"
-                    else "GATE_CD_M8N64_FINITE_SIGNED_RECTANGLE"
+                    else (
+                        f"GATE_CD_{mode['reference_mode_label']}_SIGNED_SUBRECTANGLE_FROM_M8N64_PARENT"
+                        if mode.get("policy")
+                        == "explicit_signed_subrectangle_from_parent_v1"
+                        else "GATE_CD_M8N64_FINITE_SIGNED_RECTANGLE"
+                    )
                 )
                 if gate_cd_case
                 else "task40_phi90"

@@ -22,8 +22,15 @@ GATE_CD_FORMAL_PROFILE = "task40_gate_cd_0p7_mapped_m8n64_p6_direct_v1"
 GATE_CD_PARALLEL32_PROFILE = (
     "task40_gate_cd_0p7_mapped_m8n14_p6_direct_parallel32_v1"
 )
+GATE_CD_M8N6_PROFILE = "task40_gate_cd_0p7_mapped_m8n6_p6_direct_v1"
+GATE_CD_M8N2_PROFILE = "task40_gate_cd_0p7_mapped_m8n2_p6_direct_v1"
 GATE_CD_EXECUTION_PROFILES = frozenset(
-    {GATE_CD_FORMAL_PROFILE, GATE_CD_PARALLEL32_PROFILE}
+    {
+        GATE_CD_FORMAL_PROFILE,
+        GATE_CD_PARALLEL32_PROFILE,
+        GATE_CD_M8N6_PROFILE,
+        GATE_CD_M8N2_PROFILE,
+    }
 )
 GATE_CD_PARALLEL32_WORKERS = 32
 GATE_CD_SCOPE_SCHEMA = "task40.gate_cd_formal_exact_execution_scope.v1"

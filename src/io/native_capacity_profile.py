@@ -182,10 +182,23 @@ TASK40_GATE_CD_M8N64_P6_DIRECT_PROFILE = (
 TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE = (
     "task40_gate_cd_0p7_mapped_m8n14_p6_direct_parallel32_v1"
 )
+TASK40_GATE_CD_M8N6_P6_DIRECT_PROFILE = (
+    "task40_gate_cd_0p7_mapped_m8n6_p6_direct_v1"
+)
+TASK40_GATE_CD_M8N2_P6_DIRECT_PROFILE = (
+    "task40_gate_cd_0p7_mapped_m8n2_p6_direct_v1"
+)
+TASK40_GATE_CD_SIGNED_SUBRECTANGLE_PROFILES = frozenset(
+    {
+        TASK40_GATE_CD_M8N6_P6_DIRECT_PROFILE,
+        TASK40_GATE_CD_M8N2_P6_DIRECT_PROFILE,
+    }
+)
 TASK40_GATE_CD_FORMAL_PROFILES = frozenset(
     {
         TASK40_GATE_CD_M8N64_P6_DIRECT_PROFILE,
         TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE,
+        *TASK40_GATE_CD_SIGNED_SUBRECTANGLE_PROFILES,
     }
 )
 TASK40_GATE_CD_PARALLEL32_PROFILES = frozenset(
@@ -2666,6 +2679,162 @@ def _task40_gate_cd_m8n14_profile_facts(identity):
     return base
 
 
+_TASK40_GATE_CD_SIGNED_SUBRECTANGLE_DATA = {
+    TASK40_GATE_CD_M8N6_P6_DIRECT_PROFILE: {
+        "label": "M8N6",
+        "bounds": [-8, 8, -6, 1],
+        "rectangle": [8, 6],
+        "mode_count": 544,
+        "mode_sha256": "a01d69f201d3fa02b07fd208c3e2aefb8f9501a591f57045c6c2ca761004a243",
+        "indices_sha256": "c18bb9b614aa570cf0f9171b1fcf5197651e902d1f9e39c52f491724f1728106",
+        "keys_sha256": "f90e7470893a966fd0da352109f154bd2ae077ce860c1229311d99d965a70fac",
+        "propagating_count": 416,
+        "power_carrying_count": 482,
+        "propagating_by_side": {"top": 210, "bottom": 206},
+        "power_carrying_by_side": {"top": 210, "bottom": 272},
+    },
+    TASK40_GATE_CD_M8N2_P6_DIRECT_PROFILE: {
+        "label": "M8N2",
+        "bounds": [-8, 8, -2, 1],
+        "rectangle": [8, 2],
+        "mode_count": 272,
+        "mode_sha256": "fea54561d3765346bff604334fafd5506df2aeb0562be53129cf05dfdd36c2fd",
+        "indices_sha256": "041f64f1b215e540c13f35f337fe558ace659a64ff7ffc11b45aa4ebc6ca7d93",
+        "keys_sha256": "97b64f142862e4f88a558f3d4843fed884d027f2ace473a3ef6687c2c34f663a",
+        "propagating_count": 144,
+        "power_carrying_count": 210,
+        "propagating_by_side": {"top": 74, "bottom": 70},
+        "power_carrying_by_side": {"top": 74, "bottom": 136},
+    },
+}
+
+
+def _task40_gate_cd_signed_subrectangle_profile_facts(identity):
+    """Bind one finite signed Gate-CD rectangle to the verified M8N64 parent."""
+    from copy import deepcopy
+
+    try:
+        selection = _TASK40_GATE_CD_SIGNED_SUBRECTANGLE_DATA[identity]
+    except KeyError as exc:
+        raise ValueError(f"unsupported Gate-CD signed subrectangle profile: {identity}") from exc
+
+    base = _task40_gate_cd_m8n64_profile_facts(
+        TASK40_GATE_CD_M8N64_P6_DIRECT_PROFILE
+    )
+    base = deepcopy(base)
+    label = selection["label"]
+    bounds = list(selection["bounds"])
+    rectangle = list(selection["rectangle"])
+    scope = f"task40_gate_cd_mapped_{label}_from_M8N64_parent_p6_direct"
+    options = base["component_options"]
+    mode = options["mode_selection"]
+    mode.update(
+        reference_mode_label=label,
+        parent_reference_mode_label="M8N64",
+        policy="explicit_signed_subrectangle_from_parent_v1",
+        active_inventory_scope=(
+            f"signed m[{bounds[0]},{bounds[1]}], n[{bounds[2]},{bounds[3]}] "
+            "subrectangle selected in preserved order from the finite Gate-CD "
+            "M8N64 parent"
+        ),
+        active_signed_bounds_mn=bounds,
+        active_rectangle_max_abs_m_n=rectangle,
+        expected_active_mode_count=selection["mode_count"],
+        expected_active_mode_sha256=selection["mode_sha256"],
+        expected_active_propagating_count=selection["propagating_count"],
+        expected_active_power_carrying_count=selection["power_carrying_count"],
+        expected_parent_propagating_count=4360,
+        expected_parent_power_carrying_count=4426,
+        expected_selected_parent_indices_sha256=selection["indices_sha256"],
+        expected_selected_signed_keys_sha256=selection["keys_sha256"],
+        active_port_propagating_count_by_side=dict(
+            selection["propagating_by_side"]
+        ),
+        active_port_power_carrying_count_by_side=dict(
+            selection["power_carrying_by_side"]
+        ),
+        quadrature_inventory="gate_cd_finite_M8N64_parent",
+        quadrature_reference_label="Gate-CD_M8N64_finite_parent",
+    )
+    options.update(
+        task_family=f"task40_gate_cd_mapped_{label.lower()}_p6_direct",
+        full_solve_block_reason=(
+            f"The finite {label} route is not full-DtN qualified; its exact reviewed "
+            "package and fresh host admission are required before a run."
+        ),
+    )
+    options["directional_mesh_comparison"].update(
+        case=label,
+        parent_case="M8N64",
+    )
+    evidence_modes = [
+        [side, m, 0, pol]
+        for side in ("top", "bottom")
+        for m, pol in ((-8, "p"), (0, "s"), (8, "p"))
+    ]
+    options["direct_factor_evidence"].update(
+        mode_keys=evidence_modes,
+        active_mode_scope=(
+            f"finite {label} subrectangle selected from the Gate-CD M8N64 parent; "
+            "not the auto/full DtN inventory"
+        ),
+    )
+    readiness = options["route_readiness"]
+    readiness["required"].append(
+        f"exact_{label}_signed_subrectangle_count_sha_and_parent_indices"
+    )
+    readiness["completed_bounded_witnesses"].append(
+        f"exact_{label}_signed_subrectangle_count_sha_and_parent_indices"
+    )
+
+    base.update(
+        identity=identity,
+        route=f"TASK40_GATE_CD_MAPPED_{label}_P6_CONDENSED_DIRECT",
+        operator_scope=scope,
+        full_dtn_status="FULL_DTN_NOT_VERIFIED",
+    )
+    base["condensed_route"].update(
+        name=f"task40_gate_cd_{label.lower()}_p6_exact_local_condensation_direct_v1",
+        operator_family=f"gate_cd_{label}_finite_signed_subrectangle_from_M8N64",
+        operator_scope=scope,
+        active_mode_inventory=(
+            f"finite {label} both ports s/p; selected in order from the verified M8N64 parent"
+        ),
+    )
+    direct = dict(base["campaign_authorization"]["direct_route"])
+    direct.update(
+        profile_identity=identity,
+        operator_scope=scope,
+        selection_policy="explicit_signed_subrectangle_from_parent_v1",
+        parent_signed_bounds_mn=[-8, 8, -64, 1],
+        active_signed_bounds_mn=bounds,
+        active_rectangle_max_abs_m_n=rectangle,
+        active_mode_count=selection["mode_count"],
+        active_mode_sha256=selection["mode_sha256"],
+        selected_parent_indices_sha256=selection["indices_sha256"],
+        selected_signed_keys_sha256=selection["keys_sha256"],
+        raw_tensor_execution="serial_single_mpi_rank_v1",
+        mpi_size=1,
+        math_threads=1,
+        lu_execution="serial_single_mpi_rank_v1",
+        exact_cache_contract_required=False,
+    )
+    base["campaign_authorization"]["direct_route"] = direct
+    base["backend"].update(
+        operator_scope=scope,
+        p6=f"P6_CONDENSED_DIRECT_{label}_FROM_M8N64_Q21_SERIAL_RAW_TENSORS",
+        independent_residual=f"original_full_p6_A6_active_{label}_finite_subrectangle",
+    )
+    base["campaign_authorization"].update(
+        source=(
+            f"Gate-CD finite signed {label} subrectangle selected in exact order from "
+            "the M8N64 parent. Single-rank raw tensor assembly and serial direct LU; "
+            "this remains FULL_DTN_NOT_VERIFIED."
+        )
+    )
+    return base
+
+
 def _task40_phi90_d5c_modal_profile_facts(identity):
     """Freeze one same-grid D5C-Y7 subrectangle against its finite R5 parent."""
     from copy import deepcopy
@@ -3244,6 +3413,8 @@ def native_profile_facts(identity):
     if identity in TASK40_GATE_CD_FORMAL_PROFILES:
         if identity == TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE:
             return _task40_gate_cd_m8n14_profile_facts(identity)
+        if identity in TASK40_GATE_CD_SIGNED_SUBRECTANGLE_PROFILES:
+            return _task40_gate_cd_signed_subrectangle_profile_facts(identity)
         return _task40_gate_cd_m8n64_profile_facts(identity)
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
         if identity in TASK40_PHI90_D5C_PROFILES:
@@ -4741,7 +4912,7 @@ def _validate_task40_gate_cd_geometry_cache_readiness(
 
 
 def _validate_task40_gate_cd_case(config: dict, identity: str) -> None:
-    """Validate staged and finite M8N64 Gate-CD inputs against their own profiles."""
+    """Validate staged and finite Gate-CD inputs against their own profiles."""
     from src.common.gate_cd_materials import GATE_CD_N_COMPLEX
     from src.geometry.task40_gate_cd_mesh_plan import (
         GATE_CD_CELLS,
@@ -4880,10 +5051,9 @@ def _validate_task40_gate_cd_case(config: dict, identity: str) -> None:
                 or int(mode.get('expected_active_propagating_count', -1)) != 4360
                 or int(mode.get('expected_active_power_carrying_count', -1)) != 4426
             )
-        else:
+        elif identity == TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE:
             malformed = (
-                identity != TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE
-                or mode.get('policy') != 'explicit_signed_subrectangle_from_parent_v1'
+                mode.get('policy') != 'explicit_signed_subrectangle_from_parent_v1'
                 or tuple(mode.get('parent_signed_bounds_mn') or ()) != (-8, 8, -64, 1)
                 or tuple(mode.get('active_signed_bounds_mn') or ()) != (-8, 8, -14, 1)
                 or int(mode.get('expected_mode_count', -1)) != 4488
@@ -4900,6 +5070,36 @@ def _validate_task40_gate_cd_case(config: dict, identity: str) -> None:
                 or facts.get('native_execution', {}).get('mpi_size') != 1
                 or facts.get('native_execution', {}).get('math_threads') != 1
                 or facts.get('campaign_authorization', {}).get('direct_route', {}).get('exact_cache_contract_required') is not True
+            )
+        else:
+            selection = _TASK40_GATE_CD_SIGNED_SUBRECTANGLE_DATA.get(identity)
+            if selection is None:
+                raise InputError(f'{identity} has no signed-subrectangle validation record')
+            bounds = tuple(selection['bounds'])
+            malformed = (
+                mode.get('policy') != 'explicit_signed_subrectangle_from_parent_v1'
+                or tuple(mode.get('parent_signed_bounds_mn') or ()) != (-8, 8, -64, 1)
+                or tuple(mode.get('active_signed_bounds_mn') or ()) != bounds
+                or mode.get('active_rectangle_max_abs_m_n') != selection['rectangle']
+                or int(mode.get('expected_mode_count', -1)) != 4488
+                or int(mode.get('expected_active_mode_count', -1)) != selection['mode_count']
+                or mode.get('expected_mode_sha256') != parent_mode_sha
+                or mode.get('expected_active_mode_sha256') != selection['mode_sha256']
+                or int(mode.get('expected_active_propagating_count', -1))
+                != selection['propagating_count']
+                or int(mode.get('expected_active_power_carrying_count', -1))
+                != selection['power_carrying_count']
+                or mode.get('expected_selected_parent_indices_sha256')
+                != selection['indices_sha256']
+                or mode.get('expected_selected_signed_keys_sha256')
+                != selection['keys_sha256']
+                or mode.get('active_port_propagating_count_by_side')
+                != selection['propagating_by_side']
+                or mode.get('active_port_power_carrying_count_by_side')
+                != selection['power_carrying_by_side']
+                or facts.get('native_execution', {}).get('mpi_size') != 1
+                or facts.get('native_execution', {}).get('math_threads') != 1
+                or facts.get('campaign_authorization', {}).get('direct_route', {}).get('exact_cache_contract_required') is not False
             )
         if (
             malformed
@@ -4981,12 +5181,17 @@ def _validate_task40_gate_cd_case(config: dict, identity: str) -> None:
         raise InputError(f'{identity} keeps large canonical-vector exports disabled')
     if int(output.get('sample_count_y', 0)) < 64:
         raise InputError(f'{identity} requires at least 64 y samples for grazing-phase outputs')
-    expected_report_mn = (
-        (8, 14)
-        if identity == TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE
-        else (8, 64)
-    )
+    expected_report_mn = {
+        TASK40_GATE_CD_M8N64_P6_DIRECT_PROFILE: (8, 64),
+        TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE: (8, 14),
+        **{
+            profile: (8, int(selection['rectangle'][1]))
+            for profile, selection in _TASK40_GATE_CD_SIGNED_SUBRECTANGLE_DATA.items()
+        },
+    }.get(identity)
     if identity in TASK40_GATE_CD_FORMAL_PROFILES and (
+        expected_report_mn is None
+        or
         output.get('diffraction_order_max_m') != expected_report_mn[0]
         or output.get('diffraction_order_max_n') != expected_report_mn[1]
     ):

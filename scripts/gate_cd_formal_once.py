@@ -24,8 +24,17 @@ GATE_CD_FORMAL_PROFILE = "task40_gate_cd_0p7_mapped_m8n64_p6_direct_v1"
 GATE_CD_PARALLEL32_PROFILE = (
     "task40_gate_cd_0p7_mapped_m8n14_p6_direct_parallel32_v1"
 )
+GATE_CD_M8N6_PROFILE = "task40_gate_cd_0p7_mapped_m8n6_p6_direct_v1"
+GATE_CD_M8N2_PROFILE = "task40_gate_cd_0p7_mapped_m8n2_p6_direct_v1"
+GATE_CD_SIGNED_SUBRECTANGLE_PROFILES = frozenset(
+    {GATE_CD_M8N6_PROFILE, GATE_CD_M8N2_PROFILE}
+)
 GATE_CD_FORMAL_PROFILES = frozenset(
-    {GATE_CD_FORMAL_PROFILE, GATE_CD_PARALLEL32_PROFILE}
+    {
+        GATE_CD_FORMAL_PROFILE,
+        GATE_CD_PARALLEL32_PROFILE,
+        *GATE_CD_SIGNED_SUBRECTANGLE_PROFILES,
+    }
 )
 GATE_CD_PARALLEL32_WORKERS = 32
 
@@ -240,7 +249,10 @@ def _validate_live_profile_contract(package: dict, facts: dict) -> None:
         is not cache.get("mapped_geometry_translation_invariant")
     ):
         raise ValueError("live route cache identity differs from package/profile")
-    if package.get("profile_identity") == GATE_CD_PARALLEL32_PROFILE:
+    if package.get("profile_identity") in {
+        GATE_CD_PARALLEL32_PROFILE,
+        *GATE_CD_SIGNED_SUBRECTANGLE_PROFILES,
+    }:
         mode = options.get("mode_selection", {})
         operator = package.get("finite_operator", {})
         checks = {
@@ -270,7 +282,8 @@ def _validate_live_profile_contract(package: dict, facts: dict) -> None:
         }
         if mismatches:
             raise ValueError(
-                f"Gate-CD M8N14 finite operator differs from live profile: {mismatches}"
+                f"Gate-CD {mode.get('reference_mode_label')} finite operator differs "
+                f"from live profile: {mismatches}"
             )
 
 

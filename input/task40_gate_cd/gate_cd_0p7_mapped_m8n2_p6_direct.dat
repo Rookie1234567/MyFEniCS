@@ -1,0 +1,90 @@
+# Gate-CD finite signed M8N2 profile selected from the verified M8N64 parent.
+schema_version = 1
+model_id = "gate_cd_0p7nm_mapped_50x50_zminus10_to240"
+run_id = "task40_gate_cd_0p7_mapped_m8n2_p6_direct_v1"
+comparison_group = "task40_gate_cd_m8n2_signed_subrectangle"
+dimension = 3
+
+[geometry]
+geometry_kind = "task40_gate_cd_mapped"
+period_x_nm = 50.0
+period_y_nm = 50.0
+z_min_nm = -10.0
+z_max_nm = 240.0
+interface_z_nm = 0.0
+air_height_nm = 240.0
+substrate_thickness_nm = 10.0
+
+[materials]
+n_air = [1.0, 0.0]
+mu_r = [1.0, 0.0]
+substrate_name = "Si"
+n_substrate = [0.999876266258, 0.00000463357401]
+grating_name = "Si"
+n_grating = [0.999876266258, 0.00000463357401]
+
+[incidence]
+wavelength_nm = 0.7
+grazing_angle_deg = 1.0
+azimuth_deg = 90.0
+polarization = "s"
+electric_amplitude = 1.0
+
+[discretization]
+nedelec_degree = 6
+visualization_degree = 6
+mesh_target_nm = 0.25
+mesh_cell_type = "hexahedron"
+mesh_spacing_mode = "boundary_fitted"
+assembly_backend = "standard_full"
+floquet_constraint_mode = "auto"
+mesh_axis_cell_counts = [5, 240, 23]
+mesh_plan_id = "task40_gate_cd_0p7_mapped_p6_v1"
+mesh_plan_sha256 = "c2514d85765464b3a6ae0ab27b6c94a1f171b5985b860477d002ae8571da51fc"
+
+[boundary]
+use_floquet_x = true
+use_floquet_y = true
+vertical_boundary = "dtn_port"
+scattering_background = "layered"
+dtn_order_policy = "auto_propagating"
+dtn_assembly = "auxiliary"
+use_pml = false
+
+[method]
+kind = "full3d_direct"
+
+[solver]
+linear_solver = "direct"
+direct_solver_profile = "default"
+native_capacity_profile = "task40_gate_cd_0p7_mapped_m8n2_p6_direct_v1"
+
+[execution]
+mpi_size = 1
+native_memory_policy = "interleave_nodes0_1"
+time_limit_mode = "none"
+warning_memory_gib = 64.0
+terminate_memory_gib = 128.0
+memory_limit_gb = 128.0
+require_zero_swap = false
+
+[output]
+results_root = "results"
+unique_output = true
+export_fields = true
+export_diffraction_orders = true
+export_canonical_vectors = false
+export_modal_amplitudes = true
+export_reference_planes = true
+write_visualization_files = false
+reference_plane_z_nm = [0.0, 50.0, 108.0, 180.0, 230.0]
+sample_count_x = 32
+sample_count_y = 64
+diffraction_sample_count_x = 24
+diffraction_sample_count_y = 64
+top_probe_z_nm = 230.0
+bottom_probe_z_nm = 0.0
+probe_fraction = 0.75
+# Probe-reporting envelope; DtN solve inventory is the finite signed M8N2 rectangle in the resolved profile.
+diffraction_order_max_m = 8
+diffraction_order_max_n = 2
