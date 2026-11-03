@@ -1063,10 +1063,12 @@ def build_gate_cd_mapped_airbox_mesh(
     """Build the frozen Gate-CD mapped mesh through its production QA path."""
     from ..common.gate_cd_materials import validate_gate_cd_region_entries
     from .task40_gate_cd_mesh_plan import (
-        GATE_CD_CELLS,
+        GATE_CD_FIN0_STI_Z10_PROFILE_ID,
+        GATE_CD_FIN0_STI_Z10_STATIC_PLAN,
+        GATE_CD_PROFILE_ID,
+        GATE_CD_STATIC_PLAN,
         GATE_CD_REGION_TAGS,
         build_gate_cd_mesh,
-        build_gate_cd_plan,
         gate_cd_live_mesh_facts,
     )
 
@@ -1084,15 +1086,23 @@ def build_gate_cd_mapped_airbox_mesh(
         or cfg.domain_z_max != 240.0
     ):
         raise ValueError("gate_cd mesh builder requires its frozen no-PML periodic geometry")
-    if cfg.mesh_axis_cell_counts_requested not in {None, GATE_CD_CELLS}:
-        raise ValueError("gate_cd axis counts differ from the frozen mapped mesh plan")
+    if cfg.mesh_plan_id == GATE_CD_PROFILE_ID:
+        plan = GATE_CD_STATIC_PLAN
+    elif cfg.mesh_plan_id == GATE_CD_FIN0_STI_Z10_PROFILE_ID:
+        plan = GATE_CD_FIN0_STI_Z10_STATIC_PLAN
+    else:
+        raise ValueError("gate_cd mesh builder requires a registered exact mesh plan")
+    axis_cell_counts = tuple(int(value) for value in plan.static_facts["cell_counts_xyz"])
+    if cfg.mesh_axis_cell_counts_requested not in {None, axis_cell_counts}:
+        raise ValueError("gate_cd axis counts differ from the selected mapped mesh plan")
+    if str(cfg.mesh_plan_sha256) != plan.plan_sha256:
+        raise ValueError("gate_cd input mesh-plan digest differs from the selected plan")
     entries = validate_gate_cd_region_entries(cfg.physical_material_regions)
     if tuple(int(entry["tag"]) for entry in entries) != tuple(
         int(GATE_CD_REGION_TAGS[str(entry["label"])]) for entry in entries
     ):
         raise ValueError("gate_cd resolved physical region tags differ from the frozen map")
 
-    plan = build_gate_cd_plan()
     msh, cell_tags, plan = build_gate_cd_mesh(comm, plan)
     msh.name = cfg.case_name
     msh.topology.create_connectivity(msh.topology.dim - 1, msh.topology.dim)
@@ -1125,7 +1135,7 @@ def build_gate_cd_mapped_airbox_mesh(
         facet_tags=facet_tags,
         boundary_facets=boundary_facets,
         mesh_cell_type_resolved="hexahedron",
-        mesh_cells_resolved=GATE_CD_CELLS,
+        mesh_cells_resolved=axis_cell_counts,
         z_alignment_warnings=[],
         mesh_spacing_mode_resolved="gate_cd_mapped_exact",
         mesh_axis_cell_stats=axis_stats,

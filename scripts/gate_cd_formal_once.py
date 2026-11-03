@@ -26,8 +26,15 @@ GATE_CD_PARALLEL32_PROFILE = (
 )
 GATE_CD_M8N6_PROFILE = "task40_gate_cd_0p7_mapped_m8n6_p6_direct_v1"
 GATE_CD_M8N2_PROFILE = "task40_gate_cd_0p7_mapped_m8n2_p6_direct_v1"
+GATE_CD_FIN0_STI_Z10_M8N2_PROFILE = (
+    "task40_gate_cd_fin0_sti_z10_m8n2_p6_direct_v1"
+)
 GATE_CD_SIGNED_SUBRECTANGLE_PROFILES = frozenset(
-    {GATE_CD_M8N6_PROFILE, GATE_CD_M8N2_PROFILE}
+    {
+        GATE_CD_M8N6_PROFILE,
+        GATE_CD_M8N2_PROFILE,
+        GATE_CD_FIN0_STI_Z10_M8N2_PROFILE,
+    }
 )
 GATE_CD_PARALLEL32_PROFILES = frozenset(
     {GATE_CD_PARALLEL32_PROFILE, *GATE_CD_SIGNED_SUBRECTANGLE_PROFILES}
@@ -66,6 +73,14 @@ _CAPTURE_ENV = {
     "TASK40_EXACT_CACHE_WORKER_CPUS",
     "TASK40_EXACT_CACHE_ATTEMPT_ID",
     "TASK40_EXACT_CACHE_RUNTIME_TEMPLATE_SHA256",
+    "TASK40_GATE_CD_PRELU_READY_PATH",
+    "TASK40_GATE_CD_PRELU_RELEASE_PATH",
+    "TASK40_GATE_CD_PRELU_ACCEPTED_PATH",
+    "TASK40_GATE_CD_EXPECTED_UNIT",
+    "TASK40_GATE_CD_ATTEMPT_ID",
+    "TASK40_GATE_CD_PACKAGE_SHA256",
+    "TASK40_GATE_CD_ORIGINAL272_UNIT",
+    "TASK40_GATE_CD_ORIGINAL272_INVOCATION_ID",
 }
 _MATH_THREAD_ENV = {
     "OMP_NUM_THREADS",
@@ -573,6 +588,50 @@ def validate_package_sidecar(
             != GATE_CD_PARALLEL32_WORKERS
         ):
             raise ValueError("Gate-CD parallel32 scope does not bind the exact package/sidecar/cache lease")
+    if package.get("profile_identity") == GATE_CD_FIN0_STI_Z10_M8N2_PROFILE:
+        route = package.get("identity", {}).get("direct_route_contract", {})
+        contract = route.get("pre_lu_pause")
+        pause = sidecar.get("pre_lu_pause")
+        if not isinstance(contract, dict) or not isinstance(pause, dict):
+            raise ValueError("z10 package/sidecar lacks its exact pre-LU pause contract")
+        if any(pause.get(key) != value for key, value in contract.items()):
+            raise ValueError("z10 sidecar pause contract differs from package identity")
+        if (
+            package.get("attempt_id") != sidecar.get("attempt_id")
+            or pause.get("attempt_id") != package.get("attempt_id")
+            or pause.get("service_unit") != sidecar.get("service_unit")
+            or pause.get("package_sha256") != package_sha
+            or pause.get("package_sha256") != sidecar.get("package_sha256")
+        ):
+            raise ValueError("z10 sidecar pause identity differs from package attempt")
+        root = Path(sidecar.get("attempt_cache_root", "")).resolve()
+        expected_paths = {
+            "ready_path": root / "pre_lu_pause" / "ready.json",
+            "release_path": root / "pre_lu_pause" / "release.json",
+            "accepted_path": root / "pre_lu_pause" / "accepted.json",
+        }
+        observed_paths = {}
+        for key, expected in expected_paths.items():
+            value = pause.get(key)
+            if not isinstance(value, str) or not Path(value).is_absolute():
+                raise ValueError(f"z10 sidecar {key} must be absolute")
+            observed_paths[key] = Path(value).resolve()
+            if observed_paths[key] != expected.resolve():
+                raise ValueError(f"z10 sidecar {key} differs from the attempt cache")
+        if len(set(observed_paths.values())) != len(observed_paths):
+            raise ValueError("z10 pre-LU pause evidence paths must be distinct")
+        scope_path = Path(sidecar.get("scope_path", "")).resolve(strict=True)
+        scope = _load_json(scope_path)
+        if (
+            scope.get("identity") != package.get("identity")
+            or scope.get("attempt_id") != package.get("attempt_id")
+            or scope.get("planned_systemd_user_unit") != sidecar.get("service_unit")
+            or scope.get("package_sha256") != package_sha
+            or scope.get("identity", {})
+            .get("direct_route_contract", {})
+            .get("pre_lu_pause") != contract
+        ):
+            raise ValueError("z10 scope does not bind package and pre-LU pause")
     return package, sidecar, package_sha, sidecar_sha
 
 
@@ -1114,6 +1173,12 @@ def fresh_acceptance(
     if str(output_parent) != actual["resolved_output_parent_absolute"]:
         raise ValueError("sidecar output parent differs from the formal loader")
     residue = _verify_prelaunch_output_parent(output_parent, package, actual)
+    if profile == GATE_CD_FIN0_STI_Z10_M8N2_PROFILE:
+        for key in ("ready_path", "release_path", "accepted_path"):
+            if Path(sidecar["pre_lu_pause"][key]).exists():
+                raise ValueError(
+                    "z10 pre-LU attempt evidence already exists; prepare a fresh attempt"
+                )
     _require_systemd_unit_not_loaded(str(sidecar["service_unit"]))
     scope_path = Path(sidecar["scope_path"]).resolve()
     old_env = {
@@ -1219,6 +1284,26 @@ def _validate_systemd_argv(sidecar: dict) -> list[str]:
             raise ValueError(f"sidecar launch environment differs for {key}")
         if f"--setenv={key}={expected}" not in argv:
             raise ValueError(f"systemd argv does not pass exact environment {key}")
+    if sidecar.get("profile_identity") == GATE_CD_FIN0_STI_Z10_M8N2_PROFILE:
+        from src.runners.task40_gate_cd_prelu_pause import (
+            PRELU_ENVIRONMENT_FIELDS,
+        )
+
+        pause = sidecar.get("pre_lu_pause")
+        if not isinstance(pause, dict):
+            raise ValueError("z10 sidecar lacks its pre-LU pause environment")
+        pause_environment = {
+            env_name: pause.get(field)
+            for field, env_name in PRELU_ENVIRONMENT_FIELDS.items()
+        }
+        for key, expected in pause_environment.items():
+            if (
+                not isinstance(expected, str)
+                or not expected
+                or environment.get(key) != expected
+                or f"--setenv={key}={expected}" not in argv
+            ):
+                raise ValueError(f"z10 pre-LU environment differs for {key}")
     if sidecar.get("profile_identity") in GATE_CD_PARALLEL32_PROFILES:
         scope_path = Path(sidecar.get("scope_path", "")).resolve(strict=True)
         scope = _load_json(scope_path)

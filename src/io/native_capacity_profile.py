@@ -188,6 +188,9 @@ TASK40_GATE_CD_M8N6_P6_DIRECT_PROFILE = (
 TASK40_GATE_CD_M8N2_P6_DIRECT_PROFILE = (
     "task40_gate_cd_0p7_mapped_m8n2_p6_direct_v1"
 )
+TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_PROFILE = (
+    "task40_gate_cd_fin0_sti_z10_m8n2_p6_direct_v1"
+)
 TASK40_GATE_CD_SIGNED_SUBRECTANGLE_PROFILES = frozenset(
     {
         TASK40_GATE_CD_M8N6_P6_DIRECT_PROFILE,
@@ -199,6 +202,7 @@ TASK40_GATE_CD_FORMAL_PROFILES = frozenset(
         TASK40_GATE_CD_M8N64_P6_DIRECT_PROFILE,
         TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE,
         *TASK40_GATE_CD_SIGNED_SUBRECTANGLE_PROFILES,
+        TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_PROFILE,
     }
 )
 TASK40_GATE_CD_PARALLEL32_PROFILES = frozenset(
@@ -206,6 +210,7 @@ TASK40_GATE_CD_PARALLEL32_PROFILES = frozenset(
         TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE,
         TASK40_GATE_CD_M8N6_P6_DIRECT_PROFILE,
         TASK40_GATE_CD_M8N2_P6_DIRECT_PROFILE,
+        TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_PROFILE,
     }
 )
 TASK40_GATE_CD_P6_DIRECT_PROFILES = frozenset(
@@ -2274,6 +2279,7 @@ def _task40_gate_cd_m8n64_profile_facts(identity):
         raise ValueError(f"unsupported formal gate_cd profile: {identity}")
     from src.geometry.task40_gate_cd_mesh_plan import (
         GATE_CD_CELLS,
+        GATE_CD_P6_GLOBAL_DOFS,
         GATE_CD_STATIC_PLAN,
     )
 
@@ -2300,6 +2306,7 @@ def _task40_gate_cd_m8n64_profile_facts(identity):
         mesh_plan_sha256=GATE_CD_STATIC_PLAN.plan_sha256,
         mesh_axis_cell_counts=list(GATE_CD_CELLS),
         expected_global_cell_count=int(GATE_CD_STATIC_PLAN.static_facts["global_cell_count"]),
+        expected_full_p6_rows=int(GATE_CD_P6_GLOBAL_DOFS),
         expected_material_tag_counts_by_label=dict(GATE_CD_STATIC_PLAN.tag_counts),
         physical_material_regions=options["physical_material_regions"],
         mode_selection={
@@ -2711,6 +2718,13 @@ _TASK40_GATE_CD_SIGNED_SUBRECTANGLE_DATA = {
         "power_carrying_by_side": {"top": 74, "bottom": 136},
     },
 }
+_TASK40_GATE_CD_SIGNED_SUBRECTANGLE_DATA[
+    TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_PROFILE
+] = dict(
+    _TASK40_GATE_CD_SIGNED_SUBRECTANGLE_DATA[
+        TASK40_GATE_CD_M8N2_P6_DIRECT_PROFILE
+    ]
+)
 
 
 def _task40_gate_cd_signed_subrectangle_profile_facts(identity):
@@ -2847,6 +2861,168 @@ def _task40_gate_cd_signed_subrectangle_profile_facts(identity):
             "exact-cache execution route; MPI remains one and direct LU remains "
             "serial. This remains FULL_DTN_NOT_VERIFIED."
         )
+    )
+    return base
+
+
+def _task40_gate_cd_fin0_sti_z10_m8n2_profile_facts(identity):
+    """Bind the M8N2 finite window to the separate Fin0/STI z10 mesh plan."""
+    from copy import deepcopy
+
+    from src.common.gate_cd_materials import GATE_CD_REGION_TAGS
+    from src.geometry.task40_gate_cd_mesh_plan import (
+        GATE_CD_FIN0_STI_Z10_CELLS,
+        GATE_CD_FIN0_STI_Z10_PROFILE_ID,
+        GATE_CD_FIN0_STI_Z10_STATIC_PLAN,
+        GATE_CD_STATIC_PLAN,
+    )
+
+    if identity != TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_PROFILE:
+        raise ValueError(f"unsupported Gate-CD z10 profile: {identity}")
+    base = deepcopy(
+        _task40_gate_cd_signed_subrectangle_profile_facts(
+            TASK40_GATE_CD_M8N2_P6_DIRECT_PROFILE
+        )
+    )
+    plan = GATE_CD_FIN0_STI_Z10_STATIC_PLAN
+    axis_counts = list(GATE_CD_FIN0_STI_Z10_CELLS)
+    scope = "task40_gate_cd_Fin0_STI_z10_M8N2_finite_signed_window_diagnostic"
+    options = base["component_options"]
+    previous_mesh = options["directional_mesh_comparison"]
+    base_axis_hashes = dict(GATE_CD_STATIC_PLAN.axis_hashes)
+    tag_counts_by_tag = {
+        str(GATE_CD_REGION_TAGS[label]): int(count)
+        for label, count in plan.tag_counts.items()
+    }
+    options.update(
+        task_family="task40_gate_cd_Fin0_STI_z10_M8N2_diagnostic",
+        mesh_plan_id=GATE_CD_FIN0_STI_Z10_PROFILE_ID,
+        mesh_plan_sha256=plan.plan_sha256,
+        mesh_axis_cell_counts=axis_counts,
+        mesh_axis_sha256_le_f64=dict(plan.axis_hashes),
+        expected_axis_cell_counts=axis_counts,
+        expected_global_cell_count=int(plan.static_facts["global_cell_count"]),
+        expected_full_p6_rows=int(plan.static_facts["global_p6_dof_rows"]),
+        expected_material_tag_counts_by_label=dict(plan.tag_counts),
+    )
+    options["directional_mesh_comparison"] = {
+        **previous_mesh,
+        "scope": "fixed M8N2 window on the same mapped model with only z0..50 refined",
+        "case": "Fin0_STI_Z10_M8N2",
+        "parent_case": "original_mapped_M8N2",
+        "changed_axis": "z_0_to_50",
+        "changed_axes": ["z"],
+        "axis_cell_counts": axis_counts,
+        "mesh_plan_id": GATE_CD_FIN0_STI_Z10_PROFILE_ID,
+        "mesh_plan_sha256": plan.plan_sha256,
+        "expected_axis_sha256_le_f64": dict(plan.axis_hashes),
+        "base_axis_sha256_le_f64": base_axis_hashes,
+        "expected_material_tag_counts": tag_counts_by_tag,
+        "expected_material_tag_counts_by_label": dict(plan.tag_counts),
+        "z_refinement_contract": {
+            "interval_nm": [0.0, 50.0],
+            "parts": 10,
+            "planes_nm": [float(value) for value in plan.z if 0.0 <= value <= 50.0],
+            "other_z_planes_unchanged": True,
+            "exact_original_map_interpolation": True,
+        },
+        "only_axis_changes_from_parent": True,
+        "explicit_axis_counts_in_input": False,
+    }
+    options["direct_factor_evidence"]["active_mode_scope"] = (
+        "finite M8N2 signed window on the Fin0/STI z10 mapped mesh; "
+        "not full-DtN qualification"
+    )
+    options["mode_selection"]["active_inventory_scope"] += (
+        "; reused only as the same exterior-port signed M8N2 inventory on the "
+        "z-refined geometry, subject to fresh loader identity verification"
+    )
+
+    base.update(
+        identity=identity,
+        route="TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_CONDENSED_DIRECT_DIAGNOSTIC",
+        operator_scope=scope,
+        full_dtn_status="FULL_DTN_NOT_VERIFIED",
+        launch_status="READY_FOR_EXACT_PACKAGE_REVIEW_AND_FRESH_ADMISSION",
+    )
+    base["condensed_route"].update(
+        name="task40_gate_cd_Fin0_STI_z10_M8N2_direct_diagnostic_v1",
+        operator_family="gate_cd_Fin0_STI_z10_M8N2_finite_signed_diagnostic",
+        operator_scope=scope,
+        active_mode_inventory=(
+            "finite M8N2 both ports s/p; actual loader inventory must match the "
+            "fresh case-bound manifest"
+        ),
+        expected_global_cell_count=int(plan.static_facts["global_cell_count"]),
+    )
+    direct = dict(base["campaign_authorization"]["direct_route"])
+    direct.update(
+        profile_identity=identity,
+        operator_scope=scope,
+        mesh_plan_id=GATE_CD_FIN0_STI_Z10_PROFILE_ID,
+        mesh_plan_sha256=plan.plan_sha256,
+        mesh_axis_cell_counts=axis_counts,
+        expected_global_cell_count=int(plan.static_facts["global_cell_count"]),
+        expected_full_p6_rows=int(plan.static_facts["global_p6_dof_rows"]),
+        comparison_purpose="fixed_M8N2_Fin0_STI_z10_mesh_diagnostic",
+        solver_qualification="NOT_CLAIMED",
+    )
+    base["campaign_authorization"]["direct_route"] = direct
+    base["campaign_authorization"].update(
+        source=(
+            "User-authorized fixed-window Fin0/STI z10 mesh diagnostic: preserve the "
+            "real mapped Gate-CD materials, exterior media, P6/q81/q21 route and "
+            "finite signed M8N2 window; split only z=0..50 nm into ten exact mapped "
+            "sections. This does not establish full-DtN qualification or that M8N2 "
+            "is adequate on the refined mesh."
+        )
+    )
+    pre_lu_pause = {
+        "schema": "task40.gate_cd.z10_prelu_pause_contract.v1",
+        "scope": "this exact Fin0/STI z10 M8N2 case and attempt only",
+        "pause_point": "after_one_MUMPS_symbolic_before_factor.numeric",
+        "numeric_calls_at_pause": 0,
+        "release_requires_explicit_user_authorization": True,
+        "release_binds_ready_record_sha256_and_random_nonce": True,
+        "release_requires_original272": {
+            "unit": "task40-gcd-m8n2-9bf54c110b.service",
+            "invocation_id": "c3e29ca475ba40cba35251823ca7f699",
+            "run_id": "task40_gate_cd_0p7_mapped_m8n2_p6_direct_v1",
+            "run_summary_path": (
+                "/home/fenics/Projects/Maxwell3D-Lab/task40_gate_cd_half_modes_20261103"
+                "/results/gate_cd_0p7nm_mapped_50x50_zminus10_to240/"
+                "task40_gate_cd_0p7_mapped_m8n2_p6_direct_v1__full3d_direct__mpi1__Mna/"
+                "20261103T020258.366921Z/run_summary.json"
+            ),
+            "run_summary_sha256": (
+                "7308eccb9d768e67dcf4f56d21316d94ce7cc44abab8fca2ad3ab9a16416acfe"
+            ),
+            "start_receipt_path": (
+                "/home/fenics/Projects/Maxwell3D-Lab/task-control/"
+                "gate_cd_half_modes_20261103_v3/m8n2/start_receipt.json"
+            ),
+            "start_receipt_sha256": (
+                "7bd4bd8f2c9c1bce54503eda4f94a8952634416e25b448fde119e84b057ccc47"
+            ),
+            "exit_code": 0,
+            "exit_status": 0,
+            "result_classification": "worker_exit0",
+            "run_status": "finished",
+            "unit_inactive": True,
+            "descendants_cleared": True,
+            "remaining_child_pids": [],
+        },
+        "minimum_effective_available_bytes_at_release": 64 * 1024**3,
+        "memory_guard_remains_active_while_paused": True,
+        "automatic_resume": False,
+    }
+    base["campaign_authorization"]["pre_lu_pause"] = pre_lu_pause
+    direct["pre_lu_pause"] = dict(pre_lu_pause)
+    base["campaign_authorization"]["direct_route"] = direct
+    base["backend"].update(
+        operator_scope=scope,
+        p6="P6_CONDENSED_DIRECT_FIN0_STI_Z10_M8N2_Q21_DIAGNOSTIC",
+        independent_residual="original_full_p6_A6_Fin0_STI_z10_M8N2_finite_window",
     )
     return base
 
@@ -3429,6 +3605,8 @@ def native_profile_facts(identity):
     if identity in TASK40_GATE_CD_FORMAL_PROFILES:
         if identity == TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE:
             return _task40_gate_cd_m8n14_profile_facts(identity)
+        if identity == TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_PROFILE:
+            return _task40_gate_cd_fin0_sti_z10_m8n2_profile_facts(identity)
         if identity in TASK40_GATE_CD_SIGNED_SUBRECTANGLE_PROFILES:
             return _task40_gate_cd_signed_subrectangle_profile_facts(identity)
         return _task40_gate_cd_m8n64_profile_facts(identity)
@@ -4932,6 +5110,9 @@ def _validate_task40_gate_cd_case(config: dict, identity: str) -> None:
     from src.common.gate_cd_materials import GATE_CD_N_COMPLEX
     from src.geometry.task40_gate_cd_mesh_plan import (
         GATE_CD_CELLS,
+        GATE_CD_FIN0_STI_Z10_CELLS,
+        GATE_CD_FIN0_STI_Z10_PROFILE_ID,
+        GATE_CD_FIN0_STI_Z10_STATIC_PLAN,
         GATE_CD_PROFILE_ID,
         GATE_CD_STATIC_PLAN,
     )
@@ -4997,6 +5178,15 @@ def _validate_task40_gate_cd_case(config: dict, identity: str) -> None:
     }.items():
         require('incidence', key, expected)
 
+    if identity == TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_PROFILE:
+        expected_plan_id = GATE_CD_FIN0_STI_Z10_PROFILE_ID
+        expected_plan_sha256 = GATE_CD_FIN0_STI_Z10_STATIC_PLAN.plan_sha256
+        expected_cells = GATE_CD_FIN0_STI_Z10_CELLS
+    else:
+        expected_plan_id = GATE_CD_PROFILE_ID
+        expected_plan_sha256 = GATE_CD_STATIC_PLAN.plan_sha256
+        expected_cells = GATE_CD_CELLS
+
     discretization = config.get('discretization', {})
     for key, expected in {
         'nedelec_degree': 6,
@@ -5006,12 +5196,12 @@ def _validate_task40_gate_cd_case(config: dict, identity: str) -> None:
         'mesh_spacing_mode': 'boundary_fitted',
         'assembly_backend': 'standard_full',
         'floquet_constraint_mode': 'auto',
-        'mesh_plan_id': GATE_CD_PROFILE_ID,
-        'mesh_plan_sha256': GATE_CD_STATIC_PLAN.plan_sha256,
+        'mesh_plan_id': expected_plan_id,
+        'mesh_plan_sha256': expected_plan_sha256,
     }.items():
         require('discretization', key, expected)
-    if tuple(discretization.get('mesh_axis_cell_counts') or ()) != GATE_CD_CELLS:
-        raise InputError(f'{identity} fixes mesh axis counts {GATE_CD_CELLS!r}')
+    if tuple(discretization.get('mesh_axis_cell_counts') or ()) != expected_cells:
+        raise InputError(f'{identity} fixes mesh axis counts {expected_cells!r}')
     for key in ('mesh_axis_x_values', 'mesh_axis_y_values', 'mesh_axis_z_values', 'mesh_axis_z_profile'):
         if discretization.get(key) is not None:
             raise InputError(
@@ -5211,6 +5401,7 @@ def _validate_task40_gate_cd_case(config: dict, identity: str) -> None:
     expected_report_mn = {
         TASK40_GATE_CD_M8N64_P6_DIRECT_PROFILE: (8, 64),
         TASK40_GATE_CD_M8N14_PARALLEL32_P6_DIRECT_PROFILE: (8, 14),
+        TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_PROFILE: (8, 2),
         **{
             profile: (8, int(selection['rectangle'][1]))
             for profile, selection in _TASK40_GATE_CD_SIGNED_SUBRECTANGLE_DATA.items()

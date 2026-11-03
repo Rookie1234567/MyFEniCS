@@ -19,6 +19,9 @@ from src.common.gate_cd_materials import (
 )
 
 GATE_CD_PROFILE_ID = "task40_gate_cd_0p7_mapped_p6_v1"
+GATE_CD_FIN0_STI_Z10_PROFILE_ID = (
+    "task40_gate_cd_0p7_mapped_fin0_sti_z10_p6_v1"
+)
 GATE_CD_REQUIRED_Z_PLANES_NM = (
     -10.0,
     0.0,
@@ -51,6 +54,11 @@ GATE_CD_CELLS = (
     GATE_CD_X_CELLS,
     sum(GATE_CD_Y_SEGMENT_CELLS),
     len(GATE_CD_REQUIRED_Z_PLANES_NM) - 1,
+)
+GATE_CD_FIN0_STI_Z10_CELLS = (
+    GATE_CD_X_CELLS,
+    sum(GATE_CD_Y_SEGMENT_CELLS),
+    GATE_CD_CELLS[2] + 9,
 )
 
 _STACK_LAYERS = (
@@ -170,8 +178,38 @@ def _cell_midpoint(
     )
 
 
-def build_gate_cd_plan() -> GateCdMeshPlan:
-    z = np.asarray(GATE_CD_REQUIRED_Z_PLANES_NM, dtype=np.float64)
+def _expected_hex_n1curl_global_dofs(
+    axis_cell_counts: tuple[int, int, int], degree: int
+) -> int:
+    """Count unconstrained tensor-product Nedelec-1 dofs on the structured grid."""
+
+    nx, ny, nz = (int(value) for value in axis_cell_counts)
+    p = int(degree)
+    edge_count = (
+        nx * (ny + 1) * (nz + 1)
+        + (nx + 1) * ny * (nz + 1)
+        + (nx + 1) * (ny + 1) * nz
+    )
+    face_count = (
+        (nx + 1) * ny * nz
+        + nx * (ny + 1) * nz
+        + nx * ny * (nz + 1)
+    )
+    face_dofs = 2 * p * (p - 1)
+    cell_dofs = 3 * p * (p - 1) ** 2
+    return int(
+        p * edge_count
+        + face_dofs * face_count
+        + cell_dofs * nx * ny * nz
+    )
+
+
+def _build_gate_cd_plan_for_z(
+    z: np.ndarray, *, include_p6_dof_facts: bool = False
+) -> GateCdMeshPlan:
+    z = np.ascontiguousarray(z, dtype=np.float64)
+    if z.ndim != 1 or len(z) < 2 or np.any(np.diff(z) <= 0.0):
+        raise ValueError("gate_cd mapped z planes must be strictly increasing")
     x_sections = np.vstack([_x_section(float(value)) for value in z])
     y_sections = np.vstack([_y_section(float(value)) for value in z])
     if x_sections.shape != (len(z), GATE_CD_X_CELLS + 1):
@@ -252,7 +290,12 @@ def build_gate_cd_plan() -> GateCdMeshPlan:
                 # Integrate dz*(wx0+bx*t)*(wy0+by*t) exactly on the affine map.
                 volumes[label] += dz * (c0 + c1 / 2.0 + c2 / 3.0)
 
-    if sum(counts.values()) != int(np.prod(GATE_CD_CELLS)):
+    axis_cell_counts = (
+        GATE_CD_X_CELLS,
+        sum(GATE_CD_Y_SEGMENT_CELLS),
+        len(z) - 1,
+    )
+    if sum(counts.values()) != int(np.prod(axis_cell_counts)):
         raise AssertionError(
             "gate_cd midpoint tags do not cover every cell exactly once"
         )
@@ -281,8 +324,8 @@ def build_gate_cd_plan() -> GateCdMeshPlan:
         )
     facts: dict[str, Any] = {
         "source_conditions_sha256": GATE_CD_CONDITIONS_SHA256,
-        "cell_counts_xyz": list(GATE_CD_CELLS),
-        "global_cell_count": int(np.prod(GATE_CD_CELLS)),
+        "cell_counts_xyz": list(axis_cell_counts),
+        "global_cell_count": int(np.prod(axis_cell_counts)),
         "required_z_planes_nm": z.tolist(),
         "axis_hashes_sha256_le_f64": hashes,
         "periodic_boundaries_are_fixed_translations": True,
@@ -296,9 +339,14 @@ def build_gate_cd_plan() -> GateCdMeshPlan:
         "exact_affine_volume_by_label_nm3": dict(sorted(volumes.items())),
         "aggregated_volume_check_nm3": dict(sorted(material_volume_totals.items())),
         "total_volume_nm3": float(sum(volumes.values())),
-        "z_interval_count": len(GATE_CD_REQUIRED_Z_PLANES_NM) - 1,
+        "z_interval_count": len(z) - 1,
         "y_segment_counts": list(GATE_CD_Y_SEGMENT_CELLS),
     }
+    if include_p6_dof_facts:
+        facts["nedelec_degree"] = 6
+        facts["global_p6_dof_rows"] = _expected_hex_n1curl_global_dofs(
+            axis_cell_counts, 6
+        )
     hash_payload = json.dumps(
         facts, sort_keys=True, separators=(",", ":"), allow_nan=False
     ).encode("ascii")
@@ -306,6 +354,32 @@ def build_gate_cd_plan() -> GateCdMeshPlan:
     return GateCdMeshPlan(
         z, x_sections, y_sections, dict(counts), hashes, plan_sha, facts
     )
+
+
+def build_gate_cd_plan() -> GateCdMeshPlan:
+    """Build the original frozen mapped Gate-CD plan."""
+
+    return _build_gate_cd_plan_for_z(
+        np.asarray(GATE_CD_REQUIRED_Z_PLANES_NM, dtype=np.float64)
+    )
+
+
+def build_gate_cd_fin0_sti_z10_plan() -> GateCdMeshPlan:
+    """Split only the mapped Fin0/STI interval into ten exact sections."""
+
+    base = np.asarray(GATE_CD_REQUIRED_Z_PLANES_NM, dtype=np.float64)
+    if not (np.any(base == 0.0) and np.any(base == 50.0)):
+        raise AssertionError("the frozen Gate-CD base plan lost its 0/50 nm planes")
+    inserted = np.linspace(0.0, 50.0, 11, dtype=np.float64)
+    refined = np.unique(np.concatenate((base, inserted)))
+    if len(refined) != len(base) + 9:
+        raise AssertionError("the Fin0/STI z10 plan did not add exactly nine planes")
+    if not np.array_equal(refined[(refined >= 0.0) & (refined <= 50.0)], inserted):
+        raise AssertionError("the Fin0/STI z10 sections are not exactly 5 nm apart")
+    plan = _build_gate_cd_plan_for_z(refined, include_p6_dof_facts=True)
+    if tuple(plan.static_facts["cell_counts_xyz"]) != GATE_CD_FIN0_STI_Z10_CELLS:
+        raise AssertionError("the Fin0/STI z10 axis cell counts differ from contract")
+    return plan
 
 
 def build_gate_cd_mesh(comm, plan: GateCdMeshPlan | None = None):
@@ -319,13 +393,16 @@ def build_gate_cd_mesh(comm, plan: GateCdMeshPlan | None = None):
     from src.geometry.swept_hex_mesh import build_swept_hex_mesh
 
     selected = build_gate_cd_plan() if plan is None else plan
-    flat_tags = np.empty(int(np.prod(GATE_CD_CELLS)), dtype=np.int32)
+    axis_cell_counts = tuple(
+        int(value) for value in selected.static_facts["cell_counts_xyz"]
+    )
+    flat_tags = np.empty(int(np.prod(axis_cell_counts)), dtype=np.int32)
     cell = 0
     for k, (z0, z1) in enumerate(pairwise(selected.z)):
-        for j in range(GATE_CD_CELLS[1]):
+        for j in range(axis_cell_counts[1]):
             yb = selected.y_sections[k, j : j + 2]
             yt = selected.y_sections[k + 1, j : j + 2]
-            for i in range(GATE_CD_CELLS[0]):
+            for i in range(axis_cell_counts[0]):
                 xb = selected.x_sections[k, i : i + 2]
                 xt = selected.x_sections[k + 1, i : i + 2]
                 xyz = _cell_midpoint(xb, xt, yb, yt, z0, z1)
@@ -361,7 +438,8 @@ def gate_cd_live_mesh_facts(msh, cell_tags, plan: GateCdMeshPlan) -> dict[str, A
         raise NotImplementedError("gate_cd live mesh evidence currently requires MPI1")
     tdim = msh.topology.dim
     owned = int(msh.topology.index_map(tdim).size_local)
-    if owned != int(np.prod(GATE_CD_CELLS)):
+    axis_cell_counts = tuple(int(value) for value in plan.static_facts["cell_counts_xyz"])
+    if owned != int(np.prod(axis_cell_counts)):
         raise RuntimeError("live gate_cd owned cell count differs from frozen plan")
     actual = {
         str(tag): len(cell_tags.find(tag)) for tag in GATE_CD_REGION_TAGS.values()
@@ -443,7 +521,7 @@ def gate_cd_live_mesh_facts(msh, cell_tags, plan: GateCdMeshPlan) -> dict[str, A
         "status": "PASS",
         "scope": "LIVE_MESH_ONLY_NO_FE_SPACE_OR_MATRIX",
         "owned_cells": owned,
-        "axis_cell_counts": list(GATE_CD_CELLS),
+        "axis_cell_counts": list(axis_cell_counts),
         "axis_hashes_sha256_le_f64": actual_axis_hashes,
         "cell_tag_counts_by_tag": actual,
         "expected_cell_tag_counts_by_tag": expected,
@@ -458,3 +536,5 @@ def gate_cd_live_mesh_facts(msh, cell_tags, plan: GateCdMeshPlan) -> dict[str, A
 
 
 GATE_CD_STATIC_PLAN = build_gate_cd_plan()
+GATE_CD_FIN0_STI_Z10_STATIC_PLAN = build_gate_cd_fin0_sti_z10_plan()
+GATE_CD_P6_GLOBAL_DOFS = _expected_hex_n1curl_global_dofs(GATE_CD_CELLS, 6)

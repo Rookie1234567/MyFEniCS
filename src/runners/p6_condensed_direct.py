@@ -543,6 +543,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "max_same_factor_corrections": 2,
             "expected_axis_cell_counts": expected_counts,
             "expected_global_cell_count": expected_cells,
+            "expected_full_p6_rows": options.get("expected_full_p6_rows"),
             "write_visualization_files": bool(
                 options.get("visualization_output_policy", {}).get(
                     "write_visualization_files", True
@@ -1554,19 +1555,28 @@ def _task40_gate_cd_mesh_evidence(
         gate_cd_region_entries,
     )
     from src.geometry.task40_gate_cd_mesh_plan import (
+        GATE_CD_FIN0_STI_Z10_PROFILE_ID,
+        GATE_CD_FIN0_STI_Z10_STATIC_PLAN,
+        GATE_CD_PROFILE_ID,
         GATE_CD_STATIC_PLAN,
         gate_cd_live_mesh_facts,
     )
 
     mesh_data = levels["mesh_data"]
+    if cfg.mesh_plan_id == GATE_CD_PROFILE_ID:
+        plan = GATE_CD_STATIC_PLAN
+    elif cfg.mesh_plan_id == GATE_CD_FIN0_STI_Z10_PROFILE_ID:
+        plan = GATE_CD_FIN0_STI_Z10_STATIC_PLAN
+    else:
+        raise ValueError("live Gate-CD route names an unsupported mapped mesh plan")
     facts = gate_cd_live_mesh_facts(
-        mesh_data.mesh, mesh_data.cell_tags, GATE_CD_STATIC_PLAN
+        mesh_data.mesh, mesh_data.cell_tags, plan
     )
     if (
-        str(cfg.mesh_plan_id) != "task40_gate_cd_0p7_mapped_p6_v1"
-        or str(cfg.mesh_plan_sha256) != GATE_CD_STATIC_PLAN.plan_sha256
+        str(cfg.mesh_plan_sha256) != plan.plan_sha256
         or route.get("task40_mesh_plan_family") != "gate_cd"
-        or route.get("task40_mesh_plan_sha256") != GATE_CD_STATIC_PLAN.plan_sha256
+        or route.get("task40_mesh_plan_id") != cfg.mesh_plan_id
+        or route.get("task40_mesh_plan_sha256") != plan.plan_sha256
     ):
         raise ValueError("live Gate-CD route identity differs from its mapped mesh plan")
     if (
@@ -1588,7 +1598,11 @@ def _task40_gate_cd_mesh_evidence(
         raise ValueError("Gate-CD conditions identity changed in the mapped mesh path")
     dofmap = levels["spaces"][6].dofmap
     p6_rows = int(dofmap.index_map.size_global * dofmap.index_map_bs)
-    if p6_rows != 18_378_528:
+    expected_p6_rows = int(
+        route.get("expected_full_p6_rows")
+        or plan.static_facts["global_p6_dof_rows"]
+    )
+    if p6_rows != expected_p6_rows:
         raise ValueError(f"actual Gate-CD P6 global rows changed: {p6_rows}")
     p6_local_dimension = int(levels["spaces"][6].element.space_dimension)
     if p6_local_dimension != 882:
@@ -2727,7 +2741,15 @@ def _dispersion_flat_port_mpc_witness(
     )
 
 
-def _factor_same_matrix(factor: Any, matrix: Any, rhs: Any, solution: Any, marker):
+def _factor_same_matrix(
+    factor: Any,
+    matrix: Any,
+    rhs: Any,
+    solution: Any,
+    marker,
+    *,
+    pre_numeric_hook=None,
+):
     """Run exactly one symbolic/numeric/solve sequence on one matrix object."""
 
     matrix_object_id = id(matrix)
@@ -2742,6 +2764,8 @@ def _factor_same_matrix(factor: Any, matrix: Any, rhs: Any, solution: Any, marke
     })
     if id(matrix) != matrix_object_id:
         raise RuntimeError("materialized matrix object changed after MUMPS symbolic")
+    if pre_numeric_hook is not None:
+        pre_numeric_hook(factor, matrix)
     factor.numeric(matrix)
     marker("p6_mumps_numeric_complete", {
         "matrix_object_id": matrix_object_id,
@@ -4039,12 +4063,114 @@ def run_p6_condensed_direct(
             "predicted_memory_is_not_a_stop_gate": True,
         }
         solve_started = perf_counter()
+        pre_numeric_hook = None
+        if (
+            profile_facts["identity"]
+            == "task40_gate_cd_fin0_sti_z10_m8n2_p6_direct_v1"
+        ):
+            from src.runners.task40_gate_cd_prelu_pause import (
+                wait_at_pre_numeric_pause,
+            )
+
+            payload_identity = resolved_payload.get("identity")
+            if not isinstance(payload_identity, Mapping):
+                raise ValueError("z10 pre-LU hook requires the exact resolved identity")
+            from src.runners.task40_gate_cd_prelu_pause import (
+                PRELU_ENVIRONMENT_FIELDS,
+            )
+
+            hook_values = {
+                name: os.environ.get(env_name)
+                for name, env_name in PRELU_ENVIRONMENT_FIELDS.items()
+            }
+            missing = sorted(name for name, value in hook_values.items() if not value)
+            if missing:
+                raise ValueError(
+                    f"z10 pre-LU hook environment is incomplete: {missing}"
+                )
+            invocation_id = os.environ.get("INVOCATION_ID")
+            if not invocation_id:
+                raise ValueError("z10 pre-LU hook requires systemd INVOCATION_ID")
+            prelu_identity = {
+                "profile_identity": profile_facts["identity"],
+                "run_id": str(resolved_payload.get("run_id")),
+                "source_commit": str(source_sha or ""),
+                "input_sha256": str(payload_identity.get("input_sha256", "")),
+                "physical_model_sha256": str(
+                    payload_identity.get("physical_model_sha256", "")
+                ),
+                "resolved_config_sha256": str(
+                    payload_identity.get("resolved_config_sha256", "")
+                ),
+                "package_sha256": str(hook_values["package_sha256"]),
+                "service_unit": str(hook_values["service_unit"]),
+                "invocation_id": str(invocation_id),
+                "attempt_id": str(hook_values["attempt_id"]),
+                "output_directory": str(directory),
+                "mesh_plan_id": str(route["task40_mesh_plan_id"]),
+                "mesh_plan_sha256": str(route["task40_mesh_plan_sha256"]),
+                "active_mode_sha256": str(bundle["mode_sha256"]),
+                "original272_unit": str(hook_values["original272_unit"]),
+                "original272_invocation_id": str(
+                    hook_values["original272_invocation_id"]
+                ),
+            }
+            original272_clearance = (
+                profile_facts["campaign_authorization"]["pre_lu_pause"]
+                ["release_requires_original272"]
+            )
+            prelu_identity.update(
+                original272_run_id=str(original272_clearance["run_id"]),
+                original272_run_summary_path=str(
+                    original272_clearance["run_summary_path"]
+                ),
+                original272_run_summary_sha256=str(
+                    original272_clearance["run_summary_sha256"]
+                ),
+                original272_start_receipt_path=str(
+                    original272_clearance["start_receipt_path"]
+                ),
+                original272_start_receipt_sha256=str(
+                    original272_clearance["start_receipt_sha256"]
+                ),
+            )
+
+            def pre_numeric_hook(current_factor, current_matrix):
+                current_info = dict(
+                    current_matrix.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM)
+                )
+                return wait_at_pre_numeric_pause(
+                    identity=prelu_identity,
+                    ready_path=str(hook_values["ready_path"]),
+                    release_path=str(hook_values["release_path"]),
+                    accepted_path=str(hook_values["accepted_path"]),
+                    matrix_facts={
+                        "matrix_object_id": id(current_matrix),
+                        "matrix_shape": list(current_matrix.getSize()),
+                        "matrix_nz_used": current_info.get("nz_used"),
+                        "matrix_nz_allocated": current_info.get("nz_allocated"),
+                        "matrix_identity_sha256": hashlib.sha256(
+                            json.dumps(
+                                matrix_identity,
+                                sort_keys=True,
+                                separators=(",", ":"),
+                                allow_nan=False,
+                            ).encode("utf-8")
+                        ).hexdigest(),
+                        "symbolic_calls": int(current_factor.symbolic_calls),
+                        "numeric_calls": int(current_factor.numeric_calls),
+                        "solve_calls": int(current_factor.solve_calls),
+                    },
+                    ledger=ledger,
+                )
+
         matrix_object_after_factor = _factor_same_matrix(
             factor,
             matrix,
             rhs_vector,
             solution_vector,
             ledger.marker,
+            pre_numeric_hook=pre_numeric_hook,
         )
         summary["factor"].update(
             symbolic_calls=int(factor.symbolic_calls),

@@ -31,6 +31,7 @@ from src.io.run_specification import RunSpecification
 from src.runners.task40_d07c_g5_join import G5_PROFILE
 from src.runners.task40_gate_cd_formal_admission import (
     GATE_CD_EXECUTION_PROFILES,
+    GATE_CD_FIN0_STI_Z10_M8N2_PROFILE,
     GATE_CD_PARALLEL32_PROFILES,
     GATE_CD_ATTEMPT_CACHE_ENV,
 )
@@ -898,6 +899,23 @@ def launch_specification(
                             'PYTHONPYCACHEPREFIX': str(gate_cd_attempt_cache['pycache'].resolve()),
                             'MPLCONFIGDIR': str(gate_cd_attempt_cache['mpl'].resolve()),
                         }
+                        if native_identity == GATE_CD_FIN0_STI_Z10_M8N2_PROFILE:
+                            from src.runners.task40_gate_cd_prelu_pause import (
+                                validate_worker_environment,
+                            )
+
+                            try:
+                                pause_environment = validate_worker_environment(
+                                    environment=os.environ,
+                                    scope_document=scope_document,
+                                    attempt_id=str(attempt_id),
+                                    attempt_cache_root=attempt_cache_root,
+                                )
+                            except ValueError as exc:
+                                raise InputError(
+                                    f'Gate-CD z10 pre-LU pause binding failed: {exc}'
+                                ) from exc
+                            worker_env.update(pause_environment)
                         watchdog_options['worker_environment'] = worker_env
                         watchdog_cache_path = gate_cd_attempt_cache['xdg']
                     else:

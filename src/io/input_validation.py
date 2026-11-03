@@ -883,6 +883,7 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                 )
         elif geometry_kind == "task40_gate_cd_mapped":
             from src.io.native_capacity_profile import (
+                TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_PROFILE,
                 TASK40_GATE_CD_FORMAL_PROFILES,
                 TASK40_GATE_CD_STAGED_PROFILES,
             )
@@ -934,15 +935,21 @@ def _validate_cross_fields(config: Mapping[str, Any]) -> None:
                     "solver.native_capacity_profile",
                     "gate_cd requires a dedicated staged or finite M8N64 profile",
                 )
+            expected_gate_cd_counts = (
+                (5, 240, 32)
+                if profile_identity == TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_PROFILE
+                else (5, 240, 23)
+            )
             if (
                 discretization.get("nedelec_degree") != 6
                 or discretization.get("mesh_cell_type") != "hexahedron"
                 or tuple(discretization.get("mesh_axis_cell_counts") or ())
-                != (5, 240, 23)
+                != expected_gate_cd_counts
             ):
                 raise _error(
                     "discretization",
-                    "gate_cd fixes P6 hexahedra and mapped axis counts [5,240,23]",
+                    "gate_cd fixes P6 hexahedra and mapped axis counts "
+                    f"{list(expected_gate_cd_counts)}",
                 )
             if (
                 boundary.get("vertical_boundary") != "dtn_port"
