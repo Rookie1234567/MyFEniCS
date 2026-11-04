@@ -73,6 +73,12 @@ _CAPTURE_ENV = {
     "TASK40_EXACT_CACHE_WORKER_CPUS",
     "TASK40_EXACT_CACHE_ATTEMPT_ID",
     "TASK40_EXACT_CACHE_RUNTIME_TEMPLATE_SHA256",
+    "TASK40_EXACT_CACHE_REUSE_MODE",
+    "TASK40_EXACT_CACHE_REUSE_CONTRACT",
+    "TASK40_EXACT_CACHE_REUSE_CONTRACT_SHA256",
+    "TASK40_EXACT_CACHE_REUSE_HOOK_ACTIVE",
+    "TASK40_GATE_CD_ATTEMPT_CACHE_ROOT",
+    "PYTHONPATH",
     "TASK40_GATE_CD_PRELU_READY_PATH",
     "TASK40_GATE_CD_PRELU_RELEASE_PATH",
     "TASK40_GATE_CD_PRELU_ACCEPTED_PATH",
@@ -632,6 +638,45 @@ def validate_package_sidecar(
             .get("pre_lu_pause") != contract
         ):
             raise ValueError("z10 scope does not bind package and pre-LU pause")
+        reuse = package.get("verified_cache_reuse")
+        sidecar_reuse = sidecar.get("verified_cache_reuse")
+        if not isinstance(reuse, dict) or sidecar_reuse != reuse:
+            raise ValueError("z10 package/sidecar lacks the exact verified-cache reuse contract")
+        contract_path = Path(reuse.get("contract_path", ""))
+        if not contract_path.is_absolute() or contract_path.is_symlink():
+            raise ValueError("z10 verified-cache contract path is not absolute and regular")
+        contract_raw = contract_path.read_bytes()
+        if hashlib.sha256(contract_raw).hexdigest() != reuse.get("contract_sha256"):
+            raise ValueError("z10 verified-cache contract SHA256 mismatch")
+        reuse_contract = json.loads(contract_raw)
+        if (
+            reuse.get("mode") != "verified_cache_only_v1"
+            or reuse.get("target_attempt_id") != package.get("attempt_id")
+            or reuse.get("target_attempt_cache_root") != sidecar.get("attempt_cache_root")
+            or Path(reuse_contract.get("target_attempt_cache_root", "")).resolve()
+            != root
+            or reuse_contract.get("target_attempt_id") != package.get("attempt_id")
+            or reuse_contract.get("profile_identity") != package.get("profile_identity")
+            or reuse_contract.get("run_id") != package.get("run_id")
+            or reuse_contract.get("raw_tensor_count") != 7288
+            or reuse_contract.get("carrier_count") != 272
+            or reuse_contract.get("require_cache_hits_only") is not True
+            or reuse_contract.get("allow_compute_on_miss") is not False
+            or reuse_contract.get("allow_source_cache_writes") is not False
+            or Path(reuse.get("hook_directory", "")).resolve()
+            != Path(sidecar.get("activation_script", "")).resolve().parent
+        ):
+            raise ValueError("z10 verified-cache reuse contract differs from the new exact attempt")
+        for key, expected in (
+            ("TASK40_EXACT_CACHE_REUSE_MODE", reuse["mode"]),
+            ("TASK40_EXACT_CACHE_REUSE_CONTRACT", str(contract_path.resolve())),
+            ("TASK40_EXACT_CACHE_REUSE_CONTRACT_SHA256", reuse["contract_sha256"]),
+        ):
+            if (
+                sidecar.get("service_environment", {}).get(key) != expected
+                or f"--setenv={key}={expected}" not in sidecar.get("systemd_run_argv", [])
+            ):
+                raise ValueError(f"z10 systemd environment does not bind {key}")
     return package, sidecar, package_sha, sidecar_sha
 
 
@@ -788,7 +833,10 @@ def _verify_prelaunch_output_parent(
         if classification == "bootstrap_only_preworker":
             if expected_file_names != required_files or expected_dir_names:
                 raise ValueError("bootstrap residue must be exactly seven root files")
-        elif classification == "worker_failed_gate_cd_mesh_setup":
+        elif classification in {
+            "worker_failed_gate_cd_mesh_setup",
+            "worker_failed_gate_cd_raw_tensor_summary",
+        }:
             required_setup_files = required_files | {
                 "gate_cd_runtime_environment.json",
                 "p6_condensed_direct_summary.json",
@@ -805,7 +853,29 @@ def _verify_prelaunch_output_parent(
                 or "watchdog" not in expected_dir_names
                 or any(name.startswith("numerical_output/") for name in expected_file_names)
             ):
-                raise ValueError("mesh-setup failure residue lacks exact terminal evidence")
+                raise ValueError("setup-failure residue lacks exact terminal evidence")
+            if classification == "worker_failed_gate_cd_raw_tensor_summary":
+                exact_raw_tensor_files = required_files | {
+                    "exact_cache_runtime_contract.json",
+                    "gate_cd_runtime_environment.json",
+                    "p6_condensed_direct_summary.json",
+                    "stages.jsonl",
+                    "task40_gate-cd_m8n64_finite_parent_parent_mode_manifest.json",
+                    "task40_m8n64_active_mode_manifest.json",
+                    "task40_m8n64_mode_index_map.json",
+                    "workflow_phase.json",
+                    "workstation_isolation.json",
+                    "watchdog/resources.jsonl",
+                    "watchdog/summary.json",
+                    "watchdog/worker.log",
+                }
+                if (
+                    expected_file_names != exact_raw_tensor_files
+                    or expected_dir_names != {"numerical_output", "watchdog"}
+                ):
+                    raise ValueError(
+                        "raw-tensor failure residue differs from its exact terminal tree"
+                    )
         elif classification == "worker_failed_gate_cd_signed_mode_selection":
             prior_service = record.get("prior_service")
             historical = _GATE_CD_SIGNED_SELECTION_RESIDUE
@@ -977,6 +1047,102 @@ def _verify_prelaunch_output_parent(
                 or direct_summary.get("p4_operator") != "NOT_BUILT"
             ):
                 raise ValueError("mesh-setup residue is not the exact cleared pre-matrix failure")
+        elif classification == "worker_failed_gate_cd_raw_tensor_summary":
+            workflow = _load_json(attempt_dir / "workflow_phase.json")
+            direct_summary = _load_json(
+                attempt_dir / "p6_condensed_direct_summary.json"
+            )
+            watchdog = _load_json(attempt_dir / "watchdog/summary.json")
+            authority = summary.get("resource_authority", {})
+            facts = workflow.get("facts", {})
+            cache = direct_summary.get("exact_cache_execution", {}).get("raw", {})
+            cache_evidence = record.get("raw_tensor_cache_evidence", {})
+            cache_root = Path(cache_evidence.get("root", ""))
+            complete_markers = (
+                list(cache_root.rglob("complete.json"))
+                if cache_root.is_dir() and not cache_root.is_symlink()
+                else []
+            )
+            tensor_payloads = (
+                list(cache_root.rglob("tensor.npy"))
+                if cache_root.is_dir() and not cache_root.is_symlink()
+                else []
+            )
+            stages = [
+                json.loads(line)
+                for line in (attempt_dir / "stages.jsonl")
+                .read_text(encoding="utf-8")
+                .splitlines()
+                if line.strip()
+            ]
+            progress = [
+                item.get("facts", {})
+                for item in stages
+                if item.get("stage") == "p6_direct_raw_tensor_class_progress"
+            ]
+            pool_release = stages[-2] if len(stages) >= 2 else {}
+            terminal = stages[-1] if stages else {}
+            expected_failure = (
+                "global raw tensor evaluation failed before broadcast: rank 0: "
+                "OSError: [Errno 24] Too many open files"
+            )
+            if (
+                summary.get("status") != "finished"
+                or summary.get("exit_status") != 4
+                or summary.get("result_classification") != "WORKER_FAILED"
+                or authority.get("classification") != "WORKER_FAILED"
+                or authority.get("leader_exit_code") != 4
+                or authority.get("descendants_cleared") is not True
+                or authority.get("remaining_child_pids") != []
+                or watchdog.get("classification") != "WORKER_FAILED"
+                or watchdog.get("leader_exit_code") != 4
+                or watchdog.get("descendants_cleared") is not True
+                or watchdog.get("remaining_child_pids") != []
+                or workflow.get("phase") != "setup"
+                or facts.get("failed_stage") != "p6_direct_raw_tensor_pool_lock"
+                or facts.get("exception_type") != "RuntimeError"
+                or facts.get("exception_message") != expected_failure
+                or direct_summary.get("status") != "FAILED"
+                or direct_summary.get("failed_phase") != "setup"
+                or direct_summary.get("failed_stage")
+                != "p6_direct_raw_tensor_pool_lock"
+                or direct_summary.get("exception_type") != "RuntimeError"
+                or direct_summary.get("exception_message") != expected_failure
+                or direct_summary.get("run_id") != expected_identity["run_id"]
+                or direct_summary.get("profile") != expected_identity["profile_identity"]
+                or direct_summary.get("source_sha") != prior_source
+                or direct_summary.get("outer_ksp") != "NOT_BUILT"
+                or direct_summary.get("p4_factor") != "NOT_BUILT"
+                or direct_summary.get("p4_operator") != "NOT_BUILT"
+                or direct_summary.get("full_dtn_status") != "FULL_DTN_NOT_VERIFIED"
+                or not cache_root.is_absolute()
+                or cache.get("root") != str(cache_root.resolve())
+                or len(complete_markers)
+                != cache_evidence.get("complete_marker_count")
+                or len(tensor_payloads) != cache_evidence.get("tensor_payload_count")
+                or sum(path.stat().st_size for path in tensor_payloads)
+                != cache_evidence.get("tensor_payload_bytes")
+                or not progress
+                or max(int(item.get("done", -1)) for item in progress)
+                != cache_evidence.get("complete_marker_count")
+                or max(int(item.get("total", -1)) for item in progress)
+                != cache_evidence.get("complete_marker_count")
+                or pool_release.get("stage") != "p6_direct_raw_tensor_pool_lock"
+                or pool_release.get("facts", {}).get("event_type")
+                != "raw_tensor_pool_lock_released"
+                or pool_release.get("facts", {}).get("batch_completed") is not True
+                or pool_release.get("facts", {}).get("batch_classes")
+                != cache_evidence.get("complete_marker_count")
+                or terminal.get("stage")
+                != "TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_M8N64_FAILED"
+                or terminal.get("facts", {}).get("failed_stage")
+                != "p6_direct_raw_tensor_pool_lock"
+                or terminal.get("facts", {}).get("exception_message")
+                != expected_failure
+            ):
+                raise ValueError(
+                    "raw-tensor residue is not the exact cleared post-cache EMFILE failure"
+                )
         else:
             workflow = _load_json(attempt_dir / "workflow_phase.json")
             direct_summary = _load_json(
@@ -1093,6 +1259,7 @@ def _verify_prelaunch_output_parent(
                 "files": expected_files,
                 "directories": sorted(expected_dir_names),
                 "prior_service": record.get("prior_service"),
+                "raw_tensor_cache_evidence": record.get("raw_tensor_cache_evidence"),
             }
         )
     if legacy_single:
@@ -1247,10 +1414,14 @@ def _validate_systemd_argv(sidecar: dict) -> list[str]:
     for key, value in _SERVICE_PROPERTIES.items():
         if f"--property={key}={value}" not in argv:
             raise ValueError(f"systemd service property differs: {key}")
+    if "--property=LimitNOFILE=65536:1048576" not in argv:
+        raise ValueError("systemd service must bind the reviewed LimitNOFILE=65536:1048576")
     if len(argv) < 3 or argv[-3:-1] != ["/bin/bash", "-lc"]:
         raise ValueError("systemd argv must end in the reviewed bash -lc command")
     argv_shell_command = argv[-1]
     declared_shell_command = sidecar.get("shell_command")
+    activation_script = sidecar.get("activation_script")
+    shell_command = sidecar.get("shell_command")
     if declared_shell_command != argv_shell_command:
         raise ValueError("sidecar shell_command differs from the actual systemd argv")
     if "scripts/run_case.py" not in argv_shell_command:
@@ -1304,6 +1475,28 @@ def _validate_systemd_argv(sidecar: dict) -> list[str]:
                 or f"--setenv={key}={expected}" not in argv
             ):
                 raise ValueError(f"z10 pre-LU environment differs for {key}")
+        reuse = sidecar.get("verified_cache_reuse")
+        if not isinstance(reuse, dict):
+            raise ValueError("z10 sidecar lacks its verified-cache reuse environment")
+        for key, expected in (
+            ("TASK40_EXACT_CACHE_REUSE_MODE", reuse.get("mode")),
+            ("TASK40_EXACT_CACHE_REUSE_CONTRACT", reuse.get("contract_path")),
+            ("TASK40_EXACT_CACHE_REUSE_CONTRACT_SHA256", reuse.get("contract_sha256")),
+        ):
+            if (
+                not isinstance(expected, str)
+                or environment.get(key) != expected
+                or f"--setenv={key}={expected}" not in argv
+            ):
+                raise ValueError(f"z10 cache-reuse launch environment differs for {key}")
+        if (
+            "TASK40_EXACT_CACHE_REUSE_HOOK_ACTIVE" in environment
+            or any(
+                value.startswith("--setenv=TASK40_EXACT_CACHE_REUSE_HOOK_ACTIVE=")
+                for value in argv
+            )
+        ):
+            raise ValueError("cache hook active marker must be created by Python startup")
     if sidecar.get("profile_identity") in GATE_CD_PARALLEL32_PROFILES:
         scope_path = Path(sidecar.get("scope_path", "")).resolve(strict=True)
         scope = _load_json(scope_path)
@@ -1328,6 +1521,35 @@ def _validate_systemd_argv(sidecar: dict) -> list[str]:
                 or f"--setenv={key}={expected}" not in argv
             ):
                 raise ValueError(f"sidecar exact-cache launch environment differs for {key}")
+    if sidecar.get("profile_identity") == GATE_CD_FIN0_STI_Z10_M8N2_PROFILE:
+        reuse = sidecar.get("verified_cache_reuse")
+        if not isinstance(reuse, dict):
+            raise ValueError("z10 sidecar lacks its verified-cache hook directory")
+        hook_directory = reuse.get("hook_directory")
+        if (
+            not isinstance(hook_directory, str)
+            or not Path(hook_directory).is_absolute()
+            or "ulimit -Sn 65536" not in argv_shell_command
+            or 'test "$(ulimit -Sn)" = 65536' not in argv_shell_command
+            or f"export PYTHONPATH={hook_directory}:$PYTHONPATH" not in argv_shell_command
+            or "python -c" not in argv_shell_command
+            or "TASK40_EXACT_CACHE_REUSE_HOOK_ACTIVE" not in argv_shell_command
+            or "python -S" in argv_shell_command
+            or "python -I" in argv_shell_command
+        ):
+            raise ValueError("z10 shell must set NOFILE and prove the cache guard is active")
+        ordered_shell_markers = (
+            activation_script,
+            "ulimit -Sn 65536",
+            'test "$(ulimit -Sn)" = 65536',
+            f"export PYTHONPATH={hook_directory}:$PYTHONPATH",
+            "python -c",
+            "exec python scripts/run_case.py",
+        )
+        if [argv_shell_command.index(marker) for marker in ordered_shell_markers] != sorted(
+            argv_shell_command.index(marker) for marker in ordered_shell_markers
+        ):
+            raise ValueError("z10 launch shell ordering differs from the reviewed cache/NOFILE gate")
     activation_env = (
         "_MYFENICS_NATIVE_QUALIFIED_ACTIVATION",
         "TASK39EXTRA_INT64_ACTIVATION",
@@ -1336,8 +1558,6 @@ def _validate_systemd_argv(sidecar: dict) -> list[str]:
     for key in activation_env:
         if environment.get(key) != "1" or f"--setenv={key}=1" not in argv:
             raise ValueError(f"systemd argv lacks qualified activation marker {key}")
-    activation_script = sidecar.get("activation_script")
-    shell_command = sidecar.get("shell_command")
     if not isinstance(activation_script, str) or not Path(activation_script).is_absolute():
         raise ValueError("qualified activation script path must be absolute")
     if not isinstance(shell_command, str) or activation_script not in argv_shell_command:
@@ -1368,6 +1588,7 @@ def _process_identity(pid: int) -> dict | None:
     try:
         fields = (proc / "stat").read_text().rsplit(")", 1)[1].split()
         status = (proc / "status").read_text()
+        limits = (proc / "limits").read_text()
         argv = [
             x.decode(errors="replace")
             for x in (proc / "cmdline").read_bytes().split(b"\0")
@@ -1389,6 +1610,16 @@ def _process_identity(pid: int) -> dict | None:
             ),
             None,
         )
+        max_open_files = next(
+            (
+                line.split()[-3:-1]
+                for line in limits.splitlines()
+                if line.startswith("Max open files")
+            ),
+            None,
+        )
+        if max_open_files is None or len(max_open_files) != 2:
+            raise ValueError("process has no readable Max open files limit")
         cgroup = (proc / "cgroup").read_text()
         cg_path = next(
             (x.split(":", 2)[2] for x in cgroup.splitlines() if x.count(":") >= 2),
@@ -1446,6 +1677,8 @@ def _process_identity(pid: int) -> dict | None:
             "argv": argv,
             "cwd": os.readlink(proc / "cwd"),
             "cpus_allowed_list": allowed,
+            "max_open_files_soft": int(max_open_files[0]),
+            "max_open_files_hard": int(max_open_files[1]),
             "cgroup": cgroup,
             "cgroup_path": cg_path,
             "environment": env,
@@ -1528,6 +1761,49 @@ def _require_live_capture(
     if not any(item["ppid"] in mpi_pids for item in workers):
         raise ValueError("worker is not a child of the observed MPI launcher")
     worker = workers[0]
+    if (
+        worker.get("max_open_files_soft") != 65536
+        or not isinstance(worker.get("max_open_files_hard"), int)
+        or worker["max_open_files_hard"] < worker["max_open_files_soft"]
+    ):
+        raise ValueError(
+            "worker Max open files limit differs from the reviewed 65536 soft floor"
+        )
+    if (
+        package is not None
+        and package.get("profile_identity") == GATE_CD_FIN0_STI_Z10_M8N2_PROFILE
+    ):
+        reuse = package.get("verified_cache_reuse", {})
+        environment = worker["environment"]
+        expected_values = {
+            "TASK40_EXACT_CACHE_REUSE_MODE": reuse.get("mode"),
+            "TASK40_EXACT_CACHE_REUSE_CONTRACT": reuse.get("contract_path"),
+            "TASK40_EXACT_CACHE_REUSE_CONTRACT_SHA256": reuse.get("contract_sha256"),
+            "TASK40_EXACT_CACHE_REUSE_HOOK_ACTIVE": "1",
+            "TASK40_GATE_CD_ATTEMPT_CACHE_ROOT": reuse.get("target_attempt_cache_root"),
+        }
+        if any(environment.get(key) != value for key, value in expected_values.items()):
+            raise ValueError("live worker cache-only guard environment differs from the package")
+        hook_directory = reuse.get("hook_directory")
+        if (
+            not isinstance(hook_directory, str)
+            or not environment.get("PYTHONPATH", "").startswith(hook_directory + ":")
+            or any(value in worker["argv"] for value in ("-S", "-I"))
+        ):
+            raise ValueError("live worker could bypass sitecustomize cache guard startup")
+        reuse_root = Path(reuse.get("target_attempt_cache_root", ""))
+        audit_path = reuse_root / "verified_cache_reuse.jsonl"
+        try:
+            audit = [json.loads(line) for line in audit_path.read_text().splitlines() if line]
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError("live worker cache-reuse startup audit is missing or malformed") from exc
+        if not any(
+            item.get("event") == "python_startup_guard_installed"
+            and item.get("pid") == worker.get("pid")
+            and item.get("contract_sha256") == reuse.get("contract_sha256")
+            for item in audit
+        ):
+            raise ValueError("live worker PID has no cache-only sitecustomize startup attestation")
     expected_cpu_set = set(expected_worker_cpus)
     if (
         len(expected_cpu_set) != len(expected_worker_cpus)

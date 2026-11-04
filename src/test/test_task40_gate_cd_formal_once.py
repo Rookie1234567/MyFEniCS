@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -216,6 +217,7 @@ def test_systemd_argv_requires_one_reviewed_user_service_and_run_case(tmp_path):
         "--property=Type=exec", "--property=Restart=no",
         "--property=RuntimeMaxSec=infinity", "--property=KillMode=mixed",
         "--property=TimeoutStopSec=infinity",
+        "--property=LimitNOFILE=65536:1048576",
         f"--property=StandardOutput=append:{log}",
         f"--property=StandardError=append:{log}",
     ]
@@ -239,6 +241,12 @@ def test_systemd_argv_requires_one_reviewed_user_service_and_run_case(tmp_path):
         "systemd_run_argv": argv,
     }
     assert _validate_systemd_argv(sidecar) == sidecar["systemd_run_argv"]
+    sidecar["systemd_run_argv"].remove("--property=LimitNOFILE=65536:1048576")
+    with pytest.raises(ValueError, match="LimitNOFILE=65536:1048576"):
+        _validate_systemd_argv(sidecar)
+    sidecar["systemd_run_argv"].insert(
+        8, "--property=LimitNOFILE=65536:1048576"
+    )
     sidecar["shell_command"] += " # stale declaration"
     with pytest.raises(ValueError, match="differs from the actual systemd argv"):
         _validate_systemd_argv(sidecar)
@@ -248,6 +256,115 @@ def test_systemd_argv_requires_one_reviewed_user_service_and_run_case(tmp_path):
     )
     sidecar["shell_command"] = sidecar["systemd_run_argv"][-1]
     with pytest.raises(ValueError, match="standard run_case"):
+        _validate_systemd_argv(sidecar)
+
+
+def test_z10_systemd_argv_accepts_full_nofile_and_cache_guard_shell(tmp_path):
+    from src.runners.task40_gate_cd_prelu_pause import PRELU_ENVIRONMENT_FIELDS
+
+    profile = "task40_gate_cd_fin0_sti_z10_m8n2_p6_direct_v1"
+    attempt_id = "gcdz10m8n2-20261104-r1"
+    unit = "task40-gcd-z10-m8n2-r1-4ec87416.service"
+    attempt_root = Path("/tmp") / f"task40_gate_cd_formal_attempt_{attempt_id}"
+    scope_path = tmp_path / "scope.json"
+    scope_path.write_text(
+        json.dumps({"runtime_paths": {"attempt_cache_root": str(attempt_root)}}),
+        encoding="utf-8",
+    )
+    activation = str(
+        (tmp_path / "scripts" / "activate_task40_phi90_pord64.sh").resolve()
+    )
+    hook_directory = str(Path(activation).parent)
+    contract_path = str((tmp_path / "cache_reuse_contract.json").resolve())
+    contract_sha = "a" * 64
+    log_path = str((tmp_path / "worker.log").resolve())
+    pause = {
+        "ready_path": str(attempt_root / "pre_lu_pause" / "ready.json"),
+        "release_path": str(attempt_root / "pre_lu_pause" / "release.json"),
+        "accepted_path": str(attempt_root / "pre_lu_pause" / "accepted.json"),
+        "service_unit": unit,
+        "attempt_id": attempt_id,
+        "package_sha256": "b" * 64,
+        "original272_unit": "task40-gcd-m8n2-9bf54c110b.service",
+        "original272_invocation_id": "c3e29ca475ba40cba35251823ca7f699",
+    }
+    reuse = {
+        "mode": "verified_cache_only_v1",
+        "contract_path": contract_path,
+        "contract_sha256": contract_sha,
+        "target_attempt_cache_root": str(attempt_root),
+        "hook_directory": hook_directory,
+    }
+    environment = {
+        "HWLOC_COMPONENTS": "-x86",
+        "TASK40_GATE_CD_SCOPE_PATH": str(scope_path.resolve()),
+        "TASK40_GATE_CD_SCOPE_SHA256": "c" * 64,
+        "TASK40_GATE_CD_LOCK_DIRECTORY": "/tmp",
+        "TASK40_GATE_CD_SUBMISSION_MODE": "runtime",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "BLIS_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "TASK40_GATE_CD_ATTEMPT_CACHE_ROOT": str(attempt_root),
+        "TASK40_EXACT_CACHE_TEMPLATE_PATH": str(
+            (tmp_path / "exact_cache_template.json").resolve()
+        ),
+        "TASK40_EXACT_CACHE_TEMPLATE_SHA256": "d" * 64,
+        "TASK40_EXACT_CACHE_REUSE_MODE": reuse["mode"],
+        "TASK40_EXACT_CACHE_REUSE_CONTRACT": contract_path,
+        "TASK40_EXACT_CACHE_REUSE_CONTRACT_SHA256": contract_sha,
+        "_MYFENICS_NATIVE_QUALIFIED_ACTIVATION": "1",
+        "TASK39EXTRA_INT64_ACTIVATION": "1",
+        "TASK39EXTRA_PORD64_ACTIVATION": "1",
+        **{
+            env_name: pause[field]
+            for field, env_name in PRELU_ENVIRONMENT_FIELDS.items()
+        },
+    }
+    shell = (
+        f"source {activation} && ulimit -Sn 65536 && "
+        'test "$(ulimit -Sn)" = 65536 && '
+        f"export PYTHONPATH={hook_directory}:$PYTHONPATH && "
+        "python -c 'import os; assert os.environ.get("
+        "\"TASK40_EXACT_CACHE_REUSE_HOOK_ACTIVE\") == \"1\"' && "
+        "exec python scripts/run_case.py /tmp/recovery-input.dat"
+    )
+    argv = [
+        "systemd-run", "--user", "--no-block", f"--unit={unit}",
+        "--property=Type=exec", "--property=Restart=no",
+        "--property=RuntimeMaxSec=infinity", "--property=KillMode=mixed",
+        "--property=TimeoutStopSec=infinity",
+        "--property=LimitNOFILE=65536:1048576",
+        f"--property=StandardOutput=append:{log_path}",
+        f"--property=StandardError=append:{log_path}",
+    ]
+    argv.extend(f"--setenv={key}={value}" for key, value in environment.items())
+    argv.extend(["/bin/bash", "-lc", shell])
+    sidecar = {
+        "profile_identity": profile,
+        "service_unit": unit,
+        "scope_path": str(scope_path),
+        "scope_sha256": environment["TASK40_GATE_CD_SCOPE_SHA256"],
+        "lock_directory": "/tmp",
+        "attempt_cache_root": str(attempt_root),
+        "exact_cache_template_path": environment["TASK40_EXACT_CACHE_TEMPLATE_PATH"],
+        "exact_cache_template_sha256": environment["TASK40_EXACT_CACHE_TEMPLATE_SHA256"],
+        "activation_script": activation,
+        "append_log_path": log_path,
+        "shell_command": shell,
+        "systemd_run_argv": argv,
+        "service_environment": environment,
+        "pre_lu_pause": pause,
+        "verified_cache_reuse": reuse,
+    }
+    assert _validate_systemd_argv(sidecar) == argv
+    sidecar["service_environment"]["TASK40_EXACT_CACHE_REUSE_HOOK_ACTIVE"] = "1"
+    sidecar["systemd_run_argv"].insert(
+        sidecar["systemd_run_argv"].index("/bin/bash"),
+        "--setenv=TASK40_EXACT_CACHE_REUSE_HOOK_ACTIVE=1",
+    )
+    with pytest.raises(ValueError, match="active marker must be created by Python startup"):
         _validate_systemd_argv(sidecar)
 
 
@@ -367,6 +484,189 @@ def _make_bootstrap_residue(tmp_path):
         "resolved_output_parent_absolute": str(output_parent.resolve()),
     }
     return output_parent, package, expected_identity
+
+
+def _make_raw_tensor_summary_residue(tmp_path):
+    import hashlib
+
+    output_parent = tmp_path / "output-parent"
+    attempt_id = "20261104T010238.408463Z"
+    attempt = output_parent / attempt_id
+    (attempt / "numerical_output").mkdir(parents=True)
+    (attempt / "watchdog").mkdir()
+    profile = "task40_gate_cd_fin0_sti_z10_m8n2_p6_direct_v1"
+    run_id = profile
+    prior_source = "b" * 40
+    input_path = str((tmp_path / "input.dat").resolve())
+    input_bytes = b"frozen z10 M8N2 input\n"
+    input_sha = hashlib.sha256(input_bytes).hexdigest()
+    physical_sha = "a" * 64
+    resolved = {
+        "run_id": run_id,
+        "solver": {"native_capacity_profile": profile},
+        "provenance": {
+            "input_sha256": input_sha,
+            "physical_model_sha256": physical_sha,
+            "expected_output_parent": str(output_parent.resolve()),
+        },
+    }
+    resolved_bytes = (json.dumps(resolved, sort_keys=True, indent=2) + "\n").encode()
+    resolved_sha = hashlib.sha256(resolved_bytes).hexdigest()
+    (tmp_path / "input.dat").write_bytes(input_bytes)
+
+    cache_root = tmp_path / "failed-attempt-cache" / "tensor"
+    cache_root.mkdir(parents=True)
+    tensor_bytes = [b"tensor-a", b"tensor-b"]
+    for index, payload in enumerate(tensor_bytes):
+        folder = cache_root / f"key-{index}"
+        folder.mkdir()
+        (folder / "tensor.npy").write_bytes(payload)
+        (folder / "complete.json").write_text("{}\n")
+    cache_evidence = {
+        "root": str(cache_root.resolve()),
+        "complete_marker_count": 2,
+        "tensor_payload_count": 2,
+        "tensor_payload_bytes": sum(map(len, tensor_bytes)),
+    }
+    expected_failure = (
+        "global raw tensor evaluation failed before broadcast: rank 0: "
+        "OSError: [Errno 24] Too many open files"
+    )
+    workflow = {
+        "phase": "setup",
+        "facts": {
+            "failed_stage": "p6_direct_raw_tensor_pool_lock",
+            "exception_type": "RuntimeError",
+            "exception_message": expected_failure,
+        },
+    }
+    direct_summary = {
+        "status": "FAILED",
+        "failed_phase": "setup",
+        "failed_stage": "p6_direct_raw_tensor_pool_lock",
+        "exception_type": "RuntimeError",
+        "exception_message": expected_failure,
+        "run_id": run_id,
+        "profile": profile,
+        "source_sha": prior_source,
+        "outer_ksp": "NOT_BUILT",
+        "p4_factor": "NOT_BUILT",
+        "p4_operator": "NOT_BUILT",
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "exact_cache_execution": {"raw": {"root": str(cache_root.resolve())}},
+    }
+    stage_rows = [
+        {
+            "stage": "p6_direct_raw_tensor_class_progress",
+            "facts": {"done": 2, "total": 2},
+        },
+        {
+            "stage": "p6_direct_raw_tensor_pool_lock",
+            "facts": {
+                "event_type": "raw_tensor_pool_lock_released",
+                "batch_completed": True,
+                "batch_classes": 2,
+            },
+        },
+        {
+            "stage": "TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_M8N64_FAILED",
+            "facts": {
+                "failed_stage": "p6_direct_raw_tensor_pool_lock",
+                "exception_message": expected_failure,
+            },
+        },
+    ]
+    manifest = {
+        "run_id": run_id,
+        "source_sha": prior_source,
+        "input_path": input_path,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "native_capacity_profile_identity": profile,
+        "output_directory": str(attempt.resolve()),
+    }
+    summary = {
+        "run_id": run_id,
+        "status": "finished",
+        "exit_status": 4,
+        "result_classification": "WORKER_FAILED",
+        "output_directory": str(attempt.resolve()),
+        "numerical_output_directory": str((attempt / "numerical_output").resolve()),
+        "resource_authority": {
+            "classification": "WORKER_FAILED",
+            "leader_exit_code": 4,
+            "descendants_cleared": True,
+            "remaining_child_pids": [],
+        },
+    }
+    watchdog = {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 4,
+        "descendants_cleared": True,
+        "remaining_child_pids": [],
+    }
+    files = {
+        "exact_cache_runtime_contract.json": b'{"schema":"test"}\n',
+        "gate_cd_runtime_environment.json": b'{"schema":"test"}\n',
+        "input_original.dat": input_bytes,
+        "input_sha256.txt": f"{input_sha}\n".encode(),
+        "p6_condensed_direct_summary.json": json.dumps(direct_summary).encode() + b"\n",
+        "physical_model_sha256.txt": f"{physical_sha}\n".encode(),
+        "resolved_config.json": resolved_bytes,
+        "run_manifest.json": json.dumps(manifest).encode() + b"\n",
+        "run_summary.json": json.dumps(summary).encode() + b"\n",
+        "source_sha.txt": f"{prior_source}\n".encode(),
+        "stages.jsonl": b"".join(
+            json.dumps(row).encode() + b"\n" for row in stage_rows
+        ),
+        "task40_gate-cd_m8n64_finite_parent_parent_mode_manifest.json": b"{}\n",
+        "task40_m8n64_active_mode_manifest.json": b"{}\n",
+        "task40_m8n64_mode_index_map.json": b"{}\n",
+        "workflow_phase.json": json.dumps(workflow).encode() + b"\n",
+        "workstation_isolation.json": b'{"schema":"test"}\n',
+        "watchdog/resources.jsonl": b'{"sample":1}\n',
+        "watchdog/summary.json": json.dumps(watchdog).encode() + b"\n",
+        "watchdog/worker.log": expected_failure.encode() + b"\n",
+    }
+    for relative, content in files.items():
+        (attempt / relative).write_bytes(content)
+
+    package = {
+        "profile_identity": profile,
+        "run_id": run_id,
+        "source_commit": "c" * 40,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "prelaunch_output_residue_allowlist": {
+            "schema": "task40.gate_cd.prelaunch_output_residue_allowlist.v2",
+            "attempts": [
+                {
+                    "attempt_id": attempt_id,
+                    "attempt_directory": str(attempt.resolve()),
+                    "prior_source_commit": prior_source,
+                    "classification": "worker_failed_gate_cd_raw_tensor_summary",
+                    "files": {
+                        relative: hashlib.sha256(content).hexdigest()
+                        for relative, content in files.items()
+                    },
+                    "directories": ["numerical_output", "watchdog"],
+                    "raw_tensor_cache_evidence": cache_evidence,
+                }
+            ],
+        },
+    }
+    expected_identity = {
+        "profile_identity": profile,
+        "run_id": run_id,
+        "input_path": input_path,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "resolved_output_parent_absolute": str(output_parent.resolve()),
+    }
+    return output_parent, package, expected_identity, cache_root
 
 
 def _make_signed_mode_selection_residue(tmp_path):
@@ -645,6 +945,27 @@ def test_prelaunch_output_parent_accepts_only_exact_signed_mode_selection_failur
     attempt = output_parent / "20261102T151803.010130Z"
     (attempt / "unexpected.json").write_text("{}\n")
     with pytest.raises(ValueError, match="missing, extra, or unlisted entries"):
+        _verify_prelaunch_output_parent(output_parent, package, expected_identity)
+
+
+def test_prelaunch_output_parent_accepts_only_exact_post_cache_emfile_failure(tmp_path):
+    output_parent, package, expected_identity, cache_root = (
+        _make_raw_tensor_summary_residue(tmp_path)
+    )
+    result = _verify_prelaunch_output_parent(
+        output_parent, package, expected_identity
+    )
+    assert result["status"] == "accepted_exact_prelaunch_residue_set"
+    record = result["residues"][0]
+    assert record["classification"] == "worker_failed_gate_cd_raw_tensor_summary"
+    assert record["raw_tensor_cache_evidence"]["root"] == str(cache_root.resolve())
+    assert record["raw_tensor_cache_evidence"]["complete_marker_count"] == 2
+
+    output_parent, package, expected_identity, cache_root = (
+        _make_raw_tensor_summary_residue(tmp_path / "missing-marker")
+    )
+    (cache_root / "key-1" / "complete.json").unlink()
+    with pytest.raises(ValueError, match="exact cleared post-cache EMFILE failure"):
         _verify_prelaunch_output_parent(output_parent, package, expected_identity)
 
 
@@ -1098,6 +1419,8 @@ def test_live_capture_accepts_bound_exact_cache_values_and_rejects_drift(tmp_pat
                     "pid": 103,
                     "ppid": 102,
                     "cpus_allowed_list": "0-31",
+                    "max_open_files_soft": 65536,
+                    "max_open_files_hard": 1048576,
                     "threads": [{"cpus_allowed_list": "0-31"}],
                     "libpetsc_mappings": [
                         "/qualified/pord64-overlay/petsc/lib/libpetsc.so"
@@ -1115,6 +1438,13 @@ def test_live_capture_accepts_bound_exact_cache_values_and_rejects_drift(tmp_pat
     execution_helper._require_live_capture(
         capture, tmp_path, worker_cpus, 1, package=package
     )
+
+    bad_nofile = copy.deepcopy(capture)
+    bad_nofile["roles"]["worker"][0]["max_open_files_soft"] = 1024
+    with pytest.raises(ValueError, match="Max open files limit"):
+        execution_helper._require_live_capture(
+            bad_nofile, tmp_path, worker_cpus, 1, package=package
+        )
 
     bad_affinity = copy.deepcopy(capture)
     bad_affinity["roles"]["worker"][0]["environment"][
