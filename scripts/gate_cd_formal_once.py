@@ -931,6 +931,7 @@ def _verify_prelaunch_output_parent(
                 matrix_facts = matrix_rows[-1].get("facts", {}) if matrix_rows else {}
                 if (
                     attempt_id != "20261104T152223.701221Z"
+                    or prior_source != "27c7cd2f77cd0f2e4b1ddaa4772a90dde949effd"
                     or run_manifest.get("source_sha") != prior_source
                     or run_manifest.get("run_id")
                     != "task40_gate_cd_fin0_sti_z10_m8n2_p6_direct_v1"
@@ -1227,7 +1228,105 @@ def _verify_prelaunch_output_parent(
                 raise ValueError(
                     "raw-tensor residue is not the exact cleared post-cache EMFILE failure"
                 )
-        else:
+        elif classification == "worker_failed_gate_cd_pre_lu_identity":
+            workflow = _load_json(attempt_dir / "workflow_phase.json")
+            direct_summary = _load_json(
+                attempt_dir / "p6_condensed_direct_summary.json"
+            )
+            watchdog = _load_json(attempt_dir / "watchdog/summary.json")
+            authority = summary.get("resource_authority", {})
+            facts = workflow.get("facts", {})
+            stages = [
+                json.loads(line)
+                for line in (attempt_dir / "stages.jsonl")
+                .read_text(encoding="utf-8")
+                .splitlines()
+                if line.strip()
+            ]
+            stage_names = [item.get("stage") for item in stages]
+            matrix_rows = [
+                item
+                for item in stages
+                if item.get("stage") == "p6_direct_augmented_matrix_complete"
+            ]
+            action_rows = [
+                item for item in stages if item.get("stage") == "p6_direct_action_view_ready"
+            ]
+            rhs_rows = [
+                item for item in stages if item.get("stage") == "p6_direct_rhs_ready"
+            ]
+            terminal = stages[-1] if stages else {}
+            matrix_facts = matrix_rows[-1].get("facts", {}) if matrix_rows else {}
+            matrix_identity = matrix_facts.get("matrix_identity", {})
+            rhs_facts = rhs_rows[-1].get("facts", {}) if rhs_rows else {}
+            factor = direct_summary.get("factor", {})
+            failure_evidence = record.get("failed_run_evidence", {})
+            expected_terminal_stage = (
+                "TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_M8N64_FAILED"
+            )
+            if (
+                attempt_id != "20261104T152223.701221Z"
+                or prior_source != "27c7cd2f77cd0f2e4b1ddaa4772a90dde949effd"
+                or summary.get("status") != "finished"
+                or summary.get("exit_status") != 4
+                or summary.get("result_classification") != "WORKER_FAILED"
+                or authority.get("classification") != "WORKER_FAILED"
+                or authority.get("leader_exit_code") != 4
+                or authority.get("descendants_cleared") is not True
+                or authority.get("remaining_child_pids") != []
+                or watchdog.get("classification") != "WORKER_FAILED"
+                or watchdog.get("leader_exit_code") != 4
+                or watchdog.get("descendants_cleared") is not True
+                or watchdog.get("remaining_child_pids") != []
+                or workflow.get("phase") != "setup"
+                or facts.get("failed_stage") != "p6_direct_rhs_ready"
+                or facts.get("exception_type") != "ValueError"
+                or facts.get("exception_message")
+                != "z10 pre-LU hook requires the exact resolved identity"
+                or direct_summary.get("status") != "FAILED"
+                or direct_summary.get("failed_phase") != "setup"
+                or direct_summary.get("failed_stage") != "p6_direct_rhs_ready"
+                or direct_summary.get("exception_type") != "ValueError"
+                or direct_summary.get("exception_message")
+                != "z10 pre-LU hook requires the exact resolved identity"
+                or direct_summary.get("run_id") != expected_identity["run_id"]
+                or direct_summary.get("profile") != expected_identity["profile_identity"]
+                or direct_summary.get("source_sha") != prior_source
+                or direct_summary.get("full_dtn_status") != "FULL_DTN_NOT_VERIFIED"
+                or direct_summary.get("outer_ksp") != "NOT_BUILT"
+                or direct_summary.get("p4_factor") != "NOT_BUILT"
+                or direct_summary.get("p4_operator") != "NOT_BUILT"
+                or not matrix_rows
+                or not action_rows
+                or not rhs_rows
+                or matrix_facts.get("shape") != [7_689_872, 7_689_872]
+                or int(matrix_facts.get("nz_used", -1)) != 6_450_459_962
+                or matrix_identity.get("csr_sha256")
+                != "a9a4869163c789a33f83268ea5bd597c4381d16e301c8ed9a2e6a7758d51e0ec"
+                or matrix_identity.get("dense_gather") is not False
+                or matrix_identity.get("dtype") != "complex128"
+                or rhs_facts.get("same_matrix_object_id")
+                != matrix_facts.get("matrix_object_id")
+                or stage_names.index("p6_direct_augmented_matrix_complete")
+                >= stage_names.index("p6_direct_action_view_ready")
+                or stage_names.index("p6_direct_action_view_ready")
+                >= stage_names.index("p6_direct_rhs_ready")
+                or terminal.get("stage") != expected_terminal_stage
+                or terminal.get("facts", {}).get("failed_stage")
+                != "p6_direct_rhs_ready"
+                or terminal.get("facts", {}).get("exception_message")
+                != "z10 pre-LU hook requires the exact resolved identity"
+                or any(str(name).startswith("p6_mumps_") for name in stage_names)
+                or any(int(factor.get(key, 0)) != 0 for key in (
+                    "symbolic_calls", "numeric_calls", "solve_calls"
+                ))
+                or failure_evidence.get("mumps_symbolic_started") is not False
+                or failure_evidence.get("numeric_factorization_started") is not False
+            ):
+                raise ValueError(
+                    "pre-LU identity residue is not the exact cleared pre-symbolic failure"
+                )
+        elif classification == "worker_failed_gate_cd_signed_mode_selection":
             workflow = _load_json(attempt_dir / "workflow_phase.json")
             direct_summary = _load_json(
                 attempt_dir / "p6_condensed_direct_summary.json"
@@ -1333,6 +1432,8 @@ def _verify_prelaunch_output_parent(
                 raise ValueError(
                     "signed-selection residue is not the exact cleared pre-carrier failure"
                 )
+        else:
+            raise ValueError("prelaunch residue classification is unsupported")
 
         reviewed_attempts.append(
             {
@@ -1344,6 +1445,7 @@ def _verify_prelaunch_output_parent(
                 "directories": sorted(expected_dir_names),
                 "prior_service": record.get("prior_service"),
                 "raw_tensor_cache_evidence": record.get("raw_tensor_cache_evidence"),
+                "failed_run_evidence": record.get("failed_run_evidence"),
             }
         )
     if legacy_single:

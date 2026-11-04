@@ -399,3 +399,143 @@ def test_sitecustomize_exits_before_user_code_when_contract_hash_is_wrong(tmp_pa
     assert result.returncode != 0
     assert "MAIN_SENTINEL_EXECUTED" not in result.stdout
     assert "contract SHA256 mismatch" in result.stderr
+
+
+def test_z10_prelu_compat_adapter_adds_only_verified_snapshot_identity(tmp_path):
+    import builtins
+    import types
+
+    contract, env, _module_path, _source_root, target_root = _fixture(tmp_path)
+    attempt_id = "gcdz10m8n2-20261105-r3"
+    renamed_target = target_root.parent / f"task40_gate_cd_formal_attempt_{attempt_id}"
+    target_root.rename(renamed_target)
+    target_root = renamed_target
+    contract["target_attempt_id"] = attempt_id
+    contract["target_attempt_cache_root"] = str(target_root)
+    # Use the production source digest, which is also part of the frozen cache identity.
+    from src.runners.exact_cache_contract import numerical_source_digest
+
+    contract["numerical_source_sha256"] = numerical_source_digest()
+    env["TASK40_GATE_CD_ATTEMPT_CACHE_ROOT"] = str(target_root)
+    source_commit = "c" * 40
+    scope_path = tmp_path / "scope.json"
+    scope = {
+        "attempt_id": attempt_id,
+        "identity": {
+            "profile_identity": cache_reuse.EXPECTED_PROFILE,
+            "run_id": cache_reuse.EXPECTED_RUN_ID,
+        },
+    }
+    scope_raw = (json.dumps(scope, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    scope_path.write_bytes(scope_raw)
+    env.update(
+        {
+            "TASK40_GATE_CD_SUBMISSION_MODE": "runtime",
+            "TASK40_GATE_CD_ATTEMPT_ID": attempt_id,
+            "TASK40_GATE_CD_EXPECTED_UNIT": (
+                f"task40-gcd-z10-m8n2-r3-{source_commit[:8]}.service"
+            ),
+            "TASK40_GATE_CD_PACKAGE_SHA256": "b" * 64,
+            "TASK40_GATE_CD_SCOPE_PATH": str(scope_path.resolve()),
+            "TASK40_GATE_CD_SCOPE_SHA256": _sha(scope_raw),
+        }
+    )
+
+    output_parent = tmp_path / "outputs"
+    run_directory = output_parent / "run"
+    run_directory.mkdir(parents=True)
+    input_bytes = b"frozen z10 input snapshot\n"
+    (run_directory / "input_original.dat").write_bytes(input_bytes)
+    input_sha = _sha(input_bytes)
+    physical_sha = "a" * 64
+    (run_directory / "input_sha256.txt").write_text(input_sha + "\n")
+    (run_directory / "physical_model_sha256.txt").write_text(physical_sha + "\n")
+    (run_directory / "source_sha.txt").write_text(source_commit + "\n")
+    payload = {
+        "run_id": cache_reuse.EXPECTED_RUN_ID,
+        "model_id": "gate_cd_0p7nm_mapped_50x50_zminus10_to240",
+        "solver": {"native_capacity_profile": cache_reuse.EXPECTED_PROFILE},
+        "provenance": {
+            "expected_output_parent": str(output_parent.resolve()),
+            "input_sha256": input_sha,
+            "physical_model_sha256": physical_sha,
+        },
+    }
+    resolved_raw = (json.dumps(payload, sort_keys=True, indent=2) + "\n").encode()
+    (run_directory / "resolved_config.json").write_bytes(resolved_raw)
+    resolved_sha = _sha(resolved_raw)
+    manifest = {
+        "run_id": payload["run_id"],
+        "model_id": payload["model_id"],
+        "source_sha": source_commit,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "native_capacity_profile_identity": cache_reuse.EXPECTED_PROFILE,
+        "output_directory": str(run_directory.resolve()),
+    }
+    (run_directory / "run_manifest.json").write_text(json.dumps(manifest) + "\n")
+
+    received = {}
+    fake_module = types.ModuleType(cache_reuse.Z10_P6_MODULE)
+
+    def fake_p6(resolved_payload, output_directory, *, source_sha):
+        received["payload"] = resolved_payload
+        received["source_sha"] = source_sha
+        received["output_directory"] = output_directory
+        return resolved_payload
+
+    fake_module.run_p6_condensed_direct = fake_p6
+    previous_module = sys.modules.get(cache_reuse.Z10_P6_MODULE)
+    previous_import = builtins.__import__
+    sentinel_was_set = getattr(builtins, cache_reuse._Z10_IMPORT_GUARD_ATTRIBUTE, False)
+    if hasattr(builtins, cache_reuse._Z10_IMPORT_GUARD_ATTRIBUTE):
+        delattr(builtins, cache_reuse._Z10_IMPORT_GUARD_ATTRIBUTE)
+    sys.modules[cache_reuse.Z10_P6_MODULE] = fake_module
+    try:
+        cache_reuse._install_z10_prelu_identity_adapter(contract, env)
+        imported = builtins.__import__(
+            cache_reuse.Z10_P6_MODULE,
+            globals(),
+            locals(),
+            (cache_reuse.Z10_P6_FUNCTION,),
+            0,
+        )
+        result = imported.run_p6_condensed_direct(
+            payload, run_directory, source_sha=source_commit
+        )
+        assert result["identity"] == {
+            "input_sha256": input_sha,
+            "physical_model_sha256": physical_sha,
+            "resolved_config_sha256": resolved_sha,
+        }
+        assert "identity" not in payload
+        assert received["payload"] is not payload
+        assert received["source_sha"] == source_commit
+        assert received["output_directory"] == run_directory
+        evidence = json.loads(
+            (run_directory / "z10_prelu_identity_compatibility.json").read_text()
+        )
+        assert evidence["package_sha256"] == "b" * 64
+        assert evidence["scope_sha256"] == _sha(scope_raw)
+        assert evidence["numerical_source_sha256"] == numerical_source_digest()
+
+        scope_path.write_text("tampered\n")
+        with pytest.raises(RuntimeError, match="scope hash changed"):
+            cache_reuse._verified_z10_prelu_payload_identity(
+                payload,
+                run_directory,
+                source_commit,
+                contract=contract,
+                environ=env,
+            )
+    finally:
+        builtins.__import__ = previous_import
+        if sentinel_was_set:
+            setattr(builtins, cache_reuse._Z10_IMPORT_GUARD_ATTRIBUTE, True)
+        elif hasattr(builtins, cache_reuse._Z10_IMPORT_GUARD_ATTRIBUTE):
+            delattr(builtins, cache_reuse._Z10_IMPORT_GUARD_ATTRIBUTE)
+        if previous_module is None:
+            sys.modules.pop(cache_reuse.Z10_P6_MODULE, None)
+        else:
+            sys.modules[cache_reuse.Z10_P6_MODULE] = previous_module

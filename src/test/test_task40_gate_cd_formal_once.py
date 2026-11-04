@@ -669,6 +669,182 @@ def _make_raw_tensor_summary_residue(tmp_path):
     return output_parent, package, expected_identity, cache_root
 
 
+def _make_pre_lu_identity_failure_residue(tmp_path):
+    import hashlib
+
+    output_parent = tmp_path / "output-parent"
+    attempt_id = "20261104T152223.701221Z"
+    attempt = output_parent / attempt_id
+    (attempt / "numerical_output").mkdir(parents=True)
+    (attempt / "watchdog").mkdir()
+    profile = "task40_gate_cd_fin0_sti_z10_m8n2_p6_direct_v1"
+    run_id = profile
+    prior_source = "27c7cd2f77cd0f2e4b1ddaa4772a90dde949effd"
+    input_path = str((tmp_path / "input.dat").resolve())
+    input_bytes = b"frozen Fin0/STI z10 M8N2 input\n"
+    input_sha = hashlib.sha256(input_bytes).hexdigest()
+    physical_sha = "a" * 64
+    resolved = {
+        "run_id": run_id,
+        "solver": {"native_capacity_profile": profile},
+        "provenance": {
+            "input_sha256": input_sha,
+            "physical_model_sha256": physical_sha,
+            "expected_output_parent": str(output_parent.resolve()),
+        },
+    }
+    resolved_bytes = (json.dumps(resolved, sort_keys=True, indent=2) + "\n").encode()
+    resolved_sha = hashlib.sha256(resolved_bytes).hexdigest()
+    matrix_sha = (
+        "a9a4869163c789a33f83268ea5bd597c4381d16e301c8ed9a2e6a7758d51e0ec"
+    )
+    manifest = {
+        "run_id": run_id,
+        "model_id": "gate_cd_0p7nm_mapped_50x50_zminus10_to240",
+        "source_sha": prior_source,
+        "input_path": input_path,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "native_capacity_profile_identity": profile,
+        "output_directory": str(attempt.resolve()),
+    }
+    summary = {
+        "run_id": run_id,
+        "status": "finished",
+        "exit_status": 4,
+        "result_classification": "WORKER_FAILED",
+        "output_directory": str(attempt.resolve()),
+        "numerical_output_directory": str((attempt / "numerical_output").resolve()),
+        "resource_authority": {
+            "classification": "WORKER_FAILED",
+            "leader_exit_code": 4,
+            "descendants_cleared": True,
+            "remaining_child_pids": [],
+        },
+    }
+    workflow = {
+        "phase": "setup",
+        "stage": "TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_M8N64_FAILED",
+        "facts": {
+            "failed_stage": "p6_direct_rhs_ready",
+            "exception_type": "ValueError",
+            "exception_message": "z10 pre-LU hook requires the exact resolved identity",
+        },
+    }
+    direct_summary = {
+        "status": "FAILED",
+        "failed_phase": "setup",
+        "failed_stage": "p6_direct_rhs_ready",
+        "exception_type": "ValueError",
+        "exception_message": "z10 pre-LU hook requires the exact resolved identity",
+        "run_id": run_id,
+        "profile": profile,
+        "source_sha": prior_source,
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+        "outer_ksp": "NOT_BUILT",
+        "p4_factor": "NOT_BUILT",
+        "p4_operator": "NOT_BUILT",
+        "factor": {"backend": "PETSc_MUMPS"},
+    }
+    matrix_object_id = 11
+    stages = [
+        {
+            "stage": "p6_direct_augmented_matrix_complete",
+            "facts": {
+                "shape": [7_689_872, 7_689_872],
+                "nz_used": 6_450_459_962,
+                "matrix_object_id": matrix_object_id,
+                "matrix_identity": {
+                    "csr_sha256": matrix_sha,
+                    "dense_gather": False,
+                    "dtype": "complex128",
+                },
+            },
+        },
+        {
+            "stage": "p6_direct_action_view_ready",
+            "facts": {"matrix_object_id": matrix_object_id},
+        },
+        {
+            "stage": "p6_direct_rhs_ready",
+            "facts": {"same_matrix_object_id": matrix_object_id},
+        },
+        {
+            "stage": "TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_M8N64_FAILED",
+            "facts": workflow["facts"],
+        },
+    ]
+    watchdog = {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 4,
+        "descendants_cleared": True,
+        "remaining_child_pids": [],
+    }
+    files = {
+        "exact_cache_runtime_contract.json": b'{"schema":"exact-cache-test"}\n',
+        "gate_cd_runtime_environment.json": b'{"schema":"runtime-env-test"}\n',
+        "input_original.dat": input_bytes,
+        "input_sha256.txt": f"{input_sha}\n".encode(),
+        "p6_condensed_direct_summary.json": json.dumps(direct_summary).encode() + b"\n",
+        "physical_model_sha256.txt": f"{physical_sha}\n".encode(),
+        "resolved_config.json": resolved_bytes,
+        "run_manifest.json": json.dumps(manifest).encode() + b"\n",
+        "run_summary.json": json.dumps(summary).encode() + b"\n",
+        "source_sha.txt": f"{prior_source}\n".encode(),
+        "stages.jsonl": b"".join(json.dumps(row).encode() + b"\n" for row in stages),
+        "task40_gate-cd_m8n64_finite_parent_parent_mode_manifest.json": b"{}\n",
+        "task40_m8n64_active_mode_manifest.json": b"{}\n",
+        "task40_m8n64_mode_index_map.json": b"{}\n",
+        "workflow_phase.json": json.dumps(workflow).encode() + b"\n",
+        "workstation_isolation.json": b'{"schema":"isolation-test"}\n',
+        "watchdog/resources.jsonl": b'{"sample":1}\n',
+        "watchdog/summary.json": json.dumps(watchdog).encode() + b"\n",
+        "watchdog/worker.log": b"pre-LU identity validation failed\n",
+    }
+    for relative, content in files.items():
+        (attempt / relative).write_bytes(content)
+    package = {
+        "profile_identity": profile,
+        "run_id": run_id,
+        "source_commit": "c" * 40,
+        "input_path": input_path,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "prelaunch_output_residue_allowlist": {
+            "schema": "task40.gate_cd.prelaunch_output_residue_allowlist.v2",
+            "attempts": [
+                {
+                    "attempt_id": attempt_id,
+                    "attempt_directory": str(attempt.resolve()),
+                    "prior_source_commit": prior_source,
+                    "classification": "worker_failed_gate_cd_pre_lu_identity",
+                    "files": {
+                        name: hashlib.sha256(content).hexdigest()
+                        for name, content in files.items()
+                    },
+                    "directories": ["numerical_output", "watchdog"],
+                    "failed_run_evidence": {
+                        "mumps_symbolic_started": False,
+                        "numeric_factorization_started": False,
+                    },
+                }
+            ],
+        },
+    }
+    expected_identity = {
+        "profile_identity": profile,
+        "run_id": run_id,
+        "input_path": input_path,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "resolved_output_parent_absolute": str(output_parent.resolve()),
+    }
+    return output_parent, package, expected_identity
+
+
 def _make_signed_mode_selection_residue(tmp_path):
     import hashlib
 
@@ -966,6 +1142,40 @@ def test_prelaunch_output_parent_accepts_only_exact_post_cache_emfile_failure(tm
     )
     (cache_root / "key-1" / "complete.json").unlink()
     with pytest.raises(ValueError, match="exact cleared post-cache EMFILE failure"):
+        _verify_prelaunch_output_parent(output_parent, package, expected_identity)
+
+
+def test_prelaunch_output_parent_accepts_exact_pre_lu_identity_failure(tmp_path):
+    output_parent, package, expected_identity = _make_pre_lu_identity_failure_residue(
+        tmp_path / "accepted"
+    )
+    result = _verify_prelaunch_output_parent(
+        output_parent, package, expected_identity
+    )
+    assert result["status"] == "accepted_exact_prelaunch_residue_set"
+    record = result["residues"][0]
+    assert record["attempt_id"] == "20261104T152223.701221Z"
+    assert record["classification"] == "worker_failed_gate_cd_pre_lu_identity"
+    assert record["failed_run_evidence"] == {
+        "mumps_symbolic_started": False,
+        "numeric_factorization_started": False,
+    }
+
+    output_parent, package, expected_identity = _make_pre_lu_identity_failure_residue(
+        tmp_path / "tampered"
+    )
+    attempt = output_parent / "20261104T152223.701221Z"
+    (attempt / "workflow_phase.json").write_text('{"phase":"setup"}\n')
+    with pytest.raises(ValueError, match="hash changed: workflow_phase.json"):
+        _verify_prelaunch_output_parent(output_parent, package, expected_identity)
+
+    output_parent, package, expected_identity = _make_pre_lu_identity_failure_residue(
+        tmp_path / "wrong-classification"
+    )
+    package["prelaunch_output_residue_allowlist"]["attempts"][0][
+        "classification"
+    ] = "worker_failed_gate_cd_signed_mode_selection"
+    with pytest.raises(ValueError, match="signed-selection residue prior systemd identity"):
         _verify_prelaunch_output_parent(output_parent, package, expected_identity)
 
 

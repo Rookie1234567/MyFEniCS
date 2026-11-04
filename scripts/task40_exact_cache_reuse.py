@@ -7,11 +7,13 @@ It is activated only by the reviewed Z10 recovery environment.
 
 from __future__ import annotations
 
+import builtins
 import hashlib
 import json
 import os
 import shutil
 import stat
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +31,13 @@ EXPECTED_CARRIER_COUNT = 272
 EXPECTED_CARRIER_BYTES = 1091188144
 EXPECTED_JIT_FILE_COUNT = 32
 EXPECTED_JIT_BYTES = 4660641154
+Z10_PRELU_IDENTITY_COMPAT_SCHEMA = (
+    "task40.gate_cd.z10_prelu_identity_snapshot_compatibility.v1"
+)
+Z10_P6_MODULE = "src.runners.p6_condensed_direct"
+Z10_P6_FUNCTION = "run_p6_condensed_direct"
+_Z10_IMPORT_GUARD_ATTRIBUTE = "_task40_z10_prelu_identity_import_guard"
+_Z10_WRAPPED_FUNCTION_ATTRIBUTE = "_task40_z10_prelu_identity_wrapped"
 
 
 def _sha256_bytes(raw: bytes) -> str:
@@ -50,6 +59,272 @@ def _sha256_file(path: Path) -> str:
         return h.hexdigest()
     finally:
         os.close(fd)
+
+
+def _read_regular_file(path: Path) -> bytes:
+    if path.is_symlink():
+        raise RuntimeError(f"Z10 identity snapshot is symlinked: {path}")
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(path, flags)
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise RuntimeError(f"Z10 identity snapshot is not a regular file: {path}")
+        with os.fdopen(fd, "rb", closefd=False) as stream:
+            return stream.read()
+    finally:
+        os.close(fd)
+
+
+def _write_json_exclusive(path: Path, document: dict[str, Any]) -> None:
+    raw = (json.dumps(document, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(path, flags, 0o600)
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise RuntimeError(f"Z10 identity evidence is not a regular file: {path}")
+        with os.fdopen(fd, "wb", closefd=False) as stream:
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+    finally:
+        os.close(fd)
+
+
+def _verified_z10_prelu_payload_identity(
+    resolved_payload: dict[str, Any],
+    output_directory: str | Path,
+    source_sha: str | None,
+    *,
+    contract: dict[str, Any],
+    environ: dict[str, str],
+) -> dict[str, str]:
+    """Derive legacy pre-LU identity fields from the validated run snapshots.
+
+    This compatibility adapter is kept in ``scripts`` so the frozen numerical
+    source digest remains unchanged. It runs at the worker's exact p6 adapter
+    boundary, after the worker has validated the original resolved-config bytes.
+    """
+    if (
+        contract.get("profile_identity") != EXPECTED_PROFILE
+        or contract.get("run_id") != EXPECTED_RUN_ID
+        or not isinstance(resolved_payload, dict)
+        or resolved_payload.get("run_id") != EXPECTED_RUN_ID
+        or "identity" in resolved_payload
+        or not isinstance(source_sha, str)
+        or len(source_sha) != 40
+        or any(character not in "0123456789abcdef" for character in source_sha)
+    ):
+        raise RuntimeError("Z10 pre-LU compatibility adapter received a different run identity")
+
+    attempt_id = contract.get("target_attempt_id")
+    expected_attempt_id = environ.get("TASK40_GATE_CD_ATTEMPT_ID")
+    expected_unit = environ.get("TASK40_GATE_CD_EXPECTED_UNIT")
+    package_sha = environ.get("TASK40_GATE_CD_PACKAGE_SHA256")
+    scope_path_value = environ.get("TASK40_GATE_CD_SCOPE_PATH")
+    scope_sha = environ.get("TASK40_GATE_CD_SCOPE_SHA256")
+    if (
+        not isinstance(attempt_id, str)
+        or expected_attempt_id != attempt_id
+        or not isinstance(expected_unit, str)
+        or not isinstance(package_sha, str)
+        or len(package_sha) != 64
+        or any(character not in "0123456789abcdef" for character in package_sha)
+        or not isinstance(scope_path_value, str)
+        or not Path(scope_path_value).is_absolute()
+        or not isinstance(scope_sha, str)
+        or len(scope_sha) != 64
+        or any(character not in "0123456789abcdef" for character in scope_sha)
+    ):
+        raise RuntimeError("Z10 pre-LU compatibility adapter lacks its exact launch binding")
+    attempt_suffix = attempt_id.rsplit("-", 1)[-1]
+    expected_unit_for_attempt = (
+        f"task40-gcd-z10-m8n2-{attempt_suffix}-{source_sha[:8]}.service"
+    )
+    if expected_unit != expected_unit_for_attempt:
+        raise RuntimeError("Z10 pre-LU compatibility service unit differs from the exact launch")
+    scope_path = Path(scope_path_value)
+    if _sha256_file(scope_path) != scope_sha:
+        raise RuntimeError("Z10 pre-LU compatibility scope hash changed")
+    scope = json.loads(_read_regular_file(scope_path))
+    if (
+        scope.get("attempt_id") != attempt_id
+        or scope.get("identity", {}).get("profile_identity") != EXPECTED_PROFILE
+        or scope.get("identity", {}).get("run_id") != EXPECTED_RUN_ID
+    ):
+        raise RuntimeError("Z10 pre-LU compatibility scope differs from the exact attempt")
+
+    from src.runners.exact_cache_contract import numerical_source_digest
+
+    if numerical_source_digest() != contract.get("numerical_source_sha256"):
+        raise RuntimeError("Z10 numerical source identity differs from the frozen cache")
+
+    target_root, _, _ = _target_roots(contract, environ)
+    if (
+        Path(environ.get("TASK40_GATE_CD_ATTEMPT_CACHE_ROOT", "")).resolve()
+        != Path(contract["target_attempt_cache_root"]).resolve()
+        or Path(contract["target_attempt_cache_root"]).name
+        != f"task40_gate_cd_formal_attempt_{attempt_id}"
+    ):
+        raise RuntimeError("Z10 pre-LU compatibility cache target differs from the attempt")
+
+    requested_directory = Path(output_directory)
+    if requested_directory.is_symlink():
+        raise RuntimeError("Z10 pre-LU output directory is symlinked")
+    run_directory = requested_directory.resolve(strict=True)
+    snapshot_paths = {
+        "manifest": run_directory / "run_manifest.json",
+        "resolved": run_directory / "resolved_config.json",
+        "input": run_directory / "input_original.dat",
+        "input_sha": run_directory / "input_sha256.txt",
+        "physical_sha": run_directory / "physical_model_sha256.txt",
+        "source_sha": run_directory / "source_sha.txt",
+    }
+    snapshots = {name: _read_regular_file(path) for name, path in snapshot_paths.items()}
+    manifest = json.loads(snapshots["manifest"])
+    resolved = json.loads(snapshots["resolved"])
+    provenance = resolved_payload.get("provenance")
+    solver = resolved_payload.get("solver")
+    if (
+        not isinstance(provenance, dict)
+        or not isinstance(solver, dict)
+        or resolved != resolved_payload
+        or resolved_payload.get("model_id")
+        != "gate_cd_0p7nm_mapped_50x50_zminus10_to240"
+        or solver.get("native_capacity_profile") != EXPECTED_PROFILE
+    ):
+        raise RuntimeError("Z10 pre-LU payload differs from the validated resolved snapshot")
+
+    input_sha = hashlib.sha256(snapshots["input"]).hexdigest()
+    resolved_sha = hashlib.sha256(snapshots["resolved"]).hexdigest()
+    physical_sha = snapshots["physical_sha"].decode("ascii").strip()
+    recorded_input_sha = snapshots["input_sha"].decode("ascii").strip()
+    recorded_source_sha = snapshots["source_sha"].decode("ascii").strip()
+    output_parent = Path(provenance.get("expected_output_parent", "")).resolve(strict=True)
+    expected_manifest_values = {
+        "run_id": EXPECTED_RUN_ID,
+        "model_id": resolved_payload.get("model_id"),
+        "source_sha": source_sha,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "native_capacity_profile_identity": EXPECTED_PROFILE,
+        "output_directory": str(run_directory),
+    }
+    if (
+        output_parent != run_directory.parent
+        or input_sha != recorded_input_sha
+        or input_sha != provenance.get("input_sha256")
+        or physical_sha != provenance.get("physical_model_sha256")
+        or recorded_source_sha != source_sha
+        or any(manifest.get(key) != value for key, value in expected_manifest_values.items())
+    ):
+        raise RuntimeError("Z10 pre-LU run manifest and immutable snapshots disagree")
+
+    identity = {
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+    }
+    evidence = {
+        "schema": Z10_PRELU_IDENTITY_COMPAT_SCHEMA,
+        "attempt_id": attempt_id,
+        "profile_identity": EXPECTED_PROFILE,
+        "run_id": EXPECTED_RUN_ID,
+        "source_commit": source_sha,
+        "service_unit": expected_unit,
+        "package_sha256": package_sha,
+        "scope_sha256": scope_sha,
+        "output_directory": str(run_directory),
+        "identity_source": "worker_validated_run_manifest_and_immutable_snapshots_v1",
+        "numerical_source_sha256": contract.get("numerical_source_sha256"),
+        "identity": identity,
+    }
+    _write_json_exclusive(run_directory / "z10_prelu_identity_compatibility.json", evidence)
+    _append_audit(
+        target_root,
+        {
+            "schema": SCHEMA,
+            "event": "z10_prelu_identity_compatibility_applied",
+            "pid": os.getpid(),
+            "attempt_id": attempt_id,
+            "output_directory": str(run_directory),
+            "identity": identity,
+            "source_commit": source_sha,
+        },
+    )
+    return identity
+
+
+def _install_z10_prelu_identity_adapter(
+    contract: dict[str, Any], environ: dict[str, str]
+) -> None:
+    if contract.get("profile_identity") != EXPECTED_PROFILE:
+        return
+    if environ.get("TASK40_GATE_CD_SUBMISSION_MODE") != "runtime":
+        return
+    required_environment = (
+        "TASK40_GATE_CD_ATTEMPT_ID",
+        "TASK40_GATE_CD_EXPECTED_UNIT",
+        "TASK40_GATE_CD_PACKAGE_SHA256",
+        "TASK40_GATE_CD_SCOPE_PATH",
+        "TASK40_GATE_CD_SCOPE_SHA256",
+    )
+    if any(not environ.get(name) for name in required_environment):
+        raise RuntimeError("Z10 pre-LU identity adapter launch environment is incomplete")
+    if environ.get("TASK40_GATE_CD_ATTEMPT_ID") != contract.get("target_attempt_id"):
+        raise RuntimeError("Z10 pre-LU identity adapter attempt differs from its cache contract")
+    from src.runners.exact_cache_contract import numerical_source_digest
+
+    if numerical_source_digest() != contract.get("numerical_source_sha256"):
+        raise RuntimeError("Z10 live numerical source differs from the frozen cache identity")
+    if getattr(builtins, _Z10_IMPORT_GUARD_ATTRIBUTE, False):
+        return
+
+    original_import = builtins.__import__
+
+    def import_with_z10_identity_adapter(
+        name, globals=None, locals=None, fromlist=(), level=0
+    ):
+        try:
+            module_result = original_import(name, globals, locals, fromlist, level)
+        finally:
+            if name == Z10_P6_MODULE:
+                builtins.__import__ = original_import
+        if name == Z10_P6_MODULE:
+            module = sys.modules.get(Z10_P6_MODULE)
+            original_function = getattr(module, Z10_P6_FUNCTION, None)
+            if callable(original_function) and not getattr(
+                original_function, _Z10_WRAPPED_FUNCTION_ATTRIBUTE, False
+            ):
+                def run_with_verified_identity(
+                    payload, output_directory, *args, **kwargs
+                ):
+                    if isinstance(payload, dict) and payload.get("run_id") == EXPECTED_RUN_ID:
+                        source_sha = kwargs.get("source_sha")
+                        if source_sha is None and args:
+                            source_sha = args[0]
+                        identity = _verified_z10_prelu_payload_identity(
+                            payload,
+                            output_directory,
+                            source_sha,
+                            contract=contract,
+                            environ=environ,
+                        )
+                        enriched_payload = dict(payload)
+                        existing_identity = enriched_payload.get("identity")
+                        if existing_identity is not None and existing_identity != identity:
+                            raise RuntimeError("Z10 pre-LU payload identity overlay conflicts")
+                        enriched_payload["identity"] = identity
+                        payload = enriched_payload
+                    return original_function(payload, output_directory, *args, **kwargs)
+
+                setattr(run_with_verified_identity, _Z10_WRAPPED_FUNCTION_ATTRIBUTE, True)
+                setattr(module, Z10_P6_FUNCTION, run_with_verified_identity)
+        return module_result
+
+    setattr(import_with_z10_identity_adapter, _Z10_WRAPPED_FUNCTION_ATTRIBUTE, True)
+    builtins.__import__ = import_with_z10_identity_adapter
+    setattr(builtins, _Z10_IMPORT_GUARD_ATTRIBUTE, True)
 
 
 def _read_bound_contract(environ: dict[str, str]) -> dict[str, Any]:
@@ -353,6 +628,7 @@ def install(
     if mode != MODE:
         raise RuntimeError(f"unsupported exact cache reuse mode: {mode!r}")
     contract = _read_bound_contract(env)
+    _install_z10_prelu_identity_adapter(contract, env)
     if parallel_cache is None:
         from src.solvers import parallel_tensor_cache as parallel_cache
     if carrier_module is None:
