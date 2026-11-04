@@ -72,6 +72,72 @@ def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
     temporary.replace(path)
 
 
+def _verified_z10_prelu_payload_identity(
+    resolved_payload: Mapping[str, Any],
+    run_directory: str | Path,
+    *,
+    source_sha: str | None,
+    profile_identity: str,
+) -> dict[str, str]:
+    """Bind the pre-LU pause to hashes already validated for this exact run.
+
+    The normalized resolved payload intentionally has no synthetic ``identity``
+    member.  Its run manifest and immutable run snapshots carry the input,
+    physical-model, and resolved-config hashes validated by the worker boundary.
+    Recheck those artifacts here before admitting the pause.
+    """
+
+    directory = Path(run_directory).resolve()
+    manifest_path = directory / "run_manifest.json"
+    resolved_config_path = directory / "resolved_config.json"
+    input_snapshot_path = directory / "input_original.dat"
+    physical_hash_path = directory / "physical_model_sha256.txt"
+    required_paths = (
+        manifest_path,
+        resolved_config_path,
+        input_snapshot_path,
+        physical_hash_path,
+    )
+    if any(not path.is_file() for path in required_paths):
+        raise ValueError("z10 pre-LU identity snapshots are incomplete")
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    resolved_config_bytes = resolved_config_path.read_bytes()
+    input_sha256 = hashlib.sha256(input_snapshot_path.read_bytes()).hexdigest()
+    resolved_config_sha256 = hashlib.sha256(resolved_config_bytes).hexdigest()
+    physical_model_sha256 = physical_hash_path.read_text(encoding="ascii").strip()
+    resolved_config = json.loads(resolved_config_bytes)
+
+    if (
+        not isinstance(source_sha, str)
+        or manifest.get("source_sha") != source_sha
+        or manifest.get("run_id") != resolved_payload.get("run_id")
+        or manifest.get("model_id") != resolved_payload.get("model_id")
+        or manifest.get("native_capacity_profile_identity") != profile_identity
+        or resolved_config.get("run_id") != manifest.get("run_id")
+        or resolved_config.get("model_id") != manifest.get("model_id")
+        or resolved_config.get("derived", {}).get("native_capacity_profile", {}).get(
+            "identity"
+        )
+        != profile_identity
+        or Path(str(manifest.get("output_directory", ""))).resolve() != directory
+        or manifest.get("resolved_config_sha256") != resolved_config_sha256
+        or manifest.get("input_sha256") != input_sha256
+        or manifest.get("physical_model_sha256") != physical_model_sha256
+        or len(physical_model_sha256) != 64
+        or any(character not in "0123456789abcdef" for character in physical_model_sha256)
+    ):
+        raise ValueError("z10 pre-LU run-manifest identity or snapshot hash mismatch")
+
+    return {
+        "run_id": str(manifest["run_id"]),
+        "source_commit": source_sha,
+        "input_sha256": input_sha256,
+        "physical_model_sha256": physical_model_sha256,
+        "resolved_config_sha256": resolved_config_sha256,
+    }
+
+
 def _write_direct_flat_reference_outputs(
     output_dir: Path,
     cfg: Any,
@@ -4072,9 +4138,12 @@ def run_p6_condensed_direct(
                 wait_at_pre_numeric_pause,
             )
 
-            payload_identity = resolved_payload.get("identity")
-            if not isinstance(payload_identity, Mapping):
-                raise ValueError("z10 pre-LU hook requires the exact resolved identity")
+            payload_identity = _verified_z10_prelu_payload_identity(
+                resolved_payload,
+                directory,
+                source_sha=source_sha,
+                profile_identity=str(profile_facts["identity"]),
+            )
             from src.runners.task40_gate_cd_prelu_pause import (
                 PRELU_ENVIRONMENT_FIELDS,
             )
@@ -4093,8 +4162,8 @@ def run_p6_condensed_direct(
                 raise ValueError("z10 pre-LU hook requires systemd INVOCATION_ID")
             prelu_identity = {
                 "profile_identity": profile_facts["identity"],
-                "run_id": str(resolved_payload.get("run_id")),
-                "source_commit": str(source_sha or ""),
+                "run_id": payload_identity["run_id"],
+                "source_commit": payload_identity["source_commit"],
                 "input_sha256": str(payload_identity.get("input_sha256", "")),
                 "physical_model_sha256": str(
                     payload_identity.get("physical_model_sha256", "")
