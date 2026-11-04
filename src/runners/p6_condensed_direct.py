@@ -92,11 +92,13 @@ def _verified_z10_prelu_payload_identity(
     resolved_config_path = directory / "resolved_config.json"
     input_snapshot_path = directory / "input_original.dat"
     physical_hash_path = directory / "physical_model_sha256.txt"
+    source_sha_path = directory / "source_sha.txt"
     required_paths = (
         manifest_path,
         resolved_config_path,
         input_snapshot_path,
         physical_hash_path,
+        source_sha_path,
     )
     if any(not path.is_file() for path in required_paths):
         raise ValueError("z10 pre-LU identity snapshots are incomplete")
@@ -106,11 +108,13 @@ def _verified_z10_prelu_payload_identity(
     input_sha256 = hashlib.sha256(input_snapshot_path.read_bytes()).hexdigest()
     resolved_config_sha256 = hashlib.sha256(resolved_config_bytes).hexdigest()
     physical_model_sha256 = physical_hash_path.read_text(encoding="ascii").strip()
+    recorded_source_sha = source_sha_path.read_text(encoding="ascii").strip()
     resolved_config = json.loads(resolved_config_bytes)
 
     if (
         not isinstance(source_sha, str)
         or manifest.get("source_sha") != source_sha
+        or recorded_source_sha != source_sha
         or manifest.get("run_id") != resolved_payload.get("run_id")
         or manifest.get("model_id") != resolved_payload.get("model_id")
         or manifest.get("native_capacity_profile_identity") != profile_identity

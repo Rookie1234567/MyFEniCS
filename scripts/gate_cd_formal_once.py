@@ -836,6 +836,7 @@ def _verify_prelaunch_output_parent(
         elif classification in {
             "worker_failed_gate_cd_mesh_setup",
             "worker_failed_gate_cd_raw_tensor_summary",
+            "worker_failed_gate_cd_pre_lu_identity",
         }:
             required_setup_files = required_files | {
                 "gate_cd_runtime_environment.json",
@@ -875,6 +876,89 @@ def _verify_prelaunch_output_parent(
                 ):
                     raise ValueError(
                         "raw-tensor failure residue differs from its exact terminal tree"
+                    )
+            elif classification == "worker_failed_gate_cd_pre_lu_identity":
+                exact_pre_lu_files = required_files | {
+                    "exact_cache_runtime_contract.json",
+                    "gate_cd_runtime_environment.json",
+                    "p6_condensed_direct_summary.json",
+                    "stages.jsonl",
+                    "task40_gate-cd_m8n64_finite_parent_parent_mode_manifest.json",
+                    "task40_m8n64_active_mode_manifest.json",
+                    "task40_m8n64_mode_index_map.json",
+                    "workflow_phase.json",
+                    "workstation_isolation.json",
+                    "watchdog/resources.jsonl",
+                    "watchdog/summary.json",
+                    "watchdog/worker.log",
+                }
+                if (
+                    expected_file_names != exact_pre_lu_files
+                    or expected_dir_names != {"numerical_output", "watchdog"}
+                ):
+                    raise ValueError(
+                        "pre-LU identity-failure residue differs from its exact terminal tree"
+                    )
+                run_manifest = json.loads(
+                    (attempt_dir / "run_manifest.json").read_text(encoding="utf-8")
+                )
+                run_summary = json.loads(
+                    (attempt_dir / "run_summary.json").read_text(encoding="utf-8")
+                )
+                workflow = json.loads(
+                    (attempt_dir / "workflow_phase.json").read_text(encoding="utf-8")
+                )
+                stage_rows = [
+                    json.loads(line)
+                    for line in (attempt_dir / "stages.jsonl")
+                    .read_text(encoding="utf-8")
+                    .splitlines()
+                ]
+                matrix_rows = [
+                    row
+                    for row in stage_rows
+                    if row.get("stage") == "p6_direct_augmented_matrix_complete"
+                ]
+                rhs_rows = [
+                    row for row in stage_rows if row.get("stage") == "p6_direct_rhs_ready"
+                ]
+                symbolic_rows = [
+                    row
+                    for row in stage_rows
+                    if row.get("stage") == "p6_mumps_symbolic_complete"
+                ]
+                resource = run_summary.get("resource_authority")
+                matrix_facts = matrix_rows[-1].get("facts", {}) if matrix_rows else {}
+                if (
+                    attempt_id != "20261104T152223.701221Z"
+                    or run_manifest.get("source_sha") != prior_source
+                    or run_manifest.get("run_id")
+                    != "task40_gate_cd_fin0_sti_z10_m8n2_p6_direct_v1"
+                    or run_manifest.get("native_capacity_profile_identity")
+                    != "task40_gate_cd_fin0_sti_z10_m8n2_p6_direct_v1"
+                    or run_summary.get("status") != "finished"
+                    or run_summary.get("exit_status") != 4
+                    or run_summary.get("result_classification") != "WORKER_FAILED"
+                    or not isinstance(resource, dict)
+                    or resource.get("descendants_cleared") is not True
+                    or resource.get("remaining_child_pids") != []
+                    or workflow.get("stage")
+                    != "TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_M8N64_FAILED"
+                    or workflow.get("facts", {}).get("failed_stage")
+                    != "p6_direct_rhs_ready"
+                    or workflow.get("facts", {}).get("exception_type") != "ValueError"
+                    or workflow.get("facts", {}).get("exception_message")
+                    != "z10 pre-LU hook requires the exact resolved identity"
+                    or not rhs_rows
+                    or not matrix_rows
+                    or symbolic_rows
+                    or matrix_facts.get("shape") != [7_689_872, 7_689_872]
+                    or int(matrix_facts.get("nz_used", -1)) != 6_450_459_962
+                    or Path(str(run_summary.get("output_directory", ""))).resolve()
+                    != attempt_dir
+                ):
+                    raise ValueError(
+                        "pre-LU identity-failure residue does not match its exact failed run"
                     )
         elif classification == "worker_failed_gate_cd_signed_mode_selection":
             prior_service = record.get("prior_service")
