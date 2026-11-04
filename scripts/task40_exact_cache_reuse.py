@@ -40,6 +40,19 @@ _Z10_IMPORT_GUARD_ATTRIBUTE = "_task40_z10_prelu_identity_import_guard"
 _Z10_WRAPPED_FUNCTION_ATTRIBUTE = "_task40_z10_prelu_identity_wrapped"
 
 
+class _Z10VerifiedIdentityPayload(dict):
+    """Expose a pre-LU identity through ``get`` without changing payload bytes."""
+
+    def __init__(self, payload: dict[str, Any], identity: dict[str, str]) -> None:
+        super().__init__(payload)
+        self._task40_verified_identity = identity
+
+    def get(self, key: Any, default: Any = None) -> Any:
+        if key == "identity":
+            return self._task40_verified_identity
+        return super().get(key, default)
+
+
 def _sha256_bytes(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()
 
@@ -314,8 +327,7 @@ def _install_z10_prelu_identity_adapter(
                         existing_identity = enriched_payload.get("identity")
                         if existing_identity is not None and existing_identity != identity:
                             raise RuntimeError("Z10 pre-LU payload identity overlay conflicts")
-                        enriched_payload["identity"] = identity
-                        payload = enriched_payload
+                        payload = _Z10VerifiedIdentityPayload(payload, identity)
                     return original_function(payload, output_directory, *args, **kwargs)
 
                 setattr(run_with_verified_identity, _Z10_WRAPPED_FUNCTION_ATTRIBUTE, True)

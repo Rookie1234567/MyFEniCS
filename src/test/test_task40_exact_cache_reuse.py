@@ -476,13 +476,46 @@ def test_z10_prelu_compat_adapter_adds_only_verified_snapshot_identity(tmp_path)
     }
     (run_directory / "run_manifest.json").write_text(json.dumps(manifest) + "\n")
 
+    from src.runners.exact_cache_contract import load_exact_cache_contract
+
+    exact_contract_path = tmp_path / "exact-cache-contract.json"
+    exact_contract = {
+        "schema": "exact-cache-execution.v1",
+        "source_sha": source_commit,
+        "resolved_payload_sha256": hashlib.sha256(
+            json.dumps(
+                payload, sort_keys=True, separators=(",", ":"), allow_nan=False
+            ).encode()
+        ).hexdigest(),
+        "worker_cpus": [0],
+        "tensor_root": str(target_root / "tensor"),
+        "carrier_root": str(target_root / "carrier"),
+    }
+    exact_contract_raw = json.dumps(exact_contract, sort_keys=True).encode()
+    exact_contract_path.write_bytes(exact_contract_raw)
+    exact_contract_sha = _sha(exact_contract_raw)
+    original_loaded_contract = load_exact_cache_contract(
+        exact_contract_path,
+        exact_contract_sha,
+        source_sha=source_commit,
+        resolved_payload=payload,
+    )
+
     received = {}
     fake_module = types.ModuleType(cache_reuse.Z10_P6_MODULE)
 
     def fake_p6(resolved_payload, output_directory, *, source_sha):
+        loaded_contract = load_exact_cache_contract(
+            exact_contract_path,
+            exact_contract_sha,
+            source_sha=source_sha,
+            resolved_payload=resolved_payload,
+        )
         received["payload"] = resolved_payload
         received["source_sha"] = source_sha
         received["output_directory"] = output_directory
+        received["loaded_contract"] = loaded_contract
+        received["identity"] = resolved_payload.get("identity")
         return resolved_payload
 
     fake_module.run_p6_condensed_direct = fake_p6
@@ -504,15 +537,22 @@ def test_z10_prelu_compat_adapter_adds_only_verified_snapshot_identity(tmp_path)
         result = imported.run_p6_condensed_direct(
             payload, run_directory, source_sha=source_commit
         )
-        assert result["identity"] == {
+        expected_identity = {
             "input_sha256": input_sha,
             "physical_model_sha256": physical_sha,
             "resolved_config_sha256": resolved_sha,
         }
+        assert result.get("identity") == expected_identity
+        assert "identity" not in result
         assert "identity" not in payload
         assert received["payload"] is not payload
         assert received["source_sha"] == source_commit
         assert received["output_directory"] == run_directory
+        assert received["identity"] == expected_identity
+        assert received["loaded_contract"] == original_loaded_contract
+        assert json.dumps(
+            received["payload"], sort_keys=True, separators=(",", ":"), allow_nan=False
+        ) == json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
         evidence = json.loads(
             (run_directory / "z10_prelu_identity_compatibility.json").read_text()
         )
