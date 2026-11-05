@@ -111,6 +111,91 @@ def sha256_file(path: str | Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def _validate_z10_original272_receipt_contract(contract: dict) -> None:
+    """Require the separately hashed start and live receipts in the v2 contract."""
+
+    if contract.get("schema") != "task40.gate_cd.z10_prelu_pause_contract.v2":
+        raise ValueError("z10 package does not use the reviewed pre-LU contract v2")
+    original = contract.get("release_requires_original272")
+    if not isinstance(original, dict):
+        raise ValueError("z10 pre-LU contract lacks original-272 receipt identities")
+    required = {
+        "unit",
+        "invocation_id",
+        "start_receipt_path",
+        "start_receipt_sha256",
+        "live_receipt_path",
+        "live_receipt_sha256",
+    }
+    if not required.issubset(original):
+        raise ValueError("z10 pre-LU contract omits a bound original-272 receipt")
+    if (
+        not isinstance(original["unit"], str)
+        or not original["unit"].endswith(".service")
+        or not isinstance(original["invocation_id"], str)
+        or len(original["invocation_id"]) != 32
+        or any(ch not in "0123456789abcdef" for ch in original["invocation_id"])
+    ):
+        raise ValueError("z10 original-272 unit or InvocationID is invalid")
+    for path_key, sha_key in (
+        ("start_receipt_path", "start_receipt_sha256"),
+        ("live_receipt_path", "live_receipt_sha256"),
+    ):
+        path_text = original.get(path_key)
+        expected_sha = original.get(sha_key)
+        if (
+            not isinstance(path_text, str)
+            or not Path(path_text).is_absolute()
+            or not isinstance(expected_sha, str)
+            or len(expected_sha) != 64
+            or any(ch not in "0123456789abcdef" for ch in expected_sha)
+        ):
+            raise ValueError(f"z10 pre-LU {path_key} or SHA256 is invalid")
+        path = Path(path_text)
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(f"z10 pre-LU {path_key} must be a regular file")
+        if sha256_file(path) != expected_sha:
+            raise ValueError(f"z10 pre-LU {path_key} SHA256 mismatch")
+    start_raw = Path(original["start_receipt_path"]).read_bytes()
+    if original["unit"].encode("utf-8") not in start_raw:
+        raise ValueError("z10 original-272 start receipt does not bind its unit")
+    try:
+        live = _load_json(original["live_receipt_path"])
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError) as exc:
+        raise ValueError("z10 original-272 live receipt is not valid JSON") from exc
+    properties = live.get("unit_properties")
+    main = live.get("main_pid_identity")
+    process_rows = live.get("control_group_processes")
+    try:
+        main_pid = int(main["pid"])
+        main_start_ticks = int(main["start_ticks"])
+        recorded_main_pid = int(properties["MainPID"])
+    except (TypeError, KeyError, ValueError):
+        raise ValueError("z10 original-272 live receipt has invalid process identity")
+    control_group = properties.get("ControlGroup")
+    if (
+        live.get("unit") != original["unit"]
+        or not isinstance(properties, dict)
+        or properties.get("InvocationID") != original["invocation_id"]
+        or not isinstance(main, dict)
+        or main_pid <= 0
+        or main_start_ticks <= 0
+        or recorded_main_pid != main_pid
+        or not isinstance(control_group, str)
+        or not control_group
+        or main.get("cgroup_path") != control_group
+        or not isinstance(process_rows, list)
+        or not any(
+            isinstance(row, dict)
+            and row.get("pid") == main_pid
+            and row.get("start_ticks") == main_start_ticks
+            and row.get("cgroup_path") == control_group
+            for row in process_rows
+        )
+    ):
+        raise ValueError("z10 original-272 live receipt does not bind unit and invocation")
+
+
 def _load_json(path: str | Path) -> dict:
     value = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(value, dict):
@@ -600,6 +685,7 @@ def validate_package_sidecar(
         pause = sidecar.get("pre_lu_pause")
         if not isinstance(contract, dict) or not isinstance(pause, dict):
             raise ValueError("z10 package/sidecar lacks its exact pre-LU pause contract")
+        _validate_z10_original272_receipt_contract(contract)
         if any(pause.get(key) != value for key, value in contract.items()):
             raise ValueError("z10 sidecar pause contract differs from package identity")
         if (

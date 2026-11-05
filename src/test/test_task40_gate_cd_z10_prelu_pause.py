@@ -51,6 +51,10 @@ def _identity(tmp_path: Path) -> dict:
             (tmp_path / "original272" / "start_receipt.json").resolve()
         ),
         "original272_start_receipt_sha256": "5" * 64,
+        "original272_live_receipt_path": str(
+            (tmp_path / "original272" / "live_receipt.json").resolve()
+        ),
+        "original272_live_receipt_sha256": "6" * 64,
     }
 
 
@@ -111,6 +115,14 @@ def test_z10_mesh_and_profile_are_a_distinct_fixed_window_diagnostic():
     assert options["expected_global_cell_count"] == 38_400
     assert facts["campaign_authorization"]["direct_route"]["pre_lu_pause"] == (
         facts["campaign_authorization"]["pre_lu_pause"]
+    )
+    assert (
+        facts["campaign_authorization"]["pre_lu_pause"]["schema"]
+        == "task40.gate_cd.z10_prelu_pause_contract.v2"
+    )
+    original = facts["campaign_authorization"]["pre_lu_pause"]
+    assert original["release_requires_original272"]["live_receipt_sha256"] == (
+        "5e1376a4dd82d67a209fa76f2d6c6d6ba3be3b775ff6bd4b4f574360568d4824"
     )
 
 
@@ -193,6 +205,13 @@ def test_pause_waits_for_exact_release_and_live_original272_clearance(tmp_path):
     )
     assert result["authorization"] == pause.RELEASE_AUTHORIZATION
     assert json.loads(accepted.read_text())["numeric_calls_before_release"] == 0
+    ready_record = json.loads(ready.read_text())
+    assert ready_record["required_original272_clearance"]["live_receipt_path"] == (
+        identity["original272_live_receipt_path"]
+    )
+    assert ready_record["required_original272_clearance"]["live_receipt_sha256"] == (
+        identity["original272_live_receipt_sha256"]
+    )
     assert ledger.phases == ["pre_lu_pause", "solve"]
     assert ledger.markers[0][0] == "task40_z10_pre_lu_pause_ready"
     assert ledger.markers[-1][0] == "task40_z10_pre_lu_pause_released"
@@ -283,12 +302,32 @@ def test_live_clearance_verifier_checks_bound_receipts_and_inactive_unit(
     summary_path.write_bytes(summary_raw)
     identity["original272_run_summary_sha256"] = pause._sha256(summary_raw)
     start_path = Path(identity["original272_start_receipt_path"])
-    start_raw = (
-        identity["original272_unit"] + "\n"
-        + identity["original272_invocation_id"] + "\n"
-    ).encode()
+    start_raw = pause._canonical_bytes(
+        {"service_unit": identity["original272_unit"]}
+    )
     start_path.write_bytes(start_raw)
     identity["original272_start_receipt_sha256"] = pause._sha256(start_raw)
+    control_group = "/user.slice/user-1000.slice/app.slice/original272.service"
+    live_receipt = {
+        "unit": identity["original272_unit"],
+        "unit_properties": {
+            "InvocationID": identity["original272_invocation_id"],
+            "MainPID": "71",
+            "ControlGroup": control_group,
+        },
+        "main_pid_identity": {
+            "pid": 71,
+            "start_ticks": 901,
+            "cgroup_path": control_group,
+        },
+        "control_group_processes": [
+            {"pid": 71, "start_ticks": 901, "cgroup_path": control_group}
+        ],
+    }
+    live_raw = pause._canonical_bytes(live_receipt)
+    live_path = Path(identity["original272_live_receipt_path"])
+    live_path.write_bytes(live_raw)
+    identity["original272_live_receipt_sha256"] = pause._sha256(live_raw)
 
     class Completed:
         returncode = 0
@@ -301,8 +340,27 @@ def test_live_clearance_verifier_checks_bound_receipts_and_inactive_unit(
     monkeypatch.setattr(pause.subprocess, "run", lambda *_args, **_kwargs: Completed())
     result = pause._verify_original272_clearance(identity)
     assert result["verified"] is True
+    assert result["live_receipt_sha256"] == pause._sha256(live_raw)
+    assert result["live_receipt_main_pid"] == 71
     assert result["descendants_cleared"] is True
     assert result["remaining_child_pids"] == []
+
+    live_receipt["unit_properties"]["InvocationID"] = "9" * 32
+    wrong_invocation_raw = pause._canonical_bytes(live_receipt)
+    live_path.write_bytes(wrong_invocation_raw)
+    result = pause._verify_original272_clearance(identity)
+    assert result == {
+        "verified": False,
+        "reason": "original272_live_receipt_sha_mismatch",
+    }
+    identity["original272_live_receipt_sha256"] = pause._sha256(
+        wrong_invocation_raw
+    )
+    result = pause._verify_original272_clearance(identity)
+    assert result == {
+        "verified": False,
+        "reason": "original272_live_receipt_identity_mismatch",
+    }
 
 
 def test_worker_environment_is_bound_to_scope_package_and_attempt(tmp_path):
@@ -311,6 +369,8 @@ def test_worker_environment_is_bound_to_scope_package_and_attempt(tmp_path):
     original = {
         "unit": identity["original272_unit"],
         "invocation_id": identity["original272_invocation_id"],
+        "live_receipt_path": identity["original272_live_receipt_path"],
+        "live_receipt_sha256": identity["original272_live_receipt_sha256"],
     }
     scope = {
         "attempt_id": identity["attempt_id"],

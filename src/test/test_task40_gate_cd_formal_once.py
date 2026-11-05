@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -158,6 +159,69 @@ def test_live_profile_contract_uses_component_and_campaign_quadrature_and_cache(
     ] = False
     with pytest.raises(ValueError, match="exact live profile facts"):
         _validate_live_profile_contract(package, bad_cache)
+
+
+def test_z10_original272_contract_requires_hashed_live_invocation_receipt(tmp_path):
+    from scripts.gate_cd_formal_once import (
+        _validate_z10_original272_receipt_contract,
+    )
+
+    unit = "task40-gcd-m8n2-original.service"
+    invocation = "c" * 32
+    start_path = tmp_path / "start_receipt.json"
+    live_path = tmp_path / "live_receipt.json"
+    start_raw = json.dumps({"service_unit": unit}).encode()
+    start_path.write_bytes(start_raw)
+    live = {
+        "unit": unit,
+        "unit_properties": {
+            "InvocationID": invocation,
+            "MainPID": "71",
+            "ControlGroup": "/user.slice/app.slice/original.service",
+        },
+        "main_pid_identity": {
+            "pid": 71,
+            "start_ticks": 901,
+            "cgroup_path": "/user.slice/app.slice/original.service",
+        },
+        "control_group_processes": [
+            {
+                "pid": 71,
+                "start_ticks": 901,
+                "cgroup_path": "/user.slice/app.slice/original.service",
+            }
+        ],
+    }
+    live_raw = json.dumps(live, sort_keys=True).encode()
+    live_path.write_bytes(live_raw)
+    contract = {
+        "schema": "task40.gate_cd.z10_prelu_pause_contract.v2",
+        "release_requires_original272": {
+            "unit": unit,
+            "invocation_id": invocation,
+            "start_receipt_path": str(start_path),
+            "start_receipt_sha256": hashlib.sha256(start_raw).hexdigest(),
+            "live_receipt_path": str(live_path),
+            "live_receipt_sha256": hashlib.sha256(live_raw).hexdigest(),
+        },
+    }
+    _validate_z10_original272_receipt_contract(contract)
+
+    contract["release_requires_original272"]["live_receipt_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="live_receipt_path SHA256 mismatch"):
+        _validate_z10_original272_receipt_contract(contract)
+
+    contract["release_requires_original272"]["live_receipt_sha256"] = (
+        hashlib.sha256(live_raw).hexdigest()
+    )
+    live["unit_properties"]["InvocationID"] = "d" * 32
+    live_path.write_text(json.dumps(live, sort_keys=True), encoding="utf-8")
+    live_raw = live_path.read_bytes()
+    contract["release_requires_original272"]["live_receipt_sha256"] = (
+        hashlib.sha256(live_raw).hexdigest()
+    )
+    with pytest.raises(ValueError, match="does not bind unit and invocation"):
+        _validate_z10_original272_receipt_contract(contract)
 
 
 def test_sidecar_cannot_drift_from_package_bytes(tmp_path):
