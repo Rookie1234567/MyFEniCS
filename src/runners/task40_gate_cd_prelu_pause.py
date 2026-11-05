@@ -14,9 +14,9 @@ from typing import Any, Callable, Mapping
 
 
 PROFILE_IDENTITY = "task40_gate_cd_fin0_sti_z10_m8n2_p6_direct_v1"
-READY_SCHEMA = "task40.gate_cd.z10_prelu_ready.v2"
-RELEASE_SCHEMA = "task40.gate_cd.z10_prelu_release.v2"
-ACCEPTED_SCHEMA = "task40.gate_cd.z10_prelu_release_accepted.v2"
+READY_SCHEMA = "task40.gate_cd.z10_prelu_ready.v1"
+RELEASE_SCHEMA = "task40.gate_cd.z10_prelu_release.v1"
+ACCEPTED_SCHEMA = "task40.gate_cd.z10_prelu_release_accepted.v1"
 MINIMUM_AVAILABLE_BYTES = 64 * 1024**3
 RELEASE_AUTHORIZATION = "USER_APPROVED_EXACT_CASE_AFTER_272_CLEAR_AND_MEMORY_REVIEW"
 _SHA256_LENGTH = 64
@@ -134,8 +134,6 @@ def _validate_identity(identity: Mapping[str, Any]) -> dict[str, Any]:
         "original272_run_summary_sha256",
         "original272_start_receipt_path",
         "original272_start_receipt_sha256",
-        "original272_live_receipt_path",
-        "original272_live_receipt_sha256",
     }
     value = dict(identity)
     if set(value) != required:
@@ -153,7 +151,6 @@ def _validate_identity(identity: Mapping[str, Any]) -> dict[str, Any]:
         "active_mode_sha256",
         "original272_run_summary_sha256",
         "original272_start_receipt_sha256",
-        "original272_live_receipt_sha256",
     ):
         digest = value[key]
         if not isinstance(digest, str) or len(digest) != _SHA256_LENGTH or any(
@@ -173,7 +170,6 @@ def _validate_identity(identity: Mapping[str, Any]) -> dict[str, Any]:
         "output_directory",
         "original272_run_summary_path",
         "original272_start_receipt_path",
-        "original272_live_receipt_path",
     ):
         if not Path(str(value[key])).is_absolute():
             raise ValueError(f"pre-LU {key} must be absolute")
@@ -288,10 +284,6 @@ def _validate_release(
         != identity["original272_start_receipt_path"]
         or clearance.get("start_receipt_sha256")
         != identity["original272_start_receipt_sha256"]
-        or clearance.get("live_receipt_path")
-        != identity["original272_live_receipt_path"]
-        or clearance.get("live_receipt_sha256")
-        != identity["original272_live_receipt_sha256"]
         or clearance.get("exit_status") != 0
         or clearance.get("result_classification") != "worker_exit0"
         or clearance.get("run_status") != "finished"
@@ -354,55 +346,11 @@ def _verify_original272_clearance(identity: Mapping[str, Any]) -> dict[str, Any]
     start_sha256 = _sha256(start_raw)
     if start_sha256 != exact["original272_start_receipt_sha256"]:
         return {"verified": False, "reason": "original272_start_receipt_sha_mismatch"}
-    if exact["original272_unit"].encode("utf-8") not in start_raw:
-        return {"verified": False, "reason": "original272_start_receipt_identity_mismatch"}
-
-    live_path = Path(exact["original272_live_receipt_path"])
-    try:
-        live_raw = live_path.read_bytes()
-    except OSError as exc:
-        return {
-            "verified": False,
-            "reason": f"original272_live_receipt_unreadable:{exc}",
-        }
-    live_sha256 = _sha256(live_raw)
-    if live_sha256 != exact["original272_live_receipt_sha256"]:
-        return {"verified": False, "reason": "original272_live_receipt_sha_mismatch"}
-    try:
-        live_receipt = _read_json(live_path)
-    except ValueError as exc:
-        return {"verified": False, "reason": f"original272_live_receipt_invalid:{exc}"}
-    unit_properties = live_receipt.get("unit_properties")
-    main_identity = live_receipt.get("main_pid_identity")
-    process_rows = live_receipt.get("control_group_processes")
-    if not isinstance(unit_properties, dict) or not isinstance(main_identity, dict):
-        return {"verified": False, "reason": "original272_live_receipt_identity_missing"}
-    try:
-        main_pid = int(main_identity["pid"])
-        main_start_ticks = int(main_identity["start_ticks"])
-        recorded_main_pid = int(unit_properties["MainPID"])
-    except (KeyError, TypeError, ValueError):
-        return {"verified": False, "reason": "original272_live_receipt_identity_invalid"}
-    control_group = unit_properties.get("ControlGroup")
     if (
-        live_receipt.get("unit") != exact["original272_unit"]
-        or unit_properties.get("InvocationID") != exact["original272_invocation_id"]
-        or main_pid <= 0
-        or main_start_ticks <= 0
-        or recorded_main_pid != main_pid
-        or not isinstance(control_group, str)
-        or not control_group
-        or main_identity.get("cgroup_path") != control_group
-        or not isinstance(process_rows, list)
-        or not any(
-            isinstance(row, dict)
-            and row.get("pid") == main_pid
-            and row.get("start_ticks") == main_start_ticks
-            and row.get("cgroup_path") == control_group
-            for row in process_rows
-        )
+        exact["original272_unit"].encode("utf-8") not in start_raw
+        or exact["original272_invocation_id"].encode("ascii") not in start_raw
     ):
-        return {"verified": False, "reason": "original272_live_receipt_identity_mismatch"}
+        return {"verified": False, "reason": "original272_start_receipt_identity_mismatch"}
 
     properties = (
         "LoadState,ActiveState,SubState,InvocationID,MainPID,NRestarts,Result,"
@@ -463,9 +411,6 @@ def _verify_original272_clearance(identity: Mapping[str, Any]) -> dict[str, Any]
         "systemd": systemd,
         "run_summary_sha256": summary_sha256,
         "start_receipt_sha256": start_sha256,
-        "live_receipt_sha256": live_sha256,
-        "live_receipt_main_pid": main_pid,
-        "live_receipt_main_start_ticks": main_start_ticks,
         "descendants_cleared": True,
         "remaining_child_pids": [],
     }
@@ -521,12 +466,6 @@ def wait_at_pre_numeric_pause(
             ],
             "start_receipt_sha256": exact_identity[
                 "original272_start_receipt_sha256"
-            ],
-            "live_receipt_path": exact_identity[
-                "original272_live_receipt_path"
-            ],
-            "live_receipt_sha256": exact_identity[
-                "original272_live_receipt_sha256"
             ],
             "exit_status": 0,
             "result_classification": "worker_exit0",

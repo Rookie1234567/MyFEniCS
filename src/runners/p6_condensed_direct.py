@@ -4133,12 +4133,6 @@ def run_p6_condensed_direct(
                 original272_start_receipt_sha256=str(
                     original272_clearance["start_receipt_sha256"]
                 ),
-                original272_live_receipt_path=str(
-                    original272_clearance["live_receipt_path"]
-                ),
-                original272_live_receipt_sha256=str(
-                    original272_clearance["live_receipt_sha256"]
-                ),
             )
 
             def pre_numeric_hook(current_factor, current_matrix):

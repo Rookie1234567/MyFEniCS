@@ -2978,7 +2978,7 @@ def _task40_gate_cd_fin0_sti_z10_m8n2_profile_facts(identity):
         )
     )
     pre_lu_pause = {
-        "schema": "task40.gate_cd.z10_prelu_pause_contract.v2",
+        "schema": "task40.gate_cd.z10_prelu_pause_contract.v1",
         "scope": "this exact Fin0/STI z10 M8N2 case and attempt only",
         "pause_point": "after_one_MUMPS_symbolic_before_factor.numeric",
         "numeric_calls_at_pause": 0,
@@ -3003,13 +3003,6 @@ def _task40_gate_cd_fin0_sti_z10_m8n2_profile_facts(identity):
             ),
             "start_receipt_sha256": (
                 "7bd4bd8f2c9c1bce54503eda4f94a8952634416e25b448fde119e84b057ccc47"
-            ),
-            "live_receipt_path": (
-                "/home/fenics/Projects/Maxwell3D-Lab/task-control/"
-                "gate_cd_half_modes_20261103_v3/m8n2/live_receipt.json"
-            ),
-            "live_receipt_sha256": (
-                "5e1376a4dd82d67a209fa76f2d6c6d6ba3be3b775ff6bd4b4f574360568d4824"
             ),
             "exit_code": 0,
             "exit_status": 0,

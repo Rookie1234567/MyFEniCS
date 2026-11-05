@@ -13,6 +13,7 @@ import json
 import os
 import shutil
 import stat
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -36,8 +37,10 @@ Z10_PRELU_IDENTITY_COMPAT_SCHEMA = (
 )
 Z10_P6_MODULE = "src.runners.p6_condensed_direct"
 Z10_P6_FUNCTION = "run_p6_condensed_direct"
+Z10_PRELU_MODULE = "src.runners.task40_gate_cd_prelu_pause"
 _Z10_IMPORT_GUARD_ATTRIBUTE = "_task40_z10_prelu_identity_import_guard"
 _Z10_WRAPPED_FUNCTION_ATTRIBUTE = "_task40_z10_prelu_identity_wrapped"
+_Z10_PRELU_CLEARANCE_ADAPTER_ATTRIBUTE = "_task40_z10_prelu_live_clearance_adapter"
 
 
 class _Z10VerifiedIdentityPayload(dict):
@@ -268,6 +271,325 @@ def _verified_z10_prelu_payload_identity(
     return identity
 
 
+def _z10_live_clearance_overlay(environ: dict[str, str]) -> tuple[dict, dict]:
+    scope_path = Path(environ["TASK40_GATE_CD_SCOPE_PATH"])
+    scope_sha = environ["TASK40_GATE_CD_SCOPE_SHA256"]
+    if (
+        not scope_path.is_absolute()
+        or scope_path.is_symlink()
+        or _sha256_file(scope_path) != scope_sha
+    ):
+        raise RuntimeError("Z10 live-clearance scope is missing or changed")
+    scope = json.loads(_read_regular_file(scope_path))
+    if (
+        scope.get("attempt_id") != environ.get("TASK40_GATE_CD_ATTEMPT_ID")
+        or scope.get("package_sha256") != environ.get("TASK40_GATE_CD_PACKAGE_SHA256")
+        or scope.get("planned_systemd_user_unit")
+        != environ.get("TASK40_GATE_CD_EXPECTED_UNIT")
+    ):
+        raise RuntimeError("Z10 live-clearance scope differs from the launch identity")
+    route = scope.get("identity", {}).get("direct_route_contract", {})
+    pause_contract = route.get("pre_lu_pause", {})
+    original = pause_contract.get("release_requires_original272", {})
+    overlay = scope.get("z10_prelu_live_clearance")
+    if (
+        pause_contract.get("schema") != "task40.gate_cd.z10_prelu_pause_contract.v1"
+        or not isinstance(overlay, dict)
+        or set(overlay)
+        != {"schema", "live_receipt_path", "live_receipt_sha256"}
+        or overlay.get("schema")
+        != "task40.gate_cd.z10_prelu_live_clearance_overlay.v1"
+        or not isinstance(overlay.get("live_receipt_path"), str)
+        or not Path(overlay["live_receipt_path"]).is_absolute()
+        or not isinstance(overlay.get("live_receipt_sha256"), str)
+        or len(overlay["live_receipt_sha256"]) != 64
+        or original.get("unit") != environ.get("TASK40_GATE_CD_ORIGINAL272_UNIT")
+        or original.get("invocation_id")
+        != environ.get("TASK40_GATE_CD_ORIGINAL272_INVOCATION_ID")
+    ):
+        raise RuntimeError("Z10 live-clearance overlay differs from the frozen pause scope")
+    live_path = Path(overlay["live_receipt_path"])
+    if (
+        live_path.is_symlink()
+        or not live_path.is_file()
+        or _sha256_file(live_path) != overlay["live_receipt_sha256"]
+    ):
+        raise RuntimeError("Z10 original-272 live receipt is missing or changed")
+    live = json.loads(_read_regular_file(live_path))
+    properties = live.get("unit_properties")
+    main = live.get("main_pid_identity")
+    processes = live.get("control_group_processes")
+    try:
+        main_pid = int(main["pid"])
+        main_ticks = int(main["start_ticks"])
+        recorded_main_pid = int(properties["MainPID"])
+    except (TypeError, KeyError, ValueError) as exc:
+        raise RuntimeError("Z10 original-272 live receipt lacks a valid main identity") from exc
+    control_group = properties.get("ControlGroup") if isinstance(properties, dict) else None
+    if (
+        live.get("unit") != original.get("unit")
+        or properties.get("InvocationID") != original.get("invocation_id")
+        or main_pid <= 0
+        or main_ticks <= 0
+        or recorded_main_pid != main_pid
+        or not isinstance(control_group, str)
+        or not control_group
+        or main.get("cgroup_path") != control_group
+        or not isinstance(processes, list)
+        or not any(
+            isinstance(row, dict)
+            and row.get("pid") == main_pid
+            and row.get("start_ticks") == main_ticks
+            and row.get("cgroup_path") == control_group
+            for row in processes
+        )
+    ):
+        raise RuntimeError("Z10 original-272 live receipt does not bind its unit and process")
+    return scope, overlay
+
+
+def _install_z10_prelu_live_clearance_adapter(
+    environ: dict[str, str],
+) -> None:
+    """Install the reviewed v2 clearance gate without changing numerical src bytes."""
+    from importlib import import_module
+
+    scope, overlay = _z10_live_clearance_overlay(environ)
+    module = import_module(Z10_PRELU_MODULE)
+    if getattr(module, _Z10_PRELU_CLEARANCE_ADAPTER_ATTRIBUTE, False):
+        return
+
+    legacy_validate_identity = module._validate_identity
+    legacy_validate_release = module._validate_release
+    legacy_wait = module.wait_at_pre_numeric_pause
+    legacy_atomic_create = module._atomic_create_json
+    live_path = overlay["live_receipt_path"]
+    live_sha = overlay["live_receipt_sha256"]
+    original = scope["identity"]["direct_route_contract"]["pre_lu_pause"][
+        "release_requires_original272"
+    ]
+
+    def validate_identity_v2(identity):
+        observed = dict(identity)
+        supplied_path = observed.pop("original272_live_receipt_path", None)
+        supplied_sha = observed.pop("original272_live_receipt_sha256", None)
+        validated = legacy_validate_identity(observed)
+        if (
+            supplied_path != live_path
+            or supplied_sha != live_sha
+            or validated.get("original272_unit") != original.get("unit")
+            or validated.get("original272_invocation_id")
+            != original.get("invocation_id")
+        ):
+            raise ValueError("pre-LU identity differs from the reviewed live-clearance overlay")
+        validated["original272_live_receipt_path"] = live_path
+        validated["original272_live_receipt_sha256"] = live_sha
+        return validated
+
+    def verify_original272_clearance(identity):
+        exact = validate_identity_v2(identity)
+        summary_path = Path(exact["original272_run_summary_path"])
+        summary_raw = _read_regular_file(summary_path)
+        summary_sha = _sha256_bytes(summary_raw)
+        if summary_sha != exact["original272_run_summary_sha256"]:
+            return {"verified": False, "reason": "original272_run_summary_sha_mismatch"}
+        summary = json.loads(summary_raw)
+        authority = summary.get("resource_authority")
+        if (
+            summary.get("run_id") != exact["original272_run_id"]
+            or summary.get("status") != "finished"
+            or summary.get("exit_status") != 0
+            or summary.get("result_classification") != "worker_exit0"
+            or not isinstance(authority, dict)
+            or authority.get("classification") != "COMPLETED"
+            or authority.get("descendants_cleared") is not True
+            or authority.get("remaining_child_pids") != []
+        ):
+            return {"verified": False, "reason": "original272_summary_not_terminal_clear"}
+
+        start_path = Path(exact["original272_start_receipt_path"])
+        start_raw = _read_regular_file(start_path)
+        start_sha = _sha256_bytes(start_raw)
+        if start_sha != exact["original272_start_receipt_sha256"]:
+            return {"verified": False, "reason": "original272_start_receipt_sha_mismatch"}
+        if exact["original272_unit"].encode("utf-8") not in start_raw:
+            return {"verified": False, "reason": "original272_start_receipt_unit_mismatch"}
+
+        current_live_path = Path(exact["original272_live_receipt_path"])
+        live_raw = _read_regular_file(current_live_path)
+        current_live_sha = _sha256_bytes(live_raw)
+        if current_live_sha != exact["original272_live_receipt_sha256"]:
+            return {"verified": False, "reason": "original272_live_receipt_sha_mismatch"}
+        live = json.loads(live_raw)
+        properties = live.get("unit_properties")
+        main = live.get("main_pid_identity")
+        process_rows = live.get("control_group_processes")
+        roles = live.get("roles")
+        if not isinstance(properties, dict) or not isinstance(main, dict):
+            return {"verified": False, "reason": "original272_live_receipt_identity_missing"}
+        try:
+            main_pid = int(main["pid"])
+            main_ticks = int(main["start_ticks"])
+            recorded_main_pid = int(properties["MainPID"])
+        except (KeyError, TypeError, ValueError):
+            return {"verified": False, "reason": "original272_live_receipt_identity_invalid"}
+        cgroup = properties.get("ControlGroup")
+        if (
+            live.get("unit") != exact["original272_unit"]
+            or properties.get("InvocationID") != exact["original272_invocation_id"]
+            or main_pid <= 0
+            or main_ticks <= 0
+            or recorded_main_pid != main_pid
+            or not isinstance(cgroup, str)
+            or not cgroup
+            or main.get("cgroup_path") != cgroup
+            or not isinstance(process_rows, list)
+            or not any(
+                isinstance(row, dict)
+                and row.get("pid") == main_pid
+                and row.get("start_ticks") == main_ticks
+                and row.get("cgroup_path") == cgroup
+                for row in process_rows
+            )
+        ):
+            return {"verified": False, "reason": "original272_live_receipt_identity_mismatch"}
+        if not isinstance(roles, dict):
+            return {"verified": False, "reason": "original272_live_receipt_roles_missing"}
+        bound_processes = []
+        for role in ("root", "mpi", "worker"):
+            rows = roles.get(role)
+            if not isinstance(rows, list) or len(rows) != 1 or not isinstance(rows[0], dict):
+                return {"verified": False, "reason": f"original272_live_receipt_{role}_missing"}
+            row = rows[0]
+            try:
+                pid = int(row["pid"])
+                ticks = int(row["start_ticks"])
+            except (KeyError, TypeError, ValueError):
+                return {"verified": False, "reason": f"original272_live_receipt_{role}_invalid"}
+            if pid <= 0 or ticks <= 0 or row.get("cgroup_path") != cgroup:
+                return {"verified": False, "reason": f"original272_live_receipt_{role}_cgroup_mismatch"}
+            bound_processes.append((role, pid, ticks))
+        process_identities = {(row.get("pid"), row.get("start_ticks")) for row in process_rows if isinstance(row, dict)}
+        if any((pid, ticks) not in process_identities for _, pid, ticks in bound_processes):
+            return {"verified": False, "reason": "original272_live_receipt_process_set_mismatch"}
+
+        properties_requested = (
+            "LoadState,ActiveState,SubState,InvocationID,MainPID,NRestarts,Result,"
+            "ExecMainCode,ExecMainStatus,ControlGroup"
+        )
+        try:
+            result = subprocess.run(
+                [
+                    "systemctl",
+                    "--user",
+                    "show",
+                    exact["original272_unit"],
+                    f"--property={properties_requested}",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            return {"verified": False, "reason": f"original272_systemd_unavailable:{exc}"}
+        current = dict(
+            line.split("=", 1) for line in result.stdout.splitlines() if "=" in line
+        )
+        expected_systemd = {
+            "LoadState": "not-found",
+            "ActiveState": "inactive",
+            "SubState": "dead",
+            "InvocationID": "",
+            "MainPID": "0",
+            "NRestarts": "0",
+            "Result": "success",
+            "ExecMainCode": "0",
+            "ExecMainStatus": "0",
+            "ControlGroup": "",
+        }
+        if any(current.get(key) != value for key, value in expected_systemd.items()):
+            return {
+                "verified": False,
+                "reason": "original272_systemd_not_cleared_successfully",
+                "systemd": current,
+            }
+        for role, pid, ticks in bound_processes:
+            try:
+                stat_text = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+            except FileNotFoundError:
+                continue
+            except OSError as exc:
+                return {
+                    "verified": False,
+                    "reason": f"original272_process_state_unreadable:{role}:{exc}",
+                }
+            fields = stat_text[stat_text.rindex(")") + 2 :].split()
+            if len(fields) <= 19:
+                return {"verified": False, "reason": f"original272_process_stat_invalid:{role}"}
+            if int(fields[19]) == ticks:
+                return {"verified": False, "reason": f"original272_process_still_alive:{role}"}
+        return {
+            "verified": True,
+            "systemd": current,
+            "run_summary_sha256": summary_sha,
+            "start_receipt_sha256": start_sha,
+            "live_receipt_sha256": current_live_sha,
+            "live_receipt_main_pid": main_pid,
+            "live_receipt_main_start_ticks": main_ticks,
+            "descendants_cleared": True,
+            "remaining_child_pids": [],
+        }
+
+    def validate_release_v2(release, **kwargs):
+        validated = legacy_validate_release(release, **kwargs)
+        clearance = validated.get("original272_clearance")
+        if not isinstance(clearance, dict) or (
+            clearance.get("live_receipt_path") != live_path
+            or clearance.get("live_receipt_sha256") != live_sha
+        ):
+            raise ValueError("pre-LU release does not bind the reviewed live receipt")
+        return validated
+
+    def atomic_create_v2(path, document):
+        target = Path(path).resolve()
+        expected_ready = Path(environ["TASK40_GATE_CD_PRELU_READY_PATH"]).resolve()
+        if target == expected_ready:
+            document = dict(document)
+            required = dict(document.get("required_original272_clearance", {}))
+            for key, value in (
+                ("live_receipt_path", live_path),
+                ("live_receipt_sha256", live_sha),
+            ):
+                if key in required and required[key] != value:
+                    raise ValueError("pre-LU ready record conflicts with live-clearance overlay")
+                required[key] = value
+            document["required_original272_clearance"] = required
+        return legacy_atomic_create(path, document)
+
+    def wait_at_pre_numeric_pause_v2(*, identity, **kwargs):
+        exact_identity = dict(identity)
+        if (
+            exact_identity.get("original272_unit") != original.get("unit")
+            or exact_identity.get("original272_invocation_id")
+            != original.get("invocation_id")
+        ):
+            raise ValueError("pre-LU identity differs from live-clearance scope")
+        exact_identity["original272_live_receipt_path"] = live_path
+        exact_identity["original272_live_receipt_sha256"] = live_sha
+        kwargs["original272_clearance_reader"] = verify_original272_clearance
+        return legacy_wait(identity=exact_identity, **kwargs)
+
+    module._validate_identity = validate_identity_v2
+    module._validate_release = validate_release_v2
+    module._atomic_create_json = atomic_create_v2
+    module.wait_at_pre_numeric_pause = wait_at_pre_numeric_pause_v2
+    module.READY_SCHEMA = "task40.gate_cd.z10_prelu_ready.v2"
+    module.RELEASE_SCHEMA = "task40.gate_cd.z10_prelu_release.v2"
+    module.ACCEPTED_SCHEMA = "task40.gate_cd.z10_prelu_release_accepted.v2"
+    setattr(module, _Z10_PRELU_CLEARANCE_ADAPTER_ATTRIBUTE, True)
+
+
 def _install_z10_prelu_identity_adapter(
     contract: dict[str, Any], environ: dict[str, str]
 ) -> None:
@@ -323,6 +645,7 @@ def _install_z10_prelu_identity_adapter(
                             contract=contract,
                             environ=environ,
                         )
+                        _install_z10_prelu_live_clearance_adapter(environ)
                         enriched_payload = dict(payload)
                         existing_identity = enriched_payload.get("identity")
                         if existing_identity is not None and existing_identity != identity:

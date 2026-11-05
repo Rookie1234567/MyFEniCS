@@ -418,12 +418,55 @@ def test_z10_prelu_compat_adapter_adds_only_verified_snapshot_identity(tmp_path)
     contract["numerical_source_sha256"] = numerical_source_digest()
     env["TASK40_GATE_CD_ATTEMPT_CACHE_ROOT"] = str(target_root)
     source_commit = "c" * 40
+    unit = "task40-gcd-m8n2-original.service"
+    invocation_id = "d" * 32
+    live_path = tmp_path / "original272-live.json"
+    live = {
+        "unit": unit,
+        "unit_properties": {
+            "InvocationID": invocation_id,
+            "MainPID": "71",
+            "ControlGroup": "/user.slice/app.slice/original.service",
+        },
+        "main_pid_identity": {
+            "pid": 71,
+            "start_ticks": 901,
+            "cgroup_path": "/user.slice/app.slice/original.service",
+        },
+        "control_group_processes": [
+            {
+                "pid": 71,
+                "start_ticks": 901,
+                "cgroup_path": "/user.slice/app.slice/original.service",
+            }
+        ],
+    }
+    live_raw = json.dumps(live, sort_keys=True).encode()
+    live_path.write_bytes(live_raw)
     scope_path = tmp_path / "scope.json"
     scope = {
         "attempt_id": attempt_id,
+        "package_sha256": "b" * 64,
+        "planned_systemd_user_unit": (
+            f"task40-gcd-z10-m8n2-r3-{source_commit[:8]}.service"
+        ),
+        "z10_prelu_live_clearance": {
+            "schema": "task40.gate_cd.z10_prelu_live_clearance_overlay.v1",
+            "live_receipt_path": str(live_path),
+            "live_receipt_sha256": _sha(live_raw),
+        },
         "identity": {
             "profile_identity": cache_reuse.EXPECTED_PROFILE,
             "run_id": cache_reuse.EXPECTED_RUN_ID,
+            "direct_route_contract": {
+                "pre_lu_pause": {
+                    "schema": "task40.gate_cd.z10_prelu_pause_contract.v1",
+                    "release_requires_original272": {
+                        "unit": unit,
+                        "invocation_id": invocation_id,
+                    },
+                }
+            },
         },
     }
     scope_raw = (json.dumps(scope, sort_keys=True, separators=(",", ":")) + "\n").encode()
@@ -435,6 +478,8 @@ def test_z10_prelu_compat_adapter_adds_only_verified_snapshot_identity(tmp_path)
             "TASK40_GATE_CD_EXPECTED_UNIT": (
                 f"task40-gcd-z10-m8n2-r3-{source_commit[:8]}.service"
             ),
+            "TASK40_GATE_CD_ORIGINAL272_UNIT": unit,
+            "TASK40_GATE_CD_ORIGINAL272_INVOCATION_ID": invocation_id,
             "TASK40_GATE_CD_PACKAGE_SHA256": "b" * 64,
             "TASK40_GATE_CD_SCOPE_PATH": str(scope_path.resolve()),
             "TASK40_GATE_CD_SCOPE_SHA256": _sha(scope_raw),

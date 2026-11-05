@@ -112,20 +112,21 @@ def sha256_file(path: str | Path) -> str:
 
 
 def _validate_z10_original272_receipt_contract(contract: dict) -> None:
-    """Require the separately hashed start and live receipts in the v2 contract."""
+    """Validate the frozen profile contract; live proof is a package overlay."""
 
-    if contract.get("schema") != "task40.gate_cd.z10_prelu_pause_contract.v2":
-        raise ValueError("z10 package does not use the reviewed pre-LU contract v2")
+    if contract.get("schema") != "task40.gate_cd.z10_prelu_pause_contract.v1":
+        raise ValueError("z10 package does not use the frozen pre-LU contract v1")
     original = contract.get("release_requires_original272")
     if not isinstance(original, dict):
         raise ValueError("z10 pre-LU contract lacks original-272 receipt identities")
     required = {
         "unit",
         "invocation_id",
+        "run_id",
+        "run_summary_path",
+        "run_summary_sha256",
         "start_receipt_path",
         "start_receipt_sha256",
-        "live_receipt_path",
-        "live_receipt_sha256",
     }
     if not required.issubset(original):
         raise ValueError("z10 pre-LU contract omits a bound original-272 receipt")
@@ -137,30 +138,72 @@ def _validate_z10_original272_receipt_contract(contract: dict) -> None:
         or any(ch not in "0123456789abcdef" for ch in original["invocation_id"])
     ):
         raise ValueError("z10 original-272 unit or InvocationID is invalid")
-    for path_key, sha_key in (
-        ("start_receipt_path", "start_receipt_sha256"),
-        ("live_receipt_path", "live_receipt_sha256"),
-    ):
-        path_text = original.get(path_key)
-        expected_sha = original.get(sha_key)
+    evidence_paths = {}
+    for prefix in ("run_summary", "start_receipt"):
+        path = Path(original[f"{prefix}_path"])
+        expected_sha = original[f"{prefix}_sha256"]
         if (
-            not isinstance(path_text, str)
-            or not Path(path_text).is_absolute()
+            not path.is_absolute()
             or not isinstance(expected_sha, str)
             or len(expected_sha) != 64
             or any(ch not in "0123456789abcdef" for ch in expected_sha)
+            or path.is_symlink()
+            or not path.is_file()
+            or sha256_file(path) != expected_sha
         ):
-            raise ValueError(f"z10 pre-LU {path_key} or SHA256 is invalid")
-        path = Path(path_text)
-        if path.is_symlink() or not path.is_file():
-            raise ValueError(f"z10 pre-LU {path_key} must be a regular file")
-        if sha256_file(path) != expected_sha:
-            raise ValueError(f"z10 pre-LU {path_key} SHA256 mismatch")
-    start_raw = Path(original["start_receipt_path"]).read_bytes()
+            raise ValueError(f"z10 original-272 {prefix} path/hash is invalid")
+        evidence_paths[prefix] = path
+
+    summary = _load_json(evidence_paths["run_summary"])
+    authority = summary.get("resource_authority")
+    if (
+        summary.get("run_id") != original["run_id"]
+        or summary.get("status") != "finished"
+        or summary.get("exit_status") != 0
+        or summary.get("result_classification") != "worker_exit0"
+        or not isinstance(authority, dict)
+        or authority.get("classification") != "COMPLETED"
+        or authority.get("descendants_cleared") is not True
+        or authority.get("remaining_child_pids") != []
+        or original.get("exit_status") != 0
+        or original.get("exit_code") != 0
+        or original.get("result_classification") != "worker_exit0"
+        or original.get("run_status") != "finished"
+        or original.get("descendants_cleared") is not True
+        or original.get("remaining_child_pids") != []
+        or original.get("unit_inactive") is not True
+    ):
+        raise ValueError("z10 original-272 summary does not prove a cleared completion")
+    start_path = evidence_paths["start_receipt"]
+    start_raw = start_path.read_bytes()
     if original["unit"].encode("utf-8") not in start_raw:
         raise ValueError("z10 original-272 start receipt does not bind its unit")
+
+
+def _validate_z10_live_receipt_overlay(original: dict, overlay: dict) -> None:
+    """Bind the v2 live process receipt without changing the cached src tree."""
+    if not isinstance(overlay, dict) or set(overlay) != {
+        "schema",
+        "live_receipt_path",
+        "live_receipt_sha256",
+    }:
+        raise ValueError("z10 package lacks the exact live-clearance overlay")
+    path_text = overlay.get("live_receipt_path")
+    expected_sha = overlay.get("live_receipt_sha256")
+    if (
+        overlay.get("schema") != "task40.gate_cd.z10_prelu_live_clearance_overlay.v1"
+        or not isinstance(path_text, str)
+        or not Path(path_text).is_absolute()
+        or not isinstance(expected_sha, str)
+        or len(expected_sha) != 64
+        or any(ch not in "0123456789abcdef" for ch in expected_sha)
+    ):
+        raise ValueError("z10 live-clearance overlay identity is invalid")
+    path = Path(path_text)
+    if path.is_symlink() or not path.is_file() or sha256_file(path) != expected_sha:
+        raise ValueError("z10 original-272 live receipt is missing or changed")
     try:
-        live = _load_json(original["live_receipt_path"])
+        live = _load_json(path)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError) as exc:
         raise ValueError("z10 original-272 live receipt is not valid JSON") from exc
     properties = live.get("unit_properties")
@@ -683,9 +726,15 @@ def validate_package_sidecar(
         route = package.get("identity", {}).get("direct_route_contract", {})
         contract = route.get("pre_lu_pause")
         pause = sidecar.get("pre_lu_pause")
+        live_clearance_overlay = package.get("z10_prelu_live_clearance")
         if not isinstance(contract, dict) or not isinstance(pause, dict):
             raise ValueError("z10 package/sidecar lacks its exact pre-LU pause contract")
         _validate_z10_original272_receipt_contract(contract)
+        _validate_z10_live_receipt_overlay(
+            contract["release_requires_original272"], live_clearance_overlay
+        )
+        if sidecar.get("z10_prelu_live_clearance") != live_clearance_overlay:
+            raise ValueError("z10 sidecar live-clearance overlay differs from the package")
         if any(pause.get(key) != value for key, value in contract.items()):
             raise ValueError("z10 sidecar pause contract differs from package identity")
         if (
@@ -724,6 +773,12 @@ def validate_package_sidecar(
             .get("pre_lu_pause") != contract
         ):
             raise ValueError("z10 scope does not bind package and pre-LU pause")
+        _validate_z10_live_receipt_overlay(
+            contract["release_requires_original272"],
+            scope.get("z10_prelu_live_clearance"),
+        )
+        if scope.get("z10_prelu_live_clearance") != live_clearance_overlay:
+            raise ValueError("z10 scope live-clearance overlay differs from the package")
         reuse = package.get("verified_cache_reuse")
         sidecar_reuse = sidecar.get("verified_cache_reuse")
         if not isinstance(reuse, dict) or sidecar_reuse != reuse:
@@ -807,6 +862,251 @@ def _expected_identity(
         "source_commit": source_commit,
         "direct_route_contract": direct_route,
     }
+
+
+def _validate_z10_user_stopped_prelu_residue(
+    *,
+    attempt_id: str,
+    prior_source: str,
+    record: dict,
+    attempt_dir: Path,
+    expected_identity: dict,
+) -> dict:
+    """Validate the exact r4 attempt stopped before numeric MUMPS factorization."""
+
+    expected_attempt = "20261104T231823.185333Z"
+    expected_source = "ff242c451d59fd5bfbbe4739a912f9653d304fb9"
+    expected_unit = "task40-gcd-z10-m8n2-r4-ff242c45.service"
+    expected_invocation = "589357aad4c240bd8de935aeed83f089"
+    exact_files = {
+        "exact_cache_runtime_contract.json",
+        "gate_cd_runtime_environment.json",
+        "input_original.dat",
+        "input_sha256.txt",
+        "physical_model_sha256.txt",
+        "resolved_config.json",
+        "run_manifest.json",
+        "run_summary.json",
+        "source_sha.txt",
+        "stages.jsonl",
+        "task40_gate-cd_m8n64_finite_parent_parent_mode_manifest.json",
+        "task40_m8n64_active_mode_manifest.json",
+        "task40_m8n64_mode_index_map.json",
+        "workflow_phase.json",
+        "workstation_isolation.json",
+        "z10_prelu_identity_compatibility.json",
+        "watchdog/resources.jsonl",
+        "watchdog/summary.json",
+        "watchdog/worker.log",
+    }
+    if (
+        attempt_id != expected_attempt
+        or prior_source != expected_source
+        or set(record.get("files", {})) != exact_files
+        or set(record.get("directories", [])) != {"numerical_output", "watchdog"}
+    ):
+        raise ValueError("user-stopped z10 residue is not the exact r4 output tree")
+
+    manifest = _load_json(attempt_dir / "run_manifest.json")
+    summary = _load_json(attempt_dir / "run_summary.json")
+    workflow = _load_json(attempt_dir / "workflow_phase.json")
+    stages = [
+        json.loads(line)
+        for line in (attempt_dir / "stages.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    authority = summary.get("resource_authority", {})
+    facts = workflow.get("facts", {})
+    evidence = record.get("pre_lu_stop_evidence")
+    evidence_path = Path(evidence.get("path", "")) if isinstance(evidence, dict) else Path()
+    evidence_sha = evidence.get("sha256") if isinstance(evidence, dict) else None
+    if (
+        manifest.get("source_sha") != expected_source
+        or manifest.get("run_id") != expected_identity.get("run_id")
+        or manifest.get("native_capacity_profile_identity")
+        != expected_identity.get("profile_identity")
+        or Path(str(manifest.get("output_directory", ""))).resolve() != attempt_dir
+        or manifest.get("input_sha256") != expected_identity.get("input_sha256")
+        or manifest.get("physical_model_sha256")
+        != expected_identity.get("physical_model_sha256")
+        or manifest.get("resolved_config_sha256")
+        != expected_identity.get("resolved_config_sha256")
+        or summary.get("status") != "finished"
+        or summary.get("exit_status") != 1
+        or summary.get("result_classification") != "EVIDENCE_INCOMPLETE"
+        or Path(str(summary.get("output_directory", ""))).resolve() != attempt_dir
+        or authority.get("classification") != "USER_CONTROLLED_STOP"
+        or authority.get("leader_exit_code") != 1
+        or authority.get("descendants_cleared") is not True
+        or authority.get("remaining_child_pids") != []
+        or workflow.get("phase") != "pre_lu_pause"
+        or workflow.get("stage") != "task40_z10_pre_lu_pause_waiting"
+        or facts.get("numeric_calls") != 0
+        or facts.get("factor_numeric_started") is not False
+        or facts.get("release_file_present") is not False
+        or not evidence_path.is_absolute()
+        or evidence_path.is_symlink()
+        or not evidence_path.is_file()
+        or not isinstance(evidence_sha, str)
+        or sha256_file(evidence_path) != evidence_sha
+    ):
+        raise ValueError("user-stopped z10 residue does not bind its exact run and pause")
+
+    stop_evidence = _load_json(evidence_path)
+    ready_path = Path(str(stop_evidence.get("ready_path", "")))
+    ready_sha = stop_evidence.get("ready_sha256")
+    accepted_path = Path(str(stop_evidence.get("accepted_path", "")))
+    if (
+        stop_evidence.get("schema") != "task40.gate_cd.z10_r4_prelu_stop_evidence.v1"
+        or stop_evidence.get("unit") != expected_unit
+        or stop_evidence.get("invocation_id") != expected_invocation
+        or stop_evidence.get("unit_properties")
+        != {
+            "LoadState": "not-found",
+            "ActiveState": "inactive",
+            "SubState": "dead",
+            "InvocationID": "",
+            "MainPID": "0",
+            "NRestarts": "0",
+            "Result": "success",
+            "ExecMainCode": "0",
+            "ExecMainStatus": "0",
+            "ControlGroup": "",
+        }
+        or stop_evidence.get("guard_unit")
+        != "task40-gcd-z10-memory-guard-r4-ff242c45.service"
+        or stop_evidence.get("guard_inactive") is not True
+        or stop_evidence.get("guard_properties")
+        != {
+            "LoadState": "not-found",
+            "ActiveState": "inactive",
+            "SubState": "dead",
+            "InvocationID": "",
+            "MainPID": "0",
+            "NRestarts": "0",
+            "Result": "success",
+            "ControlGroup": "",
+        }
+        or stop_evidence.get("release_present") is not False
+        or stop_evidence.get("accepted_present") is not False
+        or stop_evidence.get("numeric_calls_before_stop") != 0
+        or stop_evidence.get("factor_numeric_started") is not False
+        or not ready_path.is_absolute()
+        or ready_path.is_symlink()
+        or not ready_path.is_file()
+        or not isinstance(ready_sha, str)
+        or sha256_file(ready_path) != ready_sha
+        or not accepted_path.is_absolute()
+        or stop_evidence.get("release_path") is None
+    ):
+        raise ValueError("z10 r4 stop evidence lacks exact inactive and no-release proof")
+
+    bound_processes = stop_evidence.get("bound_processes")
+    expected_processes = {
+        ("root", 1057829, 375928110),
+        ("mpi", 1057893, 375929815),
+        ("worker", 1057896, 375929834),
+    }
+    observed_processes = {
+        (row.get("role"), row.get("pid"), row.get("start_ticks"))
+        for row in bound_processes
+        if isinstance(row, dict) and row.get("state") == "ABSENT"
+    } if isinstance(bound_processes, list) else set()
+    if observed_processes != expected_processes:
+        raise ValueError("z10 r4 stop evidence does not clear the exact bound process set")
+
+    ready = _load_json(ready_path)
+    ready_identity = ready.get("identity", {})
+    matrix = ready.get("matrix_facts", {})
+    canonical_ready_identity = (
+        json.dumps(
+            ready_identity,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+        + "\n"
+    ).encode("utf-8")
+    ready_release_path = Path(str(ready.get("release_path", "")))
+    if (
+        ready.get("schema") != "task40.gate_cd.z10_prelu_ready.v1"
+        or ready_identity.get("attempt_id") != "gcdz10m8n2-20261105-r4"
+        or ready_identity.get("source_commit") != expected_source
+        or ready_identity.get("service_unit") != expected_unit
+        or ready_identity.get("invocation_id") != expected_invocation
+        or ready.get("identity_sha256")
+        != hashlib.sha256(canonical_ready_identity).hexdigest()
+        or ready.get("identity_sha256") != facts.get("identity_sha256")
+        or ready_sha != facts.get("ready_record_sha256")
+        or matrix.get("numeric_calls") != 0
+        or matrix.get("solve_calls") != 0
+        or matrix.get("symbolic_calls") != 1
+        or any(
+            str(row.get("stage", "")).startswith(
+                ("p6_mumps_numeric", "p6_mumps_solve")
+            )
+            for row in stages
+        )
+        or any(
+            row.get("facts", {}).get("numeric_calls", 0) != 0
+            or row.get("facts", {}).get("solve_calls", 0) != 0
+            or row.get("facts", {}).get("factor_numeric_started", False) is True
+            for row in stages
+        )
+    ):
+        raise ValueError("z10 r4 residue entered or ambiguously reached numeric factorization")
+    if (
+        not ready_release_path.is_absolute()
+        or stop_evidence.get("release_path") != str(ready_release_path)
+        or ready_release_path.exists()
+        or accepted_path.exists()
+    ):
+        raise ValueError("z10 r4 stop evidence contains a release or accepted record")
+    return {"path": str(evidence_path), "sha256": evidence_sha}
+
+
+def _require_user_stopped_z10_residues_cleared(residue: dict) -> None:
+    """Recheck that a recorded user-stopped Z10 attempt cannot still be running."""
+    attempts = residue.get("residues", []) if isinstance(residue, dict) else []
+    for attempt in attempts:
+        if attempt.get("classification") != "user_stopped_gate_cd_z10_pre_lu_pause":
+            continue
+        evidence_binding = attempt.get("pre_lu_stop_evidence")
+        if not isinstance(evidence_binding, dict):
+            raise ValueError("user-stopped z10 residue lacks stop evidence binding")
+        evidence = _load_json(Path(evidence_binding["path"]))
+        _require_systemd_unit_not_loaded(str(evidence.get("unit", "")))
+        _require_systemd_unit_not_loaded(str(evidence.get("guard_unit", "")))
+        processes = evidence.get("bound_processes")
+        if not isinstance(processes, list):
+            raise ValueError("user-stopped z10 residue lacks its bound process identities")
+        for process in processes:
+            if not isinstance(process, dict):
+                raise ValueError("user-stopped z10 process identity is malformed")
+            pid = process.get("pid")
+            start_ticks = process.get("start_ticks")
+            if (
+                process.get("state") != "ABSENT"
+                or not isinstance(pid, int)
+                or pid <= 0
+                or not isinstance(start_ticks, int)
+                or start_ticks <= 0
+            ):
+                raise ValueError("user-stopped z10 process identity is incomplete")
+            stat_path = Path(f"/proc/{pid}/stat")
+            try:
+                stat = stat_path.read_text(encoding="ascii")
+            except FileNotFoundError:
+                continue
+            except OSError as exc:
+                raise RuntimeError(
+                    f"cannot verify prior z10 process identity PID {pid} is absent"
+                ) from exc
+            fields = stat[stat.rindex(")") + 2 :].split()
+            if len(fields) <= 19:
+                raise RuntimeError(f"cannot parse current process identity PID {pid}")
+            if int(fields[19]) == start_ticks:
+                raise ValueError(f"prior z10 process identity is still alive: PID {pid}")
 
 
 def _verify_prelaunch_output_parent(
@@ -919,6 +1219,28 @@ def _verify_prelaunch_output_parent(
         if classification == "bootstrap_only_preworker":
             if expected_file_names != required_files or expected_dir_names:
                 raise ValueError("bootstrap residue must be exactly seven root files")
+        elif classification == "user_stopped_gate_cd_z10_pre_lu_pause":
+            exact_user_stopped_pre_lu_files = required_files | {
+                "exact_cache_runtime_contract.json",
+                "gate_cd_runtime_environment.json",
+                "stages.jsonl",
+                "task40_gate-cd_m8n64_finite_parent_parent_mode_manifest.json",
+                "task40_m8n64_active_mode_manifest.json",
+                "task40_m8n64_mode_index_map.json",
+                "workflow_phase.json",
+                "workstation_isolation.json",
+                "z10_prelu_identity_compatibility.json",
+                "watchdog/resources.jsonl",
+                "watchdog/summary.json",
+                "watchdog/worker.log",
+            }
+            if (
+                expected_file_names != exact_user_stopped_pre_lu_files
+                or expected_dir_names != {"numerical_output", "watchdog"}
+            ):
+                raise ValueError(
+                    "user-stopped z10 pre-LU residue differs from its exact output tree"
+                )
         elif classification in {
             "worker_failed_gate_cd_mesh_setup",
             "worker_failed_gate_cd_raw_tensor_summary",
@@ -1412,6 +1734,14 @@ def _verify_prelaunch_output_parent(
                 raise ValueError(
                     "pre-LU identity residue is not the exact cleared pre-symbolic failure"
                 )
+        elif classification == "user_stopped_gate_cd_z10_pre_lu_pause":
+            pre_lu_stop_evidence = _validate_z10_user_stopped_prelu_residue(
+                attempt_id=attempt_id,
+                prior_source=prior_source,
+                record=record,
+                attempt_dir=attempt_dir,
+                expected_identity=expected_identity,
+            )
         elif classification == "worker_failed_gate_cd_signed_mode_selection":
             workflow = _load_json(attempt_dir / "workflow_phase.json")
             direct_summary = _load_json(
@@ -1532,6 +1862,9 @@ def _verify_prelaunch_output_parent(
                 "prior_service": record.get("prior_service"),
                 "raw_tensor_cache_evidence": record.get("raw_tensor_cache_evidence"),
                 "failed_run_evidence": record.get("failed_run_evidence"),
+                "pre_lu_stop_evidence": pre_lu_stop_evidence
+                if classification == "user_stopped_gate_cd_z10_pre_lu_pause"
+                else None,
             }
         )
     if legacy_single:
@@ -1612,6 +1945,7 @@ def fresh_acceptance(
     if str(output_parent) != actual["resolved_output_parent_absolute"]:
         raise ValueError("sidecar output parent differs from the formal loader")
     residue = _verify_prelaunch_output_parent(output_parent, package, actual)
+    _require_user_stopped_z10_residues_cleared(residue)
     if profile == GATE_CD_FIN0_STI_Z10_M8N2_PROFILE:
         for key in ("ready_path", "release_path", "accepted_path"):
             if Path(sidecar["pre_lu_pause"][key]).exists():

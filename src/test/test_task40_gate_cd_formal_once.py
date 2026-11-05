@@ -161,17 +161,33 @@ def test_live_profile_contract_uses_component_and_campaign_quadrature_and_cache(
         _validate_live_profile_contract(package, bad_cache)
 
 
-def test_z10_original272_contract_requires_hashed_live_invocation_receipt(tmp_path):
+def test_z10_original272_contract_binds_live_receipt_overlay(tmp_path):
     from scripts.gate_cd_formal_once import (
         _validate_z10_original272_receipt_contract,
+        _validate_z10_live_receipt_overlay,
     )
 
     unit = "task40-gcd-m8n2-original.service"
     invocation = "c" * 32
     start_path = tmp_path / "start_receipt.json"
+    summary_path = tmp_path / "run_summary.json"
     live_path = tmp_path / "live_receipt.json"
     start_raw = json.dumps({"service_unit": unit}).encode()
     start_path.write_bytes(start_raw)
+    summary_raw = json.dumps(
+        {
+            "run_id": "original272",
+            "status": "finished",
+            "exit_status": 0,
+            "result_classification": "worker_exit0",
+            "resource_authority": {
+                "classification": "COMPLETED",
+                "descendants_cleared": True,
+                "remaining_child_pids": [],
+            },
+        }
+    ).encode()
+    summary_path.write_bytes(summary_raw)
     live = {
         "unit": unit,
         "unit_properties": {
@@ -195,33 +211,49 @@ def test_z10_original272_contract_requires_hashed_live_invocation_receipt(tmp_pa
     live_raw = json.dumps(live, sort_keys=True).encode()
     live_path.write_bytes(live_raw)
     contract = {
-        "schema": "task40.gate_cd.z10_prelu_pause_contract.v2",
+        "schema": "task40.gate_cd.z10_prelu_pause_contract.v1",
         "release_requires_original272": {
             "unit": unit,
             "invocation_id": invocation,
+            "run_id": "original272",
+            "run_summary_path": str(summary_path),
+            "run_summary_sha256": hashlib.sha256(summary_raw).hexdigest(),
             "start_receipt_path": str(start_path),
             "start_receipt_sha256": hashlib.sha256(start_raw).hexdigest(),
-            "live_receipt_path": str(live_path),
-            "live_receipt_sha256": hashlib.sha256(live_raw).hexdigest(),
+            "exit_status": 0,
+            "exit_code": 0,
+            "result_classification": "worker_exit0",
+            "run_status": "finished",
+            "descendants_cleared": True,
+            "remaining_child_pids": [],
+            "unit_inactive": True,
         },
     }
     _validate_z10_original272_receipt_contract(contract)
-
-    contract["release_requires_original272"]["live_receipt_sha256"] = "0" * 64
-    with pytest.raises(ValueError, match="live_receipt_path SHA256 mismatch"):
-        _validate_z10_original272_receipt_contract(contract)
-
-    contract["release_requires_original272"]["live_receipt_sha256"] = (
-        hashlib.sha256(live_raw).hexdigest()
+    overlay = {
+        "schema": "task40.gate_cd.z10_prelu_live_clearance_overlay.v1",
+        "live_receipt_path": str(live_path),
+        "live_receipt_sha256": hashlib.sha256(live_raw).hexdigest(),
+    }
+    _validate_z10_live_receipt_overlay(
+        contract["release_requires_original272"], overlay
     )
+
+    overlay["live_receipt_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="live receipt is missing or changed"):
+        _validate_z10_live_receipt_overlay(
+            contract["release_requires_original272"], overlay
+        )
+
+    overlay["live_receipt_sha256"] = hashlib.sha256(live_raw).hexdigest()
     live["unit_properties"]["InvocationID"] = "d" * 32
     live_path.write_text(json.dumps(live, sort_keys=True), encoding="utf-8")
     live_raw = live_path.read_bytes()
-    contract["release_requires_original272"]["live_receipt_sha256"] = (
-        hashlib.sha256(live_raw).hexdigest()
-    )
+    overlay["live_receipt_sha256"] = hashlib.sha256(live_raw).hexdigest()
     with pytest.raises(ValueError, match="does not bind unit and invocation"):
-        _validate_z10_original272_receipt_contract(contract)
+        _validate_z10_live_receipt_overlay(
+            contract["release_requires_original272"], overlay
+        )
 
 
 def test_sidecar_cannot_drift_from_package_bytes(tmp_path):
@@ -909,6 +941,214 @@ def _make_pre_lu_identity_failure_residue(tmp_path):
     return output_parent, package, expected_identity
 
 
+def _make_user_stopped_z10_prelu_residue(tmp_path):
+    profile = "task40_gate_cd_fin0_sti_z10_m8n2_p6_direct_v1"
+    attempt_id = "20261104T231823.185333Z"
+    prior_source = "ff242c451d59fd5bfbbe4739a912f9653d304fb9"
+    unit = "task40-gcd-z10-m8n2-r4-ff242c45.service"
+    invocation = "589357aad4c240bd8de935aeed83f089"
+    input_path = str((tmp_path / "input.dat").resolve())
+    input_raw = b"z10 replacement fixture input\n"
+    input_sha = hashlib.sha256(input_raw).hexdigest()
+    physical_sha = "a" * 64
+    output_parent = tmp_path / "output-parent"
+    resolved = {
+        "run_id": profile,
+        "solver": {"native_capacity_profile": profile},
+        "provenance": {
+            "input_sha256": input_sha,
+            "physical_model_sha256": physical_sha,
+            "expected_output_parent": str(output_parent.resolve()),
+        },
+    }
+    resolved_raw = (json.dumps(resolved, sort_keys=True) + "\n").encode()
+    resolved_sha = hashlib.sha256(resolved_raw).hexdigest()
+    attempt = output_parent / attempt_id
+    (attempt / "numerical_output").mkdir(parents=True)
+    (attempt / "watchdog").mkdir()
+
+    ready_path = tmp_path / "attempt-cache" / "pre_lu_pause" / "ready.json"
+    ready_path.parent.mkdir(parents=True)
+    identity = {
+        "attempt_id": "gcdz10m8n2-20261105-r4",
+        "source_commit": prior_source,
+        "service_unit": unit,
+        "invocation_id": invocation,
+        "profile_identity": profile,
+        "run_id": profile,
+    }
+    identity_sha = hashlib.sha256(
+        (json.dumps(identity, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    ).hexdigest()
+    ready = {
+        "schema": "task40.gate_cd.z10_prelu_ready.v1",
+        "identity": identity,
+        "identity_sha256": identity_sha,
+        "matrix_facts": {
+            "numeric_calls": 0,
+            "solve_calls": 0,
+            "symbolic_calls": 1,
+        },
+        "release_path": str(ready_path.parent / "release.json"),
+    }
+    ready_raw = (
+        json.dumps(ready, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode()
+    ready_path.write_bytes(ready_raw)
+    ready_sha = hashlib.sha256(ready_raw).hexdigest()
+    accepted_path = str(ready_path.parent / "accepted.json")
+    stop_evidence = {
+        "schema": "task40.gate_cd.z10_r4_prelu_stop_evidence.v1",
+        "unit": unit,
+        "invocation_id": invocation,
+        "unit_properties": {
+            "LoadState": "not-found",
+            "ActiveState": "inactive",
+            "SubState": "dead",
+            "InvocationID": "",
+            "MainPID": "0",
+            "NRestarts": "0",
+            "Result": "success",
+            "ExecMainCode": "0",
+            "ExecMainStatus": "0",
+            "ControlGroup": "",
+        },
+        "guard_unit": "task40-gcd-z10-memory-guard-r4-ff242c45.service",
+        "guard_inactive": True,
+        "guard_properties": {
+            "LoadState": "not-found",
+            "ActiveState": "inactive",
+            "SubState": "dead",
+            "InvocationID": "",
+            "MainPID": "0",
+            "NRestarts": "0",
+            "Result": "success",
+            "ControlGroup": "",
+        },
+        "bound_processes": [
+            {"role": "root", "pid": 1057829, "start_ticks": 375928110, "state": "ABSENT"},
+            {"role": "mpi", "pid": 1057893, "start_ticks": 375929815, "state": "ABSENT"},
+            {"role": "worker", "pid": 1057896, "start_ticks": 375929834, "state": "ABSENT"},
+        ],
+        "ready_path": str(ready_path),
+        "ready_sha256": ready_sha,
+        "release_path": ready["release_path"],
+        "accepted_path": accepted_path,
+        "release_present": False,
+        "accepted_present": False,
+        "numeric_calls_before_stop": 0,
+        "factor_numeric_started": False,
+    }
+    evidence_path = tmp_path / "r4_stop_evidence.json"
+    evidence_path.write_text(json.dumps(stop_evidence, sort_keys=True) + "\n")
+
+    manifest = {
+        "source_sha": prior_source,
+        "run_id": profile,
+        "native_capacity_profile_identity": profile,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "input_path": input_path,
+        "output_directory": str(attempt.resolve()),
+    }
+    summary = {
+        "run_id": profile,
+        "status": "finished",
+        "exit_status": 1,
+        "result_classification": "EVIDENCE_INCOMPLETE",
+        "output_directory": str(attempt.resolve()),
+        "resource_authority": {
+            "classification": "USER_CONTROLLED_STOP",
+            "leader_exit_code": 1,
+            "descendants_cleared": True,
+            "remaining_child_pids": [],
+        },
+    }
+    workflow = {
+        "phase": "pre_lu_pause",
+        "stage": "task40_z10_pre_lu_pause_waiting",
+        "facts": {
+            "identity_sha256": identity_sha,
+            "ready_record_sha256": ready_sha,
+            "release_file_present": False,
+            "numeric_calls": 0,
+            "factor_numeric_started": False,
+        },
+    }
+    stages = [
+        {
+            "stage": "task40_z10_pre_lu_pause_waiting",
+            "facts": {
+                "numeric_calls": 0,
+                "solve_calls": 0,
+                "factor_numeric_started": False,
+            },
+        }
+    ]
+    files = {
+        "exact_cache_runtime_contract.json": b"{}\n",
+        "gate_cd_runtime_environment.json": b"{}\n",
+        "input_original.dat": input_raw,
+        "input_sha256.txt": f"{input_sha}\n".encode(),
+        "physical_model_sha256.txt": f"{physical_sha}\n".encode(),
+        "resolved_config.json": resolved_raw,
+        "run_manifest.json": json.dumps(manifest).encode() + b"\n",
+        "run_summary.json": json.dumps(summary).encode() + b"\n",
+        "source_sha.txt": f"{prior_source}\n".encode(),
+        "stages.jsonl": json.dumps(stages[0]).encode() + b"\n",
+        "task40_gate-cd_m8n64_finite_parent_parent_mode_manifest.json": b"{}\n",
+        "task40_m8n64_active_mode_manifest.json": b"{}\n",
+        "task40_m8n64_mode_index_map.json": b"{}\n",
+        "workflow_phase.json": json.dumps(workflow).encode() + b"\n",
+        "workstation_isolation.json": b"{}\n",
+        "z10_prelu_identity_compatibility.json": b"{}\n",
+        "watchdog/resources.jsonl": b"{}\n",
+        "watchdog/summary.json": b"{}\n",
+        "watchdog/worker.log": b"USER_CONTROLLED_STOP before numeric LU\n",
+    }
+    for name, content in files.items():
+        (attempt / name).write_bytes(content)
+    package = {
+        "profile_identity": profile,
+        "run_id": profile,
+        "source_commit": "c" * 40,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "prelaunch_output_residue_allowlist": {
+            "schema": "task40.gate_cd.prelaunch_output_residue_allowlist.v2",
+            "attempts": [
+                {
+                    "attempt_id": attempt_id,
+                    "attempt_directory": str(attempt.resolve()),
+                    "prior_source_commit": prior_source,
+                    "classification": "user_stopped_gate_cd_z10_pre_lu_pause",
+                    "files": {
+                        name: hashlib.sha256(content).hexdigest()
+                        for name, content in files.items()
+                    },
+                    "directories": ["numerical_output", "watchdog"],
+                    "pre_lu_stop_evidence": {
+                        "path": str(evidence_path),
+                        "sha256": hashlib.sha256(evidence_path.read_bytes()).hexdigest(),
+                    },
+                }
+            ],
+        },
+    }
+    expected_identity = {
+        "profile_identity": profile,
+        "run_id": profile,
+        "input_path": input_path,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "resolved_output_parent_absolute": str(output_parent.resolve()),
+    }
+    return output_parent, package, expected_identity, evidence_path
+
+
 def _make_signed_mode_selection_residue(tmp_path):
     import hashlib
 
@@ -1224,6 +1464,29 @@ def test_prelaunch_output_parent_accepts_exact_pre_lu_identity_failure(tmp_path)
         "mumps_symbolic_started": False,
         "numeric_factorization_started": False,
     }
+
+
+def test_prelaunch_output_parent_accepts_only_exact_user_stopped_z10_prelu(tmp_path):
+    output_parent, package, expected_identity, evidence_path = (
+        _make_user_stopped_z10_prelu_residue(tmp_path / "accepted")
+    )
+    result = _verify_prelaunch_output_parent(
+        output_parent, package, expected_identity
+    )
+    record = result["residues"][0]
+    assert result["status"] == "accepted_exact_prelaunch_residue_set"
+    assert record["attempt_id"] == "20261104T231823.185333Z"
+    assert record["classification"] == "user_stopped_gate_cd_z10_pre_lu_pause"
+    assert record["pre_lu_stop_evidence"]["path"] == str(evidence_path)
+
+    output_parent, package, expected_identity, _ = _make_user_stopped_z10_prelu_residue(
+        tmp_path / "wrong-stop-hash"
+    )
+    package["prelaunch_output_residue_allowlist"]["attempts"][0][
+        "pre_lu_stop_evidence"
+    ]["sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="does not bind its exact run and pause"):
+        _verify_prelaunch_output_parent(output_parent, package, expected_identity)
 
     output_parent, package, expected_identity = _make_pre_lu_identity_failure_residue(
         tmp_path / "tampered"
