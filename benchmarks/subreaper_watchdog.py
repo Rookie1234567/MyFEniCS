@@ -233,7 +233,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
               rss_warning_bytes: int | None = None,
               startup_headroom_bytes: int | None = None,
               minimum_available_bytes: int | None = None,
-              pss_sampling_policy: str | None = None) -> dict:
+              pss_sampling_policy: str | None = None,
+              include_fd_count: bool = False) -> dict:
     """Supervise one command; wall_seconds=None disables only the time gate."""
     if (not command or interval <= 0 or grace_seconds <= 0 or
             (wall_seconds is not None and wall_seconds <= 0)):
@@ -245,6 +246,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
     pss_sampling_policy = pss_sampling_policy or os.environ.get('PHYSICAL_WATCHDOG_PSS_POLICY', 'legacy')
     if pss_sampling_policy not in ('legacy', 'sampled', 'disabled_by_profile'):
         raise ValueError(f'unsupported PSS sampling policy: {pss_sampling_policy!r}')
+    if type(include_fd_count) is not bool:
+        raise ValueError('include_fd_count must be a bool')
     if rss_hard_limit_bytes is not None and int(rss_hard_limit_bytes) <= 0:
         raise ValueError('rss_hard_limit_bytes must be positive')
     if rss_warning_bytes is not None and int(rss_warning_bytes) <= 0:
@@ -317,6 +320,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
     stop_started = None
     classification = None
     peak_rss = peak_swap = 0
+    peak_fd_count = peak_member_fd_count = 0
+    fd_count_samples = fd_count_unreadable_samples = 0
     task_swap_nonzero_observed = False
     samples = 0
     stable_since = None
@@ -343,6 +348,18 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
             'measured_tree_rss_only_v3', 'host_available_floor_v1'
         ) else ('stop' if stop_on_global_swap else 'observe_only'),
     }
+    if include_fd_count:
+        summary.update(
+            fd_sampling_policy='sampled_process_tree_high_water_v1',
+            sampled_process_tree_fd_high_water=None,
+            sampled_process_member_fd_high_water=None,
+            fd_count_samples=0,
+            fd_count_unreadable_samples=0,
+            fd_sampling_scope=(
+                'sum of open descriptors across the sampled subreaper process tree; '
+                'sampled high-water, not an instantaneous kernel lifetime maximum'
+            ),
+        )
     clock_start = clock_sample() if timebase_guard else None
     clock_budget = ClockBudget(clock_start, policy=timebase_policy) if timebase_guard else None
     solve_budget = None
@@ -395,6 +412,8 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                 observed.update(children)
                 stage = 'resource_sample'
                 sample_options = {}
+                if include_fd_count:
+                    sample_options['include_fd_count'] = True
                 if pss_sampling_policy != 'legacy':
                     sample_options.update(include_pss=False,
                                           pss_sampling_policy=pss_sampling_policy)
@@ -457,6 +476,18 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                         'members': fault_members,
                     }
                 current = memory_envelope()
+                if include_fd_count:
+                    if sample.get('fd_count_all_readable'):
+                        fd_count_samples += 1
+                        peak_fd_count = max(
+                            peak_fd_count, int(sample['process_tree_fd_count'])
+                        )
+                        peak_member_fd_count = max(
+                            peak_member_fd_count,
+                            int(sample['maximum_member_fd_count']),
+                        )
+                    else:
+                        fd_count_unreadable_samples += 1
                 elapsed = time.monotonic() - started
                 phase = json.loads(phase_path.read_text()) if phase_path is not None and phase_path.exists() else {}
                 solve_expired = (solve_seconds is not None and phase.get('phase') == 'solve'
@@ -688,6 +719,20 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
             'startup_headroom_bytes': (int(startup_headroom_bytes)
                                        if startup_headroom_bytes is not None else None),
         })
+        if include_fd_count:
+            summary.update(
+                sampled_process_tree_fd_high_water=(
+                    peak_fd_count if fd_count_samples else None
+                ),
+                sampled_process_member_fd_high_water=(
+                    peak_member_fd_count if fd_count_samples else None
+                ),
+                fd_count_samples=fd_count_samples,
+                fd_count_unreadable_samples=fd_count_unreadable_samples,
+                fd_sampling_complete=(
+                    fd_count_samples > 0 and fd_count_unreadable_samples == 0
+                ),
+            )
         if timebase_guard:
             summary['clock_end'] = clock_sample()
             try:

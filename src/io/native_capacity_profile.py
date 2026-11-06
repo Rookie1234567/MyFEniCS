@@ -1816,6 +1816,9 @@ def _task40_phi90_d07c_profile_facts(identity):
             ),
             outer_taskset_required=False,
         )
+        base["resources"]["fd_sampling_policy"] = (
+            "sampled_process_tree_high_water_v1"
+        )
     options = base["component_options"]
     options["visualization_output_policy"] = {
         "write_visualization_files": case_label not in {

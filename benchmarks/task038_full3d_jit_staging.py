@@ -232,7 +232,13 @@ def _status_text_from(path: Path) -> dict[str, str]:
     return values
 
 
-def _process_fact(pid: int, stage: str, *, include_pss: bool = True) -> dict | None:
+def _process_fact(
+    pid: int,
+    stage: str,
+    *,
+    include_pss: bool = True,
+    include_fd_count: bool = False,
+) -> dict | None:
     # The inherited profile applies to JIT, worker, observer and checker callers.
     if os.environ.get("PHYSICAL_WATCHDOG_PSS_POLICY") == "disabled_by_profile":
         include_pss = False
@@ -250,6 +256,18 @@ def _process_fact(pid: int, stage: str, *, include_pss: bool = True) -> dict | N
         cmdline = Path(f"/proc/{pid}/cmdline").read_bytes().replace(b"\0", b" ").decode(
             errors="replace"
         ).strip()
+        fd_count = None
+        if include_fd_count:
+            if state in {"Z", "X", "x"}:
+                # Exited processes have released their descriptors even while
+                # their procfs zombie entry remains visible to the subreaper.
+                fd_count = 0
+            else:
+                try:
+                    with os.scandir(f"/proc/{pid}/fd") as entries:
+                        fd_count = sum(1 for _entry in entries)
+                except OSError:
+                    fd_count = None
         if not ppid_text or not ppid_text.isdigit() or not state or rss is None or swap is None:
             return None
         comm = values.get("Name", "")
@@ -257,7 +275,7 @@ def _process_fact(pid: int, stage: str, *, include_pss: bool = True) -> dict | N
             return None
         if int(stat_path.read_text().rsplit(")", 1)[1].split()[19]) != start_ticks:
             return None
-        return {
+        fact = {
             "pid": pid,
             "start_ticks": start_ticks,
             "ppid": int(ppid_text),
@@ -271,6 +289,10 @@ def _process_fact(pid: int, stage: str, *, include_pss: bool = True) -> dict | N
             "timestamp_ns": time.time_ns(),
             "exit_code": None,
         }
+        if include_fd_count:
+            fact["fd_count"] = fd_count
+            fact["fd_count_readable"] = fd_count is not None
+        return fact
     except (OSError, UnicodeError, ValueError, IndexError):
         return None
 
@@ -319,13 +341,18 @@ def _is_compiler(fact: dict) -> bool:
 
 def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = None,
                           *, include_pss: bool = True,
-                          pss_sampling_policy: str | None = None) -> dict:
+                          pss_sampling_policy: str | None = None,
+                          include_fd_count: bool = False) -> dict:
     policy = pss_sampling_policy or os.environ.get("PHYSICAL_WATCHDOG_PSS_POLICY", "sampled")
     if policy not in {"sampled", "disabled_by_profile"}:
         raise ValueError(f"unsupported PSS sampling policy: {policy!r}")
     include_pss = include_pss and policy != "disabled_by_profile"
     from functools import partial
-    process_fact = _process_fact if include_pss else partial(_process_fact, include_pss=False)
+    process_fact = partial(
+        _process_fact,
+        include_pss=include_pss,
+        include_fd_count=include_fd_count,
+    )
     parents = _live_parent_map()
     pids = [int(root_pid)]
     cursor = 0
@@ -361,6 +388,10 @@ def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = Non
         readable and all(fact["pss_bytes"] is not None for fact in members)
         if include_pss else None
     )
+    fd_count_all_readable = (
+        readable and all(fact.get("fd_count_readable", False) for fact in members)
+        if include_fd_count else None
+    )
     sample = {
         "schema": SAMPLE_SCHEMA,
         "root_pid": int(root_pid),
@@ -381,6 +412,19 @@ def process_tree_snapshot(root_pid: int, stage: str, exit_code: int | None = Non
         "pss_all_readable": pss_all_readable,
         "pss_bytes": sum(fact["pss_bytes"] for fact in members) if pss_all_readable else None,
     }
+    if include_fd_count:
+        sample.update(
+            fd_count_sampled=True,
+            fd_count_all_readable=fd_count_all_readable,
+            process_tree_fd_count=(
+                sum(int(fact["fd_count"]) for fact in members)
+                if fd_count_all_readable else None
+            ),
+            maximum_member_fd_count=(
+                max(int(fact["fd_count"]) for fact in members)
+                if fd_count_all_readable and members else None
+            ),
+        )
     if policy == "disabled_by_profile":
         sample.update(pss_sampling_policy=policy, pss_status="DISABLED_BY_PROFILE")
     return sample

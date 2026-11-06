@@ -45,6 +45,49 @@ def test_orphan_setsid_child_is_sampled_and_reaped(tmp_path, terminate):
     assert set(summary['global_swap_activity']['delta']) == {'pswpin_pages', 'pswpout_pages'}
 
 
+def test_process_tree_fd_sampling_is_opt_in():
+    from benchmarks.task038_full3d_jit_staging import process_tree_snapshot
+
+    baseline = process_tree_snapshot(os.getpid(), 'fd-test', include_pss=False)
+    assert 'fd_count_sampled' not in baseline
+    assert all('fd_count' not in member for member in baseline['members'])
+
+    sampled = process_tree_snapshot(
+        os.getpid(), 'fd-test', include_pss=False, include_fd_count=True
+    )
+    assert sampled['fd_count_sampled'] is True
+    assert sampled['fd_count_all_readable'] is True
+    assert sampled['process_tree_fd_count'] > 0
+    assert sampled['maximum_member_fd_count'] > 0
+    assert all(member['fd_count_readable'] for member in sampled['members'])
+
+
+def test_watchdog_records_sampled_process_tree_fd_high_water(tmp_path):
+    directory = tmp_path / 'run'
+    worker = 'import time; time.sleep(.25)'
+    monitor = f'''
+import json,sys
+from pathlib import Path
+from benchmarks.subreaper_watchdog import supervise
+summary = supervise(
+    [sys.executable, '-c', {worker!r}], Path({str(directory)!r}),
+    wall_seconds=10, interval=.05, grace_seconds=.1,
+    include_fd_count=True)
+print(json.dumps(summary))
+'''
+    result = subprocess.run([sys.executable, '-c', monitor], capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    summary = json.loads((directory / 'summary.json').read_text())
+    assert summary['fd_sampling_policy'] == 'sampled_process_tree_high_water_v1'
+    assert summary['sampled_process_tree_fd_high_water'] > 0
+    assert summary['sampled_process_member_fd_high_water'] > 0
+    assert summary['fd_count_samples'] > 0
+    assert summary['fd_count_unreadable_samples'] == 0
+    assert summary['fd_sampling_complete'] is True
+    rows = [json.loads(line) for line in (directory / 'resources.jsonl').read_text().splitlines()]
+    assert any(row['fd_count_all_readable'] and row['process_tree_fd_count'] > 0 for row in rows)
+
+
 def test_monitor_failure_cleans_live_child_and_records_original_error(tmp_path):
     directory, proof = tmp_path / 'run', tmp_path / 'proof'
     worker = ('import os,time,pathlib; '

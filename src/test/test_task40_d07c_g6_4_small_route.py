@@ -126,6 +126,10 @@ def test_g6_4_input_route_and_production_inventory_are_exact():
     assert facts["campaign_authorization"]["direct_route"]["volume_quadrature_degree"] == 15
     assert facts["resources"]["minimum_available_bytes"] == 64 * 1024**3
     assert facts["resources"]["rss_hard_limit_bytes"] is None
+    assert facts["resources"]["fd_sampling_policy"] == "sampled_process_tree_high_water_v1"
+    assert "fd_sampling_policy" not in native_profile_facts(
+        "task40para_phi90_0p7_D07C_G6_M8_N14_p6_direct_v1"
+    )["resources"]
     assert mode["policy"] == "explicit_signed_rectangle_v1"
     assert mode["parent_signed_bounds_mn"] == [-2, 2, -2, 1]
     assert mode["active_signed_bounds_mn"] == [-2, 2, -2, 1]

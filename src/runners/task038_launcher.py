@@ -890,6 +890,10 @@ def launch_specification(
                     watchdog_cache_path = None
 
                 watchdog_policy_options = {
+                    'include_fd_count': (
+                        watchdog_resources.get('fd_sampling_policy')
+                        == 'sampled_process_tree_high_water_v1'
+                    ),
                     'stop_on_global_swap': bool(
                         watchdog_resources.get(
                             'stop_on_global_swap',
