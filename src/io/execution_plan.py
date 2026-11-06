@@ -170,9 +170,11 @@ def build_execution_plan(
     from .native_capacity_profile import (
         NATIVE_PROFILES,
         P6_CONDENSED_DIRECT_PROFILES,
+        TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
         V7_ANISO_N0_P4_PROFILES,
         native_capacity_profile_identity,
         native_profile_facts,
+        numeric_factor_blas_thread_choices,
     )
     profile_identity = native_capacity_profile_identity(
         method, specification.solver
@@ -184,7 +186,24 @@ def build_execution_plan(
         from src.runners.task40_d07c_g5_join import (
             G5_PROFILE, G6_N14_PROFILE, G6_SCOPED_PROFILES, g6_case_for_profile,
         )
-        if profile_identity == G5_PROFILE or profile_identity in G6_SCOPED_PROFILES:
+        if profile_identity == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE:
+            allowed_worker_counts = numeric_factor_blas_thread_choices(
+                profile_identity
+            )
+            if (
+                worker_cpus_override is None
+                or len(worker_cpus_override) not in allowed_worker_counts
+                or any(type(cpu) is not int or cpu < 0 for cpu in worker_cpus_override)
+                or len(set(worker_cpus_override)) != len(worker_cpus_override)
+            ):
+                raise InputError(
+                    "D07C small288 execution plan requires its exact sampled "
+                    "1/8/16/24/32 physical-core reservation"
+                )
+            if specification.execution.get("native_memory_policy") != "interleave_nodes0_1":
+                raise InputError("D07C small288 rank must use interleave_nodes0_1")
+            worker_cpus = list(worker_cpus_override)
+        elif profile_identity == G5_PROFILE or profile_identity in G6_SCOPED_PROFILES:
             case = (
                 "G5" if profile_identity == G5_PROFILE
                 else g6_case_for_profile(profile_identity)
