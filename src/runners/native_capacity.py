@@ -401,7 +401,12 @@ def native_capacity_guard(
                 )
             cpu_reservation = observational_lease.cpu_reservation
             supervisor_cpu = int(cpu_reservation['supervisor_cpu'])
-            worker_cpus = [int(cpu_reservation['worker_cpu'])]
+            reserved_worker_cpus = cpu_reservation.get('worker_cpus')
+            if reserved_worker_cpus is None:
+                reserved_worker_cpus = [cpu_reservation['worker_cpu']]
+            worker_cpus = [
+                int(cpu) for cpu in reserved_worker_cpus
+            ]
             if memory_policy != 'interleave_nodes0_1':
                 raise InputError(f'{observational_case} runtime requires interleave_nodes0_1')
         if pair_context is not None and not observational_profile and (
@@ -618,6 +623,7 @@ def native_capacity_guard(
             'MKL_NUM_THREADS',
             'BLIS_NUM_THREADS',
             'NUMEXPR_NUM_THREADS',
+            'VECLIB_MAXIMUM_THREADS',
         )
         previous_environment = {name: os.environ.get(name) for name in env_names}
         if profile_facts['resources'].get('pss_sampling_policy') == 'disabled_by_profile':
@@ -629,6 +635,7 @@ def native_capacity_guard(
                 'MKL_NUM_THREADS',
                 'BLIS_NUM_THREADS',
                 'NUMEXPR_NUM_THREADS',
+                'VECLIB_MAXIMUM_THREADS',
             ):
                 os.environ[name] = threads
         try:
@@ -645,7 +652,10 @@ def native_capacity_guard(
 
 
 
-def launch_native_capacity(specification, *, setup_only: bool = False):
+def launch_native_capacity(
+    specification, *, setup_only: bool = False,
+    numeric_factor_blas_threads: int | None = None,
+):
     from src.io.native_capacity_profile import native_capacity_profile_identity
     from src.io.resolved_config import resolved_config_sha256
 
@@ -657,6 +667,14 @@ def launch_native_capacity(specification, *, setup_only: bool = False):
     )
     if profile is None:
         raise InputError('native capacity launch requires an explicit native profile')
+    if numeric_factor_blas_threads is not None and (
+        profile != 'task40para_phi90_0p7_D07C_G6_M8_N14_p6_direct_v1'
+        or type(numeric_factor_blas_threads) is not int
+        or numeric_factor_blas_threads not in {1, 8}
+    ):
+        raise InputError(
+            'numeric-factor BLAS thread control is restricted to D07C G6 M8N14 at 1 or 8 threads'
+        )
     expected_identity = None
     from .task40_d07c_g5_join import (
         G5_PROFILE, G6_SCOPED_PROFILES, g6_case_for_profile,
@@ -691,6 +709,8 @@ def launch_native_capacity(specification, *, setup_only: bool = False):
         expected_identity=expected_identity,
     ) as (_root, isolation):
         launch_kwargs = {'prelaunch_isolation': isolation}
+        if numeric_factor_blas_threads is not None:
+            launch_kwargs['numeric_factor_blas_threads'] = numeric_factor_blas_threads
         if setup_only:
             launch_kwargs['setup_only'] = True
         result = launch_specification(specification, **launch_kwargs)

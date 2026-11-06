@@ -30,6 +30,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument('--profile-r0-reference', type=Path)
     parser.add_argument('--profile-recovery-from', '--profile-cache-recovery-from',
                         dest='profile_recovery_from', type=Path, metavar='FAILED_R0_DIRECTORY')
+    parser.add_argument(
+        '--numeric-factor-blas-threads', type=int, choices=(1, 8),
+        help='G6 M8N14 only: select OpenBLAS pthread count during MUMPS numeric LU',
+    )
     return parser
 
 
@@ -48,6 +52,20 @@ def main(argv: list[str] | None = None) -> int:
         if args.physical_pc_profile is None and (args.profile_variant != 'R0' or args.profile_r0_reference is not None):
             raise InputError('fast profile options require --physical-pc-profile')
         specification = load_and_resolve(args.input_path)
+        if args.numeric_factor_blas_threads is not None:
+            if (
+                args.validate_only or args.dry_run or args.setup_only
+                or args.physical_pc_profile is not None
+            ):
+                raise InputError(
+                    '--numeric-factor-blas-threads requires a standard full-solve launch'
+                )
+            from src.io.native_capacity_profile import native_capacity_profile_identity
+
+            if native_capacity_profile_identity(
+                specification.method.get('kind'), specification.solver
+            ) != 'task40para_phi90_0p7_D07C_G6_M8_N14_p6_direct_v1':
+                raise InputError('--numeric-factor-blas-threads is restricted to D07C G6 M8N14')
         if args.setup_only:
             from src.io.native_capacity_profile import setup_only_5nm_identity_errors
 
@@ -112,7 +130,10 @@ def main(argv: list[str] | None = None) -> int:
             )
             if profile_identity in NATIVE_PROFILES:
                 from src.runners.native_capacity import launch_native_capacity
-                result = launch_native_capacity(specification)
+                result = launch_native_capacity(
+                    specification,
+                    numeric_factor_blas_threads=args.numeric_factor_blas_threads,
+                )
                 print(json.dumps(result, sort_keys=True))
                 successful_classes = {"worker_exit0", "h6_only", "pilot_16"}
                 return 0 if (

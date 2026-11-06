@@ -484,6 +484,7 @@ def launch_specification(
     pc_profile: dict | None = None,
     prelaunch_isolation: dict[str, Any] | None = None,
     setup_only: bool = False,
+    numeric_factor_blas_threads: int | None = None,
 ) -> dict[str, Any]:
     """Launch one resolved input or fail closed before numerical execution."""
 
@@ -541,6 +542,14 @@ def launch_specification(
         specification.method.get('kind'), specification.solver
     )
     p6_condensed_direct = native_identity in P6_CONDENSED_DIRECT_PROFILES
+    if numeric_factor_blas_threads is not None and (
+        native_identity != 'task40para_phi90_0p7_D07C_G6_M8_N14_p6_direct_v1'
+        or type(numeric_factor_blas_threads) is not int
+        or numeric_factor_blas_threads not in {1, 8}
+    ):
+        raise InputError(
+            'numeric-factor BLAS thread control is restricted to D07C G6 M8N14 at 1 or 8 threads'
+        )
     native_resources = (
         native_profile_facts(native_identity)['resources']
         if p6_condensed_direct
@@ -632,6 +641,10 @@ def launch_specification(
         adapter_identity=adapter,
         start_time=start_time,
     )
+    if numeric_factor_blas_threads is not None:
+        manifest['numeric_factor_blas_threads'] = numeric_factor_blas_threads
+        manifest['numeric_factor_blas_scope'] = 'MUMPS_numeric_factorization_only'
+        _write_json(run_directory / 'run_manifest.json', manifest)
     if setup_only:
         manifest['execution_mode'] = 'setup_only'
         manifest['setup_only_contract'] = {

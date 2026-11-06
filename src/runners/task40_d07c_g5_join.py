@@ -142,13 +142,29 @@ def load_observational_scope(
     ):
         raise InputError(f"{case} scope lacks the exact observational-neighbor authorization")
     policy = scope.get("cpu_policy", {})
+    worker_cpu_count = policy.get("worker_cpu_count", 1)
+    fixed_worker_cpus = policy.get("fixed_worker_cpus")
     if (
         policy.get("selection") != "sampled_low_load_distinct_physical_cores_v1"
         or policy.get("sample_seconds") != 1.5
         or policy.get("busy_fallback_allowed") is not True
         or policy.get("exclusive_cpu_ownership") is not False
+        or type(worker_cpu_count) is not int
+        or worker_cpu_count not in {1, 8}
+        or (worker_cpu_count == 8 and fixed_worker_cpus is None)
+        or (
+            fixed_worker_cpus is not None
+            and (
+                not isinstance(fixed_worker_cpus, list)
+                or len(fixed_worker_cpus) != worker_cpu_count
+                or any(type(cpu) is not int or cpu < 0 for cpu in fixed_worker_cpus)
+                or len(set(fixed_worker_cpus)) != worker_cpu_count
+            )
+        )
     ):
         raise InputError(f"{case} scope CPU policy differs from the reviewed dynamic reservation")
+    if fixed_worker_cpus is not None and case != "G6_M8_N14":
+        raise InputError("fixed multi-core reservation is restricted to D07C G6 M8N14")
     paths = scope.get("runtime_paths", {})
     attempt_id = scope.get("attempt_id")
     if not isinstance(attempt_id, str) or not _ATTEMPT_RE.fullmatch(attempt_id):
@@ -257,11 +273,23 @@ def _observe_process_affinities(proc_root: str | Path = "/proc") -> dict:
     }
 
 
-def choose_g5_cpu_reservation(*, sample_seconds: float = 1.5, proc_root: str | Path = "/proc") -> dict:
-    """Prefer low-load physical cores, avoid heavy-neighbor cores where practical."""
+def choose_g5_cpu_reservation(
+    *, sample_seconds: float = 1.5, proc_root: str | Path = "/proc",
+    worker_cpu_count: int = 1, fixed_worker_cpus: list[int] | None = None,
+) -> dict:
+    """Prefer low-load physical cores, avoiding observed heavy neighbors."""
+    if type(worker_cpu_count) is not int or worker_cpu_count not in {1, 8}:
+        raise InputError("dynamic reservation supports one or eight worker physical cores")
+    if fixed_worker_cpus is not None and (
+        not isinstance(fixed_worker_cpus, list)
+        or len(fixed_worker_cpus) != worker_cpu_count
+        or any(type(cpu) is not int or cpu < 0 for cpu in fixed_worker_cpus)
+        or len(set(fixed_worker_cpus)) != worker_cpu_count
+    ):
+        raise InputError("fixed worker CPUs must be unique nonnegative physical-core representatives")
     allowed = sorted(os.sched_getaffinity(0))
-    if len(allowed) < 2:
-        raise InputError("G5 dynamic CPU reservation needs two CPUs in the current allowed affinity")
+    if len(allowed) < worker_cpu_count + 1:
+        raise InputError("dynamic CPU reservation lacks supervisor and worker CPUs")
     observation = _observe_process_affinities(proc_root)
     heavy_cores: set[tuple[int, int]] = set()
     for row in observation["processes"]:
@@ -302,14 +330,35 @@ def choose_g5_cpu_reservation(*, sample_seconds: float = 1.5, proc_root: str | P
     candidates.sort(key=lambda row: (
         row["heavy_neighbor_affinity_overlap"], row["sampled_utilization"], row["cpu"]
     ))
-    if len(candidates) < 2:
-        raise InputError("G5 dynamic CPU reservation lacks two distinct physical cores")
-    chosen = candidates[:2]
+    if fixed_worker_cpus is None:
+        if len(candidates) < worker_cpu_count + 1:
+            raise InputError("dynamic CPU reservation lacks enough distinct physical cores")
+        chosen = candidates[:worker_cpu_count + 1]
+    else:
+        by_cpu = {candidate["cpu"]: candidate for candidate in candidates}
+        try:
+            fixed_workers = [by_cpu[cpu] for cpu in fixed_worker_cpus]
+        except KeyError as exc:
+            raise InputError(
+                f"fixed worker CPU {exc.args[0]} is no longer in the allowed physical-core set"
+            ) from exc
+        fixed_cores = {(row["package"], row["core"]) for row in fixed_workers}
+        if len(fixed_cores) != worker_cpu_count:
+            raise InputError("fixed worker CPUs are not distinct physical cores")
+        supervisors = [
+            candidate for candidate in candidates
+            if (candidate["package"], candidate["core"]) not in fixed_cores
+        ]
+        if not supervisors:
+            raise InputError("fixed worker CPUs leave no physical core for the supervisor")
+        chosen = [supervisors[0], *fixed_workers]
     return {
         "policy": "sampled_low_load_distinct_physical_cores_v1",
         "sample_seconds": float(sample_seconds),
         "supervisor_cpu": chosen[0]["cpu"],
         "worker_cpu": chosen[1]["cpu"],
+        "worker_cpus": [row["cpu"] for row in chosen[1:]],
+        "worker_cpu_count": worker_cpu_count,
         "selected_topology": chosen,
         "candidate_topology_and_load": candidates,
         "allowed_affinity_at_selection": allowed,
@@ -320,9 +369,17 @@ def choose_g5_cpu_reservation(*, sample_seconds: float = 1.5, proc_root: str | P
     }
 
 
-def choose_g6_cpu_reservation(*, sample_seconds: float = 1.5, proc_root: str | Path = "/proc") -> dict:
-    """Use the same dynamic, non-exclusive two-core sampler for exact G6."""
-    return choose_g5_cpu_reservation(sample_seconds=sample_seconds, proc_root=proc_root)
+def choose_g6_cpu_reservation(
+    *, sample_seconds: float = 1.5, proc_root: str | Path = "/proc",
+    worker_cpu_count: int = 1, fixed_worker_cpus: list[int] | None = None,
+) -> dict:
+    """Dynamically sample G6 supervisor and worker physical-core placement."""
+    return choose_g5_cpu_reservation(
+        sample_seconds=sample_seconds,
+        proc_root=proc_root,
+        worker_cpu_count=worker_cpu_count,
+        fixed_worker_cpus=fixed_worker_cpus,
+    )
 
 
 class G5RuntimeLease:
@@ -415,11 +472,15 @@ def _runtime_lease(
             raise InputError(f"{case} case-level member lock is held; no launch") from exc
         if reservation_path.exists():
             raise InputError(f"{case} one-shot reservation already exists; no retry")
-        reservation_factory = (
-            choose_g5_cpu_reservation if spec["case"] == "G5"
-            else choose_g6_cpu_reservation
-        )
-        reservation = reservation_factory(proc_root=proc_root)
+        if spec["case"] == "G5":
+            reservation = choose_g5_cpu_reservation(proc_root=proc_root)
+        else:
+            cpu_policy = scope.get("cpu_policy", {})
+            reservation = choose_g6_cpu_reservation(
+                proc_root=proc_root,
+                worker_cpu_count=cpu_policy.get("worker_cpu_count", 1),
+                fixed_worker_cpus=cpu_policy.get("fixed_worker_cpus"),
+            )
         lease = G5RuntimeLease(
             scope, scope_file, str(scope_sha256).lower(), member,
             member_path, reservation_path, reservation, submission_mode,

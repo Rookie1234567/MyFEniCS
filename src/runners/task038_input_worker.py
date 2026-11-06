@@ -310,6 +310,47 @@ def _load_and_validate_worker_payload(
         profile_name = native_capacity_profile_identity(
             resolved.get('method', {}).get('kind'), resolved.get('solver', {})
         )
+        numeric_factor_blas_threads = manifest_value.get("numeric_factor_blas_threads")
+        numeric_factor_blas_scope = manifest_value.get("numeric_factor_blas_scope")
+        if numeric_factor_blas_threads is not None:
+            if (
+                profile_name != "task40para_phi90_0p7_D07C_G6_M8_N14_p6_direct_v1"
+                or type(numeric_factor_blas_threads) is not int
+                or numeric_factor_blas_threads not in {1, 8}
+                or numeric_factor_blas_scope != "MUMPS_numeric_factorization_only"
+            ):
+                errors.append(
+                    "manifest numeric-factor BLAS control is outside the exact G6 M8N14 contract"
+                )
+            isolation = manifest_value.get("native_capacity_isolation")
+            worker_affinity = (
+                isolation.get("worker_affinity") if isinstance(isolation, dict) else None
+            )
+            if (
+                not isinstance(worker_affinity, list)
+                or len(worker_affinity) != 8
+                or any(type(cpu) is not int or cpu < 0 for cpu in worker_affinity)
+                or len(set(worker_affinity)) != 8
+            ):
+                errors.append(
+                    "manifest BLAS benchmark lacks its eight-CPU worker reservation"
+                )
+            else:
+                worker_command = manifest_value["worker_command"]
+                try:
+                    taskset_index = worker_command.index("/usr/bin/taskset")
+                    command_affinity = worker_command[taskset_index + 2]
+                except (AttributeError, IndexError, KeyError, TypeError, ValueError):
+                    errors.append(
+                        "manifest worker command omits its G6 BLAS CPU reservation"
+                    )
+                else:
+                    if command_affinity != ",".join(map(str, worker_affinity)):
+                        errors.append(
+                            "manifest worker command differs from its G6 BLAS CPU reservation"
+                        )
+        elif numeric_factor_blas_scope is not None:
+            errors.append("manifest numeric-factor BLAS scope has no thread-count binding")
         if profile_name in (V6_NATIVE_PROFILES | P6_CONDENSED_DIRECT_PROFILES):
             profile = native_profile_facts(profile_name)
             expected_execution_mode = profile['execution_mode']
@@ -420,6 +461,8 @@ def _dispatch_resolved_payload(
     output_directory: Path,
     expected_source_sha: str | None = None,
     setup_only: bool = False,
+    numeric_factor_blas_threads: int | None = None,
+    numeric_factor_worker_affinity: list[int] | None = None,
 ) -> tuple[int, list[str]]:
     """Dispatch the already validated payload without rereading its input."""
 
@@ -445,7 +488,11 @@ def _dispatch_resolved_payload(
 
             def adapter(payload, directory):
                 return run_p6_condensed_direct(
-                    payload, directory, source_sha=expected_source_sha
+                    payload,
+                    directory,
+                    source_sha=expected_source_sha,
+                    numeric_factor_blas_threads=numeric_factor_blas_threads,
+                    numeric_factor_worker_affinity=numeric_factor_worker_affinity,
                 )
 
             label = "p6 condensed direct"
@@ -534,6 +581,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"Task38 worker contract error: {error}")
         return 2
     runtime_cache_evidence = None
+    validated_manifest_value = None
     runtime_cache_errors: list[str] = []
     if not args.contract_probe and resolved_payload is not None:
         try:
@@ -557,6 +605,7 @@ def main(argv: list[str] | None = None) -> int:
                 )
                 if manifest_error or manifest_value is None:
                     raise ValueError(manifest_error or f"{case} manifest is unavailable")
+                validated_manifest_value = manifest_value
                 runtime_cache_evidence = _task40_d07c_runtime_cache_evidence(manifest_value)
         except (ImportError, KeyError, OSError, RuntimeError, TypeError, ValueError) as exc:
             runtime_cache_errors.append(f"D07C worker runtime-cache verification failed: {exc}")
@@ -602,6 +651,16 @@ def main(argv: list[str] | None = None) -> int:
         output_directory=args.expected_output_directory,
         expected_source_sha=args.expected_source_sha,
         setup_only=args.setup_only,
+        numeric_factor_blas_threads=(
+            None
+            if validated_manifest_value is None
+            else validated_manifest_value.get("numeric_factor_blas_threads")
+        ),
+        numeric_factor_worker_affinity=(
+            None
+            if validated_manifest_value is None
+            else validated_manifest_value.get("native_capacity_isolation", {}).get("worker_affinity")
+        ),
     )
     if exit_status != 0:
         if comm.rank == 0:

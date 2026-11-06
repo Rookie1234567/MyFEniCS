@@ -8,6 +8,7 @@ No p4 operator, p4 factor, H6 hierarchy, or outer Krylov method is created.
 
 from __future__ import annotations
 
+import ctypes
 import hashlib
 import json
 import math
@@ -2478,7 +2479,215 @@ def _dispersion_flat_port_mpc_witness(
     )
 
 
-def _factor_same_matrix(factor: Any, matrix: Any, rhs: Any, solution: Any, marker):
+def _openblas_thread_api() -> tuple[Any, str, Any, Any]:
+    """Resolve the already-loaded OpenBLAS pthread control API."""
+
+    mapped = set()
+    try:
+        lines = Path("/proc/self/maps").read_text().splitlines()
+    except OSError as exc:
+        raise RuntimeError(f"cannot inspect loaded libraries for OpenBLAS: {exc}") from exc
+    for line in lines:
+        fields = line.split()
+        if not fields:
+            continue
+        candidate = fields[-1]
+        if "openblas" in Path(candidate).name.lower() and candidate.startswith("/"):
+            mapped.add(os.path.realpath(candidate.removesuffix(" (deleted)")))
+    if len(mapped) != 1:
+        raise RuntimeError(
+            f"expected exactly one loaded OpenBLAS shared library, found {sorted(mapped)}"
+        )
+    library_path = next(iter(mapped))
+    library = ctypes.CDLL(library_path)
+    try:
+        get_threads = library.openblas_get_num_threads
+        set_threads = library.openblas_set_num_threads
+    except AttributeError as exc:
+        raise RuntimeError(
+            f"loaded OpenBLAS library lacks the required pthread thread API: {library_path}"
+        ) from exc
+    get_threads.argtypes = []
+    get_threads.restype = ctypes.c_int
+    set_threads.argtypes = [ctypes.c_int]
+    set_threads.restype = None
+    return library, library_path, get_threads, set_threads
+
+
+def _process_thread_affinities() -> list[dict[str, Any]]:
+    """Read every live Linux thread's effective CPU set."""
+
+    rows = []
+    task_root = Path("/proc/self/task")
+    for task_path in sorted(task_root.iterdir(), key=lambda item: int(item.name)):
+        allowed = None
+        for line in (task_path / "status").read_text().splitlines():
+            if line.startswith("Cpus_allowed_list:"):
+                allowed = line.split(":", 1)[1].strip()
+                break
+        if allowed is None:
+            raise RuntimeError(f"thread {task_path.name} has no CPU affinity readback")
+        rows.append({"tid": int(task_path.name), "cpus_allowed_list": allowed})
+    return rows
+
+
+def _affinity_rows_match(rows: list[dict[str, Any]], expected: set[int]) -> bool:
+    for row in rows:
+        actual = set()
+        for item in row["cpus_allowed_list"].split(","):
+            bounds = item.split("-", 1)
+            actual.update(range(int(bounds[0]), int(bounds[-1]) + 1))
+        if actual != expected:
+            return False
+    return bool(rows)
+
+
+def _run_numeric_factorization(
+    factor: Any,
+    matrix: Any,
+    *,
+    target_threads: int | None,
+    marker,
+) -> dict[str, Any] | None:
+    """Use an explicit BLAS count around numeric LU and restore one in all cases."""
+
+    if target_threads is None:
+        factor.numeric(matrix)
+        return None
+    if type(target_threads) is not int or target_threads not in {1, 8}:
+        raise ValueError("numeric-factor OpenBLAS thread count must be 1 or 8")
+    _library, library_path, get_threads, set_threads = _openblas_thread_api()
+    before_threads = int(get_threads())
+    if before_threads != 1:
+        raise RuntimeError(
+            f"OpenBLAS thread count must be one before MUMPS numeric, got {before_threads}"
+        )
+    marker("p6_mumps_numeric_thread_control_preparing", {
+        "target_openblas_threads": target_threads,
+        "openblas_threads_before": before_threads,
+        "openblas_library": library_path,
+        "thread_environment": {
+            name: os.environ.get(name)
+            for name in (
+                "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+                "BLIS_NUM_THREADS", "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS",
+            )
+        },
+        "scope": "MUMPS_numeric_factorization_only",
+    })
+    numeric_wall = None
+    numeric_cpu = None
+    numeric_error = None
+    restore_error = None
+    actual_threads = None
+    try:
+        set_threads(target_threads)
+        actual_threads = int(get_threads())
+        if actual_threads != target_threads:
+            raise RuntimeError(
+                f"OpenBLAS thread readback {actual_threads} differs from requested {target_threads}"
+            )
+        process_affinity = sorted(os.sched_getaffinity(0))
+        thread_affinities_before = _process_thread_affinities()
+        expected_affinity = set(process_affinity)
+        if not _affinity_rows_match(thread_affinities_before, expected_affinity):
+            raise RuntimeError("OpenBLAS worker threads do not inherit the reserved CPU affinity")
+        marker("p6_mumps_numeric_started", {
+            "target_openblas_threads": target_threads,
+            "openblas_threads_readback": actual_threads,
+            "openblas_library": library_path,
+            "worker_affinity": process_affinity,
+            "live_thread_affinities": thread_affinities_before,
+            "scope": "MUMPS_numeric_factorization_only",
+        })
+        wall_started = perf_counter()
+        cpu_started = time.process_time()
+        try:
+            factor.numeric(matrix)
+        finally:
+            numeric_wall = perf_counter() - wall_started
+            numeric_cpu = time.process_time() - cpu_started
+    except BaseException as exc:
+        numeric_error = exc
+    finally:
+        try:
+            set_threads(1)
+            restored_threads = int(get_threads())
+            if restored_threads != 1:
+                raise RuntimeError(
+                    f"OpenBLAS thread restore readback is {restored_threads}, expected one"
+                )
+        except BaseException as exc:
+            restored_threads = None
+            restore_error = exc
+    try:
+        thread_affinities_after = _process_thread_affinities()
+        thread_affinities_after_match = _affinity_rows_match(
+            thread_affinities_after, set(os.sched_getaffinity(0))
+        )
+    except (OSError, ValueError, RuntimeError) as exc:
+        thread_affinities_after = None
+        thread_affinities_after_match = False
+        affinity_readback_error = repr(exc)
+    else:
+        affinity_readback_error = None
+    evidence = {
+        "control": "OpenBLAS_pthread_runtime_API",
+        "scope": "MUMPS_numeric_factorization_only",
+        "openblas_library": library_path,
+        "openblas_threads_before": before_threads,
+        "openblas_threads_requested": target_threads,
+        "openblas_threads_readback_during_numeric": actual_threads,
+        "openblas_threads_restored": restored_threads,
+        "numeric_wall_seconds": numeric_wall,
+        "numeric_process_cpu_seconds": numeric_cpu,
+        "numeric_cpu_to_wall_ratio": (
+            None if numeric_wall in (None, 0) or numeric_cpu is None
+            else numeric_cpu / numeric_wall
+        ),
+        "environment_thread_counts_remained_one": all(
+            os.environ.get(name) == "1"
+            for name in (
+                "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+                "BLIS_NUM_THREADS", "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS",
+            )
+        ),
+        "worker_affinity": sorted(os.sched_getaffinity(0)),
+        "live_thread_affinities_after_numeric": thread_affinities_after,
+        "live_thread_affinity_matches_worker": thread_affinities_after_match,
+        "live_thread_affinity_readback_error": affinity_readback_error,
+    }
+    if restore_error is not None:
+        evidence.update(status="restore_failed", restore_error=repr(restore_error))
+        marker("p6_mumps_numeric_thread_restore_failed", evidence)
+        raise RuntimeError("OpenBLAS thread count could not be restored to one") from (
+            numeric_error or restore_error
+        )
+    if numeric_error is not None:
+        evidence.update(status="numeric_failed", error=repr(numeric_error))
+        marker("p6_mumps_numeric_failed", evidence)
+        raise numeric_error
+    if not thread_affinities_after_match:
+        evidence["status"] = "thread_affinity_verification_failed"
+        marker("p6_mumps_numeric_thread_affinity_failed", evidence)
+        raise RuntimeError(
+            "OpenBLAS live thread affinity changed outside the reserved worker CPUs"
+        )
+    evidence["status"] = "complete"
+    marker("p6_mumps_numeric_thread_control_complete", evidence)
+    return evidence
+
+
+def _factor_same_matrix(
+    factor: Any,
+    matrix: Any,
+    rhs: Any,
+    solution: Any,
+    marker,
+    *,
+    numeric_factor_blas_threads: int | None = None,
+    phase_facts: dict[str, Any] | None = None,
+):
     """Run exactly one symbolic/numeric/solve sequence on one matrix object."""
 
     matrix_object_id = id(matrix)
@@ -2493,15 +2702,25 @@ def _factor_same_matrix(factor: Any, matrix: Any, rhs: Any, solution: Any, marke
     })
     if id(matrix) != matrix_object_id:
         raise RuntimeError("materialized matrix object changed after MUMPS symbolic")
-    factor.numeric(matrix)
-    marker("p6_mumps_numeric_complete", {
+    numeric_thread_evidence = _run_numeric_factorization(
+        factor,
+        matrix,
+        target_threads=numeric_factor_blas_threads,
+        marker=marker,
+    )
+    numeric_facts = {
         "matrix_object_id": matrix_object_id,
         "symbolic_calls": int(factor.symbolic_calls),
         "numeric_calls": int(factor.numeric_calls),
         "solve_calls": int(factor.solve_calls),
         "mumps_info": factor.info(),
         "refinement_settings": factor.refinement_settings(),
-    })
+    }
+    if numeric_thread_evidence is not None:
+        numeric_facts["numeric_factor_blas_thread_control"] = numeric_thread_evidence
+        if phase_facts is not None:
+            phase_facts["numeric_factor_blas_thread_control"] = numeric_thread_evidence
+    marker("p6_mumps_numeric_complete", numeric_facts)
     if id(matrix) != matrix_object_id:
         raise RuntimeError("materialized matrix object changed after MUMPS numeric")
     factor.solve(rhs, solution)
@@ -2908,6 +3127,8 @@ def run_p6_condensed_direct(
     run_directory: str | Path,
     *,
     source_sha: str | None,
+    numeric_factor_blas_threads: int | None = None,
+    numeric_factor_worker_affinity: list[int] | None = None,
 ) -> dict[str, Any]:
     """Execute one explicitly profiled p6 condensed direct full solve."""
 
@@ -2991,6 +3212,29 @@ def run_p6_condensed_direct(
     same_matrix_lifecycle_verified = None
     try:
         profile_facts = _validate_resolved_profile(resolved_payload)
+        if numeric_factor_blas_threads is not None:
+            if (
+                profile_facts["identity"]
+                != "task40para_phi90_0p7_D07C_G6_M8_N14_p6_direct_v1"
+                or type(numeric_factor_blas_threads) is not int
+                or numeric_factor_blas_threads not in {1, 8}
+            ):
+                raise ValueError(
+                    "numeric-factor BLAS benchmarking is restricted to the frozen G6 M8N14 profile at 1 or 8 threads"
+                )
+            if (
+                not isinstance(numeric_factor_worker_affinity, list)
+                or len(numeric_factor_worker_affinity) != 8
+                or any(
+                    type(cpu) is not int or cpu < 0
+                    for cpu in numeric_factor_worker_affinity
+                )
+                or len(set(numeric_factor_worker_affinity)) != 8
+                or sorted(os.sched_getaffinity(0)) != sorted(numeric_factor_worker_affinity)
+            ):
+                raise ValueError(
+                    "G6 M8N14 BLAS thread benchmark requires the manifest-bound eight-CPU worker affinity"
+                )
         route = _direct_run_contract(str(profile_facts["identity"]))
         route.setdefault("sparse_cutoff_policy", "absolute_floor_relative_v1")
         route.setdefault("sparse_cutoff_relative_tolerance", 1.0e-13)
@@ -3033,6 +3277,7 @@ def run_p6_condensed_direct(
             "MKL_NUM_THREADS": "1",
             "BLIS_NUM_THREADS": "1",
             "NUMEXPR_NUM_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1",
         }
         bad_threads = {
             name: os.environ.get(name)
@@ -3666,6 +3911,8 @@ def run_p6_condensed_direct(
             rhs_vector,
             solution_vector,
             ledger.marker,
+            numeric_factor_blas_threads=numeric_factor_blas_threads,
+            phase_facts=summary["factor"],
         )
         summary["factor"].update(
             symbolic_calls=int(factor.symbolic_calls),
