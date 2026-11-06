@@ -1004,6 +1004,7 @@ def _global_raw_tensor_cache(
     local_kernel_seconds = 0.0
     local_broadcast_seconds = 0.0
     local_evaluations = 0
+    local_kernel_function_calls = 0
     logical_broadcast_bytes = 0
     local_keys = set(local_class_coordinates)
     locally_evaluated: dict[tuple[Any, ...], np.ndarray] = {}
@@ -1026,6 +1027,18 @@ def _global_raw_tensor_cache(
                 tag=int(key[1]),
                 dimension=int(dimension),
             )
+            if raw_tensor_evaluator is None:
+                for kernel_group in (
+                    kernels.get(-1),
+                    kernels.get(int(key[1])),
+                ):
+                    if kernel_group is None:
+                        continue
+                    local_kernel_function_calls += (
+                        len(kernel_group)
+                        if isinstance(kernel_group, (tuple, list))
+                        else 1
+                    )
             local_kernel_seconds += perf_counter() - kernel_started
             local_evaluations += 1
     except Exception as error:
@@ -1078,6 +1091,20 @@ def _global_raw_tensor_cache(
         "raw_tensor_class_count_sum": evaluation_count,
         "raw_tensor_class_use_count_sum": use_count,
         "raw_tensor_class_count_global_unique": unique_count,
+        "raw_tensor_kernel_class_evaluations": evaluation_count,
+        "raw_tensor_ffcx_kernel_function_calls": (
+            int(comm.allreduce(local_kernel_function_calls, op=MPI.SUM))
+            if raw_tensor_evaluator is None
+            else None
+        ),
+        "raw_tensor_ffcx_kernel_function_call_scope": (
+            "compiled default/tagged UFCx kernel invocations across globally "
+            "unique raw tensor classes; null for a custom tensor evaluator"
+        ),
+        "raw_tensor_cache_policy": (
+            "exact class cache in per-run memory; material tag and unrounded "
+            "cell widths with canonical-coordinate equality"
+        ),
         "raw_tensor_global_owner_policy": (
             "deterministic_dimension_squared_greedy_all_mpi_ranks"
         ),
@@ -1625,7 +1652,12 @@ def build_unconstrained_assembly_time_condensation(
     global_cells = int(comm.allreduce(owned_cells, op=MPI.SUM))
     active_interior_rows = interior_rows
     raw_class_count = int(raw_cache_audit["raw_tensor_class_count_sum"])
+    raw_cache_class_misses = int(
+        raw_cache_audit["raw_tensor_class_use_count_sum"]
+    )
     oriented_class_count = int(comm.allreduce(len(schur_cache), op=MPI.SUM))
+    if raw_cache_class_misses > global_cells or oriented_class_count > global_cells:
+        raise RuntimeError("per-cell cache-class count exceeds global cell count")
     if retain_local_schur_for_matrix_free:
         for schur in schur_cache.values():
             schur.setflags(write=False)
@@ -1798,6 +1830,23 @@ def build_unconstrained_assembly_time_condensation(
             "retained_numeric_cache_bytes_local": retained_cache_bytes_local,
             "retained_numeric_cache_bytes_sum": retained_cache_bytes_sum,
             "retained_numeric_cache_bytes_max": retained_cache_bytes_max,
+            "raw_tensor_cache_cell_class_lookups": global_cells,
+            "raw_tensor_cache_class_misses": raw_cache_class_misses,
+            "raw_tensor_cache_class_reuse_hits": (
+                global_cells - raw_cache_class_misses
+            ),
+            "raw_tensor_cache_hit_miss_scope": (
+                "one miss per distinct tensor class per rank; subsequent cells "
+                "using that rank-local class are reuse hits; no persistent cache"
+            ),
+            "oriented_schur_cache_cell_lookups": global_cells,
+            "oriented_schur_cache_class_misses": oriented_class_count,
+            "oriented_schur_cache_class_reuse_hits": (
+                global_cells - oriented_class_count
+            ),
+            "materialized_cell_matrix_insert_calls": (
+                global_cells if materialize_global_matrix else None
+            ),
             **raw_cache_audit,
             "oriented_schur_class_count_sum": oriented_class_count,
             "cell_kernel_evaluation_fraction": float(

@@ -3762,6 +3762,7 @@ def run_p6_condensed_direct(
             "degree": 6,
         })
         mesh_cells = tuple(int(value) for value in mesh_evidence["axis_cell_counts"])
+        support_index_started = perf_counter()
         support_groups, support_group_by_row, support_facts = _port_support_groups(
             levels,
             bundle["dtn_action"].carrier,
@@ -3769,7 +3770,17 @@ def run_p6_condensed_direct(
             expected_boundary_cells=mesh_cells[0] * mesh_cells[1],
             expected_modes_by_side=active_modes_by_side,
         )
-        summary["port_support"] = support_facts
+        support_index_seconds = perf_counter() - support_index_started
+        summary["port_support"] = {
+            **support_facts,
+            "indexing_wall_seconds": support_index_seconds,
+        }
+        ledger.marker("p6_direct_port_support_indexed", {
+            "wall_seconds": support_index_seconds,
+            "support_identity": support_facts["support_identity"],
+            "support_row_counts": support_facts["support_row_counts"],
+            "support_cell_counts": support_facts["support_cell_counts"],
+        })
         condensed_started = perf_counter()
         full_p6_rows = int(
             levels["spaces"][6].dofmap.index_map.size_global
@@ -3810,12 +3821,25 @@ def run_p6_condensed_direct(
                 route.get("expected_active_rows")
             ),
         )
+        port_assembly_started = perf_counter()
         port_terms = assemble_condensed_ports(
             condensed, bundle["dtn_action"].carrier
         )
+        port_assembly_seconds = perf_counter() - port_assembly_started
         del port_terms
+        ledger.marker("p6_direct_bounded_port_assembly_complete", {
+            "wall_seconds": port_assembly_seconds,
+            "appended_port_rows": int(condensed.appended_rows),
+            "support_identity": support_facts["support_identity"],
+        })
+        final_assembly_started = perf_counter()
         condensed.matrix.assemble()
+        final_assembly_seconds = perf_counter() - final_assembly_started
         matrix = condensed.matrix
+        ledger.marker("p6_direct_sparse_matrix_finalized", {
+            "wall_seconds": final_assembly_seconds,
+            "matrix_rows": int(matrix.getSize()[0]),
+        })
         matrix_object_id = id(matrix)
         matrix_info = dict(matrix.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM))
         matrix_identity = dict(condensed.build_audit["port_condensed_matrix_identity"])
@@ -3831,6 +3855,9 @@ def run_p6_condensed_direct(
             "port_matrix_signs": "[S_V,Bhat;-Dhat,Hhat]",
             "materialized_matrix_object_id": matrix_object_id,
             "assembly_wall_seconds": condensed_seconds,
+            "port_support_indexing_wall_seconds": support_index_seconds,
+            "bounded_port_assembly_wall_seconds": port_assembly_seconds,
+            "deferred_final_assembly_wall_seconds": final_assembly_seconds,
             "global_full_p6_matrix": False,
             "full_trace_matrix": False,
             "dense_trace_dtn_matrix": False,
@@ -3846,6 +3873,9 @@ def run_p6_condensed_direct(
             "matrix_identity": matrix_identity,
             "matrix_object_id": matrix_object_id,
             "assembly_wall_seconds": condensed_seconds,
+            "port_support_indexing_wall_seconds": support_index_seconds,
+            "bounded_port_assembly_wall_seconds": port_assembly_seconds,
+            "deferred_final_assembly_wall_seconds": final_assembly_seconds,
         })
 
         # The P6 action is explicitly action-only.  Give it a shallow,
