@@ -2554,8 +2554,8 @@ def _run_numeric_factorization(
     if target_threads is None:
         factor.numeric(matrix)
         return None
-    if type(target_threads) is not int or target_threads not in {1, 8}:
-        raise ValueError("numeric-factor OpenBLAS thread count must be 1 or 8")
+    if type(target_threads) is not int or target_threads not in {1, 8, 16, 24, 32}:
+        raise ValueError("numeric-factor OpenBLAS thread count must be 1, 8, 16, 24, or 32")
     _library, library_path, get_threads, set_threads = _openblas_thread_api()
     before_threads = int(get_threads())
     if before_threads != 1:
@@ -3213,27 +3213,37 @@ def run_p6_condensed_direct(
     try:
         profile_facts = _validate_resolved_profile(resolved_payload)
         if numeric_factor_blas_threads is not None:
-            if (
+            from src.io.native_capacity_profile import (
+                TASK40_PHI90_D07C_G6_M8_N14_PROFILE,
+                numeric_factor_blas_thread_choices,
+            )
+            allowed_thread_counts = numeric_factor_blas_thread_choices(
                 profile_facts["identity"]
-                != "task40para_phi90_0p7_D07C_G6_M8_N14_p6_direct_v1"
-                or type(numeric_factor_blas_threads) is not int
-                or numeric_factor_blas_threads not in {1, 8}
+            )
+            if (
+                type(numeric_factor_blas_threads) is not int
+                or numeric_factor_blas_threads not in allowed_thread_counts
             ):
                 raise ValueError(
-                    "numeric-factor BLAS benchmarking is restricted to the frozen G6 M8N14 profile at 1 or 8 threads"
+                    "numeric-factor BLAS benchmarking is outside the exact profile-scoped choices"
                 )
+            expected_worker_count = (
+                8
+                if profile_facts["identity"] == TASK40_PHI90_D07C_G6_M8_N14_PROFILE
+                else numeric_factor_blas_threads
+            )
             if (
                 not isinstance(numeric_factor_worker_affinity, list)
-                or len(numeric_factor_worker_affinity) != 8
+                or len(numeric_factor_worker_affinity) != expected_worker_count
                 or any(
                     type(cpu) is not int or cpu < 0
                     for cpu in numeric_factor_worker_affinity
                 )
-                or len(set(numeric_factor_worker_affinity)) != 8
+                or len(set(numeric_factor_worker_affinity)) != expected_worker_count
                 or sorted(os.sched_getaffinity(0)) != sorted(numeric_factor_worker_affinity)
             ):
                 raise ValueError(
-                    "G6 M8N14 BLAS thread benchmark requires the manifest-bound eight-CPU worker affinity"
+                    "numeric-LU thread benchmark requires a manifest-bound physical-core affinity matching its profile"
                 )
         route = _direct_run_contract(str(profile_facts["identity"]))
         route.setdefault("sparse_cutoff_policy", "absolute_floor_relative_v1")

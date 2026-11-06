@@ -87,6 +87,106 @@ def _validate_source_sha(value: str) -> str:
     return value
 
 
+def _validate_numeric_factor_cpu_reservation(
+    profile_identity: str | None,
+    numeric_factor_blas_threads: int | None,
+    prelaunch_isolation: dict[str, Any] | None,
+) -> list[int] | None:
+    """Require BLAS thread screens to match the reviewed physical-core set."""
+    from src.io.native_capacity_profile import (
+        TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
+        TASK40_PHI90_D07C_G6_M8_N14_PROFILE,
+        numeric_factor_blas_thread_choices,
+    )
+
+    allowed = numeric_factor_blas_thread_choices(profile_identity)
+    if numeric_factor_blas_threads is not None and (
+        type(numeric_factor_blas_threads) is not int
+        or numeric_factor_blas_threads not in allowed
+    ):
+        raise InputError(
+            'numeric-factor BLAS thread control is outside the exact profile-scoped choices'
+        )
+
+    is_g6_4 = profile_identity == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE
+    if numeric_factor_blas_threads is None and not is_g6_4:
+        return None
+
+    expected_worker_count = (
+        1 if numeric_factor_blas_threads is None
+        else 8 if profile_identity == TASK40_PHI90_D07C_G6_M8_N14_PROFILE
+        else numeric_factor_blas_threads
+    )
+    isolation = prelaunch_isolation
+    if not isinstance(isolation, dict):
+        raise InputError(
+            'numeric-factor LU requires its reviewed physical-core reservation'
+        )
+    worker_affinity = isolation.get('worker_affinity')
+    if (
+        not isinstance(worker_affinity, list)
+        or len(worker_affinity) != expected_worker_count
+        or any(type(cpu) is not int or cpu < 0 for cpu in worker_affinity)
+        or len(set(worker_affinity)) != expected_worker_count
+    ):
+        raise InputError(
+            'numeric-factor BLAS thread count differs from its physical-core reservation'
+        )
+
+    if is_g6_4:
+        supervisor_cpu = isolation.get('supervisor_cpu')
+        reservation = isolation.get('sampled_cpu_reservation')
+        expected_socket_policy = (
+            'balanced_cross_socket' if expected_worker_count == 32
+            else 'single_socket'
+        )
+        if (
+            type(supervisor_cpu) is not int
+            or supervisor_cpu in worker_affinity
+            or not isinstance(reservation, dict)
+            or reservation.get('policy') != 'sampled_low_load_distinct_physical_cores_v1'
+            or reservation.get('socket_policy') != expected_socket_policy
+            or reservation.get('worker_cpu_count') != expected_worker_count
+            or reservation.get('supervisor_cpu') != supervisor_cpu
+            or reservation.get('worker_cpus') != worker_affinity
+        ):
+            raise InputError(
+                'G6_4 launch lacks its matching sampled supervisor/worker CPU reservation'
+            )
+        selected_topology = reservation.get('selected_topology')
+        if (
+            not isinstance(selected_topology, list)
+            or len(selected_topology) != expected_worker_count + 1
+            or any(not isinstance(row, dict) for row in selected_topology)
+            or any(type(row.get('cpu')) is not int for row in selected_topology)
+            or selected_topology[0].get('cpu') != supervisor_cpu
+            or [row.get('cpu') for row in selected_topology[1:]] != worker_affinity
+            or any(type(row.get('package')) is not int for row in selected_topology)
+        ):
+            raise InputError(
+                'G6_4 sampled topology differs from the worker and supervisor CPU binding'
+            )
+        worker_packages = [row['package'] for row in selected_topology[1:]]
+        package_counts = [
+            worker_packages.count(package) for package in set(worker_packages)
+        ]
+        if (
+            expected_socket_policy == 'single_socket'
+            and len(set(worker_packages)) != 1
+        ) or (
+            expected_socket_policy == 'balanced_cross_socket'
+            and (
+                len(set(worker_packages)) < 2
+                or max(package_counts) - min(package_counts) > 1
+            )
+        ):
+            raise InputError('G6_4 worker cores do not match the reviewed socket policy')
+        if sorted(os.sched_getaffinity(0)) != [supervisor_cpu]:
+            raise InputError('G6_4 supervisor is not bound to its reserved CPU')
+
+    return worker_affinity
+
+
 def _environment_identity() -> dict[str, Any]:
     return {
         "python_executable": os.path.abspath(sys.executable),
@@ -515,6 +615,7 @@ def launch_specification(
         )
     from src.io.native_capacity_profile import (
         P6_CONDENSED_DIRECT_PROFILES,
+        TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
         native_capacity_profile_identity,
         native_profile_facts,
     )
@@ -542,14 +643,11 @@ def launch_specification(
         specification.method.get('kind'), specification.solver
     )
     p6_condensed_direct = native_identity in P6_CONDENSED_DIRECT_PROFILES
-    if numeric_factor_blas_threads is not None and (
-        native_identity != 'task40para_phi90_0p7_D07C_G6_M8_N14_p6_direct_v1'
-        or type(numeric_factor_blas_threads) is not int
-        or numeric_factor_blas_threads not in {1, 8}
-    ):
-        raise InputError(
-            'numeric-factor BLAS thread control is restricted to D07C G6 M8N14 at 1 or 8 threads'
-        )
+    numeric_factor_worker_affinity = _validate_numeric_factor_cpu_reservation(
+        native_identity,
+        numeric_factor_blas_threads,
+        prelaunch_isolation,
+    )
     native_resources = (
         native_profile_facts(native_identity)['resources']
         if p6_condensed_direct
@@ -698,8 +796,12 @@ def launch_specification(
         manifest['execution_cache'] = dict(path=str(cache_home.resolve()), empty_before_launch=not any(cache_home.iterdir()))
         _write_json(run_directory/'run_manifest.json', manifest)
     d07c_worker_cpus_override = None
-    if native_identity == G5_PROFILE or native_identity in G6_SCOPED_PROFILES:
-        d07c_worker_cpus_override = list(prelaunch_isolation.get('worker_affinity', []))
+    if native_identity == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE:
+        d07c_worker_cpus_override = numeric_factor_worker_affinity
+    elif native_identity == G5_PROFILE or native_identity in G6_SCOPED_PROFILES:
+        d07c_worker_cpus_override = list(
+            (prelaunch_isolation or {}).get('worker_affinity', [])
+        )
     plan = build_execution_plan(
         specification,
         run_directory,

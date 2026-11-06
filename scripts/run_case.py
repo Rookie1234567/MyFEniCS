@@ -31,8 +31,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument('--profile-recovery-from', '--profile-cache-recovery-from',
                         dest='profile_recovery_from', type=Path, metavar='FAILED_R0_DIRECTORY')
     parser.add_argument(
-        '--numeric-factor-blas-threads', type=int, choices=(1, 8),
-        help='G6 M8N14 only: select OpenBLAS pthread count during MUMPS numeric LU',
+        '--numeric-factor-blas-threads', type=int, choices=(1, 8, 16, 24, 32),
+        help='D07C G6 M8N14 (1/8) or coarse G6_4 M2N2 (1/8/16/24/32): '
+             'select OpenBLAS pthread count during MUMPS numeric LU',
     )
     return parser
 
@@ -60,12 +61,20 @@ def main(argv: list[str] | None = None) -> int:
                 raise InputError(
                     '--numeric-factor-blas-threads requires a standard full-solve launch'
                 )
-            from src.io.native_capacity_profile import native_capacity_profile_identity
+            from src.io.native_capacity_profile import (
+                native_capacity_profile_identity,
+                numeric_factor_blas_thread_choices,
+            )
 
-            if native_capacity_profile_identity(
+            profile_identity = native_capacity_profile_identity(
                 specification.method.get('kind'), specification.solver
-            ) != 'task40para_phi90_0p7_D07C_G6_M8_N14_p6_direct_v1':
-                raise InputError('--numeric-factor-blas-threads is restricted to D07C G6 M8N14')
+            )
+            if args.numeric_factor_blas_threads not in numeric_factor_blas_thread_choices(
+                profile_identity
+            ):
+                raise InputError(
+                    '--numeric-factor-blas-threads is outside this exact D07C profile allowance'
+                )
         if args.setup_only:
             from src.io.native_capacity_profile import setup_only_5nm_identity_errors
 

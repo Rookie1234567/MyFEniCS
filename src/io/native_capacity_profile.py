@@ -166,12 +166,18 @@ TASK40_PHI90_D07C_PROFILE_BY_CASE = {
     for case in (
         "B", "Y1", "Y2", "B_M8", "Y3_M8", "G2_M8", "G3_M8",
         "G3_M8_N64", "G3_M8_N96", "G5_M8_N64", "G6_M8_N64",
-        "G6_M8_N32", "G6_M8_N14",
+        "G6_M8_N32", "G6_M8_N14", "G6_4_M2_N2",
     )
 }
 TASK40_PHI90_D07C_PROFILES = frozenset(
     TASK40_PHI90_D07C_PROFILE_BY_CASE.values()
 )
+TASK40_PHI90_D07C_G6_M8_N14_PROFILE = TASK40_PHI90_D07C_PROFILE_BY_CASE[
+    "G6_M8_N14"
+]
+TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE = TASK40_PHI90_D07C_PROFILE_BY_CASE[
+    "G6_4_M2_N2"
+]
 TASK40_PHI90_H15_B_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_H15_B_p6_direct_v1"
 )
@@ -1574,7 +1580,7 @@ def _task40_phi90_d07c_profile_facts(identity):
     except StopIteration as exc:
         raise ValueError(f"unsupported Task40 D07C profile: {identity}") from exc
     case_name = case_label.split("_M", maxsplit=1)[0]
-    max_m = 8 if "_M8" in case_label else 32
+    max_m = 2 if case_label == "G6_4_M2_N2" else 8 if "_M8" in case_label else 32
     n_min, n_max = {
         "G3_M8_N64": (-64, 1),
         "G3_M8_N96": (-96, 1),
@@ -1582,6 +1588,7 @@ def _task40_phi90_d07c_profile_facts(identity):
         "G6_M8_N64": (-64, 1),
         "G6_M8_N32": (-32, 1),
         "G6_M8_N14": (-14, 1),
+        "G6_4_M2_N2": (-2, 1),
     }.get(case_label, (-143, 1))
     n_abs_max = max(abs(n_min), abs(n_max))
     mode_facts = {
@@ -1620,6 +1627,12 @@ def _task40_phi90_d07c_profile_facts(identity):
             "f044d5183d9f106bfff3e9d312e6aef9e7a205ab42b961655c4415a6afab949d",
             6536,
             6602,
+        ),
+        (2, -2, 1): (
+            80,
+            "2bede60faefca7e1d30c1d2e89edfe98aa653e1b4e1e77ee4c3f2ce5185cb426",
+            48,
+            66,
         ),
     }
     mode_count, mode_sha, propagating_count, power_count = mode_facts[
@@ -1793,17 +1806,28 @@ def _task40_phi90_d07c_profile_facts(identity):
             ),
             outer_taskset_required=False,
         )
+    elif case_label == "G6_4_M2_N2":
+        base["native_execution"].update(
+            supervisor_cpu=None,
+            worker_cpu=None,
+            worker_cpus=[],
+            cpu_reservation_policy=(
+                "sampled_low_load_distinct_physical_cores_v1"
+            ),
+            outer_taskset_required=False,
+        )
     options = base["component_options"]
     options["visualization_output_policy"] = {
         "write_visualization_files": case_label not in {
-            "G5_M8_N64", "G6_M8_N64", "G6_M8_N32", "G6_M8_N14"
+            "G5_M8_N64", "G6_M8_N64", "G6_M8_N32", "G6_M8_N14",
+            "G6_4_M2_N2",
         },
         "retained_field_samples": "full3d_reference_sample_npz",
         "field_recovery_and_energy_metrics": "unchanged",
         "visualization_files": (
             "disabled_by_explicit_G5_profile" if case_label == "G5_M8_N64" else
             "disabled_by_explicit_G6_profile" if case_label in {
-                "G6_M8_N64", "G6_M8_N32", "G6_M8_N14"
+                "G6_M8_N64", "G6_M8_N32", "G6_M8_N14", "G6_4_M2_N2"
             } else
             "enabled_by_legacy_profile_default"
         ),
@@ -1908,7 +1932,8 @@ def _task40_phi90_d07c_profile_facts(identity):
             "same_factor_correction_solve_calls_max": 2, "total_solve_calls_max": 3,
         },
         write_visualization_files=case_label not in {
-            "G5_M8_N64", "G6_M8_N64", "G6_M8_N32", "G6_M8_N14"
+            "G5_M8_N64", "G6_M8_N64", "G6_M8_N32", "G6_M8_N14",
+            "G6_4_M2_N2",
         },
     )
     base["campaign_authorization"]["resource_policy"] = {
@@ -1926,6 +1951,13 @@ def _task40_phi90_d07c_profile_facts(identity):
         "User-authorized three-case 0.7 nm D07C study using one fixed finite signed mode window; "
         "the excluded high-|m| propagating orders remain outside qualification."
     )
+    if case_label == "G6_4_M2_N2":
+        base["campaign_authorization"]["source"] = (
+            "User-authorized coarse D07C G6_4 implementation-equivalence baseline: "
+            "retain G6 x/z axes, geometry, materials, incidence, P6 and q81/q15; "
+            "use y segment counts 2/2/2 and signed modes M[-2,2],N[-2,1]. "
+            "This is not physical mesh convergence or full-DtN evidence."
+        )
     if max_m == 8 and case_label not in {
         "G3_M8_N64", "G3_M8_N96", "G5_M8_N64", "G6_M8_N64",
         "G6_M8_N32", "G6_M8_N14",
@@ -3497,6 +3529,15 @@ def native_capacity_profile_identity(method, solver):
     return solver.get('preconditioner')
 
 
+def numeric_factor_blas_thread_choices(profile_identity):
+    """Return exact, profile-scoped numeric-LU thread choices."""
+    if profile_identity == TASK40_PHI90_D07C_G6_M8_N14_PROFILE:
+        return frozenset({1, 8})
+    if profile_identity == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE:
+        return frozenset({1, 8, 16, 24, 32})
+    return frozenset()
+
+
 def validate_same_mesh_coefficient_map_profile_binding(
     profile_identity,
     coarse_degree,
@@ -4469,7 +4510,8 @@ def _validate_task40_phi90_d07c_case(config: dict, identity: str) -> None:
         if profile == identity
     )
     expected_visualization_files = case_label not in {
-        "G5_M8_N64", "G6_M8_N64", "G6_M8_N32", "G6_M8_N14"
+        "G5_M8_N64", "G6_M8_N64", "G6_M8_N32", "G6_M8_N14",
+        "G6_4_M2_N2",
     }
     actual_visualization_files = config.get("output", {}).get(
         "write_visualization_files", True

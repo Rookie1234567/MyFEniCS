@@ -303,9 +303,11 @@ def _load_and_validate_worker_payload(
     if not setup_only:
         from src.io.native_capacity_profile import (
             P6_CONDENSED_DIRECT_PROFILES,
+            TASK40_PHI90_D07C_G6_M8_N14_PROFILE,
             V6_NATIVE_PROFILES,
             native_capacity_profile_identity,
             native_profile_facts,
+            numeric_factor_blas_thread_choices,
         )
         profile_name = native_capacity_profile_identity(
             resolved.get('method', {}).get('kind'), resolved.get('solver', {})
@@ -313,27 +315,32 @@ def _load_and_validate_worker_payload(
         numeric_factor_blas_threads = manifest_value.get("numeric_factor_blas_threads")
         numeric_factor_blas_scope = manifest_value.get("numeric_factor_blas_scope")
         if numeric_factor_blas_threads is not None:
+            allowed_thread_counts = numeric_factor_blas_thread_choices(profile_name)
             if (
-                profile_name != "task40para_phi90_0p7_D07C_G6_M8_N14_p6_direct_v1"
-                or type(numeric_factor_blas_threads) is not int
-                or numeric_factor_blas_threads not in {1, 8}
+                type(numeric_factor_blas_threads) is not int
+                or numeric_factor_blas_threads not in allowed_thread_counts
                 or numeric_factor_blas_scope != "MUMPS_numeric_factorization_only"
             ):
                 errors.append(
-                    "manifest numeric-factor BLAS control is outside the exact G6 M8N14 contract"
+                    "manifest numeric-factor BLAS control is outside the exact profile-scoped contract"
                 )
             isolation = manifest_value.get("native_capacity_isolation")
             worker_affinity = (
                 isolation.get("worker_affinity") if isinstance(isolation, dict) else None
             )
+            expected_worker_count = (
+                8 if profile_name == TASK40_PHI90_D07C_G6_M8_N14_PROFILE
+                else numeric_factor_blas_threads
+                if type(numeric_factor_blas_threads) is int else -1
+            )
             if (
                 not isinstance(worker_affinity, list)
-                or len(worker_affinity) != 8
+                or len(worker_affinity) != expected_worker_count
                 or any(type(cpu) is not int or cpu < 0 for cpu in worker_affinity)
-                or len(set(worker_affinity)) != 8
+                or len(set(worker_affinity)) != expected_worker_count
             ):
                 errors.append(
-                    "manifest BLAS benchmark lacks its eight-CPU worker reservation"
+                    "manifest BLAS benchmark lacks its profile-matched physical-core reservation"
                 )
             else:
                 worker_command = manifest_value["worker_command"]
@@ -347,7 +354,7 @@ def _load_and_validate_worker_payload(
                 else:
                     if command_affinity != ",".join(map(str, worker_affinity)):
                         errors.append(
-                            "manifest worker command differs from its G6 BLAS CPU reservation"
+                            "manifest worker command differs from its numeric-LU CPU reservation"
                         )
         elif numeric_factor_blas_scope is not None:
             errors.append("manifest numeric-factor BLAS scope has no thread-count binding")

@@ -276,10 +276,13 @@ def _observe_process_affinities(proc_root: str | Path = "/proc") -> dict:
 def choose_g5_cpu_reservation(
     *, sample_seconds: float = 1.5, proc_root: str | Path = "/proc",
     worker_cpu_count: int = 1, fixed_worker_cpus: list[int] | None = None,
+    socket_policy: str = "auto",
 ) -> dict:
     """Prefer low-load physical cores, avoiding observed heavy neighbors."""
-    if type(worker_cpu_count) is not int or worker_cpu_count not in {1, 8}:
-        raise InputError("dynamic reservation supports one or eight worker physical cores")
+    if type(worker_cpu_count) is not int or worker_cpu_count not in {1, 8, 16, 24, 32}:
+        raise InputError("dynamic reservation supports 1, 8, 16, 24, or 32 worker physical cores")
+    if socket_policy not in {"auto", "single_socket", "balanced_cross_socket"}:
+        raise InputError("unsupported dynamic CPU socket policy")
     if fixed_worker_cpus is not None and (
         not isinstance(fixed_worker_cpus, list)
         or len(fixed_worker_cpus) != worker_cpu_count
@@ -330,7 +333,57 @@ def choose_g5_cpu_reservation(
     candidates.sort(key=lambda row: (
         row["heavy_neighbor_affinity_overlap"], row["sampled_utilization"], row["cpu"]
     ))
-    if fixed_worker_cpus is None:
+    if fixed_worker_cpus is None and socket_policy == "single_socket":
+        by_package: dict[int, list[dict]] = {}
+        for candidate in candidates:
+            by_package.setdefault(candidate["package"], []).append(candidate)
+        viable = []
+        for package, rows in by_package.items():
+            if len(rows) >= worker_cpu_count:
+                workers = rows[:worker_cpu_count]
+                viable.append((
+                    sum(row["heavy_neighbor_affinity_overlap"] for row in workers),
+                    sum(row["sampled_utilization"] for row in workers),
+                    package,
+                    workers,
+                ))
+        if not viable:
+            raise InputError(
+                "single-socket reservation lacks enough distinct worker cores on one socket"
+            )
+        _busy, _load, selected_package, workers = min(viable, key=lambda row: row[:3])
+        worker_cpus = {row["cpu"] for row in workers}
+        supervisors = [row for row in candidates if row["cpu"] not in worker_cpus]
+        if not supervisors:
+            raise InputError("single-socket workers leave no physical core for the supervisor")
+        supervisors.sort(key=lambda row: (
+            row["package"] != selected_package,
+            row["heavy_neighbor_affinity_overlap"],
+            row["sampled_utilization"], row["cpu"],
+        ))
+        chosen = [supervisors[0], *workers]
+    elif fixed_worker_cpus is None and socket_policy == "balanced_cross_socket":
+        packages = sorted({row["package"] for row in candidates})
+        if len(packages) < 2:
+            raise InputError("cross-socket reservation requires at least two CPU packages")
+        base_count, remainder = divmod(worker_cpu_count, len(packages))
+        workers = []
+        for index, package in enumerate(packages):
+            requested = base_count + (1 if index < remainder else 0)
+            rows = [row for row in candidates if row["package"] == package]
+            if len(rows) < requested:
+                raise InputError("cross-socket reservation lacks cores on one CPU package")
+            workers.extend(rows[:requested])
+        worker_cpus = {row["cpu"] for row in workers}
+        supervisors = [row for row in candidates if row["cpu"] not in worker_cpus]
+        if not supervisors:
+            raise InputError("cross-socket workers leave no physical core for the supervisor")
+        supervisors.sort(key=lambda row: (
+            row["heavy_neighbor_affinity_overlap"],
+            row["sampled_utilization"], row["cpu"],
+        ))
+        chosen = [supervisors[0], *workers]
+    elif fixed_worker_cpus is None:
         if len(candidates) < worker_cpu_count + 1:
             raise InputError("dynamic CPU reservation lacks enough distinct physical cores")
         chosen = candidates[:worker_cpu_count + 1]
@@ -354,6 +407,7 @@ def choose_g5_cpu_reservation(
         chosen = [supervisors[0], *fixed_workers]
     return {
         "policy": "sampled_low_load_distinct_physical_cores_v1",
+        "socket_policy": socket_policy,
         "sample_seconds": float(sample_seconds),
         "supervisor_cpu": chosen[0]["cpu"],
         "worker_cpu": chosen[1]["cpu"],
@@ -372,6 +426,7 @@ def choose_g5_cpu_reservation(
 def choose_g6_cpu_reservation(
     *, sample_seconds: float = 1.5, proc_root: str | Path = "/proc",
     worker_cpu_count: int = 1, fixed_worker_cpus: list[int] | None = None,
+    socket_policy: str = "auto",
 ) -> dict:
     """Dynamically sample G6 supervisor and worker physical-core placement."""
     return choose_g5_cpu_reservation(
@@ -379,6 +434,7 @@ def choose_g6_cpu_reservation(
         proc_root=proc_root,
         worker_cpu_count=worker_cpu_count,
         fixed_worker_cpus=fixed_worker_cpus,
+        socket_policy=socket_policy,
     )
 
 
