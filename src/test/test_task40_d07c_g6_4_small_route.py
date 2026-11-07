@@ -9,6 +9,7 @@ from dataclasses import replace
 from itertools import pairwise
 from math import isclose
 from pathlib import Path
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -30,6 +31,7 @@ from src.runners.task038_input_worker import (
     _load_and_validate_worker_payload,
     _parser as worker_parser,
 )
+from src.runners import task038_input_worker as d07c_worker
 from src.runners.task038_launcher import (
     _validate_numeric_factor_cpu_reservation,
     _write_bootstrap,
@@ -374,6 +376,44 @@ def test_small288_real_input_execution_plan_worker_parser_roundtrip_no_fe(
     assert errors == []
     assert resolved_payload is not None
     assert resolved_payload["derived"]["native_capacity_profile"]["identity"] == PROFILE
+
+    class FakeComm:
+        size = 1
+        rank = 0
+
+        @staticmethod
+        def allreduce(value, op=None):
+            return bool(value)
+
+        @staticmethod
+        def Barrier():
+            return None
+
+    mpi4py_stub = ModuleType("mpi4py")
+    mpi4py_stub.MPI = SimpleNamespace(COMM_WORLD=FakeComm(), LOR=object())
+    monkeypatch.setitem(sys.modules, "mpi4py", mpi4py_stub)
+    dispatch_calls = []
+
+    def capture_fe_dispatch(payload, **kwargs):
+        dispatch_calls.append({"payload": payload, **kwargs})
+        return 0, []
+
+    monkeypatch.setattr(
+        d07c_worker, "_dispatch_resolved_payload", capture_fe_dispatch
+    )
+    worker_argv = list(plan.argv[worker_index + 1 :])
+    assert d07c_worker.main(worker_argv) == 0
+    assert len(dispatch_calls) == 1
+    assert dispatch_calls[0]["numeric_factor_blas_threads"] == worker_count
+    assert dispatch_calls[0]["numeric_factor_worker_affinity"] == worker_cpus
+
+    manifest["numeric_factor_blas_threads"] = worker_count + 1
+    (run_directory / "run_manifest.json").write_text(
+        json.dumps(manifest, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    assert d07c_worker.main(worker_argv) == 2
+    assert len(dispatch_calls) == 1
 
 
 @pytest.mark.parametrize(

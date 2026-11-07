@@ -592,7 +592,10 @@ def main(argv: list[str] | None = None) -> int:
     runtime_cache_errors: list[str] = []
     if not args.contract_probe and resolved_payload is not None:
         try:
-            from src.io.native_capacity_profile import native_capacity_profile_identity
+            from src.io.native_capacity_profile import (
+                TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
+                native_capacity_profile_identity,
+            )
 
             profile_name = native_capacity_profile_identity(
                 resolved_payload.get("method", {}).get("kind"),
@@ -602,7 +605,16 @@ def main(argv: list[str] | None = None) -> int:
                 G5_PROFILE, G6_SCOPED_PROFILES, g6_case_for_profile,
             )
 
-            if profile_name == G5_PROFILE or profile_name in G6_SCOPED_PROFILES:
+            if profile_name == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE:
+                manifest_value, _manifest_bytes, manifest_error = _read_json_bytes(
+                    args.manifest, "manifest for small288 numeric-factor dispatch"
+                )
+                if manifest_error or manifest_value is None:
+                    raise ValueError(
+                        manifest_error or "small288 manifest is unavailable"
+                    )
+                validated_manifest_value = manifest_value
+            elif profile_name == G5_PROFILE or profile_name in G6_SCOPED_PROFILES:
                 case = (
                     "G5" if profile_name == G5_PROFILE
                     else g6_case_for_profile(profile_name)
@@ -615,7 +627,7 @@ def main(argv: list[str] | None = None) -> int:
                 validated_manifest_value = manifest_value
                 runtime_cache_evidence = _task40_d07c_runtime_cache_evidence(manifest_value)
         except (ImportError, KeyError, OSError, RuntimeError, TypeError, ValueError) as exc:
-            runtime_cache_errors.append(f"D07C worker runtime-cache verification failed: {exc}")
+            runtime_cache_errors.append(f"D07C worker manifest/cache verification failed: {exc}")
     cache_failed = comm.allreduce(bool(runtime_cache_errors), op=MPI.LOR)
     if cache_failed:
         if comm.rank == 0:
