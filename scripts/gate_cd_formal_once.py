@@ -1066,9 +1066,21 @@ def _validate_z10_user_stopped_prelu_residue(
 
 
 def _require_user_stopped_z10_residues_cleared(residue: dict) -> None:
-    """Recheck that a recorded user-stopped Z10 attempt cannot still be running."""
+    """Recheck recorded Z10 attempts cannot still be running."""
     attempts = residue.get("residues", []) if isinstance(residue, dict) else []
     for attempt in attempts:
+        if attempt.get("classification") == "worker_failed_gate_cd_output_recovery":
+            prior_service = attempt.get("prior_service", {})
+            unit = prior_service.get("unit")
+            if (
+                unit != "task40-gcd-z10-m8n2-r5-38759016.service"
+                or prior_service.get("must_be_not_loaded_at_fresh") is not True
+            ):
+                raise ValueError(
+                    "prior post-LU failure lacks its exact inactive service binding"
+                )
+            _require_systemd_unit_not_loaded(unit)
+            continue
         if attempt.get("classification") != "user_stopped_gate_cd_z10_pre_lu_pause":
             continue
         evidence_binding = attempt.get("pre_lu_stop_evidence")
@@ -1245,6 +1257,7 @@ def _verify_prelaunch_output_parent(
             "worker_failed_gate_cd_mesh_setup",
             "worker_failed_gate_cd_raw_tensor_summary",
             "worker_failed_gate_cd_pre_lu_identity",
+            "worker_failed_gate_cd_output_recovery",
         }:
             required_setup_files = required_files | {
                 "gate_cd_runtime_environment.json",
@@ -1260,10 +1273,204 @@ def _verify_prelaunch_output_parent(
                 not required_setup_files.issubset(expected_file_names)
                 or "numerical_output" not in expected_dir_names
                 or "watchdog" not in expected_dir_names
-                or any(name.startswith("numerical_output/") for name in expected_file_names)
+                    or (
+                        classification != "worker_failed_gate_cd_output_recovery"
+                        and any(
+                            name.startswith("numerical_output/")
+                            for name in expected_file_names
+                        )
+                    )
             ):
                 raise ValueError("setup-failure residue lacks exact terminal evidence")
-            if classification == "worker_failed_gate_cd_raw_tensor_summary":
+            if classification == "worker_failed_gate_cd_output_recovery":
+                exact_output_files = required_files | {
+                    "exact_cache_runtime_contract.json",
+                    "gate_cd_runtime_environment.json",
+                    "p6_condensed_direct_summary.json",
+                    "stages.jsonl",
+                    "task40_gate-cd_m8n64_finite_parent_parent_mode_manifest.json",
+                    "task40_m8n64_active_mode_manifest.json",
+                    "task40_m8n64_mode_index_map.json",
+                    "workflow_phase.json",
+                    "workstation_isolation.json",
+                    "z10_prelu_identity_compatibility.json",
+                    "watchdog/resources.jsonl",
+                    "watchdog/summary.json",
+                    "watchdog/worker.log",
+                    "numerical_output/task40_direct_factor_evidence/evidence.json",
+                    "numerical_output/task40_direct_factor_evidence/augmented_trace_solution.npy",
+                    "numerical_output/task40_direct_factor_evidence/independent_augmented_port_residual.npy",
+                    "numerical_output/task40_direct_factor_evidence/recovered_p6_storage_coefficients.npy",
+                    "numerical_output/task40_direct_factor_evidence/retained_modal_alpha.npy",
+                    "numerical_output/task40_direct_factor_evidence/schur_port_block_residual.npy",
+                }
+                if (
+                    expected_file_names != exact_output_files
+                    or expected_dir_names
+                    != {
+                        "numerical_output",
+                        "numerical_output/task40_direct_factor_evidence",
+                        "watchdog",
+                    }
+                ):
+                    raise ValueError(
+                        "output-recovery residue differs from its exact post-LU tree"
+                    )
+                run_manifest = _load_json(attempt_dir / "run_manifest.json")
+                run_summary = _load_json(attempt_dir / "run_summary.json")
+                workflow = _load_json(attempt_dir / "workflow_phase.json")
+                direct_summary = _load_json(
+                    attempt_dir / "p6_condensed_direct_summary.json"
+                )
+                prior_service = record.get("prior_service", {})
+                watchdog = _load_json(attempt_dir / "watchdog/summary.json")
+                authority = run_summary.get("resource_authority", {})
+                direct_evidence = direct_summary.get("direct_factor_evidence", {})
+                factor = (
+                    direct_evidence.get("factor_facts_before_release", {})
+                    .get("factor", {})
+                )
+                residuals = direct_summary.get("residuals", {})
+                evidence_path = (
+                    attempt_dir
+                    / "numerical_output/task40_direct_factor_evidence/evidence.json"
+                )
+                evidence = _load_json(evidence_path)
+                artifacts = evidence.get("artifacts", {})
+                stages = [
+                    json.loads(line)
+                    for line in (attempt_dir / "stages.jsonl")
+                    .read_text(encoding="utf-8")
+                    .splitlines()
+                    if line.strip()
+                ]
+                stage_names = [row.get("stage") for row in stages]
+                failure_facts = (
+                    stages[-1].get("facts", {}) if stages else {}
+                )
+                artifact_names = {
+                    "augmented_trace_solution",
+                    "independent_augmented_port_residual",
+                    "recovered_p6_storage_coefficients",
+                    "retained_modal_alpha",
+                    "schur_port_block_residual",
+                }
+                artifacts_match = set(artifacts) == artifact_names
+                if artifacts_match:
+                    for name, item in artifacts.items():
+                        artifact_path = Path(str(item.get("path", "")))
+                        expected_path = (
+                            attempt_dir
+                            / "numerical_output/task40_direct_factor_evidence"
+                            / f"{name}.npy"
+                        )
+                        if (
+                            artifact_path.resolve() != expected_path.resolve()
+                            or not expected_path.is_file()
+                            or item.get("sha256") != sha256_file(expected_path)
+                            or item.get("bytes") != expected_path.stat().st_size
+                            or item.get("dtype") != "complex128"
+                        ):
+                            artifacts_match = False
+                            break
+                expected_exception = (
+                    "Task40 active FE outputs cannot use the legacy N0 scope"
+                )
+                if (
+                    attempt_id != "20261105T015027.127661Z"
+                    or prior_source != "387590161118dff30dd2537cc716ed30572ec5e1"
+                    or prior_service.get("schema")
+                    != "task40.gate_cd.prior_failed_attempt_service_identity.v1"
+                    or prior_service.get("unit")
+                    != "task40-gcd-z10-m8n2-r5-38759016.service"
+                    or prior_service.get("invocation_id")
+                    != "81f276b8935e482685406e24efe12a5d"
+                    or prior_service.get("main_pid") != 1079362
+                    or prior_service.get("main_start_ticks") != 376840480
+                    or prior_service.get("run_summary_sha256")
+                    != sha256_file(attempt_dir / "run_summary.json")
+                    or prior_service.get("must_be_not_loaded_at_fresh") is not True
+                    or run_manifest.get("source_sha") != prior_source
+                    or run_manifest.get("run_id") != expected_identity["run_id"]
+                    or run_manifest.get("native_capacity_profile_identity")
+                    != expected_identity["profile_identity"]
+                    or run_manifest.get("output_directory") != str(attempt_dir)
+                    or run_summary.get("status") != "finished"
+                    or run_summary.get("exit_status") != 4
+                    or run_summary.get("result_classification") != "WORKER_FAILED"
+                    or authority.get("classification") != "WORKER_FAILED"
+                    or authority.get("leader_exit_code") != 4
+                    or authority.get("descendants_cleared") is not True
+                    or authority.get("remaining_child_pids") != []
+                    or watchdog.get("classification") != "WORKER_FAILED"
+                    or watchdog.get("leader_exit_code") != 4
+                    or watchdog.get("descendants_cleared") is not True
+                    or watchdog.get("remaining_child_pids") != []
+                    or workflow.get("phase") != "recovery"
+                    or workflow.get("stage")
+                    != "TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_M8N64_FAILED"
+                    or workflow.get("facts", {}).get("failed_stage")
+                    != "task40_direct_algebra_released_before_output"
+                    or workflow.get("facts", {}).get("exception_type")
+                    != "ValueError"
+                    or workflow.get("facts", {}).get("exception_message")
+                    != expected_exception
+                    or failure_facts.get("failed_stage")
+                    != "task40_direct_algebra_released_before_output"
+                    or failure_facts.get("exception_type") != "ValueError"
+                    or failure_facts.get("exception_message") != expected_exception
+                    or direct_summary.get("status") != "FAILED"
+                    or direct_summary.get("failed_phase") != "recovery"
+                    or direct_summary.get("failed_stage")
+                    != "task40_direct_algebra_released_before_output"
+                    or direct_summary.get("exception_type") != "ValueError"
+                    or direct_summary.get("exception_message") != expected_exception
+                    or direct_summary.get("source_sha") != prior_source
+                    or factor.get("numeric_calls") != 1
+                    or factor.get("symbolic_calls") != 1
+                    or factor.get("solve_calls") != 2
+                    or direct_summary.get("numeric_calls") not in (None, 1)
+                    or residuals.get("finite") is not True
+                    or residuals.get("condensed_direct_relative", 1.0)
+                    > residuals.get("condensed_direct_residual_gate", 0.0)
+                    or residuals.get("original_A6_active_rectangle_relative", 1.0)
+                    > residuals.get("original_A6_active_rectangle_relative_gate", 0.0)
+                    or evidence.get("status") != "SAVED_PRE_RELEASE_NOT_QUALIFICATION"
+                    or evidence.get("solver_qualification_claimed") is not False
+                    or evidence.get("added_numerical_gate") is not False
+                    or not artifacts_match
+                    or stage_names[-1]
+                    != "TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_M8N64_FAILED"
+                    or "p6_mumps_symbolic_complete" not in stage_names
+                    or "p6_mumps_numeric_complete" not in stage_names
+                    or "p6_direct_materialized_solve_complete" not in stage_names
+                    or "task40_direct_factor_evidence_saved_before_release"
+                    not in stage_names
+                    or "task40_direct_algebra_released_before_output"
+                    not in stage_names
+                    or any(
+                        name in stage_names
+                        for name in (
+                            "task40_direct_outputs_recovered",
+                            "task40_direct_field_postprocessing_complete",
+                        )
+                    )
+                    or Path(str(run_summary.get("output_directory", ""))).resolve()
+                    != attempt_dir
+                ):
+                    raise ValueError(
+                        "output-recovery residue is not the exact cleared post-LU failure"
+                    )
+                record["prior_run_facts"] = {
+                    "numeric_calls": factor.get("numeric_calls"),
+                    "solve_calls": factor.get("solve_calls"),
+                    "condensed_relative_residual": residuals.get(
+                        "condensed_direct_relative"
+                    ),
+                    "failure": expected_exception,
+                    "qualification_claimed": False,
+                }
+            elif classification == "worker_failed_gate_cd_raw_tensor_summary":
                 exact_raw_tensor_files = required_files | {
                     "exact_cache_runtime_contract.json",
                     "gate_cd_runtime_environment.json",
@@ -1447,6 +1654,19 @@ def _verify_prelaunch_output_parent(
                 raise ValueError(
                     "signed-selection failure residue must match its exact file/directory set"
                 )
+        elif classification == "worker_failed_gate_cd_output_recovery":
+            prior_facts = record.get("prior_run_facts")
+            if (
+                not isinstance(prior_facts, dict)
+                or prior_facts.get("numeric_calls") != 1
+                or prior_facts.get("solve_calls") != 2
+                or prior_facts.get("condensed_relative_residual")
+                != 1.744883865790772e-11
+                or prior_facts.get("failure")
+                != "Task40 active FE outputs cannot use the legacy N0 scope"
+                or prior_facts.get("qualification_claimed") is not False
+            ):
+                raise ValueError("post-LU output failure lost its exact run facts")
         else:
             raise ValueError("prelaunch residue classification is unsupported")
 
@@ -1848,6 +2068,19 @@ def _verify_prelaunch_output_parent(
                 raise ValueError(
                     "signed-selection residue is not the exact cleared pre-carrier failure"
                 )
+        elif classification == "worker_failed_gate_cd_output_recovery":
+            prior_facts = record.get("prior_run_facts")
+            if (
+                not isinstance(prior_facts, dict)
+                or prior_facts.get("numeric_calls") != 1
+                or prior_facts.get("solve_calls") != 2
+                or prior_facts.get("condensed_relative_residual")
+                != 1.744883865790772e-11
+                or prior_facts.get("failure")
+                != "Task40 active FE outputs cannot use the legacy N0 scope"
+                or prior_facts.get("qualification_claimed") is not False
+            ):
+                raise ValueError("post-LU output failure lost its exact run facts")
         else:
             raise ValueError("prelaunch residue classification is unsupported")
 
@@ -1862,6 +2095,7 @@ def _verify_prelaunch_output_parent(
                 "prior_service": record.get("prior_service"),
                 "raw_tensor_cache_evidence": record.get("raw_tensor_cache_evidence"),
                 "failed_run_evidence": record.get("failed_run_evidence"),
+                "prior_run_facts": record.get("prior_run_facts"),
                 "pre_lu_stop_evidence": pre_lu_stop_evidence
                 if classification == "user_stopped_gate_cd_z10_pre_lu_pause"
                 else None,

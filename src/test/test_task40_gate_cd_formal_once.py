@@ -765,6 +765,216 @@ def _make_raw_tensor_summary_residue(tmp_path):
     return output_parent, package, expected_identity, cache_root
 
 
+def _make_z10_output_recovery_failure_residue(tmp_path):
+    import hashlib
+
+    output_parent, package, identity, _ = _make_raw_tensor_summary_residue(tmp_path)
+    old_record = package["prelaunch_output_residue_allowlist"]["attempts"][0]
+    old_attempt = output_parent / old_record["attempt_id"]
+    attempt_id = "20261105T015027.127661Z"
+    attempt = output_parent / attempt_id
+    old_attempt.rename(attempt)
+    for item in sorted(attempt.rglob("*"), reverse=True):
+        if item.is_file():
+            item.unlink()
+        elif item.is_dir():
+            item.rmdir()
+    artifact_root = attempt / "numerical_output/task40_direct_factor_evidence"
+    artifact_root.mkdir(parents=True)
+    (attempt / "watchdog").mkdir()
+
+    run_id = identity["run_id"]
+    profile = identity["profile_identity"]
+    source = "387590161118dff30dd2537cc716ed30572ec5e1"
+    input_path = identity["input_path"]
+    input_bytes = b"frozen z10 M8N2 input\n"
+    input_sha = identity["input_sha256"]
+    physical_sha = identity["physical_model_sha256"]
+    resolved_bytes = (json.dumps(
+        {
+            "run_id": run_id,
+            "solver": {"native_capacity_profile": profile},
+            "provenance": {
+                "input_sha256": input_sha,
+                "physical_model_sha256": physical_sha,
+                "expected_output_parent": str(output_parent.resolve()),
+            },
+        },
+        sort_keys=True,
+        indent=2,
+    ) + "\n").encode()
+    resolved_sha = hashlib.sha256(resolved_bytes).hexdigest()
+    identity["resolved_config_sha256"] = resolved_sha
+
+    manifest = {
+        "run_id": run_id,
+        "source_sha": source,
+        "input_path": input_path,
+        "input_sha256": input_sha,
+        "physical_model_sha256": physical_sha,
+        "resolved_config_sha256": resolved_sha,
+        "native_capacity_profile_identity": profile,
+        "output_directory": str(attempt.resolve()),
+    }
+    authority = {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 4,
+        "descendants_cleared": True,
+        "remaining_child_pids": [],
+    }
+    summary = {
+        "run_id": run_id,
+        "status": "finished",
+        "exit_status": 4,
+        "result_classification": "WORKER_FAILED",
+        "output_directory": str(attempt.resolve()),
+        "numerical_output_directory": str((attempt / "numerical_output").resolve()),
+        "resource_authority": authority,
+    }
+    residuals = {
+        "finite": True,
+        "condensed_direct_relative": 1.744883865790772e-11,
+        "condensed_direct_residual_gate": 1e-9,
+        "original_A6_active_rectangle_relative": 2.4e-8,
+        "original_A6_active_rectangle_relative_gate": 1e-6,
+    }
+    payloads = {}
+    artifacts = {}
+    for name in (
+        "augmented_trace_solution",
+        "independent_augmented_port_residual",
+        "recovered_p6_storage_coefficients",
+        "retained_modal_alpha",
+        "schur_port_block_residual",
+    ):
+        relative = f"numerical_output/task40_direct_factor_evidence/{name}.npy"
+        content = f"synthetic artifact {name}\n".encode()
+        path = attempt / relative
+        path.write_bytes(content)
+        payloads[relative] = content
+        artifacts[name] = {
+            "path": str(path.resolve()),
+            "sha256": hashlib.sha256(content).hexdigest(),
+            "bytes": len(content),
+            "dtype": "complex128",
+            "shape": [1],
+        }
+    evidence = {
+        "schema": "task40.p6-direct-factor-evidence.v1",
+        "status": "SAVED_PRE_RELEASE_NOT_QUALIFICATION",
+        "solver_qualification_claimed": False,
+        "added_numerical_gate": False,
+        "artifacts": artifacts,
+    }
+    payloads[
+        "numerical_output/task40_direct_factor_evidence/evidence.json"
+    ] = (json.dumps(evidence) + "\n").encode()
+    factor = {"numeric_calls": 1, "symbolic_calls": 1, "solve_calls": 2}
+    direct_summary = {
+        "status": "FAILED",
+        "failed_phase": "recovery",
+        "failed_stage": "task40_direct_algebra_released_before_output",
+        "exception_type": "ValueError",
+        "exception_message": "Task40 active FE outputs cannot use the legacy N0 scope",
+        "run_id": run_id,
+        "profile": profile,
+        "source_sha": source,
+        "residuals": residuals,
+        "direct_factor_evidence": {
+            "factor_facts_before_release": {"factor": factor},
+        },
+    }
+    failure_facts = {
+        "failed_stage": "task40_direct_algebra_released_before_output",
+        "exception_type": "ValueError",
+        "exception_message": "Task40 active FE outputs cannot use the legacy N0 scope",
+    }
+    stage_names = [
+        "p6_mumps_symbolic_complete",
+        "p6_mumps_numeric_complete",
+        "p6_direct_materialized_solve_complete",
+        "task40_direct_factor_evidence_saved_before_release",
+        "task40_direct_algebra_released_before_output",
+        "TASK40_GATE_CD_FIN0_STI_Z10_M8N2_P6_DIRECT_M8N64_FAILED",
+    ]
+    stages = [
+        {"stage": name, "facts": failure_facts if i == len(stage_names) - 1 else {}}
+        for i, name in enumerate(stage_names)
+    ]
+    workflow = {
+        "phase": "recovery",
+        "stage": stage_names[-1],
+        "facts": failure_facts,
+    }
+    watchdog = {
+        "classification": "WORKER_FAILED",
+        "leader_exit_code": 4,
+        "descendants_cleared": True,
+        "remaining_child_pids": [],
+    }
+    payloads.update({
+        "exact_cache_runtime_contract.json": b'{"schema":"test"}\n',
+        "gate_cd_runtime_environment.json": b'{"schema":"test"}\n',
+        "input_original.dat": input_bytes,
+        "input_sha256.txt": f"{input_sha}\n".encode(),
+        "p6_condensed_direct_summary.json": (json.dumps(direct_summary) + "\n").encode(),
+        "physical_model_sha256.txt": f"{physical_sha}\n".encode(),
+        "resolved_config.json": resolved_bytes,
+        "run_manifest.json": (json.dumps(manifest) + "\n").encode(),
+        "run_summary.json": (json.dumps(summary) + "\n").encode(),
+        "source_sha.txt": f"{source}\n".encode(),
+        "stages.jsonl": b"".join(json.dumps(row).encode() + b"\n" for row in stages),
+        "task40_gate-cd_m8n64_finite_parent_parent_mode_manifest.json": b"{}\n",
+        "task40_m8n64_active_mode_manifest.json": b"{}\n",
+        "task40_m8n64_mode_index_map.json": b"{}\n",
+        "workflow_phase.json": (json.dumps(workflow) + "\n").encode(),
+        "workstation_isolation.json": b'{"schema":"test"}\n',
+        "z10_prelu_identity_compatibility.json": b'{"schema":"test"}\n',
+        "watchdog/resources.jsonl": b'{"sample":1}\n',
+        "watchdog/summary.json": (json.dumps(watchdog) + "\n").encode(),
+        "watchdog/worker.log": b"Task40 active FE outputs cannot use the legacy N0 scope\n",
+    })
+    for relative, content in payloads.items():
+        (attempt / relative).write_bytes(content)
+    files = {
+        relative: hashlib.sha256(content).hexdigest()
+        for relative, content in payloads.items()
+    }
+    run_summary_sha = hashlib.sha256(payloads["run_summary.json"]).hexdigest()
+    package.update({
+        "resolved_config_sha256": resolved_sha,
+        "prelaunch_output_residue_allowlist": {
+            "schema": "task40.gate_cd.prelaunch_output_residue_allowlist.v2",
+            "attempts": [{
+                "attempt_id": attempt_id,
+                "attempt_directory": str(attempt.resolve()),
+                "prior_source_commit": source,
+                "classification": "worker_failed_gate_cd_output_recovery",
+                "files": files,
+                "directories": [
+                    "numerical_output",
+                    "numerical_output/task40_direct_factor_evidence",
+                    "watchdog",
+                ],
+                "prior_service": {
+                    "schema": "task40.gate_cd.prior_failed_attempt_service_identity.v1",
+                    "unit": "task40-gcd-z10-m8n2-r5-38759016.service",
+                    "invocation_id": "81f276b8935e482685406e24efe12a5d",
+                    "main_pid": 1079362,
+                    "main_start_ticks": 376840480,
+                    "run_summary_sha256": run_summary_sha,
+                    "must_be_not_loaded_at_fresh": True,
+                },
+            }],
+        },
+    })
+    identity.update({
+        "resolved_config_sha256": resolved_sha,
+        "resolved_output_parent_absolute": str(output_parent.resolve()),
+    })
+    return output_parent, package, identity
+
+
 def _make_pre_lu_identity_failure_residue(tmp_path):
     import hashlib
 
@@ -1446,6 +1656,41 @@ def test_prelaunch_output_parent_accepts_only_exact_post_cache_emfile_failure(tm
     )
     (cache_root / "key-1" / "complete.json").unlink()
     with pytest.raises(ValueError, match="exact cleared post-cache EMFILE failure"):
+        _verify_prelaunch_output_parent(output_parent, package, expected_identity)
+
+
+def test_prelaunch_output_parent_accepts_only_exact_post_lu_output_failure(tmp_path):
+    import hashlib
+
+    output_parent, package, expected_identity = (
+        _make_z10_output_recovery_failure_residue(tmp_path / "accepted")
+    )
+    result = _verify_prelaunch_output_parent(
+        output_parent, package, expected_identity
+    )
+    assert result["status"] == "accepted_exact_prelaunch_residue_set"
+    record = result["residues"][0]
+    assert record["classification"] == "worker_failed_gate_cd_output_recovery"
+    assert record["prior_run_facts"] == {
+        "numeric_calls": 1,
+        "solve_calls": 2,
+        "condensed_relative_residual": 1.744883865790772e-11,
+        "failure": "Task40 active FE outputs cannot use the legacy N0 scope",
+        "qualification_claimed": False,
+    }
+
+    output_parent, package, expected_identity = (
+        _make_z10_output_recovery_failure_residue(tmp_path / "changed-stage")
+    )
+    attempt = output_parent / "20261105T015027.127661Z"
+    workflow_path = attempt / "workflow_phase.json"
+    workflow = json.loads(workflow_path.read_text())
+    workflow["facts"]["failed_stage"] = "p6_direct_mesh_setup_started"
+    workflow_path.write_text(json.dumps(workflow) + "\n")
+    package["prelaunch_output_residue_allowlist"]["attempts"][0]["files"][
+        "workflow_phase.json"
+    ] = hashlib.sha256(workflow_path.read_bytes()).hexdigest()
+    with pytest.raises(ValueError, match="exact cleared post-LU failure"):
         _verify_prelaunch_output_parent(output_parent, package, expected_identity)
 
 
