@@ -57,6 +57,40 @@ def test_active_fe_output_identity_carries_distinct_parent_and_active_scope():
     assert identity["dtn_sparse_cutoff_policy"] == "scale_homogeneous_relative_only_v1"
 
 
+def test_active_fe_output_identity_accepts_fin0_model_scope():
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        _active_fe_port_output_identity,
+    )
+
+    contract = _contract(parent_count=8, active_count=4)
+    contract["operator_scope"] = (
+        "task40_gate_cd_fin0_sti_z10_m8n2_p6_direct_v1"
+    )
+    identity = _active_fe_port_output_identity(
+        contract,
+        active_mode_count=4,
+        active_mode_sha256="b" * 64,
+        **_identity_kwargs(),
+    )
+    assert identity["operator_scope"] == contract["operator_scope"]
+
+
+def test_active_fe_output_identity_rejects_n0_scope_token():
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
+        _active_fe_port_output_identity,
+    )
+
+    contract = _contract(parent_count=8, active_count=4)
+    contract["operator_scope"] = "n0_filtered_dtn_not_full_dtn"
+    with pytest.raises(ValueError, match="legacy N0 scope"):
+        _active_fe_port_output_identity(
+            contract,
+            active_mode_count=4,
+            active_mode_sha256="b" * 64,
+            **_identity_kwargs(),
+        )
+
+
 def test_active_fe_unfiltered_contract_requires_parent_active_identity_match():
     from src.solvers.fullspace_same_mesh_hcurl_pmg_physical import (
         _active_fe_port_output_identity,
@@ -135,6 +169,8 @@ def test_task40_active_fe_outputs_use_port_files_and_never_sampled_dft(monkeypat
         "parent_sha256": "a" * 64,
         "active_count": 4,
         "active_sha256": active_sha,
+        "active_rectangle_max_abs_m_n": [1, 1],
+        "residual_scope": "A6_active_rectangle",
         "selection_policy": "explicit_box2_rectangle_v1",
         "selected_parent_indices_sha256": "c" * 64,
         "sparse_cutoff_policy": "scale_homogeneous_relative_only_v1",
@@ -154,7 +190,7 @@ def test_task40_active_fe_outputs_use_port_files_and_never_sampled_dft(monkeypat
     )
     monkeypatch.setattr(modes_3d, "incident_power_3d", lambda cfg: 1.0)
     monkeypatch.setattr(
-        postprocess_3d, "save_airbox_3d_fields", lambda *a: {"saved": True}
+        postprocess_3d, "save_airbox_3d_fields", lambda *a, **k: {"saved": True}
     )
     monkeypatch.setattr(
         rta_3d, "compute_volume_absorption_3d", lambda *a, **k: {"A_volume_total": 0.1}

@@ -957,7 +957,9 @@ def _active_fe_port_output_identity(
         operator_scope, parent_scope, selection_policy, full_dtn_status
     )):
         raise ValueError("active FE port output scope and inventory labels are required")
-    if operator_scope == "A6_n0" or "n0" in operator_scope.lower():
+    # Reject N0 as a scope token, not as an arbitrary substring: valid model
+    # identifiers such as ``Fin0`` contain the same characters but are not N0.
+    if re.search(r"(?<![a-z0-9])n0(?![a-z0-9])", operator_scope, re.IGNORECASE):
         raise ValueError("Task40 active FE outputs cannot use the legacy N0 scope")
     if full_dtn_status != "FULL_DTN_NOT_VERIFIED":
         raise ValueError("finite active-port output cannot certify the full DtN operator")
