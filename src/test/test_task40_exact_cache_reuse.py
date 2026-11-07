@@ -21,7 +21,9 @@ def _fixture(tmp_path, *, raw_count=7288, carrier_count=272):
     source_root = tmp_path / "source-attempt"
     tensor_root = source_root / "tensor"
     carrier_root = source_root / "carrier"
-    numerical_source_sha = "d" * 64
+    from src.runners.exact_cache_contract import numerical_source_digest
+
+    numerical_source_sha = numerical_source_digest()
     context_sha = _sha(
         json.dumps(
             {"numerical_source_sha256": numerical_source_sha},
@@ -217,6 +219,126 @@ def _fake_modules(source_root):
 
     carrier = SimpleNamespace(CarrierCheckpoint=CarrierCheckpoint)
     return parallel, carrier, GateCDRuntimeLease, calls
+
+
+def test_z10_source_compatibility_reconstructs_exact_cached_source_and_context():
+    from src.runners.exact_cache_contract import numerical_source_digest
+
+    repo_root = Path(__file__).resolve().parents[2]
+    cache_source = subprocess.run(
+        [
+            "git",
+            "show",
+            f"{cache_reuse.Z10_CACHE_SOURCE_COMMIT}:{cache_reuse.Z10_CACHE_SOURCE_FILE}",
+        ],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+    ).stdout
+    runtime_path = repo_root / cache_reuse.Z10_CACHE_SOURCE_FILE
+    runtime_source = runtime_path.read_bytes()
+    cache_digest = cache_reuse._numerical_source_digest_with_override(
+        repo_root / "src",
+        cache_reuse.Z10_CACHE_SOURCE_FILE_RELATIVE_TO_SRC,
+        cache_source,
+    )
+    runtime_digest = numerical_source_digest()
+    runtime_commit = subprocess.run(
+        ["git", "rev-parse", "--verify", "HEAD"],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    contract = {
+        "numerical_source_sha256": cache_digest,
+        "source_compatibility": {
+            "schema": cache_reuse.Z10_CACHE_SOURCE_COMPATIBILITY_SCHEMA,
+            "cache_source_commit": cache_reuse.Z10_CACHE_SOURCE_COMMIT,
+            "runtime_source_commit": runtime_commit,
+            "cache_numerical_source_sha256": cache_digest,
+            "runtime_numerical_source_sha256": runtime_digest,
+            "changed_source_path": cache_reuse.Z10_CACHE_SOURCE_FILE,
+            "change_id": "active_fe_output_scope_token_boundary_only_v1",
+            "cache_source_file_sha256": cache_reuse._sha256_bytes(cache_source),
+            "runtime_source_file_sha256": cache_reuse._sha256_bytes(runtime_source),
+        },
+    }
+    identity = cache_reuse._validate_z10_cache_source_identity(contract)
+    assert identity["cache_numerical_source_sha256"] == cache_digest
+    assert identity["runtime_numerical_source_sha256"] == runtime_digest
+    assert identity["compatibility_applied"] is True
+
+    live_context = {
+        "numerical_source_sha256": runtime_digest,
+        "mesh_sha256": "a" * 64,
+        "space_sha256": "b" * 64,
+    }
+    cache_context = cache_reuse._carrier_context_for_verified_cache(
+        live_context,
+        identity,
+    )
+    assert live_context["numerical_source_sha256"] == runtime_digest
+    assert cache_context == {
+        **live_context,
+        "numerical_source_sha256": cache_digest,
+    }
+
+
+def test_z10_carrier_source_overlay_fails_closed_without_compatibility():
+    with pytest.raises(RuntimeError, match="reviewed source identity"):
+        cache_reuse._carrier_context_for_verified_cache(
+            {"numerical_source_sha256": "b" * 64},
+            {
+                "cache_numerical_source_sha256": "a" * 64,
+                "runtime_numerical_source_sha256": "b" * 64,
+                "compatibility_applied": False,
+            },
+        )
+
+
+def test_z10_cache_source_compatibility_rejects_any_other_production_change(
+    tmp_path,
+):
+    from src.runners.exact_cache_contract import numerical_source_digest
+
+    cache_root = tmp_path / "cache-src"
+    runtime_root = tmp_path / "runtime-src"
+    relative = cache_reuse.Z10_CACHE_SOURCE_FILE_RELATIVE_TO_SRC
+    old_file = cache_root / relative
+    runtime_file = runtime_root / relative
+    old_file.parent.mkdir(parents=True)
+    runtime_file.parent.mkdir(parents=True)
+    cache_source = b"header\n" + cache_reuse._Z10_CACHE_SCOPE_CHECK_OLD + b"footer\n"
+    runtime_source = (
+        b"header\n"
+        + cache_reuse._Z10_CACHE_SCOPE_CHECK_CURRENT
+        + b"footer\n"
+    )
+    old_file.write_bytes(cache_source)
+    runtime_file.write_bytes(runtime_source)
+    (cache_root / "other_solver.py").write_text("value = 1\n", encoding="utf-8")
+    (runtime_root / "other_solver.py").write_text("value = 1\n", encoding="utf-8")
+
+    cached_digest = numerical_source_digest(cache_root)
+    assert cache_reuse._numerical_source_digest_with_override(
+        runtime_root,
+        relative,
+        cache_source,
+    ) == cached_digest
+    changed = runtime_source + b"\nassembly_changed = True\n"
+    with pytest.raises(RuntimeError, match="reviewed output-scope predicate"):
+        cache_reuse._validate_exact_z10_output_scope_source_change(
+            cache_source,
+            changed,
+        )
+
+    (runtime_root / "other_solver.py").write_text("value = 2\n", encoding="utf-8")
+    assert cache_reuse._numerical_source_digest_with_override(
+        runtime_root,
+        relative,
+        cache_source,
+    ) != cached_digest
 
 
 def test_cache_only_guard_rejects_any_missing_raw_shard_without_compute(tmp_path, monkeypatch):

@@ -1,8 +1,10 @@
 """Fail-closed, read-only reuse of one verified Gate-CD cache generation.
 
-This is intentionally outside ``src`` so it cannot change the numerical-source
-digest embedded in the existing exact tensor and carrier cache identities.
-It is activated only by the reviewed Z10 recovery environment.
+This compatibility layer stays outside ``src`` and never writes to verified
+cache roots. A Z10 runtime source delta is accepted only when the exact reviewed
+output-scope edit can be replaced with its cached bytes to reproduce the full
+frozen numerical-source digest. It is activated only by the reviewed recovery
+environment.
 """
 
 from __future__ import annotations
@@ -32,6 +34,22 @@ EXPECTED_CARRIER_COUNT = 272
 EXPECTED_CARRIER_BYTES = 1091188144
 EXPECTED_JIT_FILE_COUNT = 32
 EXPECTED_JIT_BYTES = 4660641154
+Z10_CACHE_SOURCE_COMPATIBILITY_SCHEMA = (
+    "task40.gate_cd.z10_cache_source_compatibility.v1"
+)
+Z10_CACHE_SOURCE_COMMIT = "387590161118dff30dd2537cc716ed30572ec5e1"
+Z10_CACHE_SOURCE_FILE = "src/solvers/fullspace_same_mesh_hcurl_pmg_physical.py"
+Z10_CACHE_SOURCE_FILE_RELATIVE_TO_SRC = (
+    "solvers/fullspace_same_mesh_hcurl_pmg_physical.py"
+)
+_Z10_CACHE_SCOPE_CHECK_OLD = (
+    b'    if operator_scope == "A6_n0" or "n0" in operator_scope.lower():\n'
+)
+_Z10_CACHE_SCOPE_CHECK_CURRENT = (
+    b"    # Reject N0 as a scope token, not as an arbitrary substring: valid model\n"
+    b"    # identifiers such as ``Fin0`` contain the same characters but are not N0.\n"
+    b'    if re.search(r"(?<![a-z0-9])n0(?![a-z0-9])", operator_scope, re.IGNORECASE):\n'
+)
 Z10_PRELU_IDENTITY_COMPAT_SCHEMA = (
     "task40.gate_cd.z10_prelu_identity_snapshot_compatibility.v1"
 )
@@ -77,6 +95,225 @@ def _sha256_file(path: Path) -> str:
         os.close(fd)
 
 
+def _numerical_source_digest_with_override(
+    source_root: Path,
+    relative_path: str,
+    replacement: bytes,
+) -> str:
+    """Hash a source tree while substituting one reviewed historical file."""
+    root = source_root.resolve(strict=True)
+    expected = Path(relative_path)
+    if expected.is_absolute() or ".." in expected.parts:
+        raise RuntimeError("source digest override path is unsafe")
+    h = hashlib.sha256()
+    count = 0
+    for path in sorted(root.rglob("*.py")):
+        relative = path.relative_to(root)
+        if "test" in relative.parts or "__pycache__" in relative.parts:
+            continue
+        payload = replacement if relative == expected else path.read_bytes()
+        h.update(relative.as_posix().encode() + b"\0")
+        h.update(hashlib.sha256(payload).digest())
+        count += 1
+    if not count or not (root / expected).is_file():
+        raise RuntimeError("source digest override did not match a production Python file")
+    return h.hexdigest()
+
+
+def _validate_exact_z10_output_scope_source_change(
+    cache_source: bytes,
+    runtime_source: bytes,
+) -> None:
+    """Allow exactly the Fin0/N0 output-scope predicate correction."""
+    if (
+        cache_source.count(_Z10_CACHE_SCOPE_CHECK_OLD) != 1
+        or runtime_source.count(_Z10_CACHE_SCOPE_CHECK_CURRENT) != 1
+        or runtime_source.replace(
+            _Z10_CACHE_SCOPE_CHECK_CURRENT,
+            _Z10_CACHE_SCOPE_CHECK_OLD,
+            1,
+        )
+        != cache_source
+    ):
+        raise RuntimeError(
+            "Z10 cached source differs beyond the reviewed output-scope predicate"
+        )
+
+
+def _validate_z10_cache_source_identity(
+    contract: dict[str, Any],
+) -> dict[str, Any]:
+    """Verify identical source or one exact, non-assembly output-code change.
+
+    Carrier checkpoints retain the source digest with which they were built.
+    If the current digest differs, this permits cache access only when replacing
+    the one reviewed output-scope check with its historical bytes reproduces
+    the complete cached production-source digest.
+    """
+    from src.runners.exact_cache_contract import numerical_source_digest
+
+    cache_digest = contract.get("numerical_source_sha256")
+    runtime_digest = numerical_source_digest()
+    if (
+        not isinstance(cache_digest, str)
+        or len(cache_digest) != 64
+        or any(c not in "0123456789abcdef" for c in cache_digest)
+    ):
+        raise RuntimeError("Z10 cache source identity is malformed")
+    compatibility = contract.get("source_compatibility")
+    if runtime_digest == cache_digest:
+        if compatibility is not None:
+            raise RuntimeError("Z10 source compatibility supplied for identical source")
+        return {
+            "schema": "identical_source_v1",
+            "cache_numerical_source_sha256": cache_digest,
+            "runtime_numerical_source_sha256": runtime_digest,
+            "compatibility_applied": False,
+        }
+
+    required = {
+        "schema",
+        "cache_source_commit",
+        "runtime_source_commit",
+        "cache_numerical_source_sha256",
+        "runtime_numerical_source_sha256",
+        "changed_source_path",
+        "change_id",
+        "cache_source_file_sha256",
+        "runtime_source_file_sha256",
+    }
+    if (
+        not isinstance(compatibility, dict)
+        or set(compatibility) != required
+        or compatibility.get("schema") != Z10_CACHE_SOURCE_COMPATIBILITY_SCHEMA
+        or compatibility.get("cache_source_commit") != Z10_CACHE_SOURCE_COMMIT
+        or compatibility.get("cache_numerical_source_sha256") != cache_digest
+        or compatibility.get("runtime_numerical_source_sha256") != runtime_digest
+        or compatibility.get("changed_source_path") != Z10_CACHE_SOURCE_FILE
+        or compatibility.get("change_id")
+        != "active_fe_output_scope_token_boundary_only_v1"
+    ):
+        raise RuntimeError("Z10 source digest mismatch lacks the exact reviewed compatibility")
+
+    repo_root = Path(__file__).resolve().parents[1]
+    runtime_commit = compatibility.get("runtime_source_commit")
+    if (
+        not isinstance(runtime_commit, str)
+        or len(runtime_commit) != 40
+        or any(c not in "0123456789abcdef" for c in runtime_commit)
+    ):
+        raise RuntimeError("Z10 runtime source commit is malformed")
+    try:
+        head = subprocess.run(
+            ["git", "rev-parse", "--verify", "HEAD"],
+            cwd=repo_root,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        ancestor = subprocess.run(
+            [
+                "git",
+                "merge-base",
+                "--is-ancestor",
+                Z10_CACHE_SOURCE_COMMIT,
+                runtime_commit,
+            ],
+            cwd=repo_root,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        cached_source = subprocess.run(
+            ["git", "show", f"{Z10_CACHE_SOURCE_COMMIT}:{Z10_CACHE_SOURCE_FILE}"],
+            cwd=repo_root,
+            check=True,
+            capture_output=True,
+        ).stdout
+        committed_runtime_source = subprocess.run(
+            ["git", "show", f"{runtime_commit}:{Z10_CACHE_SOURCE_FILE}"],
+            cwd=repo_root,
+            check=True,
+            capture_output=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise RuntimeError("Z10 cache source compatibility Git evidence is unavailable") from exc
+    runtime_path = repo_root / Z10_CACHE_SOURCE_FILE
+    if (
+        head != runtime_commit
+        or ancestor.returncode != 0
+        or runtime_path.is_symlink()
+        or not runtime_path.is_file()
+    ):
+        raise RuntimeError("Z10 cache/runtime source commits are not the reviewed worktree")
+    runtime_source = runtime_path.read_bytes()
+    if (
+        committed_runtime_source != runtime_source
+        or _sha256_bytes(cached_source)
+        != compatibility.get("cache_source_file_sha256")
+        or _sha256_bytes(runtime_source)
+        != compatibility.get("runtime_source_file_sha256")
+    ):
+        raise RuntimeError("Z10 cache/runtime source file hashes differ from the review")
+    _validate_exact_z10_output_scope_source_change(cached_source, runtime_source)
+    reconstructed_cache_digest = _numerical_source_digest_with_override(
+        repo_root / "src",
+        Z10_CACHE_SOURCE_FILE_RELATIVE_TO_SRC,
+        cached_source,
+    )
+    if reconstructed_cache_digest != cache_digest:
+        raise RuntimeError(
+            "Z10 runtime source cannot reconstruct the exact cached numerical identity"
+        )
+    return {
+        "schema": compatibility["schema"],
+        "cache_numerical_source_sha256": cache_digest,
+        "runtime_numerical_source_sha256": runtime_digest,
+        "cache_source_commit": Z10_CACHE_SOURCE_COMMIT,
+        "runtime_source_commit": runtime_commit,
+        "changed_source_path": Z10_CACHE_SOURCE_FILE,
+        "change_id": compatibility["change_id"],
+        "cache_source_file_sha256": compatibility["cache_source_file_sha256"],
+        "runtime_source_file_sha256": compatibility["runtime_source_file_sha256"],
+        "compatibility_applied": True,
+    }
+
+
+def _carrier_context_for_verified_cache(
+    context: dict[str, Any],
+    source_identity: dict[str, Any],
+) -> dict[str, Any]:
+    """Use the old digest only in the exact stored carrier context key."""
+    if not isinstance(context, dict):
+        raise RuntimeError("carrier cache context is not a dictionary")
+    cache_digest = source_identity.get("cache_numerical_source_sha256")
+    runtime_digest = source_identity.get("runtime_numerical_source_sha256")
+    supplied = context.get("numerical_source_sha256")
+    if supplied == cache_digest:
+        return dict(context)
+    if (
+        supplied != runtime_digest
+        or source_identity.get("compatibility_applied") is not True
+        or not isinstance(cache_digest, str)
+    ):
+        raise RuntimeError("carrier context does not match the reviewed source identity")
+    adapted = dict(context)
+    adapted["numerical_source_sha256"] = cache_digest
+    return adapted
+
+
+def _runtime_z10_source_identity(contract: dict[str, Any]) -> dict[str, Any]:
+    identity = contract.get("_z10_runtime_source_identity")
+    if not isinstance(identity, dict):
+        identity = _validate_z10_cache_source_identity(contract)
+        contract["_z10_runtime_source_identity"] = identity
+    from src.runners.exact_cache_contract import numerical_source_digest
+
+    if numerical_source_digest() != identity.get("runtime_numerical_source_sha256"):
+        raise RuntimeError("Z10 runtime numerical source changed after compatibility review")
+    return identity
+
+
 def _read_regular_file(path: Path) -> bytes:
     if path.is_symlink():
         raise RuntimeError(f"Z10 identity snapshot is symlinked: {path}")
@@ -116,9 +353,10 @@ def _verified_z10_prelu_payload_identity(
 ) -> dict[str, str]:
     """Derive legacy pre-LU identity fields from the validated run snapshots.
 
-    This compatibility adapter is kept in ``scripts`` so the frozen numerical
-    source digest remains unchanged. It runs at the worker's exact p6 adapter
-    boundary, after the worker has validated the original resolved-config bytes.
+    This compatibility adapter is kept in ``scripts`` so launch identity repair
+    stays separate from the numerical kernel. It runs at the worker's exact p6
+    adapter boundary, after the worker has validated the original resolved-config
+    bytes.
     """
     if (
         contract.get("profile_identity") != EXPECTED_PROFILE
@@ -169,10 +407,7 @@ def _verified_z10_prelu_payload_identity(
     ):
         raise RuntimeError("Z10 pre-LU compatibility scope differs from the exact attempt")
 
-    from src.runners.exact_cache_contract import numerical_source_digest
-
-    if numerical_source_digest() != contract.get("numerical_source_sha256"):
-        raise RuntimeError("Z10 numerical source identity differs from the frozen cache")
+    source_identity = _runtime_z10_source_identity(contract)
 
     target_root, _, _ = _target_roots(contract, environ)
     if (
@@ -252,7 +487,16 @@ def _verified_z10_prelu_payload_identity(
         "scope_sha256": scope_sha,
         "output_directory": str(run_directory),
         "identity_source": "worker_validated_run_manifest_and_immutable_snapshots_v1",
-        "numerical_source_sha256": contract.get("numerical_source_sha256"),
+        "numerical_source_sha256": source_identity["cache_numerical_source_sha256"],
+        "runtime_numerical_source_sha256": source_identity[
+            "runtime_numerical_source_sha256"
+        ],
+        "source_compatibility": {
+            "schema": source_identity["schema"],
+            "applied": source_identity["compatibility_applied"],
+            "changed_source_path": source_identity.get("changed_source_path"),
+            "change_id": source_identity.get("change_id"),
+        },
         "identity": identity,
     }
     _write_json_exclusive(run_directory / "z10_prelu_identity_compatibility.json", evidence)
@@ -608,10 +852,8 @@ def _install_z10_prelu_identity_adapter(
         raise RuntimeError("Z10 pre-LU identity adapter launch environment is incomplete")
     if environ.get("TASK40_GATE_CD_ATTEMPT_ID") != contract.get("target_attempt_id"):
         raise RuntimeError("Z10 pre-LU identity adapter attempt differs from its cache contract")
-    from src.runners.exact_cache_contract import numerical_source_digest
-
-    if numerical_source_digest() != contract.get("numerical_source_sha256"):
-        raise RuntimeError("Z10 live numerical source differs from the frozen cache identity")
+    source_identity = _validate_z10_cache_source_identity(contract)
+    contract["_z10_runtime_source_identity"] = source_identity
     if getattr(builtins, _Z10_IMPORT_GUARD_ATTRIBUTE, False):
         return
 
@@ -964,6 +1206,7 @@ def install(
         raise RuntimeError(f"unsupported exact cache reuse mode: {mode!r}")
     contract = _read_bound_contract(env)
     _install_z10_prelu_identity_adapter(contract, env)
+    source_identity = _runtime_z10_source_identity(contract)
     if parallel_cache is None:
         from src.solvers import parallel_tensor_cache as parallel_cache
     if carrier_module is None:
@@ -1094,11 +1337,11 @@ def install(
         requested = Path(root)
         if requested.is_symlink() or requested.resolve(strict=True) != carrier_target:
             raise RuntimeError("carrier loader requested an unreviewed cache root")
-        if context.get("numerical_source_sha256") != contract.get("numerical_source_sha256"):
-            raise RuntimeError("live carrier numerical source identity differs from cache contract")
+        source_identity = _runtime_z10_source_identity(contract)
+        cache_context = _carrier_context_for_verified_cache(context, source_identity)
         context_sha = _sha256_bytes(
             json.dumps(
-                context,
+                cache_context,
                 sort_keys=True,
                 separators=(",", ":"),
                 allow_nan=False,
@@ -1109,7 +1352,7 @@ def install(
         original_carrier_init(
             self,
             contract["source_carrier_root"],
-            context,
+            cache_context,
             **kwargs,
         )
         expected_root = Path(contract["source_carrier_checkpoint_root"]).resolve(strict=True)
@@ -1146,6 +1389,15 @@ def install(
                 "event": "carrier_checkpoint_restore_complete",
                 "source_carrier_checkpoint_root": contract["source_carrier_checkpoint_root"],
                 "restored_modes": len(restored),
+                "cache_numerical_source_sha256": source_identity[
+                    "cache_numerical_source_sha256"
+                ],
+                "runtime_numerical_source_sha256": source_identity[
+                    "runtime_numerical_source_sha256"
+                ],
+                "source_compatibility_applied": source_identity[
+                    "compatibility_applied"
+                ],
                 "cache_misses": 0,
                 "computed": 0,
                 "source_cache_writes_allowed": False,
