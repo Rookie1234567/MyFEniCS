@@ -12,6 +12,8 @@ from src.io.input_validation import (
     simulation_config_3d_from_normalized,
 )
 from src.io.native_capacity_profile import (
+    SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE,
+    SAXS_SIMPLE_GRATING_P6_DIRECT_CZ_PROFILE,
     SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
     TASK40_PHI90_D07C_G6_M8_N14_PROFILE,
     native_profile_facts,
@@ -136,6 +138,100 @@ def test_center_profile_has_independent_physics_modes_and_preserves_old_g6():
     direct = facts["campaign_authorization"]["direct_route"]
     assert direct["parent_mode_rectangle_max_abs_m_n"] == [8, 64]
     assert direct["active_mode_rectangle_max_abs_m_n"] == [8, 14]
+
+
+def test_one_axis_candidates_load_with_additive_profiles_and_keep_center_baseline():
+    from src.geometry.saxs_simple_grating_axis_plan import saxs_one_axis_plan
+
+    candidates = (
+        (
+            "x",
+            ROOT / "input/saxs_simple_grating_center_cx_p6_direct.dat",
+            SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE,
+        ),
+        (
+            "z",
+            ROOT / "input/saxs_simple_grating_center_cz_p6_direct.dat",
+            SAXS_SIMPLE_GRATING_P6_DIRECT_CZ_PROFILE,
+        ),
+    )
+    original = native_profile_facts(SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE)
+    original_comparison = original["component_options"][
+        "directional_mesh_comparison"
+    ]
+    original_resolved = load_and_resolve(INPUT).as_jsonable()
+
+    for axis, path, identity in candidates:
+        plan = saxs_one_axis_plan(axis)
+        resolved = load_and_resolve(path).as_jsonable()
+        facts = native_profile_facts(identity)
+        comparison = facts["component_options"]["directional_mesh_comparison"]
+        direct = facts["campaign_authorization"]["direct_route"]
+        route = _direct_run_contract(identity)
+
+        assert resolved["solver"]["native_capacity_profile"] == identity
+        assert resolved["run_id"].endswith(f"_c{axis}_v1")
+        assert resolved["discretization"]["mesh_axis_cell_counts"] == plan[
+            "axis_cell_counts"
+        ]
+        assert {
+            key: resolved["discretization"][f"mesh_axis_{key}_values"]
+            for key in "xyz"
+        } == plan["axes_nm"]
+        assert resolved["discretization"]["mesh_plan_id"] == plan["mesh_plan_id"]
+        assert resolved["discretization"]["mesh_plan_sha256"] == plan[
+            "mesh_plan_sha256"
+        ]
+        assert resolved["derived"]["native_capacity_profile"] == facts
+        assert comparison["case"] == plan["case"]
+        assert comparison["parent_case"] == "SAXS_G6_BASELINE"
+        assert comparison["changed_axis"] == axis
+        assert comparison["changed_axes"] == [axis]
+        assert comparison["changed_axes_vs_d07c_b"] == plan[
+            "changed_axes_vs_d07c_b"
+        ]
+        assert comparison["expected_axis_sha256_le_f64"] == plan[
+            "axis_sha256_le_f64"
+        ]
+        assert comparison["static_condensed_rows"] == plan["static_condensed_rows"]
+        assert facts["component_options"]["mode_selection"] == original[
+            "component_options"
+        ]["mode_selection"]
+        assert facts["component_options"]["surface_quadrature"]["degree"] == 81
+        assert facts["component_options"]["volume_quadrature"]["degree"] == 15
+        assert facts["condensed_route"]["name"] == original["condensed_route"]["name"]
+        assert numeric_factor_blas_thread_choices(identity) == {1, 8}
+        assert direct["mesh_plan_id"] == plan["mesh_plan_id"]
+        assert direct["static_condensed_rows"] == plan["static_condensed_rows"]
+        assert route["family"] == "task40_phi90"
+        assert route["comparison_family"] == "saxs_simple_grating_center"
+        assert route["task40_mesh_plan_family"] == "saxs_one_axis"
+        assert route["task40_mesh_case"] == plan["case"]
+        assert route["task40_changed_axes"] == [axis]
+        assert route["task40_changed_axes_vs_d07c_b"] == plan[
+            "changed_axes_vs_d07c_b"
+        ]
+        assert route["d13_case"] is None
+        assert route["parent_count"] == 4488
+        assert route["active_count"] == 1088
+        assert route["surface_quadrature_degree"] == 81
+        assert route["direct_factor_evidence"]["mode_keys"] == [
+            [side, m, 0, pol]
+            for side in ("top", "bottom")
+            for m, pol in ((-8, "p"), (0, "s"), (8, "p"))
+        ]
+
+    # Candidate fact construction must not mutate the already published SAXS baseline.
+    baseline_after = native_profile_facts(SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE)
+    assert baseline_after == original
+    assert original_resolved["solver"]["native_capacity_profile"] == (
+        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE
+    )
+    assert original_resolved["discretization"]["mesh_axis_cell_counts"] == [6, 200, 8]
+    assert original_comparison["axis_grid_reuse_scope"] == "mesh_coordinates_only"
+    assert original_resolved["discretization"]["mesh_plan_id"] == (
+        original_comparison["mesh_plan_id"]
+    )
 
 
 def test_center_live_inventory_preflight_uses_runner_boundary_scaling():

@@ -181,8 +181,27 @@ TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE = TASK40_PHI90_D07C_PROFILE_BY_CASE[
 SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE = (
     "saxs_simple_grating_0p7135227949_phi84_m8_nminus14_to1_p6_direct_v1"
 )
+SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE = (
+    "saxs_simple_grating_0p7135227949_phi84_m8_nminus14_to1_p6_direct_cx_v1"
+)
+SAXS_SIMPLE_GRATING_P6_DIRECT_CZ_PROFILE = (
+    "saxs_simple_grating_0p7135227949_phi84_m8_nminus14_to1_p6_direct_cz_v1"
+)
+SAXS_SIMPLE_GRATING_P6_DIRECT_ONE_AXIS_PROFILES = frozenset(
+    {
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CZ_PROFILE,
+    }
+)
+SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE_AXIS = {
+    SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE: "x",
+    SAXS_SIMPLE_GRATING_P6_DIRECT_CZ_PROFILE: "z",
+}
 SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES = frozenset(
-    {SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE}
+    {
+        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
+        *SAXS_SIMPLE_GRATING_P6_DIRECT_ONE_AXIS_PROFILES,
+    }
 )
 TASK40_PHI90_H15_B_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_H15_B_p6_direct_v1"
@@ -495,9 +514,10 @@ for _task40_profile in TASK40_PHI90_D07C_PROFILES:
 NATIVE_CASES[TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE] = (
     13.5, (10.0,), None, None, None
 )
-NATIVE_CASES[SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE] = (
-    0.7135227949132827, (0.7,), None, None, None
-)
+for _saxs_direct_profile in sorted(SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES):
+    NATIVE_CASES[_saxs_direct_profile] = (
+        0.7135227949132827, (0.7,), None, None, None
+    )
 for _f5_direct_profile in V6_F5_P6_DIRECT_PROFILES:
     NATIVE_CASES[_f5_direct_profile] = (5.0, (4.0,), None, None, None)
 NATIVE_PROFILES = tuple(NATIVE_CASES)
@@ -2208,7 +2228,7 @@ def _task40_saxs_simple_grating_profile_facts(identity):
     """Return the distinct SAXS-center profile with a fresh finite-mode identity."""
     from copy import deepcopy
 
-    if identity != SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE:
+    if identity not in SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES:
         raise ValueError(f"unsupported SAXS simple-grating profile: {identity}")
     base = deepcopy(
         _task40_phi90_d07c_profile_facts(
@@ -2462,6 +2482,86 @@ def _task40_saxs_simple_grating_profile_facts(identity):
         "pss_uss_sampling": "disabled",
         "time_limit_mode": "none",
     }
+    if identity in SAXS_SIMPLE_GRATING_P6_DIRECT_ONE_AXIS_PROFILES:
+        from src.geometry.saxs_simple_grating_axis_plan import saxs_one_axis_plan
+
+        axis = SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE_AXIS[identity]
+        plan = saxs_one_axis_plan(axis)
+        counts = [int(value) for value in plan["axis_cell_counts"]]
+        expected_cells = int(plan["expected_global_cell_count"])
+        comparison.update(
+            case=plan["case"],
+            display_name=(
+                "SAXS center; x-bisected from G6 axes"
+                if axis == "x"
+                else "SAXS center; pillar z 30-to-15 nm from G6 axes"
+            ),
+            axis_comparison_parent="SAXS_G6_BASELINE",
+            parent_case="SAXS_G6_BASELINE",
+            changed_axis=axis,
+            changed_axes=[axis],
+            changed_axes_vs_d07c_b=list(plan["changed_axes_vs_d07c_b"]),
+            parent_axis_sha256_le_f64=dict(
+                plan["parent_axis_sha256_le_f64"]
+            ),
+            base_axis_sha256_le_f64=dict(
+                plan["parent_axis_sha256_le_f64"]
+            ),
+            axis_cell_counts=counts,
+            expected_global_cell_count=expected_cells,
+            expected_material_tag_counts=dict(
+                plan["expected_material_tag_counts"]
+            ),
+            static_condensed_rows=dict(plan["static_condensed_rows"]),
+            mesh_plan_id=plan["mesh_plan_id"],
+            mesh_plan_sha256=plan["mesh_plan_sha256"],
+            axes_nm={key: list(values) for key, values in plan["axes_nm"].items()},
+            expected_axis_sha256_le_f64=dict(plan["axis_sha256_le_f64"]),
+            d07c_b_axis_sha256_le_f64=dict(plan["d07c_b_axis_sha256_le_f64"]),
+            explicit_axis_counts_in_input=True,
+            only_axis_changes_from_parent=[axis],
+        )
+        comparison.pop("only_axis_changes_from_B", None)
+        base["mesh_evidence_family"] = "SAXS_center_one_axis_refinement"
+        base["runner_summary_prefix"] = (
+            "saxs_simple_grating_center_p6_direct_saxs_one_axis_"
+            f"{axis}_m8_nminus14_to1"
+        )
+        base["route"] = (
+            "SAXS_SIMPLE_GRATING_CENTER_P6_CONDENSED_DIRECT_M8_N14_ONE_AXIS_"
+            f"{axis.upper()}"
+        )
+        options.update(
+            task_family="saxs_simple_grating_center_one_axis_mesh_modes_direct",
+            expected_axis_cell_counts=counts,
+            expected_global_cell_count=expected_cells,
+            mesh_axis_authority=(
+                "new_SAXS_one_axis_frozen_plan_relative_to_current_G6_baseline"
+            ),
+        )
+        base["condensed_route"]["expected_global_cell_count"] = expected_cells
+        direct_route.update(
+            mesh_coordinates_reused_from="SAXS_G6_baseline_plus_one_axis",
+            case=plan["case"],
+            mesh_plan_id=plan["mesh_plan_id"],
+            mesh_plan_sha256=plan["mesh_plan_sha256"],
+            parent_axis_sha256_le_f64=dict(
+                plan["parent_axis_sha256_le_f64"]
+            ),
+            d07c_b_axis_sha256_le_f64=dict(plan["d07c_b_axis_sha256_le_f64"]),
+            changed_axes=[axis],
+            changed_axes_vs_d07c_b=list(plan["changed_axes_vs_d07c_b"]),
+            expected_global_cell_count=expected_cells,
+            expected_material_tag_counts=dict(
+                plan["expected_material_tag_counts"]
+            ),
+            static_condensed_rows=dict(plan["static_condensed_rows"]),
+        )
+        campaign["source"] = (
+            "one user-authorized SAXS center single-axis target comparison; "
+            f"only {axis} differs from the accepted SAXS G6 mesh, with all "
+            "physical, modal, condensed-operator, q81/q15, and LU8 settings retained"
+        )
     return base
 
 
@@ -4906,7 +5006,6 @@ def _validate_task40_phi90_r14_case(config: dict, identity: str) -> None:
 def _validate_saxs_simple_grating_case(config: dict, identity: str) -> None:
     """Validate exact SAXS-center physics and the reused G6 mesh coordinates."""
     from .input_loader import InputError
-    from src.geometry.task40_phi90_d07c_axis_plan import validate_frozen_d07c_axes
 
     facts = _task40_saxs_simple_grating_profile_facts(identity)
 
@@ -4971,12 +5070,32 @@ def _validate_saxs_simple_grating_case(config: dict, identity: str) -> None:
             "mesh_axis_x_values", "mesh_axis_y_values", "mesh_axis_z_values",
         )
     }
-    try:
-        validate_frozen_d07c_axes(axes)
-    except ValueError as exc:
-        raise InputError(f"{identity} has invalid reused G6 mesh coordinates: {exc}") from exc
-    if tuple(discretization.get("mesh_axis_cell_counts") or ()) != (6, 200, 8):
-        raise InputError(f"{identity} fixes mesh axis counts to (6,200,8)")
+    if identity in SAXS_SIMPLE_GRATING_P6_DIRECT_ONE_AXIS_PROFILES:
+        from src.geometry.saxs_simple_grating_axis_plan import (
+            validate_saxs_one_axis_plan,
+        )
+
+        try:
+            validate_saxs_one_axis_plan(axes)
+        except ValueError as exc:
+            raise InputError(f"{identity} has invalid SAXS one-axis mesh coordinates: {exc}") from exc
+        expected_counts = tuple(
+            facts["component_options"]["expected_axis_cell_counts"]
+        )
+    else:
+        from src.geometry.task40_phi90_d07c_axis_plan import (
+            validate_frozen_d07c_axes,
+        )
+
+        try:
+            validate_frozen_d07c_axes(axes)
+        except ValueError as exc:
+            raise InputError(f"{identity} has invalid reused G6 mesh coordinates: {exc}") from exc
+        expected_counts = (6, 200, 8)
+    if tuple(discretization.get("mesh_axis_cell_counts") or ()) != expected_counts:
+        raise InputError(
+            f"{identity} fixes mesh axis counts to {expected_counts!r}"
+        )
     if discretization.get("mesh_axis_z_profile") is not None:
         raise InputError(f"{identity} requires explicit mesh axes, not a z-profile alias")
     for key, expected in {

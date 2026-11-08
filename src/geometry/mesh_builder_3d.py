@@ -534,6 +534,20 @@ def _stage4_axis_plan(cfg: SimulationConfig3D, comm_size: int) -> HexaAxisPlan:
                         f"invalid Task40 D07C frozen mesh input: {exc}"
                     ) from exc
         if frozen_axes is None:
+            from src.geometry.saxs_simple_grating_axis_plan import (
+                SAXS_ONE_AXIS_PLAN_IDS,
+                validate_saxs_one_axis_plan,
+            )
+
+            if cfg.mesh_plan_id in SAXS_ONE_AXIS_PLAN_IDS:
+                try:
+                    frozen_axes = validate_saxs_one_axis_plan(plan_identity)
+                    frozen_plan_family = "saxs_simple_grating_one_axis"
+                except ValueError as exc:
+                    raise ValueError(
+                        f"invalid SAXS one-axis frozen mesh input: {exc}"
+                    ) from exc
+        if frozen_axes is None:
             from src.geometry.task40_phi90_d5c_axis_plan import (
                 D5C_AXIS_PLAN_IDS,
                 validate_frozen_d5c_axes,

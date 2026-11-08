@@ -141,6 +141,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
     from src.io.native_capacity_profile import (
         DISPERSION_FLAT_P6_PROFILES,
         SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_ONE_AXIS_PROFILES,
         TASK40_PHI90_D07C_PROFILES,
         TASK40_PHI90_D5_PROFILES,
         TASK40_PHI90_D5C_PROFILES,
@@ -304,9 +305,18 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         d15_case = profile_identity in TASK40_PHI90_D15_PROFILES
         d5c_case = profile_identity in TASK40_PHI90_D5C_PROFILES
         saxs_case = profile_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES
-        d07c_case = profile_identity in TASK40_PHI90_D07C_PROFILES or saxs_case
+        saxs_one_axis_case = (
+            profile_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_ONE_AXIS_PROFILES
+        )
+        d07c_case = profile_identity in TASK40_PHI90_D07C_PROFILES or (
+            saxs_case and not saxs_one_axis_case
+        )
         d5_case = profile_identity in TASK40_PHI90_D5_PROFILES
+        is_d13_case = not any(
+            (saxs_case, h15_case, d5_case, d5c_case, d07c_case, d15_case)
+        )
         family_label = (
+            "saxs_one_axis" if saxs_one_axis_case else
             "d15" if d15_case else "d07c" if d07c_case else "d5c" if d5c_case else "d5" if d5_case
             else "h15" if h15_case else "d13"
         )
@@ -373,6 +383,15 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "task40_expected_axis_sha256_le_f64": expected_axis_hashes,
             "task40_base_axis_sha256_le_f64": base_axis_hashes,
             "task40_expected_material_tag_counts": expected_tag_counts,
+            "task40_changed_axes_vs_d07c_b": list(
+                mesh_case.get("changed_axes_vs_d07c_b", ())
+            ),
+            "task40_d07c_b_axis_sha256_le_f64": dict(
+                mesh_case.get("d07c_b_axis_sha256_le_f64", {})
+            ),
+            "task40_static_condensed_rows": dict(
+                mesh_case.get("static_condensed_rows", {})
+            ),
             "profile_identity": profile_identity,
             "truncated": truncated,
             "operator_scope": route_scope,
@@ -457,21 +476,21 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
                     "write_visualization_files", True
                 )
             ),
-            "d13_case": case_name if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None,
+            "d13_case": case_name if is_d13_case else None,
             "changed_axis": mesh_case["changed_axis"],
-            "d13_mesh_plan_id": plan_id if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None,
-            "d13_mesh_plan_sha256": plan_sha if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None,
+            "d13_mesh_plan_id": plan_id if is_d13_case else None,
+            "d13_mesh_plan_sha256": plan_sha if is_d13_case else None,
             "d13_expected_axis_sha256_le_f64": (
-                expected_axis_hashes if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None
+                expected_axis_hashes if is_d13_case else None
             ),
             "d13_base_axis_sha256_le_f64": (
-                base_axis_hashes if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None
+                base_axis_hashes if is_d13_case else None
             ),
             "d13_axis_comparison_parent": mesh_case.get(
                 "axis_comparison_parent", "B"
-            ) if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None,
+            ) if is_d13_case else None,
             "d13_expected_material_tag_counts": (
-                expected_tag_counts if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None
+                expected_tag_counts if is_d13_case else None
             ),
             "diagnostic_scope": profile.get("diagnostic_scope") or (
                 f"TASK40_{route_label}_{case_name}_"
@@ -1987,6 +2006,145 @@ def _task40_d07c_mesh_evidence(
     }
 
 
+def _saxs_one_axis_mesh_evidence(
+    levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Check live SAXS C axes and tags against both recorded mesh lineages."""
+    from src.geometry.saxs_simple_grating_axis_plan import saxs_one_axis_plan
+
+    axis = str(route["task40_changed_axis"])
+    plan = saxs_one_axis_plan(axis)
+    case_name = str(route["task40_mesh_case"])
+    if case_name != plan["case"]:
+        raise ValueError(f"SAXS one-axis case differs from its plan: {case_name}")
+    if route.get("task40_mesh_plan_id") != plan["mesh_plan_id"]:
+        raise ValueError(f"SAXS {case_name} mesh-plan identity differs from its plan")
+    if route.get("task40_mesh_plan_sha256") != plan["mesh_plan_sha256"]:
+        raise ValueError(f"SAXS {case_name} mesh-plan SHA256 differs from its plan")
+
+    msh = levels["mesh_data"].mesh
+    axes = {
+        key: tuple(
+            float(value)
+            for value in np.unique(np.asarray(msh.geometry.x)[:, index])
+        )
+        for index, key in enumerate(("x", "y", "z"))
+    }
+    expected_axes = {
+        key: tuple(float(value) for value in plan["axes_nm"][key])
+        for key in ("x", "y", "z")
+    }
+    if axes != expected_axes:
+        raise ValueError(
+            f"actual SAXS {case_name} coordinates differ from the frozen plan"
+        )
+    hashes = {
+        key: hashlib.sha256(np.asarray(values, dtype="<f8").tobytes()).hexdigest()
+        for key, values in axes.items()
+    }
+    if hashes != route["task40_expected_axis_sha256_le_f64"]:
+        raise ValueError(f"actual SAXS {case_name} axis hashes differ from profile facts")
+    if hashes != plan["axis_sha256_le_f64"]:
+        raise ValueError(
+            f"actual SAXS {case_name} axis hashes differ from the frozen plan"
+        )
+
+    if route.get("task40_parent_case") != plan["parent_case"]:
+        raise ValueError(f"SAXS {case_name} parent case differs from its plan")
+    if route.get("task40_parent_axis_sha256_le_f64") != plan[
+        "parent_axis_sha256_le_f64"
+    ]:
+        raise ValueError(f"SAXS {case_name} SAXS-baseline hashes differ from its plan")
+    if route.get("task40_base_axis_sha256_le_f64") != plan[
+        "parent_axis_sha256_le_f64"
+    ]:
+        raise ValueError(f"SAXS {case_name} base-axis hashes differ from its plan")
+    changed_vs_saxs = [
+        key
+        for key in ("x", "y", "z")
+        if hashes[key] != plan["parent_axis_sha256_le_f64"][key]
+    ]
+    if changed_vs_saxs != [axis] or list(route.get("task40_changed_axes", ())) != [axis]:
+        raise ValueError(
+            f"SAXS {case_name} must change exactly {axis} from its SAXS baseline"
+        )
+
+    d07c_b_hashes = dict(plan["d07c_b_axis_sha256_le_f64"])
+    if route.get("task40_d07c_b_axis_sha256_le_f64") != d07c_b_hashes:
+        raise ValueError(f"SAXS {case_name} D07C-B lineage hashes differ from its plan")
+    changed_vs_d07c_b = [
+        key for key in ("x", "y", "z") if hashes[key] != d07c_b_hashes[key]
+    ]
+    if (
+        changed_vs_d07c_b != plan["changed_axes_vs_d07c_b"]
+        or list(route.get("task40_changed_axes_vs_d07c_b", ()))
+        != plan["changed_axes_vs_d07c_b"]
+    ):
+        raise ValueError(f"SAXS {case_name} D07C-B changed-axis lineage differs from its plan")
+
+    counts = tuple(len(axes[key]) - 1 for key in ("x", "y", "z"))
+    cells = int(msh.topology.index_map(msh.topology.dim).size_global)
+    expected_counts = tuple(int(value) for value in plan["axis_cell_counts"])
+    expected_cells = int(plan["expected_global_cell_count"])
+    if (
+        counts != expected_counts
+        or counts != tuple(route["expected_axis_cell_counts"])
+    ):
+        raise ValueError(
+            f"actual SAXS {case_name} axis cell counts differ from profile facts"
+        )
+    if cells != expected_cells or cells != int(route["expected_global_cell_count"]):
+        raise ValueError(f"actual SAXS {case_name} cell count differs from profile facts")
+    if str(msh.topology.cell_name()) != "hexahedron":
+        raise ValueError("SAXS one-axis profiles require hexahedral cells")
+
+    tag_values = np.asarray(levels["mesh_data"].cell_tags.values, dtype=np.int64)
+    raw_tags = plan["expected_material_tag_counts"]
+    expected_tags = {
+        int(cfg.tags.air): int(raw_tags["1"]),
+        int(cfg.tags.substrate): int(raw_tags["2"]),
+        int(cfg.tags.grating): int(raw_tags["3"]),
+    }
+    actual_tags = {
+        tag: int(np.count_nonzero(tag_values == tag)) for tag in expected_tags
+    }
+    if tag_values.size != cells or actual_tags != expected_tags:
+        raise ValueError(
+            f"actual SAXS {case_name} material tags differ: "
+            f"{actual_tags} != {expected_tags}"
+        )
+
+    return {
+        "status": "PASS",
+        "profile": route["profile_identity"],
+        "family": route.get(
+            "mesh_evidence_family", "SAXS_center_one_axis_refinement"
+        ),
+        "case": case_name,
+        "parent_case": plan["parent_case"],
+        "changed_axis": axis,
+        "changed_axes": changed_vs_saxs,
+        "changed_axes_vs_d07c_b": changed_vs_d07c_b,
+        "geometry": "rectangular_block_grating",
+        "cell_type": "hexahedron",
+        "actual_global_cell_count": cells,
+        "axis_cell_counts": list(counts),
+        "axis_sha256_le_f64": hashes,
+        "parent_axis_sha256_le_f64": dict(plan["parent_axis_sha256_le_f64"]),
+        "d07c_b_axis_sha256_le_f64": d07c_b_hashes,
+        "actual_axes_match_frozen_saxs_one_axis_coordinates": True,
+        "exactly_one_axis_changed_from_saxs_g6_baseline": True,
+        "d07c_b_lineage_recorded_separately": True,
+        "material_tag_counts": {str(tag): count for tag, count in actual_tags.items()},
+        "expected_material_tag_counts": {
+            str(tag): count for tag, count in expected_tags.items()
+        },
+        "static_condensed_rows": dict(plan["static_condensed_rows"]),
+        "static_row_estimate_is_not_live_matrix_qa": True,
+        "mpi_size": int(msh.comm.size),
+    }
+
+
 def _task40_d5_mesh_evidence(
     levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
 ) -> dict[str, Any]:
@@ -3400,6 +3558,8 @@ def run_p6_condensed_direct(
         elif route["family"] == "task40_phi90":
             if route["task40_mesh_plan_family"] == "d07c":
                 mesh_evidence = _task40_d07c_mesh_evidence(levels, cfg, route)
+            elif route["task40_mesh_plan_family"] == "saxs_one_axis":
+                mesh_evidence = _saxs_one_axis_mesh_evidence(levels, cfg, route)
             elif route["task40_mesh_plan_family"] == "d5c":
                 mesh_evidence = _task40_d5c_mesh_evidence(levels, cfg, route)
             elif route["task40_mesh_plan_family"] == "d15":
