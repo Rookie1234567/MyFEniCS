@@ -6,6 +6,8 @@ from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from src.io.execution_plan import build_execution_plan
 from src.io.input_validation import (
     load_and_resolve,
@@ -36,9 +38,9 @@ SOURCE_SHA = "a5c8" * 10
 WORKER_CPUS = list(range(16, 24))
 
 
-def _bootstrap_roundtrip(tmp_path):
-    specification = load_and_resolve(INPUT)
-    run_directory = (tmp_path / "center-run").resolve()
+def _bootstrap_roundtrip(tmp_path, input_path=INPUT):
+    specification = load_and_resolve(input_path)
+    run_directory = (tmp_path / f"{input_path.stem}-run").resolve()
     run_directory.mkdir()
     specification = replace(
         specification,
@@ -265,7 +267,17 @@ def test_center_live_inventory_preflight_uses_runner_boundary_scaling():
     assert preflight["active_power_carrying_count"] == 1034
 
 
-def test_center_native_guard_uses_sampled_one_socket_reservation(monkeypatch, tmp_path):
+@pytest.mark.parametrize(
+    "profile_identity",
+    [
+        pytest.param(SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE, id="baseline"),
+        pytest.param(SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE, id="cx"),
+        pytest.param(SAXS_SIMPLE_GRATING_P6_DIRECT_CZ_PROFILE, id="cz"),
+    ],
+)
+def test_center_native_guard_uses_sampled_one_socket_reservation(
+    monkeypatch, tmp_path, profile_identity
+):
     from src.runners import task40_d07c_g5_join
 
     reservation = {
@@ -328,7 +340,7 @@ def test_center_native_guard_uses_sampled_one_socket_reservation(monkeypatch, tm
     )
 
     with native_capacity.native_capacity_guard(
-        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
+        profile_identity,
         memory_policy="interleave_nodes0_1",
         numeric_factor_blas_threads=8,
     ) as (_root, isolation):
@@ -342,7 +354,7 @@ def test_center_native_guard_uses_sampled_one_socket_reservation(monkeypatch, tm
         assert isolation["g6_observational_join"] is None
         assert isolation["node_memory_admission"]["policy"] == "interleave_nodes0_1"
         assert _validate_numeric_factor_cpu_reservation(
-            SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
+            profile_identity,
             8,
             isolation,
         ) == list(range(8))
@@ -356,21 +368,46 @@ def test_center_native_guard_uses_sampled_one_socket_reservation(monkeypatch, tm
     assert admission_calls[1][3]["supervisor_cpu"] == 8
 
 
-def test_profile_contract_and_real_loader_to_plan_manifest_worker_roundtrip(tmp_path):
+@pytest.mark.parametrize(
+    ("input_path", "profile_identity", "mesh_plan_family"),
+    [
+        pytest.param(
+            INPUT,
+            SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
+            "d07c",
+            id="baseline",
+        ),
+        pytest.param(
+            ROOT / "input/saxs_simple_grating_center_cx_p6_direct.dat",
+            SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE,
+            "saxs_one_axis",
+            id="cx",
+        ),
+        pytest.param(
+            ROOT / "input/saxs_simple_grating_center_cz_p6_direct.dat",
+            SAXS_SIMPLE_GRATING_P6_DIRECT_CZ_PROFILE,
+            "saxs_one_axis",
+            id="cz",
+        ),
+    ],
+)
+def test_profile_contract_and_real_loader_to_plan_manifest_worker_roundtrip(
+    tmp_path, input_path, profile_identity, mesh_plan_family
+):
     specification, run_directory, resolved_sha, plan, manifest = _bootstrap_roundtrip(
-        tmp_path
+        tmp_path, input_path
     )
-    route = _direct_run_contract(SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE)
+    route = _direct_run_contract(profile_identity)
 
     assert route["family"] == "task40_phi90"  # internal finite-window P6 route
     assert route["comparison_family"] == "saxs_simple_grating_center"
-    assert route["task40_mesh_plan_family"] == "d07c"
-    assert route["profile_identity"] == SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE
+    assert route["task40_mesh_plan_family"] == mesh_plan_family
+    assert route["profile_identity"] == profile_identity
     assert route["parent_count"] == 4488
     assert route["active_count"] == 1088
     assert route["signed_rectangle_bounds_mn"] == [-8, 8, -14, 1]
     assert manifest["native_capacity_profile_identity"] == (
-        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE
+        profile_identity
     )
     assert manifest["native_capacity_contract"]["resource_stop_policy"] == (
         "host_available_floor_v1"

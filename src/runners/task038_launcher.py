@@ -94,7 +94,7 @@ def _validate_numeric_factor_cpu_reservation(
 ) -> list[int] | None:
     """Require BLAS thread screens to match the reviewed physical-core set."""
     from src.io.native_capacity_profile import (
-        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES,
         TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
         TASK40_PHI90_D07C_G6_M8_N14_PROFILE,
         numeric_factor_blas_thread_choices,
@@ -110,7 +110,7 @@ def _validate_numeric_factor_cpu_reservation(
         )
 
     is_g6_4 = profile_identity == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE
-    is_saxs_center = profile_identity == SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE
+    is_saxs_center = profile_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES
     if numeric_factor_blas_threads is None and not is_g6_4:
         return None
 
@@ -620,7 +620,7 @@ def launch_specification(
         )
     from src.io.native_capacity_profile import (
         P6_CONDENSED_DIRECT_PROFILES,
-        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES,
         TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
         native_capacity_profile_identity,
         native_profile_facts,
@@ -801,17 +801,17 @@ def launch_specification(
         cache_home.mkdir(exist_ok=False)
         manifest['execution_cache'] = dict(path=str(cache_home.resolve()), empty_before_launch=not any(cache_home.iterdir()))
         _write_json(run_directory/'run_manifest.json', manifest)
-    d07c_worker_cpus_override = None
-    if native_identity == SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE:
+    profiled_worker_cpus_override = None
+    if native_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES:
         if numeric_factor_blas_threads not in {1, 8}:
             raise InputError(
                 'SAXS center launch requires an explicit 1- or 8-thread numeric-LU choice'
             )
-        d07c_worker_cpus_override = numeric_factor_worker_affinity
+        profiled_worker_cpus_override = numeric_factor_worker_affinity
     if native_identity == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE:
-        d07c_worker_cpus_override = numeric_factor_worker_affinity
+        profiled_worker_cpus_override = numeric_factor_worker_affinity
     elif native_identity == G5_PROFILE or native_identity in G6_SCOPED_PROFILES:
-        d07c_worker_cpus_override = list(
+        profiled_worker_cpus_override = list(
             (prelaunch_isolation or {}).get('worker_affinity', [])
         )
     plan = build_execution_plan(
@@ -823,7 +823,7 @@ def launch_specification(
         adapter_identity=adapter,
         contract_probe=contract_probe,
         setup_only=setup_only,
-        worker_cpus_override=d07c_worker_cpus_override,
+        worker_cpus_override=profiled_worker_cpus_override,
     )
     if prelaunch_isolation is not None or setup_only:
         manifest['worker_command'] = list(plan.argv)

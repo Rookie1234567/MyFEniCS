@@ -364,7 +364,7 @@ def native_capacity_guard(
     from src.io.native_capacity_profile import (
         TASK40_PHI90_P6_DIRECT_PROFILES,
         TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
-        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES,
         native_profile_facts,
         numeric_factor_blas_thread_choices,
     )
@@ -379,7 +379,7 @@ def native_capacity_guard(
     )
     observational_profile = profile == G5_PROFILE or profile in G6_SCOPED_PROFILES
     dynamic_small_profile = profile == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE
-    dynamic_saxs_profile = profile == SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE
+    dynamic_saxs_profile = profile in SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES
     observational_case = (
         'G5' if profile == G5_PROFILE
         else g6_case_for_profile(profile) if profile in G6_SCOPED_PROFILES

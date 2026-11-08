@@ -170,7 +170,7 @@ def build_execution_plan(
     from .native_capacity_profile import (
         NATIVE_PROFILES,
         P6_CONDENSED_DIRECT_PROFILES,
-        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES,
         TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
         V7_ANISO_N0_P4_PROFILES,
         native_capacity_profile_identity,
@@ -187,7 +187,7 @@ def build_execution_plan(
         from src.runners.task40_d07c_g5_join import (
             G5_PROFILE, G6_N14_PROFILE, G6_SCOPED_PROFILES, g6_case_for_profile,
         )
-        if profile_identity == SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE:
+        if profile_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES:
             allowed_worker_counts = numeric_factor_blas_thread_choices(
                 profile_identity
             )
