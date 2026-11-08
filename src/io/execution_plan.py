@@ -170,6 +170,7 @@ def build_execution_plan(
     from .native_capacity_profile import (
         NATIVE_PROFILES,
         P6_CONDENSED_DIRECT_PROFILES,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
         TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
         V7_ANISO_N0_P4_PROFILES,
         native_capacity_profile_identity,
@@ -186,7 +187,23 @@ def build_execution_plan(
         from src.runners.task40_d07c_g5_join import (
             G5_PROFILE, G6_N14_PROFILE, G6_SCOPED_PROFILES, g6_case_for_profile,
         )
-        if profile_identity == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE:
+        if profile_identity == SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE:
+            allowed_worker_counts = numeric_factor_blas_thread_choices(
+                profile_identity
+            )
+            if (
+                worker_cpus_override is None
+                or len(worker_cpus_override) not in allowed_worker_counts
+                or any(type(cpu) is not int or cpu < 0 for cpu in worker_cpus_override)
+                or len(set(worker_cpus_override)) != len(worker_cpus_override)
+            ):
+                raise InputError(
+                    "SAXS center execution plan requires its sampled 1- or 8-core reservation"
+                )
+            if specification.execution.get("native_memory_policy") != "interleave_nodes0_1":
+                raise InputError("SAXS center rank requires interleave_nodes0_1")
+            worker_cpus = list(worker_cpus_override)
+        elif profile_identity == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE:
             allowed_worker_counts = numeric_factor_blas_thread_choices(
                 profile_identity
             )

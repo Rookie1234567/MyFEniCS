@@ -178,6 +178,12 @@ TASK40_PHI90_D07C_G6_M8_N14_PROFILE = TASK40_PHI90_D07C_PROFILE_BY_CASE[
 TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE = TASK40_PHI90_D07C_PROFILE_BY_CASE[
     "G6_4_M2_N2"
 ]
+SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE = (
+    "saxs_simple_grating_0p7135227949_phi84_m8_nminus14_to1_p6_direct_v1"
+)
+SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES = frozenset(
+    {SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE}
+)
 TASK40_PHI90_H15_B_P6_DIRECT_PROFILE = (
     "task40para_phi90_13p5_H15_B_p6_direct_v1"
 )
@@ -384,6 +390,7 @@ P6_CONDENSED_DIRECT_PROFILES = (
     | V6_F5_P6_DIRECT_PROFILES
     | DISPERSION_FLAT_P6_PROFILES
     | TASK40_PHI90_P6_DIRECT_PROFILES
+    | SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES
 )
 V7_ANISO_N0_PROFILES = (
     V7_ANISO_N0_P4_PROFILES | V7_ANISO_N0_P6_DIRECT_PROFILES
@@ -488,6 +495,9 @@ for _task40_profile in TASK40_PHI90_D07C_PROFILES:
 NATIVE_CASES[TASK40_PHI90_D13_R14_P6_DIRECT_PROFILE] = (
     13.5, (10.0,), None, None, None
 )
+NATIVE_CASES[SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE] = (
+    0.7135227949132827, (0.7,), None, None, None
+)
 for _f5_direct_profile in V6_F5_P6_DIRECT_PROFILES:
     NATIVE_CASES[_f5_direct_profile] = (5.0, (4.0,), None, None, None)
 NATIVE_PROFILES = tuple(NATIVE_CASES)
@@ -552,6 +562,7 @@ NATIVE_TIME_LIMIT_MODES.update(
             *V6_F5_P6_DIRECT_PROFILES,
             *DISPERSION_FLAT_P6_PROFILES,
             *TASK40_PHI90_P6_DIRECT_PROFILES,
+            *SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES,
         )
     }
 )
@@ -2193,6 +2204,267 @@ def _task40_phi90_d07c_profile_facts(identity):
     return base
 
 
+def _task40_saxs_simple_grating_profile_facts(identity):
+    """Return the distinct SAXS-center profile with a fresh finite-mode identity."""
+    from copy import deepcopy
+
+    if identity != SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE:
+        raise ValueError(f"unsupported SAXS simple-grating profile: {identity}")
+    base = deepcopy(
+        _task40_phi90_d07c_profile_facts(
+            TASK40_PHI90_D07C_G6_M8_N14_PROFILE
+        )
+    )
+    operator_scope = (
+        "saxs_simple_grating_lambda0p7135227949132827_grazing0p9_phi84_"
+        "Mminus8to8_Nminus14to1_boundary_magnitude_scaled_r5_finite"
+    )
+    diagnostic_scope = (
+        "SAXS center: lambda=0.7135227949132827 nm, grazing=0.9 deg, "
+        "FEM phi=84 deg, finite signed M[-8,8], N[-14,1]"
+    )
+    reference_label = "SAXS_M8_NMINUS14_TO1"
+    parent_bounds = [-8, 8, -64, 1]
+    active_bounds = [-8, 8, -14, 1]
+    mode_selection = {
+        "schema": "task40.dtn-mode-selection.v1",
+        "policy": "explicit_signed_subrectangle_from_parent_v1",
+        "reference_mode_label": reference_label,
+        "parent_signed_bounds_mn": parent_bounds,
+        "active_signed_bounds_mn": active_bounds,
+        "parent_rectangle_max_abs_m_n": [8, 64],
+        "active_rectangle_max_abs_m_n": [8, 14],
+        "parent_inventory_scope": (
+            "SAXS center finite signed rectangle "
+            "M[-8,8]_N[-64,1]_including_evanescent"
+        ),
+        "active_inventory_scope": (
+            "SAXS center finite signed rectangle "
+            "M[-8,8]_N[-14,1]_selected_from_current_physics_parent"
+        ),
+        "expected_mode_count": 4488,
+        "expected_active_mode_count": 1088,
+        "expected_mode_sha256": (
+            "1d612391c6d662f28a9579428e6e276ce5bbe8345eee159773a01d6739fc0f0c"
+        ),
+        "expected_active_mode_sha256": (
+            "cf26a40d59727fd7bbcaab83ed80427859acb405b1e66a869a75e57b276d896a"
+        ),
+        "expected_parent_propagating_count": 4378,
+        "expected_parent_power_carrying_count": 4434,
+        "expected_active_propagating_count": 978,
+        "expected_active_power_carrying_count": 1034,
+        # These are re-derived from this profile's ordered signed bounds. The
+        # hashes are structural selectors; parent/active physical mode hashes
+        # above are recomputed at the new wavelength, material and azimuth.
+        "expected_selected_parent_indices_sha256": (
+            "1fc6bb7886a9858e3288ae45ee3ae50fea0bdf75881f03b52f45a26a3fe41fe1"
+        ),
+        "expected_selected_signed_keys_sha256": (
+            "03c5894de4fd5597da93a2971a1914ffca955b61e39a9f8db173d0fd39beebb0"
+        ),
+        "expected_mode_count_source": "fresh_center_physics_parent_inventory",
+        "quadrature_inventory": "fresh_4488_mode_center_parent_q81",
+        "boundary_amplitude_scale_policy": "boundary_magnitude_scaled_r5_v1",
+        "full_dtn_status": "FULL_DTN_NOT_VERIFIED",
+    }
+    n_si = (0.999876266258, 0.00000463357401)
+    epsilon_si = (
+        n_si[0] ** 2 - n_si[1] ** 2,
+        2.0 * n_si[0] * n_si[1],
+    )
+    base.update(
+        identity=identity,
+        model_id="si_block_saxs_0p7135_50x50_17x20_h120",
+        execution_mode="full_solve",
+        wavelength_nm=0.7135227949132827,
+        allowed_mesh_targets_nm=[0.7],
+        route="SAXS_SIMPLE_GRATING_CENTER_P6_CONDENSED_DIRECT_M8_N14",
+        operator_scope=operator_scope,
+        diagnostic_scope=diagnostic_scope,
+        full_dtn_status="FULL_DTN_NOT_VERIFIED",
+        physical_comparison_family="saxs_simple_grating_center",
+        runner_summary_prefix="saxs_simple_grating_center_p6_direct_saxs_m8_nminus14_to1",
+        mesh_evidence_family="SAXS_center_reused_G6_axis_geometry",
+        legacy_execution_memory_fields_authority=(
+            "diagnostic_only; host_available_floor_v1 with 64 GiB minimum and no RSS cap is authoritative"
+        ),
+        saxs_center_conditions={
+            "wavelength_nm": 0.7135227949132827,
+            "nominal_energy_label_eV": 1740,
+            "wavelength_authority": "existing_DWBA_actual_code_wavelength",
+            "grazing_angle_deg": 0.9,
+            "fem_azimuth_deg": 84.0,
+            "dwba_beam_azimuth_deg": 0.0,
+            "dwba_sample_pose_deg": 6.0,
+            "polarization": "s",
+            "electric_amplitude": 1.0,
+            "fem_orders": [[-1, 0], [-2, 0], [-3, 0], [-4, 0], [-5, 0]],
+            "extra_fem_orders": [[0, -1], [-1, -1], [-2, -1]],
+        },
+    )
+    base["task40_material_identity"] = {
+        "model_id": "si_block_saxs_0p7135_50x50_17x20_h120",
+        "material_label": "Si / silicon",
+        "index_values": list(n_si),
+        "epsilon_values": list(epsilon_si),
+        "epsilon_definition": "n**2",
+        "value_authority": "multiphysics_model_t_yaml_hash-bound_reference_values",
+        "source_sha256": (
+            "2218f10a52e7a558b7703c08b9509fdff161f2ff3058bb55cdd58fc426609a26"
+        ),
+        "accuracy_status": "reference-code-aligned_material_values",
+        "shared_material_tables_modified": False,
+    }
+    base["resources"].pop("parallel_admission_policy", None)
+    base["resources"]["concurrent_neighbor_authorized"] = False
+    base["native_execution"].update(
+        supervisor_cpu=None,
+        worker_cpu=None,
+        worker_cpus=[],
+        cpu_reservation_policy="sampled_low_load_distinct_physical_cores_v1",
+        cpu_socket_policy="single_socket",
+        numeric_factor_blas_thread_choices=[1, 8],
+        outer_taskset_required=False,
+    )
+    options = base["component_options"]
+    options.update(
+        task_family="saxs_simple_grating_center_mesh_modes_direct",
+        mesh_target_nm=0.7,
+        mesh_axis_authority=(
+            "reused_D07C_G6_axis_coordinates_only; no inherited physics or convergence claim"
+        ),
+        mode_selection=mode_selection,
+        physical_comparison_family="saxs_simple_grating_center",
+    )
+    comparison = options["directional_mesh_comparison"]
+    comparison.update(
+        display_name="SAXS center; reused G6 axis geometry",
+        axis_grid_reuse_scope="mesh_coordinates_only",
+        candidate_not_convergence_claim=True,
+        physical_profile_identity=identity,
+        axis_comparison_parent="D07C_G6_axis_plan_v1_mesh_axes_only",
+        parent_case_scope="mesh_axes_only",
+        mesh_comparison_reference_case=None,
+        mesh_comparison_reference_mode_sha256=None,
+        finite_window_context_reference_case=None,
+        finite_window_context_mode_sha256=None,
+        same_mesh_modal_reference_case=None,
+        same_mesh_modal_reference_bounds_mn=None,
+        same_mesh_modal_reference_mode_count=None,
+        same_mesh_modal_reference_mode_sha256=None,
+        cutoff_validation_status=(
+            "not_revalidated_for_center_physics; active inventory uses the fresh "
+            "center parent under boundary_magnitude_scaled_r5_v1"
+        ),
+    )
+    options["surface_quadrature"].update(
+        authority=(
+            "historical_q81_vs_q161_trace_functional_check_policy_only; "
+            "not revalidated for this SAXS center condition"
+        ),
+        verified_max_scaled_functional_error=None,
+        verification_scope=(
+            "historical trace-functional verification; no center-condition "
+            "quadrature verification is asserted"
+        ),
+    )
+    evidence_keys = [
+        [side, m, 0, polarization]
+        for side in ("top", "bottom")
+        for m, polarization in ((-8, "p"), (0, "s"), (8, "p"))
+    ]
+    options["direct_factor_evidence"].update(
+        mode_keys=evidence_keys,
+        active_mode_scope=mode_selection["active_inventory_scope"],
+    )
+    options["visualization_output_policy"].update(
+        write_visualization_files=False,
+        visualization_files="disabled_by_saxs_simple_grating_profile",
+    )
+    base["backend"].update(
+        independent_residual="original_full_p6_A6_active_SAXS_finite_rectangle_action",
+        operator_scope=operator_scope,
+        full_dtn_status="FULL_DTN_NOT_VERIFIED",
+    )
+    base["condensed_route"].update(
+        name="saxs_simple_grating_p6_exact_local_condensation_direct_v1",
+        operator_family="SAXS_M8_Nminus14_to1_finite_signed_rectangle",
+        parent_mode_inventory=mode_selection["parent_inventory_scope"],
+        active_mode_inventory="Nminus14_to1_selected_from_current_center_parent",
+        parent_mode_count=4488,
+        active_mode_count=1088,
+        omitted_auto_propagating_mode_count=None,
+        parent_quadrature_degree=81,
+        operator_scope=operator_scope,
+    )
+    direct_route = base["campaign_authorization"]["direct_route"]
+    direct_route.update(
+        mode_policy="explicit_signed_subrectangle_from_parent_v1",
+        parent_signed_bounds_mn=parent_bounds,
+        active_signed_bounds_mn=active_bounds,
+        parent_mode_rectangle_max_abs_m_n=[8, 64],
+        active_mode_rectangle_max_abs_m_n=[8, 14],
+        parent_rectangle_max_abs_m_n=[8, 64],
+        active_rectangle_max_abs_m_n=[8, 14],
+        parent_mode_count=4488,
+        active_mode_count=1088,
+        parent_mode_sha256=mode_selection["expected_mode_sha256"],
+        active_mode_sha256=mode_selection["expected_active_mode_sha256"],
+        expected_selected_parent_indices_sha256=mode_selection[
+            "expected_selected_parent_indices_sha256"
+        ],
+        expected_selected_signed_keys_sha256=mode_selection[
+            "expected_selected_signed_keys_sha256"
+        ],
+        parent_propagating_count=4378,
+        parent_power_carrying_count=4434,
+        active_propagating_count=978,
+        active_power_carrying_count=1034,
+        omitted_auto_propagating_mode_count=None,
+        physical_comparison_family="saxs_simple_grating_center",
+        material_index_values=list(n_si),
+        material_epsilon_values=list(epsilon_si),
+        wavelength_nm=0.7135227949132827,
+        grazing_angle_deg=0.9,
+        fem_azimuth_deg=84.0,
+        mesh_coordinates_reused_from="D07C_G6_axis_plan_v1",
+        numeric_factor_blas_thread_choices=[1, 8],
+        numeric_factor_worker_socket_policy="single_socket",
+    )
+    campaign = base["campaign_authorization"]
+    campaign.update(
+        source=(
+            "separate SAXS simple-grating center profile; exact center physics and finite-mode "
+            "inventories are bound independently; G6 reuse is limited to mesh axis coordinates"
+        ),
+        formal_mpi=1,
+        math_threads=1,
+        numa_policy="interleave_nodes0_1",
+    )
+    campaign["user_material"] = {
+        "authority": "reference_model_t_yaml_hash_bound_values",
+        "source_sha256": (
+            "2218f10a52e7a558b7703c08b9509fdff161f2ff3058bb55cdd58fc426609a26"
+        ),
+        "n_values": list(n_si),
+        "epsilon_values": list(epsilon_si),
+        "epsilon_definition": "n**2",
+    }
+    campaign["resource_policy"] = {
+        "name": "host_available_floor_v1",
+        "rss_user_cap": None,
+        "minimum_available_bytes": 64 * 1024**3,
+        "swap": "observe_only",
+        "global_swap": "observe_only",
+        "prediction": "record_only",
+        "memavailable": "stop_below_explicit_64_gib_floor",
+        "pss_uss_sampling": "disabled",
+        "time_limit_mode": "none",
+    }
+    return base
+
+
 def _task40_phi90_d5c_modal_profile_facts(identity):
     """Freeze one same-grid D5C-Y7 subrectangle against its finite R5 parent."""
     from copy import deepcopy
@@ -2766,6 +3038,8 @@ def _task40_phi90_d15_profile_facts(identity):
 
 def native_profile_facts(identity):
     from .physical_balanced_profile import balanced_profile_facts
+    if identity in SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES:
+        return _task40_saxs_simple_grating_profile_facts(identity)
     if identity in TASK40_PHI90_P6_DIRECT_PROFILES:
         if identity in TASK40_PHI90_D5C_PROFILES:
             return _task40_phi90_d5c_profile_facts(identity)
@@ -3534,6 +3808,8 @@ def native_capacity_profile_identity(method, solver):
 
 def numeric_factor_blas_thread_choices(profile_identity):
     """Return exact, profile-scoped numeric-LU thread choices."""
+    if profile_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES:
+        return frozenset({1, 8})
     if profile_identity == TASK40_PHI90_D07C_G6_M8_N14_PROFILE:
         return frozenset({1, 8})
     if profile_identity == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE:
@@ -4627,12 +4903,124 @@ def _validate_task40_phi90_r14_case(config: dict, identity: str) -> None:
         raise InputError(f'{identity} requires output.diffraction_order_max_n=9')
 
 
+def _validate_saxs_simple_grating_case(config: dict, identity: str) -> None:
+    """Validate exact SAXS-center physics and the reused G6 mesh coordinates."""
+    from .input_loader import InputError
+    from src.geometry.task40_phi90_d07c_axis_plan import validate_frozen_d07c_axes
+
+    facts = _task40_saxs_simple_grating_profile_facts(identity)
+
+    def require(section: str, key: str, expected: object) -> None:
+        actual = config.get(section, {}).get(key)
+        if actual != expected:
+            raise InputError(
+                f"{identity} fixes {section}.{key}={expected!r}; got {actual!r}"
+            )
+
+    if config.get("model_id") != facts["model_id"]:
+        raise InputError(f"{identity} fixes its distinct SAXS model identity")
+    require("method", "kind", "full3d_direct")
+    solver = config.get("solver", {})
+    require("solver", "native_capacity_profile", identity)
+    require("solver", "linear_solver", "direct")
+    require("solver", "direct_solver_profile", "default")
+    forbidden = {
+        "preconditioner", "ksp_type", "restart", "max_iterations", "coarse_degree"
+    } & set(solver)
+    if forbidden:
+        raise InputError(f"{identity} forbids iterative/P4 fields: {sorted(forbidden)}")
+    for key, expected in {
+        "geometry_kind": "rectangular_block_grating",
+        "period_x_nm": 50.0, "period_y_nm": 50.0,
+        "z_min_nm": -10.0, "z_max_nm": 130.0,
+        "interface_z_nm": 0.0, "air_height_nm": 130.0,
+        "substrate_thickness_nm": 10.0,
+        "grating_width_x_nm": 17.0, "grating_width_y_nm": 20.0,
+        "grating_height_nm": 120.0,
+    }.items():
+        require("geometry", key, expected)
+    n_si = (0.999876266258, 0.00000463357401)
+    materials = config.get("materials", {})
+    for key, expected in {
+        "n_air": (1.0, 0.0), "mu_r": (1.0, 0.0),
+        "n_substrate": n_si, "n_grating": n_si,
+    }.items():
+        if tuple(materials.get(key, ())) != expected:
+            raise InputError(f"{identity} fixes materials.{key}={expected!r}")
+    for key in ("substrate_name", "grating_name"):
+        if materials.get(key) != "Si / silicon":
+            raise InputError(f"{identity} fixes materials.{key} to Si / silicon")
+    for key, expected in {
+        "wavelength_nm": 0.7135227949132827,
+        "grazing_angle_deg": 0.9, "azimuth_deg": 84.0,
+        "polarization": "s", "electric_amplitude": 1.0,
+    }.items():
+        require("incidence", key, expected)
+    for key, expected in {
+        "nedelec_degree": 6, "visualization_degree": 6,
+        "mesh_target_nm": 0.7, "mesh_cell_type": "hexahedron",
+        "mesh_spacing_mode": "boundary_fitted",
+        "assembly_backend": "standard_full", "floquet_constraint_mode": "auto",
+    }.items():
+        require("discretization", key, expected)
+    discretization = config.get("discretization", {})
+    axes = {
+        key: discretization.get(key)
+        for key in (
+            "mesh_plan_id", "mesh_plan_sha256", "mesh_axis_cell_counts",
+            "mesh_axis_x_values", "mesh_axis_y_values", "mesh_axis_z_values",
+        )
+    }
+    try:
+        validate_frozen_d07c_axes(axes)
+    except ValueError as exc:
+        raise InputError(f"{identity} has invalid reused G6 mesh coordinates: {exc}") from exc
+    if tuple(discretization.get("mesh_axis_cell_counts") or ()) != (6, 200, 8):
+        raise InputError(f"{identity} fixes mesh axis counts to (6,200,8)")
+    if discretization.get("mesh_axis_z_profile") is not None:
+        raise InputError(f"{identity} requires explicit mesh axes, not a z-profile alias")
+    for key, expected in {
+        "use_floquet_x": True, "use_floquet_y": True,
+        "vertical_boundary": "dtn_port", "scattering_background": "layered",
+        "dtn_order_policy": "auto_propagating", "dtn_assembly": "auxiliary",
+        "use_pml": False,
+    }.items():
+        require("boundary", key, expected)
+    for key, expected in {
+        "mpi_size": 1, "time_limit_mode": "none", "timeout_seconds": None,
+        "require_zero_swap": False, "native_memory_policy": "interleave_nodes0_1",
+        "warning_memory_gib": 64.0, "terminate_memory_gib": 128.0,
+        "memory_limit_gb": 128.0,
+    }.items():
+        require("execution", key, expected)
+    output = config.get("output", {})
+    if output.get("write_visualization_files") is not False:
+        raise InputError(f"{identity} disables VTK/visualization exports")
+    for key in (
+        "export_fields", "export_diffraction_orders", "export_modal_amplitudes",
+        "export_reference_planes",
+    ):
+        if output.get(key) is not True:
+            raise InputError(f"{identity} requires output.{key}=true")
+    if output.get("export_canonical_vectors") is not False:
+        raise InputError(f"{identity} keeps canonical-vector export disabled")
+    if output.get("top_probe_z_nm") != 127.5 or output.get("bottom_probe_z_nm") != -7.5:
+        raise InputError(f"{identity} places diagnostic probes in the air/substrate ports")
+    if tuple(output.get("reference_plane_z_nm") or ()) != (10.0, 30.0, 60.0, 90.0, 110.0):
+        raise InputError(f"{identity} fixes reference-plane field sampling")
+    if int(output.get("sample_count_y", 0)) < 64:
+        raise InputError(f"{identity} requires at least 64 full-3D y samples")
+
+
 def validate_native_case(config):
     """Validate only the campaign's frozen physical and numerical choices."""
     from .input_loader import InputError
     identity = native_capacity_profile_identity(
         config.get('method', {}).get('kind'), config['solver']
     )
+    if identity in SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES:
+        _validate_saxs_simple_grating_case(config, identity)
+        return
     if (
         "write_visualization_files" in config.get("output", {})
         and identity not in TASK40_PHI90_D07C_PROFILES

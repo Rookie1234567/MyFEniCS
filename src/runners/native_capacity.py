@@ -14,9 +14,12 @@ from src.io.input_loader import InputError
 
 def _native_capacity_host_lock(root: Path, profile: str) -> tuple[Path, Path]:
     """Choose the shared host lock for Task40, preserving every older path."""
-    from src.io.native_capacity_profile import TASK40_PHI90_P6_DIRECT_PROFILES
+    from src.io.native_capacity_profile import (
+        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES,
+        TASK40_PHI90_P6_DIRECT_PROFILES,
+    )
 
-    if profile not in TASK40_PHI90_P6_DIRECT_PROFILES:
+    if profile not in TASK40_PHI90_P6_DIRECT_PROFILES | SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES:
         return root.parent/'native-capacity-heavy.lock', root.parent/'task-repository.git'
     try:
         completed = subprocess.run(
@@ -361,6 +364,7 @@ def native_capacity_guard(
     from src.io.native_capacity_profile import (
         TASK40_PHI90_P6_DIRECT_PROFILES,
         TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
         native_profile_facts,
         numeric_factor_blas_thread_choices,
     )
@@ -375,12 +379,13 @@ def native_capacity_guard(
     )
     observational_profile = profile == G5_PROFILE or profile in G6_SCOPED_PROFILES
     dynamic_small_profile = profile == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE
+    dynamic_saxs_profile = profile == SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE
     observational_case = (
         'G5' if profile == G5_PROFILE
         else g6_case_for_profile(profile) if profile in G6_SCOPED_PROFILES
         else None
     )
-    if observational_profile or dynamic_small_profile:
+    if observational_profile or dynamic_small_profile or dynamic_saxs_profile:
         supervisor_cpu = None
         worker_cpus = None
     else:
@@ -433,6 +438,39 @@ def native_capacity_guard(
                 worker_cpu_count=requested_threads,
                 socket_policy=socket_policy,
             )
+            supervisor_cpu = int(cpu_reservation['supervisor_cpu'])
+            worker_cpus = [int(cpu) for cpu in cpu_reservation['worker_cpus']]
+        if dynamic_saxs_profile:
+            choices = numeric_factor_blas_thread_choices(profile)
+            requested_threads = (
+                1 if numeric_factor_blas_threads is None
+                else numeric_factor_blas_threads
+            )
+            if type(requested_threads) is not int or requested_threads not in choices:
+                raise InputError(
+                    'SAXS center sampled CPU reservation requires an authorized 1/8 thread count'
+                )
+            if (
+                memory_policy != 'interleave_nodes0_1'
+                or profile_facts['native_execution'].get('cpu_socket_policy')
+                != 'single_socket'
+            ):
+                raise InputError(
+                    'SAXS center runtime requires one-socket workers and interleave_nodes0_1'
+                )
+            from .task40_d07c_g5_join import choose_sampled_cpu_reservation
+            cpu_reservation = choose_sampled_cpu_reservation(
+                worker_cpu_count=requested_threads,
+                socket_policy='single_socket',
+            )
+            if (
+                cpu_reservation.get('policy')
+                != 'sampled_low_load_distinct_physical_cores_v1'
+                or cpu_reservation.get('socket_policy') != 'single_socket'
+                or cpu_reservation.get('worker_cpu_count') != requested_threads
+                or len(cpu_reservation.get('worker_cpus', ())) != requested_threads
+            ):
+                raise InputError('SAXS center sampled CPU reservation is incomplete')
             supervisor_cpu = int(cpu_reservation['supervisor_cpu'])
             worker_cpus = [int(cpu) for cpu in cpu_reservation['worker_cpus']]
         if pair_context is not None and not observational_profile and (
@@ -583,6 +621,8 @@ def native_capacity_guard(
         isolation = {'canonical_repository': str(common_repository),
                      'native_capacity_heavy_lock': str(lock_path.resolve()),
                      'native_capacity_lock_scope': (
+                         'saxs_center_shared_task40_host_heavy_lock'
+                         if dynamic_saxs_profile else
                          'g5_case_level_member_lock_no_canonical'
                          if profile == G5_PROFILE else
                          'g6_case_level_member_lock_no_canonical'

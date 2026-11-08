@@ -423,6 +423,21 @@ def choose_g5_cpu_reservation(
     }
 
 
+def choose_sampled_cpu_reservation(
+    *, sample_seconds: float = 1.5, proc_root: str | Path = "/proc",
+    worker_cpu_count: int = 1, fixed_worker_cpus: list[int] | None = None,
+    socket_policy: str = "auto",
+) -> dict:
+    """Profile-neutral low-load placement; this does not acquire a G5/G6 lease."""
+    return choose_g5_cpu_reservation(
+        sample_seconds=sample_seconds,
+        proc_root=proc_root,
+        worker_cpu_count=worker_cpu_count,
+        fixed_worker_cpus=fixed_worker_cpus,
+        socket_policy=socket_policy,
+    )
+
+
 def choose_g6_cpu_reservation(
     *, sample_seconds: float = 1.5, proc_root: str | Path = "/proc",
     worker_cpu_count: int = 1, fixed_worker_cpus: list[int] | None = None,

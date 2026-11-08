@@ -94,6 +94,7 @@ def _validate_numeric_factor_cpu_reservation(
 ) -> list[int] | None:
     """Require BLAS thread screens to match the reviewed physical-core set."""
     from src.io.native_capacity_profile import (
+        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
         TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
         TASK40_PHI90_D07C_G6_M8_N14_PROFILE,
         numeric_factor_blas_thread_choices,
@@ -109,6 +110,7 @@ def _validate_numeric_factor_cpu_reservation(
         )
 
     is_g6_4 = profile_identity == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE
+    is_saxs_center = profile_identity == SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE
     if numeric_factor_blas_threads is None and not is_g6_4:
         return None
 
@@ -133,11 +135,11 @@ def _validate_numeric_factor_cpu_reservation(
             'numeric-factor BLAS thread count differs from its physical-core reservation'
         )
 
-    if is_g6_4:
+    if is_g6_4 or is_saxs_center:
         supervisor_cpu = isolation.get('supervisor_cpu')
         reservation = isolation.get('sampled_cpu_reservation')
         expected_socket_policy = (
-            'balanced_cross_socket' if expected_worker_count == 32
+            'balanced_cross_socket' if is_g6_4 and expected_worker_count == 32
             else 'single_socket'
         )
         if (
@@ -151,7 +153,7 @@ def _validate_numeric_factor_cpu_reservation(
             or reservation.get('worker_cpus') != worker_affinity
         ):
             raise InputError(
-                'G6_4 launch lacks its matching sampled supervisor/worker CPU reservation'
+                'native direct launch lacks its matching sampled supervisor/worker CPU reservation'
             )
         selected_topology = reservation.get('selected_topology')
         if (
@@ -164,7 +166,7 @@ def _validate_numeric_factor_cpu_reservation(
             or any(type(row.get('package')) is not int for row in selected_topology)
         ):
             raise InputError(
-                'G6_4 sampled topology differs from the worker and supervisor CPU binding'
+                'sampled topology differs from the worker and supervisor CPU binding'
             )
         worker_packages = [row['package'] for row in selected_topology[1:]]
         package_counts = [
@@ -180,9 +182,9 @@ def _validate_numeric_factor_cpu_reservation(
                 or max(package_counts) - min(package_counts) > 1
             )
         ):
-            raise InputError('G6_4 worker cores do not match the reviewed socket policy')
+            raise InputError('worker cores do not match the reviewed single-socket policy')
         if sorted(os.sched_getaffinity(0)) != [supervisor_cpu]:
-            raise InputError('G6_4 supervisor is not bound to its reserved CPU')
+            raise InputError('launcher supervisor is not bound to its reserved CPU')
 
     return worker_affinity
 
@@ -385,6 +387,9 @@ def _base_manifest(
                 'prediction_admission_policy', 'legacy'
             ),
             'icntl23': profile['resources'].get('icntl23'),
+            'legacy_execution_memory_fields_authority': profile.get(
+                'legacy_execution_memory_fields_authority'
+            ),
         }
         coarse_operator = profile.get('coarse_operator')
         if coarse_operator is not None:
@@ -615,6 +620,7 @@ def launch_specification(
         )
     from src.io.native_capacity_profile import (
         P6_CONDENSED_DIRECT_PROFILES,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
         TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
         native_capacity_profile_identity,
         native_profile_facts,
@@ -796,6 +802,12 @@ def launch_specification(
         manifest['execution_cache'] = dict(path=str(cache_home.resolve()), empty_before_launch=not any(cache_home.iterdir()))
         _write_json(run_directory/'run_manifest.json', manifest)
     d07c_worker_cpus_override = None
+    if native_identity == SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE:
+        if numeric_factor_blas_threads not in {1, 8}:
+            raise InputError(
+                'SAXS center launch requires an explicit 1- or 8-thread numeric-LU choice'
+            )
+        d07c_worker_cpus_override = numeric_factor_worker_affinity
     if native_identity == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE:
         d07c_worker_cpus_override = numeric_factor_worker_affinity
     elif native_identity == G5_PROFILE or native_identity in G6_SCOPED_PROFILES:

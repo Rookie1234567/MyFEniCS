@@ -140,6 +140,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
 
     from src.io.native_capacity_profile import (
         DISPERSION_FLAT_P6_PROFILES,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES,
         TASK40_PHI90_D07C_PROFILES,
         TASK40_PHI90_D5_PROFILES,
         TASK40_PHI90_D5C_PROFILES,
@@ -153,7 +154,10 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         native_profile_facts,
     )
 
-    if profile_identity in TASK40_PHI90_P6_DIRECT_PROFILES:
+    if profile_identity in (
+        TASK40_PHI90_P6_DIRECT_PROFILES
+        | SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES
+    ):
         profile = native_profile_facts(profile_identity)
         options = profile["component_options"]
         mesh_case = options["directional_mesh_comparison"]
@@ -299,14 +303,15 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         h15_case = profile_identity in TASK40_PHI90_H15_PROFILES
         d15_case = profile_identity in TASK40_PHI90_D15_PROFILES
         d5c_case = profile_identity in TASK40_PHI90_D5C_PROFILES
-        d07c_case = profile_identity in TASK40_PHI90_D07C_PROFILES
+        saxs_case = profile_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES
+        d07c_case = profile_identity in TASK40_PHI90_D07C_PROFILES or saxs_case
         d5_case = profile_identity in TASK40_PHI90_D5_PROFILES
         family_label = (
             "d15" if d15_case else "d07c" if d07c_case else "d5c" if d5c_case else "d5" if d5_case
             else "h15" if h15_case else "d13"
         )
         route_label = (
-            "D15" if d15_case else "D07C" if d07c_case else "D5C" if d5c_case else "D5" if d5_case
+            "SAXS" if saxs_case else "D15" if d15_case else "D07C" if d07c_case else "D5C" if d5c_case else "D5" if d5_case
             else "H15" if h15_case else "D13"
         )
         plan_id = mesh_case["mesh_plan_id"]
@@ -341,7 +346,16 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             mode.get("expected_mode_sha256"),
         )
         return {
+            # task40_phi90 is an internal finite-window P6 implementation
+            # branch. The public comparison family below keeps the new
+            # physical condition separate from the historical phi90 runs.
             "family": "task40_phi90",
+            "comparison_family": profile.get(
+                "physical_comparison_family", "task40_phi90"
+            ),
+            "mesh_evidence_family": profile.get(
+                "mesh_evidence_family", "D07C_0p7nm_finite_signed_modes"
+            ),
             "task40_mesh_plan_family": family_label,
             "task40_mesh_case": case_name,
             "task40_changed_axis": mesh_case["changed_axis"],
@@ -407,9 +421,10 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             ),
             "residual_gate_key": "original_A6_active_rectangle_residual_pass",
             "residual_finite_key": "original_A6_active_rectangle_finite",
-            "summary_prefix": (
+            "summary_prefix": profile.get(
+                "runner_summary_prefix",
                 f"task40_phi90_{family_label}_{case_name.lower()}_p6_direct_"
-                f"{reference_label}"
+                f"{reference_label}",
             ),
             "expected_mode_count": expected_mode_count,
             "expected_rectangle_max_abs_m_n": active_rectangle,
@@ -458,7 +473,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             "d13_expected_material_tag_counts": (
                 expected_tag_counts if not h15_case and not d5_case and not d5c_case and not d07c_case and not d15_case else None
             ),
-            "diagnostic_scope": (
+            "diagnostic_scope": profile.get("diagnostic_scope") or (
                 f"TASK40_{route_label}_{case_name}_"
                 f"{'0P7NM' if d07c_case else '5NM' if d5_case or d5c_case else '13P5NM'}_"
                 f"{expected_cells}CELL_PHI90"
@@ -1956,7 +1971,7 @@ def _task40_d07c_mesh_evidence(
     return {
         "status": "PASS",
         "profile": route["profile_identity"],
-        "family": "D07C_0p7nm_finite_signed_modes",
+        "family": route.get("mesh_evidence_family", "D07C_0p7nm_finite_signed_modes"),
         "case": case_name,
         "parent_case": expected_parent_case,
         "changed_axis": route["task40_changed_axis"],
@@ -3258,7 +3273,7 @@ def run_p6_condensed_direct(
             profile=profile_facts["identity"],
             operator_scope=route["operator_scope"],
             full_dtn_status=route["full_dtn_status"],
-            comparison_family=route["family"],
+            comparison_family=route.get("comparison_family", route["family"]),
             active_mode_count_expected=route["active_count"],
             active_mode_sha256_expected=route["active_sha256"],
         )
