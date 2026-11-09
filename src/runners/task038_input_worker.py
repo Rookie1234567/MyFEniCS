@@ -18,7 +18,9 @@ def _task40_d07c_runtime_cache_evidence(
     """Verify the exact G5/G6 worker cache and JIT routing before FE work."""
     profile = manifest.get("native_capacity_profile_identity")
     from src.runners.task40_d07c_g5_join import (
-        G5_PROFILE, G6_SCOPED_PROFILES, g6_case_for_profile,
+        G5_PROFILE,
+        G6_SCOPED_PROFILES,
+        g6_case_for_profile,
     )
 
     if profile != G5_PROFILE and profile not in G6_SCOPED_PROFILES:
@@ -591,18 +593,25 @@ def main(argv: list[str] | None = None) -> int:
     validated_manifest_value = None
     runtime_cache_errors: list[str] = []
     if not args.contract_probe and resolved_payload is not None:
+        profile_name = None
+        saxs_numeric_profiles = frozenset()
         try:
             from src.io.native_capacity_profile import (
+                SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES,
                 TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
                 native_capacity_profile_identity,
             )
+
+            saxs_numeric_profiles = SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES
 
             profile_name = native_capacity_profile_identity(
                 resolved_payload.get("method", {}).get("kind"),
                 resolved_payload.get("solver", {}),
             )
             from src.runners.task40_d07c_g5_join import (
-                G5_PROFILE, G6_SCOPED_PROFILES, g6_case_for_profile,
+                G5_PROFILE,
+                G6_SCOPED_PROFILES,
+                g6_case_for_profile,
             )
 
             if profile_name == TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE:
@@ -614,20 +623,46 @@ def main(argv: list[str] | None = None) -> int:
                         manifest_error or "small288 manifest is unavailable"
                     )
                 validated_manifest_value = manifest_value
+            elif profile_name in saxs_numeric_profiles:
+                manifest_value, _manifest_bytes, manifest_error = _read_json_bytes(
+                    args.manifest, "manifest for SAXS numeric-factor dispatch"
+                )
+                if manifest_error or manifest_value is None:
+                    raise ValueError(
+                        manifest_error or "SAXS numeric-factor manifest is unavailable"
+                    )
+                validated_manifest_value = manifest_value
             elif profile_name == G5_PROFILE or profile_name in G6_SCOPED_PROFILES:
                 case = (
-                    "G5" if profile_name == G5_PROFILE
+                    "G5"
+                    if profile_name == G5_PROFILE
                     else g6_case_for_profile(profile_name)
                 )
                 manifest_value, _manifest_bytes, manifest_error = _read_json_bytes(
                     args.manifest, f"manifest for {case} runtime cache verification"
                 )
                 if manifest_error or manifest_value is None:
-                    raise ValueError(manifest_error or f"{case} manifest is unavailable")
+                    raise ValueError(
+                        manifest_error or f"{case} manifest is unavailable"
+                    )
                 validated_manifest_value = manifest_value
-                runtime_cache_evidence = _task40_d07c_runtime_cache_evidence(manifest_value)
-        except (ImportError, KeyError, OSError, RuntimeError, TypeError, ValueError) as exc:
-            runtime_cache_errors.append(f"D07C worker manifest/cache verification failed: {exc}")
+                runtime_cache_evidence = _task40_d07c_runtime_cache_evidence(
+                    manifest_value
+                )
+        except (
+            ImportError,
+            KeyError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:
+            failure_scope = (
+                "SAXS numeric-factor manifest verification"
+                if profile_name in saxs_numeric_profiles
+                else "D07C worker manifest/cache verification"
+            )
+            runtime_cache_errors.append(f"{failure_scope} failed: {exc}")
     cache_failed = comm.allreduce(bool(runtime_cache_errors), op=MPI.LOR)
     if cache_failed:
         if comm.rank == 0:
@@ -641,7 +676,9 @@ def main(argv: list[str] | None = None) -> int:
                 args.expected_output_directory, runtime_cache_evidence
             )
         except (OSError, TypeError, ValueError) as exc:
-            write_errors.append(f"D07C runtime-cache evidence could not be persisted: {exc}")
+            write_errors.append(
+                f"D07C runtime-cache evidence could not be persisted: {exc}"
+            )
     if comm.allreduce(bool(write_errors), op=MPI.LOR):
         if comm.rank == 0:
             for error in write_errors:
@@ -678,7 +715,9 @@ def main(argv: list[str] | None = None) -> int:
         numeric_factor_worker_affinity=(
             None
             if validated_manifest_value is None
-            else validated_manifest_value.get("native_capacity_isolation", {}).get("worker_affinity")
+            else validated_manifest_value.get("native_capacity_isolation", {}).get(
+                "worker_affinity"
+            )
         ),
     )
     if exit_status != 0:

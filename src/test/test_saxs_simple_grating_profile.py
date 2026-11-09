@@ -21,16 +21,22 @@ from src.io.native_capacity_profile import (
     native_profile_facts,
     numeric_factor_blas_thread_choices,
 )
-from src.runners.p6_condensed_direct import _direct_run_contract
+from src.runners import (
+    native_capacity,
+    p6_condensed_direct,
+    reviewed_workstation_admission,
+    task038_input_worker,
+)
+from src.runners.p6_condensed_direct import (
+    _direct_run_contract,
+    _preflight_task40_mode_inventories,
+)
 from src.runners.task038_input_worker import _load_and_validate_worker_payload
 from src.runners.task038_launcher import (
     _validate_numeric_factor_cpu_reservation,
     _write_bootstrap,
     _write_json,
 )
-from src.runners.p6_condensed_direct import _preflight_task40_mode_inventories
-from src.runners import native_capacity, reviewed_workstation_admission
-
 
 ROOT = Path(__file__).resolve().parents[2]
 INPUT = ROOT / "input/saxs_simple_grating_center_p6_direct.dat"
@@ -38,7 +44,9 @@ SOURCE_SHA = "a5c8" * 10
 WORKER_CPUS = list(range(16, 24))
 
 
-def _bootstrap_roundtrip(tmp_path, input_path=INPUT):
+def _bootstrap_roundtrip(
+    tmp_path, input_path=INPUT, *, worker_cpus_override=WORKER_CPUS
+):
     specification = load_and_resolve(input_path)
     run_directory = (tmp_path / f"{input_path.stem}-run").resolve()
     run_directory.mkdir()
@@ -52,7 +60,7 @@ def _bootstrap_roundtrip(tmp_path, input_path=INPUT):
         source_sha=SOURCE_SHA,
         python_executable=sys.executable,
         mpiexec_command="/usr/bin/mpiexec",
-        worker_cpus_override=WORKER_CPUS,
+        worker_cpus_override=worker_cpus_override,
     )
     manifest, resolved_sha = _write_bootstrap(
         specification,
@@ -83,6 +91,43 @@ def _validate_worker(specification, run_directory, resolved_sha, plan):
         expected_resolved_config_sha256=resolved_sha,
         actual_mpi_size=1,
     )
+
+
+def _run_worker_main(monkeypatch, plan):
+    class SerialComm:
+        rank = 0
+        size = 1
+
+        @staticmethod
+        def allreduce(value, op=None):
+            return value
+
+        @staticmethod
+        def Barrier():
+            return None
+
+    monkeypatch.setitem(
+        sys.modules,
+        "mpi4py",
+        SimpleNamespace(MPI=SimpleNamespace(COMM_WORLD=SerialComm(), LOR=object())),
+    )
+    argv = list(plan.argv)
+    worker_args = argv[argv.index("src.runners.task038_input_worker") + 1 :]
+    return task038_input_worker.main(worker_args)
+
+
+def _install_fake_p6_dispatch(monkeypatch, events=None):
+    calls = []
+
+    def fake_run_p6(_payload, _directory, **kwargs):
+        # Worker validation and production dispatch stay real; only FE work is stubbed.
+        if events is not None:
+            events.append("numeric-dispatch")
+        calls.append(kwargs)
+        return {"passed": True, "errors": []}
+
+    monkeypatch.setattr(p6_condensed_direct, "run_p6_condensed_direct", fake_run_p6)
+    return calls
 
 
 def test_center_profile_has_independent_physics_modes_and_preserves_old_g6():
@@ -428,3 +473,117 @@ def test_profile_contract_and_real_loader_to_plan_manifest_worker_roundtrip(
     assert resolved["derived"]["native_capacity_profile"] == manifest[
         "native_capacity_profile"
     ]
+
+
+@pytest.mark.parametrize(
+    ("input_path", "profile_identity"),
+    [
+        pytest.param(
+            INPUT,
+            SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
+            id="baseline",
+        ),
+        pytest.param(
+            ROOT / "input/saxs_simple_grating_center_cx_p6_direct.dat",
+            SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE,
+            id="cx",
+        ),
+        pytest.param(
+            ROOT / "input/saxs_simple_grating_center_cz_p6_direct.dat",
+            SAXS_SIMPLE_GRATING_P6_DIRECT_CZ_PROFILE,
+            id="cz",
+        ),
+    ],
+)
+def test_worker_main_forwards_saxs_blas8_to_numeric_runner_without_fe(
+    tmp_path, monkeypatch, input_path, profile_identity
+):
+    _specification, _run_directory, _resolved_sha, plan, manifest = (
+        _bootstrap_roundtrip(tmp_path, input_path)
+    )
+    assert manifest["native_capacity_profile_identity"] == profile_identity
+    observed = _install_fake_p6_dispatch(monkeypatch)
+
+    assert _run_worker_main(monkeypatch, plan) == 0
+
+    assert observed == [
+        {
+            "source_sha": SOURCE_SHA,
+            "numeric_factor_blas_threads": 8,
+            "numeric_factor_worker_affinity": WORKER_CPUS,
+        }
+    ]
+
+
+def test_worker_main_keeps_saxs_missing_thread_count_as_none_default(
+    tmp_path, monkeypatch
+):
+    _specification, run_directory, _resolved_sha, plan, manifest = _bootstrap_roundtrip(
+        tmp_path, INPUT
+    )
+    manifest.pop("numeric_factor_blas_threads")
+    manifest.pop("numeric_factor_blas_scope")
+    _write_json(run_directory / "run_manifest.json", manifest)
+    observed = _install_fake_p6_dispatch(monkeypatch)
+
+    assert _run_worker_main(monkeypatch, plan) == 0
+
+    assert observed[0]["numeric_factor_blas_threads"] is None
+
+
+def test_worker_main_preserves_g6_cache_validation_and_thread_route(
+    tmp_path, monkeypatch
+):
+    from src.runners.task40_d07c_g5_join import G6_N14_PROFILE
+
+    input_path = ROOT / (
+        "input/task40para_phi90_mesh_modes_direct/d07c_g6_m8_nminus14_to1_p6_direct.dat"
+    )
+    _specification, _run_directory, _resolved_sha, plan, manifest = (
+        _bootstrap_roundtrip(tmp_path, input_path)
+    )
+    assert manifest["native_capacity_profile_identity"] == G6_N14_PROFILE
+    events = []
+    observed = _install_fake_p6_dispatch(monkeypatch, events)
+    cache_evidence = {"owner": "G6_attempt_only", "verified": True}
+
+    def verify_cache(received_manifest):
+        events.append("cache-validated")
+        assert received_manifest["native_capacity_profile_identity"] == G6_N14_PROFILE
+        return cache_evidence
+
+    def write_cache(_output_directory, evidence):
+        events.append("cache-evidence-written")
+        assert evidence == cache_evidence
+
+    monkeypatch.setattr(
+        task038_input_worker, "_task40_d07c_runtime_cache_evidence", verify_cache
+    )
+    monkeypatch.setattr(
+        task038_input_worker, "_write_d07c_runtime_cache_evidence", write_cache
+    )
+
+    assert _run_worker_main(monkeypatch, plan) == 0
+
+    assert events == ["cache-validated", "cache-evidence-written", "numeric-dispatch"]
+    assert observed[0]["numeric_factor_blas_threads"] == 8
+
+
+def test_worker_main_rejects_blas8_for_unqualified_legacy_g6_profile(
+    tmp_path, monkeypatch, capsys
+):
+    input_path = ROOT / (
+        "input/task40para_phi90_mesh_modes_direct/d07c_g6_m8_nminus64_to1_p6_direct.dat"
+    )
+    _specification, run_directory, _resolved_sha, plan, manifest = _bootstrap_roundtrip(
+        tmp_path,
+        input_path,
+        worker_cpus_override=[WORKER_CPUS[0]],
+    )
+    manifest["native_capacity_isolation"]["worker_affinity"] = [WORKER_CPUS[0]]
+    _write_json(run_directory / "run_manifest.json", manifest)
+    dispatch_calls = _install_fake_p6_dispatch(monkeypatch)
+
+    assert _run_worker_main(monkeypatch, plan) == 2
+    assert dispatch_calls == []
+    assert "outside the exact profile-scoped contract" in capsys.readouterr().out
