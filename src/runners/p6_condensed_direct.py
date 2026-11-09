@@ -140,8 +140,9 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
 
     from src.io.native_capacity_profile import (
         DISPERSION_FLAT_P6_PROFILES,
-        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILES,
         SAXS_SIMPLE_GRATING_P6_DIRECT_ONE_AXIS_PROFILES,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES,
         TASK40_PHI90_D07C_PROFILES,
         TASK40_PHI90_D5_PROFILES,
         TASK40_PHI90_D5C_PROFILES,
@@ -308,19 +309,24 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         saxs_one_axis_case = (
             profile_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_ONE_AXIS_PROFILES
         )
+        saxs_cxz15_case = (
+            profile_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILES
+        )
         d07c_case = profile_identity in TASK40_PHI90_D07C_PROFILES or (
-            saxs_case and not saxs_one_axis_case
+            saxs_case and not saxs_one_axis_case and not saxs_cxz15_case
         )
         d5_case = profile_identity in TASK40_PHI90_D5_PROFILES
         is_d13_case = not any(
             (saxs_case, h15_case, d5_case, d5c_case, d07c_case, d15_case)
         )
         family_label = (
+            "saxs_cxz15" if saxs_cxz15_case else
             "saxs_one_axis" if saxs_one_axis_case else
             "d15" if d15_case else "d07c" if d07c_case else "d5c" if d5c_case else "d5" if d5_case
             else "h15" if h15_case else "d13"
         )
         route_label = (
+            "SAXS_CXZ15" if saxs_cxz15_case else
             "SAXS" if saxs_case else "D15" if d15_case else "D07C" if d07c_case else "D5C" if d5c_case else "D5" if d5_case
             else "H15" if h15_case else "D13"
         )
@@ -388,6 +394,20 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             ),
             "task40_d07c_b_axis_sha256_le_f64": dict(
                 mesh_case.get("d07c_b_axis_sha256_le_f64", {})
+            ),
+            "task40_reference_run_id": mesh_case.get("reference_run_id"),
+            "task40_reference_run_timestamp": mesh_case.get(
+                "reference_run_timestamp"
+            ),
+            "task40_reference_source_sha256": mesh_case.get(
+                "reference_source_sha256"
+            ),
+            "task40_baseline_case": mesh_case.get("baseline_case"),
+            "task40_baseline_axis_sha256_le_f64": dict(
+                mesh_case.get("baseline_axis_sha256_le_f64", {})
+            ),
+            "task40_changed_axes_vs_saxs_g6_baseline": list(
+                mesh_case.get("changed_axes_vs_saxs_g6_baseline", ())
             ),
             "task40_static_condensed_rows": dict(
                 mesh_case.get("static_condensed_rows", {})
@@ -2145,6 +2165,165 @@ def _saxs_one_axis_mesh_evidence(
     }
 
 
+def _saxs_cxz15_mesh_evidence(
+    levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Verify live CXZ15 coordinates, both lineages, tags, P6 space, and MPC."""
+    from src.geometry.saxs_simple_grating_axis_plan import saxs_cxz15_plan
+
+    plan = saxs_cxz15_plan()
+    if route.get("task40_mesh_plan_family") != "saxs_cxz15":
+        raise ValueError("CXZ15 route has the wrong mesh-plan family")
+    if route.get("task40_mesh_case") != plan["case"]:
+        raise ValueError("CXZ15 case differs from its frozen mesh plan")
+    if route.get("task40_mesh_plan_id") != plan["mesh_plan_id"]:
+        raise ValueError("CXZ15 mesh-plan identity differs from its frozen plan")
+    if route.get("task40_mesh_plan_sha256") != plan["mesh_plan_sha256"]:
+        raise ValueError("CXZ15 mesh-plan SHA256 differs from its frozen plan")
+    if route.get("task40_parent_case") != plan["parent_case"]:
+        raise ValueError("CXZ15 reference case is not the completed CX mesh")
+    if route.get("task40_reference_run_id") != plan["reference_run_id"]:
+        raise ValueError("CXZ15 reference run identity differs from its frozen plan")
+    if route.get("task40_reference_run_timestamp") != plan[
+        "reference_run_timestamp"
+    ]:
+        raise ValueError("CXZ15 reference run timestamp differs from its frozen plan")
+    if route.get("task40_reference_source_sha256") != plan[
+        "reference_source_sha256"
+    ]:
+        raise ValueError("CXZ15 reference source identity differs from its frozen plan")
+
+    mesh_data = levels["mesh_data"]
+    msh = mesh_data.mesh
+    axes = {
+        key: tuple(
+            float(value)
+            for value in np.unique(np.asarray(msh.geometry.x)[:, index])
+        )
+        for index, key in enumerate(("x", "y", "z"))
+    }
+    expected_axes = {
+        key: tuple(float(value) for value in plan["axes_nm"][key])
+        for key in "xyz"
+    }
+    if axes != expected_axes:
+        raise ValueError("actual CXZ15 coordinates differ from the frozen plan")
+    hashes = {
+        key: hashlib.sha256(np.asarray(values, dtype="<f8").tobytes()).hexdigest()
+        for key, values in axes.items()
+    }
+    if hashes != plan["axis_sha256_le_f64"]:
+        raise ValueError("actual CXZ15 axis hashes differ from the frozen plan")
+    if hashes != route.get("task40_expected_axis_sha256_le_f64"):
+        raise ValueError("actual CXZ15 hashes differ from resolved profile facts")
+    if hashes != plan["axis_sha256_le_f64"]:
+        raise ValueError("actual CXZ15 hashes differ from its plan receipt")
+
+    reference_hashes = plan["reference_axis_sha256_le_f64"]
+    baseline_hashes = plan["baseline_axis_sha256_le_f64"]
+    if route.get("task40_parent_axis_sha256_le_f64") != reference_hashes:
+        raise ValueError("CXZ15 resolved reference axis hashes differ from plan")
+    if route.get("task40_base_axis_sha256_le_f64") != reference_hashes:
+        raise ValueError("CXZ15 base axis hashes must identify completed CX")
+    if route.get("task40_baseline_axis_sha256_le_f64") != baseline_hashes:
+        raise ValueError("CXZ15 G6 baseline axis hashes differ from plan")
+    changed_from_reference = [
+        axis for axis in "xyz" if hashes[axis] != reference_hashes[axis]
+    ]
+    changed_from_baseline = [
+        axis for axis in "xyz" if hashes[axis] != baseline_hashes[axis]
+    ]
+    if (
+        changed_from_reference != ["z"]
+        or list(route.get("task40_changed_axes", ())) != ["z"]
+        or list(route.get("task40_changed_axes_vs_saxs_g6_baseline", ()))
+        != ["x", "z"]
+        or changed_from_baseline != ["x", "z"]
+    ):
+        raise ValueError("CXZ15 must change only z from CX and x/z from G6")
+
+    counts = tuple(len(axes[key]) - 1 for key in "xyz")
+    cells = int(msh.topology.index_map(msh.topology.dim).size_global)
+    expected_counts = tuple(int(value) for value in plan["axis_cell_counts"])
+    expected_cells = int(plan["expected_global_cell_count"])
+    if counts != expected_counts or counts != tuple(
+        route["expected_axis_cell_counts"]
+    ):
+        raise ValueError("actual CXZ15 axis counts differ from profile facts")
+    if cells != expected_cells or cells != int(route["expected_global_cell_count"]):
+        raise ValueError("actual CXZ15 cell count differs from profile facts")
+    if str(msh.topology.cell_name()) != "hexahedron":
+        raise ValueError("CXZ15 requires hexahedral cells")
+
+    raw_tags = plan["expected_material_tag_counts"]
+    expected_tags = {
+        int(cfg.tags.air): int(raw_tags["1"]),
+        int(cfg.tags.substrate): int(raw_tags["2"]),
+        int(cfg.tags.grating): int(raw_tags["3"]),
+    }
+    tag_values = np.asarray(mesh_data.cell_tags.values, dtype=np.int64)
+    actual_tags = {
+        tag: int(np.count_nonzero(tag_values == tag)) for tag in expected_tags
+    }
+    if tag_values.size != cells or actual_tags != expected_tags:
+        raise ValueError(
+            f"actual CXZ15 material tags differ: {actual_tags} != {expected_tags}"
+        )
+
+    spaces = levels.get("spaces", {})
+    floquets = levels.get("floquets", {})
+    if int(cfg.nedelec_degree) != 6 or 6 not in spaces or 6 not in floquets:
+        raise ValueError("CXZ15 actual P6 space and double-Floquet MPC are required")
+    p6_space = spaces[6]
+    p6_floquet = floquets[6]
+    if getattr(p6_floquet, "mpc", None) is None:
+        raise ValueError("CXZ15 P6 double-Floquet MPC was not finalized")
+    dofmap = p6_space.dofmap
+    p6_global_dof_count = int(
+        dofmap.index_map.size_global * dofmap.index_map_bs
+    )
+    return {
+        "status": "PASS",
+        "profile": route["profile_identity"],
+        "family": "SAXS_center_CXZ15_z_refinement_from_CX",
+        "case": plan["case"],
+        "reference_case": plan["parent_case"],
+        "reference_run_id": plan["reference_run_id"],
+        "reference_run_timestamp": plan["reference_run_timestamp"],
+        "reference_source_sha256": plan["reference_source_sha256"],
+        "changed_axes_from_reference": changed_from_reference,
+        "baseline_case": plan["baseline_case"],
+        "changed_axes_from_saxs_g6_baseline": changed_from_baseline,
+        "cell_type": "hexahedron",
+        "actual_global_cell_count": cells,
+        "axis_cell_counts": list(counts),
+        "axis_sha256_le_f64": hashes,
+        "reference_axis_sha256_le_f64": dict(reference_hashes),
+        "baseline_axis_sha256_le_f64": dict(baseline_hashes),
+        "actual_axes_match_frozen_cxz15_coordinates": True,
+        "exactly_z_changed_from_completed_cx": True,
+        "baseline_xz_changes_recorded_separately": True,
+        "material_tag_counts": {str(tag): count for tag, count in actual_tags.items()},
+        "expected_material_tag_counts": {
+            str(tag): count for tag, count in expected_tags.items()
+        },
+        "p6_space_degree": 6,
+        "p6_global_dof_count": p6_global_dof_count,
+        "double_floquet_mpc_finalized": True,
+        "floquet_constraint_mode_resolved": str(
+            p6_floquet.constraint_mode_resolved
+        ),
+        "floquet_num_constraints": int(p6_floquet.num_constraints),
+        "floquet_num_edge_constraints": int(p6_floquet.num_edge_constraints),
+        "floquet_num_face_constraints": int(p6_floquet.num_face_constraints),
+        "p6_matrix_assembly_started": False,
+        "p6_factorization_started": False,
+        "static_condensed_rows": dict(plan["static_condensed_rows"]),
+        "static_row_estimate_is_not_live_matrix_qa": True,
+        "mpi_size": int(msh.comm.size),
+    }
+
+
 def _task40_d5_mesh_evidence(
     levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
 ) -> dict[str, Any]:
@@ -3560,6 +3739,8 @@ def run_p6_condensed_direct(
                 mesh_evidence = _task40_d07c_mesh_evidence(levels, cfg, route)
             elif route["task40_mesh_plan_family"] == "saxs_one_axis":
                 mesh_evidence = _saxs_one_axis_mesh_evidence(levels, cfg, route)
+            elif route["task40_mesh_plan_family"] == "saxs_cxz15":
+                mesh_evidence = _saxs_cxz15_mesh_evidence(levels, cfg, route)
             elif route["task40_mesh_plan_family"] == "d5c":
                 mesh_evidence = _task40_d5c_mesh_evidence(levels, cfg, route)
             elif route["task40_mesh_plan_family"] == "d15":

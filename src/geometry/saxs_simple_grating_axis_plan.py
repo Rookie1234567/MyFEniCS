@@ -13,7 +13,6 @@ from itertools import pairwise
 from math import prod
 from typing import Mapping
 
-
 SAXS_G6_BASE_AXES = {
     "x": (0.0, 8.25, 16.5, 25.0, 33.5, 41.75, 50.0),
     "y": tuple(float(i) * 0.25 for i in range(201)),
@@ -154,6 +153,84 @@ def saxs_one_axis_plan(axis: str) -> dict[str, object]:
     return plan
 
 
+def saxs_cxz15_plan() -> dict[str, object]:
+    """Build CXZ15 relative to completed CX and retain the G6 baseline lineage."""
+    cx_plan = saxs_one_axis_plan("x")
+    g6_z_plan = saxs_one_axis_plan("z")
+    axes = {
+        key: tuple(values) for key, values in cx_plan["axes_nm"].items()
+    }
+    axes["z"] = tuple(g6_z_plan["axes_nm"]["z"])
+    counts = [len(axes[key]) - 1 for key in "xyz"]
+    cells = prod(counts)
+    tags = _midpoint_tags(axes)
+    expected_tags = {"1": 21440, "2": 4800, "3": 2560}
+    if counts != [12, 200, 12] or tags != expected_tags or sum(tags.values()) != cells:
+        raise AssertionError(
+            f"CXZ15 static mesh inventory changed: counts={counts}, tags={tags}"
+        )
+
+    reference_hashes = _axes_sha256(cx_plan["axes_nm"])
+    baseline_hashes = _axes_sha256(SAXS_G6_BASE_AXES)
+    actual_hashes = _axes_sha256(axes)
+    changed_from_cx = [
+        key for key in "xyz" if actual_hashes[key] != reference_hashes[key]
+    ]
+    changed_from_g6 = [
+        key for key in "xyz" if actual_hashes[key] != baseline_hashes[key]
+    ]
+    if changed_from_cx != ["z"] or changed_from_g6 != ["x", "z"]:
+        raise AssertionError(
+            f"CXZ15 lineage mismatch: CX={changed_from_cx}, G6={changed_from_g6}"
+        )
+
+    plan: dict[str, object] = {
+        "schema": "saxs.simple_grating.cxz15_plan.v1",
+        "case": "CXZ15",
+        "parent_case": "CX",
+        "reference_run_id": (
+            "saxs_simple_grating_center_0p7135227949_phi84_p6_direct_cx_v1"
+        ),
+        "reference_run_timestamp": "20261108T144628.333953Z",
+        "reference_source_sha256": (
+            "0c8ab09edfd60f40a45785f5e637e7718c13abf2"
+        ),
+        "reference_axis_cell_counts": list(cx_plan["axis_cell_counts"]),
+        "reference_global_cell_count": int(cx_plan["expected_global_cell_count"]),
+        "reference_axis_sha256_le_f64": reference_hashes,
+        "baseline_case": "SAXS_G6_BASELINE",
+        "baseline_axis_cell_counts": [6, 200, 8],
+        "baseline_axis_sha256_le_f64": baseline_hashes,
+        "changed_axis": "z",
+        "changed_axes": changed_from_cx,
+        "changed_axes_vs_saxs_g6_baseline": changed_from_g6,
+        "axis_cell_counts": counts,
+        "axes_nm": {key: list(values) for key, values in axes.items()},
+        "axis_sha256_le_f64": actual_hashes,
+        "expected_global_cell_count": cells,
+        "expected_material_tag_counts": tags,
+        "static_condensed_rows": {
+            "periodic_trace_rows": counts[0] * counts[1] * (198 * counts[2] + 72),
+            "port_mode_rows": 1088,
+            "augmented_rows": counts[0] * counts[1] * (198 * counts[2] + 72) + 1088,
+            "status": "combinatorial_estimate_not_live_matrix_qa",
+        },
+        "static_plan_record": {
+            "relative_to_completed_CX_changes_exactly_one_axis": True,
+            "relative_to_SAXS_G6_baseline_changes_two_axes": ["x", "z"],
+            "parent_reference_is_completed_CX_run": True,
+            "material_tags": "independent_cell_midpoint_classification_not_live_mesh_qa",
+            "lu_memory_prediction": None,
+        },
+    }
+    plan_hash = hashlib.sha256(
+        json.dumps(plan, sort_keys=True, separators=(",", ":")).encode("ascii")
+    ).hexdigest()
+    plan["mesh_plan_id"] = "saxs_simple_grating_center_cxz15_z_refine_from_cx_v1"
+    plan["mesh_plan_sha256"] = plan_hash
+    return plan
+
+
 SAXS_ONE_AXIS_PLAN_CASES = {
     "C_X_BISECT": "x",
     "C_Z_PILLAR_30_TO15": "z",
@@ -161,6 +238,31 @@ SAXS_ONE_AXIS_PLAN_CASES = {
 SAXS_ONE_AXIS_PLAN_IDS = {
     str(saxs_one_axis_plan(axis)["mesh_plan_id"]): axis for axis in ("x", "z")
 }
+SAXS_CXZ15_PLAN_IDS = {"saxs_simple_grating_center_cxz15_z_refine_from_cx_v1"}
+
+
+def validate_saxs_cxz15_plan(payload: Mapping[str, object]) -> dict[str, tuple[float, ...]]:
+    """Validate the exact CXZ15 mesh and both reference/baseline identities."""
+    plan = saxs_cxz15_plan()
+    if payload.get("mesh_plan_id") != plan["mesh_plan_id"]:
+        raise ValueError("unsupported SAXS CXZ15 mesh plan")
+    if payload.get("mesh_plan_sha256") != plan["mesh_plan_sha256"]:
+        raise ValueError("SAXS CXZ15 plan SHA256 differs from the frozen plan")
+    try:
+        counts = tuple(int(value) for value in payload.get("mesh_axis_cell_counts", ()))
+        axes = {
+            key: tuple(float(value) for value in payload.get(f"mesh_axis_{key}_values", ()))
+            for key in "xyz"
+        }
+    except (TypeError, ValueError) as exc:
+        raise ValueError("SAXS CXZ15 mesh payload is malformed") from exc
+    if counts != tuple(plan["axis_cell_counts"]):
+        raise ValueError("SAXS CXZ15 cell counts differ from the frozen plan")
+    if axes != {key: tuple(plan["axes_nm"][key]) for key in "xyz"}:
+        raise ValueError("SAXS CXZ15 coordinates differ from the frozen plan")
+    if _axes_sha256(axes) != plan["axis_sha256_le_f64"]:
+        raise ValueError("SAXS CXZ15 axis hashes differ from the frozen plan")
+    return axes
 
 
 def validate_saxs_one_axis_plan(payload: Mapping[str, object]) -> dict[str, tuple[float, ...]]:

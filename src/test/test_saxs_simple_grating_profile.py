@@ -15,6 +15,7 @@ from src.io.input_validation import (
 )
 from src.io.native_capacity_profile import (
     SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE,
+    SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILE,
     SAXS_SIMPLE_GRATING_P6_DIRECT_CZ_PROFILE,
     SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
     TASK40_PHI90_D07C_G6_M8_N14_PROFILE,
@@ -40,6 +41,7 @@ from src.runners.task038_launcher import (
 
 ROOT = Path(__file__).resolve().parents[2]
 INPUT = ROOT / "input/saxs_simple_grating_center_p6_direct.dat"
+CXZ15_INPUT = ROOT / "input/saxs_simple_grating_center_cxz15_p6_direct.dat"
 SOURCE_SHA = "a5c8" * 10
 WORKER_CPUS = list(range(16, 24))
 
@@ -281,6 +283,172 @@ def test_one_axis_candidates_load_with_additive_profiles_and_keep_center_baselin
     )
 
 
+def test_cxz15_profile_is_z_only_from_completed_cx_and_records_g6_lineage():
+    from src.geometry.saxs_simple_grating_axis_plan import (
+        saxs_cxz15_plan,
+        saxs_one_axis_plan,
+    )
+
+    plan = saxs_cxz15_plan()
+    cx_plan = saxs_one_axis_plan("x")
+    resolved = load_and_resolve(CXZ15_INPUT).as_jsonable()
+    cx_resolved = load_and_resolve(
+        ROOT / "input/saxs_simple_grating_center_cx_p6_direct.dat"
+    ).as_jsonable()
+    facts = native_profile_facts(SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILE)
+    comparison = facts["component_options"]["directional_mesh_comparison"]
+    direct = facts["campaign_authorization"]["direct_route"]
+    route = _direct_run_contract(SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILE)
+
+    assert resolved["solver"]["native_capacity_profile"] == (
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILE
+    )
+    assert resolved["run_id"].endswith("_cxz15_v1")
+    assert resolved["discretization"]["mesh_axis_cell_counts"] == [12, 200, 12]
+    assert resolved["discretization"]["mesh_axis_x_values"] == cx_plan["axes_nm"]["x"]
+    assert resolved["discretization"]["mesh_axis_y_values"] == cx_plan["axes_nm"]["y"]
+    assert resolved["discretization"]["mesh_axis_z_values"] == plan["axes_nm"]["z"]
+    assert resolved["discretization"]["mesh_plan_id"] == plan["mesh_plan_id"]
+    assert resolved["discretization"]["mesh_plan_sha256"] == plan[
+        "mesh_plan_sha256"
+    ]
+    assert plan["changed_axes"] == ["z"]
+    assert plan["changed_axes_vs_saxs_g6_baseline"] == ["x", "z"]
+    assert plan["axis_sha256_le_f64"]["x"] == cx_plan["axis_sha256_le_f64"]["x"]
+    assert plan["axis_sha256_le_f64"]["y"] == cx_plan["axis_sha256_le_f64"]["y"]
+    assert plan["reference_run_timestamp"] == "20261108T144628.333953Z"
+    assert plan["reference_source_sha256"] == (
+        "0c8ab09edfd60f40a45785f5e637e7718c13abf2"
+    )
+    assert cx_plan["mesh_plan_sha256"] == (
+        "48de59951bfc241d3df8630f74a678abe3b0bb878a50a51b3db77a70f532b7ab"
+    )
+    assert saxs_one_axis_plan("z")["mesh_plan_sha256"] == (
+        "1f62374bddf01d12078f1fa07c21d1ef78bccb4a12aed88883ba8954729fcc8d"
+    )
+    assert plan["axis_cell_counts"] == [12, 200, 12]
+    assert plan["expected_global_cell_count"] == 28800
+    assert plan["expected_material_tag_counts"] == {
+        "1": 21440,
+        "2": 4800,
+        "3": 2560,
+    }
+    assert plan["static_condensed_rows"]["augmented_rows"] == 5876288
+    assert comparison["parent_case"] == "CX"
+    assert comparison["changed_axes"] == ["z"]
+    assert comparison["changed_axes_vs_saxs_g6_baseline"] == ["x", "z"]
+    assert comparison["parent_axis_sha256_le_f64"] == plan[
+        "reference_axis_sha256_le_f64"
+    ]
+    assert comparison["baseline_axis_sha256_le_f64"] == plan[
+        "baseline_axis_sha256_le_f64"
+    ]
+    assert direct["changed_axes"] == ["z"]
+    assert direct["changed_axes_vs_saxs_g6_baseline"] == ["x", "z"]
+    assert facts["component_options"]["mode_selection"]["expected_active_mode_count"] == 1088
+    cx_facts = native_profile_facts(SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE)
+    assert facts["component_options"]["mode_selection"] == cx_facts[
+        "component_options"
+    ]["mode_selection"]
+    assert facts["component_options"]["surface_quadrature"]["degree"] == 81
+    assert facts["component_options"]["volume_quadrature"]["degree"] == 15
+    assert facts["condensed_route"]["expected_global_cell_count"] == 28800
+    assert route["task40_mesh_plan_family"] == "saxs_cxz15"
+    assert route["task40_parent_case"] == "CX"
+    assert route["task40_changed_axes"] == ["z"]
+    assert route["task40_changed_axes_vs_saxs_g6_baseline"] == ["x", "z"]
+    assert route["expected_axis_cell_counts"] == [12, 200, 12]
+    assert route["expected_global_cell_count"] == 28800
+    assert numeric_factor_blas_thread_choices(
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILE
+    ) == {1, 8}
+    for section in (
+        "geometry",
+        "materials",
+        "incidence",
+        "boundary",
+        "method",
+        "execution",
+        "output",
+    ):
+        assert resolved[section] == cx_resolved[section]
+    assert resolved["comparison_group"] == cx_resolved["comparison_group"]
+    assert {
+        key: value
+        for key, value in resolved["solver"].items()
+        if key != "native_capacity_profile"
+    } == {
+        key: value
+        for key, value in cx_resolved["solver"].items()
+        if key != "native_capacity_profile"
+    }
+
+
+def test_cxz15_actual_mesh_p6_mpc_and_lineage_evidence_without_form_or_factor():
+    from mpi4py import MPI
+
+    from src.geometry.saxs_simple_grating_axis_plan import saxs_cxz15_plan
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_global import (
+        _build_same_mesh_levels,
+    )
+
+    specification = load_and_resolve(CXZ15_INPUT)
+    resolved = specification.as_jsonable()
+    profile = resolved["solver"]["native_capacity_profile"]
+    route = _direct_run_contract(profile)
+    cfg = simulation_config_3d_from_normalized(resolved)
+    cfg.stage4_dtn_order_policy = "explicit_signed_rectangle"
+    cfg.task40_dtn_signed_rectangle_bounds_mn = tuple(
+        int(value) for value in route["parent_signed_bounds_mn"]
+    )
+    cfg.stage4_dtn_quadrature_degree = int(route["surface_quadrature_degree"])
+    cfg.task40_port_boundary_amplitude_scale_policy = route[
+        "mode_basis_scale_policy"
+    ]
+    mode_preflight = _preflight_task40_mode_inventories(cfg, route)
+    assert len(mode_preflight["parent_inventory"][0]) == 4488
+    assert len(mode_preflight["active_inventory"][0]) == 1088
+    assert route["active_sha256"] == (
+        "cf26a40d59727fd7bbcaab83ed80427859acb405b1e66a869a75e57b276d896a"
+    )
+    levels = _build_same_mesh_levels(
+        cfg, MPI.COMM_SELF, (6,), include_positive_coefficients=False
+    )
+    try:
+        evidence = p6_condensed_direct._saxs_cxz15_mesh_evidence(
+            levels, cfg, route
+        )
+        plan = saxs_cxz15_plan()
+        assert evidence["status"] == "PASS"
+        assert evidence["actual_global_cell_count"] == 28800
+        assert evidence["axis_cell_counts"] == [12, 200, 12]
+        assert evidence["material_tag_counts"] == {
+            "1": 21440,
+            "2": 4800,
+            "3": 2560,
+        }
+        assert evidence["axis_sha256_le_f64"] == plan["axis_sha256_le_f64"]
+        assert evidence["reference_axis_sha256_le_f64"] == plan[
+            "reference_axis_sha256_le_f64"
+        ]
+        assert evidence["baseline_axis_sha256_le_f64"] == plan[
+            "baseline_axis_sha256_le_f64"
+        ]
+        assert evidence["p6_space_degree"] == 6
+        assert evidence["p6_global_dof_count"] > 0
+        assert evidence["double_floquet_mpc_finalized"] is True
+        assert evidence["floquet_constraint_mode_resolved"] == "topological_trace_p6"
+        assert evidence["floquet_num_constraints"] > 0
+        assert evidence["p6_matrix_assembly_started"] is False
+        assert evidence["p6_factorization_started"] is False
+    finally:
+        for floquet in levels.get("floquets", {}).values():
+            mpc = getattr(floquet, "mpc", None)
+            if mpc is not None and hasattr(mpc, "destroy"):
+                mpc.destroy()
+        del levels
+
+
 def test_center_live_inventory_preflight_uses_runner_boundary_scaling():
     specification = load_and_resolve(INPUT)
     resolved = specification.as_jsonable()
@@ -318,6 +486,7 @@ def test_center_live_inventory_preflight_uses_runner_boundary_scaling():
         pytest.param(SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE, id="baseline"),
         pytest.param(SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE, id="cx"),
         pytest.param(SAXS_SIMPLE_GRATING_P6_DIRECT_CZ_PROFILE, id="cz"),
+        pytest.param(SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILE, id="cxz15"),
     ],
 )
 def test_center_native_guard_uses_sampled_one_socket_reservation(
@@ -434,6 +603,12 @@ def test_center_native_guard_uses_sampled_one_socket_reservation(
             "saxs_one_axis",
             id="cz",
         ),
+        pytest.param(
+            CXZ15_INPUT,
+            SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILE,
+            "saxs_cxz15",
+            id="cxz15",
+        ),
     ],
 )
 def test_profile_contract_and_real_loader_to_plan_manifest_worker_roundtrip(
@@ -492,6 +667,11 @@ def test_profile_contract_and_real_loader_to_plan_manifest_worker_roundtrip(
             ROOT / "input/saxs_simple_grating_center_cz_p6_direct.dat",
             SAXS_SIMPLE_GRATING_P6_DIRECT_CZ_PROFILE,
             id="cz",
+        ),
+        pytest.param(
+            CXZ15_INPUT,
+            SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILE,
+            id="cxz15",
         ),
     ],
 )

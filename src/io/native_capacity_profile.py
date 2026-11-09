@@ -187,6 +187,12 @@ SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE = (
 SAXS_SIMPLE_GRATING_P6_DIRECT_CZ_PROFILE = (
     "saxs_simple_grating_0p7135227949_phi84_m8_nminus14_to1_p6_direct_cz_v1"
 )
+SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILE = (
+    "saxs_simple_grating_0p7135227949_phi84_m8_nminus14_to1_p6_direct_cxz15_v1"
+)
+SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILES = frozenset(
+    {SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILE}
+)
 SAXS_SIMPLE_GRATING_P6_DIRECT_ONE_AXIS_PROFILES = frozenset(
     {
         SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE,
@@ -201,6 +207,7 @@ SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES = frozenset(
     {
         SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
         *SAXS_SIMPLE_GRATING_P6_DIRECT_ONE_AXIS_PROFILES,
+        *SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILES,
     }
 )
 TASK40_PHI90_H15_B_P6_DIRECT_PROFILE = (
@@ -2561,6 +2568,105 @@ def _task40_saxs_simple_grating_profile_facts(identity):
             "one user-authorized SAXS center single-axis target comparison; "
             f"only {axis} differs from the accepted SAXS G6 mesh, with all "
             "physical, modal, condensed-operator, q81/q15, and LU8 settings retained"
+        )
+    elif identity in SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILES:
+        from src.geometry.saxs_simple_grating_axis_plan import saxs_cxz15_plan
+
+        plan = saxs_cxz15_plan()
+        counts = [int(value) for value in plan["axis_cell_counts"]]
+        expected_cells = int(plan["expected_global_cell_count"])
+        comparison.update(
+            case=plan["case"],
+            display_name="SAXS center; pillar z 30-to-15 nm from completed CX",
+            axis_comparison_parent="SAXS_CX_COMPLETED_RUN",
+            parent_case=plan["parent_case"],
+            changed_axis=plan["changed_axis"],
+            changed_axes=list(plan["changed_axes"]),
+            changed_axes_vs_saxs_g6_baseline=list(
+                plan["changed_axes_vs_saxs_g6_baseline"]
+            ),
+            parent_axis_sha256_le_f64=dict(
+                plan["reference_axis_sha256_le_f64"]
+            ),
+            base_axis_sha256_le_f64=dict(
+                plan["reference_axis_sha256_le_f64"]
+            ),
+            baseline_case=plan["baseline_case"],
+            baseline_axis_cell_counts=list(plan["baseline_axis_cell_counts"]),
+            baseline_axis_sha256_le_f64=dict(
+                plan["baseline_axis_sha256_le_f64"]
+            ),
+            reference_run_id=plan["reference_run_id"],
+            reference_run_timestamp=plan["reference_run_timestamp"],
+            reference_source_sha256=plan["reference_source_sha256"],
+            reference_axis_cell_counts=list(
+                plan["reference_axis_cell_counts"]
+            ),
+            expected_global_cell_count=expected_cells,
+            axis_cell_counts=counts,
+            expected_material_tag_counts=dict(
+                plan["expected_material_tag_counts"]
+            ),
+            static_condensed_rows=dict(plan["static_condensed_rows"]),
+            mesh_plan_id=plan["mesh_plan_id"],
+            mesh_plan_sha256=plan["mesh_plan_sha256"],
+            axes_nm={key: list(values) for key, values in plan["axes_nm"].items()},
+            expected_axis_sha256_le_f64=dict(plan["axis_sha256_le_f64"]),
+            explicit_axis_counts_in_input=True,
+            only_axis_changes_from_parent=["z"],
+        )
+        comparison.pop("only_axis_changes_from_B", None)
+        base["mesh_evidence_family"] = "SAXS_center_CXZ15_z_refinement_from_CX"
+        base["runner_summary_prefix"] = (
+            "saxs_simple_grating_center_p6_direct_saxs_cxz15_"
+            "m8_nminus14_to1"
+        )
+        base["route"] = (
+            "SAXS_SIMPLE_GRATING_CENTER_P6_CONDENSED_DIRECT_M8_N14_CXZ15"
+        )
+        options.update(
+            task_family="saxs_simple_grating_center_cxz15_mesh_modes_direct",
+            expected_axis_cell_counts=counts,
+            expected_global_cell_count=expected_cells,
+            mesh_axis_authority=(
+                "completed_CX_mesh_x_y_plus_exact_pillar_z_30_to15_refinement"
+            ),
+        )
+        base["condensed_route"]["expected_global_cell_count"] = expected_cells
+        direct_route.update(
+            mesh_coordinates_reused_from="completed_CX_plus_pillar_z_30_to15",
+            case=plan["case"],
+            mesh_plan_id=plan["mesh_plan_id"],
+            mesh_plan_sha256=plan["mesh_plan_sha256"],
+            parent_case=plan["parent_case"],
+            parent_axis_sha256_le_f64=dict(
+                plan["reference_axis_sha256_le_f64"]
+            ),
+            reference_run_id=plan["reference_run_id"],
+            reference_run_timestamp=plan["reference_run_timestamp"],
+            reference_source_sha256=plan["reference_source_sha256"],
+            reference_axis_cell_counts=list(
+                plan["reference_axis_cell_counts"]
+            ),
+            baseline_case=plan["baseline_case"],
+            baseline_axis_sha256_le_f64=dict(
+                plan["baseline_axis_sha256_le_f64"]
+            ),
+            changed_axis="z",
+            changed_axes=["z"],
+            changed_axes_vs_saxs_g6_baseline=["x", "z"],
+            expected_axis_sha256_le_f64=dict(plan["axis_sha256_le_f64"]),
+            expected_axis_cell_counts=counts,
+            expected_global_cell_count=expected_cells,
+            expected_material_tag_counts=dict(
+                plan["expected_material_tag_counts"]
+            ),
+            static_condensed_rows=dict(plan["static_condensed_rows"]),
+        )
+        campaign["source"] = (
+            "one user-authorized SAXS center CXZ15 target refinement; x/y are "
+            "identical to completed CX and only pillar z changes from 30 nm to "
+            "15 nm, while physical, modal, P6, q81/q15, and LU8 settings stay fixed"
         )
     return base
 
@@ -5079,6 +5185,20 @@ def _validate_saxs_simple_grating_case(config: dict, identity: str) -> None:
             validate_saxs_one_axis_plan(axes)
         except ValueError as exc:
             raise InputError(f"{identity} has invalid SAXS one-axis mesh coordinates: {exc}") from exc
+        expected_counts = tuple(
+            facts["component_options"]["expected_axis_cell_counts"]
+        )
+    elif identity in SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILES:
+        from src.geometry.saxs_simple_grating_axis_plan import (
+            validate_saxs_cxz15_plan,
+        )
+
+        try:
+            validate_saxs_cxz15_plan(axes)
+        except ValueError as exc:
+            raise InputError(
+                f"{identity} has invalid CXZ15 mesh coordinates: {exc}"
+            ) from exc
         expected_counts = tuple(
             facts["component_options"]["expected_axis_cell_counts"]
         )
