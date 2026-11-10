@@ -13,6 +13,7 @@ import hashlib
 import json
 import math
 import os
+import shutil
 import sys
 import time
 from collections.abc import Mapping
@@ -31,6 +32,66 @@ DIRECT_ROWS = ACTIVE_ROWS + APPENDED_PORTS
 FULL_P6_ROWS = 32_061_312
 ACTIVE_MODE_SHA256 = "946e0d294b99cb7f44817c3649029942ac325f345eb1770caa566183d2b04f3b"
 PARENT_MODE_SHA256 = "7f023c73d7b63379955642dd062e47ba7004f3cdf0accf42684286c4af71dbfb"
+
+
+def _set_worker_nofile_soft_limit(target: int) -> dict[str, int]:
+    """Set RLIMIT_NOFILE for this worker only; never change the hard limit."""
+    import resource
+
+    target = int(target)
+    if target <= 0:
+        raise ValueError("worker RLIMIT_NOFILE target must be positive")
+    before_soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    if hard != resource.RLIM_INFINITY and hard < target:
+        raise RuntimeError(
+            f"worker RLIMIT_NOFILE hard limit {hard} is below required {target}"
+        )
+    resource.setrlimit(resource.RLIMIT_NOFILE, (target, hard))
+    after_soft, after_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    if after_soft != target or after_hard != hard:
+        raise RuntimeError("worker RLIMIT_NOFILE readback differs from the requested limit")
+    return {
+        "requested_soft": target,
+        "before_soft": int(before_soft),
+        "before_hard": int(hard),
+        "after_soft": int(after_soft),
+        "after_hard": int(after_hard),
+    }
+
+
+def _p6_ooc_file_inventory(directory: Path | None) -> dict[str, Any]:
+    """Return logical and allocated bytes for this run's isolated OOC files."""
+    if directory is None or not directory.exists():
+        return {
+            "directory": None if directory is None else str(directory),
+            "directory_exists": False,
+            "files": [],
+            "logical_bytes": 0,
+            "allocated_bytes": 0,
+        }
+    files = []
+    logical_bytes = 0
+    allocated_bytes = 0
+    for path in sorted(directory.rglob("*")):
+        if not path.is_file():
+            continue
+        stat_result = path.stat()
+        logical = int(stat_result.st_size)
+        allocated = int(getattr(stat_result, "st_blocks", 0)) * 512
+        logical_bytes += logical
+        allocated_bytes += allocated
+        files.append({
+            "name": str(path.relative_to(directory)),
+            "logical_bytes": logical,
+            "allocated_bytes": allocated,
+        })
+    return {
+        "directory": str(directory),
+        "directory_exists": True,
+        "files": files,
+        "logical_bytes": logical_bytes,
+        "allocated_bytes": allocated_bytes,
+    }
 
 
 def _json_safe(value: Any) -> Any:
@@ -70,6 +131,195 @@ def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
         encoding="utf-8",
     )
     temporary.replace(path)
+
+
+def _ooc_disk_admission_facts_sha256(facts: Mapping[str, Any]) -> str:
+    payload = json.dumps(
+        _json_safe(facts), sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _ooc_disk_admission_release_is_valid(
+    release: Any,
+    *,
+    run_id: str,
+    source_sha: str,
+    input_sha256: str,
+    blocked_facts_sha256: str,
+) -> bool:
+    if not isinstance(release, Mapping):
+        return False
+    review = release.get("review")
+    resource_monitor = release.get("resource_monitor")
+    if not isinstance(review, Mapping) or not isinstance(resource_monitor, Mapping):
+        return False
+    receipt_sha = resource_monitor.get("receipt_sha256")
+    if not bool(
+        run_id
+        and source_sha
+        and input_sha256
+        and blocked_facts_sha256
+        and release.get("schema") == "saxs.p6.ooc_disk_admission_release.v1"
+        and release.get("decision")
+        == "APPROVE_NUMERIC_FACTOR_AFTER_RESOURCE_RECOVERY"
+        and release.get("run_id") == run_id
+        and release.get("source_sha") == source_sha
+        and release.get("input_sha256") == input_sha256
+        and release.get("blocked_facts_sha256") == blocked_facts_sha256
+        and review.get("status") == "APPROVED"
+        and isinstance(review.get("reference"), str)
+        and bool(review.get("reference", "").strip())
+        and isinstance(review.get("reviewed_at_utc"), str)
+        and bool(review.get("reviewed_at_utc", "").strip())
+        and resource_monitor.get("status") == "ACTIVE_FOR_EXACT_RUN"
+        and resource_monitor.get("manager") == "systemd --user"
+        and resource_monitor.get("xdg_runtime_dir") == "/run/user/1000"
+        and resource_monitor.get("run_id") == run_id
+        and resource_monitor.get("source_sha") == source_sha
+        and resource_monitor.get("input_sha256") == input_sha256
+        and isinstance(resource_monitor.get("unit"), str)
+        and bool(resource_monitor.get("unit", "").strip())
+        and isinstance(resource_monitor.get("target_scope"), str)
+        and bool(resource_monitor.get("target_scope", "").strip())
+        and isinstance(resource_monitor.get("target_invocation_id"), str)
+        and bool(resource_monitor.get("target_invocation_id", "").strip())
+        and isinstance(resource_monitor.get("receipt_path"), str)
+        and bool(resource_monitor.get("receipt_path", "").strip())
+        and isinstance(receipt_sha, str)
+        and len(receipt_sha) == 64
+        and all(character in "0123456789abcdef" for character in receipt_sha)
+    ):
+        return False
+    receipt_path = Path(str(resource_monitor["receipt_path"]))
+    if not receipt_path.is_absolute():
+        return False
+    try:
+        receipt_bytes = receipt_path.read_bytes()
+        receipt = json.loads(receipt_bytes)
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return False
+    return bool(
+        hashlib.sha256(receipt_bytes).hexdigest() == receipt_sha
+        and isinstance(receipt, Mapping)
+        and receipt.get("schema") == "saxs.host.systemd_user_resource_monitor_receipt.v1"
+        and receipt.get("status") == "ACTIVE_FOR_EXACT_RUN"
+        and receipt.get("manager") == "systemd --user"
+        and receipt.get("xdg_runtime_dir") == "/run/user/1000"
+        and receipt.get("run_id") == run_id
+        and receipt.get("source_sha") == source_sha
+        and receipt.get("input_sha256") == input_sha256
+        and receipt.get("monitor_unit") == resource_monitor.get("unit")
+        and receipt.get("target_scope") == resource_monitor.get("target_scope")
+        and receipt.get("target_invocation_id")
+        == resource_monitor.get("target_invocation_id")
+    )
+
+
+def _wait_for_ooc_disk_admission_release(
+    *,
+    run_directory: Path,
+    ooc_directory: Path,
+    blocked_facts: Mapping[str, Any],
+    required_bytes: int | None,
+    run_id: str,
+    source_sha: str,
+    input_sha256: str,
+    summary: dict[str, Any],
+    marker,
+) -> dict[str, Any]:
+    """Retain the symbolic factor and matrix until recovery plus explicit review."""
+    blocked_path = run_directory / "mumps_ooc_disk_admission_blocked.json"
+    release_path = run_directory / "mumps_ooc_disk_admission_release.json"
+    facts_digest = _ooc_disk_admission_facts_sha256(blocked_facts)
+    _atomic_json(blocked_path, blocked_facts)
+    blocked_status = {
+        "status": "BLOCKED_RESOURCE_AND_REVIEW_RELEASE_REQUIRED",
+        "blocked_facts_path": str(blocked_path),
+        "blocked_facts_sha256": facts_digest,
+        "review_release_path": str(release_path),
+        "numeric_factorization_started": False,
+        "same_factor_and_matrix_retained": True,
+        "required_available_bytes": required_bytes,
+        "release_rejections": [],
+    }
+    summary["status"] = blocked_status["status"]
+    summary["result_classification"] = blocked_status["status"]
+    summary["mumps_ooc"]["disk_admission_blocked"] = blocked_status
+    _atomic_json(run_directory / "p6_condensed_direct_summary.json", summary)
+    marker("p6_ooc_disk_admission_blocked", {
+        **blocked_status,
+        "blocked_facts": dict(blocked_facts),
+    })
+
+    wait_started = time.monotonic()
+    last_observation_write = wait_started
+    while True:
+        release_bytes = None
+        try:
+            release_bytes = release_path.read_bytes()
+        except FileNotFoundError:
+            pass
+        except OSError as exc:
+            blocked_status["last_release_read_error"] = str(exc)
+
+        if release_bytes is not None:
+            if len(release_bytes) > 65536:
+                rejection = "release_file_exceeds_64_KiB"
+            else:
+                try:
+                    release = json.loads(release_bytes)
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    release = None
+                    rejection = "release_file_is_not_valid_json"
+                else:
+                    rejection = None
+            if rejection is None and not _ooc_disk_admission_release_is_valid(
+                release,
+                run_id=run_id,
+                source_sha=source_sha,
+                input_sha256=input_sha256,
+                blocked_facts_sha256=facts_digest,
+            ):
+                rejection = "release_identity_review_or_monitor_receipt_mismatch"
+            if rejection is None and required_bytes is None:
+                rejection = "symbolic_disk_requirement_is_unavailable"
+            if rejection is None:
+                try:
+                    current_free = int(shutil.disk_usage(ooc_directory).free)
+                except OSError as exc:
+                    current_free = None
+                    blocked_status["last_disk_read_error"] = str(exc)
+                if current_free is not None and current_free >= int(required_bytes):
+                    release_sha = hashlib.sha256(release_bytes).hexdigest()
+                    return {
+                        "release_path": str(release_path),
+                        "release_sha256": release_sha,
+                        "blocked_facts_path": str(blocked_path),
+                        "blocked_facts_sha256": facts_digest,
+                        "available_bytes_at_release": current_free,
+                        "required_available_bytes": int(required_bytes),
+                        "review": dict(release["review"]),
+                        "resource_monitor": dict(release["resource_monitor"]),
+                    }
+                rejection = "disk_headroom_not_yet_restored"
+            if rejection not in blocked_status["release_rejections"]:
+                blocked_status["release_rejections"].append(rejection)
+
+        if time.monotonic() - last_observation_write >= 5.0:
+            try:
+                blocked_status["last_disk_available_bytes"] = int(
+                    shutil.disk_usage(ooc_directory).free
+                )
+            except OSError as exc:
+                blocked_status["last_disk_read_error"] = str(exc)
+            blocked_status["elapsed_wait_seconds"] = float(
+                time.monotonic() - wait_started
+            )
+            summary["mumps_ooc"]["disk_admission_blocked"] = blocked_status
+            _atomic_json(run_directory / "p6_condensed_direct_summary.json", summary)
+            last_observation_write = time.monotonic()
+        time.sleep(1.0)
 
 
 def _write_direct_flat_reference_outputs(
@@ -140,6 +390,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
 
     from src.io.native_capacity_profile import (
         DISPERSION_FLAT_P6_PROFILES,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILES,
         SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILES,
         SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILES,
         SAXS_SIMPLE_GRATING_P6_DIRECT_ONE_AXIS_PROFILES,
@@ -316,17 +567,22 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         saxs_cx9z10_case = (
             profile_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILES
         )
+        saxs_cx9z7p5_ooc8_case = (
+            profile_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILES
+        )
         d07c_case = profile_identity in TASK40_PHI90_D07C_PROFILES or (
             saxs_case
             and not saxs_one_axis_case
             and not saxs_cxz15_case
             and not saxs_cx9z10_case
+            and not saxs_cx9z7p5_ooc8_case
         )
         d5_case = profile_identity in TASK40_PHI90_D5_PROFILES
         is_d13_case = not any(
             (saxs_case, h15_case, d5_case, d5c_case, d07c_case, d15_case)
         )
         family_label = (
+            "saxs_cx9z7p5_ooc8" if saxs_cx9z7p5_ooc8_case else
             "saxs_cx9z10" if saxs_cx9z10_case else
             "saxs_cxz15" if saxs_cxz15_case else
             "saxs_one_axis" if saxs_one_axis_case else
@@ -334,6 +590,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
             else "h15" if h15_case else "d13"
         )
         route_label = (
+            "SAXS_CX9Z7P5_OOC8" if saxs_cx9z7p5_ooc8_case else
             "SAXS_CX9Z10" if saxs_cx9z10_case else
             "SAXS_CXZ15" if saxs_cxz15_case else
             "SAXS" if saxs_case else "D15" if d15_case else "D07C" if d07c_case else "D5C" if d5c_case else "D5" if d5_case
@@ -2333,21 +2590,24 @@ def _saxs_cxz15_mesh_evidence(
     }
 
 
-def _saxs_cx9z10_mesh_evidence(
-    levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
+def _saxs_exact_target_mesh_evidence(
+    levels: Mapping[str, Any],
+    cfg: Any,
+    route: Mapping[str, Any],
+    *,
+    plan: Mapping[str, Any],
+    family_label: str,
+    target_label: str,
 ) -> dict[str, Any]:
-    """Verify the exact CX9Z10 axes, cell tags, P6 space, and double-Floquet MPC."""
-    from src.geometry.saxs_simple_grating_axis_plan import saxs_cx9z10_plan
-
-    plan = saxs_cx9z10_plan()
-    if route.get("task40_mesh_plan_family") != "saxs_cx9z10":
-        raise ValueError("CX9Z10 route has the wrong mesh-plan family")
+    """Verify one frozen SAXS target mesh, its tags, P6 space, and Floquet MPC."""
+    if route.get("task40_mesh_plan_family") != family_label:
+        raise ValueError(f"{target_label} route has the wrong mesh-plan family")
     if route.get("task40_mesh_case") != plan["case"]:
-        raise ValueError("CX9Z10 case differs from its frozen mesh plan")
+        raise ValueError(f"{target_label} case differs from its frozen mesh plan")
     if route.get("task40_mesh_plan_id") != plan["mesh_plan_id"]:
-        raise ValueError("CX9Z10 mesh-plan identity differs from its frozen plan")
+        raise ValueError(f"{target_label} mesh-plan identity differs from its frozen plan")
     if route.get("task40_mesh_plan_sha256") != plan["mesh_plan_sha256"]:
-        raise ValueError("CX9Z10 mesh-plan SHA256 differs from its frozen plan")
+        raise ValueError(f"{target_label} mesh-plan SHA256 differs from its frozen plan")
 
     mesh_data = levels["mesh_data"]
     mesh = mesh_data.mesh
@@ -2363,7 +2623,7 @@ def _saxs_cx9z10_mesh_evidence(
         for axis in "xyz"
     }
     if axes != expected_axes:
-        raise ValueError("actual CX9Z10 coordinates differ from the frozen plan")
+        raise ValueError(f"actual {target_label} coordinates differ from the frozen plan")
     hashes = {
         axis: hashlib.sha256(
             np.asarray(axes[axis], dtype="<f8").tobytes()
@@ -2371,20 +2631,20 @@ def _saxs_cx9z10_mesh_evidence(
         for axis in "xyz"
     }
     if hashes != plan["axis_sha256_le_f64"]:
-        raise ValueError("actual CX9Z10 axis hashes differ from the frozen plan")
+        raise ValueError(f"actual {target_label} axis hashes differ from the frozen plan")
     if hashes != route.get("task40_expected_axis_sha256_le_f64"):
-        raise ValueError("actual CX9Z10 hashes differ from resolved profile facts")
+        raise ValueError(f"actual {target_label} hashes differ from resolved profile facts")
     counts = tuple(len(axes[axis]) - 1 for axis in "xyz")
     if counts != tuple(plan["axis_cell_counts"]):
-        raise ValueError("actual CX9Z10 axis cell counts differ from the frozen plan")
+        raise ValueError(f"actual {target_label} axis counts differ from the frozen plan")
     if counts != tuple(route.get("expected_axis_cell_counts", ())):
-        raise ValueError("actual CX9Z10 axis counts differ from resolved profile facts")
+        raise ValueError(f"actual {target_label} axis counts differ from resolved profile facts")
     cells = int(mesh.topology.index_map(mesh.topology.dim).size_global)
     expected_cells = int(plan["expected_global_cell_count"])
     if cells != expected_cells or cells != int(route["expected_global_cell_count"]):
-        raise ValueError("actual CX9Z10 cell count differs from resolved profile facts")
+        raise ValueError(f"actual {target_label} cell count differs from resolved profile facts")
     if str(mesh.topology.cell_name()) != "hexahedron":
-        raise ValueError("CX9Z10 requires hexahedral cells")
+        raise ValueError(f"{target_label} requires hexahedral cells")
 
     raw_tags = plan["expected_material_tag_counts"]
     expected_tags = {
@@ -2398,22 +2658,22 @@ def _saxs_cx9z10_mesh_evidence(
     }
     if tag_values.size != cells or actual_tags != expected_tags:
         raise ValueError(
-            f"actual CX9Z10 material tags differ: {actual_tags} != {expected_tags}"
+            f"actual {target_label} material tags differ: {actual_tags} != {expected_tags}"
         )
 
     spaces = levels.get("spaces", {})
     floquets = levels.get("floquets", {})
     if int(cfg.nedelec_degree) != 6 or 6 not in spaces or 6 not in floquets:
-        raise ValueError("CX9Z10 actual P6 space and double-Floquet MPC are required")
+        raise ValueError(f"{target_label} actual P6 space and double-Floquet MPC are required")
     p6_space = spaces[6]
     p6_floquet = floquets[6]
     if getattr(p6_floquet, "mpc", None) is None:
-        raise ValueError("CX9Z10 P6 double-Floquet MPC was not finalized")
+        raise ValueError(f"{target_label} P6 double-Floquet MPC was not finalized")
     dofmap = p6_space.dofmap
     return {
         "status": "PASS",
         "profile": route["profile_identity"],
-        "family": "SAXS_center_CX9Z10_target",
+        "family": f"SAXS_center_{target_label}_target",
         "case": plan["case"],
         "parent_case": plan["parent_case"],
         "parent_is_mesh_reference_only": True,
@@ -2422,7 +2682,7 @@ def _saxs_cx9z10_mesh_evidence(
         "actual_global_cell_count": cells,
         "axis_cell_counts": list(counts),
         "axis_sha256_le_f64": hashes,
-        "actual_axes_match_frozen_cx9z10_coordinates": True,
+        f"actual_axes_match_frozen_{target_label.lower()}_coordinates": True,
         "material_tag_counts": {str(tag): count for tag, count in actual_tags.items()},
         "expected_material_tag_counts": {
             str(tag): count for tag, count in expected_tags.items()
@@ -2444,6 +2704,39 @@ def _saxs_cx9z10_mesh_evidence(
         "static_row_estimate_is_not_live_matrix_qa": True,
         "mpi_size": int(mesh.comm.size),
     }
+
+
+def _saxs_cx9z10_mesh_evidence(
+    levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
+) -> dict[str, Any]:
+    from src.geometry.saxs_simple_grating_axis_plan import saxs_cx9z10_plan
+
+    return _saxs_exact_target_mesh_evidence(
+        levels,
+        cfg,
+        route,
+        plan=saxs_cx9z10_plan(),
+        family_label="saxs_cx9z10",
+        target_label="CX9Z10",
+    )
+
+
+def _saxs_cx9z7p5_mesh_evidence(
+    levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
+) -> dict[str, Any]:
+    from src.geometry.saxs_simple_grating_axis_plan import saxs_cx9z7p5_plan
+
+    evidence = _saxs_exact_target_mesh_evidence(
+        levels,
+        cfg,
+        route,
+        plan=saxs_cx9z7p5_plan(),
+        family_label="saxs_cx9z7p5_ooc8",
+        target_label="CX9Z7P5",
+    )
+    evidence["pillar_z_step_nm"] = 7.5
+    evidence["pillar_z_cells"] = 16
+    return evidence
 
 
 def _task40_d5_mesh_evidence(
@@ -3161,6 +3454,7 @@ def _factor_same_matrix(
     *,
     numeric_factor_blas_threads: int | None = None,
     phase_facts: dict[str, Any] | None = None,
+    after_symbolic=None,
 ):
     """Run exactly one symbolic/numeric/solve sequence on one matrix object."""
 
@@ -3174,6 +3468,8 @@ def _factor_same_matrix(
         "ordering": factor.preferred_ordering,
         "mumps_info": factor.info(),
     })
+    if after_symbolic is not None:
+        after_symbolic(factor, matrix)
     if id(matrix) != matrix_object_id:
         raise RuntimeError("materialized matrix object changed after MUMPS symbolic")
     numeric_thread_evidence = _run_numeric_factorization(
@@ -3651,19 +3947,25 @@ def run_p6_condensed_direct(
         resolved_payload.get("solver", {}).get("native_capacity_profile", "")
     )
     from src.io.native_capacity_profile import (
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE,
         SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE,
     )
+    ooc8_target = (
+        selected_profile_identity
+        == SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE
+    )
+    pre_lu_profiles = {
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE,
+    }
 
     if pre_lu_port_gate is None:
         pre_lu_port_gate = pre_lu_port_gate_from_environment(
-            required=(
-                selected_profile_identity
-                == SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE
-            )
+            required=selected_profile_identity in pre_lu_profiles
         )
     if (
         pre_lu_port_gate is not None
-        and selected_profile_identity != SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE
+        and selected_profile_identity not in pre_lu_profiles
     ):
         raise ValueError("CX9Z10 pre-LU port threading is forbidden for other profiles")
 
@@ -3711,8 +4013,46 @@ def run_p6_condensed_direct(
     output_facts = None
     route = None
     same_matrix_lifecycle_verified = None
+    ooc_directory = None
+    ooc_prefix = None
+    ooc_environment_before = {}
+    worker_nofile_facts = None
     try:
         profile_facts = _validate_resolved_profile(resolved_payload)
+        if ooc8_target:
+            ooc_contract = profile_facts["component_options"].get(
+                "mumps_ooc_contract"
+            )
+            if not isinstance(ooc_contract, dict) or not ooc_contract.get("enabled"):
+                raise RuntimeError("CX9Z7P5 OOC8 profile omits its explicit OOC contract")
+            worker_nofile_facts = _set_worker_nofile_soft_limit(
+                int(ooc_contract["worker_nofile_soft_limit"])
+            )
+            ooc_directory = directory / "mumps_ooc_files"
+            if ooc_directory.exists():
+                raise RuntimeError(
+                    "MUMPS OOC directory already exists; refusing to reuse another run's files"
+                )
+            ooc_directory.mkdir(mode=0o700)
+            ooc_prefix = "M" + hashlib.sha256(
+                str(directory).encode("utf-8")
+            ).hexdigest()[:15]
+            for name in ("MUMPS_OOC_TMPDIR", "MUMPS_OOC_PREFIX"):
+                ooc_environment_before[name] = os.environ.get(name)
+            os.environ["MUMPS_OOC_TMPDIR"] = str(ooc_directory)
+            os.environ["MUMPS_OOC_PREFIX"] = ooc_prefix
+            summary["worker_nofile_limit"] = worker_nofile_facts
+            summary["mumps_ooc"] = {
+                "contract": ooc_contract,
+                "directory": str(ooc_directory),
+                "directory_is_unique_to_run": True,
+                "prefix": ooc_prefix,
+                "environment": {
+                    "MUMPS_OOC_TMPDIR": str(ooc_directory),
+                    "MUMPS_OOC_PREFIX": ooc_prefix,
+                },
+                "files_before_factor": _p6_ooc_file_inventory(ooc_directory),
+            }
         if profile_facts["identity"] != selected_profile_identity:
             raise ValueError("resolved solver profile identity changed before execution")
         if numeric_factor_blas_threads is not None:
@@ -3907,6 +4247,8 @@ def run_p6_condensed_direct(
                 mesh_evidence = _saxs_cxz15_mesh_evidence(levels, cfg, route)
             elif route["task40_mesh_plan_family"] == "saxs_cx9z10":
                 mesh_evidence = _saxs_cx9z10_mesh_evidence(levels, cfg, route)
+            elif route["task40_mesh_plan_family"] == "saxs_cx9z7p5_ooc8":
+                mesh_evidence = _saxs_cx9z7p5_mesh_evidence(levels, cfg, route)
             elif route["task40_mesh_plan_family"] == "d5c":
                 mesh_evidence = _task40_d5c_mesh_evidence(levels, cfg, route)
             elif route["task40_mesh_plan_family"] == "d15":
@@ -4464,6 +4806,171 @@ def run_p6_condensed_direct(
 
         factor = _MumpsFactor(matrix)
         factor_settings = factor.symbolic_memory_settings()
+        after_symbolic_gate = None
+        if ooc8_target:
+            ooc_contract = summary["mumps_ooc"]["contract"]
+            requested_icntl = ooc_contract["mumps_icntl_before_symbolic"]
+            for index_text, value in requested_icntl.items():
+                factor.set_icntl(int(index_text), int(value))
+            icntl_readback = {
+                str(index): int(factor.get_icntl(int(index)))
+                for index in requested_icntl
+            }
+            expected_icntl = {
+                str(index): int(value) for index, value in requested_icntl.items()
+            }
+            if icntl_readback != expected_icntl:
+                raise RuntimeError(
+                    "MUMPS OOC ICNTL readback differs from the reviewed contract: "
+                    f"{icntl_readback} != {expected_icntl}"
+                )
+            factor_settings = factor.symbolic_memory_settings()
+            factor_settings["icntl"]["35"] = icntl_readback["35"]
+            summary["mumps_ooc"]["icntl_before_symbolic"] = {
+                "requested": expected_icntl,
+                "readback": icntl_readback,
+                "readback_passed": True,
+            }
+
+            def after_symbolic_gate(factor_handle, _matrix):
+                symbolic_info = factor_handle.info()
+                rinfog = symbolic_info.get("rinfog", {})
+                estimate_mb = rinfog.get("15")
+                estimate_valid = not (
+                    not isinstance(estimate_mb, (int, float))
+                    or not math.isfinite(float(estimate_mb))
+                    or float(estimate_mb) <= 0.0
+                )
+                estimate_bytes = (
+                    math.ceil(
+                        float(estimate_mb)
+                        * 1_000_000
+                        * float(ooc_contract["disk_estimate_headroom_factor"])
+                    )
+                    if estimate_valid else None
+                )
+                reserve_bytes = int(ooc_contract["disk_reserve_bytes"])
+                required_bytes = (
+                    estimate_bytes + reserve_bytes
+                    if estimate_bytes is not None else None
+                )
+                disk_read_error = None
+                disk_free = None
+                try:
+                    disk_free = int(shutil.disk_usage(ooc_directory).free)
+                except OSError as exc:
+                    disk_read_error = str(exc)
+                disk_gate = {
+                    "status": (
+                        "PASS"
+                        if estimate_valid and disk_free is not None
+                        and required_bytes is not None and disk_free >= required_bytes
+                        else "BLOCKED_RESOURCE_AND_REVIEW_RELEASE_REQUIRED"
+                    ),
+                    "disk_path": str(ooc_directory),
+                    "available_bytes_after_symbolic": disk_free,
+                    "disk_read_error": disk_read_error,
+                    "mumps_rinfog15_decimal_mb_after_symbolic": (
+                        float(estimate_mb) if estimate_valid else estimate_mb
+                    ),
+                    "estimate_bytes_with_headroom": estimate_bytes,
+                    "headroom_factor": float(
+                        ooc_contract["disk_estimate_headroom_factor"]
+                    ),
+                    "fixed_reserve_bytes": reserve_bytes,
+                    "required_available_bytes": required_bytes,
+                    "estimate_units": "decimal_MB_times_1e6_bytes",
+                    "numeric_factorization_admitted": bool(
+                        estimate_valid and disk_free is not None
+                        and required_bytes is not None and disk_free >= required_bytes
+                    ),
+                }
+                summary["mumps_ooc"]["symbolic_mumps_info"] = symbolic_info
+                summary["mumps_ooc"]["disk_admission_gate"] = disk_gate
+                summary["mumps_ooc"]["files_after_symbolic"] = (
+                    _p6_ooc_file_inventory(ooc_directory)
+                )
+                if disk_free < int(ooc_contract["disk_warning_bytes"]):
+                    summary["mumps_ooc"]["disk_warning_after_symbolic"] = {
+                        "threshold_bytes": int(ooc_contract["disk_warning_bytes"]),
+                        "available_bytes": disk_free,
+                    }
+                if not disk_gate["numeric_factorization_admitted"]:
+                    reason = (
+                        "symbolic_disk_estimate_unavailable"
+                        if not estimate_valid else
+                        "disk_monitor_unavailable"
+                        if disk_free is None else "disk_headroom_below_required"
+                    )
+                    blocked_facts = {
+                        "schema": "saxs.p6.ooc_disk_admission_blocked.v1",
+                        "run_id": str(resolved_payload.get("run_id") or ""),
+                        "source_sha": str(source_sha or ""),
+                        "input_sha256": str(resolved_payload.get("input_sha256") or ""),
+                        "profile": selected_profile_identity,
+                        "reason": reason,
+                        "disk_gate": disk_gate,
+                        "symbolic_mumps_info": symbolic_info,
+                        "matrix_object_id": id(_matrix),
+                        "symbolic_calls": int(factor_handle.symbolic_calls),
+                        "numeric_calls": int(factor_handle.numeric_calls),
+                        "numeric_factorization_started": False,
+                    }
+                    release_facts = _wait_for_ooc_disk_admission_release(
+                        run_directory=directory,
+                        ooc_directory=ooc_directory,
+                        blocked_facts=blocked_facts,
+                        required_bytes=required_bytes,
+                        run_id=blocked_facts["run_id"],
+                        source_sha=blocked_facts["source_sha"],
+                        input_sha256=blocked_facts["input_sha256"],
+                        summary=summary,
+                        marker=ledger.marker,
+                    )
+                    disk_gate.update(
+                        status="PASS_AFTER_REVIEWED_RESOURCE_RECOVERY",
+                        available_bytes_at_release=(
+                            release_facts["available_bytes_at_release"]
+                        ),
+                        required_available_bytes=(
+                            release_facts["required_available_bytes"]
+                        ),
+                        numeric_factorization_admitted=True,
+                        blocked_facts_sha256=(
+                            release_facts["blocked_facts_sha256"]
+                        ),
+                        reviewed_release_sha256=release_facts["release_sha256"],
+                        review=release_facts["review"],
+                        resource_monitor=release_facts["resource_monitor"],
+                    )
+                    summary["mumps_ooc"]["disk_admission_gate"] = disk_gate
+                    summary["mumps_ooc"]["disk_admission_blocked"].update(
+                        status="RELEASED_AFTER_RESOURCE_RECOVERY_AND_REVIEW",
+                        release_path=release_facts["release_path"],
+                        release_sha256=release_facts["release_sha256"],
+                        available_bytes_at_release=(
+                            release_facts["available_bytes_at_release"]
+                        ),
+                    )
+                    summary["status"] = "RUNNING"
+                    summary["result_classification"] = "NOT_QUALIFIED"
+                    _atomic_json(
+                        directory / "p6_condensed_direct_summary.json", summary
+                    )
+                    ledger.marker(
+                        "p6_ooc_disk_admission_review_release_accepted",
+                        {
+                            "blocked_facts_sha256": (
+                                release_facts["blocked_facts_sha256"]
+                            ),
+                            "release_sha256": release_facts["release_sha256"],
+                            "available_bytes_at_release": (
+                                release_facts["available_bytes_at_release"]
+                            ),
+                            "required_available_bytes": required_bytes,
+                        },
+                    )
+
         if route.get("require_mumps_icntl23_zero"):
             icntl = factor_settings.get("icntl", {})
             if type(icntl.get("23")) is not int or icntl.get("23") != 0:
@@ -4486,6 +4993,7 @@ def run_p6_condensed_direct(
             ledger.marker,
             numeric_factor_blas_threads=numeric_factor_blas_threads,
             phase_facts=summary["factor"],
+            after_symbolic=after_symbolic_gate,
         )
         summary["factor"].update(
             symbolic_calls=int(factor.symbolic_calls),
@@ -4497,6 +5005,15 @@ def run_p6_condensed_direct(
             mumps_info_after_solve=factor.info(),
             refinement_settings=factor.refinement_settings(),
         )
+        if ooc8_target:
+            solved_info = summary["factor"]["mumps_info_after_solve"]
+            solved_rinfog = solved_info.get("rinfog", {})
+            summary["mumps_ooc"].update(
+                post_solve_rinfog15_decimal_mb=solved_rinfog.get("15"),
+                post_solve_rinfog16_decimal_mb=solved_rinfog.get("16"),
+                post_solve_mumps_info=solved_info,
+                files_after_solve=_p6_ooc_file_inventory(ooc_directory),
+            )
         post_matrix_info = dict(matrix.getInfo(PETSc.Mat.InfoType.GLOBAL_SUM))
         summary["matrix"]["actual_matrix_info_after_solve"] = post_matrix_info
 
@@ -5045,9 +5562,50 @@ def run_p6_condensed_direct(
         if factor is not None:
             try:
                 factor.destroy()
+                if ooc8_target:
+                    summary.setdefault("mumps_ooc", {})[
+                        "factor_destroyed"
+                    ] = bool(getattr(factor, "destroyed", False))
             except Exception as cleanup_error:  # noqa: BLE001
+                if ooc8_target:
+                    summary.setdefault("mumps_ooc", {})[
+                        "factor_destroy_error"
+                    ] = repr(cleanup_error)
                 print(
                     f"direct-solve MUMPS cleanup failed: {cleanup_error!r}",
+                    file=sys.stderr,
+                )
+        if ooc8_target:
+            try:
+                before_cleanup = _p6_ooc_file_inventory(ooc_directory)
+                summary.setdefault("mumps_ooc", {})[
+                    "files_after_factor_destroy"
+                ] = before_cleanup
+                if summary.get("passed") is True and before_cleanup["files"]:
+                    shutil.rmtree(ooc_directory)
+                    summary["mumps_ooc"]["success_cleanup_removed_files"] = True
+                else:
+                    summary["mumps_ooc"]["success_cleanup_removed_files"] = False
+                    summary["mumps_ooc"]["files_retained_on_failure"] = bool(
+                        before_cleanup["files"]
+                    )
+                summary["mumps_ooc"]["files_after_cleanup"] = (
+                    _p6_ooc_file_inventory(ooc_directory)
+                )
+            except (OSError, TypeError, ValueError) as cleanup_error:
+                summary.setdefault("mumps_ooc", {})[
+                    "ooc_cleanup_error"
+                ] = repr(cleanup_error)
+            for name, previous in ooc_environment_before.items():
+                if previous is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = previous
+            try:
+                _atomic_json(directory / "p6_condensed_direct_summary.json", summary)
+            except (OSError, TypeError, ValueError) as write_error:
+                print(
+                    f"failed to persist post-factor OOC evidence: {write_error!r}",
                     file=sys.stderr,
                 )
         if action is not None:

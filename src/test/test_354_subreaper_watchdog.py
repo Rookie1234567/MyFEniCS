@@ -422,3 +422,79 @@ print(json.dumps(result))
         assert summary['classification'] == 'PERFORMANCE_CONTROLLED_STOP'
         assert safe.read_text() == 'last safe'
         assert 'first_SIGTERM' in summary and 'first_SIGKILL' not in summary
+
+
+def test_disk_floor_stops_before_starting_worker(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    import benchmarks.subreaper_watchdog as watchdog
+
+    run_directory = tmp_path / 'run'
+    run_directory.mkdir()
+    proof = tmp_path / 'worker-started'
+    monkeypatch.setattr(
+        watchdog.shutil,
+        'disk_usage',
+        lambda _path: SimpleNamespace(total=1000, used=901, free=99),
+    )
+    result = watchdog.supervise(
+        [
+            sys.executable,
+            '-c',
+            f'from pathlib import Path; Path({str(proof)!r}).write_text("started")',
+        ],
+        run_directory / 'watchdog',
+        wall_seconds=None,
+        minimum_disk_available_bytes=100,
+        disk_warning_bytes=200,
+        disk_path=run_directory,
+    )
+    assert result['classification'] == 'RESOURCE_CONTROLLED_STOP'
+    assert result['disk_admission_gate']['worker_started'] is False
+    assert result['sampled_disk_available_min_bytes'] == 99
+    assert result['disk_samples'] == 0
+    assert not proof.exists()
+
+
+def test_disk_floor_is_monitored_and_stops_live_worker_tree(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    import benchmarks.subreaper_watchdog as watchdog
+
+    run_directory = tmp_path / 'run'
+    run_directory.mkdir()
+    calls = []
+
+    def disk_usage(_path):
+        calls.append(len(calls))
+        free = 10**12 if len(calls) == 1 else 50
+        return SimpleNamespace(total=10**12 + 1, used=1, free=free)
+
+    monkeypatch.setattr(watchdog.shutil, 'disk_usage', disk_usage)
+    monkeypatch.setattr(
+        watchdog,
+        'memory_envelope',
+        lambda: {
+            'launch_cap_bytes': None,
+            'planning_cap_bytes': None,
+            'effective_available_bytes': 128 * 1024**3,
+            'reserve_bytes': None,
+        },
+    )
+    result = watchdog.supervise(
+        [sys.executable, '-c', 'import time; time.sleep(60)'],
+        run_directory / 'watchdog',
+        wall_seconds=None,
+        interval=.05,
+        grace_seconds=.1,
+        hard_stop_immediate=True,
+        resource_stop_policy='host_available_floor_v1',
+        minimum_available_bytes=64 * 1024**3,
+        minimum_disk_available_bytes=100,
+        disk_warning_bytes=200,
+        disk_path=run_directory,
+    )
+    assert result['classification'] == 'RESOURCE_CONTROLLED_STOP'
+    assert result['descendants_cleared']
+    assert result['disk_samples'] > 0
+    assert result['sampled_disk_available_min_bytes'] == 50
+    assert result['minimum_disk_available_bytes'] == 100
+    assert result['disk_warning_bytes'] == 200

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import ast
+import hashlib
+import json
 import sys
 from dataclasses import replace
 from importlib import import_module
@@ -275,3 +277,136 @@ def test_factor_lifecycle_uses_one_matrix_for_symbolic_numeric_solve(monkeypatch
     ]
     assert all(value is matrix for _name, value in factor.calls)
     assert len(markers) == 2
+
+
+def test_symbolic_admission_callback_can_stop_before_numeric(monkeypatch):
+    fake_petsc4py = ModuleType("petsc4py")
+    fake_petsc4py.PETSc = ModuleType("petsc4py.PETSc")
+    monkeypatch.setitem(sys.modules, "petsc4py", fake_petsc4py)
+    from src.runners.p6_condensed_direct import _factor_same_matrix
+
+    class AdmissionStop(Exception):
+        pass
+
+    class FakeFactor:
+        def __init__(self):
+            self.calls = []
+            self.symbolic_calls = 0
+            self.numeric_calls = 0
+            self.solve_calls = 0
+            self.preferred_ordering = "MMD_AT_PLUS_A"
+
+        def symbolic(self, matrix):
+            self.calls.append(("symbolic", matrix))
+            self.symbolic_calls += 1
+
+        def numeric(self, matrix):
+            self.calls.append(("numeric", matrix))
+            self.numeric_calls += 1
+
+        def solve(self, rhs, solution):
+            self.calls.append(("solve", rhs))
+            self.solve_calls += 1
+
+        def info(self):
+            return {"INFOG(1)": 0}
+
+    matrix, rhs, solution = object(), object(), object()
+    factor = FakeFactor()
+    admissions = []
+
+    def stop_after_symbolic(factor_handle, matrix_handle):
+        admissions.append((factor_handle.symbolic_calls, factor_handle.numeric_calls,
+                           matrix_handle))
+        raise AdmissionStop
+
+    try:
+        _factor_same_matrix(
+            factor, matrix, rhs, solution, lambda *_row: None,
+            after_symbolic=stop_after_symbolic,
+        )
+    except AdmissionStop:
+        pass
+    else:
+        raise AssertionError("symbolic admission stop was not propagated")
+
+    assert admissions == [(1, 0, matrix)]
+    assert factor.calls == [("symbolic", matrix)]
+    assert factor.numeric_calls == 0
+    assert factor.solve_calls == 0
+
+
+def test_ooc_disk_release_is_bound_to_run_source_input_and_blocked_facts(
+    monkeypatch, tmp_path
+):
+    fake_petsc4py = ModuleType("petsc4py")
+    fake_petsc4py.PETSc = ModuleType("petsc4py.PETSc")
+    monkeypatch.setitem(sys.modules, "petsc4py", fake_petsc4py)
+    from src.runners.p6_condensed_direct import (
+        _ooc_disk_admission_facts_sha256,
+        _ooc_disk_admission_release_is_valid,
+    )
+
+    facts = {
+        "run_id": "run-cx9z7p5-unique",
+        "source_sha": "b" * 40,
+        "input_sha256": "c" * 64,
+        "available_bytes": 100,
+        "required_bytes": 200,
+    }
+    monitor_receipt = {
+        "schema": "saxs.host.systemd_user_resource_monitor_receipt.v1",
+        "status": "ACTIVE_FOR_EXACT_RUN",
+        "manager": "systemd --user",
+        "xdg_runtime_dir": "/run/user/1000",
+        "run_id": facts["run_id"],
+        "source_sha": facts["source_sha"],
+        "input_sha256": facts["input_sha256"],
+        "monitor_unit": "myfenics-saxs-run-monitor.service",
+        "target_scope": "myfenics-saxs-run.scope",
+        "target_invocation_id": "d" * 32,
+    }
+    receipt_path = tmp_path / "resource-monitor-receipt.json"
+    receipt_bytes = json.dumps(
+        monitor_receipt, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    receipt_path.write_bytes(receipt_bytes)
+    release = {
+        "schema": "saxs.p6.ooc_disk_admission_release.v1",
+        "decision": "APPROVE_NUMERIC_FACTOR_AFTER_RESOURCE_RECOVERY",
+        "run_id": facts["run_id"],
+        "source_sha": facts["source_sha"],
+        "input_sha256": facts["input_sha256"],
+        "blocked_facts_sha256": _ooc_disk_admission_facts_sha256(facts),
+        "review": {
+            "status": "APPROVED",
+            "reference": "main-review-2026-11-10",
+            "reviewed_at_utc": "2026-11-10T15:00:00Z",
+        },
+        "resource_monitor": {
+            "status": "ACTIVE_FOR_EXACT_RUN",
+            "manager": "systemd --user",
+            "xdg_runtime_dir": "/run/user/1000",
+            "run_id": facts["run_id"],
+            "source_sha": facts["source_sha"],
+            "input_sha256": facts["input_sha256"],
+            "unit": "myfenics-saxs-run-monitor.service",
+            "target_scope": "myfenics-saxs-run.scope",
+            "target_invocation_id": "d" * 32,
+            "receipt_path": str(receipt_path),
+            "receipt_sha256": hashlib.sha256(receipt_bytes).hexdigest(),
+        },
+    }
+    identity = {
+        "run_id": facts["run_id"],
+        "source_sha": facts["source_sha"],
+        "input_sha256": facts["input_sha256"],
+        "blocked_facts_sha256": release["blocked_facts_sha256"],
+    }
+    assert _ooc_disk_admission_release_is_valid(release, **identity)
+    for key in identity:
+        stale = dict(release)
+        stale[key] = "stale-identity"
+        assert not _ooc_disk_admission_release_is_valid(stale, **identity)
+    receipt_path.write_text("{}", encoding="utf-8")
+    assert not _ooc_disk_admission_release_is_valid(release, **identity)

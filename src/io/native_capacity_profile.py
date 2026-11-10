@@ -193,11 +193,17 @@ SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILE = (
 SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE = (
     "saxs_simple_grating_0p7135227949_phi84_m8_nminus14_to1_p6_direct_cx9z10_v1"
 )
+SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE = (
+    "saxs_simple_grating_0p7135227949_phi84_m8_nminus14_to1_p6_direct_cx9z7p5_ooc8_v1"
+)
 SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILES = frozenset(
     {SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILE}
 )
 SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILES = frozenset(
     {SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE}
+)
+SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILES = frozenset(
+    {SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE}
 )
 SAXS_SIMPLE_GRATING_P6_DIRECT_ONE_AXIS_PROFILES = frozenset(
     {
@@ -215,6 +221,7 @@ SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES = frozenset(
         *SAXS_SIMPLE_GRATING_P6_DIRECT_ONE_AXIS_PROFILES,
         *SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILES,
         *SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILES,
+        *SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILES,
     }
 )
 TASK40_PHI90_H15_B_P6_DIRECT_PROFILE = (
@@ -2753,6 +2760,156 @@ def _task40_saxs_simple_grating_profile_facts(identity):
             "the exact 16-cell z axis, P6, M[-8,8]/N[-14,1], q81/q15, "
             "and no VTK; CXZ15 supplies only the unchanged y-axis reference"
         )
+    elif identity in SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILES:
+        from src.geometry.saxs_simple_grating_axis_plan import saxs_cx9z7p5_plan
+
+        plan = saxs_cx9z7p5_plan()
+        counts = [int(value) for value in plan["axis_cell_counts"]]
+        expected_cells = int(plan["expected_global_cell_count"])
+        resource_monitor_contract = {
+            "schema": "saxs.host.systemd_user_resource_monitor.v1",
+            "manager": "systemd --user",
+            "user_option": "--user",
+            "xdg_runtime_dir": "/run/user/1000",
+            "target_launch": "systemd-run --user --scope",
+            "monitor_unit_scope": "separate user unit outside the target scope",
+            "freeze_thaw": "systemctl --user freeze/thaw the exact target unit",
+            "registration_receipt_schema": (
+                "saxs.host.systemd_user_resource_monitor_receipt.v1"
+            ),
+            "target_identity_fields": [
+                "run_id",
+                "source_sha",
+                "input_sha256",
+                "target_unit",
+                "target_invocation_id",
+                "leader_pid",
+                "leader_start_ticks",
+                "target_cgroup_path",
+            ],
+            "sample_interval_seconds": 1,
+            "memory": {
+                "metric": "host_MemAvailable_bytes",
+                "warning_bytes": 256 * 1024**3,
+                "pause_at_or_below_bytes": 128 * 1024**3,
+                "resume_at_or_above_bytes": 192 * 1024**3,
+                "resume_stable_seconds": 60,
+                "emergency_stop_floor_bytes": 64 * 1024**3,
+            },
+            "disk": {
+                "metric": "free_bytes_on_the_OOC_run_filesystem",
+                "warning_bytes": 256 * 1024**3,
+                "pause_at_or_below_bytes": 192 * 1024**3,
+                "resume_at_or_above_bytes": 256 * 1024**3,
+                "resume_stable_seconds": 60,
+                "emergency_stop_floor_bytes": 128 * 1024**3,
+            },
+            "blocked_ooc_admission": {
+                "freeze_exact_target_scope": True,
+                "resume_requires_run_bound_review_release": True,
+                "numeric_factorization_must_remain_unstarted_until_release": True,
+            },
+            "monitor_failure_policy": (
+                "do_not_launch_without_active_identity_bound_monitor; never thaw on identity mismatch"
+            ),
+            "pause_time_limit_policy": "none_by_profile",
+        }
+        ooc_contract = {
+            "schema": "saxs.p6.ooc8.target_contract.v1",
+            "enabled": True,
+            "numeric_factor_blas_threads": 8,
+            "mumps_icntl_before_symbolic": {"14": 0, "22": 1, "23": 0, "35": 0},
+            "symbolic_disk_estimate": "MUMPS_RINFOG_15_decimal_MB_after_symbolic",
+            "disk_estimate_headroom_factor": 1.10,
+            "disk_reserve_bytes": 128 * 1024**3,
+            "minimum_disk_available_bytes": 128 * 1024**3,
+            "disk_warning_bytes": 256 * 1024**3,
+            "ooc_directory_scope": "unique_run_directory",
+            "worker_nofile_soft_limit": 65536,
+            "independent_resource_monitor": resource_monitor_contract,
+        }
+        comparison.update(
+            case=plan["case"],
+            display_name="SAXS center; CX9Z7P5 exact target axes, MUMPS OOC8",
+            axis_comparison_parent="CX9Z10_mesh_reference_only",
+            parent_case=plan["parent_case"],
+            changed_axis="z",
+            changed_axes=list(plan["changed_axes"]),
+            parent_axis_sha256_le_f64=dict(
+                plan["parent_axis_sha256_le_f64"]
+            ),
+            base_axis_sha256_le_f64=dict(plan["base_axis_sha256_le_f64"]),
+            axis_cell_counts=counts,
+            expected_global_cell_count=expected_cells,
+            expected_material_tag_counts=dict(
+                plan["expected_material_tag_counts"]
+            ),
+            static_condensed_rows=dict(plan["static_condensed_rows"]),
+            mesh_plan_id=plan["mesh_plan_id"],
+            mesh_plan_sha256=plan["mesh_plan_sha256"],
+            axes_nm={key: list(values) for key, values in plan["axes_nm"].items()},
+            expected_axis_sha256_le_f64=dict(plan["axis_sha256_le_f64"]),
+            explicit_axis_counts_in_input=True,
+            only_axis_changes_from_parent=["z"],
+            target_mesh_not_a_convergence_claim=True,
+            direct_factor_storage="MUMPS_out_of_core_opt_in",
+        )
+        comparison.pop("only_axis_changes_from_B", None)
+        base["mesh_evidence_family"] = "SAXS_center_CX9Z7P5_OOC8_target"
+        base["runner_summary_prefix"] = (
+            "saxs_simple_grating_center_p6_direct_saxs_cx9z7p5_ooc8_"
+            "m8_nminus14_to1"
+        )
+        base["route"] = (
+            "SAXS_SIMPLE_GRATING_CENTER_P6_CONDENSED_DIRECT_CX9Z7P5_OOC8"
+        )
+        base["resources"]["minimum_disk_available_bytes"] = (
+            ooc_contract["minimum_disk_available_bytes"]
+        )
+        base["resources"]["disk_warning_bytes"] = ooc_contract["disk_warning_bytes"]
+        base["native_execution"]["numeric_factor_blas_thread_choices"] = [8]
+        options.update(
+            task_family="saxs_simple_grating_center_cx9z7p5_ooc8_target_direct",
+            expected_axis_cell_counts=counts,
+            expected_global_cell_count=expected_cells,
+            mesh_axis_authority="main_reviewed_exact_CX9Z7P5_target_plan",
+            pre_lu_port_assembly_gate={
+                "profile_id": "CX9Z10_PRELU_LOCAL_PORT_BLAS8_V1",
+                "profile_path": "profiles/cx9z10_prelu_port_blas8_v1.json",
+                "activation": (
+                    "exact_CX9Z10_or_CX9Z7P5_OOC8_native_profile_and_launcher_manifest"
+                ),
+                "numeric_lu_is_independent": True,
+            },
+            mumps_ooc_contract=ooc_contract,
+        )
+        base["condensed_route"]["expected_global_cell_count"] = expected_cells
+        direct_route.update(
+            mesh_coordinates_reused_from="CX9Z10_exact_x_y_plus_refined_pillar_z",
+            case=plan["case"],
+            mesh_plan_id=plan["mesh_plan_id"],
+            mesh_plan_sha256=plan["mesh_plan_sha256"],
+            parent_case=plan["parent_case"],
+            parent_axis_sha256_le_f64=dict(
+                plan["parent_axis_sha256_le_f64"]
+            ),
+            base_axis_sha256_le_f64=dict(plan["base_axis_sha256_le_f64"]),
+            changed_axis="z",
+            changed_axes=list(plan["changed_axes"]),
+            expected_axis_sha256_le_f64=dict(plan["axis_sha256_le_f64"]),
+            expected_axis_cell_counts=counts,
+            expected_global_cell_count=expected_cells,
+            expected_material_tag_counts=dict(
+                plan["expected_material_tag_counts"]
+            ),
+            static_condensed_rows=dict(plan["static_condensed_rows"]),
+            mumps_ooc_contract=ooc_contract,
+        )
+        campaign["source"] = (
+            "main-reviewed CX9Z7P5 target: preserve CX9Z10 x/y and all physics, "
+            "P6, M[-8,8]/N[-14,1], q81/q15 and 8 numeric BLAS threads; refine "
+            "only pillar z to 16 x 7.5 nm cells and opt in to MUMPS OOC"
+        )
     return base
 
 
@@ -4099,6 +4256,8 @@ def native_capacity_profile_identity(method, solver):
 
 def numeric_factor_blas_thread_choices(profile_identity):
     """Return exact, profile-scoped numeric-LU thread choices."""
+    if profile_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILES:
+        return frozenset({8})
     if profile_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES:
         return frozenset({1, 8})
     if profile_identity == TASK40_PHI90_D07C_G6_M8_N14_PROFILE:
@@ -5297,6 +5456,20 @@ def _validate_saxs_simple_grating_case(config: dict, identity: str) -> None:
         except ValueError as exc:
             raise InputError(
                 f"{identity} has invalid CX9Z10 mesh coordinates: {exc}"
+            ) from exc
+        expected_counts = tuple(
+            facts["component_options"]["expected_axis_cell_counts"]
+        )
+    elif identity in SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILES:
+        from src.geometry.saxs_simple_grating_axis_plan import (
+            validate_saxs_cx9z7p5_plan,
+        )
+
+        try:
+            validate_saxs_cx9z7p5_plan(axes)
+        except ValueError as exc:
+            raise InputError(
+                f"{identity} has invalid CX9Z7P5 mesh coordinates: {exc}"
             ) from exc
         expected_counts = tuple(
             facts["component_options"]["expected_axis_cell_counts"]

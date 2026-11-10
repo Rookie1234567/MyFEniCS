@@ -305,6 +305,7 @@ def _load_and_validate_worker_payload(
     if not setup_only:
         from src.io.native_capacity_profile import (
             P6_CONDENSED_DIRECT_PROFILES,
+            SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE,
             SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE,
             TASK40_PHI90_D07C_G6_M8_N14_PROFILE,
             V6_NATIVE_PROFILES,
@@ -395,6 +396,12 @@ def _load_and_validate_worker_payload(
                     expected_route = profile['campaign_authorization']['direct_route']
                     expected_rss_cap = profile['resources']['rss_hard_limit_bytes']
                     expected_minimum_available = profile['resources'].get('minimum_available_bytes')
+                    expected_minimum_disk = profile['resources'].get(
+                        'minimum_disk_available_bytes'
+                    )
+                    expected_disk_warning = profile['resources'].get(
+                        'disk_warning_bytes'
+                    )
                     if native_contract.get('profile') != profile_name:
                         errors.append('manifest condensed-direct resource profile mismatch')
                     if native_contract.get('rss_hard_limit_bytes') != expected_rss_cap:
@@ -405,9 +412,22 @@ def _load_and_validate_worker_payload(
                         errors.append('manifest condensed-direct resource stop policy mismatch')
                     if native_contract.get('minimum_available_bytes') != expected_minimum_available:
                         errors.append('manifest condensed-direct minimum available-memory floor mismatch')
+                    if native_contract.get('minimum_disk_available_bytes') != expected_minimum_disk:
+                        errors.append('manifest condensed-direct minimum disk floor mismatch')
+                    if native_contract.get('disk_warning_bytes') != expected_disk_warning:
+                        errors.append('manifest condensed-direct disk warning threshold mismatch')
                     if native_contract.get('direct_route') != expected_route:
                         errors.append('manifest condensed-direct route contract mismatch')
-        if profile_name == SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE:
+                    if profile_name == SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE:
+                        expected_ooc_contract = profile['component_options'].get(
+                            'mumps_ooc_contract'
+                        )
+                        if native_contract.get('mumps_ooc_contract') != expected_ooc_contract:
+                            errors.append('manifest OOC8 contract differs from the resolved profile')
+        if profile_name in (
+            SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE,
+            SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE,
+        ):
             gate_profile = profile['component_options'].get(
                 'pre_lu_port_assembly_gate'
             )
@@ -475,7 +495,7 @@ def _load_and_validate_worker_payload(
                         f'CX9Z10 pre-LU gate binding could not be validated: {exc}'
                     )
         elif manifest_value.get('pre_lu_port_assembly_gate') is not None:
-            errors.append('pre-LU port gate binding is forbidden outside CX9Z10')
+            errors.append('pre-LU port gate binding is forbidden outside CX9Z10/CX9Z7P5_OOC8')
         elif any(
             os.environ.get(name) is not None
             for name in (
@@ -576,12 +596,19 @@ def _dispatch_resolved_payload(
             from src.runners.p6_condensed_direct import run_p6_condensed_direct
 
             def adapter(payload, directory):
+                runner_options = {"source_sha": expected_source_sha}
+                if numeric_factor_blas_threads is not None:
+                    runner_options["numeric_factor_blas_threads"] = (
+                        numeric_factor_blas_threads
+                    )
+                if numeric_factor_worker_affinity is not None:
+                    runner_options["numeric_factor_worker_affinity"] = (
+                        numeric_factor_worker_affinity
+                    )
                 return run_p6_condensed_direct(
                     payload,
                     directory,
-                    source_sha=expected_source_sha,
-                    numeric_factor_blas_threads=numeric_factor_blas_threads,
-                    numeric_factor_worker_affinity=numeric_factor_worker_affinity,
+                    **runner_options,
                 )
 
             label = "p6 condensed direct"

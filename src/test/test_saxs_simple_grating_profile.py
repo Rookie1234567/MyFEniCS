@@ -16,6 +16,7 @@ from src.io.input_validation import (
 )
 from src.io.native_capacity_profile import (
     SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE,
+    SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE,
     SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE,
     SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILE,
     SAXS_SIMPLE_GRATING_P6_DIRECT_CZ_PROFILE,
@@ -45,6 +46,7 @@ ROOT = Path(__file__).resolve().parents[2]
 INPUT = ROOT / "input/saxs_simple_grating_center_p6_direct.dat"
 CXZ15_INPUT = ROOT / "input/saxs_simple_grating_center_cxz15_p6_direct.dat"
 CX9Z10_INPUT = ROOT / "input/saxs_simple_grating_center_cx9z10_p6_direct.dat"
+CX9Z7P5_OOC8_INPUT = ROOT / "input/saxs_simple_grating_center_cx9z7p5_ooc8_p6_direct.dat"
 SOURCE_SHA = "a5c8" * 10
 WORKER_CPUS = list(range(16, 24))
 
@@ -533,6 +535,189 @@ def test_cx9z10_input_profile_and_exact_target_axis_contract():
         "numeric_lu_is_independent": True,
     }
     assert numeric_factor_blas_thread_choices(profile) == {1, 8}
+
+
+def test_cx9z7p5_ooc8_input_profile_and_exact_target_axis_contract():
+    from src.geometry.saxs_simple_grating_axis_plan import (
+        saxs_cx9z7p5_plan,
+        validate_saxs_cx9z7p5_plan,
+    )
+
+    target = load_and_resolve(CX9Z7P5_OOC8_INPUT).as_jsonable()
+    parent = load_and_resolve(CX9Z10_INPUT).as_jsonable()
+    profile = target["solver"]["native_capacity_profile"]
+    facts = native_profile_facts(profile)
+    route = _direct_run_contract(profile)
+    plan = saxs_cx9z7p5_plan()
+    discretization = target["discretization"]
+    axes = {
+        "mesh_plan_id": discretization["mesh_plan_id"],
+        "mesh_plan_sha256": discretization["mesh_plan_sha256"],
+        "mesh_axis_cell_counts": discretization["mesh_axis_cell_counts"],
+        "mesh_axis_x_values": discretization["mesh_axis_x_values"],
+        "mesh_axis_y_values": discretization["mesh_axis_y_values"],
+        "mesh_axis_z_values": discretization["mesh_axis_z_values"],
+    }
+
+    assert profile == SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE
+    assert target["run_id"].endswith("_cx9z7p5_ooc8_v1")
+    for section in ("geometry", "materials", "incidence", "boundary", "method"):
+        assert target[section] == parent[section]
+    assert discretization["mesh_axis_x_values"] == parent["discretization"][
+        "mesh_axis_x_values"
+    ]
+    assert discretization["mesh_axis_y_values"] == parent["discretization"][
+        "mesh_axis_y_values"
+    ]
+    assert validate_saxs_cx9z7p5_plan(axes) == {
+        key: tuple(plan["axes_nm"][key]) for key in "xyz"
+    }
+    assert plan["axis_cell_counts"] == [9, 200, 20]
+    assert plan["expected_global_cell_count"] == 36000
+    assert plan["expected_material_tag_counts"] == {
+        "1": 28560,
+        "2": 3600,
+        "3": 3840,
+    }
+    assert plan["changed_axes"] == ["z"]
+    assert plan["static_condensed_rows"]["augmented_rows"] == 7_258_688
+    assert route["task40_mesh_plan_family"] == "saxs_cx9z7p5_ooc8"
+    assert route["task40_mesh_plan_id"] == plan["mesh_plan_id"]
+    assert route["expected_axis_cell_counts"] == [9, 200, 20]
+    assert route["expected_global_cell_count"] == 36000
+    assert route["active_count"] == 1088
+    assert route["signed_rectangle_bounds_mn"] == [-8, 8, -14, 1]
+    assert route["surface_quadrature_degree"] == 81
+    assert facts["component_options"]["volume_quadrature"]["degree"] == 15
+    assert facts["component_options"]["visualization_output_policy"][
+        "write_visualization_files"
+    ] is False
+    assert facts["component_options"]["mumps_ooc_contract"] == {
+        "schema": "saxs.p6.ooc8.target_contract.v1",
+        "enabled": True,
+        "numeric_factor_blas_threads": 8,
+        "mumps_icntl_before_symbolic": {
+            "14": 0,
+            "22": 1,
+            "23": 0,
+            "35": 0,
+        },
+        "symbolic_disk_estimate": "MUMPS_RINFOG_15_decimal_MB_after_symbolic",
+        "disk_estimate_headroom_factor": 1.1,
+        "disk_reserve_bytes": 128 * 1024**3,
+        "minimum_disk_available_bytes": 128 * 1024**3,
+        "disk_warning_bytes": 256 * 1024**3,
+        "ooc_directory_scope": "unique_run_directory",
+        "worker_nofile_soft_limit": 65536,
+        "independent_resource_monitor": {
+            "schema": "saxs.host.systemd_user_resource_monitor.v1",
+            "manager": "systemd --user",
+            "user_option": "--user",
+            "xdg_runtime_dir": "/run/user/1000",
+            "target_launch": "systemd-run --user --scope",
+            "monitor_unit_scope": "separate user unit outside the target scope",
+            "freeze_thaw": "systemctl --user freeze/thaw the exact target unit",
+            "registration_receipt_schema": (
+                "saxs.host.systemd_user_resource_monitor_receipt.v1"
+            ),
+            "target_identity_fields": [
+                "run_id",
+                "source_sha",
+                "input_sha256",
+                "target_unit",
+                "target_invocation_id",
+                "leader_pid",
+                "leader_start_ticks",
+                "target_cgroup_path",
+            ],
+            "sample_interval_seconds": 1,
+            "memory": {
+                "metric": "host_MemAvailable_bytes",
+                "warning_bytes": 256 * 1024**3,
+                "pause_at_or_below_bytes": 128 * 1024**3,
+                "resume_at_or_above_bytes": 192 * 1024**3,
+                "resume_stable_seconds": 60,
+                "emergency_stop_floor_bytes": 64 * 1024**3,
+            },
+            "disk": {
+                "metric": "free_bytes_on_the_OOC_run_filesystem",
+                "warning_bytes": 256 * 1024**3,
+                "pause_at_or_below_bytes": 192 * 1024**3,
+                "resume_at_or_above_bytes": 256 * 1024**3,
+                "resume_stable_seconds": 60,
+                "emergency_stop_floor_bytes": 128 * 1024**3,
+            },
+            "blocked_ooc_admission": {
+                "freeze_exact_target_scope": True,
+                "resume_requires_run_bound_review_release": True,
+                "numeric_factorization_must_remain_unstarted_until_release": True,
+            },
+            "monitor_failure_policy": (
+                "do_not_launch_without_active_identity_bound_monitor; never thaw on identity mismatch"
+            ),
+            "pause_time_limit_policy": "none_by_profile",
+        },
+    }
+    assert facts["resources"]["minimum_available_bytes"] == 64 * 1024**3
+    assert facts["resources"]["minimum_disk_available_bytes"] == 128 * 1024**3
+    assert facts["resources"]["disk_warning_bytes"] == 256 * 1024**3
+    assert facts["native_execution"]["numeric_factor_blas_thread_choices"] == [8]
+    assert numeric_factor_blas_thread_choices(profile) == {8}
+
+
+def test_cx9z7p5_ooc8_worker_binds_prelu_and_forwards_only_lu8(
+    tmp_path, monkeypatch
+):
+    _specification, run_directory, _resolved_sha, plan, manifest = (
+        _bootstrap_roundtrip(tmp_path, CX9Z7P5_OOC8_INPUT)
+    )
+    binding = _cx9z10_prelu_launcher_binding()
+    manifest["pre_lu_port_assembly_gate"] = binding
+    _write_json(run_directory / "run_manifest.json", manifest)
+    for name, value in binding["worker_environment"].items():
+        monkeypatch.setenv(name, value)
+    observed = _install_fake_p6_dispatch(monkeypatch)
+
+    assert manifest["native_capacity_profile_identity"] == (
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE
+    )
+    assert manifest["native_capacity_contract"]["mumps_ooc_contract"][
+        "mumps_icntl_before_symbolic"
+    ] == {"14": 0, "22": 1, "23": 0, "35": 0}
+    assert _run_worker_main(monkeypatch, plan) == 0
+    assert observed == [
+        {
+            "source_sha": SOURCE_SHA,
+            "numeric_factor_blas_threads": 8,
+            "numeric_factor_worker_affinity": WORKER_CPUS,
+        }
+    ]
+
+
+def test_ooc_worker_nofile_limit_sets_soft_only(monkeypatch):
+    import resource
+
+    from src.runners.p6_condensed_direct import _set_worker_nofile_soft_limit
+
+    limits = {"soft": 1024, "hard": 131072}
+
+    def getrlimit(_resource):
+        return limits["soft"], limits["hard"]
+
+    def setrlimit(_resource, values):
+        limits["soft"], limits["hard"] = values
+
+    monkeypatch.setattr(resource, "getrlimit", getrlimit)
+    monkeypatch.setattr(resource, "setrlimit", setrlimit)
+    evidence = _set_worker_nofile_soft_limit(65536)
+    assert evidence == {
+        "requested_soft": 65536,
+        "before_soft": 1024,
+        "before_hard": 131072,
+        "after_soft": 65536,
+        "after_hard": 131072,
+    }
+    assert limits == {"soft": 65536, "hard": 131072}
 
 
 def test_cx9z10_prelu_gate_binds_active_and_parent_modes_separately(tmp_path):

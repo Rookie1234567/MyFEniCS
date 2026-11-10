@@ -279,6 +279,7 @@ def _base_manifest(
     from src.io.native_capacity_profile import (
         NATIVE_PROFILES,
         P6_CONDENSED_DIRECT_PROFILES,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE,
         native_capacity_profile_identity,
         native_profile_facts,
     )
@@ -378,6 +379,10 @@ def _base_manifest(
             'rss_hard_limit_bytes': profile['resources'].get('rss_hard_limit_bytes'),
             'rss_warning_bytes': profile['resources'].get('rss_warning_bytes'),
             'minimum_available_bytes': profile['resources'].get('minimum_available_bytes'),
+            'minimum_disk_available_bytes': profile['resources'].get(
+                'minimum_disk_available_bytes'
+            ),
+            'disk_warning_bytes': profile['resources'].get('disk_warning_bytes'),
             'swap_policy': profile['resources'].get('swap_policy', 'legacy_stop'),
             'global_swap_delta_policy': profile['resources'].get(
                 'global_swap_delta_policy',
@@ -405,6 +410,10 @@ def _base_manifest(
         if native_identity in P6_CONDENSED_DIRECT_PROFILES:
             manifest['native_capacity_contract']['direct_route'] = dict(
                 profile['campaign_authorization']['direct_route']
+            )
+        if native_identity == SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE:
+            manifest['native_capacity_contract']['mumps_ooc_contract'] = dict(
+                profile['component_options']['mumps_ooc_contract']
             )
         if profile.get('native_execution'):
             manifest['native_capacity_contract']['native_execution'] = profile[
@@ -620,6 +629,7 @@ def launch_specification(
         )
     from src.io.native_capacity_profile import (
         P6_CONDENSED_DIRECT_PROFILES,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE,
         SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE,
         SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES,
         TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
@@ -657,7 +667,10 @@ def launch_specification(
         'MYFENICS_CX9Z10_PRELU_LAUNCHER_PATH',
         'MYFENICS_CX9Z10_PRELU_WORKER_PATH',
     )
-    if native_identity == SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE:
+    if native_identity in (
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z7P5_OOC8_PROFILE,
+    ):
         profile = native_profile_facts(native_identity)
         gate_profile = profile['component_options'].get(
             'pre_lu_port_assembly_gate'
@@ -993,6 +1006,15 @@ def launch_specification(
                     'rss_warning_bytes': watchdog_resources.get('rss_warning_bytes'),
                     'startup_headroom_bytes': watchdog_resources.get('startup_headroom_bytes'),
                     'minimum_available_bytes': watchdog_resources.get('minimum_available_bytes'),
+                    'minimum_disk_available_bytes': watchdog_resources.get(
+                        'minimum_disk_available_bytes'
+                    ),
+                    'disk_warning_bytes': watchdog_resources.get('disk_warning_bytes'),
+                    'disk_path': (
+                        str(run_directory)
+                        if watchdog_resources.get('minimum_disk_available_bytes')
+                        is not None else None
+                    ),
                     'pss_sampling_policy': watchdog_resources.get('pss_sampling_policy'),
                 }
                 authority = supervise(list(plan.argv), run_directory / 'watchdog',
@@ -1044,6 +1066,14 @@ def launch_specification(
                     'resource_stop_policy': authority.get('resource_stop_policy', 'legacy'),
                     'rss_hard_limit_bytes': authority.get('rss_hard_limit_bytes'),
                     'minimum_available_bytes': authority.get('minimum_available_bytes'),
+                    'minimum_disk_available_bytes': authority.get(
+                        'minimum_disk_available_bytes'
+                    ),
+                    'disk_warning_bytes': authority.get('disk_warning_bytes'),
+                    'disk_path': authority.get('disk_path'),
+                    'sampled_disk_available_min_bytes': authority.get(
+                        'sampled_disk_available_min_bytes'
+                    ),
                     'startup_headroom_bytes': authority.get('startup_headroom_bytes'),
                     'swap_policy': authority.get('swap_policy', 'legacy_stop'),
                     'prediction_admission_policy': physical_resources.get(

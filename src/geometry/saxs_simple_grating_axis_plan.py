@@ -1,7 +1,7 @@
 """Frozen tensor mesh plans for the SAXS center P6 direct route.
 
-The one-axis plans are configuration-only. CX9Z10 is the separately reviewed
-target mesh plan; this module does not authorize or launch any solve.
+The one-axis plans are configuration-only. CX9Z10 and CX9Z7P5 are separately
+reviewed target mesh plans; this module does not authorize or launch any solve.
 """
 
 from __future__ import annotations
@@ -317,6 +317,95 @@ def saxs_cx9z10_plan() -> dict[str, object]:
     return plan
 
 
+def saxs_cx9z7p5_plan() -> dict[str, object]:
+    """Return the exact 9 x 200 x 20 CX9Z7P5 target mesh plan."""
+    reference = saxs_cx9z10_plan()
+    axes = {
+        "x": _piecewise_axis((0.0, 16.5, 33.5, 50.0), (3, 3, 3)),
+        "y": tuple(float(index) * 50.0 / 200 for index in range(201)),
+        "z": (
+            -10.0, -5.0, 0.0, 7.5, 15.0, 22.5, 30.0, 37.5, 45.0,
+            52.5, 60.0, 67.5, 75.0, 82.5, 90.0, 97.5, 105.0, 112.5,
+            120.0, 125.0, 130.0,
+        ),
+    }
+    counts = [len(axes[key]) - 1 for key in "xyz"]
+    cells = prod(counts)
+    tags = _midpoint_tags(axes)
+    expected_tags = {"1": 28560, "2": 3600, "3": 3840}
+    if counts != [9, 200, 20] or cells != 36000 or tags != expected_tags:
+        raise AssertionError(
+            f"CX9Z7P5 static mesh inventory changed: counts={counts}, tags={tags}"
+        )
+    axis_hashes = _axes_sha256(axes)
+    changed_from_reference = [
+        key
+        for key in "xyz"
+        if axis_hashes[key] != reference["axis_sha256_le_f64"][key]
+    ]
+    if changed_from_reference != ["z"]:
+        raise AssertionError(
+            f"CX9Z7P5 lineage must change pillar z only: {changed_from_reference}"
+        )
+    plan: dict[str, object] = {
+        "schema": "saxs.simple_grating.cx9z7p5_plan.v1",
+        "case": "CX9Z7P5",
+        "parent_case": "CX9Z10_mesh_reference_only",
+        "changed_axis": "z",
+        "changed_axes": changed_from_reference,
+        "axis_cell_counts": counts,
+        "axes_nm": {key: list(axes[key]) for key in "xyz"},
+        "axis_sha256_le_f64": axis_hashes,
+        "parent_axis_sha256_le_f64": dict(
+            reference["axis_sha256_le_f64"]
+        ),
+        "base_axis_sha256_le_f64": dict(
+            reference["axis_sha256_le_f64"]
+        ),
+        "reference_axis_sha256_le_f64": dict(
+            reference["axis_sha256_le_f64"]
+        ),
+        "expected_global_cell_count": cells,
+        "expected_material_tag_counts": tags,
+        "static_condensed_rows": {
+            "periodic_trace_rows": counts[0] * counts[1] * (198 * counts[2] + 72),
+            "port_mode_rows": 1088,
+            "augmented_rows": (
+                counts[0] * counts[1] * (198 * counts[2] + 72) + 1088
+            ),
+            "status": "combinatorial_estimate_not_live_matrix_qa",
+        },
+        "target_scope": {
+            "x_regions_nm": [[0.0, 16.5], [16.5, 33.5], [33.5, 50.0]],
+            "x_cells_per_region": [3, 3, 3],
+            "y_cells": 200,
+            "z_axis_nm": list(axes["z"]),
+            "pillar_z_cells": 16,
+            "pillar_z_step_nm": 7.5,
+            "m_bounds": [-8, 8],
+            "n_bounds": [-14, 1],
+            "mode_count": 1088,
+            "surface_quadrature_degree": 81,
+            "volume_quadrature_degree": 15,
+            "finite_element_degree": 6,
+            "write_visualization_files": False,
+        },
+        "static_plan_record": {
+            "source": "main-reviewed exact CX9Z7P5 target axes",
+            "parent_case": "CX9Z10",
+            "parent_is_mesh_reference_only": True,
+            "material_tags": "independent_cell_midpoint_classification_not_live_mesh_qa",
+            "lu_memory_prediction": None,
+        },
+    }
+    plan_hash = hashlib.sha256(
+        json.dumps(plan, sort_keys=True, separators=(",", ":")).encode("ascii")
+    ).hexdigest()
+    plan["mesh_plan_id"] = "saxs_simple_grating_center_cx9z7p5_ooc8_target_v1"
+    plan["mesh_plan_sha256"] = plan_hash
+    return plan
+
+
 SAXS_ONE_AXIS_PLAN_CASES = {
     "C_X_BISECT": "x",
     "C_Z_PILLAR_30_TO15": "z",
@@ -326,6 +415,7 @@ SAXS_ONE_AXIS_PLAN_IDS = {
 }
 SAXS_CXZ15_PLAN_IDS = {"saxs_simple_grating_center_cxz15_z_refine_from_cx_v1"}
 SAXS_CX9Z10_PLAN_ID = "saxs_simple_grating_center_cx9z10_target_v1"
+SAXS_CX9Z7P5_PLAN_ID = "saxs_simple_grating_center_cx9z7p5_ooc8_target_v1"
 
 
 def validate_saxs_cxz15_plan(payload: Mapping[str, object]) -> dict[str, tuple[float, ...]]:
@@ -373,6 +463,30 @@ def validate_saxs_cx9z10_plan(payload: Mapping[str, object]) -> dict[str, tuple[
         raise ValueError("SAXS CX9Z10 coordinates differ from the frozen plan")
     if _axes_sha256(axes) != plan["axis_sha256_le_f64"]:
         raise ValueError("SAXS CX9Z10 axis hashes differ from the frozen plan")
+    return axes
+
+
+def validate_saxs_cx9z7p5_plan(payload: Mapping[str, object]) -> dict[str, tuple[float, ...]]:
+    """Validate exact CX9Z7P5 target axes and their frozen identity."""
+    plan = saxs_cx9z7p5_plan()
+    if payload.get("mesh_plan_id") != plan["mesh_plan_id"]:
+        raise ValueError("unsupported SAXS CX9Z7P5 mesh plan")
+    if payload.get("mesh_plan_sha256") != plan["mesh_plan_sha256"]:
+        raise ValueError("SAXS CX9Z7P5 plan SHA256 differs from the frozen plan")
+    try:
+        counts = tuple(int(value) for value in payload.get("mesh_axis_cell_counts", ()))
+        axes = {
+            key: tuple(float(value) for value in payload.get(f"mesh_axis_{key}_values", ()))
+            for key in "xyz"
+        }
+    except (TypeError, ValueError) as exc:
+        raise ValueError("SAXS CX9Z7P5 mesh payload is malformed") from exc
+    if counts != tuple(plan["axis_cell_counts"]):
+        raise ValueError("SAXS CX9Z7P5 cell counts differ from the frozen plan")
+    if axes != {key: tuple(plan["axes_nm"][key]) for key in "xyz"}:
+        raise ValueError("SAXS CX9Z7P5 coordinates differ from the frozen plan")
+    if _axes_sha256(axes) != plan["axis_sha256_le_f64"]:
+        raise ValueError("SAXS CX9Z7P5 axis hashes differ from the frozen plan")
     return axes
 
 

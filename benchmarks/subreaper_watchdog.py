@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 import signal
 import subprocess
 import time
@@ -233,6 +234,9 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
               rss_warning_bytes: int | None = None,
               startup_headroom_bytes: int | None = None,
               minimum_available_bytes: int | None = None,
+              minimum_disk_available_bytes: int | None = None,
+              disk_warning_bytes: int | None = None,
+              disk_path: Path | str | None = None,
               pss_sampling_policy: str | None = None,
               include_fd_count: bool = False) -> dict:
     """Supervise one command; wall_seconds=None disables only the time gate."""
@@ -256,6 +260,20 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
         raise ValueError('startup_headroom_bytes must be nonnegative')
     if minimum_available_bytes is not None and int(minimum_available_bytes) <= 0:
         raise ValueError('minimum_available_bytes must be positive')
+    if minimum_disk_available_bytes is not None and int(minimum_disk_available_bytes) <= 0:
+        raise ValueError('minimum_disk_available_bytes must be positive')
+    if disk_warning_bytes is not None and int(disk_warning_bytes) <= 0:
+        raise ValueError('disk_warning_bytes must be positive')
+    if minimum_disk_available_bytes is None:
+        if disk_warning_bytes is not None or disk_path is not None:
+            raise ValueError('disk monitoring requires a minimum disk floor')
+    elif disk_path is None:
+        raise ValueError('disk monitoring requires an explicit path on the target filesystem')
+    elif disk_warning_bytes is not None and int(disk_warning_bytes) < int(
+        minimum_disk_available_bytes
+    ):
+        raise ValueError('disk warning must be at or above the disk stop floor')
+    disk_path_value = None if disk_path is None else Path(disk_path).resolve()
     if resource_stop_policy == 'host_available_floor_v1':
         if rss_hard_limit_bytes is not None or rss_warning_bytes is not None:
             raise ValueError('host_available_floor_v1 does not accept an RSS cap or warning')
@@ -333,11 +351,24 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
         'solve_deadline_seconds': solve_seconds,
         'time_limit_mode': 'none' if wall_seconds is None and solve_seconds is None else 'bounded',
         'resource_stop_policy': resource_stop_policy,
+        'memory_scope': 'dedicated subreaper parent plus all descendants; sampled simultaneous RSS',
         'rss_hard_limit_bytes': None if cap is None else int(cap),
         'rss_warning_bytes': warning_cap,
         'minimum_available_bytes': (
             int(minimum_available_bytes)
             if resource_stop_policy == 'host_available_floor_v1' else None
+        ),
+        'minimum_disk_available_bytes': (
+            int(minimum_disk_available_bytes)
+            if minimum_disk_available_bytes is not None else None
+        ),
+        'disk_warning_bytes': (
+            int(disk_warning_bytes) if disk_warning_bytes is not None else None
+        ),
+        'disk_path': None if disk_path_value is None else str(disk_path_value),
+        'disk_monitoring_scope': (
+            'free bytes on the target run filesystem; same st_dev as the OOC run directory'
+            if disk_path_value is not None else None
         ),
         'startup_headroom_bytes': (int(startup_headroom_bytes)
                                    if startup_headroom_bytes is not None else None),
@@ -348,6 +379,75 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
             'measured_tree_rss_only_v3', 'host_available_floor_v1'
         ) else ('stop' if stop_on_global_swap else 'observe_only'),
     }
+    disk_available_min = None
+    disk_samples = 0
+    disk_unreadable_samples = 0
+    if disk_path_value is not None:
+        try:
+            if not disk_path_value.exists():
+                raise OSError(f'disk monitoring path does not exist: {disk_path_value}')
+            if os.stat(disk_path_value).st_dev != os.stat(directory.parent).st_dev:
+                raise OSError(
+                    'disk monitoring path and watchdog run directory are on different filesystems'
+                )
+            launch_disk_available = int(shutil.disk_usage(disk_path_value).free)
+        except OSError as exc:
+            summary.update(
+                classification='MONITORING_LOST',
+                leader_exit_code=None,
+                descendants_cleared=True,
+                remaining_child_pids=[],
+                observed_child_pids=[],
+                sampled_process_tree_rss_peak_bytes=None,
+                sampled_process_tree_swap_peak_bytes=None,
+                sampled_disk_available_min_bytes=None,
+                disk_monitoring_error=str(exc),
+                disk_samples=0,
+                disk_unreadable_samples=1,
+                launch_envelope=envelope,
+                source_state=source_state if source_state is not None else (
+                    'development_worktree; not formal PDE provenance'
+                ),
+                samples=0,
+                elapsed_seconds=time.monotonic() - started,
+            )
+            return summary
+        summary['launch_disk_available_bytes'] = launch_disk_available
+        disk_available_min = launch_disk_available
+        if launch_disk_available < int(minimum_disk_available_bytes):
+            summary.update(
+                classification='RESOURCE_CONTROLLED_STOP',
+                leader_exit_code=None,
+                descendants_cleared=True,
+                remaining_child_pids=[],
+                observed_child_pids=[],
+                sampled_process_tree_rss_peak_bytes=None,
+                sampled_process_tree_swap_peak_bytes=None,
+                sampled_disk_available_min_bytes=launch_disk_available,
+                disk_admission_gate={
+                    'status': 'RESOURCE_CONTROLLED_STOP',
+                    'available_bytes': launch_disk_available,
+                    'minimum_disk_available_bytes': int(
+                        minimum_disk_available_bytes
+                    ),
+                    'worker_started': False,
+                },
+                disk_samples=0,
+                disk_unreadable_samples=0,
+                launch_envelope=envelope,
+                source_state=source_state if source_state is not None else (
+                    'development_worktree; not formal PDE provenance'
+                ),
+                samples=0,
+                elapsed_seconds=time.monotonic() - started,
+            )
+            return summary
+        summary['disk_admission_gate'] = {
+            'status': 'PASS',
+            'available_bytes': launch_disk_available,
+            'minimum_disk_available_bytes': int(minimum_disk_available_bytes),
+            'worker_started': False,
+        }
     if include_fd_count:
         summary.update(
             fd_sampling_policy='sampled_process_tree_high_water_v1',
@@ -423,6 +523,26 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                 sample = process_tree_snapshot(os.getpid(), 'workflow', exit_code, **sample_options)
                 sample['resource_sample_cost'] = dict(wall_seconds=time.monotonic()-rss_started,
                                                        cpu_seconds=time.thread_time()-rss_cpu)
+                disk_free = None
+                disk_error = None
+                if disk_path_value is not None:
+                    try:
+                        disk_free = int(shutil.disk_usage(disk_path_value).free)
+                        disk_available_min = (
+                            disk_free if disk_available_min is None
+                            else min(disk_available_min, disk_free)
+                        )
+                        disk_samples += 1
+                    except OSError as exc:
+                        disk_error = str(exc)
+                        disk_unreadable_samples += 1
+                    sample['disk_available_bytes'] = disk_free
+                    sample['disk_monitoring_error'] = disk_error
+                    sample['disk_warning'] = bool(
+                        disk_free is not None
+                        and disk_warning_bytes is not None
+                        and disk_free < int(disk_warning_bytes)
+                    )
                 if pss_sampling_policy == 'legacy' and sample_options.get('include_pss'):
                     next_pss_sample = time.monotonic() + 5.0
                 if diagnostic is not None:
@@ -565,6 +685,15 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                             wall_seconds is not None and
                             deadline_elapsed >= wall_seconds) or solve_expired else
                         'USER_CONTROLLED_STOP' if requested_signal else None)
+                    if disk_path_value is not None:
+                        if disk_error is not None and reason is None:
+                            reason = 'MONITORING_LOST'
+                        elif (
+                            disk_free is not None
+                            and disk_free < int(minimum_disk_available_bytes)
+                            and reason is None
+                        ):
+                            reason = 'RESOURCE_CONTROLLED_STOP'
                     sample['resource_policy_observations'] = {
                         'process_tree_swap_bytes': int(sample['swap_bytes']),
                         'effective_available_bytes': int(current['effective_available_bytes']),
@@ -577,6 +706,15 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                             if resource_stop_policy == 'host_available_floor_v1' else None
                         ),
                         'rss_gate_only': resource_stop_policy == 'measured_tree_rss_only_v3',
+                        'disk_available_bytes': disk_free,
+                        'minimum_disk_available_bytes': (
+                            None if minimum_disk_available_bytes is None
+                            else int(minimum_disk_available_bytes)
+                        ),
+                        'disk_warning_bytes': (
+                            None if disk_warning_bytes is None
+                            else int(disk_warning_bytes)
+                        ),
                     }
                 if stop_on_global_swap or resource_stop_policy in (
                     'measured_tree_rss_only_v3', 'host_available_floor_v1'
@@ -716,6 +854,17 @@ def supervise(command: list[str], directory: Path, *, wall_seconds: float | None
                 int(minimum_available_bytes)
                 if resource_stop_policy == 'host_available_floor_v1' else None
             ),
+            'minimum_disk_available_bytes': (
+                int(minimum_disk_available_bytes)
+                if minimum_disk_available_bytes is not None else None
+            ),
+            'disk_warning_bytes': (
+                int(disk_warning_bytes) if disk_warning_bytes is not None else None
+            ),
+            'disk_path': None if disk_path_value is None else str(disk_path_value),
+            'sampled_disk_available_min_bytes': disk_available_min,
+            'disk_samples': disk_samples,
+            'disk_unreadable_samples': disk_unreadable_samples,
             'startup_headroom_bytes': (int(startup_headroom_bytes)
                                        if startup_headroom_bytes is not None else None),
         })
