@@ -620,6 +620,7 @@ def launch_specification(
         )
     from src.io.native_capacity_profile import (
         P6_CONDENSED_DIRECT_PROFILES,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE,
         SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES,
         TASK40_PHI90_D07C_G6_4_M2_N2_PROFILE,
         native_capacity_profile_identity,
@@ -648,6 +649,60 @@ def launch_specification(
     native_identity = native_capacity_profile_identity(
         specification.method.get('kind'), specification.solver
     )
+    pre_lu_gate_binding = None
+    pre_lu_gate_environment = None
+    pre_lu_environment_names = (
+        'MYFENICS_CX9Z10_PRELU_PORT_PROFILE_ID',
+        'MYFENICS_CX9Z10_PRELU_PROFILE_PATH',
+        'MYFENICS_CX9Z10_PRELU_LAUNCHER_PATH',
+        'MYFENICS_CX9Z10_PRELU_WORKER_PATH',
+    )
+    if native_identity == SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE:
+        profile = native_profile_facts(native_identity)
+        gate_profile = profile['component_options'].get(
+            'pre_lu_port_assembly_gate'
+        )
+        if not isinstance(gate_profile, dict):
+            raise InputError('CX9Z10 resolved profile omits the pre-LU gate identity')
+        repository_root = Path(__file__).resolve().parents[2]
+        gate_profile_path = (repository_root / gate_profile['profile_path']).resolve()
+        launcher_path = Path(__file__).resolve()
+        worker_path = (repository_root / 'src/runners/p6_condensed_direct.py').resolve()
+        try:
+            gate_profile_document = json.loads(gate_profile_path.read_text())
+        except (OSError, json.JSONDecodeError) as exc:
+            raise InputError(f'CX9Z10 pre-LU profile is unavailable: {exc}') from exc
+        profile_id = str(gate_profile.get('profile_id', ''))
+        if (
+            gate_profile_document.get('profile_id') != profile_id
+            or gate_profile_document.get('state')
+            != 'EXPLICIT_OPT_IN_PENDING_MAIN_PACKAGE_REVIEW'
+            or gate_profile_document.get('target_performance_status')
+            != 'NOT_MEASURED'
+        ):
+            raise InputError('CX9Z10 pre-LU profile identity/state is invalid')
+        pre_lu_gate_environment = {
+            'MYFENICS_CX9Z10_PRELU_PORT_PROFILE_ID': profile_id,
+            'MYFENICS_CX9Z10_PRELU_PROFILE_PATH': str(gate_profile_path),
+            'MYFENICS_CX9Z10_PRELU_LAUNCHER_PATH': str(launcher_path),
+            'MYFENICS_CX9Z10_PRELU_WORKER_PATH': str(worker_path),
+        }
+        pre_lu_gate_binding = {
+            'schema': 'cx9z10.prelu_launcher_binding.v1',
+            'profile_id': profile_id,
+            'profile_path': str(gate_profile_path),
+            'profile_sha256': hashlib.sha256(
+                gate_profile_path.read_bytes()
+            ).hexdigest(),
+            'launcher_path': str(launcher_path),
+            'launcher_sha256': hashlib.sha256(launcher_path.read_bytes()).hexdigest(),
+            'worker_path': str(worker_path),
+            'worker_sha256': hashlib.sha256(worker_path.read_bytes()).hexdigest(),
+            'worker_environment': dict(pre_lu_gate_environment),
+            'launch_authority': 'external_main_review_and_fresh_gate_required',
+        }
+    elif any(os.environ.get(name) is not None for name in pre_lu_environment_names):
+        raise InputError('CX9Z10 pre-LU opt-in variables are forbidden for other profiles')
     p6_condensed_direct = native_identity in P6_CONDENSED_DIRECT_PROFILES
     numeric_factor_worker_affinity = _validate_numeric_factor_cpu_reservation(
         native_identity,
@@ -745,6 +800,9 @@ def launch_specification(
         adapter_identity=adapter,
         start_time=start_time,
     )
+    if pre_lu_gate_binding is not None:
+        manifest['pre_lu_port_assembly_gate'] = pre_lu_gate_binding
+        _write_json(run_directory / 'run_manifest.json', manifest)
     if numeric_factor_blas_threads is not None:
         manifest['numeric_factor_blas_threads'] = numeric_factor_blas_threads
         manifest['numeric_factor_blas_scope'] = 'MUMPS_numeric_factorization_only'
@@ -897,6 +955,20 @@ def launch_specification(
                         watchdog_cache_path = (
                             Path(os.environ['XDG_CACHE_HOME'])
                             if 'XDG_CACHE_HOME' in os.environ else None
+                        )
+                    if pre_lu_gate_environment is not None:
+                        existing_worker_environment = dict(
+                            watchdog_options.get('worker_environment', {})
+                        )
+                        if set(existing_worker_environment) & set(
+                            pre_lu_gate_environment
+                        ):
+                            raise InputError(
+                                'CX9Z10 pre-LU environment conflicts with another worker profile'
+                            )
+                        existing_worker_environment.update(pre_lu_gate_environment)
+                        watchdog_options['worker_environment'] = (
+                            existing_worker_environment
                         )
                 else:
                     watchdog_cache_path = None

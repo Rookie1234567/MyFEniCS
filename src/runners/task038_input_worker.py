@@ -305,6 +305,7 @@ def _load_and_validate_worker_payload(
     if not setup_only:
         from src.io.native_capacity_profile import (
             P6_CONDENSED_DIRECT_PROFILES,
+            SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE,
             TASK40_PHI90_D07C_G6_M8_N14_PROFILE,
             V6_NATIVE_PROFILES,
             native_capacity_profile_identity,
@@ -406,6 +407,85 @@ def _load_and_validate_worker_payload(
                         errors.append('manifest condensed-direct minimum available-memory floor mismatch')
                     if native_contract.get('direct_route') != expected_route:
                         errors.append('manifest condensed-direct route contract mismatch')
+        if profile_name == SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE:
+            gate_profile = profile['component_options'].get(
+                'pre_lu_port_assembly_gate'
+            )
+            if not isinstance(gate_profile, dict):
+                errors.append('CX9Z10 resolved profile omits its pre-LU gate identity')
+            else:
+                repository_root = Path(__file__).resolve().parents[2]
+                profile_path = (
+                    repository_root / gate_profile.get('profile_path', '')
+                ).resolve()
+                launcher_path = (
+                    repository_root / 'src/runners/task038_launcher.py'
+                ).resolve()
+                worker_path = (
+                    repository_root / 'src/runners/p6_condensed_direct.py'
+                ).resolve()
+                try:
+                    profile_document = json.loads(profile_path.read_text())
+                    worker_environment = {
+                        'MYFENICS_CX9Z10_PRELU_PORT_PROFILE_ID': str(
+                            gate_profile['profile_id']
+                        ),
+                        'MYFENICS_CX9Z10_PRELU_PROFILE_PATH': str(profile_path),
+                        'MYFENICS_CX9Z10_PRELU_LAUNCHER_PATH': str(launcher_path),
+                        'MYFENICS_CX9Z10_PRELU_WORKER_PATH': str(worker_path),
+                    }
+                    expected_gate_binding = {
+                        'schema': 'cx9z10.prelu_launcher_binding.v1',
+                        'profile_id': gate_profile['profile_id'],
+                        'profile_path': str(profile_path),
+                        'profile_sha256': hashlib.sha256(
+                            profile_path.read_bytes()
+                        ).hexdigest(),
+                        'launcher_path': str(launcher_path),
+                        'launcher_sha256': hashlib.sha256(
+                            launcher_path.read_bytes()
+                        ).hexdigest(),
+                        'worker_path': str(worker_path),
+                        'worker_sha256': hashlib.sha256(
+                            worker_path.read_bytes()
+                        ).hexdigest(),
+                        'worker_environment': worker_environment,
+                        'launch_authority': (
+                            'external_main_review_and_fresh_gate_required'
+                        ),
+                    }
+                    if (
+                        profile_document.get('profile_id')
+                        != gate_profile['profile_id']
+                        or profile_document.get('state')
+                        != 'EXPLICIT_OPT_IN_PENDING_MAIN_PACKAGE_REVIEW'
+                        or profile_document.get('target_performance_status')
+                        != 'NOT_MEASURED'
+                    ):
+                        errors.append('CX9Z10 pre-LU profile document identity/state mismatch')
+                    if manifest_value.get('pre_lu_port_assembly_gate') != expected_gate_binding:
+                        errors.append('CX9Z10 launcher manifest pre-LU gate binding mismatch')
+                    for name, expected in worker_environment.items():
+                        if os.environ.get(name) != expected:
+                            errors.append(
+                                f'CX9Z10 worker environment has an invalid {name} binding'
+                            )
+                except (KeyError, OSError, json.JSONDecodeError, TypeError) as exc:
+                    errors.append(
+                        f'CX9Z10 pre-LU gate binding could not be validated: {exc}'
+                    )
+        elif manifest_value.get('pre_lu_port_assembly_gate') is not None:
+            errors.append('pre-LU port gate binding is forbidden outside CX9Z10')
+        elif any(
+            os.environ.get(name) is not None
+            for name in (
+                'MYFENICS_CX9Z10_PRELU_PORT_PROFILE_ID',
+                'MYFENICS_CX9Z10_PRELU_PROFILE_PATH',
+                'MYFENICS_CX9Z10_PRELU_LAUNCHER_PATH',
+                'MYFENICS_CX9Z10_PRELU_WORKER_PATH',
+            )
+        ):
+            errors.append('CX9Z10 pre-LU environment is forbidden outside its target profile')
     if manifest_value.get("execution_mode", "full_solve") != expected_execution_mode:
         errors.append("worker CLI and manifest execution mode mismatch")
     if setup_only:

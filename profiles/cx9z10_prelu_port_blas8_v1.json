@@ -1,0 +1,59 @@
+{
+  "schema": "myfenics.cx9z10.prelu-port-assembly-profile.v1",
+  "profile_id": "CX9Z10_PRELU_LOCAL_PORT_BLAS8_V1",
+  "state": "EXPLICIT_OPT_IN_PENDING_MAIN_PACKAGE_REVIEW",
+  "launch_authority": "external_main_review_and_fresh_gate_required",
+  "target": {
+    "geometry": "17x20x120_nm_centered_silicon_pillar",
+    "pillar_nm": [17, 20, 120],
+    "period_nm": [50, 50],
+    "x_regions_nm": [[0, 16.5], [16.5, 33.5], [33.5, 50]],
+    "x_cells_per_region": [3, 3, 3],
+    "y_cells": 200,
+    "z_axis_nm": [-10, -5, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 125, 130],
+    "z_cells": 16,
+    "global_hexahedra": 28800,
+    "finite_element_degree": 6,
+    "dtn_modes": {
+      "m": [-8, 8],
+      "n": [-14, 1],
+      "count": 1088,
+      "side_indices": "derive from live ordered carrier entries and mode_identity.side; never assume contiguous ordering"
+    },
+    "surface_quadrature_degree": 81,
+    "volume_quadrature_degree": 15,
+    "vtk": false
+  },
+  "execution": {
+    "mpi_size": 1,
+    "petsc_scalar": "complex128",
+    "petsc_int_bits": 64,
+    "openblas_before": 1,
+    "local_port_assembly_default_threads": 1,
+    "local_port_assembly_opt_in_threads": 8,
+    "numeric_lu_scope": "separate_mpi1_blas8_scope_with_its_own_reviewed_gate",
+    "preparation": "capture at most 3 already-created CellPortTerms after normal generation and before local matrix insertion; no tensor, carrier, mesh, or global matrix rebuild",
+    "fallback": "any unavailable input, failed child, insufficient selection coverage, failed numeric gate, or failed CPU evidence keeps same live matrix on serial port assembly"
+  },
+  "acceptance": {
+    "fresh_numeric_children": 6,
+    "paired_measurements": 3,
+    "threads": [1, 8],
+    "median_speedup_minimum": 1.1,
+    "operator_relative_error_maximum": 1e-12,
+    "required_cell_coverage": ["distinct_raw_class_where_available", "top", "bottom"],
+    "cpu_evidence": "thread readback plus process CPU/wall ratio and observed native OpenBLAS worker-thread CPU activity",
+    "production_callback": "exactly once; failure after callback begins propagates without retry",
+    "prepared_and_terminal_receipts": "separate immutable files bound by hash"
+  },
+  "runtime_identity_requirements": {
+    "source_sha": "derive from the final frozen source checkout at launch",
+    "worker_sha256": "derive from the exact executed worker file",
+    "launcher_sha256": "derive from the exact authorized launcher",
+    "resolved_input_sha256": "derive from the actual resolved input packet",
+    "mesh_sha256": "derive from the live mesh geometry and connectivity",
+    "carrier_mode_manifest_sha256": "derive from the live ordered carrier manifest",
+    "comparison_sha256": "derive from the completed comparison receipt"
+  },
+  "target_performance_status": "NOT_MEASURED"
+}

@@ -25,6 +25,10 @@ from .hcurl_assembly_time_condensation import (
     AssemblyTimeCondensedSystem,
     _cell_trace_expansion,
 )
+from .scoped_openblas_threads import (
+    OpenBLASControlError,
+    scoped_openblas_threads,
+)
 
 
 def _matrix(value: Any, name: str) -> np.ndarray:
@@ -149,6 +153,93 @@ class CellPortTerms:
     H: np.ndarray | None = None
 
 
+CX9Z10_PRELU_B8_PROFILE_ID = "CX9Z10_PRELU_LOCAL_PORT_BLAS8_V1"
+
+
+def _is_hex_digest(value: Any, length: int) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == length
+        and all(character in "0123456789abcdef" for character in value.lower())
+    )
+
+
+@dataclass(frozen=True)
+class PortAssemblyExecutionDecision:
+    """Hash-bound explicit opt-in for the CX9Z10 pre-LU local port algebra."""
+
+    profile_id: str
+    source_sha: str
+    worker_sha256: str
+    launcher_sha256: str
+    profile_sha256: str
+    resolved_solver_profile_sha256: str
+    benchmark_worker_sha256: str
+    input_sha256: str
+    mesh_sha256: str
+    carrier_mode_manifest_sha256: str
+    comparison_sha256: str
+    selected_cells: tuple[Mapping[str, Any], ...]
+    selection_coverage: Mapping[str, Any]
+    comparison: Mapping[str, Any]
+    local_blas_threads: int = 8
+
+    def __post_init__(self) -> None:
+        if self.profile_id != CX9Z10_PRELU_B8_PROFILE_ID:
+            raise ValueError("unsupported pre-LU port assembly profile opt-in")
+        if self.local_blas_threads != 8:
+            raise ValueError("the CX9Z10 opt-in only supports local BLAS8")
+        if not _is_hex_digest(self.source_sha, 40):
+            raise ValueError("source_sha must be a full 40-character Git SHA")
+        for name in (
+            "worker_sha256",
+            "launcher_sha256",
+            "profile_sha256",
+            "input_sha256",
+            "mesh_sha256",
+            "carrier_mode_manifest_sha256",
+            "comparison_sha256",
+            "resolved_solver_profile_sha256",
+            "benchmark_worker_sha256",
+        ):
+            if not _is_hex_digest(getattr(self, name), 64):
+                raise ValueError(f"{name} must be a full SHA256 digest")
+        if not 1 <= len(self.selected_cells) <= 3:
+            raise ValueError("the pre-LU profile requires one to three selected cells")
+        if not bool(self.selection_coverage.get("sufficient")):
+            raise ValueError("selected pre-LU cells do not meet coverage requirements")
+        if not {"top", "bottom"}.issubset(
+            set(self.selection_coverage.get("selected_sides", ()))
+        ):
+            raise ValueError("selected cells must represent both carrier sides")
+        if int(self.selection_coverage.get("selected_class_count", 0)) < 1:
+            raise ValueError("selected cells must include a geometric/material class")
+        if self.comparison.get("recommendation") != "RECOMMEND_SCOPED_BLAS8":
+            raise ValueError("comparison did not recommend scoped BLAS8")
+        for gate in (
+            "numerical_gate",
+            "speed_gate_1p10",
+            "thread_readback_gate",
+            "cpu_evidence_gate",
+        ):
+            if self.comparison.get(gate) is not True:
+                raise ValueError(f"comparison gate {gate} did not pass")
+        expected = {
+            "source_sha": self.source_sha,
+            "profile_sha256": self.profile_sha256,
+            "input_sha256": self.input_sha256,
+            "mesh_sha256": self.mesh_sha256,
+            "port_mode_manifest_sha256": self.carrier_mode_manifest_sha256,
+            "worker_sha256": self.worker_sha256,
+            "launcher_sha256": self.launcher_sha256,
+            "resolved_solver_profile_sha256": self.resolved_solver_profile_sha256,
+            "benchmark_worker_sha256": self.benchmark_worker_sha256,
+        }
+        for name, value in expected.items():
+            if self.comparison.get(name) != value:
+                raise ValueError(f"comparison provenance does not match {name}")
+
+
 def assemble_port_condensed_terms(
     condensed: AssemblyTimeCondensedSystem,
     port_terms: Mapping[int, CellPortTerms],
@@ -250,6 +341,8 @@ def assemble_port_condensed_terms(
 def assemble_condensed_ports(
     condensed: AssemblyTimeCondensedSystem,
     carrier: Any,
+    *,
+    pre_assembly_gate: Any | None = None,
 ) -> dict[int, CellPortTerms]:
     """Translate an MPC-processed carrier and assemble its local terms.
 
@@ -384,10 +477,110 @@ def assemble_condensed_ports(
             Di=di,
             port_indices=ports,
         )
-    audit = assemble_port_condensed_terms(condensed, terms)
     for term in terms.values():
         term.Bi.setflags(write=False)
         term.Di.setflags(write=False)
+        term.port_indices.setflags(write=False)
+
+    execution_decision: PortAssemblyExecutionDecision | None = None
+    preparation_error: str | None = None
+    gate_enabled = pre_assembly_gate is not None
+    if gate_enabled:
+        try:
+            execution_decision = pre_assembly_gate.prepare(
+                condensed=condensed,
+                carrier=carrier,
+                port_terms=terms,
+            )
+            if execution_decision is not None:
+                if not isinstance(execution_decision, PortAssemblyExecutionDecision):
+                    raise TypeError("pre-assembly gate returned an invalid decision type")
+                live_mode_sha = getattr(carrier, "mode_manifest_sha256", None)
+                if live_mode_sha is None and getattr(carrier, "carrier", None) is not None:
+                    live_mode_sha = getattr(
+                        carrier.carrier, "mode_manifest_sha256", None
+                    )
+                if execution_decision.carrier_mode_manifest_sha256 != live_mode_sha:
+                    raise ValueError("decision mode-manifest SHA differs from live carrier")
+            elif preparation_error is None:
+                preparation_error = getattr(
+                    pre_assembly_gate, "preparation_error", None
+                )
+        except Exception as exc:
+            execution_decision = None
+            preparation_error = f"{type(exc).__name__}: {exc}"
+
+    assembler_call_count = 0
+    assembler_started = False
+    assembly_started = perf_counter()
+    thread_scope: dict[str, Any] | None = None
+    gate_status = "SERIAL"
+
+    def assemble_once() -> dict[str, Any]:
+        nonlocal assembler_call_count, assembler_started
+        if assembler_call_count:
+            raise RuntimeError("port-condensed production assembler is exactly-once")
+        assembler_call_count += 1
+        assembler_started = True
+        return assemble_port_condensed_terms(condensed, terms)
+
+    try:
+        if execution_decision is None:
+            audit = assemble_once()
+            gate_status = (
+                "COMPLETED_SERIAL_AFTER_PREPARE_FAILURE"
+                if preparation_error is not None
+                else "COMPLETED_SERIAL"
+            )
+        else:
+            try:
+                with scoped_openblas_threads(8) as thread_scope:
+                    audit = assemble_once()
+                gate_status = "COMPLETED_BLAS8"
+            except OpenBLASControlError as exc:
+                if assembler_call_count:
+                    raise
+                if not exc.serial_state_verified:
+                    raise
+                preparation_error = (
+                    f"BLAS8 control failed before production assembly: {exc}"
+                )
+                audit = assemble_once()
+                gate_status = "COMPLETED_SERIAL_FALLBACK"
+    except BaseException as exc:
+        gate_status = (
+            "FAILED_AFTER_ASSEMBLY_START"
+            if assembler_started
+            else "FAILED_BEFORE_ASSEMBLY_START"
+        )
+        if gate_enabled:
+            gate_record = pre_assembly_gate.finish(
+                decision=execution_decision,
+                status=gate_status,
+                assembly_call_count=assembler_call_count,
+                assembly_started=assembler_started,
+                assembly_wall_seconds=perf_counter() - assembly_started,
+                thread_scope=thread_scope,
+                preparation_error=preparation_error,
+                exception=exc,
+            )
+            if gate_record is not None:
+                condensed.build_audit["pre_lu_port_assembly_gate"] = gate_record
+        raise
+    else:
+        if gate_enabled:
+            gate_record = pre_assembly_gate.finish(
+                decision=execution_decision,
+                status=gate_status,
+                assembly_call_count=assembler_call_count,
+                assembly_started=assembler_started,
+                assembly_wall_seconds=perf_counter() - assembly_started,
+                thread_scope=thread_scope,
+                preparation_error=preparation_error,
+                exception=None,
+            )
+            if gate_record is not None:
+                condensed.build_audit["pre_lu_port_assembly_gate"] = gate_record
     stored_term_bytes = int(
         sum(
             term.Bi.nbytes + term.Di.nbytes + term.port_indices.nbytes

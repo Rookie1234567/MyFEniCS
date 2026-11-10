@@ -140,6 +140,7 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
 
     from src.io.native_capacity_profile import (
         DISPERSION_FLAT_P6_PROFILES,
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILES,
         SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILES,
         SAXS_SIMPLE_GRATING_P6_DIRECT_ONE_AXIS_PROFILES,
         SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILES,
@@ -312,20 +313,28 @@ def _direct_run_contract(profile_identity: str) -> dict[str, Any]:
         saxs_cxz15_case = (
             profile_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILES
         )
+        saxs_cx9z10_case = (
+            profile_identity in SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILES
+        )
         d07c_case = profile_identity in TASK40_PHI90_D07C_PROFILES or (
-            saxs_case and not saxs_one_axis_case and not saxs_cxz15_case
+            saxs_case
+            and not saxs_one_axis_case
+            and not saxs_cxz15_case
+            and not saxs_cx9z10_case
         )
         d5_case = profile_identity in TASK40_PHI90_D5_PROFILES
         is_d13_case = not any(
             (saxs_case, h15_case, d5_case, d5c_case, d07c_case, d15_case)
         )
         family_label = (
+            "saxs_cx9z10" if saxs_cx9z10_case else
             "saxs_cxz15" if saxs_cxz15_case else
             "saxs_one_axis" if saxs_one_axis_case else
             "d15" if d15_case else "d07c" if d07c_case else "d5c" if d5c_case else "d5" if d5_case
             else "h15" if h15_case else "d13"
         )
         route_label = (
+            "SAXS_CX9Z10" if saxs_cx9z10_case else
             "SAXS_CXZ15" if saxs_cxz15_case else
             "SAXS" if saxs_case else "D15" if d15_case else "D07C" if d07c_case else "D5C" if d5c_case else "D5" if d5_case
             else "H15" if h15_case else "D13"
@@ -2324,6 +2333,119 @@ def _saxs_cxz15_mesh_evidence(
     }
 
 
+def _saxs_cx9z10_mesh_evidence(
+    levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Verify the exact CX9Z10 axes, cell tags, P6 space, and double-Floquet MPC."""
+    from src.geometry.saxs_simple_grating_axis_plan import saxs_cx9z10_plan
+
+    plan = saxs_cx9z10_plan()
+    if route.get("task40_mesh_plan_family") != "saxs_cx9z10":
+        raise ValueError("CX9Z10 route has the wrong mesh-plan family")
+    if route.get("task40_mesh_case") != plan["case"]:
+        raise ValueError("CX9Z10 case differs from its frozen mesh plan")
+    if route.get("task40_mesh_plan_id") != plan["mesh_plan_id"]:
+        raise ValueError("CX9Z10 mesh-plan identity differs from its frozen plan")
+    if route.get("task40_mesh_plan_sha256") != plan["mesh_plan_sha256"]:
+        raise ValueError("CX9Z10 mesh-plan SHA256 differs from its frozen plan")
+
+    mesh_data = levels["mesh_data"]
+    mesh = mesh_data.mesh
+    axes = {
+        axis: tuple(
+            float(value)
+            for value in np.unique(np.asarray(mesh.geometry.x)[:, index])
+        )
+        for index, axis in enumerate("xyz")
+    }
+    expected_axes = {
+        axis: tuple(float(value) for value in plan["axes_nm"][axis])
+        for axis in "xyz"
+    }
+    if axes != expected_axes:
+        raise ValueError("actual CX9Z10 coordinates differ from the frozen plan")
+    hashes = {
+        axis: hashlib.sha256(
+            np.asarray(axes[axis], dtype="<f8").tobytes()
+        ).hexdigest()
+        for axis in "xyz"
+    }
+    if hashes != plan["axis_sha256_le_f64"]:
+        raise ValueError("actual CX9Z10 axis hashes differ from the frozen plan")
+    if hashes != route.get("task40_expected_axis_sha256_le_f64"):
+        raise ValueError("actual CX9Z10 hashes differ from resolved profile facts")
+    counts = tuple(len(axes[axis]) - 1 for axis in "xyz")
+    if counts != tuple(plan["axis_cell_counts"]):
+        raise ValueError("actual CX9Z10 axis cell counts differ from the frozen plan")
+    if counts != tuple(route.get("expected_axis_cell_counts", ())):
+        raise ValueError("actual CX9Z10 axis counts differ from resolved profile facts")
+    cells = int(mesh.topology.index_map(mesh.topology.dim).size_global)
+    expected_cells = int(plan["expected_global_cell_count"])
+    if cells != expected_cells or cells != int(route["expected_global_cell_count"]):
+        raise ValueError("actual CX9Z10 cell count differs from resolved profile facts")
+    if str(mesh.topology.cell_name()) != "hexahedron":
+        raise ValueError("CX9Z10 requires hexahedral cells")
+
+    raw_tags = plan["expected_material_tag_counts"]
+    expected_tags = {
+        int(cfg.tags.air): int(raw_tags["1"]),
+        int(cfg.tags.substrate): int(raw_tags["2"]),
+        int(cfg.tags.grating): int(raw_tags["3"]),
+    }
+    tag_values = np.asarray(mesh_data.cell_tags.values, dtype=np.int64)
+    actual_tags = {
+        tag: int(np.count_nonzero(tag_values == tag)) for tag in expected_tags
+    }
+    if tag_values.size != cells or actual_tags != expected_tags:
+        raise ValueError(
+            f"actual CX9Z10 material tags differ: {actual_tags} != {expected_tags}"
+        )
+
+    spaces = levels.get("spaces", {})
+    floquets = levels.get("floquets", {})
+    if int(cfg.nedelec_degree) != 6 or 6 not in spaces or 6 not in floquets:
+        raise ValueError("CX9Z10 actual P6 space and double-Floquet MPC are required")
+    p6_space = spaces[6]
+    p6_floquet = floquets[6]
+    if getattr(p6_floquet, "mpc", None) is None:
+        raise ValueError("CX9Z10 P6 double-Floquet MPC was not finalized")
+    dofmap = p6_space.dofmap
+    return {
+        "status": "PASS",
+        "profile": route["profile_identity"],
+        "family": "SAXS_center_CX9Z10_target",
+        "case": plan["case"],
+        "parent_case": plan["parent_case"],
+        "parent_is_mesh_reference_only": True,
+        "changed_axes_from_mesh_reference": list(plan["changed_axes"]),
+        "cell_type": "hexahedron",
+        "actual_global_cell_count": cells,
+        "axis_cell_counts": list(counts),
+        "axis_sha256_le_f64": hashes,
+        "actual_axes_match_frozen_cx9z10_coordinates": True,
+        "material_tag_counts": {str(tag): count for tag, count in actual_tags.items()},
+        "expected_material_tag_counts": {
+            str(tag): count for tag, count in expected_tags.items()
+        },
+        "p6_space_degree": 6,
+        "p6_global_dof_count": int(
+            dofmap.index_map.size_global * dofmap.index_map_bs
+        ),
+        "double_floquet_mpc_finalized": True,
+        "floquet_constraint_mode_resolved": str(
+            p6_floquet.constraint_mode_resolved
+        ),
+        "floquet_num_constraints": int(p6_floquet.num_constraints),
+        "floquet_num_edge_constraints": int(p6_floquet.num_edge_constraints),
+        "floquet_num_face_constraints": int(p6_floquet.num_face_constraints),
+        "p6_matrix_assembly_started": False,
+        "p6_factorization_started": False,
+        "static_condensed_rows": dict(plan["static_condensed_rows"]),
+        "static_row_estimate_is_not_live_matrix_qa": True,
+        "mpi_size": int(mesh.comm.size),
+    }
+
+
 def _task40_d5_mesh_evidence(
     levels: Mapping[str, Any], cfg: Any, route: Mapping[str, Any]
 ) -> dict[str, Any]:
@@ -3481,6 +3603,7 @@ def run_p6_condensed_direct(
     source_sha: str | None,
     numeric_factor_blas_threads: int | None = None,
     numeric_factor_worker_affinity: list[int] | None = None,
+    pre_lu_port_gate: Any | None = None,
 ) -> dict[str, Any]:
     """Execute one explicitly profiled p6 condensed direct full solve."""
 
@@ -3513,10 +3636,36 @@ def run_p6_condensed_direct(
     from src.solvers.hcurl_assembly_time_condensation import (
         build_unconstrained_assembly_time_condensation,
     )
-    from src.solvers.p4_cell_condensed_inverse import assemble_condensed_ports
+    from src.solvers.p4_cell_condensed_inverse import (
+        CX9Z10_PRELU_B8_PROFILE_ID,
+        assemble_condensed_ports,
+    )
+    from src.runners.cx9z10_prelu_port_gate import (
+        pre_lu_port_gate_from_environment,
+    )
     from src.solvers.p6_cell_condensed_action import (
         build_p6_cell_condensed_action_from_carrier,
     )
+
+    selected_profile_identity = str(
+        resolved_payload.get("solver", {}).get("native_capacity_profile", "")
+    )
+    from src.io.native_capacity_profile import (
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE,
+    )
+
+    if pre_lu_port_gate is None:
+        pre_lu_port_gate = pre_lu_port_gate_from_environment(
+            required=(
+                selected_profile_identity
+                == SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE
+            )
+        )
+    if (
+        pre_lu_port_gate is not None
+        and selected_profile_identity != SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE
+    ):
+        raise ValueError("CX9Z10 pre-LU port threading is forbidden for other profiles")
 
     directory = Path(run_directory).resolve()
     directory.mkdir(parents=True, exist_ok=True)
@@ -3564,6 +3713,8 @@ def run_p6_condensed_direct(
     same_matrix_lifecycle_verified = None
     try:
         profile_facts = _validate_resolved_profile(resolved_payload)
+        if profile_facts["identity"] != selected_profile_identity:
+            raise ValueError("resolved solver profile identity changed before execution")
         if numeric_factor_blas_threads is not None:
             from src.io.native_capacity_profile import (
                 TASK40_PHI90_D07C_G6_M8_N14_PROFILE,
@@ -3669,6 +3820,10 @@ def run_p6_condensed_direct(
         cfg = simulation_config_3d_from_normalized(resolved_payload)
         if not isinstance(cfg, SimulationConfig3D):
             raise TypeError("resolved direct input did not create SimulationConfig3D")
+        if pre_lu_port_gate is not None and getattr(
+            pre_lu_port_gate, "profile_id", None
+        ) != CX9Z10_PRELU_B8_PROFILE_ID:
+            raise ValueError("pre-LU port gate must use the explicit CX9Z10 opt-in profile")
         if route["family"] == "task40_phi90":
             if route.get("signed_rectangle_bounds_mn") is not None:
                 cfg.stage4_dtn_order_policy = "explicit_signed_rectangle"
@@ -3700,6 +3855,15 @@ def run_p6_condensed_direct(
             # this opt-in profile binds q160 in resolved facts and applies it
             # only to the exact flat runner route.
             cfg.stage4_dtn_quadrature_degree = int(route["surface_quadrature_degree"])
+        if pre_lu_port_gate is not None:
+            pre_lu_port_gate.bind_run(
+                source_sha=source_sha,
+                profile_facts=profile_facts,
+                route=route,
+                resolved_payload=resolved_payload,
+                config=cfg,
+                run_directory=directory,
+            )
         ledger.marker("p6_direct_resolved_profile_bound", {
             "profile": profile_facts["identity"],
             "direct_run_contract": route,
@@ -3741,6 +3905,8 @@ def run_p6_condensed_direct(
                 mesh_evidence = _saxs_one_axis_mesh_evidence(levels, cfg, route)
             elif route["task40_mesh_plan_family"] == "saxs_cxz15":
                 mesh_evidence = _saxs_cxz15_mesh_evidence(levels, cfg, route)
+            elif route["task40_mesh_plan_family"] == "saxs_cx9z10":
+                mesh_evidence = _saxs_cx9z10_mesh_evidence(levels, cfg, route)
             elif route["task40_mesh_plan_family"] == "d5c":
                 mesh_evidence = _task40_d5c_mesh_evidence(levels, cfg, route)
             elif route["task40_mesh_plan_family"] == "d15":
@@ -3777,6 +3943,11 @@ def run_p6_condensed_direct(
             raise ValueError("actual direct-run mesh evidence did not pass")
         summary["mesh_evidence"] = mesh_evidence
         ledger.marker("p6_direct_actual_mesh_qa_complete", mesh_evidence)
+        if pre_lu_port_gate is not None:
+            pre_lu_port_gate.bind_mesh(
+                mesh_data=levels["mesh_data"],
+                mesh_evidence=mesh_evidence,
+            )
 
         if route["family"] == "task40_phi90":
             inventory_preflight = _preflight_task40_mode_inventories(cfg, route)
@@ -4179,9 +4350,15 @@ def run_p6_condensed_direct(
         )
         port_assembly_started = perf_counter()
         port_terms = assemble_condensed_ports(
-            condensed, bundle["dtn_action"].carrier
+            condensed,
+            bundle["dtn_action"].carrier,
+            pre_assembly_gate=pre_lu_port_gate,
         )
         port_assembly_seconds = perf_counter() - port_assembly_started
+        if pre_lu_port_gate is not None:
+            summary["pre_lu_port_assembly_gate"] = condensed.build_audit.get(
+                "pre_lu_port_assembly_gate"
+            )
         del port_terms
         ledger.marker("p6_direct_bounded_port_assembly_complete", {
             "wall_seconds": port_assembly_seconds,

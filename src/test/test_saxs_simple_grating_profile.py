@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import sys
 from contextlib import contextmanager
 from dataclasses import replace
@@ -15,6 +16,7 @@ from src.io.input_validation import (
 )
 from src.io.native_capacity_profile import (
     SAXS_SIMPLE_GRATING_P6_DIRECT_CX_PROFILE,
+    SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE,
     SAXS_SIMPLE_GRATING_P6_DIRECT_CXZ15_PROFILE,
     SAXS_SIMPLE_GRATING_P6_DIRECT_CZ_PROFILE,
     SAXS_SIMPLE_GRATING_P6_DIRECT_PROFILE,
@@ -42,6 +44,7 @@ from src.runners.task038_launcher import (
 ROOT = Path(__file__).resolve().parents[2]
 INPUT = ROOT / "input/saxs_simple_grating_center_p6_direct.dat"
 CXZ15_INPUT = ROOT / "input/saxs_simple_grating_center_cxz15_p6_direct.dat"
+CX9Z10_INPUT = ROOT / "input/saxs_simple_grating_center_cx9z10_p6_direct.dat"
 SOURCE_SHA = "a5c8" * 10
 WORKER_CPUS = list(range(16, 24))
 
@@ -77,6 +80,33 @@ def _bootstrap_roundtrip(
     manifest["worker_command"] = list(plan.argv)
     _write_json(run_directory / "run_manifest.json", manifest)
     return specification, run_directory, resolved_sha, plan, manifest
+
+
+def _cx9z10_prelu_launcher_binding():
+    repository_root = ROOT.resolve()
+    profile_path = (
+        repository_root / "profiles/cx9z10_prelu_port_blas8_v1.json"
+    ).resolve()
+    launcher_path = (repository_root / "src/runners/task038_launcher.py").resolve()
+    worker_path = (repository_root / "src/runners/p6_condensed_direct.py").resolve()
+    worker_environment = {
+        "MYFENICS_CX9Z10_PRELU_PORT_PROFILE_ID": "CX9Z10_PRELU_LOCAL_PORT_BLAS8_V1",
+        "MYFENICS_CX9Z10_PRELU_PROFILE_PATH": str(profile_path),
+        "MYFENICS_CX9Z10_PRELU_LAUNCHER_PATH": str(launcher_path),
+        "MYFENICS_CX9Z10_PRELU_WORKER_PATH": str(worker_path),
+    }
+    return {
+        "schema": "cx9z10.prelu_launcher_binding.v1",
+        "profile_id": "CX9Z10_PRELU_LOCAL_PORT_BLAS8_V1",
+        "profile_path": str(profile_path),
+        "profile_sha256": hashlib.sha256(profile_path.read_bytes()).hexdigest(),
+        "launcher_path": str(launcher_path),
+        "launcher_sha256": hashlib.sha256(launcher_path.read_bytes()).hexdigest(),
+        "worker_path": str(worker_path),
+        "worker_sha256": hashlib.sha256(worker_path.read_bytes()).hexdigest(),
+        "worker_environment": worker_environment,
+        "launch_authority": "external_main_review_and_fresh_gate_required",
+    }
 
 
 def _validate_worker(specification, run_directory, resolved_sha, plan):
@@ -439,6 +469,142 @@ def test_cxz15_actual_mesh_p6_mpc_and_lineage_evidence_without_form_or_factor():
         assert evidence["double_floquet_mpc_finalized"] is True
         assert evidence["floquet_constraint_mode_resolved"] == "topological_trace_p6"
         assert evidence["floquet_num_constraints"] > 0
+        assert evidence["p6_matrix_assembly_started"] is False
+        assert evidence["p6_factorization_started"] is False
+    finally:
+        for floquet in levels.get("floquets", {}).values():
+            mpc = getattr(floquet, "mpc", None)
+            if mpc is not None and hasattr(mpc, "destroy"):
+                mpc.destroy()
+        del levels
+
+
+def test_cx9z10_input_profile_and_exact_target_axis_contract():
+    from src.geometry.saxs_simple_grating_axis_plan import (
+        saxs_cx9z10_plan,
+        validate_saxs_cx9z10_plan,
+    )
+
+    specification = load_and_resolve(CX9Z10_INPUT)
+    resolved = specification.as_jsonable()
+    profile = resolved["solver"]["native_capacity_profile"]
+    facts = native_profile_facts(profile)
+    route = _direct_run_contract(profile)
+    plan = saxs_cx9z10_plan()
+    discretization = resolved["discretization"]
+    axes = {
+        "mesh_plan_id": discretization["mesh_plan_id"],
+        "mesh_plan_sha256": discretization["mesh_plan_sha256"],
+        "mesh_axis_cell_counts": discretization["mesh_axis_cell_counts"],
+        "mesh_axis_x_values": discretization["mesh_axis_x_values"],
+        "mesh_axis_y_values": discretization["mesh_axis_y_values"],
+        "mesh_axis_z_values": discretization["mesh_axis_z_values"],
+    }
+
+    assert profile == SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE
+    assert resolved["run_id"].endswith("_cx9z10_v1")
+    assert validate_saxs_cx9z10_plan(axes) == {
+        key: tuple(plan["axes_nm"][key]) for key in "xyz"
+    }
+    assert plan["axis_cell_counts"] == [9, 200, 16]
+    assert plan["expected_global_cell_count"] == 28800
+    assert plan["expected_material_tag_counts"] == {
+        "1": 22320,
+        "2": 3600,
+        "3": 2880,
+    }
+    assert route["task40_mesh_plan_family"] == "saxs_cx9z10"
+    assert route["task40_mesh_plan_id"] == plan["mesh_plan_id"]
+    assert route["task40_mesh_plan_sha256"] == plan["mesh_plan_sha256"]
+    assert route["expected_axis_cell_counts"] == [9, 200, 16]
+    assert route["expected_global_cell_count"] == 28800
+    assert route["expected_mode_count"] == 4488
+    assert route["active_count"] == 1088
+    assert route["signed_rectangle_bounds_mn"] == [-8, 8, -14, 1]
+    assert route["surface_quadrature_degree"] == 81
+    assert facts["component_options"]["volume_quadrature"]["degree"] == 15
+    assert facts["component_options"]["visualization_output_policy"][
+        "write_visualization_files"
+    ] is False
+    assert facts["component_options"]["pre_lu_port_assembly_gate"] == {
+        "profile_id": "CX9Z10_PRELU_LOCAL_PORT_BLAS8_V1",
+        "profile_path": "profiles/cx9z10_prelu_port_blas8_v1.json",
+        "activation": "exact_CX9Z10_native_profile_and_launcher_manifest",
+        "numeric_lu_is_independent": True,
+    }
+    assert numeric_factor_blas_thread_choices(profile) == {1, 8}
+
+
+def test_cx9z10_worker_requires_bound_prelu_profile_and_forwards_numeric_lu8(
+    tmp_path, monkeypatch
+):
+    _specification, run_directory, _resolved_sha, plan, manifest = (
+        _bootstrap_roundtrip(tmp_path, CX9Z10_INPUT)
+    )
+    binding = _cx9z10_prelu_launcher_binding()
+    manifest["pre_lu_port_assembly_gate"] = binding
+    _write_json(run_directory / "run_manifest.json", manifest)
+    for name, value in binding["worker_environment"].items():
+        monkeypatch.setenv(name, value)
+    observed = _install_fake_p6_dispatch(monkeypatch)
+
+    assert manifest["native_capacity_profile_identity"] == (
+        SAXS_SIMPLE_GRATING_P6_DIRECT_CX9Z10_PROFILE
+    )
+    assert _run_worker_main(monkeypatch, plan) == 0
+    assert observed == [
+        {
+            "source_sha": SOURCE_SHA,
+            "numeric_factor_blas_threads": 8,
+            "numeric_factor_worker_affinity": WORKER_CPUS,
+        }
+    ]
+
+
+def test_cx9z10_actual_mesh_p6_mpc_and_exact_tag_qa_without_form_or_factor():
+    from mpi4py import MPI
+
+    from src.solvers.fullspace_same_mesh_hcurl_pmg_global import (
+        _build_same_mesh_levels,
+    )
+
+    specification = load_and_resolve(CX9Z10_INPUT)
+    resolved = specification.as_jsonable()
+    profile = resolved["solver"]["native_capacity_profile"]
+    route = _direct_run_contract(profile)
+    cfg = simulation_config_3d_from_normalized(resolved)
+    cfg.stage4_dtn_order_policy = "explicit_signed_rectangle"
+    cfg.task40_dtn_signed_rectangle_bounds_mn = tuple(
+        int(value) for value in route["parent_signed_bounds_mn"]
+    )
+    cfg.stage4_dtn_quadrature_degree = int(route["surface_quadrature_degree"])
+    cfg.task40_port_boundary_amplitude_scale_policy = route[
+        "mode_basis_scale_policy"
+    ]
+    mode_preflight = _preflight_task40_mode_inventories(cfg, route)
+    assert len(mode_preflight["parent_inventory"][0]) == 4488
+    assert len(mode_preflight["active_inventory"][0]) == 1088
+    levels = _build_same_mesh_levels(
+        cfg, MPI.COMM_SELF, (6,), include_positive_coefficients=False
+    )
+    try:
+        evidence = p6_condensed_direct._saxs_cx9z10_mesh_evidence(
+            levels, cfg, route
+        )
+        assert evidence["status"] == "PASS"
+        assert evidence["actual_global_cell_count"] == 28800
+        assert evidence["axis_cell_counts"] == [9, 200, 16]
+        assert evidence["material_tag_counts"] == {
+            str(cfg.tags.air): 22320,
+            str(cfg.tags.substrate): 3600,
+            str(cfg.tags.grating): 2880,
+        }
+        assert evidence["axis_sha256_le_f64"] == route[
+            "task40_expected_axis_sha256_le_f64"
+        ]
+        assert evidence["p6_space_degree"] == 6
+        assert evidence["p6_global_dof_count"] > 0
+        assert evidence["double_floquet_mpc_finalized"] is True
         assert evidence["p6_matrix_assembly_started"] is False
         assert evidence["p6_factorization_started"] is False
     finally:
