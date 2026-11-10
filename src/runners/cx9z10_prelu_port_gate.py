@@ -77,18 +77,38 @@ def _axis_values_from_profile(target: Mapping[str, Any]) -> dict[str, tuple[floa
     return {"x": tuple(x_values), "y": y_values, "z": z_values}
 
 
+def _cell_geometry_coordinates(mesh: Any, cell: int) -> np.ndarray:
+    """Return the cell's Q1 coordinates through the geometry dof map.
+
+    Topology vertex indices and geometry coordinate indices are distinct
+    namespaces in DOLFINx.  The geometry dof map is the authoritative mapping
+    from a cell's local coordinate nodes to ``mesh.geometry.x``.
+    """
+    coordinates = np.asarray(mesh.geometry.x, dtype=np.float64)
+    dofs = np.asarray(mesh.geometry.dofmap[cell], dtype=np.int64)
+    if coordinates.ndim != 2 or coordinates.shape[1] != 3:
+        raise ValueError("CX9Z10 geometry coordinates must have shape (N, 3)")
+    if dofs.shape != (8,):
+        raise ValueError(
+            "CX9Z10 pre-LU mesh identity requires eight first-order hex geometry dofs"
+        )
+    if np.any(dofs < 0) or np.any(dofs >= len(coordinates)):
+        raise ValueError("cell geometry dof map contains an out-of-range coordinate index")
+    points = coordinates[dofs]
+    if points.shape != (8, 3) or not np.isfinite(points).all():
+        raise ValueError("cell geometry coordinates must be finite Q1 hexahedron points")
+    return points
+
+
 def _live_mesh_identity(mesh: Any) -> tuple[dict[str, Any], str]:
     topology = mesh.topology
-    topology.create_connectivity(3, 0)
-    cell_to_vertex = topology.connectivity(3, 0)
-    coordinates = np.asarray(mesh.geometry.x, dtype=np.float64)
     owned_cells = int(topology.index_map(3).size_local)
     local_cells: list[tuple[tuple[float, float, float], ...]] = []
     local_vertices: set[tuple[float, float, float]] = set()
     for cell in range(owned_cells):
         points = tuple(
-            tuple(float(value) for value in coordinates[int(vertex)])
-            for vertex in cell_to_vertex.links(cell)
+            tuple(float(value) for value in point)
+            for point in _cell_geometry_coordinates(mesh, cell)
         )
         canonical_cell = tuple(sorted(points))
         local_cells.append(canonical_cell)
@@ -245,10 +265,24 @@ class CX9Z10PreLUPortGate:
             target["global_hexahedra"]
         ):
             raise ValueError("resolved profile cell count differs from CX9Z10")
-        if int(route.get("expected_mode_count", -1)) != int(
-            target["dtn_modes"]["count"]
+        modes = target["dtn_modes"]
+        expected_active_count = int(modes["count"])
+        expected_parent_count = int(modes["parent_count"])
+        if int(route.get("active_count", -1)) != expected_active_count:
+            raise ValueError("resolved active modal count differs from CX9Z10")
+        if (
+            int(route.get("parent_count", -1)) != expected_parent_count
+            or int(route.get("expected_mode_count", -1)) != expected_parent_count
         ):
-            raise ValueError("resolved modal count differs from CX9Z10")
+            raise ValueError("resolved parent modal count differs from CX9Z10")
+        expected_parent_bounds = [
+            int(modes["m"][0]),
+            int(modes["m"][1]),
+            int(modes["parent_n"][0]),
+            int(modes["parent_n"][1]),
+        ]
+        if list(route.get("parent_signed_bounds_mn") or ()) != expected_parent_bounds:
+            raise ValueError("resolved parent signed DtN bounds differ from CX9Z10")
         expected_bounds = [
             int(target["dtn_modes"]["m"][0]),
             int(target["dtn_modes"]["m"][1]),
@@ -390,7 +424,6 @@ class CX9Z10PreLUPortGate:
     ) -> dict[str, Any]:
         mesh = mesh_data.mesh
         topology = mesh.topology
-        cell_to_vertex = topology.connectivity(3, 0)
         recovery = condensed.cell_recovery_maps[cell_index]
         class_key = tuple(recovery.class_key)
         if len(class_key) < 5:
@@ -408,10 +441,9 @@ class CX9Z10PreLUPortGate:
         raw_widths = tuple(float(value) for value in class_key[1:4])
         if len(raw_widths) != 3 or not np.isfinite(raw_widths).all():
             raise ValueError(f"cell {cell_index} raw widths are invalid")
-        coordinates = np.asarray(mesh.geometry.x, dtype=np.float64)
         points = sorted(
-            tuple(float(value) for value in coordinates[int(vertex)])
-            for vertex in cell_to_vertex.links(cell_index)
+            tuple(float(value) for value in point)
+            for point in _cell_geometry_coordinates(mesh, cell_index)
         )
         mesh_cell_count = int(topology.index_map(3).size_local)
         if len(condensed.cell_recovery_maps) != mesh_cell_count:

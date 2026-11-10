@@ -535,6 +535,121 @@ def test_cx9z10_input_profile_and_exact_target_axis_contract():
     assert numeric_factor_blas_thread_choices(profile) == {1, 8}
 
 
+def test_cx9z10_prelu_gate_binds_active_and_parent_modes_separately(tmp_path):
+    from src.runners.cx9z10_prelu_port_gate import CX9Z10PreLUPortGate
+
+    specification = load_and_resolve(CX9Z10_INPUT)
+    resolved = specification.as_jsonable()
+    identity = resolved["solver"]["native_capacity_profile"]
+    route = _direct_run_contract(identity)
+    gate = CX9Z10PreLUPortGate(
+        profile_path=ROOT / "profiles/cx9z10_prelu_port_blas8_v1.json",
+        launcher_path=ROOT / "src/runners/task038_launcher.py",
+        worker_path=ROOT / "src/runners/p6_condensed_direct.py",
+        benchmark_script_path=ROOT / "benchmarks/bench_port_terms_blas8.py",
+    )
+
+    gate.bind_run(
+        source_sha=SOURCE_SHA,
+        profile_facts=native_profile_facts(identity),
+        route=route,
+        resolved_payload=resolved,
+        config=simulation_config_3d_from_normalized(resolved),
+        run_directory=tmp_path / "cx9z10-prelu-run",
+    )
+
+    assert route["expected_mode_count"] == route["parent_count"] == 4488
+    assert route["active_count"] == 1088
+    assert gate.preparation_error is None, gate.preparation_error
+    assert gate._route["expected_mode_count"] == 4488
+    assert gate._route["active_count"] == 1088
+
+
+def test_cx9z10_geometry_provenance_uses_geometry_dofmap_after_numbering_permutation():
+    import numpy as np
+
+    from src.runners.cx9z10_prelu_port_gate import (
+        CX9Z10PreLUPortGate,
+        _live_mesh_identity,
+    )
+
+    points = np.asarray(
+        [
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0),
+            (1.0, 1.0, 0.0),
+            (0.0, 0.0, 1.0),
+            (1.0, 0.0, 1.0),
+            (0.0, 1.0, 1.0),
+            (1.0, 1.0, 1.0),
+        ],
+        dtype=np.float64,
+    )
+    permutation = np.asarray([4, 1, 7, 0, 2, 6, 3, 5], dtype=np.int32)
+    permuted_coordinates = np.empty_like(points)
+    permuted_coordinates[permutation] = points
+    topology_maps = {
+        0: SimpleNamespace(size_local=8, size_global=8),
+        3: SimpleNamespace(size_local=1, size_global=1),
+    }
+
+    def mesh_with_numbering(coordinates, geometry_dofs):
+        topology = SimpleNamespace(
+            index_map=lambda dimension: topology_maps[dimension],
+            cell_name=lambda: "hexahedron",
+            # Deliberately retain topology vertex IDs 0..7.  They are not the
+            # geometry coordinate rows selected by geometry_dofs below.
+            create_connectivity=lambda *_args: None,
+            connectivity=lambda *_args: SimpleNamespace(
+                links=lambda _cell: np.arange(8, dtype=np.int32)
+            ),
+        )
+        geometry = SimpleNamespace(
+            x=np.asarray(coordinates, dtype=np.float64),
+            dofmap=np.asarray([geometry_dofs], dtype=np.int32),
+        )
+        return SimpleNamespace(
+            topology=topology,
+            geometry=geometry,
+            comm=SimpleNamespace(size=1),
+        )
+
+    direct_mesh = mesh_with_numbering(points, np.arange(8, dtype=np.int32))
+    permuted_mesh = mesh_with_numbering(permuted_coordinates, permutation)
+    direct_identity, direct_sha = _live_mesh_identity(direct_mesh)
+    permuted_identity, permuted_sha = _live_mesh_identity(permuted_mesh)
+    assert permuted_identity == direct_identity
+    assert permuted_sha == direct_sha
+
+    gate_stub = SimpleNamespace(
+        _config=SimpleNamespace(
+            tags=SimpleNamespace(air=1, substrate=2, grating=3, top_pml=4, bottom_pml=5)
+        )
+    )
+    condensed = SimpleNamespace(
+        cell_recovery_maps=[SimpleNamespace(class_key=(3, 1.0, 1.0, 1.0, 0))]
+    )
+    direct_record = CX9Z10PreLUPortGate._cell_geometry_record(
+        gate_stub,
+        cell_index=0,
+        condensed=condensed,
+        mesh_data=SimpleNamespace(mesh=direct_mesh),
+        mesh_sha256=direct_sha,
+    )
+    permuted_record = CX9Z10PreLUPortGate._cell_geometry_record(
+        gate_stub,
+        cell_index=0,
+        condensed=condensed,
+        mesh_data=SimpleNamespace(mesh=permuted_mesh),
+        mesh_sha256=permuted_sha,
+    )
+    assert permuted_record["coordinates_nm"] == direct_record["coordinates_nm"]
+    assert permuted_record["coordinates_nm"] == sorted(
+        [list(point) for point in points.tolist()]
+    )
+
+
 def test_cx9z10_worker_requires_bound_prelu_profile_and_forwards_numeric_lu8(
     tmp_path, monkeypatch
 ):

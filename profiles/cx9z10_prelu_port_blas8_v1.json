@@ -18,6 +18,8 @@
       "m": [-8, 8],
       "n": [-14, 1],
       "count": 1088,
+      "parent_n": [-64, 1],
+      "parent_count": 4488,
       "side_indices": "derive from live ordered carrier entries and mode_identity.side; never assume contiguous ordering"
     },
     "surface_quadrature_degree": 81,
