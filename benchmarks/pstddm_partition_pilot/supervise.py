@@ -1,0 +1,190 @@
+"""Single-process-group, cumulative-budget supervisor for the opt-in pilot."""
+from __future__ import annotations
+import argparse
+import datetime
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import signal
+import subprocess
+import sys
+import time
+import tomllib
+
+ROOT = Path(__file__).resolve().parents[2]
+BASE = ROOT/'benchmarks/artifacts/pstddm_partition_pilot'
+G = 1 << 30
+
+
+def main():
+    if not __debug__ or sys.flags.optimize or os.environ.get('PYTHONOPTIMIZE'):
+        raise RuntimeError('Optimization mode is forbidden for assertion-based admission')
+    parser=argparse.ArgumentParser()
+    parser.add_argument('input',type=Path)
+    parser.add_argument('--python',type=Path,required=True)
+    args=parser.parse_args()
+    BASE.mkdir(parents=True,exist_ok=True)
+    lock=(BASE/'run.lock').open('a')
+    fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    spec=tomllib.loads(args.input.read_text())
+    assert spec['model']=='pstddm_partition_pilot'
+    out=BASE/spec['case_id']
+    assert out.parent==BASE and not out.exists(),'Unique case id; never overwrite evidence'
+    subprocess.run(['git','diff','--exit-code'],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
+    subprocess.run(['git','diff','--cached','--exit-code'],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
+    assert not subprocess.check_output(['git','ls-files','--others','--exclude-standard'],cwd=ROOT,text=True).strip(),'Untracked source/evidence must be committed before formal run'
+    sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+    assert subprocess.check_output(['git','branch','--show-current'],cwd=ROOT,text=True).strip()=='task40extra_dot_parallel_cloud'
+    ledger_path=BASE/'budget_ledger.json'
+    ledger=json.loads(ledger_path.read_text()) if ledger_path.exists() else []
+    for entry in ledger:
+        if entry.get('status')=='running':
+            raise RuntimeError('Unfinished ledger reservation: inspect its outcome before continuing')
+    assert len(ledger)<10 and sum(r['wall_seconds'] for r in ledger)<21600
+    source_names=subprocess.check_output(['git','ls-files','src','scripts','benchmarks/pstddm_partition_pilot',
+        'input/pstddm_partition_pilot'],cwd=ROOT,text=True).splitlines()
+    source_hashes={name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in source_names}
+    input_hash=hashlib.sha256(args.input.read_bytes()).hexdigest()
+    def facts():
+        m={k:int(v.split()[0])*1024 for k,v in (x.split(':',1) for x in Path('/proc/meminfo').read_text().splitlines())}
+        v={k:int(x) for k,x in (r.split() for r in Path('/proc/vmstat').read_text().splitlines())}
+        return {'available':m['MemAvailable'],'system_used':m['MemTotal']-m['MemAvailable'],
+                'swap_used':m['SwapTotal']-m['SwapFree'],'pswpin':v['pswpin'],'pswpout':v['pswpout'],
+                'disk_free':shutil.disk_usage(BASE).free}
+    initial=facts()
+    def output_bytes():
+        total=0
+        for path in out.rglob('*'):
+            try:
+                if path.is_file():
+                    total+=path.stat().st_size
+            except FileNotFoundError:
+                pass  # A JIT temporary was atomically renamed between samples.
+        return total
+    def gate(f):
+        assert f['available']>2*G+(512<<20),'2.5GiB original available floor'
+        assert f['system_used']+(512<<20)<6*G,'6GiB system usage including stage reserve'
+        assert f['swap_used']==0 and (f['pswpin'],f['pswpout'])==(initial['pswpin'],initial['pswpout']),'zero swap'
+        assert f['disk_free']>12*G+(256<<20),'12GiB disk floor plus output reserve'
+    gate(initial)
+    out.mkdir()
+    previous=sum(x['wall_seconds'] for x in ledger)
+    assert previous+1800<=21600,'full next-case time reserve'
+    reservation={'case':spec['case_id'],'status':'running','wall_seconds':1800,
+                 'budget_reserved_seconds':1800,'source_sha':sha,
+                 'started_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                 'supervisor_pid':os.getpid(),'input_sha256':input_hash}
+    ledger.append(reservation)
+    ledger_path.write_text(json.dumps(ledger,indent=2))
+    (out/'supervisor_identity.json').write_text(json.dumps({'source_sha':sha,'source_hashes':source_hashes,
+        'input_sha256':input_hash,'started_utc':reservation['started_utc']},indent=2))
+    env=os.environ.copy()
+    for name in ['LD_PRELOAD','LD_LIBRARY_PATH','LD_AUDIT','PYTHONPATH','PYTHONHOME','PETSC_OPTIONS','PETSC_DIR','PETSC_ARCH']:
+        assert not env.get(name),'unexpected runtime injection '+name
+    for name in ['OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS']:
+        env[name]='1'
+    env['CC']=str(args.python.resolve().parent/'gcc')
+    env['PSTDDM_SUPERVISOR_PID']=str(os.getpid())
+    env['PSTDDM_OUTPUT']=str(out)
+    env['XDG_CACHE_HOME']=str(out/'cache')
+    cmd=[str(args.python.resolve()),'-I','-B',str(ROOT/'scripts/run_case.py'),str(args.input.resolve())]
+    start=time.monotonic()
+    samples=[]
+    reason=None
+    with (out/'stdout.log').open('w') as stdout,(out/'stderr.log').open('w') as stderr:
+        process=subprocess.Popen(cmd,cwd=ROOT,env=env,stdout=stdout,stderr=stderr,start_new_session=True)
+        reservation['child_pgid']=process.pid
+        ledger_path.write_text(json.dumps(ledger,indent=2))
+        def owned():
+            rows=[]
+            for path in Path('/proc').glob('[0-9]*/stat'):
+                try:
+                    s=path.read_text();rest=s[s.rfind(')')+2:].split();pid=int(path.parent.name)
+                    if int(rest[2])==process.pid or pid==os.getpid():
+                        status=dict(x.split(':',1) for x in (path.parent/'status').read_text().splitlines() if ':' in x)
+                        rows.append({'pid':pid,'rss':int(status.get('VmRSS','0 kB').split()[0])*1024,
+                                     'swap':int(status.get('VmSwap','0 kB').split()[0])*1024})
+                except (FileNotFoundError,ProcessLookupError):
+                    pass
+            return rows
+        try:
+            while True:
+                f=facts();rows=owned();elapsed=time.monotonic()-start
+                rss=sum(r['rss'] for r in rows)
+                samples.append({'elapsed':elapsed,'rss':rss,'processes':rows,**f})
+                gate(f)
+                assert rss+(512<<20)<2*G,'2GiB task tree budget including reserve'
+                assert all(r['swap']==0 for r in rows)
+                assert elapsed<1800 and elapsed+previous<21600,'case/cumulative time budget'
+                assert output_bytes()<(240<<20),'256MiB output cap with 16MiB supervisor reserve'
+                if process.poll() is not None:
+                    break
+                time.sleep(.1)
+        except BaseException as exc:
+            reason=repr(exc)
+        finally:
+            try:os.killpg(process.pid,signal.SIGTERM)
+            except ProcessLookupError:pass
+            try:process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid,signal.SIGKILL);process.wait()
+            deadline=time.monotonic()+5
+            remaining=[r for r in owned() if r['pid']!=os.getpid()]
+            while remaining and time.monotonic()<deadline:
+                time.sleep(.1);remaining=[r for r in owned() if r['pid']!=os.getpid()]
+            if remaining:
+                try:os.killpg(process.pid,signal.SIGKILL)
+                except ProcessLookupError:pass
+                time.sleep(.2)
+                remaining=[r for r in owned() if r['pid']!=os.getpid()]
+    elapsed=time.monotonic()-start
+    final=facts()
+    try:gate(final)
+    except BaseException as exc:reason=(reason or '')+' FINAL '+repr(exc)
+    if subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()!=sha:
+        reason=(reason or '')+' SOURCE_SHA_CHANGED'
+    if subprocess.call(['git','diff','--quiet'],cwd=ROOT):
+        reason=(reason or '')+' TRACKED_SOURCE_CHANGED'
+    if subprocess.call(['git','diff','--cached','--quiet'],cwd=ROOT):
+        reason=(reason or '')+' STAGED_SOURCE_CHANGED'
+    if subprocess.check_output(['git','ls-files','--others','--exclude-standard'],cwd=ROOT,text=True).strip():
+        reason=(reason or '')+' UNTRACKED_SOURCE_CHANGED'
+    current={name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in source_names}
+    if current!=source_hashes or hashlib.sha256(args.input.read_bytes()).hexdigest()!=input_hash:
+        reason=(reason or '')+' SOURCE_OR_INPUT_BYTES_CHANGED'
+    record={'case':spec['case_id'],'status':'finished','started_utc':reservation['started_utc'],
+            'ended_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            'source_sha':sha,'wall_seconds':elapsed,'returncode':process.returncode,
+            'stop_reason':reason,'remaining':remaining,'peak_sampled_tree_rss':max(s['rss'] for s in samples),
+            'initial':initial,'final':final,'command':cmd,'sampling_seconds':.1,
+            'rss_limit_including_512MiB':2*G,'system_used_limit':6*G,'disk_floor':12*G}
+    (out/'resource_samples.json').write_text(json.dumps(samples))
+    record['output_bytes']=0
+    # Fixed-point byte count includes this metadata itself and all raw samples.
+    for _ in range(4):
+        (out/'supervision.json').write_text(json.dumps(record,indent=2))
+        measured=output_bytes()
+        if measured==record['output_bytes']:
+            break
+        record['output_bytes']=measured
+    if measured>=(256<<20):
+        reason=(reason or '')+' FINAL_OUTPUT_CAP_CONTROLLED_STOP'
+        record['stop_reason']=reason
+    record['wall_seconds']=time.monotonic()-start
+    record['ended_utc']=datetime.datetime.now(datetime.timezone.utc).isoformat()
+    for _ in range(4):
+        (out/'supervision.json').write_text(json.dumps(record,indent=2))
+        measured=output_bytes()
+        if measured==record['output_bytes']:
+            break
+        record['output_bytes']=measured
+    ledger[-1]=record;ledger_path.write_text(json.dumps(ledger,indent=2))
+    print(json.dumps(record,indent=2),flush=True)
+    assert reason is None and process.returncode==0 and not remaining
+
+
+if __name__=='__main__':
+    main()

@@ -1,0 +1,25 @@
+{
+  "status": "PURE_ALGEBRA_PASS_NATIVE_NOT_RUN",
+  "tests": 7,
+  "unittest_reported_seconds": 0.012,
+  "entry": "qualified Python with -I -B, explicit repository sys.path, runpy of src/test/test_pstddm_source_transfer.py",
+  "coverage": [
+    "source transfer exact transparent algebraic oracle",
+    "nonzero layer sources and endpoint counting",
+    "fresh residual linearity",
+    "lifting rejection",
+    "cubic cutoff",
+    "analytic pointwise curl product",
+    "complex flexible GMRES with nonzero initial, variable PC, restart, controlled max-iteration failure"
+  ],
+  "native_FE_or_PML_qualification": false,
+  "compileall": "pass",
+  "input_validate_only": "pass",
+  "CI": "not_run",
+  "full_repository_tests": "not_run_outside_minimal_scope",
+  "preserved_setup_failures": [
+    "pytest unavailable in the restored runtime; no native operation launched",
+    "running isolated test file without explicit repository sys.path could not import src; corrected stdlib unittest entry"
+  ],
+  "formal_PDE_runs": 0
+}

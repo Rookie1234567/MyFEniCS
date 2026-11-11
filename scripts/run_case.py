@@ -112,6 +112,15 @@ def main(argv: list[str] | None = None) -> int:
     try:
         from src.io.input_loader import load_dat_input
         marker = load_dat_input(args.input_path)
+        if marker.document.get("model") == "pstddm_partition_pilot":
+            defaults = vars(_parser().parse_args([str(args.input_path)]))
+            changed = {key for key,value in vars(args).items() if value != defaults[key]}
+            if changed - {"validate_only","dry_run"}:
+                raise InputError("PSTDDM pilot accepts only --validate-only or --dry-run")
+            from src.runners.pstddm_case import run_pstddm
+            result = run_pstddm(args.input_path, dry_run=bool(args.validate_only or args.dry_run))
+            print(json.dumps(result,sort_keys=True,allow_nan=False))
+            return 0
         if marker.document.get("model") == "sixlayer_surrogate_0p7nm":
             # A narrow explicit schema dispatch, not a change to legacy input
             # defaults. Task-specific PC/recovery flags do not apply here.
