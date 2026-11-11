@@ -1,0 +1,126 @@
+{
+  "result": {
+    "initial_true_residual": 1.662579339920738e-13,
+    "initial_errors": {
+      "E_relative_L2": 3.7346713162854886e-16,
+      "H_relative_L2": 3.9564189125088344e-16,
+      "E_scattered_relative_L2": 3.970535708399208e-13,
+      "H_scattered_relative_L2": 4.134142567374811e-13,
+      "E_error_l2_squared": 9.837283677389052e-30,
+      "H_error_l2_squared": 1.1038594326764321e-29,
+      "field_squared_norms": {
+        "E_total_l2_squared": 70.52943796572835,
+        "H_total_l2_squared": 70.51950167350964,
+        "E_scattered_l2_squared": 6.239890707634614e-05,
+        "H_scattered_l2_squared": 6.45866671640328e-05
+      }
+    },
+    "first_double_sweep_seconds": 0.022417333999328548,
+    "final_true_residual": 1.662579339920738e-13,
+    "field_errors": {
+      "E_relative_L2": 3.7346713162854886e-16,
+      "H_relative_L2": 3.9564189125088344e-16,
+      "E_scattered_relative_L2": 3.970535708399208e-13,
+      "H_scattered_relative_L2": 4.134142567374811e-13,
+      "E_error_l2_squared": 9.837283677389052e-30,
+      "H_error_l2_squared": 1.1038594326764321e-29,
+      "field_squared_norms": {
+        "E_total_l2_squared": 70.52943796572835,
+        "H_total_l2_squared": 70.51950167350964,
+        "E_scattered_l2_squared": 6.239890707634614e-05,
+        "H_scattered_l2_squared": 6.45866671640328e-05
+      }
+    },
+    "FGMRES": {
+      "algorithm": "flexible_right_GMRES_two_pass_MGS",
+      "restart": 30,
+      "maximum_iterations": 100,
+      "iterations": 0,
+      "reason": "converged",
+      "true_residual": 1.662579339920738e-13,
+      "history": [
+        {
+          "iteration": 0,
+          "true_residual": 1.662579339920738e-13
+        }
+      ],
+      "wall_seconds": 0.0010348060004616855,
+      "pc_apply_seconds": 0.0,
+      "passed": true
+    },
+    "pc_applications": [
+      {
+        "apply_index": 1,
+        "layer_count": 2,
+        "local_solve_count": 2,
+        "forward_transfer_count": 0,
+        "reverse_transfer_count": 0,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 1,
+        "partition_lifting_relative_residual": 4.4102541793752457e-16,
+        "original_layer_source_norms": [
+          0.05039212508617094,
+          0.04263727662943692
+        ],
+        "lifting_seconds": 0.0038075529992056545,
+        "local_solves_seconds": 0.013544158000513562,
+        "source_transfer_seconds": 0.0,
+        "reconstruction_load_seconds": 0.0006684050003968878,
+        "projection_seconds": 0.0030874600015522446,
+        "wall_seconds": 0.02117099099996267
+      }
+    ],
+    "recovery_seconds": 4.166409634999582,
+    "diagnostics": {
+      "qualification": "diagnostic_unqualified_for_physical_convergence",
+      "field_definition": "total E = scattered FE E + analytic flat-interface background",
+      "H_definition": "code units curl(Etotal)/(i*k0*mu_r)",
+      "saved_H_representation": "vector DG interpolation; not used for the H error integral",
+      "E_total_l2_squared": 70.5294379657294,
+      "H_total_l2_squared": 70.5195016735088,
+      "E_scattered_l2_squared": 6.239890707634614e-05,
+      "H_scattered_l2_squared": 6.45866671640328e-05,
+      "offline_reconstructed_norms": {
+        "E_total_l2_squared": 70.52943796572835,
+        "H_total_l2_squared": 70.51950167350964,
+        "E_scattered_l2_squared": 6.239890707634614e-05,
+        "H_scattered_l2_squared": 6.45866671640328e-05
+      },
+      "background_cross_vector_identity_relative_defects": {
+        "E": 1.4910132268967286e-14,
+        "H": 1.1889483168481959e-14
+      },
+      "background_payload_file": "candidate_fields.npz",
+      "background_payload_identity": "m_bg=T^H integral(bg dot conj(v)); k_bg=T^H integral(curl(bg) dot conj(curl(v))); quadrature28",
+      "incident_power": 0.05865349214176169,
+      "R_total": 0.11328667277006202,
+      "T_total": 0.8817990913203154,
+      "A_flux": 0.0049142359096225885,
+      "A_volume": 0.009617026081977917,
+      "volume_absorption_by_material_tag": {
+        "1": 0.0,
+        "2": 0.004101360700228997,
+        "3": 0.005515665381748919
+      },
+      "energy_defect": 0.004702790172355309,
+      "mode_gauge": "boundary_plane"
+    },
+    "diagnostic_absolute_differences": {
+      "R_total": 5.551115123125783e-17,
+      "T_total": 0.0,
+      "A_flux": 1.1102230246251565e-16,
+      "A_volume": 0.0,
+      "energy_defect": 2.220446049250313e-16,
+      "maximum_individual_mode_power": 5.551115123125783e-17
+    },
+    "same_discrete_solver_pass": true,
+    "diagnostic_H_comparison_pass": true,
+    "diagnostic_power_comparison_pass": true,
+    "physical_convergence_qualified": false
+  },
+  "global_setup_seconds": 21.002711471999646,
+  "numerical_wall_seconds": 56.09535286100072,
+  "physical_sha256": "2bc579e2ce3824025f85ec7382292a4028da5a294bbea30baebdc5663e831e9e",
+  "source_sha": "bd0d4daed6da301eaca26b2fdac76a59a834be8a",
+  "status": "COMPLETED_NUMERICAL_REVIEW_PENDING"
+}

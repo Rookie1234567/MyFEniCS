@@ -1,0 +1,43 @@
+{
+  "partition_count": 2,
+  "bounds_cell_indices": [
+    0,
+    2,
+    4
+  ],
+  "pml_thickness_nm": 10.0,
+  "pml_cells_per_side": 2,
+  "pml_grading_ratio": 1.25,
+  "sigma_max": 8.81921219963504,
+  "mass_partition_relative": 5.052996039133241e-19,
+  "reconstruction_relative": 3.2673735837629306e-15,
+  "local_assembly_seconds": 24.716491085000598,
+  "local_factor_seconds": 0.49974152899994806,
+  "setup_seconds": 26.780126030000247,
+  "cache_strategy": "all_local_factors_and_one_global_mass_factor_resident",
+  "global_mass_factor_nnz": 1674331,
+  "pairs": [
+    {
+      "rows": 3120,
+      "raw_rows": 3570,
+      "pml_rows": 0,
+      "physical_rows": 3120,
+      "pml_cells": 0,
+      "free_rows": 3120,
+      "local_residual": 1.2358208700055488e-13,
+      "factor_nnz": 3744046,
+      "phase_map_error": 0.0,
+      "weak_product_errors": [
+        2.258074557615987e-15,
+        1.7197014347680144e-15
+      ],
+      "n2_operator_relative": 1.6276937621084444e-16
+    }
+  ],
+  "actual_solve_counts": [
+    2
+  ],
+  "actual_solve_seconds": [
+    0.013398789000348188
+  ]
+}

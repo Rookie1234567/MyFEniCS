@@ -1,0 +1,810 @@
+{
+  "A.npz": {
+    "bytes": 1917651,
+    "sha256": "1bda8b74ea3ca6aa1ed599f9fafbf9e85b39c8a769637711bc24e5aabda0b996"
+  },
+  "C.npz": {
+    "bytes": 5586579,
+    "sha256": "086b1c624242ba0cce6c7de0640ca323fe14f74e81155e304987669b13ec030f"
+  },
+  "D.npz": {
+    "bytes": 5602128,
+    "sha256": "7ced0ce6c7268e1ad30138f172653b62d0883ece2850dac8550fc994fb96f310"
+  },
+  "T.npz": {
+    "bytes": 11488,
+    "sha256": "327dacdec1c51a375fd8882f98c2d68a696ea4004c3cb3ce1790156e0ed4dcc1"
+  },
+  "artifact_hashes.json": {
+    "bytes": 6408,
+    "sha256": "e5caefd68b47e91dc5cf779c226773a305083a5d509f4e1baa523604f0e9ec57"
+  },
+  "cache/fenics/libffcx_forms_b83eb8f5dbc743e111a7029f01ca714ae9134ce8.c": {
+    "bytes": 2445815,
+    "sha256": "12976d45f9488c836f4e67b7f80c5e3da51b2166852f752fe22b289fcfa5e7b0"
+  },
+  "cache/fenics/libffcx_forms_b83eb8f5dbc743e111a7029f01ca714ae9134ce8.c.cached": {
+    "bytes": 1926,
+    "sha256": "7733b2ca9cd0c5e5b47b0897ba5fed3f9df900ec29d98a40c554d32def461837"
+  },
+  "cache/fenics/libffcx_forms_b83eb8f5dbc743e111a7029f01ca714ae9134ce8.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 2120880,
+    "sha256": "fdc4680644b4137a3ced3be54b8c0eeb1c77cc5d44ee74308d2cff56b4ba714e"
+  },
+  "cache/fenics/libffcx_forms_b83eb8f5dbc743e111a7029f01ca714ae9134ce8.o": {
+    "bytes": 2110560,
+    "sha256": "b88d608bf028f444c4e1258df1a2a454fddfe7f189f5dc2280c9d82c9b7dbfbb"
+  },
+  "cache/fenics/libffcx_forms_bde45fb0c8f99dac28013fc92e055143d6b8d64e.c": {
+    "bytes": 2445492,
+    "sha256": "1cc9f17c6d83e64d4735a1bd9a859a5ca7c47f5e83512051506f1ca2407dc144"
+  },
+  "cache/fenics/libffcx_forms_bde45fb0c8f99dac28013fc92e055143d6b8d64e.c.cached": {
+    "bytes": 1926,
+    "sha256": "c605b11d98c30b93cf259b9d0aa1802ea59d418fb68fb309e5601e899ee5e839"
+  },
+  "cache/fenics/libffcx_forms_bde45fb0c8f99dac28013fc92e055143d6b8d64e.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 2120880,
+    "sha256": "b46fad30157cc4461d96c827d50f77e310ee9f57b4befad57635afcf8b264b2d"
+  },
+  "cache/fenics/libffcx_forms_bde45fb0c8f99dac28013fc92e055143d6b8d64e.o": {
+    "bytes": 2110328,
+    "sha256": "48bfa92a2e1ac818f89a22bec64dee858b7076114ed3247b01f9cc8e7d22603f"
+  },
+  "cache/fenics/libffcx_forms_c14c3b973b2e06903fec525551d7b2e239daaa2c.c": {
+    "bytes": 2445493,
+    "sha256": "28de1047fec75dd40b23a238216a5a8ae39e719331f876dbf62d6ff2c42e6830"
+  },
+  "cache/fenics/libffcx_forms_c14c3b973b2e06903fec525551d7b2e239daaa2c.c.cached": {
+    "bytes": 1926,
+    "sha256": "63737dd5be2c87e5494a250763072c23901687e8560921353d0f61b37eb131e5"
+  },
+  "cache/fenics/libffcx_forms_c14c3b973b2e06903fec525551d7b2e239daaa2c.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 2120880,
+    "sha256": "f193141c3182399527f5bf9fcf68789e6bfb4b34b72abecdb03f3c8a42ebba2b"
+  },
+  "cache/fenics/libffcx_forms_c14c3b973b2e06903fec525551d7b2e239daaa2c.o": {
+    "bytes": 2110328,
+    "sha256": "06bb04318b420f6806dc03c49b2ce2721d75a28d9f2bf6552f52934e9276f5e7"
+  },
+  "cache/fenics/libffcx_forms_ccb7769eb11adf45c630316cc6b8fa6ad825af1a.c": {
+    "bytes": 2445814,
+    "sha256": "2507e2f76dc6f7802a58f5f5481b7706dee96f34668a41754c6b923d68ace860"
+  },
+  "cache/fenics/libffcx_forms_ccb7769eb11adf45c630316cc6b8fa6ad825af1a.c.cached": {
+    "bytes": 1926,
+    "sha256": "702462c8444e7f79af294683c2759c8a22e18f9373479de48398e6cf5fb15a2f"
+  },
+  "cache/fenics/libffcx_forms_ccb7769eb11adf45c630316cc6b8fa6ad825af1a.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 2120880,
+    "sha256": "bb82e0976ef4659c228f86e13464ff3cbd93b70dcb9dba63d726cf76f01bb953"
+  },
+  "cache/fenics/libffcx_forms_ccb7769eb11adf45c630316cc6b8fa6ad825af1a.o": {
+    "bytes": 2110560,
+    "sha256": "997e5dc76603096f5907f7163ce56d9aeffc5123b75785812cf9b73afad38818"
+  },
+  "cache/libffcx_expressions_6cbe99f1bfefc42ba7ac068118a36bd451a9d75c.c": {
+    "bytes": 202236,
+    "sha256": "8c4c0664a302db9162d9dcee8407784af4ba32906763d4b93807ac17cf912f7a"
+  },
+  "cache/libffcx_expressions_6cbe99f1bfefc42ba7ac068118a36bd451a9d75c.c.cached": {
+    "bytes": 1948,
+    "sha256": "82b282835cd4e7a9792c7f9403dd5bdd9287f7daad9978df0eb566bc2eb34f70"
+  },
+  "cache/libffcx_expressions_6cbe99f1bfefc42ba7ac068118a36bd451a9d75c.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 215200,
+    "sha256": "23c98c8134d02be81099b873faba6fcb6a7cc9309fa268a0e598b4242422c53b"
+  },
+  "cache/libffcx_expressions_6cbe99f1bfefc42ba7ac068118a36bd451a9d75c.o": {
+    "bytes": 203944,
+    "sha256": "d212af362c97a64141de7d27c16e6c0f2f98bb2b27f3e0398fa11cb82e9b3f20"
+  },
+  "cache/libffcx_forms_068acc1598fef438ef17c606a844d268e66c1a0e.c": {
+    "bytes": 191757,
+    "sha256": "1602872abb52d416c8fb2502e75649c44288fae4df303da8f731065a734afe84"
+  },
+  "cache/libffcx_forms_068acc1598fef438ef17c606a844d268e66c1a0e.c.cached": {
+    "bytes": 1912,
+    "sha256": "36d19e1748d4b58e271f71d5fc85c202cd528390dbab9f9c0a9b0bbd1f06abf3"
+  },
+  "cache/libffcx_forms_068acc1598fef438ef17c606a844d268e66c1a0e.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 116744,
+    "sha256": "e3ba197bf3cc2e67a6986d7eb0ee6507ecf5fe16f313967f2081c0cbb4f10784"
+  },
+  "cache/libffcx_forms_068acc1598fef438ef17c606a844d268e66c1a0e.o": {
+    "bytes": 108808,
+    "sha256": "65a2cd4d045ad68f17550ad9f3aebeea1640f3d76f7ce2f70d8747fad72c2e14"
+  },
+  "cache/libffcx_forms_0cf96496f0518f66eee9a54679b5552613d3c361.c": {
+    "bytes": 398765,
+    "sha256": "be18619048926e8290e2954cfc21af53ab95839b4653a9ce091cee52585be5f9"
+  },
+  "cache/libffcx_forms_0cf96496f0518f66eee9a54679b5552613d3c361.c.cached": {
+    "bytes": 1912,
+    "sha256": "8b8ccc9e3bba0fff3b94d36e8d3f80426864ea2205133a58b44700dfbde4d1f5"
+  },
+  "cache/libffcx_forms_0cf96496f0518f66eee9a54679b5552613d3c361.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 269968,
+    "sha256": "ec9b0683edc00f69a647329282a70d2747ab9ccc4e0fd208c56f88e2f401a1c2"
+  },
+  "cache/libffcx_forms_0cf96496f0518f66eee9a54679b5552613d3c361.o": {
+    "bytes": 253608,
+    "sha256": "e40edae659dec41d2759b8eb270983ca64012c9e180bdc17e9c0e5dd1602b653"
+  },
+  "cache/libffcx_forms_0d368671f097b46d25fdd35cc363093f650b8c9e.c": {
+    "bytes": 1009686,
+    "sha256": "bc1fb4e1c1cef5ee1d0c5a9edb1e8a509a3a5b636d89ec20cf1bc62eea4cc6c7"
+  },
+  "cache/libffcx_forms_0d368671f097b46d25fdd35cc363093f650b8c9e.c.cached": {
+    "bytes": 1912,
+    "sha256": "4c8538b9e29006cebeacb2dda87105f03f4b0a40f25ec37d1b9075fbe10f9385"
+  },
+  "cache/libffcx_forms_0d368671f097b46d25fdd35cc363093f650b8c9e.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 744000,
+    "sha256": "37be5b6af5ecdf6bd7d2b05eef128226a5708fbfa985caf3b34918c6b16ebe73"
+  },
+  "cache/libffcx_forms_0d368671f097b46d25fdd35cc363093f650b8c9e.o": {
+    "bytes": 739632,
+    "sha256": "df5b77d93a68ab844cbbfdc154d359e4d966466ab5273304ca23b4237db06618"
+  },
+  "cache/libffcx_forms_0dc44a78a41f4d3be169d1037f0c8f8b6c0448f1.c": {
+    "bytes": 130508,
+    "sha256": "a5708a482b50eadc5258e1bad3bb2c662f1054d8c634be57f17c29bed48ab5bf"
+  },
+  "cache/libffcx_forms_0dc44a78a41f4d3be169d1037f0c8f8b6c0448f1.c.cached": {
+    "bytes": 1912,
+    "sha256": "2c0dee6ebe9ee920f7a0c5f437f37e04770bbd8d93147658119fb81152bb3cb3"
+  },
+  "cache/libffcx_forms_0dc44a78a41f4d3be169d1037f0c8f8b6c0448f1.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 60032,
+    "sha256": "f387f8a41ac435fa60a677f13edea3fa03563f966efafaf90d61313248e656b7"
+  },
+  "cache/libffcx_forms_0dc44a78a41f4d3be169d1037f0c8f8b6c0448f1.o": {
+    "bytes": 46984,
+    "sha256": "fe31700bb85321fba758ad78b79ca108936eca2ee1ced2558a9bb17691e15879"
+  },
+  "cache/libffcx_forms_0f2129bceaa00dd97e88c76f8f9c2a6e4e4c0aa9.c": {
+    "bytes": 132199,
+    "sha256": "52ff5f407a54a34f56431cce565ce59c6e6e0afdb0c21f01670a2cd77d13cc16"
+  },
+  "cache/libffcx_forms_0f2129bceaa00dd97e88c76f8f9c2a6e4e4c0aa9.c.cached": {
+    "bytes": 1912,
+    "sha256": "6582f853c95a6b83754fb2d684e115bd8d64cb3c1d2db895f1e465bc402b5b0f"
+  },
+  "cache/libffcx_forms_0f2129bceaa00dd97e88c76f8f9c2a6e4e4c0aa9.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 60032,
+    "sha256": "2ecd37f57f21070b95980cdf0ca959e91aefe4b0ad242f496df46dbb91653f6d"
+  },
+  "cache/libffcx_forms_0f2129bceaa00dd97e88c76f8f9c2a6e4e4c0aa9.o": {
+    "bytes": 52392,
+    "sha256": "3a268817aa1f92b74e78737594c3468d98ffcfdeb85d9465fbce242fc5eeed82"
+  },
+  "cache/libffcx_forms_0f214711efbf603e8a28d99a8ac7fd093a0d025b.c": {
+    "bytes": 1009629,
+    "sha256": "95cd5684853b4f8c4cceda80d28b9bc8686e88b44377cdd8f99ff0139cd62100"
+  },
+  "cache/libffcx_forms_0f214711efbf603e8a28d99a8ac7fd093a0d025b.c.cached": {
+    "bytes": 1912,
+    "sha256": "01fc6ea34ddf5e26765d6556f334079a352ef1d501b56460c41af32b49141228"
+  },
+  "cache/libffcx_forms_0f214711efbf603e8a28d99a8ac7fd093a0d025b.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 744000,
+    "sha256": "b8a8547e159c3c66f964d25805950636ceb9eb915c7ebbb899b39f69f20eaf12"
+  },
+  "cache/libffcx_forms_0f214711efbf603e8a28d99a8ac7fd093a0d025b.o": {
+    "bytes": 739544,
+    "sha256": "f172a5c1b7126f6ddcfca17e2249e65ac5d7e41eb0ad44afda1059a53c8405fe"
+  },
+  "cache/libffcx_forms_26ffffcfc532b18e3c6fb8761ed3f18dee7444c1.c": {
+    "bytes": 1086298,
+    "sha256": "e824bca3b1e0e470184f020f4a362af54152c38d136aa1b4ed06a57cb4b53fb6"
+  },
+  "cache/libffcx_forms_26ffffcfc532b18e3c6fb8761ed3f18dee7444c1.c.cached": {
+    "bytes": 1912,
+    "sha256": "2852a5ac7ca85d075af7dcab3005802c4be669c0e64c222692e777ed1f5377b5"
+  },
+  "cache/libffcx_forms_26ffffcfc532b18e3c6fb8761ed3f18dee7444c1.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 808920,
+    "sha256": "3e960e8eaec1c9825e84d36a245d23e309dd5387986c8b74bb3ecc654510bdb9"
+  },
+  "cache/libffcx_forms_26ffffcfc532b18e3c6fb8761ed3f18dee7444c1.o": {
+    "bytes": 793664,
+    "sha256": "c200346ec257b2b53fb87644aa0f7cac166a4e7e6251923732f1c89a0855a9fe"
+  },
+  "cache/libffcx_forms_3bf5fbce1f601df1b8cabcd70f296feece7a7382.c": {
+    "bytes": 338107,
+    "sha256": "4b5e6ee9d76d854b2531de2df48f6afcae345dda7c9c76ff004292c9e2239bf7"
+  },
+  "cache/libffcx_forms_3bf5fbce1f601df1b8cabcd70f296feece7a7382.c.cached": {
+    "bytes": 1912,
+    "sha256": "f5fb99da07250d5b53f79ee0484f79e4f1b7fd7614aeec6cc4ca5204a4bc439c"
+  },
+  "cache/libffcx_forms_3bf5fbce1f601df1b8cabcd70f296feece7a7382.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 228480,
+    "sha256": "5409bf9f7fd8f64760af7107b10ef87d229a54ce347506f13a22d846d2097ab2"
+  },
+  "cache/libffcx_forms_3bf5fbce1f601df1b8cabcd70f296feece7a7382.o": {
+    "bytes": 211536,
+    "sha256": "ab521365a5c4309e7307faa29ec6b2871aae9e9e62c9e39adc608b3f03e5752b"
+  },
+  "cache/libffcx_forms_501e4cc8b530c40fad729d00e186e5189abcce91.c": {
+    "bytes": 563995,
+    "sha256": "1b7b13ef9b721d3478b1c0414ce04cc114f7d20b8503b268dc0fbc155a1bf5a7"
+  },
+  "cache/libffcx_forms_501e4cc8b530c40fad729d00e186e5189abcce91.c.cached": {
+    "bytes": 1912,
+    "sha256": "eb8bdcfef15bc92ec083befdc8250e3b8e48b96da3f515ff0641f6ea4f900f25"
+  },
+  "cache/libffcx_forms_501e4cc8b530c40fad729d00e186e5189abcce91.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 358448,
+    "sha256": "4518ea0a04248fe43457a7df04a77f7c2dd984573267b5aaf9b658ccd8a9c6c8"
+  },
+  "cache/libffcx_forms_501e4cc8b530c40fad729d00e186e5189abcce91.o": {
+    "bytes": 350496,
+    "sha256": "7ca705061a28feb4c3dc17a85de207063618bced78c9449748704b35e6afba02"
+  },
+  "cache/libffcx_forms_5b529158d633f761b4058194a1d7f9915d2f7d3b.c": {
+    "bytes": 191757,
+    "sha256": "b6e9950d87157fc025e7fc6782784dfac355c40185a33714590679a4abe2f923"
+  },
+  "cache/libffcx_forms_5b529158d633f761b4058194a1d7f9915d2f7d3b.c.cached": {
+    "bytes": 1912,
+    "sha256": "0fbfb320d87dd8f8c8ac381f3e37a32c524e005811dd875e3ee7685524eaed81"
+  },
+  "cache/libffcx_forms_5b529158d633f761b4058194a1d7f9915d2f7d3b.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 116744,
+    "sha256": "87799f8ea105e34532f5588ef8c9f8f952ec7079dcb9e547c938603a15192675"
+  },
+  "cache/libffcx_forms_5b529158d633f761b4058194a1d7f9915d2f7d3b.o": {
+    "bytes": 108808,
+    "sha256": "1605d269b545a74679df5f199d86f26dcb3286d7e37bc9e63413ed8556e0dd94"
+  },
+  "cache/libffcx_forms_6bcd1d9edcaf467d82b775ef9185a7e5950245a1.c": {
+    "bytes": 1825660,
+    "sha256": "5023890604e903ee5208e9074aaf4765508022dbf15393328e88ef235c670249"
+  },
+  "cache/libffcx_forms_6bcd1d9edcaf467d82b775ef9185a7e5950245a1.c.cached": {
+    "bytes": 1912,
+    "sha256": "8fb6967d03767b27dadfec8182a9052d8e5a97e6e4668577e5dd5f8dd52b4d39"
+  },
+  "cache/libffcx_forms_6bcd1d9edcaf467d82b775ef9185a7e5950245a1.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 1296960,
+    "sha256": "1211c52b4cbe5df95f39e3619296fe398f63dbe5f8904b74fb422628636fbb1f"
+  },
+  "cache/libffcx_forms_6bcd1d9edcaf467d82b775ef9185a7e5950245a1.o": {
+    "bytes": 1290504,
+    "sha256": "91d3be55a3ed3a37f768e15136a509a28394f78f2d7d4cd28778243853d4f5fc"
+  },
+  "cache/libffcx_forms_760adfe91851e02d2ae8173640accf9f34fe6ce9.c": {
+    "bytes": 1086015,
+    "sha256": "cc43a0fecaa0c08ca2ef866e9a6fd84b3546bc0582a9ff20df936ef3e25981f7"
+  },
+  "cache/libffcx_forms_760adfe91851e02d2ae8173640accf9f34fe6ce9.c.cached": {
+    "bytes": 1912,
+    "sha256": "e042b5e521f8a5b4c27659e997d21fd54aebcc2184f81e20d45c2bef7013c167"
+  },
+  "cache/libffcx_forms_760adfe91851e02d2ae8173640accf9f34fe6ce9.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 808920,
+    "sha256": "efc865b0023adb6d77dfc0d352f3496dac3ff80e529266f80e2424e7f7dfa185"
+  },
+  "cache/libffcx_forms_760adfe91851e02d2ae8173640accf9f34fe6ce9.o": {
+    "bytes": 793664,
+    "sha256": "a19b18108c09a3210e9b457ed01089bfe9d7b5ea15558969135a7f0639cee535"
+  },
+  "cache/libffcx_forms_7a521f7587d74bf039223662e8738bcb92aedb0e.c": {
+    "bytes": 563994,
+    "sha256": "fecb48d341a16741f892902ebdb23790692213411711cf329f8d5daa4c311012"
+  },
+  "cache/libffcx_forms_7a521f7587d74bf039223662e8738bcb92aedb0e.c.cached": {
+    "bytes": 1912,
+    "sha256": "f37fc61bc0ec929578c7196e9c88e5a9ac0f6621acc5bd1e9310a1080f89fcc5"
+  },
+  "cache/libffcx_forms_7a521f7587d74bf039223662e8738bcb92aedb0e.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 358448,
+    "sha256": "3f0a6ce0e3964a75094b0212862dbbe6b21866a647ad75bd3473b77eda7b024e"
+  },
+  "cache/libffcx_forms_7a521f7587d74bf039223662e8738bcb92aedb0e.o": {
+    "bytes": 350496,
+    "sha256": "63074e0d54e12d5d58e5ec70aa55d26c94bd9f180c1f352bf41a22d4ed28a166"
+  },
+  "cache/libffcx_forms_7bed4be399ba5db9b9973679d905babe39dea932.c": {
+    "bytes": 1825673,
+    "sha256": "15627527312693f495af86c2ec3770ed4b1e325460787380cf794949541a64bb"
+  },
+  "cache/libffcx_forms_7bed4be399ba5db9b9973679d905babe39dea932.c.cached": {
+    "bytes": 1912,
+    "sha256": "84670328e2f38ef5c97b7ea0fcca37243b9aacf3b279484183ae2abb7c55641e"
+  },
+  "cache/libffcx_forms_7bed4be399ba5db9b9973679d905babe39dea932.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 1292864,
+    "sha256": "3616d0d63e2f25c0606d44d1121814201aae951fb185c51670cacd79b0d5a326"
+  },
+  "cache/libffcx_forms_7bed4be399ba5db9b9973679d905babe39dea932.o": {
+    "bytes": 1288936,
+    "sha256": "080f14af3321835155abee94e03a4977273276dc3bbd7ba46a1de9a7beea6c99"
+  },
+  "cache/libffcx_forms_81c14ed5d041e47a398b88e205d78c5f3a34b2b3.c": {
+    "bytes": 642031,
+    "sha256": "f07b37aa3afda8435e832d803d9a0c4edac2571253ebdca3bbc6ea1db17c9b97"
+  },
+  "cache/libffcx_forms_81c14ed5d041e47a398b88e205d78c5f3a34b2b3.c.cached": {
+    "bytes": 1912,
+    "sha256": "9081ee7fd8aab06932488242438b1c386818f9a0fe3d6402ea72444770eed3ea"
+  },
+  "cache/libffcx_forms_81c14ed5d041e47a398b88e205d78c5f3a34b2b3.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 420376,
+    "sha256": "9bad79069ac72a976eceae1862c12e12e2d419d8676e7eecc290df617a2fa859"
+  },
+  "cache/libffcx_forms_81c14ed5d041e47a398b88e205d78c5f3a34b2b3.o": {
+    "bytes": 415912,
+    "sha256": "7d7bce8ef2401fbb42edab0b89771303d24d08d373f6cf0732f76eb98df8d507"
+  },
+  "cache/libffcx_forms_820cc6e690c2de1b0d87cf932349cfbe9c69f18a.c": {
+    "bytes": 563937,
+    "sha256": "af1493962e30ff7c687fc381fc02b9649ef2f867f558be781a358bacd556c0c4"
+  },
+  "cache/libffcx_forms_820cc6e690c2de1b0d87cf932349cfbe9c69f18a.c.cached": {
+    "bytes": 1912,
+    "sha256": "ce02c888659fe7ffcb4ed57b5957aadd595e15cd174f1293800a83686fa2b073"
+  },
+  "cache/libffcx_forms_820cc6e690c2de1b0d87cf932349cfbe9c69f18a.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 358448,
+    "sha256": "a0da2ee6444ccb55b0a944c7b572425e6e46cbc9e9feaf5d369c7fc69a4b9355"
+  },
+  "cache/libffcx_forms_820cc6e690c2de1b0d87cf932349cfbe9c69f18a.o": {
+    "bytes": 350472,
+    "sha256": "821880708fad34c7a59f1031659b25decff7aa7b383e51006f99487fa66ad176"
+  },
+  "cache/libffcx_forms_8cdc47aef563711421c96e807bfac1776b83a0c2.c": {
+    "bytes": 993184,
+    "sha256": "a78acd5e6f75a08f6754dd1d7e4e324ab118dddb67c68604c535a1d0f788d180"
+  },
+  "cache/libffcx_forms_8cdc47aef563711421c96e807bfac1776b83a0c2.c.cached": {
+    "bytes": 1912,
+    "sha256": "72eb809780026663fbc05e1cd86ad5c26b689f92aec2dbf83885f5f77ce76309"
+  },
+  "cache/libffcx_forms_8cdc47aef563711421c96e807bfac1776b83a0c2.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 755640,
+    "sha256": "efda58bdbc8c060fa971801f902610b5566554c41320ca98fd62a83b07eeea2b"
+  },
+  "cache/libffcx_forms_8cdc47aef563711421c96e807bfac1776b83a0c2.o": {
+    "bytes": 734552,
+    "sha256": "ce12b75799dc0b80299f1bd412d63139febd96180efc47c5d7446cc35b9d0ebb"
+  },
+  "cache/libffcx_forms_9d4f7ce5b0b42e431c446f3253b7d4412f94416b.c": {
+    "bytes": 336064,
+    "sha256": "a01a9cdde6330eb9db3d0c66438e72bb14f2f558212ab0733de40ea56b8d3b46"
+  },
+  "cache/libffcx_forms_9d4f7ce5b0b42e431c446f3253b7d4412f94416b.c.cached": {
+    "bytes": 1912,
+    "sha256": "b3f70def1122d00a2c5c96b717d3323a98b47e33db5f2bed5a8b8198b9015b84"
+  },
+  "cache/libffcx_forms_9d4f7ce5b0b42e431c446f3253b7d4412f94416b.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 224080,
+    "sha256": "4b3bf80fb516f52ea38ff410ba62d90e2ae0a6ca1a25002762d936a31477c0cf"
+  },
+  "cache/libffcx_forms_9d4f7ce5b0b42e431c446f3253b7d4412f94416b.o": {
+    "bytes": 209488,
+    "sha256": "e6c7c9c47aed7bb6d00a038b8150e8a2fb47e1abe59e3df9edc0e07e439193ff"
+  },
+  "cache/libffcx_forms_a21852c9ab11fe2fc9099d5a74179dd16ec74ea0.c": {
+    "bytes": 338106,
+    "sha256": "e42ec892072d42f610185625cbe18e035ebe6a3df9b6cdffdee2feacb3e52347"
+  },
+  "cache/libffcx_forms_a21852c9ab11fe2fc9099d5a74179dd16ec74ea0.c.cached": {
+    "bytes": 1912,
+    "sha256": "559c4c9da0ef53210748ddd1331885de49065c901555c03a36af0bdd2e3176ca"
+  },
+  "cache/libffcx_forms_a21852c9ab11fe2fc9099d5a74179dd16ec74ea0.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 228480,
+    "sha256": "bf873e694e244424f988ee4492a0ed38291b94f427411daab9e943c80ad6e496"
+  },
+  "cache/libffcx_forms_a21852c9ab11fe2fc9099d5a74179dd16ec74ea0.o": {
+    "bytes": 211536,
+    "sha256": "d8ee41bf8dbf0de6d6e153d2c104e1b17a7d3e7e6a21f78a92060624031428bf"
+  },
+  "cache/libffcx_forms_c6b467ee2df3cec7420680f3b7cdd630a9b60878.c": {
+    "bytes": 1009629,
+    "sha256": "9fe04f3464d1520e9e1c01318790f988a469dbeb6160c2a5a4c491f8e4943fd3"
+  },
+  "cache/libffcx_forms_c6b467ee2df3cec7420680f3b7cdd630a9b60878.c.cached": {
+    "bytes": 1912,
+    "sha256": "6a941b4613c8818cceadf147b2eea4c108f1f864faacd74569d7bf88f4626c29"
+  },
+  "cache/libffcx_forms_c6b467ee2df3cec7420680f3b7cdd630a9b60878.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 744000,
+    "sha256": "77dbd0b145e5cb14218afd4169a68ee208196dcad09b95b6bdb03bc29939ed75"
+  },
+  "cache/libffcx_forms_c6b467ee2df3cec7420680f3b7cdd630a9b60878.o": {
+    "bytes": 739544,
+    "sha256": "90906479c1620d4be92dded8d3ba56ea0c08837d1f125d6cbe61d14788372c64"
+  },
+  "cache/libffcx_forms_c80e69c90cc79e6a3332ff232f41e91f2990f09f.c": {
+    "bytes": 338106,
+    "sha256": "c20ae95e44629bb988fa04730cf4d50db218eadc09c2410ff52d2f9a28a1d928"
+  },
+  "cache/libffcx_forms_c80e69c90cc79e6a3332ff232f41e91f2990f09f.c.cached": {
+    "bytes": 1912,
+    "sha256": "1460dd8ae435fdc7b660243a528f22adf9bad762bf898d48bb112e9e83ffadf0"
+  },
+  "cache/libffcx_forms_c80e69c90cc79e6a3332ff232f41e91f2990f09f.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 228480,
+    "sha256": "9606a8d92421f90f8b9195ce7cea7614ff2e605ab5da61ce66bf942bd846e194"
+  },
+  "cache/libffcx_forms_c80e69c90cc79e6a3332ff232f41e91f2990f09f.o": {
+    "bytes": 211536,
+    "sha256": "6108be1e8f0f74fa849ecb952fd1f05503b61571cad875061e07a9653d99a4f3"
+  },
+  "cache/libffcx_forms_d012d8c54f70292402f0efa4ded8a11d182861cb.c": {
+    "bytes": 1255805,
+    "sha256": "e54d8b3cce4fd973e303e08afffc492250a95630c2b7e3826b50f2312de847e3"
+  },
+  "cache/libffcx_forms_d012d8c54f70292402f0efa4ded8a11d182861cb.c.cached": {
+    "bytes": 1912,
+    "sha256": "a8be22ff50c93423f89a75e34703a6a1b2582d6c835f5349b7a08befa6abb4de"
+  },
+  "cache/libffcx_forms_d012d8c54f70292402f0efa4ded8a11d182861cb.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 466464,
+    "sha256": "b22531bfd8fc117a51324b364268a110083cc4a3c95cf6d1e7e85ad12b17b7b4"
+  },
+  "cache/libffcx_forms_d012d8c54f70292402f0efa4ded8a11d182861cb.o": {
+    "bytes": 468264,
+    "sha256": "0b47604fdad5c140403595a85f59c40d00e3bdeb29a475649662965cd34bf8a6"
+  },
+  "cache/libffcx_forms_d0e87d79747c4954075162a64e370db6a971c291.c": {
+    "bytes": 338106,
+    "sha256": "6ed4221cc6353f602ad252432dc876e10d0a269624e5113fba5c7f311d4e48b3"
+  },
+  "cache/libffcx_forms_d0e87d79747c4954075162a64e370db6a971c291.c.cached": {
+    "bytes": 1912,
+    "sha256": "e10a751aa4993246e6e37a3d3af3a59a36d34082ccc3b485e0c33e82af88eb9f"
+  },
+  "cache/libffcx_forms_d0e87d79747c4954075162a64e370db6a971c291.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 228480,
+    "sha256": "fa8af51867a07fe283dcf3e7f468d24d216387260b2601ab2f8e510abe37cf27"
+  },
+  "cache/libffcx_forms_d0e87d79747c4954075162a64e370db6a971c291.o": {
+    "bytes": 211536,
+    "sha256": "e1eb32604fc740f0a10070959e4d14e05cfc1c44b39a4260654bb824478a9cba"
+  },
+  "cache/libffcx_forms_d5b0313676582dedfb5887f59810734b490ed50f.c": {
+    "bytes": 563995,
+    "sha256": "7d230a5909df66d3ba6af15a021dc6190290cef5fec149663dcbdb9792dfc82a"
+  },
+  "cache/libffcx_forms_d5b0313676582dedfb5887f59810734b490ed50f.c.cached": {
+    "bytes": 1912,
+    "sha256": "3e123cc721b07204ae3e97cff0df5367d92145498929103524a3c61490b046f9"
+  },
+  "cache/libffcx_forms_d5b0313676582dedfb5887f59810734b490ed50f.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 358448,
+    "sha256": "0c6406af6d7be9be20641fe9866d3d0906f5a93e1752ad42854cfa42d3b94c81"
+  },
+  "cache/libffcx_forms_d5b0313676582dedfb5887f59810734b490ed50f.o": {
+    "bytes": 350536,
+    "sha256": "b0cd32690a3beffc6862572c8dda18f63666b2422731627d34155b48f2cc5aac"
+  },
+  "cache/libffcx_forms_d95968606868dad7a466f543958715f6dd2b7792.c": {
+    "bytes": 1009677,
+    "sha256": "56d2ff666b7dac24c05c2d953745d91646eeaca534b1b167c55e8f0f02b9d2f6"
+  },
+  "cache/libffcx_forms_d95968606868dad7a466f543958715f6dd2b7792.c.cached": {
+    "bytes": 1912,
+    "sha256": "dea8c5a12628a5376c9f46f663daed1692713b1cce211918a81fa878ad815621"
+  },
+  "cache/libffcx_forms_d95968606868dad7a466f543958715f6dd2b7792.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 744000,
+    "sha256": "7e472f9004e32bc9c9ed3a7bf17145534fae3010ac8435e64dae4b3fa1cbceab"
+  },
+  "cache/libffcx_forms_d95968606868dad7a466f543958715f6dd2b7792.o": {
+    "bytes": 739664,
+    "sha256": "c72cbff4d96d77e1d8ad1868d590121f53c1384d9440536c718acddd2f7ca844"
+  },
+  "cache/libffcx_forms_ea81ec3a973c9a3f64c90b2dfba7083d30afc966.c": {
+    "bytes": 191757,
+    "sha256": "2c083f8911a2092baee2195c9972dc4f8bf45ea2574c47d8a9ebd537e41b665c"
+  },
+  "cache/libffcx_forms_ea81ec3a973c9a3f64c90b2dfba7083d30afc966.c.cached": {
+    "bytes": 1912,
+    "sha256": "57724f0c8702c44f4904e726e1ea9a348309f516075cc86f5be244a756591ea4"
+  },
+  "cache/libffcx_forms_ea81ec3a973c9a3f64c90b2dfba7083d30afc966.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 116744,
+    "sha256": "92bd37a4faa7feee4bc1238381827523df1858f60498ea427f3b345e1ed07bf0"
+  },
+  "cache/libffcx_forms_ea81ec3a973c9a3f64c90b2dfba7083d30afc966.o": {
+    "bytes": 108808,
+    "sha256": "b477be427d85d914ad55b2c021f0a5b1487adf791898431625881e3d9f92b7ac"
+  },
+  "cache/libffcx_forms_ec6564ead8717aba3c497d05ed5d25f2fbc2dc6e.c": {
+    "bytes": 1086054,
+    "sha256": "7f1398dd975204acfb374f403cf69d94106938a1c051c566f03c2244383e6d1e"
+  },
+  "cache/libffcx_forms_ec6564ead8717aba3c497d05ed5d25f2fbc2dc6e.c.cached": {
+    "bytes": 1912,
+    "sha256": "38ce68493353d47179f3aaa8ca64c21c5c544d45c2692eae9c52c8505543ceba"
+  },
+  "cache/libffcx_forms_ec6564ead8717aba3c497d05ed5d25f2fbc2dc6e.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 808920,
+    "sha256": "46ab4389e60e0de12916b975f8ecd10dc9ecca3fc93e9762c0134d83aa9dfcb4"
+  },
+  "cache/libffcx_forms_ec6564ead8717aba3c497d05ed5d25f2fbc2dc6e.o": {
+    "bytes": 793512,
+    "sha256": "0aae029bbcce6bf7213e0b68b5f476cf4fef2f5f5ef446a53993846189696a3d"
+  },
+  "cache/libffcx_forms_f3e58b2d86d19202de842bcc27c5399ea436b261.c": {
+    "bytes": 1009686,
+    "sha256": "c3c4fe83a7cf3ca5d8a2d859ade993dccc2c71a898918c40d3e663c95869e8da"
+  },
+  "cache/libffcx_forms_f3e58b2d86d19202de842bcc27c5399ea436b261.c.cached": {
+    "bytes": 1912,
+    "sha256": "b6842752b57a249018307ee70ab5a27117aa756e364a23fcb90a434f7167d215"
+  },
+  "cache/libffcx_forms_f3e58b2d86d19202de842bcc27c5399ea436b261.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 744000,
+    "sha256": "75ef07b1e30fdc4f213ad3fb7ebdadef1ed876090248764b9d4a56a87f6b9378"
+  },
+  "cache/libffcx_forms_f3e58b2d86d19202de842bcc27c5399ea436b261.o": {
+    "bytes": 739568,
+    "sha256": "0af16267106a88bd8e70c9c6b22902fefc8012ccbd235206cbbeec190f4a652e"
+  },
+  "cache/libffcx_forms_f613097c0d49a1dc1d7297d2c950e2ad710ee385.c": {
+    "bytes": 992680,
+    "sha256": "181f8dd9cbf04189c83fb328ce115ceb66180ef7562e7258299a7b3cdafadcd5"
+  },
+  "cache/libffcx_forms_f613097c0d49a1dc1d7297d2c950e2ad710ee385.c.cached": {
+    "bytes": 1912,
+    "sha256": "f5b5760ec5e827ea0bf2f1e54ea60e918337afb4c40620e016b514e054b2425a"
+  },
+  "cache/libffcx_forms_f613097c0d49a1dc1d7297d2c950e2ad710ee385.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 744800,
+    "sha256": "99fd1e72096b91dbf902ce7a97ddb8b66e022c68b98b0c3de99a06136916fc84"
+  },
+  "cache/libffcx_forms_f613097c0d49a1dc1d7297d2c950e2ad710ee385.o": {
+    "bytes": 732832,
+    "sha256": "20834eaf8662a851b1a264084dbea79fd69317b213a2024810c8639eb2de1669"
+  },
+  "cache/libffcx_forms_f687ae4e6269a81caaccb0f137265ba581fd6e37.c": {
+    "bytes": 1009682,
+    "sha256": "7b2f22cb3d8f8e7117c4db371347cc37e90fd8b09b532120ecddba67a5a179c1"
+  },
+  "cache/libffcx_forms_f687ae4e6269a81caaccb0f137265ba581fd6e37.c.cached": {
+    "bytes": 1912,
+    "sha256": "708e3269837ac66de145ebfb73a5babe9a680e2d5b5bdd7ad2a5831aa19cbe1c"
+  },
+  "cache/libffcx_forms_f687ae4e6269a81caaccb0f137265ba581fd6e37.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 744000,
+    "sha256": "23b3865a6a7439b94117b49648efa97ca4919892d27e1750df8ca8b658dd53e9"
+  },
+  "cache/libffcx_forms_f687ae4e6269a81caaccb0f137265ba581fd6e37.o": {
+    "bytes": 739568,
+    "sha256": "da40bc27a80bda806e35cf33c552ac07cc6bad3c6a5683325dd4868446f050ea"
+  },
+  "cache/libffcx_forms_fba824c439caf3506dbfa00589a35c9110b40014.c": {
+    "bytes": 191758,
+    "sha256": "7ec51446dd3c581b5e487cd718a7e503a356bad8244fc1a621053d1489067972"
+  },
+  "cache/libffcx_forms_fba824c439caf3506dbfa00589a35c9110b40014.c.cached": {
+    "bytes": 1912,
+    "sha256": "386388e992e49b11fc706a4776e9947bb20d0c08948a3e6efadadbb317cb2f7d"
+  },
+  "cache/libffcx_forms_fba824c439caf3506dbfa00589a35c9110b40014.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 116744,
+    "sha256": "016f3a8fef840babfaeef95bc6fa83702f9009284b68f80b5ba2cd574d52c781"
+  },
+  "cache/libffcx_forms_fba824c439caf3506dbfa00589a35c9110b40014.o": {
+    "bytes": 108808,
+    "sha256": "7fb952c6de1ca81590effa404b94c6f4b263e904df83a909d1123832f2b8c476"
+  },
+  "cache/libffcx_forms_fd014d18363ca66798831a5322c1928371a23d10.c": {
+    "bytes": 191757,
+    "sha256": "56492cf22580f205019a367a832939aee86b083fe53782eaa53d671538f7f3f1"
+  },
+  "cache/libffcx_forms_fd014d18363ca66798831a5322c1928371a23d10.c.cached": {
+    "bytes": 1912,
+    "sha256": "128d1be754167fb07811a19107c8ed0e7ad7d8d02b76621d989bbd26b64bd549"
+  },
+  "cache/libffcx_forms_fd014d18363ca66798831a5322c1928371a23d10.cpython-312-x86_64-linux-gnu.so": {
+    "bytes": 116744,
+    "sha256": "e5915c6b6084f426eb3b8a0352ba9efc2e40908244c5a2560b123fdd78be8aed"
+  },
+  "cache/libffcx_forms_fd014d18363ca66798831a5322c1928371a23d10.o": {
+    "bytes": 108808,
+    "sha256": "f7eaad8998df3e1354225461a8f2cb65d290e8734b5c28c0671fe9e7f6e394cf"
+  },
+  "candidate_diagnostics.json": {
+    "bytes": 206809,
+    "sha256": "1744cfd6715d130256f0f0280ffc2fff513d8f715836b239d212bdedf4b19759"
+  },
+  "candidate_fields.npz": {
+    "bytes": 456100,
+    "sha256": "6ee0e05fb385fefdf65988d782de90c53457bddced965d3a0c8016c9a30fe944"
+  },
+  "candidate_solution.npz": {
+    "bytes": 127084,
+    "sha256": "d73dd2209e125947c79ea4b26fc58bcae01855c700b92b61a18d89052f6a6abb"
+  },
+  "curl_gram.npz": {
+    "bytes": 1458784,
+    "sha256": "460ed65452c5bd81e6326e7f8b362b94fa815ffe98c825d409f65b6cc970f654"
+  },
+  "environment.json": {
+    "bytes": 653,
+    "sha256": "a82534d889b8f4414b63a78da7dc3725b6090fad360858ef47dc32cc7898c532"
+  },
+  "full.npz": {
+    "bytes": 13344447,
+    "sha256": "a2d392d8f682ae4a07dce24244ae71bb9ef0cd79b5e390636836503c2d208fc0"
+  },
+  "input_original.dat": {
+    "bytes": 482,
+    "sha256": "8db0755cf834baefd4271154f75572c9ab2890b365ed7a0b7b73147a96cc5eeb"
+  },
+  "manufactured_expected.npy": {
+    "bytes": 63424,
+    "sha256": "f73408afa013290bb214620e3a71004b0f34b3034d18de185c258a42e977c460"
+  },
+  "mass.npz": {
+    "bytes": 1978917,
+    "sha256": "103e07de5815d49f5be3a9543c2317d03f9877ac65383a7cd08084760dfbe260"
+  },
+  "mesh_3d.h5": {
+    "bytes": 18472,
+    "sha256": "4a4e443b6f439e32568c3b8f62f72a84fe1419779ab1d57317f29e76bedf7fad"
+  },
+  "mesh_3d.xdmf": {
+    "bytes": 607,
+    "sha256": "4e3256e0b01d40ba76409cde541bca02d1f2d6a489c05bbb6c0e79a1f2903235"
+  },
+  "mesh_3d_partition_note.txt": {
+    "bytes": 1535,
+    "sha256": "0da3adb9c5863eef1641b226c93ed57a77b7c8ad16fd0ab3fee82a17c32ab200"
+  },
+  "mode_manifest.json": {
+    "bytes": 1081626,
+    "sha256": "374ccdb4bcf152bef701877c9592d7162bb8e7410c5b4a28822333202156b75b"
+  },
+  "pair0_L.npz": {
+    "bytes": 5329117,
+    "sha256": "283d363d62e4482c07e9faa7b680506f5030e50a23bd996480de84ca6213c94b"
+  },
+  "pair0_commutator_minus.npz": {
+    "bytes": 481267,
+    "sha256": "c4388c4d8fe40e3c042fd13fbf10f1a51caa7e6654f3b2950f539fe7037754be"
+  },
+  "pair0_commutator_plus.npz": {
+    "bytes": 495280,
+    "sha256": "6acbcdf4c51c6e59800e93deba1cc34df68e8a99ae711572554baa47d2fcc058"
+  },
+  "pair0_map.npz": {
+    "bytes": 5844,
+    "sha256": "0fb2eea6f7285b299c197d7ae111e620a105af52db78f13745b5a2475522f292"
+  },
+  "pair1_L.npz": {
+    "bytes": 3222012,
+    "sha256": "0642fa49f0d0e0630c131b0940433ce9bc28d7207fb0283e39647747700571fe"
+  },
+  "pair1_commutator_minus.npz": {
+    "bytes": 495260,
+    "sha256": "adc33d3dcab04e5811e42ed80bb7d1874cf8fb2e259089f098ef43f2d66e06cd"
+  },
+  "pair1_commutator_plus.npz": {
+    "bytes": 495567,
+    "sha256": "115b550b8bfda593415d6365bf77c6bc08eaf69bc0d6936a3c523a2c97def41d"
+  },
+  "pair1_map.npz": {
+    "bytes": 5964,
+    "sha256": "d3556072b36820a5de6d64e13eb7c21f965f34c10e6ff2992d97eba8b791ea8b"
+  },
+  "pair2_L.npz": {
+    "bytes": 5078590,
+    "sha256": "55e553f9ccc3c49aaebd4aa6819ea8d36f34631c915000048e697334cf2f169c"
+  },
+  "pair2_commutator_minus.npz": {
+    "bytes": 495537,
+    "sha256": "4fa3013aff5c74cf21e3159f340d1d9fe28845003602bf919e416ed5a1df362f"
+  },
+  "pair2_commutator_plus.npz": {
+    "bytes": 506894,
+    "sha256": "17cddc63ce1a6f82fcf7c8ee9eaf828724ce7e56a68dbc9a8c808821f7c02321"
+  },
+  "pair2_map.npz": {
+    "bytes": 5926,
+    "sha256": "8c931d88290e8ffa1565a5673c2c9e32a139e65e3ae05dfebcf880f22ba22dff"
+  },
+  "partition_audit.json": {
+    "bytes": 1807,
+    "sha256": "2887d7570b6ba476073b52a1b51e563543239bd69c13d155f9cfa2a0f5dbda67"
+  },
+  "partition_build_progress.json": {
+    "bytes": 297,
+    "sha256": "0112641a9315f52fb6fd1a489d4733f001f84a931039a7d7c2c1ba4afddecbe1"
+  },
+  "phase_gates.json": {
+    "bytes": 2588,
+    "sha256": "d81015dabc0e9c1e271809f7802f9d470c6b7fbaac0320a596117d1ff81d37d5"
+  },
+  "physical_raw_f.npy": {
+    "bytes": 57248,
+    "sha256": "3d67a5d017ccf6c6e325adf0726674181c4cde99d8dea216fdcbd72e9841eebf"
+  },
+  "physical_rhs.npy": {
+    "bytes": 63424,
+    "sha256": "43b59eca218d50b7d8891777aa1550e1fbe8db1bcb0b8f043b2b3c4155b4947e"
+  },
+  "raw_A.npz": {
+    "bytes": 1739063,
+    "sha256": "7f349225d62b227488877e3bc8f7bd653ff7301b43513d9807c137f57325b1c8"
+  },
+  "raw_C.npz": {
+    "bytes": 6588719,
+    "sha256": "31e0c37388a20728ba0318473f27483d5b184754e72a214e35a7d5ea20214944"
+  },
+  "raw_D.npz": {
+    "bytes": 6576336,
+    "sha256": "9e1ace3c1c61a82c040faa9aed34dd4106e62475e606d61e165a202897280b46"
+  },
+  "raw_aux_rhs.npy": {
+    "bytes": 13504,
+    "sha256": "9e54122fcb6a9bff7354b8b17ae194be7c79bf791d0ee4ff829b5c360873ffcb"
+  },
+  "raw_f.npy": {
+    "bytes": 57248,
+    "sha256": "cfdace72ca1005070fdce96766b8e843c58267857a6cb71e8f2b51fff6105530"
+  },
+  "raw_mpc.npz": {
+    "bytes": 40666,
+    "sha256": "13ab8503f17adebad35cd42c5bc933851692c03afefa8ddd4040409f4821f899"
+  },
+  "reference_diagnostics.json": {
+    "bytes": 206786,
+    "sha256": "879e6b95b810b5a7c170c98075a507e3d3dcc17f6858397901c3f9e8357f5c20"
+  },
+  "reference_fields.npz": {
+    "bytes": 456100,
+    "sha256": "9b2d0cc2d7fa087a3e2a2dbf5040c67a76a19be638d4e3dc75d1d0cafb2802cd"
+  },
+  "reference_solution.npz": {
+    "bytes": 63552,
+    "sha256": "9043339757ca7326d82960d7dd2ab8d55cc98166eb716ec9a550338a092a022d"
+  },
+  "resolved_config.json": {
+    "bytes": 8248,
+    "sha256": "5dfe42b111dd2f4e088b28a073dcaa617656bb7a004489c2e933b6a91f2ce7a8"
+  },
+  "resource_samples.json": {
+    "bytes": 246616,
+    "sha256": "c3717194cd5dad7628229e00c5c12001ed2fbc9b51b92b5b31c828d211229c89"
+  },
+  "rhs.npy": {
+    "bytes": 63424,
+    "sha256": "371f1ad60fd50cfb5abee31a2445d6cbbec05d34173919c7cf51d4cb98650f03"
+  },
+  "run_manifest.json": {
+    "bytes": 557,
+    "sha256": "7e06f2c04d1be5b508250f3aef537a7054234c1df97d774c4e38cff31f09db84"
+  },
+  "run_summary.json": {
+    "bytes": 268890,
+    "sha256": "01df6ae32476cc058874e0cf6286ff9eb1b1cf7a73f1fe5266c4ce05370b05d6"
+  },
+  "source_hashes.json": {
+    "bytes": 94572,
+    "sha256": "657977ef17b4d59edf1c4433bf64e08ba4a313a4f8e33d64479421ab41a0ff1d"
+  },
+  "stderr.log": {
+    "bytes": 168,
+    "sha256": "eb4623e7dcb70f141352e1815fbdc63dac1350de9306865aa627faef077e1cb6"
+  },
+  "stdout.log": {
+    "bytes": 163215,
+    "sha256": "a38f015be9a13b86cdcbdabc649c0f9458e5f217b8d6f157c9e761f00a9f5dc3"
+  },
+  "supervision.json": {
+    "bytes": 1154,
+    "sha256": "f12e83d03cca4cee6c90e66237222eec79cfcd36498312b17e2ccb83a6143470"
+  },
+  "supervisor_identity.json": {
+    "bytes": 97017,
+    "sha256": "ca14942f1cd6b4ee8f2db7efefa2f8019f52a79af1ad01b798c2751abed7488a"
+  }
+}

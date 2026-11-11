@@ -1,0 +1,82 @@
+[
+  {
+    "stage": "global_volume_assembly",
+    "elapsed": 1.515661061001083,
+    "rss_bytes": 134373376,
+    "planned_extra_bytes": 268435456,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9613877248
+  },
+  {
+    "stage": "global_dtn_assembly",
+    "elapsed": 10.498502342001302,
+    "rss_bytes": 152547328,
+    "planned_extra_bytes": 268435456,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9507545088
+  },
+  {
+    "stage": "mass_factor",
+    "elapsed": 23.85881055900063,
+    "rss_bytes": 289972224,
+    "planned_extra_bytes": 623001600,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9372254208
+  },
+  {
+    "stage": "local_assembly_pair_0",
+    "elapsed": 26.737314169000456,
+    "rss_bytes": 322424832,
+    "planned_extra_bytes": 268435456,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9325981696
+  },
+  {
+    "stage": "local_factor_pair_0_free_2880",
+    "elapsed": 49.27608574400074,
+    "rss_bytes": 330702848,
+    "planned_extra_bytes": 530841600,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9296875520
+  },
+  {
+    "stage": "local_assembly_pair_1",
+    "elapsed": 49.974061913000696,
+    "rss_bytes": 446611456,
+    "planned_extra_bytes": 268435456,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9193918464
+  },
+  {
+    "stage": "local_factor_pair_1_free_4080",
+    "elapsed": 63.43299895900054,
+    "rss_bytes": 472444928,
+    "planned_extra_bytes": 1065369600,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9137364992
+  },
+  {
+    "stage": "local_assembly_pair_2",
+    "elapsed": 64.13078576800035,
+    "rss_bytes": 622813184,
+    "planned_extra_bytes": 268435456,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9023098880
+  },
+  {
+    "stage": "local_factor_pair_2_free_2880",
+    "elapsed": 75.38959410200005,
+    "rss_bytes": 642240512,
+    "planned_extra_bytes": 530841600,
+    "reserve_bytes": 536870912,
+    "available_bytes": 8975081472
+  },
+  {
+    "stage": "candidate_recovery_reserve",
+    "elapsed": 76.756461029001,
+    "rss_bytes": 809988096,
+    "planned_extra_bytes": 268435456,
+    "reserve_bytes": 536870912,
+    "available_bytes": 8842334208
+  }
+]

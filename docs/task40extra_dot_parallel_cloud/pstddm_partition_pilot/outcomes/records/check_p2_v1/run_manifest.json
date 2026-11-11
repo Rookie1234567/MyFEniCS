@@ -1,0 +1,15 @@
+{
+  "base_sha": "2c7aa97f4746c5de0545cf511908321b356a74df",
+  "source_sha": "bd0d4daed6da301eaca26b2fdac76a59a834be8a",
+  "input_sha256": "8db0755cf834baefd4271154f75572c9ab2890b365ed7a0b7b73147a96cc5eeb",
+  "physical_sha256": "2bc579e2ce3824025f85ec7382292a4028da5a294bbea30baebdc5663e831e9e",
+  "mode": "correctness",
+  "case_id": "check_p2_v1",
+  "global_FE_independent": 3120,
+  "global_FE_raw": 3570,
+  "auxiliary": 836,
+  "matrix_rows": 3956,
+  "mpi": 1,
+  "threads": 1,
+  "scope": "coarse p2 same-discrete algorithm pilot; not physical convergence"
+}

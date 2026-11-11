@@ -1,0 +1,596 @@
+{
+  "result": {
+    "initial_true_residual": 0.11156907259442005,
+    "initial_errors": {
+      "E_relative_L2": 4.188201202704081e-05,
+      "H_relative_L2": 4.622586732055952e-05,
+      "E_scattered_relative_L2": 0.044527084235719834,
+      "H_scattered_relative_L2": 0.04830234867181007,
+      "E_error_l2_squared": 1.237158938880213e-07,
+      "H_error_l2_squared": 1.5068824384921825e-07,
+      "field_squared_norms": {
+        "E_total_l2_squared": 70.53049682297363,
+        "H_total_l2_squared": 70.52055986376689,
+        "E_scattered_l2_squared": 6.154657411854322e-05,
+        "H_scattered_l2_squared": 6.37281923125969e-05
+      }
+    },
+    "first_double_sweep_seconds": 0.04483425899888971,
+    "final_true_residual": 5.744071142367318e-09,
+    "field_errors": {
+      "E_relative_L2": 3.4176760232802408e-12,
+      "H_relative_L2": 3.4057622350288673e-12,
+      "E_scattered_relative_L2": 3.633520473676048e-09,
+      "H_scattered_relative_L2": 3.558750208597628e-09,
+      "E_error_l2_squared": 8.238197631427993e-22,
+      "H_error_l2_squared": 8.17970960440413e-22,
+      "field_squared_norms": {
+        "E_total_l2_squared": 70.5294379657194,
+        "H_total_l2_squared": 70.5195016735007,
+        "E_scattered_l2_squared": 6.239890707220142e-05,
+        "H_scattered_l2_squared": 6.458666715977937e-05
+      }
+    },
+    "FGMRES": {
+      "algorithm": "flexible_right_GMRES_two_pass_MGS",
+      "restart": 30,
+      "maximum_iterations": 100,
+      "iterations": 18,
+      "reason": "converged",
+      "true_residual": 5.744071142367318e-09,
+      "history": [
+        {
+          "iteration": 0,
+          "true_residual": 0.11156907259442005
+        },
+        {
+          "iteration": 1,
+          "true_residual": 0.07494285938313358
+        },
+        {
+          "iteration": 2,
+          "true_residual": 0.03237065159351684
+        },
+        {
+          "iteration": 3,
+          "true_residual": 0.0190546851938421
+        },
+        {
+          "iteration": 4,
+          "true_residual": 0.006900176565896336
+        },
+        {
+          "iteration": 5,
+          "true_residual": 0.003380642817994656
+        },
+        {
+          "iteration": 6,
+          "true_residual": 0.0013724874689349921
+        },
+        {
+          "iteration": 7,
+          "true_residual": 0.0006869917956191186
+        },
+        {
+          "iteration": 8,
+          "true_residual": 0.00027136410812910404
+        },
+        {
+          "iteration": 9,
+          "true_residual": 6.267998863165796e-05
+        },
+        {
+          "iteration": 10,
+          "true_residual": 3.0290996434269192e-05
+        },
+        {
+          "iteration": 11,
+          "true_residual": 8.871779156353833e-06
+        },
+        {
+          "iteration": 12,
+          "true_residual": 2.505164123016981e-06
+        },
+        {
+          "iteration": 13,
+          "true_residual": 1.1799177066610982e-06
+        },
+        {
+          "iteration": 14,
+          "true_residual": 6.852578710744092e-07
+        },
+        {
+          "iteration": 15,
+          "true_residual": 2.2473743308927258e-07
+        },
+        {
+          "iteration": 16,
+          "true_residual": 6.144942732542271e-08
+        },
+        {
+          "iteration": 17,
+          "true_residual": 2.0089644014919406e-08
+        },
+        {
+          "iteration": 18,
+          "true_residual": 5.744071142367318e-09
+        }
+      ],
+      "wall_seconds": 0.8956051050008682,
+      "pc_apply_seconds": 0.8333272920026502,
+      "passed": true
+    },
+    "pc_applications": [
+      {
+        "apply_index": 1,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 4.419684314085406e-16,
+        "original_layer_source_norms": [
+          0.0008016458252921632,
+          0.05039308013840596,
+          0.04265061475431749,
+          0.0005701918351537736
+        ],
+        "lifting_seconds": 0.003720344999237568,
+        "local_solves_seconds": 0.03496834200086596,
+        "source_transfer_seconds": 0.0007486339982278878,
+        "reconstruction_load_seconds": 0.0011060250017180806,
+        "projection_seconds": 0.0031269929986592615,
+        "wall_seconds": 0.04375797099964984
+      },
+      {
+        "apply_index": 2,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 3.7168867931239183e-16,
+        "original_layer_source_norms": [
+          0.26684366485711436,
+          0.17915692084643572,
+          0.45546971522803975,
+          0.8071944549313874
+        ],
+        "lifting_seconds": 0.0038129950007714797,
+        "local_solves_seconds": 0.03387911200115923,
+        "source_transfer_seconds": 0.0006434080005419673,
+        "reconstruction_load_seconds": 0.0009345549988211133,
+        "projection_seconds": 0.0030467220003629336,
+        "wall_seconds": 0.04238385499957076
+      },
+      {
+        "apply_index": 3,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 3.530074458198142e-16,
+        "original_layer_source_norms": [
+          0.1760595501113456,
+          0.1389915602582494,
+          0.34773028070278905,
+          0.8962634805887003
+        ],
+        "lifting_seconds": 0.0034215159994346322,
+        "local_solves_seconds": 0.03469152399884479,
+        "source_transfer_seconds": 0.0006805630018789088,
+        "reconstruction_load_seconds": 0.0009760680004546884,
+        "projection_seconds": 0.003037507998669753,
+        "wall_seconds": 0.04286735200003022
+      },
+      {
+        "apply_index": 4,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 4.2313025020281327e-16,
+        "original_layer_source_norms": [
+          0.43379481579473184,
+          0.3169029327949276,
+          0.49003370073931823,
+          0.5950224120758437
+        ],
+        "lifting_seconds": 0.003459442999883322,
+        "local_solves_seconds": 0.03423247499995341,
+        "source_transfer_seconds": 0.0006734429989592172,
+        "reconstruction_load_seconds": 0.0009775700000318466,
+        "projection_seconds": 0.0030648990014015,
+        "wall_seconds": 0.042468482000913355
+      },
+      {
+        "apply_index": 5,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 4.0061508996024795e-16,
+        "original_layer_source_norms": [
+          0.68208622585863,
+          0.4547977973741984,
+          0.31333824414198186,
+          0.35718055336145493
+        ],
+        "lifting_seconds": 0.003456909000306041,
+        "local_solves_seconds": 0.0346783860004507,
+        "source_transfer_seconds": 0.0007215849982458167,
+        "reconstruction_load_seconds": 0.0009391529983986402,
+        "projection_seconds": 0.002990897999552544,
+        "wall_seconds": 0.04284692100009124
+      },
+      {
+        "apply_index": 6,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 4.106161615558113e-16,
+        "original_layer_source_norms": [
+          0.18452175142899874,
+          0.4202659902417016,
+          0.4642797580680332,
+          0.5468107911087011
+        ],
+        "lifting_seconds": 0.0034098989999620244,
+        "local_solves_seconds": 0.03431819500110578,
+        "source_transfer_seconds": 0.0007208139995782403,
+        "reconstruction_load_seconds": 0.0009310010009357939,
+        "projection_seconds": 0.0030860209990350995,
+        "wall_seconds": 0.04252975400049763
+      },
+      {
+        "apply_index": 7,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 4.133279675677121e-16,
+        "original_layer_source_norms": [
+          0.24050890479095863,
+          0.30378612815812217,
+          0.4799708257465223,
+          0.7018212119012721
+        ],
+        "lifting_seconds": 0.0035148959996149642,
+        "local_solves_seconds": 0.03502850200129615,
+        "source_transfer_seconds": 0.0006489269999292446,
+        "reconstruction_load_seconds": 0.00108500199894479,
+        "projection_seconds": 0.0032590319988230476,
+        "wall_seconds": 0.04360125600032916
+      },
+      {
+        "apply_index": 8,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 4.635482037229171e-16,
+        "original_layer_source_norms": [
+          0.2503592539510122,
+          0.3439098840813903,
+          0.47968664701204233,
+          0.6548304617629432
+        ],
+        "lifting_seconds": 0.0034819259999494534,
+        "local_solves_seconds": 0.034857856002417975,
+        "source_transfer_seconds": 0.0007024070000625215,
+        "reconstruction_load_seconds": 0.0009629569976823404,
+        "projection_seconds": 0.003127363001112826,
+        "wall_seconds": 0.04319341200061899
+      },
+      {
+        "apply_index": 9,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 4.1128225773192223e-16,
+        "original_layer_source_norms": [
+          0.28405966655784726,
+          0.36655704341284157,
+          0.6337880429539199,
+          0.4811206860687875
+        ],
+        "lifting_seconds": 0.0035193929998058593,
+        "local_solves_seconds": 0.034796415000528214,
+        "source_transfer_seconds": 0.0006552459999511484,
+        "reconstruction_load_seconds": 0.0009302289981860667,
+        "projection_seconds": 0.003168275001371512,
+        "wall_seconds": 0.04313290099889855
+      },
+      {
+        "apply_index": 10,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 4.63941623536841e-16,
+        "original_layer_source_norms": [
+          0.3977007915759674,
+          0.48149342937343603,
+          0.5244214464341291,
+          0.36049897054812624
+        ],
+        "lifting_seconds": 0.003570048998881248,
+        "local_solves_seconds": 0.036505393001789344,
+        "source_transfer_seconds": 0.0006918710005265893,
+        "reconstruction_load_seconds": 0.000998561999949743,
+        "projection_seconds": 0.003137929001240991,
+        "wall_seconds": 0.0449666589993285
+      },
+      {
+        "apply_index": 11,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 5.556810103228548e-16,
+        "original_layer_source_norms": [
+          0.2451999242465853,
+          0.407179319106519,
+          0.5878246488002524,
+          0.440214905534925
+        ],
+        "lifting_seconds": 0.003520434000165551,
+        "local_solves_seconds": 0.03375418599716795,
+        "source_transfer_seconds": 0.0006917490009072935,
+        "reconstruction_load_seconds": 0.0009607539977878332,
+        "projection_seconds": 0.003395546998945065,
+        "wall_seconds": 0.04238749999967695
+      },
+      {
+        "apply_index": 12,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 4.62870203629603e-16,
+        "original_layer_source_norms": [
+          0.22196519014205365,
+          0.31169094369075234,
+          0.5021685568127359,
+          0.6804613450537499
+        ],
+        "lifting_seconds": 0.0038083569997979794,
+        "local_solves_seconds": 0.034935342002427205,
+        "source_transfer_seconds": 0.0006466520026151557,
+        "reconstruction_load_seconds": 0.0009469650012761122,
+        "projection_seconds": 0.0032797630010463763,
+        "wall_seconds": 0.0436786319987732
+      },
+      {
+        "apply_index": 13,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 4.69521026485094e-16,
+        "original_layer_source_norms": [
+          0.2368086155986571,
+          0.38242242909135704,
+          0.5954853977035628,
+          0.5093903097701914
+        ],
+        "lifting_seconds": 0.003487054000288481,
+        "local_solves_seconds": 0.034845767000661,
+        "source_transfer_seconds": 0.000686893998135929,
+        "reconstruction_load_seconds": 0.0009871039983408991,
+        "projection_seconds": 0.0031730520004202845,
+        "wall_seconds": 0.04324620199986384
+      },
+      {
+        "apply_index": 14,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 5.506538897673244e-16,
+        "original_layer_source_norms": [
+          0.20350941966719718,
+          0.3235116426365294,
+          0.6482810549245424,
+          0.4829238690636197
+        ],
+        "lifting_seconds": 0.0037421279994305223,
+        "local_solves_seconds": 0.03564661100244848,
+        "source_transfer_seconds": 0.0007195619982667267,
+        "reconstruction_load_seconds": 0.0010582719987723976,
+        "projection_seconds": 0.03242165699884936,
+        "wall_seconds": 0.07437290999951074
+      },
+      {
+        "apply_index": 15,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 5.135904230930887e-16,
+        "original_layer_source_norms": [
+          0.13304961387685008,
+          0.24741880698221747,
+          0.5046053302972848,
+          0.7531067841024313
+        ],
+        "lifting_seconds": 0.004804254998816759,
+        "local_solves_seconds": 0.03650494099929347,
+        "source_transfer_seconds": 0.0007584510003653122,
+        "reconstruction_load_seconds": 0.0010635089984134538,
+        "projection_seconds": 0.0030940130000089994,
+        "wall_seconds": 0.046319312999912654
+      },
+      {
+        "apply_index": 16,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 4.823428636896893e-16,
+        "original_layer_source_norms": [
+          0.14533288834268762,
+          0.2772745647988702,
+          0.5385087987448793,
+          0.6969574387078441
+        ],
+        "lifting_seconds": 0.003755687999728252,
+        "local_solves_seconds": 0.03515601499930199,
+        "source_transfer_seconds": 0.0006463520003308076,
+        "reconstruction_load_seconds": 0.0009699589991214452,
+        "projection_seconds": 0.0031728220001241425,
+        "wall_seconds": 0.04376389999924868
+      },
+      {
+        "apply_index": 17,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 4.839972678226472e-16,
+        "original_layer_source_norms": [
+          0.2623863093858223,
+          0.372893113056323,
+          0.5120587585645366,
+          0.6359195544383552
+        ],
+        "lifting_seconds": 0.0037811369984410703,
+        "local_solves_seconds": 0.035600683999291505,
+        "source_transfer_seconds": 0.0007690960010222625,
+        "reconstruction_load_seconds": 0.0009959079998225207,
+        "projection_seconds": 0.0030744539999432163,
+        "wall_seconds": 0.04428293999990274
+      },
+      {
+        "apply_index": 18,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 5.160047381915636e-16,
+        "original_layer_source_norms": [
+          0.27932149155521224,
+          0.3147394902966311,
+          0.5999429332128922,
+          0.5524902513788698
+        ],
+        "lifting_seconds": 0.0036647619999712333,
+        "local_solves_seconds": 0.034553777000837727,
+        "source_transfer_seconds": 0.0007109589987521758,
+        "reconstruction_load_seconds": 0.001005902002361836,
+        "projection_seconds": 0.0032626970005367184,
+        "wall_seconds": 0.04327783900043869
+      },
+      {
+        "apply_index": 19,
+        "layer_count": 4,
+        "local_solve_count": 6,
+        "forward_transfer_count": 2,
+        "reverse_transfer_count": 2,
+        "mass_solve_count": 2,
+        "maximum_retained_forward_fields": 3,
+        "partition_lifting_relative_residual": 4.874080508453867e-16,
+        "original_layer_source_norms": [
+          0.26460866325433036,
+          0.411066265709635,
+          0.5763327707534591,
+          0.4783695678277871
+        ],
+        "lifting_seconds": 0.003501926999888383,
+        "local_solves_seconds": 0.03544747200066922,
+        "source_transfer_seconds": 0.0006938120004633674,
+        "reconstruction_load_seconds": 0.0009917709976434708,
+        "projection_seconds": 0.003127263000351377,
+        "wall_seconds": 0.04382417099986924
+      }
+    ],
+    "recovery_seconds": 3.920356198999798,
+    "diagnostics": {
+      "qualification": "diagnostic_unqualified_for_physical_convergence",
+      "field_definition": "total E = scattered FE E + analytic flat-interface background",
+      "H_definition": "code units curl(Etotal)/(i*k0*mu_r)",
+      "saved_H_representation": "vector DG interpolation; not used for the H error integral",
+      "E_total_l2_squared": 70.5294379657199,
+      "H_total_l2_squared": 70.51950167350016,
+      "E_scattered_l2_squared": 6.239890707220142e-05,
+      "H_scattered_l2_squared": 6.458666715977937e-05,
+      "offline_reconstructed_norms": {
+        "E_total_l2_squared": 70.5294379657194,
+        "H_total_l2_squared": 70.5195016735007,
+        "E_scattered_l2_squared": 6.239890707220142e-05,
+        "H_scattered_l2_squared": 6.458666715977937e-05
+      },
+      "background_cross_vector_identity_relative_defects": {
+        "E": 7.052089586674666e-15,
+        "H": 7.657633227158811e-15
+      },
+      "background_payload_file": "candidate_fields.npz",
+      "background_payload_identity": "m_bg=T^H integral(bg dot conj(v)); k_bg=T^H integral(curl(bg) dot conj(curl(v))); quadrature28",
+      "incident_power": 0.05865349214176169,
+      "R_total": 0.11328667276938915,
+      "T_total": 0.8817990913201219,
+      "A_flux": 0.0049142359104888955,
+      "A_volume": 0.009617026081979176,
+      "volume_absorption_by_material_tag": {
+        "1": 0.0,
+        "2": 0.004101360700229141,
+        "3": 0.005515665381750035
+      },
+      "energy_defect": 0.004702790171490223,
+      "mode_gauge": "boundary_plane"
+    },
+    "diagnostic_absolute_differences": {
+      "R_total": 6.729200530131152e-13,
+      "T_total": 1.9351187319216478e-13,
+      "A_flux": 8.664180484174722e-13,
+      "A_volume": 1.259409243559162e-15,
+      "energy_defect": 8.65307825392847e-13,
+      "maximum_individual_mode_power": 6.500355809180292e-13
+    },
+    "same_discrete_solver_pass": true,
+    "diagnostic_H_comparison_pass": true,
+    "diagnostic_power_comparison_pass": true,
+    "physical_convergence_qualified": false
+  },
+  "global_setup_seconds": 20.39866520600117,
+  "numerical_wall_seconds": 81.62660314000095,
+  "physical_sha256": "2bc579e2ce3824025f85ec7382292a4028da5a294bbea30baebdc5663e831e9e",
+  "source_sha": "bd0d4daed6da301eaca26b2fdac76a59a834be8a",
+  "status": "COMPLETED_NUMERICAL_REVIEW_PENDING"
+}

@@ -1,0 +1,40 @@
+{
+  "case": "check_p2_v1",
+  "status": "finished",
+  "started_utc": "2026-11-11T10:06:59.600999+00:00",
+  "ended_utc": "2026-11-11T10:08:21.836694+00:00",
+  "source_sha": "bd0d4daed6da301eaca26b2fdac76a59a834be8a",
+  "wall_seconds": 82.23423806500068,
+  "returncode": 0,
+  "stop_reason": null,
+  "remaining": [],
+  "peak_sampled_tree_rss": 913211392,
+  "initial": {
+    "available": 9703968768,
+    "system_used": 747458560,
+    "swap_used": 0,
+    "pswpin": 0,
+    "pswpout": 0,
+    "disk_free": 59301449728
+  },
+  "final": {
+    "available": 9553223680,
+    "system_used": 898203648,
+    "swap_used": 0,
+    "pswpin": 0,
+    "pswpout": 0,
+    "disk_free": 59155652608
+  },
+  "command": [
+    "/workspace/scratch/9c465670b46b/mpi_recovery_20261111/runtime_openmpi/bin/python3.12",
+    "-I",
+    "-B",
+    "/workspace/scratch/9c465670b46b/pstddm_cloud_20261111/scripts/run_case.py",
+    "/workspace/scratch/9c465670b46b/pstddm_cloud_20261111/input/pstddm_partition_pilot/check_p2.dat"
+  ],
+  "sampling_seconds": 0.1,
+  "rss_limit_including_512MiB": 2147483648,
+  "system_used_limit": 6442450944,
+  "disk_floor": 12884901888,
+  "output_bytes": 145625258
+}

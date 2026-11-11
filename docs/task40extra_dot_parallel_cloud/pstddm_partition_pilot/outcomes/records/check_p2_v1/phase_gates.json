@@ -1,0 +1,98 @@
+[
+  {
+    "stage": "global_volume_assembly",
+    "elapsed": 1.6785373670008994,
+    "rss_bytes": 135217152,
+    "planned_extra_bytes": 268435456,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9603559424
+  },
+  {
+    "stage": "global_dtn_assembly",
+    "elapsed": 10.756848589000583,
+    "rss_bytes": 153767936,
+    "planned_extra_bytes": 268435456,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9466384384
+  },
+  {
+    "stage": "direct_reference_factor",
+    "elapsed": 23.824168193999867,
+    "rss_bytes": 293367808,
+    "planned_extra_bytes": 1001595904,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9345576960
+  },
+  {
+    "stage": "direct_reference_diagnostics",
+    "elapsed": 24.636285161999695,
+    "rss_bytes": 294551552,
+    "planned_extra_bytes": 268435456,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9261166592
+  },
+  {
+    "stage": "mass_factor",
+    "elapsed": 28.38885794899943,
+    "rss_bytes": 297824256,
+    "planned_extra_bytes": 623001600,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9233412096
+  },
+  {
+    "stage": "local_assembly_pair_0",
+    "elapsed": 31.17638060900026,
+    "rss_bytes": 329916416,
+    "planned_extra_bytes": 268435456,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9242058752
+  },
+  {
+    "stage": "local_factor_pair_0_free_2880",
+    "elapsed": 52.9022272330003,
+    "rss_bytes": 334950400,
+    "planned_extra_bytes": 530841600,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9274888192
+  },
+  {
+    "stage": "local_assembly_pair_1",
+    "elapsed": 53.80943071500042,
+    "rss_bytes": 444145664,
+    "planned_extra_bytes": 268435456,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9175293952
+  },
+  {
+    "stage": "local_factor_pair_1_free_4080",
+    "elapsed": 67.16478726199966,
+    "rss_bytes": 471285760,
+    "planned_extra_bytes": 1065369600,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9144070144
+  },
+  {
+    "stage": "local_assembly_pair_2",
+    "elapsed": 67.8397533110001,
+    "rss_bytes": 619032576,
+    "planned_extra_bytes": 268435456,
+    "reserve_bytes": 536870912,
+    "available_bytes": 8992804864
+  },
+  {
+    "stage": "local_factor_pair_2_free_2880",
+    "elapsed": 78.79853550000007,
+    "rss_bytes": 641359872,
+    "planned_extra_bytes": 530841600,
+    "reserve_bytes": 536870912,
+    "available_bytes": 9026600960
+  },
+  {
+    "stage": "candidate_recovery_reserve",
+    "elapsed": 80.3151944350011,
+    "rss_bytes": 809107456,
+    "planned_extra_bytes": 268435456,
+    "reserve_bytes": 536870912,
+    "available_bytes": 8854564864
+  }
+]

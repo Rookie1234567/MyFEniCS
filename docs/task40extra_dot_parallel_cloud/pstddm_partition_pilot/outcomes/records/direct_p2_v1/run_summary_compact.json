@@ -1,0 +1,48 @@
+{
+  "result": {
+    "true_residual": 1.3228513315737436e-13,
+    "factor_seconds": 0.7515805599996384,
+    "solve_seconds": 0.00995748400055163,
+    "factor_nnz": 5424251,
+    "recovery_seconds": 3.8928847319984925,
+    "diagnostics": {
+      "qualification": "diagnostic_unqualified_for_physical_convergence",
+      "field_definition": "total E = scattered FE E + analytic flat-interface background",
+      "H_definition": "code units curl(Etotal)/(i*k0*mu_r)",
+      "saved_H_representation": "vector DG interpolation; not used for the H error integral",
+      "E_total_l2_squared": 70.52943796572939,
+      "H_total_l2_squared": 70.5195016735088,
+      "E_scattered_l2_squared": 6.239890707634646e-05,
+      "H_scattered_l2_squared": 6.458666716403312e-05,
+      "offline_reconstructed_norms": {
+        "E_total_l2_squared": 70.52943796572835,
+        "H_total_l2_squared": 70.51950167350964,
+        "E_scattered_l2_squared": 6.239890707634646e-05,
+        "H_scattered_l2_squared": 6.458666716403312e-05
+      },
+      "background_cross_vector_identity_relative_defects": {
+        "E": 1.4708643995062323e-14,
+        "H": 1.1889483168481959e-14
+      },
+      "background_payload_file": "reference_fields.npz",
+      "background_payload_identity": "m_bg=T^H integral(bg dot conj(v)); k_bg=T^H integral(curl(bg) dot conj(curl(v))); quadrature28",
+      "incident_power": 0.05865349214176169,
+      "R_total": 0.11328667277006207,
+      "T_total": 0.8817990913203154,
+      "A_flux": 0.0049142359096224775,
+      "A_volume": 0.009617026081977917,
+      "volume_absorption_by_material_tag": {
+        "1": 0.0,
+        "2": 0.004101360700228997,
+        "3": 0.005515665381748919
+      },
+      "energy_defect": 0.004702790172355531,
+      "mode_gauge": "boundary_plane"
+    }
+  },
+  "global_setup_seconds": 20.109455078998508,
+  "numerical_wall_seconds": 28.060008190999724,
+  "physical_sha256": "2bc579e2ce3824025f85ec7382292a4028da5a294bbea30baebdc5663e831e9e",
+  "source_sha": "bd0d4daed6da301eaca26b2fdac76a59a834be8a",
+  "status": "COMPLETED_NUMERICAL_REVIEW_PENDING"
+}

@@ -1,0 +1,21 @@
+{
+  "python": "/workspace/scratch/9c465670b46b/mpi_recovery_20261111/runtime_openmpi/bin/python3.12",
+  "python_version": "3.12.13 | packaged by conda-forge | (main, Mar  5 2026, 16:50:00) [GCC 14.3.0]",
+  "dolfinx": "0.10.0",
+  "basix": "0.10.0",
+  "numpy": "2.5.4",
+  "PETSc": [
+    3,
+    25,
+    5
+  ],
+  "PETSc_ScalarType": "complex128",
+  "PETSc_IntType": "int32",
+  "MPI_library": "Open MPI v5.0.10, package: Open MPI conda@9ee00b64ad27 Distribution, ident: 5.0.10, repo rev: v5.0.10, Feb 23, 2026\u0000",
+  "threads": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1"
+  }
+}

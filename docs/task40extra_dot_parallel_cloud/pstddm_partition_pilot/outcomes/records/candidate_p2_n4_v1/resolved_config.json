@@ -1,0 +1,309 @@
+{
+  "pilot": {
+    "model": "pstddm_partition_pilot",
+    "case_id": "candidate_p2_n4_v1",
+    "mode": "candidate",
+    "degree": 2,
+    "partitions": 4,
+    "reference_case": "direct_p2_v1",
+    "workflow": "source_transfer_initial_then_fgmres",
+    "restart": 30,
+    "max_iterations": 100,
+    "true_residual_tolerance": 1e-08,
+    "reference_tolerance": 1e-10,
+    "field_E_tolerance": 0.0001,
+    "field_H_tolerance": 0.001,
+    "pml_thickness_nm": 10.0,
+    "pml_cells_per_side": 2,
+    "pml_grading_ratio": 1.25,
+    "pml_nominal_amplitude": 0.01,
+    "factor_strategy": "cache_all_local_plus_global_mass"
+  },
+  "global": {
+    "case_name": "rebuild120_p2_dtn",
+    "stage_case": "stage4_block_grating",
+    "geometry_kind": "rectangular_block_grating",
+    "lambda0": 0.7,
+    "n_air": [
+      1.0,
+      0.0
+    ],
+    "mu_r": [
+      1.0,
+      0.0
+    ],
+    "period_x": 2.5925925925925926,
+    "period_y": 2.5925925925925926,
+    "z_min": -0.5185185185185185,
+    "z_max": 6.7407407407407405,
+    "air_height": 6.7407407407407405,
+    "substrate_thickness": 0.5185185185185185,
+    "grating_height": 6.222222222222222,
+    "grating_width_x": 0.8814814814814814,
+    "grating_width_y": 1.037037037037037,
+    "cell_notch": null,
+    "air_void_box_nm": null,
+    "geometry_identity": "scaled07_centered17x20_physical120_rebuilt_20261025",
+    "n_substrate": [
+      0.9998851703688496,
+      4.3236152269189515e-06
+    ],
+    "n_grating": [
+      0.9998851703688496,
+      4.3236152269189515e-06
+    ],
+    "dtn_phase_gauge": "boundary_plane",
+    "stage4_dtn_quadrature_degree": 28,
+    "substrate_material_label": null,
+    "grating_material_label": null,
+    "validation_role": "numerical_sanity_only",
+    "interface_z": 0.0,
+    "scattering_background": "layered",
+    "stage4_boundary_model": "dtn_port",
+    "stage4_dtn_order_policy": "manual",
+    "stage4_dtn_assembly": "auxiliary",
+    "stage4_pml_outer_bc": "zero_tangential",
+    "use_floquet_xy": true,
+    "use_pml": false,
+    "pml_top_thickness": 0.0,
+    "pml_bottom_thickness": 0.0,
+    "pml_alpha": 800.0,
+    "incident_theta_deg": 89.0,
+    "incident_phi_deg": 90.0,
+    "polarization_kind": "s",
+    "custom_polarization": null,
+    "incident_amplitude": [
+      1.0,
+      0.0
+    ],
+    "incident_e0_v_per_m": 1.0,
+    "nedelec_degree": 2,
+    "nedelec_trace_degree": null,
+    "nedelec_interior_degree": null,
+    "visualization_degree": 2,
+    "mesh_target_size": 0.7,
+    "mesh_cell_type": "hexahedron",
+    "mesh_spacing_mode": "boundary_fitted",
+    "mesh_axis_cell_counts": [
+      3,
+      10,
+      4
+    ],
+    "mesh_axis_x_values": [
+      0.0,
+      0.8555555555555555,
+      1.737037037037037,
+      2.5925925925925926
+    ],
+    "mesh_axis_y_values": [
+      0.0,
+      0.25925925925925924,
+      0.5185185185185185,
+      0.7777777777777778,
+      1.037037037037037,
+      1.2962962962962963,
+      1.5555555555555554,
+      1.8148148148148147,
+      2.074074074074074,
+      2.333333333333333,
+      2.5925925925925926
+    ],
+    "mesh_axis_z_values": [
+      -0.5185185185185185,
+      0.0,
+      3.111111111111111,
+      6.222222222222222,
+      6.7407407407407405
+    ],
+    "mesh_axis_z_profile": "physical120_rebuilt",
+    "mesh_refined_size": null,
+    "mesh_refinement_radius": null,
+    "floquet_constraint_mode": "auto",
+    "divergence_penalty": 0.0,
+    "diffraction_zero_order_only": true,
+    "diffraction_order_max_m": 5,
+    "diffraction_order_max_n": 9,
+    "reporting_diffraction_order_max_m": 3,
+    "reporting_diffraction_order_max_n": 7,
+    "diffraction_sample_count_x": 24,
+    "diffraction_sample_count_y": 24,
+    "diffraction_top_probe_z": null,
+    "diffraction_bottom_probe_z": null,
+    "diffraction_probe_fraction": 0.75,
+    "diffraction_compute_modal_diagnostic": false,
+    "diffraction_rayleigh_tol": 1e-06,
+    "dtn_y_invariant_n0_alias_preflight": false,
+    "dtn_trace_alias_overlap_tolerance": 1e-08,
+    "dtn_auxiliary_direct_projection_audit": false,
+    "dtn_auxiliary_direct_projection_tolerance": 1e-10,
+    "full3d_reference_export": false,
+    "full3d_reference_plane_z": [],
+    "full3d_reference_sample_count_x": 40,
+    "full3d_reference_sample_count_y": 20,
+    "petsc_direct_solver_profile": "default",
+    "petsc_ksp_view": false,
+    "petsc_log_view": false,
+    "petsc_extra_options": {},
+    "direct_release_base_after_augmentation": false,
+    "stage4_full3d_assembly_backend": "standard_full",
+    "stage4_variable_p_cell_degree_plan": null,
+    "stage4_local_h_refinement_plan": null,
+    "stage4_cell_static_condensation": false,
+    "stage4_assembly_time_cell_static_condensation": false,
+    "direct_release_solver_before_postprocess": false,
+    "stage4_preserve_structured_input_partition": false,
+    "stage4_floquet_slave_elimination": false,
+    "matrix_diagnostics_assemble_unconstrained": false,
+    "matrix_diagnostics_assemble_only": false,
+    "matrix_diagnostics_factorization_only": false,
+    "unique_output": true,
+    "tags": {
+      "air": 1,
+      "substrate": 2,
+      "grating": 3,
+      "top_pml": 4,
+      "bottom_pml": 5,
+      "x_min": 11,
+      "x_max": 12,
+      "y_min": 13,
+      "y_max": 14,
+      "z_min": 15,
+      "z_max": 16
+    },
+    "eps_r": [
+      1.0,
+      0.0
+    ],
+    "x_min": 0.0,
+    "x_max": 2.5925925925925926,
+    "y_min": 0.0,
+    "y_max": 2.5925925925925926,
+    "physical_z_min": -0.5185185185185185,
+    "physical_z_max": 6.7407407407407405,
+    "domain_z_min": -0.5185185185185185,
+    "domain_z_max": 6.7407407407407405,
+    "mesh_cell_type_resolved": "hexahedron",
+    "mesh_spacing_mode_requested": "boundary_fitted",
+    "mesh_axis_cell_counts_requested": [
+      3,
+      10,
+      4
+    ],
+    "mesh_axis_x_values_requested": [
+      0.0,
+      0.8555555555555555,
+      1.737037037037037,
+      2.5925925925925926
+    ],
+    "mesh_axis_y_values_requested": [
+      0.0,
+      0.25925925925925924,
+      0.5185185185185185,
+      0.7777777777777778,
+      1.037037037037037,
+      1.2962962962962963,
+      1.5555555555555554,
+      1.8148148148148147,
+      2.074074074074074,
+      2.333333333333333,
+      2.5925925925925926
+    ],
+    "mesh_axis_z_values_requested": [
+      -0.5185185185185185,
+      0.0,
+      3.111111111111111,
+      6.222222222222222,
+      6.7407407407407405
+    ],
+    "mesh_axis_z_profile_requested": "physical120_rebuilt",
+    "mesh_refined_size_resolved": 0.35,
+    "mesh_refinement_radius_resolved": 0.7,
+    "floquet_constraint_mode_requested": "auto",
+    "nedelec_fixed_trace_enabled": false,
+    "nedelec_trace_degree_resolved": 2,
+    "nedelec_interior_degree_resolved": 2,
+    "nedelec_fixed_trace_contract": "uniform_n1curl",
+    "propagation_direction": [
+      6.122301397540666e-17,
+      0.9998476951563913,
+      -0.017452406437283376
+    ],
+    "polarization": [
+      [
+        -1.0,
+        0.0
+      ],
+      [
+        6.123233995736766e-17,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ]
+    ],
+    "wavevector": [
+      [
+        5.495364883878937e-16,
+        0.0
+      ],
+      [
+        8.97461192517716,
+        0.0
+      ],
+      [
+        -0.1566524338595219,
+        0.0
+      ]
+    ],
+    "floquet_phase_x": [
+      1.0,
+      1.4247242291537984e-15
+    ],
+    "floquet_phase_y": [
+      -0.29019682129303004,
+      -0.9569669821427598
+    ],
+    "eps_air": [
+      1.0,
+      0.0
+    ],
+    "eps_substrate": [
+      0.9997703539048498,
+      8.646237495554417e-06
+    ],
+    "eps_grating": [
+      0.9997703539048498,
+      8.646237495554417e-06
+    ],
+    "grating_index": [
+      0.9998851703688496,
+      4.3236152269189515e-06
+    ],
+    "grating_bounds": {
+      "x_min": 0.8555555555555556,
+      "x_max": 1.737037037037037,
+      "y_min": 0.7777777777777778,
+      "y_max": 1.8148148148148149,
+      "z_min": 0.0,
+      "z_max": 6.222222222222222
+    },
+    "grating_background_eps": [
+      1.0,
+      0.0
+    ],
+    "k0": 8.975979010256552,
+    "omega": 2.690930810441219e+18,
+    "mesh_cells": [
+      4,
+      4,
+      11
+    ],
+    "length_unit": "nm",
+    "electric_field_unit": "V/m",
+    "magnetic_field_unit": "A/m",
+    "magnetic_field_scale_A_per_m": 0.002654418727984993
+  },
+  "global_pml_disabled": true,
+  "unused_global_pml_alpha": 800.0
+}

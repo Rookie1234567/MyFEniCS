@@ -1,0 +1,40 @@
+{
+  "case": "direct_p2_v1",
+  "status": "finished",
+  "started_utc": "2026-11-11T10:09:13.033751+00:00",
+  "ended_utc": "2026-11-11T10:09:41.677679+00:00",
+  "source_sha": "bd0d4daed6da301eaca26b2fdac76a59a834be8a",
+  "wall_seconds": 28.64244989299914,
+  "returncode": 0,
+  "stop_reason": null,
+  "remaining": [],
+  "peak_sampled_tree_rss": 427446272,
+  "initial": {
+    "available": 9660633088,
+    "system_used": 790794240,
+    "swap_used": 0,
+    "pswpin": 0,
+    "pswpout": 0,
+    "disk_free": 59155398656
+  },
+  "final": {
+    "available": 9517740032,
+    "system_used": 933687296,
+    "swap_used": 0,
+    "pswpin": 0,
+    "pswpout": 0,
+    "disk_free": 59065929728
+  },
+  "command": [
+    "/workspace/scratch/9c465670b46b/mpi_recovery_20261111/runtime_openmpi/bin/python3.12",
+    "-I",
+    "-B",
+    "/workspace/scratch/9c465670b46b/pstddm_cloud_20261111/scripts/run_case.py",
+    "/workspace/scratch/9c465670b46b/pstddm_cloud_20261111/input/pstddm_partition_pilot/direct_p2.dat"
+  ],
+  "sampling_seconds": 0.1,
+  "rss_limit_including_512MiB": 2147483648,
+  "system_used_limit": 6442450944,
+  "disk_floor": 12884901888,
+  "output_bytes": 89324649
+}
