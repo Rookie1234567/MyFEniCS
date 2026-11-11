@@ -1,0 +1,21 @@
+{
+  "base_sha": "2c7aa97f4746c5de0545cf511908321b356a74df",
+  "numerical_source_sha": "bd0d4daed6da301eaca26b2fdac76a59a834be8a",
+  "numerical_source_tree": "403b66eb357cc96ee5ffc0924cac51b4f2ccaaa2",
+  "implementation_remote_sha": "70afaab9aaa6cde32de23c1e45f509e86bfffb53",
+  "same_implementation_tree": true,
+  "old_local_results_commit": "e17101f7e42ac58ca9ab2c51314279731539fe4d",
+  "results_tree": "491a22e0065539d7443210eb0338b22a74112e16",
+  "results_remote_sha": "60be6bbdd79d0dfffba11590a6ba224bc656b2dc",
+  "results_remote_readback": "verified",
+  "earlier_unknown_tree_result": "verified absent by GitHub 422, then created exact original tree",
+  "earlier_rejected_commit": "not executed; user subsequently explicitly authorized publication to same repository and branch",
+  "publication_branch": "task40extra_dot_parallel_cloud",
+  "source_and_results_restoration": "SHA256 and CRC verified full backup; no numerical reruns",
+  "old_local_final_document_commit": "ce43eb9917a023c40d2e4291fd808a6535565fda",
+  "old_final_document_commit_available_in_restored_snapshot": false,
+  "recovered_closeout_documents": "reconstructed from backed-up reports and verified statistics, with new publication receipts; not claimed byte-identical to old final documentation commit",
+  "no_force_no_amend_no_other_branch_merge": true,
+  "closeout_document_commit": "this commit; its final ref is separately verified after publication",
+  "github_rendered_view": "to be checked after publication"
+}

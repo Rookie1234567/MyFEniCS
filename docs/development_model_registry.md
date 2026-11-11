@@ -2146,3 +2146,11 @@ production model。
 | dot_sparse_p2_checker_attempt2 | checker d0959c5b5ea78363b6428604a12a5281cfee3fd1；1234其他依赖hash/ABI未变 | 88/88重算及完整interior/all-q/alias/slave/原S/native门通过；24raw vectors全finite | PASS；2.8673s/RSS253747200B/swap0/清场；无PDE重跑 | 同上 |
 
 172零C/174零D仍然保留；不把532identity当未裁剪非零贡献。p4与装配前gauge修正held、原尺寸2TB/48h未资格；没有ordinary default/用户机器/其他分支改动。
+
+## 2026-11-11：dot PSTDDM分区pilot
+
+为验证真正源转移是否能替代旧PML Schwarz，本轮在固定0.7nm、有限x/y三维Si块、120hex/p2、双Floquet和836端口的3956阶系统上做四案，新增双向累计弱源转移和局部PML，未改变原算子。Direct残差1.32e−13；N2退化全域锚点首扫1.66e−13；N4首扫0.11157，18步FGMRES后5.74e−9，总E/H约3.4e−12、散射E/H约3.6e−9。独立保存矩阵复核通过。
+
+N2/N4全过程峰613.37/874.19MiB、56.716/82.300s，分区增加反而更费内存/时间；固定PML使最大local free4080超过global FE3120，全部局部因子和全局mass因子同时缓存。四案249.892s、零swap、无门触发。p2物理未收敛，能量缺口0.00470279，功率仅diagnostic；N4首扫散射误差约4.5%保留，制造源功率诊断失败不改判。N8四层网格不合法；p4保守阶段预留约36.765GiB无法在本轮2GiB局部门准入，未运行而非方法不可能。
+
+结论PASS_WITH_QUALIFICATIONS，停止本轮扩展、保持opt-in，不merge。下一轮须先单独审查PML网格/因子驻留成本，再谈规模；缓存冷热与部分阶段计数未记录，不能宣称全冷benchmark。详见[统一结果](task40extra_dot_parallel_cloud/pstddm_partition_pilot/outcomes/summary.md)、[响应](task40extra_dot_parallel_cloud/pstddm_partition_pilot/response_v1.md)与[独审](task40extra_dot_parallel_cloud/pstddm_partition_pilot/review_report_v2.md)。

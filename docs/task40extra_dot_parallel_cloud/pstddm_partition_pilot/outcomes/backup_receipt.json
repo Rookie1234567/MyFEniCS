@@ -1,0 +1,10 @@
+{
+  "file_name": "PSTDDM_p2_full_evidence_20261111.zip",
+  "bytes": 346163969,
+  "sha256": "44ab8b54eee5da700035a2644c0e98c4ba40abe710d1afabf0c013808bc46c31",
+  "zip_crc_test": "pass",
+  "persistent_backup": "saved_successfully_to_user_Space",
+  "restore_verification": "SHA256 and full CRC verified again on cloud restore",
+  "includes": "exact execution source archive, all frozen raw runs including matrices/fields/JIT and supervision, independent review and report snapshot",
+  "excludes": "runtime packages, private credentials, later publication receipts and doc-only edits"
+}

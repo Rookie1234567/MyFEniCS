@@ -3450,3 +3450,11 @@ V26 本轮 Full3D p6/h7.5、coarse p4 场已经完成 126 步并通过残差/物
 worker1c83fae全过程11.1352s/同时树RSS437866496B；独立checker d0959c5为2.8673s/253747200B，分别zero swap/清场，88/88重算及全局门通过。原raw因子1.4342e12/NaN失败不改判；checker首次NumPy-bool JSON失败也保存。仅checker/其own test改动，receipt核验1234份其他source/config/input hashes及ABI不变，没有PDE重跑。新worker31targeted、checker修复5targeted通过；full pytest/MPI多rank/Ruff/CI未运行。
 
 172零C/174零D泛函仍在；532只是完整模式身份，正H缩放不能恢复上游absolute floor删除的有限贡献。p4保持held，下一门为同Gauss/fullMPC的装配前boundary-plane系数新权威。原尺寸accuracy/2TB/48h与工作站完整交付尚未资格；本批补足main/laptop campaign，不接管。见[Response V6](task40extra_dot_parallel_cloud/response_v6.md)及[compact](task40extra_dot_parallel_cloud/outcomes/records/positive_H_same_discrete_p2_v1.json)。
+
+## 2026-11-11：dot PSTDDM分区pilot
+
+为验证真正源转移是否能替代旧PML Schwarz，本轮在固定0.7nm、有限x/y三维Si块、120hex/p2、双Floquet和836端口的3956阶系统上做四案，新增双向累计弱源转移和局部PML，未改变原算子。Direct残差1.32e−13；N2退化全域锚点首扫1.66e−13；N4首扫0.11157，18步FGMRES后5.74e−9，总E/H约3.4e−12、散射E/H约3.6e−9。独立保存矩阵复核通过。
+
+N2/N4全过程峰613.37/874.19MiB、56.716/82.300s，分区增加反而更费内存/时间；固定PML使最大local free4080超过global FE3120，全部局部因子和全局mass因子同时缓存。四案249.892s、零swap、无门触发。p2物理未收敛，能量缺口0.00470279，功率仅diagnostic；N4首扫散射误差约4.5%保留，制造源功率诊断失败不改判。N8四层网格不合法；p4保守阶段预留约36.765GiB无法在本轮2GiB局部门准入，未运行而非方法不可能。
+
+结论PASS_WITH_QUALIFICATIONS，停止本轮扩展、保持opt-in，不merge。下一轮须先单独审查PML网格/因子驻留成本，再谈规模；缓存冷热与部分阶段计数未记录，不能宣称全冷benchmark。详见[统一结果](task40extra_dot_parallel_cloud/pstddm_partition_pilot/outcomes/summary.md)、[响应](task40extra_dot_parallel_cloud/pstddm_partition_pilot/response_v1.md)与[独审](task40extra_dot_parallel_cloud/pstddm_partition_pilot/review_report_v2.md)。
