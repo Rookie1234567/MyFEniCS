@@ -8,9 +8,10 @@
   "original_git_diff_check": "pass",
   "original_registry_contract": "pass_40_sections_92_evidence_paths",
   "restored_markdown_structure": "pass",
-  "github_rendered_view": "pending_after_publication",
+  "github_rendered_view": "pass; details in publication_completion_v1.json",
   "full_repository_tests": "not_run",
   "CI": "not_run",
   "formal_PDE_runs": 4,
-  "original_run_directories": "frozen; restored CRC/SHA checked; no new PDE"
+  "original_run_directories": "frozen; restored CRC/SHA checked; no new PDE",
+  "completion_receipt": "publication_completion_v1.json"
 }

@@ -17,5 +17,6 @@
   "recovered_closeout_documents": "reconstructed from backed-up reports and verified statistics, with new publication receipts; not claimed byte-identical to old final documentation commit",
   "no_force_no_amend_no_other_branch_merge": true,
   "closeout_document_commit": "this commit; its final ref is separately verified after publication",
-  "github_rendered_view": "to be checked after publication"
+  "github_rendered_view": "pass; details in publication_completion_v1.json",
+  "completion_receipt": "publication_completion_v1.json"
 }

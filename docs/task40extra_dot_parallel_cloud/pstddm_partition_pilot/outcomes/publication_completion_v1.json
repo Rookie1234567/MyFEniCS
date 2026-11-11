@@ -1,0 +1,25 @@
+{
+  "verified_utc": "2026-11-11T12:52:26.083065+00:00",
+  "branch": "task40extra_dot_parallel_cloud",
+  "verified_report_commit": "d65daa58ffa350b3f1e59dd32b62e972431799b4",
+  "verified_report_tree": "0fd2e8fd419fec496dcc3837f66a0dc58ac2a1f0",
+  "verified_results_commit": "60be6bbdd79d0dfffba11590a6ba224bc656b2dc",
+  "verified_results_tree": "491a22e0065539d7443210eb0338b22a74112e16",
+  "local_tracking_ahead_behind": [
+    0,
+    0
+  ],
+  "local_worktree_before_this_receipt": "clean",
+  "remote_history": "fast-forward only, no force/amend/other branch merge",
+  "original_numerical_code_and_raw_evidence": "unchanged, no numerical rerun",
+  "github_rendered_view": {
+    "status": "pass",
+    "method_v1": "formula observed typeset and screenshot inspected",
+    "summary": "all six rendered tables have consistent columns (8,2,10,3,3,3); screenshot inspected",
+    "review_report_v2": "all three rendered tables have consistent columns (8,3,4)",
+    "response_v1": "rendered heading, list, paragraphs and links inspected",
+    "scope": "immutable report commit; numerical method unchanged from original implementation"
+  },
+  "CI": "no passing-CI claim; workflow query limited to PR-triggered runs returned empty; no PR created",
+  "backup": "Space original ZIP CRC/SHA verified on restore; hash44ab8b54eee5da700035a2644c0e98c4ba40abe710d1afabf0c013808bc46c31"
+}
