@@ -66,7 +66,9 @@ class P6ComparisonTests(unittest.TestCase):
             base = Path(temporary)
             from types import SimpleNamespace
             from src.postprocessing.postprocess_3d import save_airbox_3d_fields
-            metrics = save_airbox_3d_fields(SimpleNamespace(mesh=msh, cell_tags=None), cfg, field, base/'metrics')
+            cells = np.arange(msh.topology.index_map(3).size_local, dtype=np.int32)
+            tags = mesh.meshtags(msh, 3, cells, np.full(len(cells), cfg.tags.air, dtype=np.int32))
+            metrics = save_airbox_3d_fields(SimpleNamespace(mesh=msh, cell_tags=tags), cfg, field, base/'metrics')
             self.assertIsNone(metrics['paraview_file'])
             self.assertEqual(metrics['vtx_3d_output_status'], 'disabled_by_profile')
             self.assertFalse(list((base/'metrics').glob('*.vtu')))
