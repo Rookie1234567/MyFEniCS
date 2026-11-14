@@ -1,0 +1,17 @@
+model = "pstddm_stationary_workstation_pilot"
+case_id = "w13p5_n4"
+mode = "candidate"
+wavelength_nm = 13.5
+degree = 2
+partitions = 4
+reference_case_id = "w13p5_direct"
+workflow = "source_transfer_initial_then_original_system_fgmres"
+restart = 30
+max_iterations = 100
+true_residual_tolerance = 1e-8
+reference_tolerance = 1e-10
+field_E_tolerance = 1e-4
+field_H_tolerance = 1e-3
+theta_deg = 89.0
+phi_deg = 90.0
+polarization = "s"

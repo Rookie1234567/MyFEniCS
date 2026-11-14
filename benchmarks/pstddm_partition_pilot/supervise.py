@@ -15,8 +15,11 @@ import time
 import tomllib
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 BASE = ROOT/'benchmarks/artifacts/pstddm_partition_pilot'
 G = 1 << 30
+THREADS=('OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS')
 
 
 def main():
@@ -186,5 +189,211 @@ def main():
     assert reason is None and process.returncode==0 and not remaining
 
 
+def _workstation_meminfo():
+    result={}
+    for line in Path('/proc/meminfo').read_text().splitlines():
+        name,value=line.split(':',1);fields=value.split()
+        result[name]=int(fields[0])*(1024 if len(fields)>1 and fields[1]=='kB' else 1)
+    return result
+
+
+def _workstation_cgroup():
+    root=Path('/sys/fs/cgroup').resolve(strict=True)
+    relative=next((line.split(':',2)[2] for line in Path('/proc/self/cgroup').read_text().splitlines()
+                  if line.startswith('0::')),None)
+    if relative is None:raise RuntimeError('unified cgroup v2 membership is required')
+    path=(root/relative.lstrip('/')).resolve(strict=True)
+    if not path.is_relative_to(root):raise RuntimeError('cgroup path escapes /sys/fs/cgroup')
+    facts={name:int((path/file).read_text().strip()) for name,file in (
+        ('memory_current_bytes','memory.current'),('memory_max_bytes','memory.max'),
+        ('swap_current_bytes','memory.swap.current'),('swap_max_bytes','memory.swap.max'))}
+    return path,facts
+
+
+def _workstation_group(pgid):
+    rows=[]
+    for stat_path in Path('/proc').glob('[0-9]*/stat'):
+        try:
+            stat=stat_path.read_text();rest=stat[stat.rfind(')')+2:].split()
+            pid,ppid,group=int(stat_path.parent.name),int(rest[1]),int(rest[2])
+            if group!=pgid:continue
+            status=dict(line.split(':',1) for line in (stat_path.parent/'status').read_text().splitlines() if ':' in line)
+            rows.append({'pid':pid,'ppid':ppid,
+                         'rss_bytes':int(status.get('VmRSS','0 kB').split()[0])*1024,
+                         'swap_bytes':int(status.get('VmSwap','0 kB').split()[0])*1024})
+        except (FileNotFoundError,ProcessLookupError,PermissionError,ValueError,IndexError):
+            continue
+    return rows
+
+
+def _workstation_json(path,value):
+    path.write_text(json.dumps(value,indent=2,allow_nan=False)+'\n',encoding='utf-8')
+
+
+def _workstation_prepare_case_output(output,runtime,identity):
+    output.mkdir();(output/'tmp').mkdir();(output/'cache').mkdir()
+    _workstation_json(output/'runtime_receipt.json',runtime)
+    identity=dict(identity)
+    identity['runtime_receipt_sha256']=hashlib.sha256((output/'runtime_receipt.json').read_bytes()).hexdigest()
+    _workstation_json(output/'supervisor_identity.json',identity)
+    return identity
+
+
+def _workstation_profile_main(argv=None):
+    parser=argparse.ArgumentParser(description='Native-Linux workstation PSTDDM resource profile.')
+    parser.add_argument('--profile',choices=('workstation',),required=True)
+    parser.add_argument('input',type=Path)
+    parser.add_argument('--scope-root',type=Path,required=True)
+    parser.add_argument('--runs-root',type=Path,required=True)
+    args=parser.parse_args(argv)
+    scope=args.scope_root.resolve(strict=True);runs=args.runs_root.resolve(strict=True)
+    input_path=args.input.resolve(strict=True)
+    if not runs.is_relative_to(scope) or runs.name!='runs' or not input_path.is_relative_to(scope):
+        raise ValueError('workstation inputs and outputs must stay below the assigned task root')
+    if _git_branch()!='task40extra_dot_parallel_cloud':
+        raise RuntimeError('workstation case requires the exact task execution branch')
+    subprocess.run(['git','diff','--exit-code'],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
+    subprocess.run(['git','diff','--cached','--exit-code'],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
+    if subprocess.check_output(['git','ls-files','--others','--exclude-standard'],cwd=ROOT,text=True).strip():
+        raise RuntimeError('workstation run requires frozen tracked source and inputs')
+    with input_path.open('rb') as stream:document=tomllib.load(stream)
+    case_id=str(document.get('case_id',''))
+    if not case_id or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-' for c in case_id):
+        raise ValueError('unsafe or missing case_id')
+    output=runs/case_id
+    if output.exists():raise FileExistsError(f'refusing to overwrite evidence: {output}')
+    for name in THREADS:os.environ[name]='1'
+    lock_path=scope/'run.lock'
+    with lock_path.open('a') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        ledger_path=scope/'budget_ledger.json'
+        ledger=json.loads(ledger_path.read_text()) if ledger_path.exists() else []
+        if any(row.get('status')=='running' for row in ledger):
+            raise RuntimeError('an unfinished attempt is already reserved')
+        if len(ledger)>=10:raise RuntimeError('shared ten-attempt budget is exhausted')
+        previous=sum(float(row.get('wall_seconds',0.)) for row in ledger)
+        if previous+1800>21600:raise RuntimeError('not enough cumulative time remains for a full case reserve')
+        from src.runners.pstddm_workstation_case import (
+            qualified_native_runtime_receipt, validate_workstation_cgroup,
+        )
+        runtime=qualified_native_runtime_receipt(scope)
+        cgroup_path,cg=_workstation_cgroup()
+        validate_workstation_cgroup(str(cgroup_path),cg,str(runtime['preparation_cgroup']['path']))
+        memory=_workstation_meminfo();disk=shutil.disk_usage(scope).free
+        if memory['MemAvailable']<400*G or disk<400_000_000_000:
+            raise RuntimeError('initial host reserve or 400 GB disk floor failed')
+        if any(os.environ.get(name)!='1' for name in THREADS):raise RuntimeError('thread contract failed')
+        sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+        tracked=subprocess.check_output(['git','ls-files','src','scripts','benchmarks/pstddm_partition_pilot',
+                                        'input/pstddm_workstation_pilot'],cwd=ROOT,text=True).splitlines()
+        hashes={path:hashlib.sha256((ROOT/path).read_bytes()).hexdigest() for path in tracked}
+        input_sha=hashlib.sha256(input_path.read_bytes()).hexdigest()
+        reservation={'case_id':case_id,'status':'running','reserved_seconds':1800,'wall_seconds':0.,
+                     'source_sha':sha,'input_sha256':input_sha,
+                     'started_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                     'supervisor_pid':os.getpid(),'branch':'task40extra_dot_parallel_cloud'}
+        ledger.append(reservation);_workstation_json(ledger_path,ledger)
+        _workstation_prepare_case_output(output,runtime,{
+            'case_id':case_id,'supervisor_pid':os.getpid(),
+            'source_sha':sha,'source_hashes':hashes,'input_path':str(input_path),'input_sha256':input_sha,
+            'scope_root':str(scope),'runs_root':str(runs),'cgroup_path':str(cgroup_path),
+            'initial_cgroup':cg,'initial_MemAvailable_bytes':memory['MemAvailable'],
+            'initial_disk_free_bytes':disk,'host_reserve_bytes':400*G,
+            'tree_limit_bytes':8_000_000_000,'staging_reserve_bytes':512<<20})
+        env=os.environ.copy();env.update({
+            'PSTDDM_WORKSTATION_SUPERVISOR_PID':str(os.getpid()),
+            'PSTDDM_WORKSTATION_SCOPE_ROOT':str(scope),'PSTDDM_WORKSTATION_OUTPUT':str(output),
+            'TMPDIR':str(output/'tmp'),'TMP':str(output/'tmp'),'TEMP':str(output/'tmp'),
+            'XDG_CACHE_HOME':str(output/'cache')})
+        command=[str(Path(sys.executable).absolute()),'-I','-B',str(ROOT/'scripts/run_case.py'),str(input_path)]
+        start=time.monotonic();samples=[];reason=None;process=None
+        with (output/'stdout.log').open('wb') as stdout,(output/'stderr.log').open('wb') as stderr:
+            try:
+                process=subprocess.Popen(command,cwd=ROOT,env=env,stdout=stdout,stderr=stderr,start_new_session=True)
+                pgid=process.pid;reservation['child_pgid']=pgid;_workstation_json(ledger_path,ledger)
+                while process.poll() is None:
+                    elapsed=time.monotonic()-start;mem=_workstation_meminfo();_,facts=_workstation_cgroup()
+                    procs=_workstation_group(pgid);rss=sum(row['rss_bytes'] for row in procs)
+                    swap=sum(row['swap_bytes'] for row in procs);free=shutil.disk_usage(scope).free
+                    sample={'elapsed_seconds':elapsed,'process_group_id':pgid,'process_tree_rss_bytes':rss,
+                            'process_tree_swap_bytes':swap,'processes':procs,'MemAvailable_bytes':mem['MemAvailable'],
+                            'host_total_bytes':mem['MemTotal'],'disk_free_bytes':free,'cgroup':facts}
+                    samples.append(sample)
+                    if rss+(512<<20)>8_000_000_000:raise RuntimeError('process tree exceeded 8e9 B with staging reserve')
+                    if swap or facts['swap_current_bytes']:raise RuntimeError('task process group/cgroup used swap')
+                    validate_workstation_cgroup(str(cgroup_path),facts,
+                                                str(runtime['preparation_cgroup']['path']))
+                    if mem['MemAvailable']<400*G:raise RuntimeError('host MemAvailable crossed 400 GiB reserve')
+                    if free<400_000_000_000:raise RuntimeError('task disk free space crossed 400 GB floor')
+                    if elapsed>=1800 or previous+elapsed>=21600:raise RuntimeError('case/shared wall budget reached')
+                    if int(elapsed)%15==0 and (len(samples)==1 or int(samples[-2]['elapsed_seconds'])!=int(elapsed)):
+                        print(json.dumps({'heartbeat_seconds':round(elapsed,1),'rss_bytes':rss,
+                                          'available_bytes':mem['MemAvailable'],'disk_free_bytes':free}),flush=True)
+                    time.sleep(1.)
+                if process.returncode!=0:reason=f'child_returncode_{process.returncode}'
+            except BaseException as exc:
+                reason=f'controlled_stop:{type(exc).__name__}:{exc}'
+            finally:
+                if process is not None:
+                    try:os.killpg(process.pid,signal.SIGTERM)
+                    except ProcessLookupError:pass
+                    try:process.wait(timeout=20)
+                    except subprocess.TimeoutExpired:
+                        try:os.killpg(process.pid,signal.SIGKILL)
+                        except ProcessLookupError:pass
+                        process.wait()
+                    deadline=time.monotonic()+10
+                    while _workstation_group(process.pid) and time.monotonic()<deadline:time.sleep(.2)
+                    remaining=_workstation_group(process.pid)
+                    if remaining:
+                        try:os.killpg(process.pid,signal.SIGKILL)
+                        except ProcessLookupError:pass
+                        deadline=time.monotonic()+5
+                        while _workstation_group(process.pid) and time.monotonic()<deadline:time.sleep(.2)
+                        remaining=_workstation_group(process.pid)
+                else:
+                    remaining=[]
+        elapsed=time.monotonic()-start;memory=_workstation_meminfo();_,final_cg=_workstation_cgroup()
+        free=shutil.disk_usage(scope).free;head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+        dirty=bool(subprocess.check_output(['git','status','--porcelain','--untracked-files=normal'],cwd=ROOT,text=True).strip())
+        now_hashes={path:hashlib.sha256((ROOT/path).read_bytes()).hexdigest() for path in tracked}
+        if head!=sha or dirty or now_hashes!=hashes or hashlib.sha256(input_path.read_bytes()).hexdigest()!=input_sha:
+            reason=(reason or '')+' source_or_input_changed_during_run'
+        if remaining:
+            reason=(reason or '')+' remaining_process_group_members_after_SIGKILL'
+        status=('COMPLETED_PROCESS_REVIEW_PENDING' if reason is None and process is not None and process.returncode==0
+                else 'CONTROLLED_STOP' if reason and reason.startswith('controlled_stop:') else 'FAILED')
+        record={**reservation,'status':status,'ended_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                'wall_seconds':elapsed,'returncode':None if process is None else process.returncode,
+                'stop_reason':reason,'peak_sampled_process_tree_rss_bytes':max(
+                    (int(sample['process_tree_rss_bytes']) for sample in samples),default=0),
+                'resource_sample_count':len(samples),'final_MemAvailable_bytes':memory['MemAvailable'],
+                'final_disk_free_bytes':free,'final_cgroup':final_cg,
+                'remaining_descendants':remaining,
+                'final_cgroup_swap_current_bytes':final_cg['swap_current_bytes'],
+                'budget_limits':{'attempt_count':10,'cumulative_seconds':21600,'case_seconds':1800,
+                    'tree_bytes':8_000_000_000,'staging_reserve_bytes':512<<20,
+                    'host_reserve_bytes':400*G,'disk_floor_bytes':400_000_000_000},'command':command}
+        _workstation_json(output/'resource_samples.json',samples)
+        _workstation_json(output/'supervision.json',record)
+        artifacts={}
+        for path in sorted(output.rglob('*')):
+            if path.is_file() and path.name not in ('artifact_hashes.json','stdout.log','stderr.log'):
+                artifacts[str(path.relative_to(output))]={'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),
+                                                            'bytes':path.stat().st_size}
+        _workstation_json(output/'artifact_hashes.json',artifacts)
+        ledger[-1]=record;_workstation_json(ledger_path,ledger)
+        print(json.dumps(record,indent=2),flush=True)
+        return 0 if status=='COMPLETED_PROCESS_REVIEW_PENDING' else 2
+
+
+def _git_branch():
+    return subprocess.check_output(['git','branch','--show-current'],cwd=ROOT,text=True).strip()
+
+
 if __name__=='__main__':
+    if sys.argv[1:2]==['--profile'] and len(sys.argv)>2 and sys.argv[2]=='workstation':
+        raise SystemExit(_workstation_profile_main(sys.argv[1:]))
+    if sys.argv[1:2]==['--profile'] and len(sys.argv)>2 and sys.argv[2]=='cloud':
+        sys.argv=sys.argv[:1]+sys.argv[3:]
     main()

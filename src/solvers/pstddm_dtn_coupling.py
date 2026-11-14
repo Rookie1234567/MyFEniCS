@@ -6,6 +6,9 @@ residual checks. Condensing interiors must transform these blocks exactly or
 prove their tangential trace is structurally zero before projection.
 """
 from dataclasses import dataclass
+import hashlib
+import json
+from math import floor, pi
 import numpy as np
 
 @dataclass
@@ -30,6 +33,37 @@ def normalized_columns(vx,vy,mode,cfg):
     if not np.isfinite(c).all() or not np.isfinite(d).all():raise FloatingPointError('Nonfinite surface block')
     return c,d
 
+
+def _complex_pair(value):
+    number = complex(value)
+    return [float(number.real), float(number.imag)]
+
+
+def _mode_record(index, mode):
+    return {
+        "index": int(index), "side": mode.side, "m": int(mode.m), "n": int(mode.n),
+        "polarization": mode.polarization, "propagating": bool(mode.propagating),
+        "rayleigh_warning": bool(mode.rayleigh_warning),
+        "alpha": _complex_pair(mode.alpha), "gamma": _complex_pair(mode.gamma),
+        "beta": _complex_pair(mode.beta), "refractive_index": _complex_pair(mode.refractive_index),
+        "vertical_sign": int(mode.vertical_sign),
+        "e_vector": [_complex_pair(value) for value in mode.e_vector],
+        "k_vector": [_complex_pair(value) for value in mode.k_vector],
+        "h_vector": [_complex_pair(value) for value in mode.h_vector],
+        "electric_tangential_norm_sq": float(mode.electric_tangential_norm_sq),
+        "power_per_unit_amplitude": float(mode.power_per_unit_amplitude),
+    }
+
+
+def _sparse_sha256(matrix):
+    canonical = matrix.tocsr(copy=True)
+    canonical.sort_indices()
+    digest = hashlib.sha256()
+    digest.update(np.asarray(canonical.shape, dtype=np.int64).tobytes())
+    for value in (canonical.indptr, canonical.indices, canonical.data):
+        digest.update(np.ascontiguousarray(value).tobytes())
+    return digest.hexdigest()
+
 def assemble_dtn_blocks(problem, *, log=print, per_mode=None):
     """Original unconstrained FE surface blocks, MPI1 only.
 
@@ -45,7 +79,8 @@ def assemble_dtn_blocks(problem, *, log=print, per_mode=None):
     if cfg.use_pml or cfg.stage4_boundary_model!='dtn_port':raise ValueError('DtN only')
     if md.mesh.comm.size!=1:raise ValueError('MPI1 only')
     modes=list(outgoing_port_modes_3d(cfg))
-    if len(modes)!=836:raise ValueError(f'Expected m5/n9 836 modes, got {len(modes)}')
+    if not modes:raise ValueError('DtN inventory must contain at least one mode')
+    mode_records = [_mode_record(index, mode) for index, mode in enumerate(modes)]
     assemblers={}
     for side,tag,z in [('top',cfg.tags.z_max,cfg.physical_z_max),('bottom',cfg.tags.z_min,cfg.physical_z_min)]:
         for component in (0,1):
@@ -73,9 +108,38 @@ def assemble_dtn_blocks(problem, *, log=print, per_mode=None):
     C=csc_matrix((np.asarray(c_data),np.asarray(c_rows),np.asarray(c_ptr)),shape=(n,len(modes)))
     # d lists one modal row, stored as a column then transposed WITHOUT conj.
     D=csc_matrix((np.asarray(d_data),np.asarray(d_rows),np.asarray(d_ptr)),shape=(n,len(modes))).T.tocsr()
+    serialized_modes=json.dumps(mode_records,sort_keys=True,separators=(',',':'),allow_nan=False).encode()
+    side_counts={}
+    for side in ('top','bottom'):
+        selected=[mode for mode in modes if mode.side==side]
+        side_counts[side]={
+            'mode_count':len(selected),
+            'propagating_mode_count':sum(bool(mode.propagating) for mode in selected),
+            'evanescent_mode_count':sum(not bool(mode.propagating) for mode in selected),
+            'rayleigh_warning_mode_count':sum(bool(mode.rayleigh_warning) for mode in selected),
+        }
+    m_max=max(abs(mode.m) for mode in modes)
+    n_max=max(abs(mode.n) for mode in modes)
+    index_max=max(abs(complex(cfg.n_air)),abs(complex(cfg.substrate_index)))
+    auto_max_m=floor((index_max*cfg.k0+abs(cfg.kx))*cfg.period_x/(2*pi)+1e-12)
+    auto_max_n=floor((index_max*cfg.k0+abs(cfg.ky))*cfg.period_y/(2*pi)+1e-12)
+    model = getattr(problem, 'model_spec', None)
     return DtnBlocks(C,D,identity(len(modes),dtype=np.complex128,format='csr'),
         np.zeros(len(modes),dtype=np.complex128),modes,
-        {'gauge':'boundary_plane','m_max':5,'n_max':9,'n_aux':len(modes),
+        {'gauge':'boundary_plane','m_max':m_max,'n_max':n_max,'n_aux':len(modes),
+         'mode_count':len(modes),
+         'auto_max_m':auto_max_m,'auto_max_n':auto_max_n,
+         'selected_m_max':m_max,'selected_n_max':n_max,
+         'propagating_mode_count':sum(bool(mode.propagating) for mode in modes),
+         'evanescent_mode_count':sum(not bool(mode.propagating) for mode in modes),
+         'rayleigh_warning_mode_count':sum(bool(mode.rayleigh_warning) for mode in modes),
+         'side_counts':side_counts,
+         'order_padding':getattr(model,'dtn_order_padding',None),
+         'ordered_modes_sha256':hashlib.sha256(serialized_modes).hexdigest(),
+         'ordered_mode_records':mode_records,
+         'C_sha256':_sparse_sha256(C),'D_sha256':_sparse_sha256(D),
+         'C_shape':list(C.shape),'D_shape':list(D.shape),
+         'C_nnz':int(C.nnz),'D_nnz':int(D.nnz),
          'surface_quadrature_degree':28,'component_assemblies':count,
          'incident_port_source':'zero','unknown':'scattered_against_analytic_flat_interface',
          'cutoff_policy':'exact_nonzero_only_no_numeric_threshold',

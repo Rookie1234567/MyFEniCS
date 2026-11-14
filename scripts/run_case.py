@@ -112,6 +112,17 @@ def main(argv: list[str] | None = None) -> int:
     try:
         from src.io.input_loader import load_dat_input
         marker = load_dat_input(args.input_path)
+        if marker.document.get("model") == "pstddm_stationary_workstation_pilot":
+            defaults = vars(_parser().parse_args([str(args.input_path)]))
+            changed = {key for key, value in vars(args).items() if value != defaults[key]}
+            if changed - {"validate_only", "dry_run"}:
+                raise InputError("workstation PSTDDM accepts only --validate-only or --dry-run")
+            from src.runners.pstddm_workstation_case import run_workstation_case
+            result = run_workstation_case(
+                args.input_path, dry_run=bool(args.validate_only or args.dry_run),
+            )
+            print(json.dumps(result, sort_keys=True, allow_nan=False))
+            return 0
         if marker.document.get("model") == "pstddm_partition_pilot":
             defaults = vars(_parser().parse_args([str(args.input_path)]))
             changed = {key for key,value in vars(args).items() if value != defaults[key]}

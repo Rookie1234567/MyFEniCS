@@ -38,7 +38,7 @@ def scalar(form, cache, degree=28):
                                       form_compiler_options={'quadrature_degree': degree}))
 
 
-def global_system(out, degree, gate):
+def global_system(out, degree, gate, *, model_spec=None):
     import ufl
     from dolfinx import fem
     from dolfinx.fem import petsc as fp
@@ -47,7 +47,7 @@ def global_system(out, degree, gate):
     from .pstddm_model import build_problem
     from .pstddm_dtn_coupling import assemble_dtn_blocks
     start = time.monotonic()
-    p = build_problem('dtn', out, degree)
+    p = build_problem('dtn', out, degree, model_spec=model_spec)
     assert PETSc.COMM_WORLD.size == 1 and np.dtype(PETSc.ScalarType).name == 'complex128'
     cache = out / 'cache'
     gate('global_volume_assembly', 256 << 20)
@@ -92,28 +92,34 @@ global boundaries retain exactly their original Fourier-DtN blocks.
     from .fullspace_pml_double_sweep import (
         _physical_local_row_map, _copy_local_material_tags, _cell_midpoint_data, _grid_key,
     )
-    from .pstddm_model import X, Y, Z
     from src.constraints.floquet_3d import build_double_floquet_mpc
     from src.geometry.hybrid_local_mesh import _local_boundary_tags
     from src.geometry.mesh_builder_3d import _structured_hexa_mesh
 
-    if count not in (2, 4):
-        raise ValueError('The frozen four-z-cell mesh admits only N=2 or N=4 here')
+    if count not in (2, 4, 8):
+        raise ValueError('The workstation profile admits only N=2, N=4, or readmitted N=8')
     p, cfg, cache = system.p, system.p.cfg, system.cache
+    model = p.model_spec
+    x_values = np.asarray(model.x_axis_nm, dtype=np.float64)
+    y_values = np.asarray(model.y_axis_nm, dtype=np.float64)
+    z_values = np.asarray(model.z_axis_nm, dtype=np.float64)
+    nz = z_values.size - 1
+    if nz % count:
+        raise ValueError(f'{nz} physical z layers cannot be divided into N={count} partitions')
     start_time = time.monotonic()
-    bounds = np.arange(0, 5, 4 // count)
+    bounds = np.linspace(0, nz, count + 1, dtype=np.int64)
     n = system.M.shape[0]
     gate('mass_factor', 4*n*n*16)
     mass_factor = splu(system.M.tocsc())
     cells, mid = _cell_midpoint_data(p.V.mesh)
-    part = np.searchsorted(np.asarray(Z)[bounds], mid[:, 2], side='right') - 1
+    part = np.searchsorted(z_values[bounds], mid[:, 2], side='right') - 1
     tags = mesh.meshtags(p.V.mesh, 3, cells, np.asarray(part+1, dtype=np.int32))
     dx = ufl.Measure('dx', domain=p.V.mesh, subdomain_data=tags)
     u, v = ufl.TrialFunction(p.V), ufl.TestFunction(p.V)
     z = ufl.SpatialCoordinate(p.V.mesh)[2]
     Mi, Bi = [], []
     for i in range(count):
-        a, b = Z[bounds[i]], Z[bounds[i+1]]
+        a, b = z_values[bounds[i]], z_values[bounds[i+1]]
         t = (z-a)/(b-a)
         beta = 1 - 3*t*t + 2*t*t*t
         Mi.append((system.T.conj().T @ assemble(ufl.inner(u, v)*dx(i+1), cache) @ system.T).tocsr())
@@ -124,23 +130,23 @@ global boundaries retain exactly their original Fourier-DtN blocks.
     sigma = 3*np.log(100)/(cfg.k0*np.sin(np.deg2rad(1.0))*10.0)
     pairs = []
     assembly_seconds = factor_seconds = 0.0
-    tolerance = 1e-9 * max(np.ptp(X), np.ptp(Y), np.ptp(Z), 1.)
+    tolerance = 1e-9 * max(np.ptp(x_values), np.ptp(y_values), np.ptp(z_values), 1.)
     for i in range(count-1):
         t0 = time.monotonic()
         lo, hi = int(bounds[i]), int(bounds[i+2])
-        physical_z = np.asarray(Z[lo:hi+1])
+        physical_z = z_values[lo:hi+1]
         depths = 10*np.cumsum(np.asarray([1., 1.25]))/2.25
         lz = np.r_[physical_z[0]-depths[::-1] if lo else [], physical_z,
-                   physical_z[-1]+depths if hi < 4 else []]
+                   physical_z[-1]+depths if hi < nz else []]
         left_count = 2 if lo else 0
-        local = _structured_hexa_mesh(p.V.mesh.comm, np.asarray(X), np.asarray(Y), lz,
+        local = _structured_hexa_mesh(p.V.mesh.comm, x_values, y_values, lz,
                                       preserve_input_partition=False)
         local.topology.create_connectivity(2, 3)
         lcell, lmid = _cell_midpoint_data(local)
         layer = np.searchsorted(lz, lmid[:, 2], side='right')-1
         physical = lcell[(layer >= left_count) & (layer < left_count+hi-lo)]
         material, _, pml_cells, _, _, _ = _copy_local_material_tags(
-            p.V.mesh, p.mesh_data, local, np.asarray(Z), lz, lo, hi,
+            p.V.mesh, p.mesh_data, local, z_values, lz, lo, hi,
             left_count, hi-lo, tolerance, 100)
         facet, _ = _local_boundary_tags(local, cfg, z_min=float(lz[0]), z_max=float(lz[-1]))
         md = SimpleNamespace(mesh=local, cell_tags=material, facet_tags=facet)
@@ -173,7 +179,7 @@ global boundaries retain exactly their original Fourier-DtN blocks.
             eps.x.array[Q.dofmap.cell_dofs(int(c))] = values[int(tag)]
         x = ufl.SpatialCoordinate(local)
         dl = ufl.conditional(ufl.lt(x[2], physical_z[0]), (physical_z[0]-x[2])/10, 0.) if lo else 0.
-        dr = ufl.conditional(ufl.gt(x[2], physical_z[-1]), (x[2]-physical_z[-1])/10, 0.) if hi < 4 else 0.
+        dr = ufl.conditional(ufl.gt(x[2], physical_z[-1]), (x[2]-physical_z[-1])/10, 0.) if hi < nz else 0.
         stretch = 1 + 1j*sigma*(dl*dl+dr*dr)
         muinv = ufl.diag(ufl.as_vector([1/stretch, 1/stretch, stretch]))
         epst = ufl.diag(ufl.as_vector([eps*stretch, eps*stretch, eps/stretch]))
@@ -182,7 +188,7 @@ global boundaries retain exactly their original Fourier-DtN blocks.
                 - cfg.k0**2*ufl.inner(epst*lu, lv))*ufl.dx
         gate(f'local_assembly_pair_{i}', 256 << 20)
         L = (Tl.conj().T @ assemble(form, cache) @ Tl).tocsr()
-        for side, include in [('bottom', lo == 0), ('top', hi == 4)]:
+        for side, include in [('bottom', lo == 0), ('top', hi == nz)]:
             if include:
                 ids = np.asarray([j for j, mode in enumerate(system.dtn.modes) if mode.side == side])
                 L = L - S @ system.C[:, ids] @ system.D[ids, :] @ S.T
@@ -193,20 +199,20 @@ global boundaries retain exactly their original Fourier-DtN blocks.
             if n2_operator_relative > 1e-12:
                 raise RuntimeError(f'N2 original operator mismatch {n2_operator_relative}')
         boundary = []
-        for endpoint, include in [(lz[0], lo > 0), (lz[-1], hi < 4)]:
+        for endpoint, include in [(lz[0], lo > 0), (lz[-1], hi < nz)]:
             if include:
                 facets = mesh.locate_entities_boundary(local, 2, lambda xx, zz=endpoint: np.isclose(xx[2], zz, atol=tolerance, rtol=0))
                 boundary.extend(fem.locate_dofs_topological(V, 2, facets).tolist())
         bc = np.flatnonzero(np.asarray(abs(Tl[np.unique(boundary).astype(int)]).sum(axis=0)).ravel() > 0) if boundary else np.asarray([], int)
         free = np.setdiff1d(np.arange(Tl.shape[1]), bc)
         # Layer-local commutator support is integrated, including grad(beta).
-        lp = np.searchsorted(np.asarray(Z)[bounds], lmid[:, 2], side='right')-1
+        lp = np.searchsorted(z_values[bounds], lmid[:, 2], side='right')-1
         ltags = mesh.meshtags(local, 3, physical, np.asarray(lp[physical]+1, np.int32))
         ldx = ufl.Measure('dx', domain=local, subdomain_data=ltags)
         commutators = []
         weak_product_errors = []
         for target, decreasing in [(i+1, True), (i, False)]:
-            a, b = Z[bounds[target]], Z[bounds[target+1]]
+            a, b = z_values[bounds[target]], z_values[bounds[target+1]]
             t = (x[2]-a)/(b-a)
             beta = 1-3*t*t+2*t*t*t if decreasing else 3*t*t-2*t*t*t
             cb = (ufl.inner(ufl.cross(ufl.grad(beta), lu), ufl.curl(lv))
@@ -281,6 +287,11 @@ global boundaries retain exactly their original Fourier-DtN blocks.
     if reproduction > 1e-10:
         raise RuntimeError(f'Conforming reconstruction map defect {reproduction}')
     metadata = {'partition_count': count, 'bounds_cell_indices': bounds.tolist(),
+                'bounds_z_nm': z_values[bounds].tolist(),
+                'physical_z_axis_nm': z_values.tolist(),
+                'geometry_identity': model.geometry_identity,
+                'wavelength_nm': float(model.wavelength_nm),
+                'local_pml_profile': 'two_cells_per_internal_side_10nm_ratio1p25_quadratic_v1',
                 'pml_thickness_nm': 10., 'pml_cells_per_side': 2, 'pml_grading_ratio': 1.25,
                 'sigma_max': float(sigma), 'mass_partition_relative': float(split_defect),
                 'reconstruction_relative': float(reproduction), 'local_assembly_seconds': assembly_seconds,
