@@ -127,7 +127,9 @@ class PublicMumpsFactor:
             self.close_error=exc;FAILED_OWNERS.append(self);raise
 
 
-def incore_memory_budget(info, nnz, observation, *, available_floor_bytes):
+def incore_memory_budget(info, nnz, observation, *, available_floor_bytes,
+                         mumps_task_limit_bytes=10_000_000_000,
+                         future_co_resident_reserve_bytes=0):
     """MUMPS 5.8.2 in-core policy; INFOG16 already includes ICNTL14.
 
     ICNTL23 caps MUMPS workspace only, NOT process RSS. PETSc conversion is
@@ -135,21 +137,27 @@ def incore_memory_budget(info, nnz, observation, *, available_floor_bytes):
     copy even when complex-double SeqAIJ aliases values), plus 256 MiB outside
     MUMPS. The independent 512 MiB stage margin is never lent to the factor.
     """
-    if type(nnz) is not int or nnz < 1 or type(available_floor_bytes) is not int or available_floor_bytes < 2**30:
+    if (type(nnz) is not int or nnz < 1 or type(available_floor_bytes) is not int
+            or available_floor_bytes < 2**30 or type(mumps_task_limit_bytes) is not int
+            or mumps_task_limit_bytes < 2**30
+            or type(future_co_resident_reserve_bytes) is not int
+            or future_co_resident_reserve_bytes < 0):
         raise ValueError("positive exact nnz and >=1GiB available floor required")
     need=info["16"]
     values=[need,observation["effective_cap_bytes"],observation["live_tree_and_supervisor_bytes"],
             observation["system"]["available"],observation["margin_bytes"]]
     if any(type(v) is not int or v < 0 for v in values) or need < 1 or values[-1] < 512*2**20:
         raise ValueError("finite exact integer live memory/INFOG16 observations required")
-    external=24*nnz+256*2**20
-    available=min(min(values[1],10_000_000_000)-values[2], values[3]-available_floor_bytes)
+    external=24*nnz+256*2**20+future_co_resident_reserve_bytes
+    available=min(min(values[1],mumps_task_limit_bytes)-values[2], values[3]-available_floor_bytes)
     observation_slack=16*2**20
     workspace_budget=available-values[4]-external-observation_slack
     cap_mb=workspace_budget//1_000_000
     return {"policy":"mumps582-incore-live-workspace-cap-v2",
             "required_INFOG16_MB":need,"INFOG26_OOC_diagnostic_only":info["26"],
             "matrix_stored_nnz":nnz,"petsc_conversion_upper_bytes":24*nnz,
+            "mumps_task_limit_bytes":mumps_task_limit_bytes,
+            "future_co_resident_reserve_bytes":future_co_resident_reserve_bytes,
             "outside_mumps_reserve_bytes":256*2**20,"external_future_bytes":external,
             "independent_margin_bytes":values[4],"available_floor_bytes":available_floor_bytes,
             "uncommitted_observation_slack_bytes":observation_slack,
@@ -195,8 +203,14 @@ def symbolic_memory_preflight(matrix, options, *, admit, directory):
     if isinstance(nz,bool) or not float(nz).is_integer() or nz<1:raise RuntimeError("invalid actual stored nnz")
     observation=admit("mumps_numeric_budget_observation",0,
                       estimate_basis="symbolic factor released; observe actual live headroom before choosing ICNTL23")
+    floor_bytes=observation.get("available_floor_bytes")
+    if floor_bytes is None:
+        floor_bytes=int(os.environ["TASK44_AVAILABLE_FLOOR_BYTES"])
+    task_limit=observation.get("mumps_task_limit_bytes",10_000_000_000)
     budget=incore_memory_budget(info,int(nz),observation,
-                               available_floor_bytes=int(os.environ["TASK44_AVAILABLE_FLOOR_BYTES"]))
+                               available_floor_bytes=int(floor_bytes),
+                               mumps_task_limit_bytes=int(task_limit),
+                               future_co_resident_reserve_bytes=observation.get("future_co_resident_reserve_bytes",0))
     record.update(budget)
     atomic_json(Path(directory,"symbolic_preflight.json"),record)
     if not budget["passed"]:raise RuntimeError("MUMPS_INCORE_WORKSPACE_CAP_BELOW_ANALYSIS_REQUIREMENT")

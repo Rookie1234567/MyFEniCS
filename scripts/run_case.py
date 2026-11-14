@@ -112,6 +112,19 @@ def main(argv: list[str] | None = None) -> int:
     try:
         from src.io.input_loader import load_dat_input
         marker = load_dat_input(args.input_path)
+        if marker.document.get("model") == "pstddm_p6_convergence_workstation":
+            defaults = vars(_parser().parse_args([str(args.input_path)]))
+            changed = {key for key, value in vars(args).items() if value != defaults[key]}
+            if changed - {"validate_only", "dry_run"}:
+                raise InputError("p6 convergence accepts only --validate-only or --dry-run")
+            from src.runners.pstddm_p6_convergence import run_p6_convergence_case
+            result = run_p6_convergence_case(
+                args.input_path, dry_run=bool(args.validate_only or args.dry_run),
+            )
+            print(json.dumps(result, sort_keys=True, allow_nan=False))
+            return 0 if result["status"] in {
+                "VALID_CONFIGURATION_NOT_RUN", "DIRECT_NUMERICAL_AND_PHYSICAL_PASS"
+            } else 4
         if marker.document.get("model") == "pstddm_stationary_workstation_pilot":
             defaults = vars(_parser().parse_args([str(args.input_path)]))
             changed = {key for key, value in vars(args).items() if value != defaults[key]}

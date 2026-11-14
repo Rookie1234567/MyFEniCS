@@ -25,6 +25,31 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class WorkstationProfileFixtures(unittest.TestCase):
+    def test_p6_budget_is_explicit_and_historical_profile_stays_unchanged(self):
+        self.assertEqual(supervise._workstation_limits(
+            'workstation', 'pstddm_stationary_workstation_pilot'),
+            (8_000_000_000, 1800, 'budget_ledger.json'))
+        self.assertEqual(supervise._workstation_limits(
+            'workstation-p6', 'pstddm_p6_convergence_workstation'),
+            (64 << 30, 7200, 'budget_ledger_p6.json'))
+        with self.assertRaisesRegex(ValueError, 'profile/model'):
+            supervise._workstation_limits('workstation-p6', 'pstddm_stationary_workstation_pilot')
+        facts = dict(memory_current_bytes=60 << 30, memory_max_bytes=64 << 30,
+                     swap_current_bytes=0, swap_max_bytes=0)
+        validate_workstation_cgroup('/p6', facts, '/abi', tree_limit_bytes=64 << 30)
+        with self.assertRaisesRegex(ValueError, 'memory.max'):
+            validate_workstation_cgroup('/p6', facts, '/abi')
+        with self.assertRaises(MemoryError):
+            validate_workstation_cgroup('/p6', facts, '/abi',
+                                        tree_limit_bytes=64 << 30, future_bytes=4 << 30)
+        with self.assertRaisesRegex(ValueError, 'swap'):
+            validate_workstation_cgroup('/p6', {**facts, 'swap_current_bytes':1},
+                                        '/abi', tree_limit_bytes=64 << 30)
+        with self.assertRaisesRegex(MemoryError, 'ancestor'):
+            validate_workstation_cgroup('/p6', {**facts, 'ancestors':[
+                dict(path='/parent', memory_max_bytes=100 << 30, memory_current_bytes=99 << 30)]},
+                '/abi', tree_limit_bytes=64 << 30, future_bytes=1 << 30)
+
     def test_13p5_direct_dat_dry_run_is_a_no_fe_preflight(self):
         result = run_workstation_case(
             ROOT / "input/pstddm_workstation_pilot/13p5_direct.dat", dry_run=True,

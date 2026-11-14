@@ -82,6 +82,8 @@ class SimulationConfig3D:
     # geometry from its name or silently fall back to a different mesh plan.
     geometry_model_variant: str | None = None
     geometry_identity: str | None = None
+    # Explicit opt-in for exact material geometry cache/build paths.
+    stage4_preserve_exact_geometry: bool = False
     n_substrate: complex | None = None
     n_grating: complex | None = None
     # Opt-in interface-fitted multilayer pillar; legacy single material unchanged.
@@ -691,6 +693,8 @@ class SimulationConfig3D:
         ):
             if data.get(key) is None:
                 data.pop(key, None)
+        if not self.stage4_preserve_exact_geometry:
+            data.pop("stage4_preserve_exact_geometry", None)
         for key in ("n_air", "mu_r", "n_substrate", "n_grating", "incident_amplitude"):
             data[key] = _complex_or_none(data[key])
         if self.grating_layer_indices is not None:

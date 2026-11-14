@@ -207,6 +207,17 @@ def _workstation_cgroup():
     facts={name:int((path/file).read_text().strip()) for name,file in (
         ('memory_current_bytes','memory.current'),('memory_max_bytes','memory.max'),
         ('swap_current_bytes','memory.swap.current'),('swap_max_bytes','memory.swap.max'))}
+    ancestors=[]
+    parent=path.parent
+    while parent!=root:
+        if not parent.is_relative_to(root):raise RuntimeError('invalid cgroup ancestor')
+        if (parent/'memory.max').is_file():
+            limit=(parent/'memory.max').read_text().strip()
+            ancestors.append({'path':str(parent),
+                              'memory_max_bytes':None if limit=='max' else int(limit),
+                              'memory_current_bytes':int((parent/'memory.current').read_text().strip())})
+        parent=parent.parent
+    facts['ancestors']=ancestors
     return path,facts
 
 
@@ -219,6 +230,7 @@ def _workstation_group(pgid):
             if group!=pgid:continue
             status=dict(line.split(':',1) for line in (stat_path.parent/'status').read_text().splitlines() if ':' in line)
             rows.append({'pid':pid,'ppid':ppid,
+                         'start_ticks':int(rest[19]),
                          'rss_bytes':int(status.get('VmRSS','0 kB').split()[0])*1024,
                          'swap_bytes':int(status.get('VmSwap','0 kB').split()[0])*1024})
         except (FileNotFoundError,ProcessLookupError,PermissionError,ValueError,IndexError):
@@ -239,9 +251,32 @@ def _workstation_prepare_case_output(output,runtime,identity):
     return identity
 
 
+def _workstation_limits(profile, model):
+    """Explicit opt-in budgets; the historical p2 contract is unchanged."""
+    profiles = {
+        'workstation': ('pstddm_stationary_workstation_pilot', 8_000_000_000, 1800,
+                        'budget_ledger.json'),
+        'workstation-p6': ('pstddm_p6_convergence_workstation', 64*G, 7200,
+                           'budget_ledger_p6.json'),
+    }
+    if profile not in profiles or model != profiles[profile][0]:
+        raise ValueError('workstation profile/model mismatch')
+    _, cap, case_seconds, ledger_name = profiles[profile]
+    return cap, case_seconds, ledger_name
+
+
+def _workstation_file_hash(path):
+    digest = hashlib.sha256()
+    with path.open('rb') as stream:
+        for chunk in iter(lambda: stream.read(1 << 20), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def _workstation_profile_main(argv=None):
+    case_started=time.monotonic()
     parser=argparse.ArgumentParser(description='Native-Linux workstation PSTDDM resource profile.')
-    parser.add_argument('--profile',choices=('workstation',),required=True)
+    parser.add_argument('--profile',choices=('workstation','workstation-p6'),required=True)
     parser.add_argument('input',type=Path)
     parser.add_argument('--scope-root',type=Path,required=True)
     parser.add_argument('--runs-root',type=Path,required=True)
@@ -257,6 +292,7 @@ def _workstation_profile_main(argv=None):
     if subprocess.check_output(['git','ls-files','--others','--exclude-standard'],cwd=ROOT,text=True).strip():
         raise RuntimeError('workstation run requires frozen tracked source and inputs')
     with input_path.open('rb') as stream:document=tomllib.load(stream)
+    tree_limit,case_seconds,ledger_name=_workstation_limits(args.profile,document.get('model'))
     case_id=str(document.get('case_id',''))
     if not case_id or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-' for c in case_id):
         raise ValueError('unsafe or missing case_id')
@@ -266,29 +302,37 @@ def _workstation_profile_main(argv=None):
     lock_path=scope/'run.lock'
     with lock_path.open('a') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
-        ledger_path=scope/'budget_ledger.json'
+        ledger_path=scope/ledger_name
+        for other_name in ('budget_ledger.json','budget_ledger_p6.json'):
+            other_path=scope/other_name
+            if other_path.exists() and any(row.get('status')=='running'
+                                          for row in json.loads(other_path.read_text())):
+                raise RuntimeError('an unfinished workstation attempt is already reserved')
         ledger=json.loads(ledger_path.read_text()) if ledger_path.exists() else []
         if any(row.get('status')=='running' for row in ledger):
             raise RuntimeError('an unfinished attempt is already reserved')
         if len(ledger)>=10:raise RuntimeError('shared ten-attempt budget is exhausted')
         previous=sum(float(row.get('wall_seconds',0.)) for row in ledger)
-        if previous+1800>21600:raise RuntimeError('not enough cumulative time remains for a full case reserve')
+        if previous+case_seconds>21600:raise RuntimeError('not enough cumulative time remains for a full case reserve')
         from src.runners.pstddm_workstation_case import (
             qualified_native_runtime_receipt, validate_workstation_cgroup,
         )
         runtime=qualified_native_runtime_receipt(scope)
         cgroup_path,cg=_workstation_cgroup()
-        validate_workstation_cgroup(str(cgroup_path),cg,str(runtime['preparation_cgroup']['path']))
+        validate_workstation_cgroup(str(cgroup_path),cg,str(runtime['preparation_cgroup']['path']),
+                                    tree_limit_bytes=tree_limit)
         memory=_workstation_meminfo();disk=shutil.disk_usage(scope).free
         if memory['MemAvailable']<400*G or disk<400_000_000_000:
             raise RuntimeError('initial host reserve or 400 GB disk floor failed')
         if any(os.environ.get(name)!='1' for name in THREADS):raise RuntimeError('thread contract failed')
         sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
         tracked=subprocess.check_output(['git','ls-files','src','scripts','benchmarks/pstddm_partition_pilot',
-                                        'input/pstddm_workstation_pilot'],cwd=ROOT,text=True).splitlines()
+                                        'input/pstddm_workstation_pilot',
+                                        'input/pstddm_p6_convergence_workstation'],cwd=ROOT,text=True).splitlines()
         hashes={path:hashlib.sha256((ROOT/path).read_bytes()).hexdigest() for path in tracked}
         input_sha=hashlib.sha256(input_path.read_bytes()).hexdigest()
-        reservation={'case_id':case_id,'status':'running','reserved_seconds':1800,'wall_seconds':0.,
+        reservation={'case_id':case_id,'status':'running','reserved_seconds':case_seconds,'wall_seconds':0.,
+                     'profile':args.profile,'ledger_path':str(ledger_path),
                      'source_sha':sha,'input_sha256':input_sha,
                      'started_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
                      'supervisor_pid':os.getpid(),'branch':'task40extra_dot_parallel_cloud'}
@@ -299,14 +343,15 @@ def _workstation_profile_main(argv=None):
             'scope_root':str(scope),'runs_root':str(runs),'cgroup_path':str(cgroup_path),
             'initial_cgroup':cg,'initial_MemAvailable_bytes':memory['MemAvailable'],
             'initial_disk_free_bytes':disk,'host_reserve_bytes':400*G,
-            'tree_limit_bytes':8_000_000_000,'staging_reserve_bytes':512<<20})
+            'tree_limit_bytes':tree_limit,'case_seconds':case_seconds,'profile':args.profile,
+            'ledger_path':str(ledger_path),'staging_reserve_bytes':512<<20})
         env=os.environ.copy();env.update({
             'PSTDDM_WORKSTATION_SUPERVISOR_PID':str(os.getpid()),
             'PSTDDM_WORKSTATION_SCOPE_ROOT':str(scope),'PSTDDM_WORKSTATION_OUTPUT':str(output),
             'TMPDIR':str(output/'tmp'),'TMP':str(output/'tmp'),'TEMP':str(output/'tmp'),
             'XDG_CACHE_HOME':str(output/'cache')})
         command=[str(Path(sys.executable).absolute()),'-I','-B',str(ROOT/'scripts/run_case.py'),str(input_path)]
-        start=time.monotonic();samples=[];reason=None;process=None
+        start=case_started;samples=[];reason=None;process=None
         with (output/'stdout.log').open('wb') as stdout,(output/'stderr.log').open('wb') as stderr:
             try:
                 process=subprocess.Popen(command,cwd=ROOT,env=env,stdout=stdout,stderr=stderr,start_new_session=True)
@@ -319,13 +364,14 @@ def _workstation_profile_main(argv=None):
                             'process_tree_swap_bytes':swap,'processes':procs,'MemAvailable_bytes':mem['MemAvailable'],
                             'host_total_bytes':mem['MemTotal'],'disk_free_bytes':free,'cgroup':facts}
                     samples.append(sample)
-                    if rss+(512<<20)>8_000_000_000:raise RuntimeError('process tree exceeded 8e9 B with staging reserve')
+                    if rss+(512<<20)>tree_limit:raise RuntimeError('process tree exceeded profile cap with staging reserve')
                     if swap or facts['swap_current_bytes']:raise RuntimeError('task process group/cgroup used swap')
                     validate_workstation_cgroup(str(cgroup_path),facts,
-                                                str(runtime['preparation_cgroup']['path']))
+                                                str(runtime['preparation_cgroup']['path']),
+                                                tree_limit_bytes=tree_limit)
                     if mem['MemAvailable']<400*G:raise RuntimeError('host MemAvailable crossed 400 GiB reserve')
                     if free<400_000_000_000:raise RuntimeError('task disk free space crossed 400 GB floor')
-                    if elapsed>=1800 or previous+elapsed>=21600:raise RuntimeError('case/shared wall budget reached')
+                    if elapsed>=case_seconds or previous+elapsed>=21600:raise RuntimeError('case/shared wall budget reached')
                     if int(elapsed)%15==0 and (len(samples)==1 or int(samples[-2]['elapsed_seconds'])!=int(elapsed)):
                         print(json.dumps({'heartbeat_seconds':round(elapsed,1),'rss_bytes':rss,
                                           'available_bytes':mem['MemAvailable'],'disk_free_bytes':free}),flush=True)
@@ -371,20 +417,29 @@ def _workstation_profile_main(argv=None):
                 'final_disk_free_bytes':free,'final_cgroup':final_cg,
                 'remaining_descendants':remaining,
                 'final_cgroup_swap_current_bytes':final_cg['swap_current_bytes'],
-                'budget_limits':{'attempt_count':10,'cumulative_seconds':21600,'case_seconds':1800,
-                    'tree_bytes':8_000_000_000,'staging_reserve_bytes':512<<20,
+                'budget_limits':{'attempt_count':10,'cumulative_seconds':21600,'case_seconds':case_seconds,
+                    'tree_bytes':tree_limit,'staging_reserve_bytes':512<<20,
                     'host_reserve_bytes':400*G,'disk_floor_bytes':400_000_000_000},'command':command}
         _workstation_json(output/'resource_samples.json',samples)
         _workstation_json(output/'supervision.json',record)
         artifacts={}
         for path in sorted(output.rglob('*')):
             if path.is_file() and path.name not in ('artifact_hashes.json','stdout.log','stderr.log'):
-                artifacts[str(path.relative_to(output))]={'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),
+                artifacts[str(path.relative_to(output))]={'sha256':_workstation_file_hash(path),
                                                             'bytes':path.stat().st_size}
+        _workstation_json(output/'artifact_hashes.json',artifacts)
+        record['wall_seconds']=time.monotonic()-case_started
+        record['wall_scope']='supervisor entry through cleanup and required artifact hashing'
+        if record['wall_seconds']>=case_seconds or previous+record['wall_seconds']>=21600:
+            record['status']='CONTROLLED_STOP'
+            record['stop_reason']=(record['stop_reason'] or '')+' closeout_exceeded_case_or_shared_budget'
+        _workstation_json(output/'supervision.json',record)
+        artifacts['supervision.json']={'sha256':_workstation_file_hash(output/'supervision.json'),
+                                      'bytes':(output/'supervision.json').stat().st_size}
         _workstation_json(output/'artifact_hashes.json',artifacts)
         ledger[-1]=record;_workstation_json(ledger_path,ledger)
         print(json.dumps(record,indent=2),flush=True)
-        return 0 if status=='COMPLETED_PROCESS_REVIEW_PENDING' else 2
+        return 0 if record['status']=='COMPLETED_PROCESS_REVIEW_PENDING' else 2
 
 
 def _git_branch():
@@ -392,7 +447,7 @@ def _git_branch():
 
 
 if __name__=='__main__':
-    if sys.argv[1:2]==['--profile'] and len(sys.argv)>2 and sys.argv[2]=='workstation':
+    if sys.argv[1:2]==['--profile'] and len(sys.argv)>2 and sys.argv[2] in ('workstation','workstation-p6'):
         raise SystemExit(_workstation_profile_main(sys.argv[1:]))
     if sys.argv[1:2]==['--profile'] and len(sys.argv)>2 and sys.argv[2]=='cloud':
         sys.argv=sys.argv[:1]+sys.argv[3:]

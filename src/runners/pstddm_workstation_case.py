@@ -90,17 +90,26 @@ def validate_workstation_cgroup(
     *,
     reserve_bytes: int = STAGING_RESERVE_BYTES,
     future_bytes: int = 0,
+    tree_limit_bytes: int = TREE_LIMIT_BYTES,
 ) -> None:
     """Validate the live case unit independently of the imports-only unit."""
     if active_path == preparation_path:
         raise ValueError("case cgroup must be separate from the ABI-preflight cgroup")
-    if active_facts.get("memory_max_bytes") != TREE_LIMIT_BYTES:
-        raise ValueError("case cgroup memory.max must equal 8,000,000,000 B")
+    if tree_limit_bytes not in (TREE_LIMIT_BYTES, 64 << 30):
+        raise ValueError("unregistered workstation task cap")
+    if reserve_bytes < 0 or future_bytes < 0:
+        raise ValueError("resource reserves must be nonnegative")
+    if active_facts.get("memory_max_bytes") != tree_limit_bytes:
+        raise ValueError(f"case cgroup memory.max must equal {tree_limit_bytes} B")
     if active_facts.get("swap_max_bytes") != 0 or active_facts.get("swap_current_bytes") != 0:
         raise ValueError("case cgroup swap must remain zero")
-    current = active_facts.get("memory_current_bytes", TREE_LIMIT_BYTES)
-    if current + future_bytes + reserve_bytes > TREE_LIMIT_BYTES:
+    current = active_facts.get("memory_current_bytes", tree_limit_bytes)
+    if current + future_bytes + reserve_bytes > tree_limit_bytes:
         raise MemoryError("case cgroup current plus staging reserve exceeds memory.max")
+    for ancestor in active_facts.get("ancestors", []):
+        limit = ancestor["memory_max_bytes"]
+        if limit is not None and ancestor["memory_current_bytes"] + future_bytes + reserve_bytes > limit:
+            raise MemoryError(f"ancestor cgroup headroom is insufficient: {ancestor['path']}")
 
 
 def _source_sha() -> str:

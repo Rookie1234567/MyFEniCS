@@ -82,7 +82,8 @@ FAILED_BOUNDED_FACTOR_ROOTS = []
 def _stage4_preserve_exact_geometry(cfg: SimulationConfig3D) -> bool:
     """Keep Task40's local cache geometry identical to its native mesh."""
 
-    return (cfg.geometry_identity == TASK40_GEOMETRY_IDENTITY
+    return (cfg.stage4_preserve_exact_geometry
+            or cfg.geometry_identity == TASK40_GEOMETRY_IDENTITY
             or cfg.grating_layer_thicknesses_nm is not None)
 
 
@@ -2251,12 +2252,13 @@ def _solve_augmented_system(
     progress_comm = comm if comm is not None else A_aug.getComm()
     symbolic_admission = None
     if resource_preflight:
-        from ..common.runtime_resource_policy import admit, active
+        from ..common.runtime_resource_policy import admit, active, disk_reserve_bytes
         from .bounded_mumps import symbolic_memory_preflight
         if not active() or out_dir is None:
             raise RuntimeError("bounded exact factorization requires explicit active resource policy")
         from .pre_factor_checkpoint import save_pre_factor_checkpoint
-        checkpoint=save_pre_factor_checkpoint(A_aug,b_aug,out_dir/"pre_factor_checkpoint",admit=admit)
+        checkpoint=save_pre_factor_checkpoint(A_aug,b_aug,out_dir/"pre_factor_checkpoint",admit=admit,
+                                             disk_reserve_bytes=disk_reserve_bytes(2**31))
         symbolic_admission = symbolic_memory_preflight(A_aug, petsc_options, admit=admit,
                                                        directory=out_dir / "mumps_symbolic")
         petsc_options = dict(petsc_options)
