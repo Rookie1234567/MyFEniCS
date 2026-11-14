@@ -8,6 +8,8 @@ import unittest
 from unittest.mock import patch
 
 from benchmarks.pstddm_partition_pilot import supervise
+from benchmarks.pstddm_partition_pilot.workstation_review import review_saved_n2_pair
+from scipy import sparse
 from src.runners.pstddm_workstation_case import (
     _sha256,
     _source_sha,
@@ -107,6 +109,49 @@ class WorkstationProfileFixtures(unittest.TestCase):
                     validate_supervisor_handoff(
                         case_path, case_id, input_sha, scope, output, parent_pid=parent_pid,
                     )
+
+    def test_n2_local_review_missing_matrices_is_explicitly_not_recomputable(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            original = sparse.eye(2, format="csr", dtype=complex)
+            result = review_saved_n2_pair(
+                root / "pair0_map.npz", root / "pair0_L.npz", original,
+                in_process_relative=4.2e-15,
+            )
+        self.assertEqual(result["status"], "NOT_RECOMPUTABLE_MISSING_SAVED_LOCAL_MATRICES")
+        self.assertEqual(result["missing_files"], ["pair0_map.npz", "pair0_L.npz"])
+        self.assertEqual(result["in_process_n2_operator_relative"], 4.2e-15)
+        self.assertIsNone(result["independent_operator_relative"])
+
+    def test_n2_local_review_recomputes_complete_saved_matrices(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pair_map = sparse.eye(2, format="csr", dtype=complex)
+            local = sparse.diags([2.0, 3.0], format="csr", dtype=complex)
+            original = pair_map.T @ local @ pair_map
+            sparse.save_npz(root / "pair0_map.npz", pair_map)
+            sparse.save_npz(root / "pair0_L.npz", local)
+            result = review_saved_n2_pair(
+                root / "pair0_map.npz", root / "pair0_L.npz", original,
+                in_process_relative=0.0,
+            )
+        self.assertEqual(result["status"], "INDEPENDENT_N2_LOCAL_MATRIX_RECOMPUTATION_PASS")
+        self.assertEqual(result["missing_files"], [])
+        self.assertEqual(result["independent_operator_relative"], 0.0)
+
+    def test_n2_local_review_fails_for_complete_but_mismatched_matrices(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pair_map = sparse.eye(2, format="csr", dtype=complex)
+            local = sparse.diags([2.0, 3.0], format="csr", dtype=complex)
+            original = sparse.diags([2.0, 4.0], format="csr", dtype=complex)
+            sparse.save_npz(root / "pair0_map.npz", pair_map)
+            sparse.save_npz(root / "pair0_L.npz", local)
+            with self.assertRaisesRegex(AssertionError, "operator mismatch"):
+                review_saved_n2_pair(
+                    root / "pair0_map.npz", root / "pair0_L.npz", original,
+                    in_process_relative=0.0,
+                )
 
 
 if __name__ == "__main__":

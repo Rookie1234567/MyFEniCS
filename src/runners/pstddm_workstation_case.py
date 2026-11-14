@@ -432,8 +432,17 @@ def run_workstation_case(input_path: str | Path, *, dry_run: bool = False) -> di
             raise ValueError("reference case must be a sibling in this task's runs directory")
         reference = _verify_reference(reference_dir, system, identity)
         core, pairs, partition = build_partition(system, int(document["partitions"]), gate)
+        from scipy import sparse
+
+        for index, pair in enumerate(pairs):
+            for name, matrix in (("map", pair.S), ("commutator_plus", pair.plus),
+                                 ("commutator_minus", pair.minus), ("L", pair.L)):
+                sparse.save_npz(output / f"pair{index}_{name}.npz", matrix)
         (output / "partition_audit.json").write_text(json.dumps(_plain(partition), indent=2, allow_nan=False) + "\n")
         result = candidate(system, core, reference, output)
+        partition["actual_solve_counts"] = [pair.solve_count for pair in pairs]
+        partition["actual_solve_seconds"] = [pair.solve_seconds for pair in pairs]
+        (output / "partition_audit.json").write_text(json.dumps(_plain(partition), indent=2, allow_nan=False) + "\n")
         manifest["reference_case_id"] = document["reference_case_id"]
         manifest["reference_source_sha"] = json.loads((reference_dir / "run_manifest.json").read_text())["source_sha"]
         manifest["partition_count"] = int(document["partitions"])

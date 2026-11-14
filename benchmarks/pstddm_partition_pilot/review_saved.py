@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import resource
 import shutil
+import sys
 import time
 
 import numpy as np
@@ -22,6 +23,10 @@ parser.add_argument('--scope-root',type=Path)
 parser.add_argument('--case',action='append',dest='cases')
 args=parser.parse_args()
 ROOT = args.repository.resolve()
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from benchmarks.pstddm_partition_pilot.workstation_review import review_saved_n2_pair
+
 PROFILE = args.profile
 SCOPE_ROOT = args.scope_root.resolve() if args.scope_root else None
 BASE = (args.results_root.resolve() if PROFILE=='workstation' and args.results_root
@@ -431,10 +436,10 @@ def check_workstation_case(name):
             assert pair['phase_map_error']<1e-11 and pair['local_residual']<1e-9
             assert all(value<1e-11 for value in pair['weak_product_errors'])
         if partition['partition_count']==2:
-            pair_map=sparse.load_npz(p/'pair0_map.npz');local=sparse.load_npz(p/'pair0_L.npz')
-            compare=sparse_difference(pair_map.T@local@pair_map,arrays['A']-arrays['C']@arrays['D'])
-            assert compare['relative_frobenius']<1e-12
-            results['N2_original_operator_identity']=compare
+            results['N2_local_matrix_review']=review_saved_n2_pair(
+                p/'pair0_map.npz',p/'pair0_L.npz',arrays['A']-arrays['C']@arrays['D'],
+                in_process_relative=partition['pairs'][0].get('n2_operator_relative'),
+            )
     item={'case':name,'source_sha':manifest['source_sha'],'physical_sha256':manifest['physical_sha256'],
           'wavelength_nm':manifest['wavelength_nm'],'mode_count':len(modes),
           'mode_order_sha256':metadata['ordered_modes_sha256'],
@@ -477,20 +482,33 @@ def _workstation_review():
         assert len({item['mode_order_sha256'] for item in group})==1
         assert all(item['array_hashes']==group[0]['array_hashes'] for item in group)
         assert len({item['rhs_sha256'] for item in group})==1
+    local_matrix_limitations=[
+        {'case':item['case'],'status':review['status'],'missing_files':review['missing_files'],
+         'in_process_n2_operator_relative':review['in_process_n2_operator_relative']}
+        for item in cases
+        for review in [item['solutions'].get('N2_local_matrix_review',{})]
+        if review.get('status')=='NOT_RECOMPUTABLE_MISSING_SAVED_LOCAL_MATRICES'
+    ]
+    review_status=('SAVED_WORKSTATION_CASE_REVIEW_COMPLETE_WITH_LIMITATIONS'
+                   if local_matrix_limitations else 'SAVED_WORKSTATION_CASE_REVIEW_COMPLETE')
+    limits=['Only explicitly selected saved cases were reviewed; earlier FAILED and CONTROLLED_STOP ledger entries remain visible and do not block review.',
+            'Same-discrete solver/field status and qualified total-power status are reported separately.',
+            'The review recomputes saved original-system residuals, MPC defects, E/H errors, matrix identities, and resource gates; it does not rerun PDE cases.',
+            'A same-discrete pass is not mesh/modal convergence or physical/target-scale qualification.']
+    if local_matrix_limitations:
+        limits.append('Independent N=2 local-matrix recomputation is unavailable for listed cases; their saved in-process n2_operator_relative values are reported separately and are not independent recomputations.')
     guard('final')
-    result={'status':'SAVED_WORKSTATION_CASE_REVIEW_COMPLETE',
+    result={'status':review_status,
             'review_script_sha256':digest(Path(__file__)),
             'reviewed_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
             'profile':'workstation','reviewed_case_ids':list(args.cases),'cases':cases,
             'ledger_attempt_count':len(ledger),
             'ledger_status_counts':{status:sum(row.get('status')==status for row in ledger) for status in sorted(statuses)},
             'ledger_cumulative_wall_seconds':sum(float(row.get('wall_seconds',0.)) for row in ledger),
+            'independent_local_matrix_limitations':local_matrix_limitations,
             'review_peak_rss_bytes':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024,
             'review_wall_seconds':time.monotonic()-START,'review_guards':GUARDS,
-            'limits':['Only explicitly selected saved cases were reviewed; earlier FAILED and CONTROLLED_STOP ledger entries remain visible and do not block review.',
-                      'Same-discrete solver/field status and qualified total-power status are reported separately.',
-                      'The review recomputes saved original-system residuals, MPC defects, E/H errors, matrix identities, and resource gates; it does not rerun PDE cases.',
-                      'A same-discrete pass is not mesh/modal convergence or physical/target-scale qualification.']}
+            'limits':limits}
     OUT.write_text(json.dumps(result,indent=2,allow_nan=False)+'\n')
     print(json.dumps({'status':result['status'],'report':str(OUT),
                       'reviewed_case_ids':list(args.cases),
