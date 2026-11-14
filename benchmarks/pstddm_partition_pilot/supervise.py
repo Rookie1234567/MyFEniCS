@@ -273,6 +273,10 @@ def _workstation_file_hash(path):
     return digest.hexdigest()
 
 
+def _workstation_disk_floor(profile):
+    return 380_000_000_000 if profile == 'workstation-p6' else 400_000_000_000
+
+
 def _workstation_profile_main(argv=None):
     case_started=time.monotonic()
     parser=argparse.ArgumentParser(description='Native-Linux workstation PSTDDM resource profile.')
@@ -293,6 +297,7 @@ def _workstation_profile_main(argv=None):
         raise RuntimeError('workstation run requires frozen tracked source and inputs')
     with input_path.open('rb') as stream:document=tomllib.load(stream)
     tree_limit,case_seconds,ledger_name=_workstation_limits(args.profile,document.get('model'))
+    disk_floor=_workstation_disk_floor(args.profile)
     case_id=str(document.get('case_id',''))
     if not case_id or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-' for c in case_id):
         raise ValueError('unsafe or missing case_id')
@@ -322,8 +327,8 @@ def _workstation_profile_main(argv=None):
         validate_workstation_cgroup(str(cgroup_path),cg,str(runtime['preparation_cgroup']['path']),
                                     tree_limit_bytes=tree_limit)
         memory=_workstation_meminfo();disk=shutil.disk_usage(scope).free
-        if memory['MemAvailable']<400*G or disk<400_000_000_000:
-            raise RuntimeError('initial host reserve or 400 GB disk floor failed')
+        if memory['MemAvailable']<400*G or disk<disk_floor:
+            raise RuntimeError('initial host reserve or profile disk floor failed')
         if any(os.environ.get(name)!='1' for name in THREADS):raise RuntimeError('thread contract failed')
         sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
         tracked=subprocess.check_output(['git','ls-files','src','scripts','benchmarks/pstddm_partition_pilot',
@@ -370,7 +375,7 @@ def _workstation_profile_main(argv=None):
                                                 str(runtime['preparation_cgroup']['path']),
                                                 tree_limit_bytes=tree_limit)
                     if mem['MemAvailable']<400*G:raise RuntimeError('host MemAvailable crossed 400 GiB reserve')
-                    if free<400_000_000_000:raise RuntimeError('task disk free space crossed 400 GB floor')
+                    if free<disk_floor:raise RuntimeError('task disk free space crossed profile floor')
                     if elapsed>=case_seconds or previous+elapsed>=21600:raise RuntimeError('case/shared wall budget reached')
                     if int(elapsed)%15==0 and (len(samples)==1 or int(samples[-2]['elapsed_seconds'])!=int(elapsed)):
                         print(json.dumps({'heartbeat_seconds':round(elapsed,1),'rss_bytes':rss,
@@ -419,7 +424,7 @@ def _workstation_profile_main(argv=None):
                 'final_cgroup_swap_current_bytes':final_cg['swap_current_bytes'],
                 'budget_limits':{'attempt_count':10,'cumulative_seconds':21600,'case_seconds':case_seconds,
                     'tree_bytes':tree_limit,'staging_reserve_bytes':512<<20,
-                    'host_reserve_bytes':400*G,'disk_floor_bytes':400_000_000_000},'command':command}
+                    'host_reserve_bytes':400*G,'disk_floor_bytes':disk_floor},'command':command}
         _workstation_json(output/'resource_samples.json',samples)
         _workstation_json(output/'supervision.json',record)
         artifacts={}

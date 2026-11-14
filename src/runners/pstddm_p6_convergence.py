@@ -13,7 +13,7 @@ from typing import Any, Mapping
 MODEL_NAME = "pstddm_p6_convergence_workstation"
 TASK_CAP_BYTES = 64 << 30
 HOST_RESERVE_BYTES = 400 << 30
-DISK_RESERVE_BYTES = 400_000_000_000
+DISK_RESERVE_BYTES = 380_000_000_000
 STAGING_RESERVE_BYTES = 512 << 20
 CASE_SECONDS = 7200
 FULL_RESIDUAL_TOLERANCE = 1.0e-10
@@ -144,6 +144,7 @@ def build_p6_config(case: Mapping[str, Any], material: Mapping[str, Any]):
         petsc_direct_solver_profile="default",
         petsc_extra_options={**cfg.petsc_extra_options, "pc_factor_mat_solver_type": "mumps"},
         full3d_reference_export=False,
+        write_visualization_files=False,
         unique_output=False,
     )
     backend = resolve_stage4_full3d_assembly_backend(cfg, apply=True)
@@ -394,7 +395,7 @@ def _admission_callback(output: Path, scope_root: Path, preparation_cgroup: str,
         if available - int(future_bytes) - STAGING_RESERVE_BYTES < HOST_RESERVE_BYTES:
             raise MemoryError("future allocation would cross the 400 GiB host reserve")
         if disk_free < DISK_RESERVE_BYTES:
-            raise OSError("p6 direct case would cross the 400 GB disk reserve")
+            raise OSError("p6 direct case would cross the 380 GB disk reserve")
         return observation
     return admit
 
@@ -459,7 +460,7 @@ def _run_p6_convergence_case(input_path: str | Path, dry_run: bool = False) -> d
     if int(facts["memory_max_bytes"]) != TASK_CAP_BYTES or int(facts["swap_max_bytes"]) != 0:
         raise RuntimeError("workstation-p6 cgroup must be 64 GiB with swap disabled")
     if shutil.disk_usage(scope_root).free < DISK_RESERVE_BYTES:
-        raise OSError("less than 400 GB remains before p6 case start")
+        raise OSError("less than 380 GB remains before p6 case start")
 
     from src.common.strict_json import atomic_json, snapshot
     from src.common.runtime_resource_policy import resource_policy
@@ -503,13 +504,15 @@ def _run_p6_convergence_case(input_path: str | Path, dry_run: bool = False) -> d
             "case_wall_seconds": CASE_SECONDS,
         },
         "global_full_FE_matrix_exported": False,
+        "condensed_matrix_checkpoint_enabled": False,
+        "visualization_files_enabled": False,
         "solution_observer": "common p6 physical quadrature samples; no VTU interpolation",
     }
     atomic_json(output / "run_manifest.json", manifest)
     started = time.monotonic()
     admit = _admission_callback(output, scope_root, runtime["preparation_cgroup"]["path"], started)
     future, estimate = _assembly_future_bytes(plan, modes["count"])
-    with resource_policy(admit, disk_reserve_bytes=DISK_RESERVE_BYTES):
+    with resource_policy(admit, disk_reserve_bytes=DISK_RESERVE_BYTES, factor_checkpoint=False):
         admit("before_local_static_condensation_assembly", future, estimate_basis=estimate)
 
         def observer(*, field, mesh_data, config, **_kwargs):

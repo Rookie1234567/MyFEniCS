@@ -4,18 +4,21 @@ from contextvars import ContextVar
 
 _CALLBACK=ContextVar("myfenics_resource_admission",default=None)
 _DISK_RESERVE_BYTES=ContextVar("myfenics_resource_disk_reserve_bytes",default=None)
+_FACTOR_CHECKPOINT=ContextVar("myfenics_factor_checkpoint",default=True)
 
 
 @contextmanager
-def resource_policy(callback, *, disk_reserve_bytes=None):
+def resource_policy(callback, *, disk_reserve_bytes=None, factor_checkpoint=True):
     if not callable(callback) or _CALLBACK.get() is not None:
         raise ValueError("one explicit callable resource policy is required")
     if disk_reserve_bytes is not None and (type(disk_reserve_bytes) is not int or disk_reserve_bytes < 0):
         raise ValueError("disk reserve must be a non-negative exact integer")
     token=_CALLBACK.set(callback)
     disk_token=_DISK_RESERVE_BYTES.set(disk_reserve_bytes)
+    checkpoint_token=_FACTOR_CHECKPOINT.set(bool(factor_checkpoint))
     try:yield
     finally:
+        _FACTOR_CHECKPOINT.reset(checkpoint_token)
         _DISK_RESERVE_BYTES.reset(disk_token)
         _CALLBACK.reset(token)
 
@@ -34,3 +37,7 @@ def disk_reserve_bytes(default=None):
     """Return an opt-in checkpoint disk floor, preserving the legacy default."""
     configured=_DISK_RESERVE_BYTES.get()
     return default if configured is None else configured
+
+
+def factor_checkpoint_enabled():
+    return _FACTOR_CHECKPOINT.get()

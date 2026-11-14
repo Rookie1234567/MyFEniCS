@@ -258,7 +258,9 @@ def save_airbox_3d_fields(
 
     vtx_output_status = "skipped_mpi"
     vtx_output_files: list[str] = []
-    if comm.size == 1:
+    if not cfg.write_visualization_files:
+        vtx_output_status = "disabled_by_profile"
+    elif comm.size == 1:
         try:
             with io.VTXWriter(comm, out_dir / "E_3d_numerical.bp", E_num_dg) as writer:
                 writer.write(0.0)
@@ -345,7 +347,10 @@ def save_airbox_3d_fields(
         paraview_owned_cell_filter_applied = True
     paraview_cells_written = int(paraview_grid.n_cells)
 
-    if comm.size > 1:
+    if not cfg.write_visualization_files:
+        paraview_path = None
+        paraview_cells_written = 0
+    elif comm.size > 1:
         # PyVista writes one local VTU per rank.  Rank0 writes the collection
         # file after a barrier so ParaView can open the distributed result.
         paraview_path = out_dir / "fields_3d_for_paraview_parallel.pvd"
@@ -393,7 +398,7 @@ def save_airbox_3d_fields(
         "mean_poynting_W_per_m2": mean_poynting.tolist(),
         "poynting_direction_cosine": poynting_cosine,
         "curl_postprocess_success": True,
-        "paraview_file": str(paraview_path),
+        "paraview_file": None if paraview_path is None else str(paraview_path),
         "postprocess_point_scope": postprocess_point_scope,
         "postprocess_local_owned_points": local_owned_point_count,
         "postprocess_local_total_points_before_owned_filter": local_total_point_count,

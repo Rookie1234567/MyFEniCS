@@ -139,6 +139,7 @@ class SimulationConfig3D:
     nedelec_trace_degree: int | None = None
     nedelec_interior_degree: int | None = None
     visualization_degree: int = 2
+    write_visualization_files: bool = True
     mesh_target_size: float = 140.0
     mesh_cell_type: str = "auto"  # "auto", "tetrahedron", or "hexahedron"
     mesh_spacing_mode: str = "auto"  # Stage 4 hexa: "auto", "uniform_strict", "boundary_fitted", or "local_refined"
@@ -695,6 +696,8 @@ class SimulationConfig3D:
                 data.pop(key, None)
         if not self.stage4_preserve_exact_geometry:
             data.pop("stage4_preserve_exact_geometry", None)
+        if self.write_visualization_files:
+            data.pop("write_visualization_files", None)
         for key in ("n_air", "mu_r", "n_substrate", "n_grating", "incident_amplitude"):
             data[key] = _complex_or_none(data[key])
         if self.grating_layer_indices is not None:

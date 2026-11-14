@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 
-from src.common.runtime_resource_policy import disk_reserve_bytes, resource_policy
+from src.common.runtime_resource_policy import disk_reserve_bytes, resource_policy, factor_checkpoint_enabled
 from src.runners.pstddm_p6_convergence import (
     DISK_RESERVE_BYTES,
     EXPECTED_MODE_COUNT,
@@ -52,6 +52,7 @@ def test_p6_config_inherits_workstation_mode_padding_and_exact_physics():
     assert cfg.stage4_assembly_time_cell_static_condensation is True
     assert cfg.petsc_extra_options["pc_factor_mat_solver_type"] == "mumps"
     assert cfg.mesh_axis_cell_counts == (6, 6, 14)
+    assert cfg.write_visualization_files is False
 
 
 def test_direct_gate_uses_explicit_full_residual_and_independent_energy_closure():
@@ -85,11 +86,17 @@ def test_direct_gate_uses_explicit_full_residual_and_independent_energy_closure(
 def test_resource_profile_overrides_mumps_and_checkpoint_floors_without_changing_defaults():
     assert disk_reserve_bytes(2**31) == 2**31
     callback = lambda *_args, **_kwargs: None
-    with resource_policy(callback, disk_reserve_bytes=DISK_RESERVE_BYTES):
+    assert factor_checkpoint_enabled() is True
+    with resource_policy(callback, disk_reserve_bytes=DISK_RESERVE_BYTES, factor_checkpoint=False):
         assert disk_reserve_bytes(2**31) == DISK_RESERVE_BYTES
+        assert factor_checkpoint_enabled() is False
+    assert factor_checkpoint_enabled() is True
     assert disk_reserve_bytes(2**31) == 2**31
     assert TASK_CAP_BYTES == 64 << 30
     assert HOST_RESERVE_BYTES == 400 << 30
+    from benchmarks.pstddm_partition_pilot.supervise import _workstation_disk_floor
+    assert DISK_RESERVE_BYTES == _workstation_disk_floor('workstation-p6') == 380_000_000_000
+    assert _workstation_disk_floor('workstation') == 400_000_000_000
 
     from src.solvers.bounded_mumps import incore_memory_budget
 

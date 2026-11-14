@@ -60,9 +60,17 @@ class P6ComparisonTests(unittest.TestCase):
         field.interpolate(lambda x: (1+.2j)*np.asarray([x[1]**2, x[2]**2, x[0]**2]))
         field.x.scatter_forward()
         cfg = SimulationConfig3D(nedelec_degree=6, lambda0=13.5)
+        cfg.write_visualization_files = False
         pair = [([0., 1.],)*3, ([0., .5, 1.],)*3]
         with tempfile.TemporaryDirectory() as temporary:
             base = Path(temporary)
+            from types import SimpleNamespace
+            from src.postprocessing.postprocess_3d import save_airbox_3d_fields
+            metrics = save_airbox_3d_fields(SimpleNamespace(mesh=msh), cfg, field, base/'metrics')
+            self.assertIsNone(metrics['paraview_file'])
+            self.assertEqual(metrics['vtx_3d_output_status'], 'disabled_by_profile')
+            self.assertFalse(list((base/'metrics').glob('*.vtu')))
+            self.assertFalse(list((base/'metrics').glob('*.bp')))
             for name in ('a', 'b'):
                 (base/name).mkdir()
                 save_common_field_samples(field, cfg, base/name, pair)

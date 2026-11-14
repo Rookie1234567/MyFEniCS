@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import itertools
 import json
+import shutil
 from pathlib import Path
 import time
 
@@ -56,7 +57,7 @@ def save_common_field_samples(field, config, output_directory, axis_pair):
     from src.common.analytic_fields_3d import (
         electric_field_code_values, magnetic_field_code_values,
     )
-    from src.common.runtime_resource_policy import admit
+    from src.common.runtime_resource_policy import admit, disk_reserve_bytes
 
     started = time.monotonic()
     mesh = field.function_space.mesh
@@ -66,6 +67,8 @@ def save_common_field_samples(field, config, output_directory, axis_pair):
     count = int(np.prod([len(a)-1 for a in axes])) * 8**3
     # Include file-backed output pages, not just Python arrays and scratch.
     file_bytes = count*(4*3*16+3*8+8)
+    if shutil.disk_usage(output_directory).free < file_bytes + disk_reserve_bytes(2 << 30):
+        raise RuntimeError('common field sample disk admission failed')
     ncell = mesh.topology.index_map(3).size_local
     admit('p6_common_field_samples', file_bytes+ncell*7**3*3*16+(64 << 20),
           estimate_basis='four complex fields, points/weights, DG6 curl and bounded scratch')
