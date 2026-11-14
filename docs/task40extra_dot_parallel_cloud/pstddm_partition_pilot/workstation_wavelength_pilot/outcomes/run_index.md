@@ -31,4 +31,15 @@
 
 ## p6用户续作：第一次h10装配（失败保留）
 
+## p6 h10 retry1与只读CSV/残差补审
+
+- 正式source `e7eba2645b58acb8a0871a5f619e69ad61faad2b`，输入SHA256 `95a9a9d7ce068d7591e5e9c2b912720cf9e52fb7cc8d167fe46fc163132679eb`。
+- run：`runs/p6_h10_direct_13p5_retry1`；2026-11-14 22:19:49至22:42:05（Asia/Singapore），supervisor含清场/hash 1339.9056962477043s。进程组已退出、无后代、task swap0。退出由CSV字段错误引起，已保存原方程残差也独立未达本轮1e-10。
+- `original_full_augmented_vectors.npz` SHA256 `49370707c29a0b4aef8183048cc4a8ea1e40361f3ac790138941aacd06255325`；`original_full_augmented_residual.json` SHA256 `400093f306ed22d0f1d4bc6ef8dcef2cf601e08a445e919ee2c66c77e6cdff23`。
+- 原`diffraction_orders_3d.json` SHA256 `e196912476c747c92b815462651a464e7789dd8f090cbcaca74a401a7d283b21`；新目录`reviews/p6_h10_direct_13p5_retry1_csv_residual`保存其306行诊断CSV及补审，未覆盖旧文件。306行诊断probe输出不等于612个上下端口通道数量。
+- 新CSV SHA256 `be757dff1d55493bcdeeddbf2b030aaee941918c1946af3b2f948c0f505c602c`；`audit.json` SHA256 `1b7009c36435ab9a96070a56a4887f4ecd44c5b3a003ef5fcbd474d1eb711552`。补审完成但数值FAIL、物理未完成，不授予official。
+- 完整分阶段时间、source与审核代码hash见[retry1 compact](records/p6_h10_retry1.json)，解释见[Response V2](../response_v2.md)。没有新增PDE重放。
+
+### 首次h10历史
+
 `p6_h10_direct_13p5`，source `2ba53154fbcee9af30477b0398302bb24708b98b`，504 cells、612 modes、凝聚增广102996行/86586068 stored NNZ。2026-11-14 21:40:39至21:58:07（Asia/Singapore），supervisor完整1048.3153135273606 s。MUMPS桥接所读sysconfig仍含旧prefix，因编译器资格守卫退出；symbolic/numeric/场/R均未完成。进程树采样峰值3167588352 B，systemd任务cgroup峰值3638575104 B，两者口径不同；任务swap0、后代清空。原始及紧凑证据见[失败回执](records/p6_h10_attempt1.json)。旧文件不覆盖，修复后使用独立retry目录且继续累计费用。

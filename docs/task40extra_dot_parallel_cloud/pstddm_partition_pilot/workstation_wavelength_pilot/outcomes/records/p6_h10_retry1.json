@@ -1,0 +1,297 @@
+{
+  "case_id": "p6_h10_direct_13p5_retry1",
+  "source_sha": "e7eba2645b58acb8a0871a5f619e69ad61faad2b",
+  "input_sha256": "95a9a9d7ce068d7591e5e9c2b912720cf9e52fb7cc8d167fe46fc163132679eb",
+  "status": "NUMERICAL_GATE_FAILED_AND_POSTPROCESS_CSV_ERROR",
+  "wall_seconds": 1339.9056962477043,
+  "peak_sampled_process_tree_rss_bytes": 16042999808,
+  "systemd_cgroup_peak_bytes": 16647438336,
+  "task_swap_bytes": 0,
+  "remaining_descendants": [],
+  "condensed_relative_residual": 1.2779043655559762E-10,
+  "saved_residual_audit": {
+    "audit_completed": true,
+    "scope": "hash and saved residual norm recomputation; no fresh FE/operator/factor",
+    "source_record": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/runs/p6_h10_direct_13p5_retry1/original_full_augmented_residual.json",
+    "source_record_sha256": "400093f306ed22d0f1d4bc6ef8dcef2cf601e08a445e919ee2c66c77e6cdff23",
+    "vectors_file": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/runs/p6_h10_direct_13p5_retry1/original_full_augmented_vectors.npz",
+    "vectors_sha256": "49370707c29a0b4aef8183048cc4a8ea1e40361f3ac790138941aacd06255325",
+    "member_norms": {
+      "rhs": 1.8917378966874532,
+      "residual": 6.069761145545764E-7,
+      "auxiliary_residual": 2.403840930875965E-13,
+      "independent_FE_coefficients": 769.673905642861,
+      "auxiliary_coefficients": 1.1118306157565336
+    },
+    "relative_residual": 3.2085634887236534E-7,
+    "required_relative_residual": 1E-10,
+    "numerical_pass": false,
+    "old_passed_field": true,
+    "physical_qualification": "NOT_COMPLETED",
+    "official": false,
+    "tests_passed": 2,
+    "saved_rows_reexported": 306,
+    "csv_sha256": "be757dff1d55493bcdeeddbf2b030aaee941918c1946af3b2f948c0f505c602c",
+    "donor_hashes": {
+      "original_full_augmented_residual.json": "400093f306ed22d0f1d4bc6ef8dcef2cf601e08a445e919ee2c66c77e6cdff23",
+      "original_full_augmented_vectors.npz": "49370707c29a0b4aef8183048cc4a8ea1e40361f3ac790138941aacd06255325",
+      "diffraction_orders_3d.json": "e196912476c747c92b815462651a464e7789dd8f090cbcaca74a401a7d283b21"
+    },
+    "old_files_unchanged": true,
+    "fresh_pde_count": 0,
+    "new_factor_count": 0,
+    "elapsed_seconds": 0.7906959671527147,
+    "process_peak_rss_bytes": 149344256,
+    "task_swap_bytes": 0,
+    "code_hashes": {
+      "benchmarks/pstddm_partition_pilot/workstation_review.py": "7dc94bbdc0ef2507d0ac025ccd51c5abf503ec0d33e2d37e1aaa71aba0b41b67",
+      "src/postprocessing/diffraction_3d.py": "322856dbb2e43aeabfccd0bb136025a98568dd593f78648dedbc48bb2adef39e",
+      "src/test/test_pstddm_p6_convergence_profile.py": "b908b77fa17536af2fb08ee72301ac26f6352f9512ff8f6d734eab630375f34b",
+      "src/test/test_diffraction_3d_csv_schema.py": "4ffb862f0efd4cf4fa31526fc99181e04cd6d825241bafbbca8ca870b0470a66"
+    }
+  },
+  "diagnostic_R": 0.25532728157128665,
+  "diagnostic_T": 0.05651947744085552,
+  "A_volume": null,
+  "physical_qualification": "NOT_COMPLETED",
+  "field_comparison": "NOT_RUN",
+  "phase_boundaries": [
+    {
+      "stage": "process_start",
+      "status": "begin",
+      "elapsed_seconds": 0.0001923888921737671
+    },
+    {
+      "stage": "after_config",
+      "status": "end",
+      "elapsed_seconds": 0.000879230909049511
+    },
+    {
+      "stage": "case_start",
+      "status": "begin",
+      "elapsed_seconds": 0.0017717275768518448
+    },
+    {
+      "stage": "mumps_ooc_runtime_setup",
+      "status": "end",
+      "elapsed_seconds": 0.0022086510434746742
+    },
+    {
+      "stage": "mesh_build",
+      "status": "begin",
+      "elapsed_seconds": 0.002634274773299694
+    },
+    {
+      "stage": "mesh_build",
+      "status": "end",
+      "elapsed_seconds": 0.018867668695747852
+    },
+    {
+      "stage": "after_mesh",
+      "status": "end",
+      "elapsed_seconds": 0.01930597610771656
+    },
+    {
+      "stage": "function_space_setup",
+      "status": "begin",
+      "elapsed_seconds": 0.03264594357460737
+    },
+    {
+      "stage": "function_space_setup",
+      "status": "end",
+      "elapsed_seconds": 0.42193626426160336
+    },
+    {
+      "stage": "after_function_space",
+      "status": "end",
+      "elapsed_seconds": 0.4223703220486641
+    },
+    {
+      "stage": "field_formulation_setup",
+      "status": "begin",
+      "elapsed_seconds": 0.4227077942341566
+    },
+    {
+      "stage": "field_formulation_setup",
+      "status": "end",
+      "elapsed_seconds": 0.42425651755183935
+    },
+    {
+      "stage": "floquet_and_boundary_setup",
+      "status": "begin",
+      "elapsed_seconds": 0.42744048219174147
+    },
+    {
+      "stage": "floquet_and_boundary_setup",
+      "status": "end",
+      "elapsed_seconds": 2.490283140912652
+    },
+    {
+      "stage": "after_floquet_mpc_finalize",
+      "status": "end",
+      "elapsed_seconds": 2.491068935021758
+    },
+    {
+      "stage": "variational_form_setup",
+      "status": "begin",
+      "elapsed_seconds": 2.4953829012811184
+    },
+    {
+      "stage": "after_materials_and_forms",
+      "status": "end",
+      "elapsed_seconds": 2.498473823070526
+    },
+    {
+      "stage": "variational_form_setup",
+      "status": "end",
+      "elapsed_seconds": 2.6159268701449037
+    },
+    {
+      "stage": "stage4_full3d_assembly_backend",
+      "status": "end",
+      "elapsed_seconds": 2.6167544946074486
+    },
+    {
+      "stage": "stage4_dtn_base_matrix_assembled",
+      "status": "end",
+      "elapsed_seconds": 761.9610970653594
+    },
+    {
+      "stage": "after_base_matrix_assembly",
+      "status": "end",
+      "elapsed_seconds": 761.962705350481
+    },
+    {
+      "stage": "after_dtn_mode_enumeration",
+      "status": "end",
+      "elapsed_seconds": 762.0949667496607
+    },
+    {
+      "stage": "after_augmented_matrix_allocation",
+      "status": "end",
+      "elapsed_seconds": 762.0967530207708
+    },
+    {
+      "stage": "after_base_matrix_copy",
+      "status": "end",
+      "elapsed_seconds": 762.0972880283371
+    },
+    {
+      "stage": "after_base_matrix_release",
+      "status": "end",
+      "elapsed_seconds": 762.097650625743
+    },
+    {
+      "stage": "after_dtn_coupling_insert",
+      "status": "end",
+      "elapsed_seconds": 899.7752914410084
+    },
+    {
+      "stage": "stage4_dtn_augmented_matrix_finalized",
+      "status": "end",
+      "elapsed_seconds": 901.6827415004373
+    },
+    {
+      "stage": "before_ksp_create",
+      "status": "begin",
+      "elapsed_seconds": 906.0593539588153
+    },
+    {
+      "stage": "stage4_dtn_augmented_ksp_setup",
+      "status": "begin",
+      "elapsed_seconds": 906.062919746153
+    },
+    {
+      "stage": "before_ksp_setup",
+      "status": "begin",
+      "elapsed_seconds": 906.0633286144584
+    },
+    {
+      "stage": "during_ksp_setup_peak",
+      "status": "active",
+      "elapsed_seconds": 906.0636722939089
+    },
+    {
+      "stage": "stage4_dtn_augmented_ksp_setup",
+      "status": "end",
+      "elapsed_seconds": 1120.0222544986755
+    },
+    {
+      "stage": "after_ksp_setup_factorized",
+      "status": "end",
+      "elapsed_seconds": 1120.0227739131078
+    },
+    {
+      "stage": "stage4_dtn_augmented_solve",
+      "status": "begin",
+      "elapsed_seconds": 1120.0231796521693
+    },
+    {
+      "stage": "before_ksp_solve",
+      "status": "begin",
+      "elapsed_seconds": 1120.0234841033816
+    },
+    {
+      "stage": "during_ksp_solve_peak",
+      "status": "active",
+      "elapsed_seconds": 1120.0237906696275
+    },
+    {
+      "stage": "stage4_dtn_augmented_solve",
+      "status": "end",
+      "elapsed_seconds": 1123.9937157677487
+    },
+    {
+      "stage": "after_ksp_solve",
+      "status": "end",
+      "elapsed_seconds": 1123.9944292642176
+    },
+    {
+      "stage": "after_condensed_diagnostic_residual",
+      "status": "end",
+      "elapsed_seconds": 1126.1596789145842
+    },
+    {
+      "stage": "after_fe_field_reconstruction",
+      "status": "end",
+      "elapsed_seconds": 1126.16026150994
+    },
+    {
+      "stage": "after_augmented_matrix_finalize",
+      "status": "end",
+      "elapsed_seconds": 1126.16058190912
+    },
+    {
+      "stage": "after_original_full_augmented_residual",
+      "status": "end",
+      "elapsed_seconds": 1251.1316292099655
+    },
+    {
+      "stage": "after_official_rta",
+      "status": "end",
+      "elapsed_seconds": 1251.4051940198988
+    },
+    {
+      "stage": "stage4_dtn_port_assembly_and_solve",
+      "status": "end",
+      "elapsed_seconds": 1251.4670029701665
+    },
+    {
+      "stage": "solver_objects_retained_for_postprocess",
+      "status": "end",
+      "elapsed_seconds": 1254.2182530295104
+    },
+    {
+      "stage": "after_field_output",
+      "status": "end",
+      "elapsed_seconds": 1307.372902000323
+    }
+  ],
+  "postprocess_error": "CSV first-row schema omitted twelve later Fourier fields",
+  "audit_service_runtime_seconds": 1.482,
+  "audit_service_runtime_scope": "service parent including audit child; do not add child elapsed",
+  "audit_remote_directory": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/reviews/p6_h10_direct_13p5_retry1_csv_residual",
+  "raw_remote_directory": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/runs/p6_h10_direct_13p5_retry1",
+  "old_run_preserved": true,
+  "automatic_pde_replay": false
+}

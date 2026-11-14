@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import math
+import hashlib
+import json
 import os
 from pathlib import Path
 import sys
@@ -22,6 +24,36 @@ from src.runners.pstddm_p6_convergence import (
     mesh_plan,
 )
 from src.solvers.pstddm_material import derive_si_optical_identity
+
+
+def test_partial_p6_audit_recomputes_strict_gate_and_rejects_changed_payload():
+    import numpy as np
+    from benchmarks.pstddm_partition_pilot.workstation_review import review_saved_p6_residual
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        arrays = {"rhs": np.array([1+0j]), "residual": np.array([3e-7+0j]),
+                  "auxiliary_residual": np.array([0j])}
+        path = root / "vectors.npz"
+        np.savez(path, **arrays)
+        record = {
+            "vectors_file": path.name,
+            "vectors_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "relative_residual": 3e-7, "passed": True,
+            "saved_members": {name: {"shape": list(values.shape),
+                "payload_sha256": hashlib.sha256(values.view(np.uint8)).hexdigest()}
+                for name, values in arrays.items()},
+        }
+        (root / "original_full_augmented_residual.json").write_text(json.dumps(record))
+        audit = review_saved_p6_residual(root)
+        assert audit["audit_completed"] and not audit["numerical_pass"]
+        assert audit["old_passed_field"] is True and audit["official"] is False
+        np.savez(path, **{**arrays, "residual": np.array([0j])})
+        try:
+            review_saved_p6_residual(root)
+        except ValueError as exc:
+            assert "hash mismatch" in str(exc)
+        else:
+            raise AssertionError("changed residual payload was accepted")
 
 
 def test_retry_keeps_original_math_and_separate_case_identity():

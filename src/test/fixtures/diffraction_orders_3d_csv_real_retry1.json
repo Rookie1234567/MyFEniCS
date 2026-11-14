@@ -1,0 +1,108 @@
+{
+  "source_file": "p6_h10_direct_13p5_retry1/diffraction_orders_3d.json",
+  "source_sha256": "e196912476c747c92b815462651a464e7789dd8f090cbcaca74a401a7d283b21",
+  "orders": [
+    {
+      "m": -4,
+      "n": -8,
+      "polarization": "s",
+      "alpha": [
+        -0.5026548245743669,
+        0.0
+      ],
+      "gamma": [
+        -0.5399594011765849,
+        0.0
+      ],
+      "beta_top": [
+        0.0,
+        0.5723645654113623
+      ],
+      "beta_bottom": [
+        0.0006898422687112346,
+        0.5727439842934899
+      ],
+      "top_propagating": false,
+      "bottom_propagating": false,
+      "included_in_total_power": false,
+      "rayleigh_warning": false,
+      "rayleigh_warning_top": false,
+      "rayleigh_warning_bottom": false,
+      "reflected_amplitude": [
+        0.0,
+        0.0
+      ],
+      "transmitted_amplitude": [
+        0.0,
+        0.0
+      ],
+      "R": 0.0,
+      "T": 0.0,
+      "top_fit_residual": null,
+      "bottom_fit_residual": null
+    },
+    {
+      "m": 0,
+      "n": 0,
+      "polarization": "s",
+      "alpha": [
+        2.849448458307597e-17,
+        0.0
+      ],
+      "gamma": [
+        0.465350247972149,
+        0.0
+      ],
+      "beta_top": [
+        0.008122718792714466,
+        0.0
+      ],
+      "beta_bottom": [
+        0.015869485702214456,
+        0.024897026717166985
+      ],
+      "top_propagating": true,
+      "bottom_propagating": false,
+      "included_in_total_power": true,
+      "rayleigh_warning": false,
+      "rayleigh_warning_top": false,
+      "rayleigh_warning_bottom": false,
+      "reflected_amplitude": [
+        0.0,
+        0.0
+      ],
+      "transmitted_amplitude": [
+        0.0,
+        0.0
+      ],
+      "R": 0.0,
+      "T": 0.0,
+      "reflected_amplitude_e_fourier": [
+        -0.4201790240181242,
+        0.2805788652881816
+      ],
+      "transmitted_amplitude_e_fourier": [
+        0.16925268153309347,
+        -0.13752734580001774
+      ],
+      "R_e_fourier": 0.2552749118711803,
+      "T_e_fourier": 0.0,
+      "top_e_fourier_projection_residual": 1.796897924240944e-14,
+      "bottom_e_fourier_projection_residual": 1.3039899147408983e-14,
+      "reflected_amplitude_eh_fourier": [
+        -0.4201010386240179,
+        0.28038220516196233
+      ],
+      "transmitted_amplitude_eh_fourier": [
+        0.16926222263347557,
+        -0.13752815471271782
+      ],
+      "R_eh_fourier": 0.25509906362441664,
+      "T_eh_fourier": 0.0,
+      "top_eh_fourier_fit_residual": 4.607113646828423e-16,
+      "bottom_eh_fourier_fit_residual": 1.7229426621356713e-16,
+      "top_fit_residual": null,
+      "bottom_fit_residual": null
+    }
+  ]
+}

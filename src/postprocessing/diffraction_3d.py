@@ -655,6 +655,21 @@ def _complex_text(value: complex) -> str:
     return f"{number.real:.16e}{number.imag:+.16e}j"
 
 
+def _write_diffraction_orders_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+    """Write every row field, including diagnostics added only to later orders."""
+    csv_rows = [
+        {key: _complex_text(value) if isinstance(value, complex) else value for key, value in row.items()}
+        for row in rows
+    ]
+    fieldnames = list(dict.fromkeys(key for row in csv_rows for key in row))
+    if not fieldnames:
+        fieldnames = ["m", "n"]
+    with Path(path).open("w", newline="", encoding="utf-8") as fp:
+        writer = csv.DictWriter(fp, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(csv_rows)
+
+
 def compute_diffraction_orders_3d(
     mesh_data,
     cfg: SimulationConfig3D,
@@ -920,18 +935,7 @@ def compute_diffraction_orders_3d(
             json.dumps(payload, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",
         )
-        csv_rows = []
-        for row in rows:
-            csv_rows.append(
-                {
-                    key: _complex_text(value) if isinstance(value, complex) else value
-                    for key, value in row.items()
-                }
-            )
-        with (out_dir / "diffraction_orders_3d.csv").open("w", newline="", encoding="utf-8") as fp:
-            writer = csv.DictWriter(fp, fieldnames=list(csv_rows[0].keys()) if csv_rows else ["m", "n"])
-            writer.writeheader()
-            writer.writerows(csv_rows)
+        _write_diffraction_orders_csv(out_dir / "diffraction_orders_3d.csv", rows)
         (out_dir / "power_metrics_3d.json").write_text(
             json.dumps(metrics, ensure_ascii=False, indent=2, default=_json_default),
             encoding="utf-8",

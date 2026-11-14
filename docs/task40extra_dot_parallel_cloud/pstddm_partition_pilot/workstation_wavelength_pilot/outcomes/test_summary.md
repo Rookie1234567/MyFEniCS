@@ -1,5 +1,13 @@
 # 定向测试与只读审核
 
+## p6 retry1 CSV修复与保存残差补审（2026-11-14）
+
+本次只执行两个直接相关回归：真实保存JSON中“首行无Fourier字段、后续行有12个字段”的导出；旧`passed=true`但残差`3e-7`必须按本任务`1e-10`判FAIL，并拒绝被修改的向量archive。原资格化complex128/int32、MPI1/math1环境中2项通过。真实全部306行JSON经同一生产helper重导出，逐字段读回一致，原三个输入文件hash前后不变。
+
+只读补审逐成员核验原16.41MB向量包的hash、shape、dtype和有限性，重算原残差仍为`3.2085634887236534e-7`，结论`audit_completed=true / numerical_pass=false / official=false`；没有重施原算子、FE构建或factor。子进程含测试/审核/CSV回放0.7906959671527147s，峰值RSS149344256 B；整个受限user-service父段1.482s，父子不相加。任务swap0、退出0。systemd打印的508KiB内存峰与Python RSS不一致，不将其用作实测Python峰值。
+
+远端命令由`preparation/p6_csv_review.sh`执行资格化activation和`python -I -B preparation/pstddm_csv_review_run.py`（均为绝对专用根路径）；单位`pstddm-p6-csv-review-20261114.service`，2GiB/单CPU/零swap。候选文件hash、原始文件hash及结果见`reviews/p6_h10_direct_13p5_retry1_csv_residual/audit.json`，SHA256 `1b7009c36435ab9a96070a56a4887f4ecd44c5b3a003ef5fcbd474d1eb711552`。候选科学数值未改，正式PDE仍绑定旧源码`e7eba2645b58acb8a0871a5f619e69ad61faad2b`。未运行全仓测试或CI，不把补审成功转成PDE通过。
+
 以下是已经执行的检查，不是未来计划。测试经工作站既有 native complex activation 和受限 user service 执行；没有运行全仓 pytest、MPI2/4 或 GitHub CI。
 
 | source | 检查 | 结果与费用 |

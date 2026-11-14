@@ -2149,6 +2149,14 @@ production model。
 
 ## 2026-11-11：dot PSTDDM分区pilot
 
+### 2026-11-14工作站p6续作：数值未通过，CSV已修复
+
+新用户范围为13.5nm、50×50×140nm三维有限宽Si块、phi90/S、p6h10/h7.5凝聚direct收敛，再条件比较同网格PSTDDM。h10实际504cells/612端口，凝聚增广102996行、86586068 NNZ。首场在symbolic前编译器接线失败（1048.3153135273606s）；修复后retry1完成分解/恢复，但原残差3.2085634887236534e-7超过1e-10，另因诊断CSV列头遗漏退出。retry1父耗时1339.9056962477043s，采样进程树RSS16042999808 B、cgroup峰16647438336 B，task swap0/清场完成。R/T仅未资格诊断，体吸收门未完成。
+
+CSV改用全行字段并集；原306行JSON可重导出，保存原向量补审重现数值FAIL，2个定向回归通过，没有重跑PDE或修改数学阈值。h7.5/条件迭代尚未运行，不能宣称收敛或省内存。精确source/hash/成本见[p6 Response V2](task40extra_dot_parallel_cloud/pstddm_partition_pilot/workstation_wavelength_pilot/response_v2.md)与[compact](task40extra_dot_parallel_cloud/pstddm_partition_pilot/workstation_wavelength_pilot/outcomes/records/p6_h10_retry1.json)。原p2历史和所有失败保留，本分支不合并master。
+
+### 原0.7nm p2 pilot历史
+
 为验证真正源转移是否能替代旧PML Schwarz，本轮在固定0.7nm、有限x/y三维Si块、120hex/p2、双Floquet和836端口的3956阶系统上做四案，新增双向累计弱源转移和局部PML，未改变原算子。Direct残差1.32e−13；N2退化全域锚点首扫1.66e−13；N4首扫0.11157，18步FGMRES后5.74e−9，总E/H约3.4e−12、散射E/H约3.6e−9。独立保存矩阵复核通过。
 
 N2/N4全过程峰613.37/874.19MiB、56.716/82.300s，分区增加反而更费内存/时间；固定PML使最大local free4080超过global FE3120，全部局部因子和全局mass因子同时缓存。四案249.892s、零swap、无门触发。p2物理未收敛，能量缺口0.00470279，功率仅diagnostic；N4首扫散射误差约4.5%保留，制造源功率诊断失败不改判。N8四层网格不合法；p4保守阶段预留约36.765GiB无法在本轮2GiB局部门准入，未运行而非方法不可能。
