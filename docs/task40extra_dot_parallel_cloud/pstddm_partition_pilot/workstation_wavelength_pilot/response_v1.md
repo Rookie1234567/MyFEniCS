@@ -1,24 +1,11 @@
 # 工作站波长续试 Response V1
 
-状态：**PREPARATION_IN_PROGRESS**。本文件只对应新增的固定几何波长续试，不覆盖旧 cloud PSTDDM pilot 的 PASS_WITH_QUALIFICATIONS 结果。
+状态：**COMPLETED_WITH_LIMITATIONS，等待审阅**。13.5 nm 与 5 nm 的 direct、N=2、N=4 六个受监督 case 均已完成；原系统显式真残差及同离散场误差通过各自门槛。**这不构成物理功率通过**：体吸收诊断分别达到 2.395 和 22.208，能量缺口分别为 2.227 和 22.055，所有 R/T/吸收仍标为 diagnostic、未获物理资格。0.7 nm 只完成不组装有限元的材料/模式/整对象计划预检，没有运行 PDE。
 
-| 项目 | 当前准备决定 | 证据/边界 |
-|---|---|---|
-| 执行顺序 | 13.5 nm；通过且共享预算允许后 5 nm；再条件性评估 0.7 nm | 用户本轮覆盖旧 cloud-only/旧顺序；远端写入和正式运行仍需主控现场准入 |
-| 几何 | 50×50×140 nm 单胞；居中有限 17×20×120 nm Si 块；Si 基底 10 nm | x/y 均有有限材料边界，双 Floquet 保留 |
-| 13.5 nm 网格 | p2、4×4×16=256 hex；z 16 层可切 N=2/4/8 | 同离散算法与资源试验，不是物理精度网格 |
-| DtN | 每波长根据当前材料和角度生成传播阶，再加 m/n 各一阶矩形包络 | 旧 836 模式不可复用；冻结前需实际 inventory |
-| 材料 | 优先从已归档 CXRO/Henke Si 原始表按目标能量取 bracket，保留来源、符号和 SHA | 不跨波长复用单个 n；材料计算/数据核验不等于样品测量 |
-| 局部 PML | 每侧 10 nm、两层、1.25 grading、固定二次 stretch 公式 | 只用于局部问题；原全局 Floquet–DtN A 不变 |
-| 数值门 | direct residual≤1e-10；candidate residual≤1e-8；E/H误差≤1e-4/1e-3；已资格化总功率绝对差≤1e-4 | 未资格后处理保留 diagnostic，并说明资格缺口；不跳过已资格门 |
-| 预算 | 全波长共享最多10次/6小时；单次30分钟；MPI1/单线程 | 8e9 B 任务树 RSS 与动态 host reserve 取较严者，cgroup swap=0 |
+本轮模型是固定几何的有限宽三维 p2 小网格，用来检查累计源转移算法是否解出同一离散方程、以及分区数如何影响资源。它不是几何、材料、网格、模式截断或连续物理收敛证明。N=2 只有一个覆盖整个物理域的 pair，初始场已几乎精确（FGMRES 为 0 步），是正确性锚点，不是低内存或可扩展性证明。两个波长下 N=4 的全程 wall 和进程树峰值 RSS 都高于 N=2。
 
-执行者不 commit/push；主控在检查并冻结本轮 source 后集中提交与推送。
+13.5 nm direct 的诊断能量缺口为 **2.226713987670701**；5 nm direct 为 **22.054987473243543**。A_volume 分别为 **2.3953684927134478** 和 **22.208391959345533**，不能被描述为有效吸收或功率通过。完整逐案指标、身份、原始记录和审阅路径见[结果汇总](outcomes/summary.md)。
 
-本地实现已交主控冻结，相关测试尚待在工作站执行，当前未启动正式 PDE。主控已通过 SSH 在用户授权目录内登记独立执行 worktree，并完成 imports-only ABI 检查；这不是 FE 或 PDE 通过。
+实现阶段的定向测试和六场独立审核已完成，见[测试记录](outcomes/test_summary.md)与[精确证据索引](outcomes/run_index.md)。文档收口没有重跑数值计算。六场监督父时间合计752.9924059184268秒，最大采样进程树RSS为936599552 B，任务swap均为0；准备/独立审核费用另列，缺失历史费用保留UNKNOWN。主控集中提交同一分支，旧失败和邻项目保持原状，不合并master。
 
-执行源码目录为 `/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/source`，运行和准备证据位于其上级任务目录。原父目录的 Task41 分支及邻项目未切换、停止或修改。复用现有 native Linux runtime，PETSc 3.25.6 complex128/int32、DOLFINx/Basix/FFCx 0.10.0、MPI1/math1；未安装新环境。
-
-实际 ABI 收据为 `benchmarks/artifacts/pstddm_workstation/preparation/abi_imports_20261114.json`，SHA256=`280dbdf428d1e85d2ddf792f2f76afbfec7a88e73e21d2d616d4f2c54277b2b9`。预检服务已经退出；正式服务使用独立新 cgroup。任务限制为 MemoryMax=8,000,000,000 B、MemorySwapMax=0、CPUQuota=100%、Nice=15、IOWeight=10。宿主已有约1.19GB swap，不计作本任务新增 swap；本任务必须以自身 cgroup/进程树记录验证零 swap。
-
-2026-11-14 10:02:31 UTC 只读样本：MemAvailable=503,245,275,136 B，磁盘 available=427,584,544,768 B，邻作业 PID2651881 正常运行。本次采用至少400GiB宿主内存保留线及400,000,000,000 B磁盘底线，正式启动前仍需读实时值。该样本不是正式运行峰值或永久容量保证。
+结果基线：`b679ce3b84ad7bbb7e1fbb65cfa89674879e2b89`；最终科学源码：`20712b4aa13c5c48aecfdf981ba8fbf97fe26e81`。0.7nm 的约1.91TB仅是当前保守direct规划值，不是实测factor要求；本机8GB任务额度及完整对象账未准入，未执行该波长。下一步优先读取既有场定位能量不闭合，不重复本批求解。
