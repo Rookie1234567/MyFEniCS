@@ -1,0 +1,176 @@
+{
+  "status": "ENGINEERING_FAILURE_BEFORE_MUMPS_SYMBOLIC",
+  "case_id": "p6_h10_direct_13p5",
+  "source_sha": "2ba53154fbcee9af30477b0398302bb24708b98b",
+  "wall_seconds": 1048.3153135273606,
+  "peak_sampled_process_tree_rss_bytes": 3167588352,
+  "systemd_memory_peak_bytes": 3638575104,
+  "systemd_peak_semantics": "whole task cgroup observed after exit, includes file-backed and compiler pages",
+  "task_swap_bytes": 0,
+  "remaining_descendants": [],
+  "matrix_rows": 102996,
+  "matrix_stored_nnz": 86586068,
+  "mumps_symbolic_started": false,
+  "numeric_started": false,
+  "full_residual": null,
+  "R": null,
+  "stop_reason": "load_public_shim: explicit qualified relocated compiler policy must be active",
+  "phase_boundaries": [
+    {
+      "stage": "process_start",
+      "status": "begin",
+      "elapsed_seconds": 0.00025837402790784836
+    },
+    {
+      "stage": "after_config",
+      "status": "end",
+      "elapsed_seconds": 0.0015500988811254501
+    },
+    {
+      "stage": "case_start",
+      "status": "begin",
+      "elapsed_seconds": 0.00270182266831398
+    },
+    {
+      "stage": "mumps_ooc_runtime_setup",
+      "status": "end",
+      "elapsed_seconds": 0.0031600818037986755
+    },
+    {
+      "stage": "mesh_build",
+      "status": "begin",
+      "elapsed_seconds": 0.003580113872885704
+    },
+    {
+      "stage": "mesh_build",
+      "status": "end",
+      "elapsed_seconds": 0.02723841927945614
+    },
+    {
+      "stage": "after_mesh",
+      "status": "end",
+      "elapsed_seconds": 0.0277671217918396
+    },
+    {
+      "stage": "function_space_setup",
+      "status": "begin",
+      "elapsed_seconds": 1.677892493084073
+    },
+    {
+      "stage": "function_space_setup",
+      "status": "end",
+      "elapsed_seconds": 1.9834693847224116
+    },
+    {
+      "stage": "after_function_space",
+      "status": "end",
+      "elapsed_seconds": 1.984250177629292
+    },
+    {
+      "stage": "field_formulation_setup",
+      "status": "begin",
+      "elapsed_seconds": 1.984622578136623
+    },
+    {
+      "stage": "field_formulation_setup",
+      "status": "end",
+      "elapsed_seconds": 1.9857945935800672
+    },
+    {
+      "stage": "floquet_and_boundary_setup",
+      "status": "begin",
+      "elapsed_seconds": 1.9908019192516804
+    },
+    {
+      "stage": "floquet_and_boundary_setup",
+      "status": "end",
+      "elapsed_seconds": 4.244260484352708
+    },
+    {
+      "stage": "after_floquet_mpc_finalize",
+      "status": "end",
+      "elapsed_seconds": 4.245192892849445
+    },
+    {
+      "stage": "variational_form_setup",
+      "status": "begin",
+      "elapsed_seconds": 4.251076454296708
+    },
+    {
+      "stage": "after_materials_and_forms",
+      "status": "end",
+      "elapsed_seconds": 4.254011807963252
+    },
+    {
+      "stage": "variational_form_setup",
+      "status": "end",
+      "elapsed_seconds": 6.09645464643836
+    },
+    {
+      "stage": "stage4_full3d_assembly_backend",
+      "status": "end",
+      "elapsed_seconds": 6.097889143042266
+    },
+    {
+      "stage": "stage4_dtn_base_matrix_assembled",
+      "status": "end",
+      "elapsed_seconds": 815.3913246272132
+    },
+    {
+      "stage": "after_base_matrix_assembly",
+      "status": "end",
+      "elapsed_seconds": 815.3930871104822
+    },
+    {
+      "stage": "after_dtn_mode_enumeration",
+      "status": "end",
+      "elapsed_seconds": 815.494859604165
+    },
+    {
+      "stage": "after_augmented_matrix_allocation",
+      "status": "end",
+      "elapsed_seconds": 815.4965011887252
+    },
+    {
+      "stage": "after_base_matrix_copy",
+      "status": "end",
+      "elapsed_seconds": 815.496911931783
+    },
+    {
+      "stage": "after_base_matrix_release",
+      "status": "end",
+      "elapsed_seconds": 815.4972684383392
+    },
+    {
+      "stage": "after_dtn_coupling_insert",
+      "status": "end",
+      "elapsed_seconds": 1037.0699159279466
+    },
+    {
+      "stage": "stage4_dtn_augmented_matrix_finalized",
+      "status": "end",
+      "elapsed_seconds": 1042.549436046742
+    }
+  ],
+  "remote_root": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/runs/p6_h10_direct_13p5",
+  "raw_files": {
+    "artifact_hashes.json": {
+      "bytes": 11148,
+      "sha256": "8c767c9601954c5c1372ca7d976c59aa005945b08e1b5b84654487668baa8d17"
+    },
+    "progress_3d.jsonl": {
+      "bytes": 30173,
+      "sha256": "083c5965c5b1b67a5e7d7746ba69c472664f854243fecb8957f4af3a4037ab44"
+    },
+    "run_manifest.json": {
+      "bytes": 4118,
+      "sha256": "2c288b68852dcc5fb02642b50f5686cb1eb504c2dc746dc97799affc39cfa375"
+    },
+    "supervision.json": {
+      "bytes": 2533,
+      "sha256": "38224a7711d320947a78331a736a2a5a8c7f176c455a436e032ca5e9beb65251"
+    }
+  },
+  "failure_preserved": true,
+  "pending_repair": "explicit qualified-prefix compiler for public MUMPS bridge, real 2x2 API check before any FE, separate retry id; do not change FFCx/JIT compilation or numerical controls"
+}

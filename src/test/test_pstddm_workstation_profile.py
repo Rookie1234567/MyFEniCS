@@ -25,6 +25,35 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class WorkstationProfileFixtures(unittest.TestCase):
+    def test_p6_retry_cache_requires_same_math_runtime_and_product_hash(self):
+        import json
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary); donor=root/'p6_h10_direct_13p5'; output=root/'p6_h10_direct_13p5_retry1'
+            donor.mkdir(); output.mkdir()
+            input_path=root/'old.dat'
+            input_path.write_text('case_id="p6_h10_direct_13p5"\nh_nm=10.0\n')
+            runtime={key: {} for key in ('activation_and_abi_dependencies','PETSc_scalar_type',
+                     'PETSc_integer_type','PETSc_version','MPI_library','modules','python_executable')}
+            runtime_path=donor/'runtime_receipt.json';runtime_path.write_text(json.dumps(runtime))
+            source={'src/solvers/volume.py':'frozen'}
+            identity=dict(input_path=str(input_path),input_sha256=_sha256(input_path),source_sha='old',
+                          source_hashes=source,runtime_receipt_sha256=_sha256(runtime_path))
+            (donor/'supervisor_identity.json').write_text(json.dumps(identity))
+            cache=donor/'cache/fenics/kernel.so';cache.parent.mkdir(parents=True);cache.write_bytes(b'qualified')
+            inventory={'cache/fenics/kernel.so':dict(bytes=cache.stat().st_size,sha256=_sha256(cache))}
+            (donor/'artifact_hashes.json').write_text(json.dumps(inventory))
+            document=dict(case_id=output.name,h_nm=10.0)
+            result=supervise._seed_p6_retry_jit_cache(output,document,runtime,source,0)
+            self.assertEqual(result['files'],1)
+            self.assertEqual((output/'cache/fenics/kernel.so').read_bytes(),cache.read_bytes())
+            with self.assertRaisesRegex(RuntimeError,'mathematical'):
+                supervise._seed_p6_retry_jit_cache(output,{**document,'h_nm':7.5},runtime,source,0)
+            with self.assertRaisesRegex(RuntimeError,'dependency'):
+                supervise._seed_p6_retry_jit_cache(output,document,runtime,{'src/solvers/volume.py':'changed'},0)
+            cache.write_bytes(b'corrupted')
+            with self.assertRaisesRegex(RuntimeError,'identity'):
+                supervise._seed_p6_retry_jit_cache(output,document,runtime,source,0)
+
     def test_p6_budget_is_explicit_and_historical_profile_stays_unchanged(self):
         self.assertEqual(supervise._workstation_limits(
             'workstation', 'pstddm_stationary_workstation_pilot'),

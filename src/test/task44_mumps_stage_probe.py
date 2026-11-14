@@ -7,14 +7,14 @@ import sys
 import time
 
 
-def run(directory):
+def run(directory, compiler_command=None):
     import numpy as np
     from petsc4py import PETSc
     from src.solvers.bounded_mumps import PublicMumpsFactor,load_public_shim,FAILED_OWNERS
     directory=Path(directory);directory.mkdir(parents=True,exist_ok=False)
     objects=[];factor=None;primary=None;facts={};started=time.monotonic()
     try:
-        api,identity=load_public_shim(directory)
+        api,identity=load_public_shim(directory, compiler_command=compiler_command)
         A=PETSc.Mat().createAIJ([2,2],nnz=2,comm=PETSc.COMM_SELF);objects.append(A)
         values=np.array([[4+1j,1-.2j],[-.3+.5j,3-.4j]],dtype=PETSc.ScalarType)
         A.setValues([0,1],[0,1],values);A.assemble()

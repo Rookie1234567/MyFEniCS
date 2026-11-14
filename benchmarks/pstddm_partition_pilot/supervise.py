@@ -6,6 +6,7 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import signal
@@ -277,6 +278,59 @@ def _workstation_disk_floor(profile):
     return 380_000_000_000 if profile == 'workstation-p6' else 400_000_000_000
 
 
+def _seed_p6_retry_jit_cache(output, document, runtime, source_hashes, disk_floor):
+    """Copy only hash-bound same-input JIT products; never mutate old evidence."""
+    match = re.fullmatch(r'(.+)_retry[1-9][0-9]*', document['case_id'])
+    if match is None:
+        return None
+    donor = output.parent / match.group(1)
+    identity = json.loads((donor/'supervisor_identity.json').read_text())
+    prior_input = Path(identity['input_path'])
+    if _workstation_file_hash(prior_input) != identity['input_sha256']:
+        raise RuntimeError('JIT donor input hash changed')
+    old_document = tomllib.loads(prior_input.read_text())
+    if ({k:v for k,v in old_document.items() if k != 'case_id'} !=
+            {k:v for k,v in document.items() if k != 'case_id'}):
+        raise RuntimeError('JIT donor mathematical input differs')
+    if _workstation_file_hash(donor/'runtime_receipt.json') != identity['runtime_receipt_sha256']:
+        raise RuntimeError('JIT donor ABI receipt hash changed')
+    prior_runtime = json.loads((donor/'runtime_receipt.json').read_text())
+    for key in ('activation_and_abi_dependencies','PETSc_scalar_type','PETSc_integer_type',
+                'PETSc_version','MPI_library','modules','python_executable'):
+        if prior_runtime[key] != runtime[key]:
+            raise RuntimeError('JIT donor runtime differs: '+key)
+    allowed_nonform_changes = {
+        'src/common/runtime_resource_policy.py', 'src/solvers/bounded_mumps.py',
+        'src/runners/pstddm_p6_convergence.py',
+    }
+    for path, digest in identity['source_hashes'].items():
+        if (path.startswith('src/') and not path.startswith('src/test/')
+                and path not in allowed_nonform_changes and source_hashes.get(path) != digest):
+            raise RuntimeError('JIT donor form dependency changed: '+path)
+    inventory = json.loads((donor/'artifact_hashes.json').read_text())
+    products = {p:r for p,r in inventory.items() if p.startswith('cache/fenics/')}
+    total = sum(row['bytes'] for row in products.values())
+    if shutil.disk_usage(output).free < disk_floor + total:
+        raise RuntimeError('JIT cache copy exceeds disk admission')
+    started = time.monotonic()
+    for relative, row in products.items():
+        original = donor / relative
+        target = output / relative
+        if (original.is_symlink() or not original.resolve().is_relative_to(donor.resolve())
+                or original.stat().st_size != row['bytes']
+                or _workstation_file_hash(original) != row['sha256']):
+            raise RuntimeError('JIT donor product identity failed: '+relative)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(original, target)
+        if _workstation_file_hash(target) != row['sha256']:
+            raise RuntimeError('JIT product copy hash failed: '+relative)
+    return {'donor':str(donor), 'donor_source_sha':identity['source_sha'],
+            'files':len(products), 'copied_bytes':total,
+            'elapsed_seconds':time.monotonic()-started,
+            'artifact_inventory_sha256':_workstation_file_hash(donor/'artifact_hashes.json'),
+            'old_files_changed':False, 'FEM_or_factor_reuse_claimed':False}
+
+
 def _workstation_profile_main(argv=None):
     case_started=time.monotonic()
     parser=argparse.ArgumentParser(description='Native-Linux workstation PSTDDM resource profile.')
@@ -359,6 +413,13 @@ def _workstation_profile_main(argv=None):
         start=case_started;samples=[];reason=None;process=None
         with (output/'stdout.log').open('wb') as stdout,(output/'stderr.log').open('wb') as stderr:
             try:
+                if args.profile == 'workstation-p6':
+                    cache_record = _seed_p6_retry_jit_cache(output,document,runtime,hashes,disk_floor)
+                    if cache_record is not None:
+                        identity_path=output/'supervisor_identity.json'
+                        identity=json.loads(identity_path.read_text())
+                        identity['jit_cache_adoption']=cache_record
+                        _workstation_json(identity_path,identity)
                 process=subprocess.Popen(command,cwd=ROOT,env=env,stdout=stdout,stderr=stderr,start_new_session=True)
                 pgid=process.pid;reservation['child_pgid']=pgid;_workstation_json(ledger_path,ledger)
                 while process.poll() is None:

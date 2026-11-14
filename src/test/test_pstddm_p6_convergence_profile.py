@@ -1,6 +1,12 @@
 from __future__ import annotations
 
 import math
+import os
+from pathlib import Path
+import sys
+import tempfile
+import tomllib
+from unittest.mock import patch
 
 from src.common.runtime_resource_policy import disk_reserve_bytes, resource_policy, factor_checkpoint_enabled
 from src.runners.pstddm_p6_convergence import (
@@ -16,6 +22,38 @@ from src.runners.pstddm_p6_convergence import (
     mesh_plan,
 )
 from src.solvers.pstddm_material import derive_si_optical_identity
+
+
+def test_retry_keeps_original_math_and_separate_case_identity():
+    from src.runners.pstddm_p6_convergence import _validate_case
+    root=Path(__file__).resolve().parents[2]/'input/pstddm_p6_convergence_workstation'
+    old=tomllib.loads((root/'13p5_h10_direct.dat').read_text())
+    new=tomllib.loads((root/'13p5_h10_direct_retry1.dat').read_text())
+    assert {k:v for k,v in old.items() if k!='case_id'} == {k:v for k,v in new.items() if k!='case_id'}
+    assert _validate_case(new)['case_id'] != _validate_case(old)['case_id']
+    for bad in ('p6_h10_direct_13p5_retry0','p6_h7p5_direct_13p5_retry1','../retry1'):
+        try: _validate_case({**new,'case_id':bad})
+        except ValueError: pass
+        else: raise AssertionError('invalid retry identity accepted')
+
+
+def test_explicit_compiler_context_and_prefix_do_not_mutate_sysconfig():
+    import sysconfig
+    from src.common.runtime_resource_policy import mumps_compiler_command
+    from src.runners.pstddm_p6_convergence import qualified_mumps_compiler_command
+    before=sysconfig.get_config_var('CC')
+    with tempfile.TemporaryDirectory() as temporary:
+        prefix=Path(temporary)
+        compiler=prefix/'bin/x86_64-conda-linux-gnu-cc'
+        compiler.parent.mkdir(); compiler.write_text('#!/bin/sh\n');compiler.chmod(0o700)
+        (prefix/'x86_64-conda-linux-gnu/sysroot').mkdir(parents=True)
+        with patch.object(sys,'prefix',str(prefix)),patch.dict(os.environ,{'_MYFENICS_CLOUD_QUALIFIED_ACTIVATION':'1'}):
+            command=qualified_mumps_compiler_command()
+        assert mumps_compiler_command() is None
+        with resource_policy(lambda *_a,**_k: None,mumps_compiler_command=command):
+            assert mumps_compiler_command()==command
+        assert mumps_compiler_command() is None
+        assert sysconfig.get_config_var('CC')==before
 
 
 def test_piecewise_h_axes_are_material_fitted_and_match_frozen_counts():

@@ -28,3 +28,7 @@
 | compact/docs | 本目录结果、负结果与 hash 索引。 |
 | research-only | PSTDDM 当前 p2 固定离散试验；物理能量与规模性能未资格。 |
 | do-not-merge | ignored 原始大数组、缓存及任何主机凭据；本轮不合并 master。 |
+
+## p6用户续作：第一次h10装配（失败保留）
+
+`p6_h10_direct_13p5`，source `2ba53154fbcee9af30477b0398302bb24708b98b`，504 cells、612 modes、凝聚增广102996行/86586068 stored NNZ。2026-11-14 21:40:39至21:58:07（Asia/Singapore），supervisor完整1048.3153135273606 s。MUMPS桥接所读sysconfig仍含旧prefix，因编译器资格守卫退出；symbolic/numeric/场/R均未完成。进程树采样峰值3167588352 B，systemd任务cgroup峰值3638575104 B，两者口径不同；任务swap0、后代清空。原始及紧凑证据见[失败回执](records/p6_h10_attempt1.json)。旧文件不覆盖，修复后使用独立retry目录且继续累计费用。

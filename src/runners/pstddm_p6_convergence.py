@@ -5,6 +5,7 @@ import hashlib
 import json
 import math
 import os
+import re
 from pathlib import Path
 import shutil
 import time
@@ -50,7 +51,7 @@ def _validate_case(document: Mapping[str, Any]) -> dict[str, Any]:
     h_nm = float(case["h_nm"])
     if case["model"] != MODEL_NAME or case["mode"] != "direct":
         raise ValueError("p6 convergence profile accepts direct cases with its exact model marker")
-    if h_nm not in CASE_IDS or case["case_id"] != CASE_IDS[h_nm]:
+    if h_nm not in CASE_IDS or not re.fullmatch(re.escape(CASE_IDS[h_nm])+r'(?:_retry[1-9][0-9]*)?', str(case['case_id'])):
         raise ValueError("case_id/h_nm is outside the frozen h10/h7.5 direct pair")
     fixed = {
         "wavelength_nm": 13.5, "degree": 6, "geometry_identity": "stationary_centered_17x20x120_period50x50_zm10_130_v1",
@@ -353,6 +354,21 @@ def _mem_available_bytes() -> int:
     raise RuntimeError("MemAvailable is not readable")
 
 
+def qualified_mumps_compiler_command():
+    """Select only the current qualified prefix compiler; leave FFCx/sysconfig untouched."""
+    import sys
+    if os.environ.get('_MYFENICS_CLOUD_QUALIFIED_ACTIVATION') != '1':
+        raise RuntimeError('qualified native activation required for MUMPS compiler')
+    prefix = Path(sys.prefix).resolve(strict=True)
+    compiler = prefix/'bin/x86_64-conda-linux-gnu-cc'
+    sysroot = prefix/'x86_64-conda-linux-gnu/sysroot'
+    if (not compiler.is_file() or not os.access(compiler, os.X_OK)
+            or not compiler.resolve().is_relative_to(prefix/'bin')
+            or not sysroot.is_dir() or not sysroot.resolve().is_relative_to(prefix)):
+        raise RuntimeError('qualified prefix compiler/sysroot missing or escaped')
+    return (str(compiler), '--sysroot='+str(sysroot), '-pthread')
+
+
 def _admission_callback(output: Path, scope_root: Path, preparation_cgroup: str, started: float):
     from src.common.strict_json import atomic_json
     from src.runners.pstddm_workstation_case import validate_workstation_cgroup
@@ -512,7 +528,24 @@ def _run_p6_convergence_case(input_path: str | Path, dry_run: bool = False) -> d
     started = time.monotonic()
     admit = _admission_callback(output, scope_root, runtime["preparation_cgroup"]["path"], started)
     future, estimate = _assembly_future_bytes(plan, modes["count"])
-    with resource_policy(admit, disk_reserve_bytes=DISK_RESERVE_BYTES, factor_checkpoint=False):
+    compiler = qualified_mumps_compiler_command()
+    with resource_policy(admit, disk_reserve_bytes=DISK_RESERVE_BYTES, factor_checkpoint=False,
+                         mumps_compiler_command=compiler):
+        admit('public_mumps_bridge_before_FE', 256 << 20,
+              estimate_basis='small compiled public PETSc API bridge, before mesh/form/assembly')
+        from src.solvers.bounded_mumps import load_public_shim
+        import sysconfig
+        original_cc = sysconfig.get_config_var('CC')
+        shim_started = time.monotonic()
+        _api, shim_identity = load_public_shim(output/'mumps_symbolic', compiler_command=compiler)
+        if sysconfig.get_config_var('CC') != original_cc:
+            raise RuntimeError('MUMPS bridge unexpectedly changed FFCx compiler policy')
+        atomic_json(output/'mumps_compiler_preflight.json', {
+            'status':'PUBLIC_API_ABI_PASS_BEFORE_FE_NOT_FACTOR_QUALIFICATION',
+            'elapsed_seconds':time.monotonic()-shim_started,
+            'compiler':list(compiler), 'original_sysconfig_CC':original_cc,
+            'sysconfig_unchanged':True, 'identity':shim_identity,
+        })
         admit("before_local_static_condensation_assembly", future, estimate_basis=estimate)
 
         def observer(*, field, mesh_data, config, **_kwargs):

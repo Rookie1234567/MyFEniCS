@@ -26,7 +26,7 @@ def _digest(path):
     return h.hexdigest()
 
 
-def load_public_shim(directory):
+def load_public_shim(directory, *, compiler_command=None):
     from petsc4py import PETSc
     import numpy as np
     directory=Path(directory);directory.mkdir(parents=True,exist_ok=True)
@@ -34,8 +34,15 @@ def load_public_shim(directory):
     prefix=Path(sys.prefix).resolve()
     header=prefix/"include/petscmat.h"
     library=(prefix/"lib/libpetsc.so").resolve(strict=True)
-    compiler=shlex.split(sysconfig.get_config_var("CC") or "")
-    if not compiler or Path(compiler[0]).parent!=prefix/"bin" or not any(x.startswith("--sysroot=") for x in compiler):
+    compiler_source=("python_sysconfig" if compiler_command is None else "explicit_qualified_policy")
+    if compiler_command is None:
+        compiler=shlex.split(sysconfig.get_config_var("CC") or "")
+    elif isinstance(compiler_command,str):
+        compiler=shlex.split(compiler_command)
+    else:
+        compiler=[str(value) for value in compiler_command]
+    if (not compiler or Path(compiler[0]).parent!=prefix/"bin"
+            or not any(x.startswith("--sysroot=") for x in compiler)):
         raise RuntimeError("explicit qualified relocated compiler policy must be active")
     facts={"schema":"public-petsc-mumps-stages.v1","source_sha256":_digest(source),
            "header_sha256":_digest(header),"library_sha256":_digest(library),
@@ -43,6 +50,8 @@ def load_public_shim(directory):
            "compiler":compiler,"compiler_sha256":_digest(compiler[0]),
            "configuration_headers":{name:_digest(prefix/"include"/name)
                 for name in ("petscconf.h","petscsys.h","petscmat.h","petscversion.h")}}
+    if compiler_command is not None:
+        facts["compiler_source"]=compiler_source
     key=sha256(json.dumps(facts,sort_keys=True).encode()).hexdigest()
     output=directory/("public_mumps_"+key+".so")
     depfile=directory/(key+".d")
@@ -177,7 +186,10 @@ def symbolic_memory_preflight(matrix, options, *, admit, directory):
     Ordinary KSP repeats symbolic; no factor reuse or changed ordering claimed.
     """
     from ..common.strict_json import atomic_json
-    api,identity=load_public_shim(directory)
+    from ..common.runtime_resource_policy import mumps_compiler_command
+    api,identity=load_public_shim(
+        directory,compiler_command=mumps_compiler_command(),
+    )
     controls={14:100,24:1,35:0,22:0}
     for key,value in options.items():
         if key.startswith("mat_mumps_icntl_"):controls[int(key.rsplit("_",1)[1])]=int(value)
