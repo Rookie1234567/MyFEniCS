@@ -546,6 +546,12 @@ def _run_p6_convergence_case(input_path: str | Path, dry_run: bool = False) -> d
             'compiler':list(compiler), 'original_sysconfig_CC':original_cc,
             'sysconfig_unchanged':True, 'identity':shim_identity,
         })
+        manifest['mumps_compiler_preflight'] = {
+            'path':str(output/'mumps_compiler_preflight.json'),
+            'sha256':hashlib.sha256((output/'mumps_compiler_preflight.json').read_bytes()).hexdigest(),
+            'status':'PUBLIC_API_ABI_PASS_BEFORE_FE_NOT_FACTOR_QUALIFICATION',
+        }
+        atomic_json(output/'run_manifest.json', manifest)
         admit("before_local_static_condensation_assembly", future, estimate_basis=estimate)
 
         def observer(*, field, mesh_data, config, **_kwargs):
