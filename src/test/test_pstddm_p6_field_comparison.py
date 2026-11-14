@@ -66,7 +66,7 @@ class P6ComparisonTests(unittest.TestCase):
             base = Path(temporary)
             from types import SimpleNamespace
             from src.postprocessing.postprocess_3d import save_airbox_3d_fields
-            metrics = save_airbox_3d_fields(SimpleNamespace(mesh=msh), cfg, field, base/'metrics')
+            metrics = save_airbox_3d_fields(SimpleNamespace(mesh=msh, cell_tags=None), cfg, field, base/'metrics')
             self.assertIsNone(metrics['paraview_file'])
             self.assertEqual(metrics['vtx_3d_output_status'], 'disabled_by_profile')
             self.assertFalse(list((base/'metrics').glob('*.vtu')))
