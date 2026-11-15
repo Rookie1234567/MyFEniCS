@@ -43,3 +43,11 @@
 ### 首次h10历史
 
 `p6_h10_direct_13p5`，source `2ba53154fbcee9af30477b0398302bb24708b98b`，504 cells、612 modes、凝聚增广102996行/86586068 stored NNZ。2026-11-14 21:40:39至21:58:07（Asia/Singapore），supervisor完整1048.3153135273606 s。MUMPS桥接所读sysconfig仍含旧prefix，因编译器资格守卫退出；symbolic/numeric/场/R均未完成。进程树采样峰值3167588352 B，systemd任务cgroup峰值3638575104 B，两者口径不同；任务swap0、后代清空。原始及紧凑证据见[失败回执](records/p6_h10_attempt1.json)。旧文件不覆盖，修复后使用独立retry目录且继续累计费用。
+
+## p6保存载荷诊断及retry2–4（2026-11-15）
+
+完整索引见[Response V3](../response_v3.md)和[hash-bound compact](records/p6_h10_diagnosis_retry4.json)。retry2源2b7dcd78e54ffde890a15fb49badcfdb2595630b，0.6686448389664292s，JIT身份门在worker前拒绝；retry3源619e6d243ea7cbc904b0ad69e54fadb308c1a81b，10.891114233061671s，内部direct被旧外部port限制拒绝；两者均无numeric。
+
+retry4源afd415d3f5eae03e30d223d1d794008812891cd5，输入3da34ca66b6c96309b0d565b67d2ae355892bbccc83836d43c6b07d72d55fe3c。run=`runs/p6_h10_direct_13p5_retry4`，2026-11-15 08:56:52至09:09:33（Asia/Singapore），supervisor总763.1766434162855s。symbolic原始INFOG16/17=22457MB，numeric_ICNTL23候选13534MB，numeric_calls=0。原FAILED/child_returncode_1不改写，审核原因分类RESOURCE_CONTROLLED_STOP_BEFORE_NUMERIC。末态MainPID0、后代空、task swap0；无新解/新场/物理输出。
+
+原artifact_hashes.json逐文件验证取回收据，包括原生ABI、source/input、symbolic预算及595资源样本。主控只读重算预算缺口8,922,358,816B；原stage同对象条件式MemAvailable最低459,148,846,112B不是新run放行。未保存完整CSR，未宣称factor可复用。旧向量仅用于诊断和独立审核，不冒充新求解结果。

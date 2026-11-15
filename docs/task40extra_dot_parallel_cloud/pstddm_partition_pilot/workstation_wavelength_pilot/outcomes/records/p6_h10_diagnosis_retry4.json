@@ -1,0 +1,568 @@
+{
+  "case": {
+    "C_sha256": "52d946a3dc91c6b30a48c74496a54f86293bfa4df66aecd491b48e3d3ac8ed6b",
+    "D_sha256": "d8e58dffdfb2bdabf7844960824dea2f22ee28350eeef3f002169f246811d3db",
+    "case_id": "p6_h10_direct_13p5_retry1",
+    "cells": 504,
+    "degree": 6,
+    "dtn_modes": 612,
+    "h_nm": 10.0,
+    "input_sha256": "95a9a9d7ce068d7591e5e9c2b912720cf9e52fb7cc8d167fe46fc163132679eb",
+    "material_identity_sha256": "0dd4093be35e7226f0425853866b4458d27facc5c2ae31131ba8c3e45c999e25",
+    "ordered_modes_sha256": "953be5a1283555a87c0dfac258c7b1b346ec64dd17d78072d186687856e65208",
+    "physical_identity_sha256": "f67681a7725164e383d0c4734f80539b4409505a7e41b9f1aa951365e138b20c",
+    "source_sha": "e7eba2645b58acb8a0871a5f619e69ad61faad2b",
+    "wavelength_nm": 13.5
+  },
+  "claim_boundary": "Saved-vector diagnosis plus corrected-run assembly/symbolic evidence. No corrected numeric solve; old numerical FAIL preserved. Resource classification is retrospective; original FAILED receipt remains unchanged.",
+  "diagnostic_costs": [
+    {
+      "elapsed_after_imports_seconds": 12.811645520851016,
+      "matrix_or_factor": false,
+      "mpc_build_seconds": 2.2063,
+      "name": "saved residual geometry/row mapping final report",
+      "notes": "Metadata-only rebuild/mapping; report timing is after imports, not whole service wall.",
+      "pde": false,
+      "peak_rss_bytes": 724733952,
+      "runs": 1
+    },
+    {
+      "assembly_subtime_seconds": null,
+      "factorization": false,
+      "name": "incident RHS auto-versus-q28 vector capture",
+      "notes": "Two incident vectors assembled once using the finalized MPC test projection; precise assembly subtime and peak RSS were not saved.",
+      "pde_solve": false,
+      "peak_rss_bytes": null,
+      "runs": 1,
+      "whole_process_wall_seconds": 25.786462409
+    },
+    {
+      "compiled_identity_seconds": 0.005169,
+      "factorization": false,
+      "name": "report from retained vectors and compiled-rule identity",
+      "notes": "Re-formed incident forms for compiled-rule identity only; did not reassemble either vector.",
+      "pde": false,
+      "peak_rss_bytes": 334151680,
+      "reassembled_vectors": false,
+      "rebuilt_mpc": false,
+      "report_process_seconds": 1.7102079540491104,
+      "runs": 1
+    }
+  ],
+  "evidence": {
+    "first_vector_capture_script_sha256": "be734aaaa73122aeb62831544689cd8a60c851a69e74f05cd1d9207fb0958f60",
+    "first_vector_capture_status": "vector assembly succeeded; subsequent JSON serialization failed on mappingproxy; preserve failure script and status",
+    "metadata_report_sha256": "7657ab09c11de18502935917ab2b8c25b4a164745191edd2cc5008bafe226955",
+    "metadata_script_sha256": "50c09c921e020cecd16b69db16e985bc74de806f960655584b19c79302b6d80d",
+    "retained_report_script_sha256": "e67b045efba8197cbb0dd6b0b8cacb956185fa481a7ecf855bd28d43b8520cef",
+    "retained_vector_report_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/reviews/p6_h10_direct_13p5_retry1_saved_residual_distribution_20261115/saved_incident_rhs_quadrature_audit_from_retained_vectors.json",
+    "retained_vector_report_sha256": "26054d4d827ef5a4dd3199971b656f006bc5c080ecbdcb9dde9dfff2631c0411"
+  },
+  "not_completed": [
+    "Corrected degree-28 solve and original residual: NOT_RUN; retry4 stopped after symbolic and before numeric.",
+    "Physical power/volume absorption and mesh convergence: NOT_QUALIFIED.",
+    "h7.5 direct and same-mesh PSTDDM comparison: NOT_RUN.",
+    "No CSR checkpoint or live factor was retained; JIT products and input/evidence identities can be reused.",
+    "Capture assembly subtime/peak and some preparation costs remain UNKNOWN."
+  ],
+  "original_gate": {
+    "condensed_relative_residual": 1.2779043655559762e-10,
+    "old_record_preserved": true,
+    "physical_status": "NOT_COMPLETED",
+    "relative_residual": 3.2085634887236534e-07,
+    "rhs_norm": 1.8917378966874532,
+    "saved_full_fe_residual_norm": 6.069761145545764e-07,
+    "status": "DIRECT_NUMERICAL_FAIL",
+    "tolerance": 1e-10
+  },
+  "quadrature_path": {
+    "cause": "p6 runner did not request the reference incident quadrature flag, so the source RHS and full residual used different incident-traction quadrature rules.",
+    "full_augmented_residual_incident_rhs": "explicit stage4_dtn_quadrature_degree=28",
+    "production_incident_rhs": "auto-generated surface rule; compiled rule degree 15",
+    "scope": "p6-only selector fix; shared Stage 4 default remains false for other callers"
+  },
+  "record_status": "DIAGNOSTIC_COMPLETE_REPAIRED_RUN_STOPPED_BEFORE_NUMERIC",
+  "retained_vector_comparison": {
+    "delta_over_rhs_production_auto_minus_q28_source": 3.2085621535624343e-07,
+    "new_q28_solve_result": "NOT_RUN",
+    "original_q28_residual_top125_squared_share": 0.990217,
+    "original_q28_residual_top50_squared_share": 0.900265,
+    "r_delta_cosine": 0.9999999179892587,
+    "r_minus_delta_definition": "r - delta = A*x - b_auto: the saved solution residual against the degree-15 production RHS it actually used.",
+    "r_minus_delta_outside_top125_over_rhs": 1.2993602564999198e-10,
+    "r_minus_delta_over_rhs_saved_solution_against_actual_q15_rhs": 1.299454705721522e-10,
+    "r_minus_delta_ranks51_to125_over_rhs": 9.287597594538798e-13,
+    "r_minus_delta_top125_over_rhs": 1.5667037061925482e-12,
+    "r_minus_delta_top50_over_rhs": 1.2617312757543258e-12,
+    "r_over_rhs_saved_solution_against_q28_checker_rhs": 3.2085634887234014e-07,
+    "residual_definition": "r = A*x - b28, where b28 is the explicit degree-28 incident RHS used by the full residual checker.",
+    "source_delta_definition": "delta = b_auto - b28, where b_auto is the production degree-15 automatic-rule RHS.",
+    "status": "COMPLETE_FROM_RETAINED_VECTORS_NO_REASSEMBLY",
+    "vector_archive_bytes": 27316262,
+    "vector_archive_sha256": "5a59e56d9ad97992ccb339b9107fcae850b4b8c3581e9c9bc14e5b05e5e4fffb"
+  },
+  "schema": "pstddm.p6.saved_residual_incident_quadrature_diagnostic.v1",
+  "tolerance_margin": {
+    "gate": 1e-10,
+    "interpretation": "The source-vector difference aligns closely with the old saved q28-checker residual. Subtracting delta yields the old solution residual for the q15 load actually used. Neither result is a new q28 solve; the q15 residual itself remains about 30% above the gate.",
+    "new_degree28_solve_residual": "UNKNOWN_NOT_RUN",
+    "old_saved_solution_q15_residual_excess_over_gate": 2.99454705721522e-11,
+    "old_saved_solution_q28_residual_excess_over_gate": 3.2075634887234013e-07,
+    "old_saved_solution_residual_against_actual_q15_production_rhs": 1.299454705721522e-10,
+    "old_saved_solution_residual_against_q28_checker_rhs": 3.2085634887234014e-07
+  },
+  "source_after_guard_repair": "afd415d3f5eae03e30d223d1d794008812891cd5",
+  "next_step": "No automatic retry. Re-evaluate actual shared host/cgroup headroom and full object budget before any new corrected h10 verification. No saved assembled matrix/factor continuation is available.",
+  "attempt_receipt_audit": {
+    "schema": "pstddm.p6.receipt_audit.v1",
+    "audit_kind": "read_only_receipt_hash_budget_cleanup",
+    "PDE_calls": 0,
+    "factor_builds": 0,
+    "numerical_recomputation": false,
+    "attempts": {
+      "retry2": {
+        "source_sha": "2b7dcd78e54ffde890a15fb49badcfdb2595630b",
+        "input_sha256": "ba063d49519c4feffa03cce50ac0a5c1705c98ca92fa525b512a3635560df2e1",
+        "raw_status": "CONTROLLED_STOP",
+        "raw_stop_reason": "controlled_stop:RuntimeError:JIT donor form dependency changed: src/postprocessing/diffraction_3d.py",
+        "wall_seconds": 0.6686448389664292,
+        "task_swap_bytes": 0,
+        "remaining_descendants": [],
+        "verified_files": {
+          "supervisor_identity.json": {
+            "bytes": 101289,
+            "sha256": "7c3dd49d570c77e3231d0b5d12521c955d72956b4c90cc3c7ba696f7a7e3785f"
+          },
+          "resource_samples.json": {
+            "bytes": 3,
+            "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+          },
+          "supervision.json": {
+            "bytes": 2604,
+            "sha256": "1a127bdc8f1ea2a496447745b8cac023b18dd30f206469517cd1cb7509b30cdd"
+          },
+          "runtime_receipt.json": {
+            "bytes": 7725,
+            "sha256": "a742ed66d477dbccd51ae0b61e513dff201532d66a2d29d8ca725fb7b39605fa"
+          }
+        },
+        "remote_run_root": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/runs/p6_h10_direct_13p5_retry2"
+      },
+      "retry3": {
+        "source_sha": "619e6d243ea7cbc904b0ad69e54fadb308c1a81b",
+        "input_sha256": "f8053ec9fb7b3f88a5f81d1337b59e41148e571005d23a64d89e3b889a370b5e",
+        "raw_status": "FAILED",
+        "raw_stop_reason": "child_returncode_1",
+        "wall_seconds": 10.891114233061671,
+        "task_swap_bytes": 0,
+        "remaining_descendants": [],
+        "verified_files": {
+          "mumps_compiler_preflight.json": {
+            "bytes": 4165,
+            "sha256": "b490edf0b67f6f3292ab5d21b5a7604cc82e059a75179eafed250fc2dbd6d67a"
+          },
+          "supervisor_identity.json": {
+            "bytes": 102257,
+            "sha256": "0b7277840dc5699cd10e0403401112eee4a4d6c3a42f4fc413ee15b348e519ec"
+          },
+          "resource_samples.json": {
+            "bytes": 5692,
+            "sha256": "b927a3d39c8686da399a19fe5225d5c8c1599f6e20fb0a01af5c09801036e4dc"
+          },
+          "run_manifest.json": {
+            "bytes": 4767,
+            "sha256": "11353c9a86c696ac45f26bb68c7d14c318982a8a2075e7a25eedcfaf293d6a74"
+          },
+          "resolved_config.json": {
+            "bytes": 6751,
+            "sha256": "3373d13ebb0d46d69a23560ff4d5efe3432ab30b719585bc6163c21cf299ceca"
+          },
+          "resource_admission.json": {
+            "bytes": 8078,
+            "sha256": "b6e5ba2cfbf192a5671a7cdc183c86dcabf5122861145641d4b49a738a6f20dc"
+          },
+          "material_identity.json": {
+            "bytes": 1217,
+            "sha256": "8170fbbf23f078fe09c8779a3fc81d9516ebd796106e8692133c7917c87809ce"
+          },
+          "mode_inventory.json": {
+            "bytes": 779765,
+            "sha256": "57273cd16f4046e87907f047a65afdecd9e80134b87e968de98963f3cc1af309"
+          },
+          "supervision.json": {
+            "bytes": 2544,
+            "sha256": "74212e9a7c6e7206e5ec1e440b5b764bc51e8c77bd8a2451be43a9cdca01b3d2"
+          },
+          "runtime_receipt.json": {
+            "bytes": 7725,
+            "sha256": "8e5e4d2f204870891ded8b51414821e7c7aa2273f64b649974fb1172aa8d06e2"
+          },
+          "incident_traction_quadrature_receipt.json": {
+            "bytes": 384,
+            "sha256": "8b5c10cfa968a12847f501e6b2f8cd9787a21da8cc3f458f57756d61cbc371c4"
+          }
+        },
+        "remote_run_root": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/runs/p6_h10_direct_13p5_retry3"
+      },
+      "retry4": {
+        "source_sha": "afd415d3f5eae03e30d223d1d794008812891cd5",
+        "input_sha256": "3da34ca66b6c96309b0d565b67d2ae355892bbccc83836d43c6b07d72d55fe3c",
+        "raw_status": "FAILED",
+        "raw_stop_reason": "child_returncode_1",
+        "wall_seconds": 763.1766434162855,
+        "task_swap_bytes": 0,
+        "remaining_descendants": [],
+        "verified_files": {
+          "mumps_compiler_preflight.json": {
+            "bytes": 4165,
+            "sha256": "c99c7878f4e53c5b186a2677038fb79d04a08963d2f991729f319550ae5d6337"
+          },
+          "supervisor_identity.json": {
+            "bytes": 102715,
+            "sha256": "0d423c6fb3a4bdd86fa023f710f7bcd1abccdd73edb7401bfb73dc637c22ac8e"
+          },
+          "resource_samples.json": {
+            "bytes": 803976,
+            "sha256": "91dabd0b6618a1c23af389c04a0a69aad7a166617e3f1e0483a880a36c875053"
+          },
+          "run_manifest.json": {
+            "bytes": 4746,
+            "sha256": "01d4d9eee197b589b736bcf1a0acbf16a23a8c9598ce599d42ea7ed7a4169ad4"
+          },
+          "resolved_config.json": {
+            "bytes": 6751,
+            "sha256": "0de4f7187c55d20f73eeeff2429561eb72bffce67167fe260074ea57a87f5dc3"
+          },
+          "resource_admission.json": {
+            "bytes": 11069,
+            "sha256": "3cbd16a1cb3ab989c746e95f8bc3080edaa59d7375fb10bfd4c69ac6f8936d48"
+          },
+          "material_identity.json": {
+            "bytes": 1217,
+            "sha256": "8170fbbf23f078fe09c8779a3fc81d9516ebd796106e8692133c7917c87809ce"
+          },
+          "actual_compiled_surface_rules.json": {
+            "bytes": 15608,
+            "sha256": "d1a55294e1508acf646cb631023155a5796cfe3ecc4dc3b590ff3fe292c0ee9e"
+          },
+          "mode_inventory.json": {
+            "bytes": 779765,
+            "sha256": "57273cd16f4046e87907f047a65afdecd9e80134b87e968de98963f3cc1af309"
+          },
+          "supervision.json": {
+            "bytes": 2546,
+            "sha256": "66f75ffa233de05123653ece2071e105e5435d684b57e8d3c8571a5907bbef08"
+          },
+          "mumps_symbolic/symbolic_preflight.json": {
+            "bytes": 6174,
+            "sha256": "abee139b25d2f9a65430bf310e26490f64748ae6481f2bfcbd8f4ff4773520d2"
+          },
+          "runtime_receipt.json": {
+            "bytes": 7725,
+            "sha256": "7a0da915d01544ad2ff7b10f3af2006fb090f6c0d945f9f8d027e091bc0fcba7"
+          },
+          "incident_traction_quadrature_receipt.json": {
+            "bytes": 384,
+            "sha256": "8b5c10cfa968a12847f501e6b2f8cd9787a21da8cc3f458f57756d61cbc371c4"
+          }
+        },
+        "classification": "RESOURCE_CONTROLLED_STOP_BEFORE_NUMERIC",
+        "workspace_budget_bytes": 13534641184,
+        "required_INFOG16_MB": 22457,
+        "workspace_shortfall_bytes": 8922358816,
+        "peak_sampled_tree_rss_bytes": 4102488064,
+        "peak_tree_sample": {
+          "elapsed_seconds": 757.8453578026965,
+          "process_group_id": 3482467,
+          "process_tree_rss_bytes": 4102488064,
+          "process_tree_swap_bytes": 0,
+          "processes": [
+            {
+              "pid": 3482467,
+              "ppid": 3482408,
+              "start_ticks": 462920954,
+              "rss_bytes": 4102488064,
+              "swap_bytes": 0
+            }
+          ],
+          "MemAvailable_bytes": 448334409728,
+          "host_total_bytes": 2163100385280,
+          "disk_free_bytes": 388133347328,
+          "cgroup": {
+            "memory_current_bytes": 4404183040,
+            "memory_max_bytes": 68719476736,
+            "swap_current_bytes": 0,
+            "swap_max_bytes": 0,
+            "ancestors": [
+              {
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice",
+                "memory_max_bytes": null,
+                "memory_current_bytes": 2063243862016
+              },
+              {
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service",
+                "memory_max_bytes": null,
+                "memory_current_bytes": 2063859605504
+              },
+              {
+                "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+                "memory_max_bytes": null,
+                "memory_current_bytes": 2141753815040
+              },
+              {
+                "path": "/sys/fs/cgroup/user.slice",
+                "memory_max_bytes": null,
+                "memory_current_bytes": 2141758234624
+              }
+            ]
+          }
+        },
+        "peak_sampled_cgroup_current_bytes": 4404195328,
+        "all_sampled_task_swap_zero": true,
+        "remote_run_root": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/runs/p6_h10_direct_13p5_retry4"
+      }
+    }
+  },
+  "retry4_symbolic_budget": {
+    "INFOG": {
+      "1": 0,
+      "16": 22457,
+      "17": 22457,
+      "2": 0,
+      "26": 4991,
+      "27": 4991,
+      "3": 606662352,
+      "4": 1505132
+    },
+    "INFOG26_OOC_diagnostic_only": 4991,
+    "MUMPS_cap_not_process_RSS_cap": true,
+    "available_floor_bytes": 429496729600,
+    "controls": {
+      "14": 100,
+      "22": 0,
+      "24": 1,
+      "35": 0
+    },
+    "estimate_not_upper_bound": true,
+    "external_future_bytes": 6641468384,
+    "future_co_resident_reserve_bytes": 4294967296,
+    "future_numeric_bytes": 20175468384,
+    "independent_margin_bytes": 536870912,
+    "later_KSP_repeats_symbolic": true,
+    "live_observation": {
+      "active_cgroup_path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/pstddm-p6-h10-retry4-20261115.service",
+      "ancestors": [
+        {
+          "memory_current_bytes": 2061462278144,
+          "memory_max_bytes": null,
+          "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice"
+        },
+        {
+          "memory_current_bytes": 2062078750720,
+          "memory_max_bytes": null,
+          "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service"
+        },
+        {
+          "memory_current_bytes": 2139974254592,
+          "memory_max_bytes": null,
+          "path": "/sys/fs/cgroup/user.slice/user-1000.slice"
+        },
+        {
+          "memory_current_bytes": 2139978674176,
+          "memory_max_bytes": null,
+          "path": "/sys/fs/cgroup/user.slice"
+        }
+      ],
+      "available_floor_bytes": 429496729600,
+      "disk_free_bytes": 388133335040,
+      "disk_reserve_bytes": 380000000000,
+      "effective_cap_bytes": 68719476736,
+      "elapsed_seconds": 754.3309805719182,
+      "estimate_basis": "symbolic factor released; observe actual live headroom before choosing ICNTL23",
+      "future_bytes": 0,
+      "future_co_resident_reserve_bytes": 4294967296,
+      "live_tree_and_supervisor_bytes": 3018309632,
+      "margin_bytes": 536870912,
+      "mumps_task_limit_bytes": 68719476736,
+      "stage": "mumps_numeric_budget_observation",
+      "system": {
+        "available": 450226487296
+      },
+      "task_swap_current_bytes": 0,
+      "task_swap_max_bytes": 0
+    },
+    "matrix_stored_nnz": 86586068,
+    "mumps_task_limit_bytes": 68719476736,
+    "numeric_ICNTL23_MB": 13534,
+    "numeric_calls": 0,
+    "outside_mumps_reserve_bytes": 268435456,
+    "passed": false,
+    "petsc_conversion_upper_bytes": 2078065632,
+    "policy": "mumps582-incore-live-workspace-cap-v2",
+    "reference": "MUMPS 5.8.2 user guide section 5.11; PETSc v3.25.6 MatConvertToTriples_seqaij_seqaij",
+    "required_INFOG16_MB": 22457,
+    "schema": "mumps-symbolic-preflight.v2",
+    "shim": {
+      "PETSc_version": [
+        3,
+        25,
+        6
+      ],
+      "compile_argv": [
+        "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/x86_64-conda-linux-gnu-cc",
+        "--sysroot=/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/x86_64-conda-linux-gnu/sysroot",
+        "-pthread",
+        "-std=c99",
+        "-O2",
+        "-fPIC",
+        "-shared",
+        "-MD",
+        "-MF",
+        "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/runs/p6_h10_direct_13p5_retry4/mumps_symbolic/c6a11aa219ba33747b48bab7b67e10c0256f8f20d2da4c9e60d64b2dcf1caa69.d",
+        "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/source/src/solvers/public_mumps_stages.c",
+        "-I/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/include",
+        "-L/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib",
+        "-Wl,-rpath,/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/lib",
+        "-lpetsc",
+        "-o",
+        "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/runs/p6_h10_direct_13p5_retry4/mumps_symbolic/public_mumps_c6a11aa219ba33747b48bab7b67e10c0256f8f20d2da4c9e60d64b2dcf1caa69.so"
+      ],
+      "compiler": [
+        "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/x86_64-conda-linux-gnu-cc",
+        "--sysroot=/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/x86_64-conda-linux-gnu/sysroot",
+        "-pthread"
+      ],
+      "compiler_sha256": "1b866d8450249db5231194834ff440ad20b1f5e9316c94cd6b59c2da575545e0",
+      "compiler_source": "explicit_qualified_policy",
+      "configuration_headers": {
+        "petscconf.h": "5ea90670f5d5631d37761e17def39b4ae8112988dbedc301bc1ef88cff9d72df",
+        "petscmat.h": "f483e8c7684991052a287cdb210a750860baba22809d433ee5c636ca903ba04c",
+        "petscsys.h": "adf8876ce66084a160ac1ca123243cbe45ac652a780db45c4b0d37b1a5dd3c10",
+        "petscversion.h": "2b53352977a711ea26f47b3cb6f49625bea092463b6bfb93f61950113bc3a462"
+      },
+      "dependencies_file": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/runs/p6_h10_direct_13p5_retry4/mumps_symbolic/c6a11aa219ba33747b48bab7b67e10c0256f8f20d2da4c9e60d64b2dcf1caa69.dependencies.json",
+      "dependencies_sha256": "ee3ce6ca53c5807f4b17fd5826f17bcc49193faf181ed343ffacea5f9230e6db",
+      "header_sha256": "f483e8c7684991052a287cdb210a750860baba22809d433ee5c636ca903ba04c",
+      "library_sha256": "1a931d78f3e9bea26afc0a5cc96d661d3cb0a2eccd44d8709a5e7348c3a11111",
+      "prefix": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix",
+      "schema": "public-petsc-mumps-stages.v1",
+      "shim_file": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/runs/p6_h10_direct_13p5_retry4/mumps_symbolic/public_mumps_c6a11aa219ba33747b48bab7b67e10c0256f8f20d2da4c9e60d64b2dcf1caa69.so",
+      "shim_sha256": "ae0365c67b0d13a0d9e66c1ce05f7c7b145c5381e343becc058ff143e7ac3b3d",
+      "source_sha256": "81c2fc1f68fad594543594db82467cdae126eb23e095c36c7084afe7d6512d24"
+    },
+    "symbolic_seconds": 4.31717380695045,
+    "uncommitted_observation_slack_bytes": 16777216,
+    "workspace_budget_bytes": 13534641184
+  },
+  "tests": {
+    "final_guard": {
+      "exit_code": 0,
+      "test_seconds": 0.7355273421853781,
+      "process_peak_rss_bytes": 219766784,
+      "candidate_sha256": {
+        "dtn_port_3d.py": "ae8592c7a349226fa2e4cc617f913baeb30c0162a48719536a54c5dd2e001d3e",
+        "p6_guard_candidate_test.py": "5804827ac6067a17873b3d920498e42cf58f4b70dbb7676bde582050af0ec9a1",
+        "supervise.py": "7bd823295edfcc8d269f6eb78bef9b92f5808bb53dbd2350bb3e6c54a97c212d",
+        "test_374_reference_incident_quadrature.py": "15ef6bb3e6576dc8c7f19b9d8c30187514a0709a538ad8e49b59852df3875bb0",
+        "test_pstddm_workstation_profile.py": "76f15861a114d9ea794410b03d3ff149397a93fc7ab1a8732a1ff66bfc3bb053"
+      },
+      "PDE_calls": 0,
+      "factor_builds": 0
+    },
+    "fixture_failures_preserved": {
+      "exit_code": 1,
+      "test_seconds": 0.6251649055629969,
+      "process_peak_rss_bytes": 228093952,
+      "candidate_sha256": {
+        "dtn_port_3d.py": "ae8592c7a349226fa2e4cc617f913baeb30c0162a48719536a54c5dd2e001d3e",
+        "p6_guard_candidate_test.py": "dc4a4a704e91a53b26a84ee864b63e03cb94d739a0e23916c2ea399f3fea76e6",
+        "supervise.py": "7bd823295edfcc8d269f6eb78bef9b92f5808bb53dbd2350bb3e6c54a97c212d",
+        "test_374_reference_incident_quadrature.py": "364777581b16fdbea297a206ea887d5259b3b9c7f5135bebb62e74e609aa9318",
+        "test_pstddm_workstation_profile.py": "76f15861a114d9ea794410b03d3ff149397a93fc7ab1a8732a1ff66bfc3bb053"
+      },
+      "PDE_calls": 0,
+      "factor_builds": 0
+    },
+    "incident_wrapper_only_earlier": {
+      "schema": "pstddm.incident_quadrature_targeted_test.v1",
+      "exit_code": 0,
+      "test_seconds": 0.7589744478464127,
+      "process_peak_rss_bytes": 216432640,
+      "python": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+      "scalar": "<class 'numpy.complex128'>",
+      "integer": "<class 'numpy.int32'>",
+      "candidate_sha256": {
+        "pstddm_p6_convergence.py": "6e3468c582dca0ef741e4cdd4519e23a7cda7a9b0d165d0a060e3d48ebc5e1d2",
+        "test_374_reference_incident_quadrature.py": "a4eb5e996fa865e574366266c5689f79c2bc471c8c26a788ef6d33aebee63976"
+      },
+      "PDE_calls": 0,
+      "factor_builds": 0
+    },
+    "csv_hash_pair": {
+      "exit_code": 0,
+      "test_seconds": 0.28649305645376444,
+      "process_peak_rss_bytes": 119955456,
+      "candidate_sha256": {
+        "supervise.py": "010180cd284b81ad54fb600109d0d72d6ca1084840f7bd329d8d6fc0a0bdbe97",
+        "test_pstddm_workstation_profile.py": "dcd9ebc5da0dc5fb3ac0b382db4a4def9f278af0d723a4ca90305f202f29b9e9"
+      },
+      "PDE_calls": 0,
+      "factor_builds": 0
+    }
+  },
+  "costs": {
+    "formal_supervisor_wall_sum_seconds": 3162.9574122633785,
+    "formal_limit_seconds": 21600,
+    "formal_remaining_seconds": 18437.04258773662,
+    "scope": "supervisor entry through cleanup and hashes; preparation/audit/tests separately reported, unknown costs not zero"
+  },
+  "memory_boundary": {
+    "retry4_systemd_MemoryPeak_bytes": 3130531840,
+    "retry4_sampled_cgroup_peak_bytes": 4404195328,
+    "systemd_peak_conflicts_with_samples": true,
+    "cause": "UNKNOWN; do not use systemd value as actual maximum",
+    "PSS": "NOT_SAMPLED"
+  },
+  "earlier_wrapper_fix_validation_history": {
+    "environment": "qualified native user-service",
+    "full_pde_run": false,
+    "measured_test_process_seconds": 0.75897,
+    "push_sync_status": "source commit synchronized at 2b7dcd78e54ffde890a15fb49badcfdb2595630b; exact remote ref matched; worktree clean at launch",
+    "pytest_seconds": 0.63,
+    "python_peak_rss_bytes": 216432640,
+    "result": "5 passed, 5 deselected",
+    "runner_sha256": "6e3468c582dca0ef741e4cdd4519e23a7cda7a9b0d165d0a060e3d48ebc5e1d2",
+    "service_seconds": 1.865,
+    "source_commit": "24ee048553d918c4a38a6abab24bd3412056f8ad",
+    "targeted_test_sha256": "a4eb5e996fa865e574366266c5689f79c2bc471c8c26a788ef6d33aebee63976",
+    "task_swap_bytes": 0
+  },
+  "saved_residual_top125_mapping": {
+    "count": 125,
+    "share_of_full_FE_residual_squared": 0.9902174492532544,
+    "support_coordinate_extent_nm": {
+      "x": {
+        "min": 0.0,
+        "max": 50.0
+      },
+      "y": {
+        "min": 15.0,
+        "max": 35.0
+      },
+      "z": {
+        "min": 130.0,
+        "max": 130.0
+      }
+    },
+    "exclusive_boundary_signatures": {
+      "z_max": {
+        "count": 125,
+        "residual_squared": 3.648159162580485e-13,
+        "share_of_selected_set_residual_squared": 1.0,
+        "share_of_full_FE_residual_squared": 0.9902174492532544,
+        "subset_residual_L2_over_original_rhs_L2": 3.192830950497046e-07
+      }
+    },
+    "unique_incident_cell_count": 24
+  }
+}

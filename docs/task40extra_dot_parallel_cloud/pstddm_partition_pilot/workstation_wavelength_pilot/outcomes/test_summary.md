@@ -29,3 +29,11 @@ ABI进口收据SHA256为`280dbdf428d1e85d2ddf792f2f76afbfec7a88e73e21d2d616d4f2c
 旧失败在已完成凝聚增广装配后、MUMPS symbolic前发生；原`sysconfig.CC`仍含搬迁前WSL路径。修复只为公开PETSc/MUMPS C桥接提供当前资格化prefix内编译器和sysroot，保留旧默认守卫，不改FFCx编译配置、积分、求解控制或资源门。正式runner在FE前加载/核验同一桥接，独立retry保持原h10数学输入。
 
 工作站原ABI下实际2×2 complex128测试完成symbolic、numeric、完整残差及普通KSP对照：残差`2.1593801109342874e-16`，与普通KSP解差0，清理通过，probe内部0.38676974922418594 s；这是API小测试，不是PDE通过。原始`preparation/p6_api_probe/actual_api_result/result.json`。相关7项测试通过（0.102 s），覆盖显式编译器上下文、旧默认、独立retry身份、JIT缓存同数学/ABI/hash与污染拒绝；另实际执行retry dry配置和FE前桥接加载，见`preparation/p6_repair_targeted.log`。不重复全仓测试。失败产生的1048.3153135273606 s费用和原输出保持不变。
+
+## p6入射积分、内部direct入口与缓存资格（2026-11-15）
+
+最终源码afd415d3f5eae03e30d223d1d794008812891cd5。原生complex128/int32、MPI1/math1环境下15个相关测试通过，pytest0.50s、测试父段0.7355273421853781s、RSS峰219766784B；service父段2.777s，父子不相加。真实p6 public wrapper经真实DtN impl走过guard，以装配前log哨兵退出；variable-p反例仅隔离更早的degree-plan资格门，真实resolver及待测guard保留。另验nonassembled/action-only拒绝及精确cache旧/新hash对；无PDE/factor。
+
+首轮2失败/21通过保留：variable-p夹具先触发degree-plan门而非待测guard；临时候选目录名意外命中-k筛选，使旧p2路径测试在临时位置找不到输入。修正夹具和明确选择后仅运行相关测试，不为包装错误启动PDE。更早5项wrapper及1项CSV-cache回归的source/hash/费用亦在compact中分列，不把这些当新PDE资格。
+
+主控对retry2/3/4原始artifact清单逐项核验小收据hash；独立重算retry4 workspace公式、原始INFOG与候选ICNTL23关系，确认numeric_calls=0、595样本任务swap0和后代清空。审核完成不转授数值PASS。测试及原负回执见[compact](records/p6_h10_diagnosis_retry4.json)。未运行全仓测试、MPI2/4或CI。

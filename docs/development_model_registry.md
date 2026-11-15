@@ -2162,3 +2162,9 @@ CSV改用全行字段并集；原306行JSON可重导出，保存原向量补审�
 N2/N4全过程峰613.37/874.19MiB、56.716/82.300s，分区增加反而更费内存/时间；固定PML使最大local free4080超过global FE3120，全部局部因子和全局mass因子同时缓存。四案249.892s、零swap、无门触发。p2物理未收敛，能量缺口0.00470279，功率仅diagnostic；N4首扫散射误差约4.5%保留，制造源功率诊断失败不改判。N8四层网格不合法；p4保守阶段预留约36.765GiB无法在本轮2GiB局部门准入，未运行而非方法不可能。
 
 结论PASS_WITH_QUALIFICATIONS，停止本轮扩展、保持opt-in，不merge。下一轮须先单独审查PML网格/因子驻留成本，再谈规模；缓存冷热与部分阶段计数未记录，不能宣称全冷benchmark。详见[统一结果](task40extra_dot_parallel_cloud/pstddm_partition_pilot/outcomes/summary.md)、[响应](task40extra_dot_parallel_cloud/pstddm_partition_pilot/response_v1.md)与[独审](task40extra_dot_parallel_cloud/pstddm_partition_pilot/review_report_v2.md)。
+
+## 2026-11-15：PSTDDM p6保存残差归因与修复后动态资源停止
+
+保存场定位发现生产入射载荷用自动15阶、原完整检查用28阶积分；两载荷差与旧残差余弦0.9999999179892587，解释主要误差。旧解相对实际15阶载荷仍为1.299454705721522e-10>1e-10，旧FAIL保留。显式28阶接线及内部direct guard已修复，默认和数值门不改，相关15项测试通过。
+
+修复后retry4（source afd415d3f5eae03e30d223d1d794008812891cd5）完成504cells/612modes/102996行的装配与symbolic，763.1766434162855s；INFOG16/17预测22457MB，host动态余量下工作区候选13534MB，numeric前停止。真实采样treeRSS峰4102488064B、cgroup峰4404195328B；systemd峰字段偏小矛盾另列UNKNOWN。task swap0、完整清场，无新原残差/物理场，不以资源停止冒充数值失败或通过。五次正式attempt父账3162.9574122633785s，准备测试另列。未重启同条件失败，不改邻项目。见[Response V3](task40extra_dot_parallel_cloud/pstddm_partition_pilot/workstation_wavelength_pilot/response_v3.md)与其完整hash证据；h7.5/迭代/网格资格仍未完成。
