@@ -2942,10 +2942,14 @@ def _solve_stage4_dtn_port_total_field_impl(
         Stage4NeverMaterializedLinearSolverPort,
     )
     if diagnostic_reference_incident_quadrature and (
-        linear_solver_port is None or not assembly_time_cell_static_condensation
-        or variable_p_backend or never_materialized_port
+        not assembly_time_cell_static_condensation
+        or variable_p_backend
+        or never_materialized_port
     ):
-        raise ValueError('diagnostic incident quadrature requires fixed-p assembled external reference')
+        raise ValueError(
+            'diagnostic incident quadrature requires a materialized fixed-p '
+            'assembly-time system; variable-p and action-only systems are unsupported'
+        )
     if matrix_free_dtn and not never_materialized_port:
         raise ValueError("matrix-free DtN requires the action-only solver port")
     if matrix_free_dtn_probe and (not matrix_free_dtn or not never_materialized_port):

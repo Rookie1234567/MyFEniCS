@@ -38,7 +38,11 @@ class WorkstationProfileFixtures(unittest.TestCase):
             reviewed_path='src/postprocessing/diffraction_3d.py'
             reviewed_old='587efc81a90c8a65b1e3ff1ec2efe53084893f3d6545556d24a2f1636d9a419d'
             reviewed_new='322856dbb2e43aeabfccd0bb136025a98568dd593f78648dedbc48bb2adef39e'
-            source={'src/solvers/volume.py':'frozen',reviewed_path:reviewed_old}
+            guard_path='src/solvers/dtn_port_3d.py'
+            guard_old='49e75c0ee080c2b40dcbe6cc6da0e40ee47828cf1f81a49bef1b82fee7472b1e'
+            guard_new='ae8592c7a349226fa2e4cc617f913baeb30c0162a48719536a54c5dd2e001d3e'
+            source={'src/solvers/volume.py':'frozen',reviewed_path:reviewed_old,
+                    guard_path:guard_old}
             identity=dict(input_path=str(input_path),input_sha256=_sha256(input_path),source_sha='old',
                           source_hashes=source,runtime_receipt_sha256=_sha256(runtime_path))
             (donor/'supervisor_identity.json').write_text(json.dumps(identity))
@@ -46,13 +50,15 @@ class WorkstationProfileFixtures(unittest.TestCase):
             inventory={'cache/fenics/kernel.so':dict(bytes=cache.stat().st_size,sha256=_sha256(cache))}
             (donor/'artifact_hashes.json').write_text(json.dumps(inventory))
             document=dict(case_id=output.name,h_nm=10.0)
-            current_source={**source,reviewed_path:reviewed_new}
+            current_source={**source,reviewed_path:reviewed_new,guard_path:guard_new}
             result=supervise._seed_p6_retry_jit_cache(output,document,runtime,current_source,0)
             self.assertEqual(result['files'],1)
-            self.assertEqual(result['reviewed_nonform_source_changes'],[{
-                'path':reviewed_path,'old_sha256':reviewed_old,'new_sha256':reviewed_new,
-                'reason':'CSV-only-review/source6a28',
-            }])
+            self.assertEqual(result['reviewed_nonform_source_changes'],[
+                {'path':reviewed_path,'old_sha256':reviewed_old,'new_sha256':reviewed_new,
+                 'reason':'CSV-only-review/source6a28'},
+                {'path':guard_path,'old_sha256':guard_old,'new_sha256':guard_new,
+                 'reason':'fixed-p-direct-incident-quadrature-guard-only/619e6d'},
+            ])
             self.assertEqual((output/'cache/fenics/kernel.so').read_bytes(),cache.read_bytes())
             with self.assertRaisesRegex(RuntimeError,'mathematical'):
                 supervise._seed_p6_retry_jit_cache(output,{**document,'h_nm':7.5},runtime,current_source,0)
@@ -62,11 +68,24 @@ class WorkstationProfileFixtures(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,'dependency'):
                 supervise._seed_p6_retry_jit_cache(output,document,runtime,
                     {**current_source,reviewed_path:'wrong-new'},0)
+            with self.assertRaisesRegex(RuntimeError,'dependency'):
+                supervise._seed_p6_retry_jit_cache(output,document,runtime,
+                    {**current_source,guard_path:'wrong-new'},0)
             wrong_path_source={key:value for key,value in current_source.items() if key != reviewed_path}
             wrong_path_source['src/postprocessing/diffraction_csv_only.py']=reviewed_new
             with self.assertRaisesRegex(RuntimeError,'dependency'):
                 supervise._seed_p6_retry_jit_cache(output,document,runtime,wrong_path_source,0)
             identity['source_hashes']={**source,reviewed_path:'wrong-old'}
+            (donor/'supervisor_identity.json').write_text(json.dumps(identity))
+            with self.assertRaisesRegex(RuntimeError,'dependency'):
+                supervise._seed_p6_retry_jit_cache(output,document,runtime,current_source,0)
+            wrong_guard_path={key:value for key,value in current_source.items() if key != guard_path}
+            wrong_guard_path['src/solvers/dtn_port_3d_reviewed.py']=guard_new
+            identity['source_hashes']=source
+            (donor/'supervisor_identity.json').write_text(json.dumps(identity))
+            with self.assertRaisesRegex(RuntimeError,'dependency'):
+                supervise._seed_p6_retry_jit_cache(output,document,runtime,wrong_guard_path,0)
+            identity['source_hashes']={**source,guard_path:'wrong-old'}
             (donor/'supervisor_identity.json').write_text(json.dumps(identity))
             with self.assertRaisesRegex(RuntimeError,'dependency'):
                 supervise._seed_p6_retry_jit_cache(output,document,runtime,current_source,0)

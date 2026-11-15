@@ -32,31 +32,113 @@ def test_public_wrapper_forwards_default_off_flag(monkeypatch,enabled):
     assert seen[flag] is enabled
 
 
-def test_p6_runner_calls_public_stage4_wrapper_with_reference_quadrature(monkeypatch, tmp_path):
+class _PassedIncidentQuadratureGuard(Exception):
+    pass
+
+
+def _p6_fixed_p_guard_config():
+    from src.runners import pstddm_p6_convergence as p6
+    from src.solvers.pstddm_material import derive_si_optical_identity
+
+    return p6.build_p6_config(
+        {"case_id": "p6_h10_direct_13p5_retry3", "h_nm": 10.0},
+        derive_si_optical_identity(13.5),
+    )
+
+
+def _call_stage4_impl_until_guard(dtn, cfg, output, *, linear_solver_port=None):
+    def stop_after_guard(_message):
+        raise _PassedIncidentQuadratureGuard
+
+    return dtn.solve_stage4_dtn_port_total_field(
+        a=None,
+        L=None,
+        V=None,
+        mesh_data=None,
+        cfg=cfg,
+        floquet_data=object(),
+        petsc_options={},
+        out_dir=output,
+        log=stop_after_guard,
+        started=0.0,
+        linear_solver_port=linear_solver_port,
+        diagnostic_reference_incident_quadrature=True,
+    )
+
+
+def test_p6_runner_reaches_fixed_p_direct_incident_quadrature_guard(monkeypatch, tmp_path):
     from src.runners import pstddm_p6_convergence as p6
     from src.solvers import solve_maxwell_3d_stage_4b_block_grating as stage
+    from src.solvers import dtn_port_3d as dtn
 
-    cfg = SimpleNamespace(stage4_dtn_quadrature_degree=28)
+    cfg = _p6_fixed_p_guard_config()
     observer = object()
-    sentinel = object()
-    calls = []
 
-    def stage4_call(received_cfg, received_output, **kwargs):
-        calls.append((received_cfg, received_output, kwargs))
-        return sentinel
+    def prepared_flow(received_cfg, received_output, **kwargs):
+        assert kwargs["diagnostic_reference_incident_quadrature"] is True
+        assert kwargs["solution_observer"] is observer
+        return _call_stage4_impl_until_guard(dtn, received_cfg, received_output)
 
-    monkeypatch.setattr(stage, "run_stage4b_block_grating_3d_case", stage4_call)
-    result = p6._run_p6_stage4_solver(cfg, tmp_path, observer)
+    monkeypatch.setattr(stage, "run_prepared_3d_case_flow", prepared_flow)
+    with pytest.raises(_PassedIncidentQuadratureGuard):
+        p6._run_p6_stage4_solver(cfg, tmp_path, observer)
 
-    assert result is sentinel
-    assert calls == [(
-        cfg,
-        tmp_path,
-        {
-            "solution_observer": observer,
-            "diagnostic_reference_incident_quadrature": True,
-        },
-    )]
+
+def test_fixed_p_external_assembled_incident_quadrature_reaches_guard(tmp_path):
+    from src.solvers import dtn_port_3d as dtn
+
+    cfg = _p6_fixed_p_guard_config()
+    with pytest.raises(_PassedIncidentQuadratureGuard):
+        _call_stage4_impl_until_guard(
+            dtn, cfg, tmp_path, linear_solver_port=lambda _request: None,
+        )
+
+
+@pytest.mark.parametrize("backend_kind", ["variable_p", "nonassembled", "action_only"])
+def test_incident_quadrature_guard_rejects_variable_or_unassembled_paths(
+    monkeypatch, tmp_path, backend_kind,
+):
+    from dataclasses import replace
+    from src.common.config_3d import (
+        ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
+        STANDARD_FULL_ASSEMBLY_BACKEND,
+    )
+    from src.solvers import dtn_port_3d as dtn
+
+    cfg = _p6_fixed_p_guard_config()
+    linear_solver_port = None
+    if backend_kind == "variable_p":
+        cfg = replace(
+            cfg,
+            stage4_full3d_assembly_backend=ASSEMBLY_TIME_VARIABLE_P_CONDENSED_BACKEND,
+        )
+        linear_solver_port = lambda _request: None
+        # This fixture isolates the incident-quadrature guard. The minimal p6
+        # config intentionally lacks the geometry-bound variable-p degree plan,
+        # so bypass only that earlier qualification gate while keeping backend
+        # resolution and the real solver implementation active.
+        monkeypatch.setattr(
+            dtn,
+            "qualify_stage4_full3d_assembly_backend",
+            lambda _cfg, _audit: {"status": "fixture-qualified"},
+        )
+    elif backend_kind == "nonassembled":
+        cfg = replace(
+            cfg,
+            stage4_full3d_assembly_backend=STANDARD_FULL_ASSEMBLY_BACKEND,
+            stage4_cell_static_condensation=False,
+            stage4_assembly_time_cell_static_condensation=False,
+            stage4_floquet_slave_elimination=False,
+        )
+    else:
+        linear_solver_port = dtn.Stage4NeverMaterializedLinearSolverPort(
+            lambda _request: None,
+        )
+
+    with pytest.raises(ValueError, match="materialized fixed-p assembly-time"):
+        _call_stage4_impl_until_guard(
+            dtn, cfg, tmp_path, linear_solver_port=linear_solver_port,
+        )
 
 
 def example():

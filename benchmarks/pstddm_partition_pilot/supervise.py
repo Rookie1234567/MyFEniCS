@@ -309,6 +309,11 @@ def _seed_p6_retry_jit_cache(output, document, runtime, source_hashes, disk_floo
             'new_sha256': '322856dbb2e43aeabfccd0bb136025a98568dd593f78648dedbc48bb2adef39e',
             'reason': 'CSV-only-review/source6a28',
         },
+        'src/solvers/dtn_port_3d.py': {
+            'old_sha256': '49e75c0ee080c2b40dcbe6cc6da0e40ee47828cf1f81a49bef1b82fee7472b1e',
+            'new_sha256': 'ae8592c7a349226fa2e4cc617f913baeb30c0162a48719536a54c5dd2e001d3e',
+            'reason': 'fixed-p-direct-incident-quadrature-guard-only/619e6d',
+        },
     }
     reviewed_source_changes = []
     for path, digest in identity['source_hashes'].items():
