@@ -17,6 +17,7 @@ coordinate identities easy to test without PETSc or DOLFINx.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -210,3 +211,102 @@ def expand_trace_primal(
             raise ValueError("trace original row is outside the full FE vector")
         full[original] = np.dot(coefficients, primal[indices])
     return full
+
+
+@dataclass(frozen=True)
+class PreparedTraceMasterAdapter:
+    """Validated array maps for repeated master-only dual lift and primal trace readback."""
+
+    active_rows: int
+    full_rows: int
+    owned_original_rows: np.ndarray
+    owned_active_ids: np.ndarray
+    active_original_rows: np.ndarray
+
+    def lift_dual(self, active_dual: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        value = np.asarray(active_dual, dtype=np.complex128)
+        if value.shape != (self.active_rows,) or not np.isfinite(value).all():
+            raise ValueError("active trace dual must be a finite vector with the prepared layout")
+        return self.owned_original_rows, value[self.owned_active_ids].copy()
+
+    def restrict_primal(self, full_primal: np.ndarray) -> np.ndarray:
+        value = np.asarray(full_primal, dtype=np.complex128)
+        if value.shape != (self.full_rows,) or not np.isfinite(value).all():
+            raise ValueError("full FE primal must be finite and match the prepared row count")
+        return value[self.active_original_rows].copy()
+
+
+def prepare_trace_master_adapter(
+    trace_constraints: Any,
+    full_rows: int,
+    *,
+    owned_only: bool = True,
+) -> PreparedTraceMasterAdapter:
+    """Validate the full trace map once and cache only the master-row index arrays."""
+    active_rows, _trace_rows, original_to_active, _expansion = _validated_map(trace_constraints)
+    owned_originals = _active_originals(
+        trace_constraints, original_to_active, owned_only=owned_only
+    )
+    if np.any(owned_originals < 0) or np.any(owned_originals >= full_rows):
+        raise ValueError("owned trace master row lies outside the full FE vector")
+    owned_active_ids = np.fromiter(
+        (original_to_active[int(row)] for row in owned_originals),
+        dtype=np.int64,
+        count=len(owned_originals),
+    )
+    active_originals = _active_originals(
+        trace_constraints, original_to_active, owned_only=False
+    )
+    if np.any(active_originals < 0) or np.any(active_originals >= full_rows):
+        raise ValueError("active trace master row lies outside the full FE vector")
+    for value in (owned_originals, owned_active_ids, active_originals):
+        value.setflags(write=False)
+    return PreparedTraceMasterAdapter(
+        active_rows=int(active_rows),
+        full_rows=int(full_rows),
+        owned_original_rows=owned_originals,
+        owned_active_ids=owned_active_ids,
+        active_original_rows=active_originals,
+    )
+
+
+def apply_full_fe_port_bridge(
+    trace_dual: np.ndarray,
+    auxiliary_dual: np.ndarray,
+    *,
+    full_C: Any,
+    full_D: Any,
+    lift_trace_dual: Any,
+    source_transfer: Any,
+    restrict_trace_primal: Any,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Apply the existing full-FE port bridge around a source-transfer action.
+
+    The full-FE coupling C enters before the source transfer, including its
+    interior rows. The returned auxiliary dual uses full-FE D and the complete
+    source-transfer primal. Only the primal sent to the condensed solver is
+    restricted to independent trace masters.
+    """
+    trace = np.asarray(trace_dual, dtype=np.complex128)
+    auxiliary = np.asarray(auxiliary_dual, dtype=np.complex128)
+    C = full_C
+    D = full_D
+    if trace.ndim != 1 or auxiliary.ndim != 1 or not np.isfinite(trace).all() or not np.isfinite(auxiliary).all():
+        raise ValueError("full-FE port bridge inputs must be finite vectors")
+    if len(getattr(C, "shape", ())) != 2 or int(C.shape[1]) != auxiliary.size:
+        raise ValueError("full-FE C block must have one column per auxiliary mode")
+    full_rows = int(C.shape[0])
+    if getattr(D, "shape", None) != (auxiliary.size, full_rows):
+        raise ValueError("full-FE D block must have one row per auxiliary mode and full FE column")
+    lifted_trace = np.asarray(lift_trace_dual(trace), dtype=np.complex128)
+    if lifted_trace.shape != (full_rows,) or not np.isfinite(lifted_trace).all():
+        raise ValueError("master-only trace lift returned the wrong full independent FE layout")
+    full_rhs = lifted_trace - np.asarray(C @ auxiliary, dtype=np.complex128).reshape(full_rows)
+    full_primal = np.asarray(source_transfer(full_rhs), dtype=np.complex128)
+    if full_primal.shape != (full_rows,) or not np.isfinite(full_primal).all():
+        raise ValueError("full-FE source transfer returned an invalid primal")
+    auxiliary_result = auxiliary - np.asarray(D @ full_primal, dtype=np.complex128).reshape(auxiliary.size)
+    trace_primal = np.asarray(restrict_trace_primal(full_primal), dtype=np.complex128)
+    if trace_primal.shape != trace.shape or not np.isfinite(trace_primal).all():
+        raise ValueError("full-FE primal restriction returned an invalid trace vector")
+    return trace_primal, auxiliary_result, full_primal

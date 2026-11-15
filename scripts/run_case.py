@@ -122,9 +122,13 @@ def main(argv: list[str] | None = None) -> int:
                 args.input_path, dry_run=bool(args.validate_only or args.dry_run),
             )
             print(json.dumps(result, sort_keys=True, allow_nan=False))
-            return 0 if result["status"] in {
-                "VALID_CONFIGURATION_NOT_RUN", "DIRECT_NUMERICAL_AND_PHYSICAL_PASS"
-            } else 4
+            status = result["status"]
+            if status in {"VALID_CONFIGURATION_NOT_RUN", "DIRECT_NUMERICAL_AND_PHYSICAL_PASS",
+                          "PSTDDM_DIAGNOSTIC_GATE_PASS"}:
+                return 0
+            if status == "PSTDDM_DIAGNOSTIC_COMPLETED_COMPARISON_UNAVAILABLE":
+                return 5
+            return 4
         if marker.document.get("model") == "pstddm_stationary_workstation_pilot":
             defaults = vars(_parser().parse_args([str(args.input_path)]))
             changed = {key for key, value in vars(args).items() if value != defaults[key]}

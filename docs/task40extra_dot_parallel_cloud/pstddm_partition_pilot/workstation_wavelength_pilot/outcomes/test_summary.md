@@ -8,6 +8,14 @@
 
 两个独立测试服务均限2GiB/单CPU/零swap、低优先级。远端证据位于任务专属`preparation/p6_iterative_candidate/test_receipt.json`和`preparation/p6_aux_factor_candidate/test_receipt.json`，相对根为`/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation`。这些是准备资格，不是完整迭代结果；真实入口、端口与完整残差仍须后续核验。旧直接法FAIL及全部费用保留，不重跑旧PDE或全仓测试。
 
+本轮追加的完整FE端口桥验证：复相位MPC、非零内部C/D以及非单位凝聚H的小型真实`PureSourceTransfer→FGMRES`调用链在工作站资格环境通过，13项测试、父段0.30915696267038584秒、进程RSS峰125157376 B，未建立FE或因子。桥源码SHA256为`d82ec28f8e16028af442ffaf648d462a4ce64ca2321239cc45c75238f7b210d6`，测试SHA256为`9a335a9ebd3ae4125be95d88a50c26ecb586bd8f084c6170f47ec79642c60f26`。原始收据为任务专属`preparation/p6_iterative_bridge_chain/test_receipt.json`；独立服务`pstddm-p6-bridge-chain-test-20261115.service`的父时长1.343秒与测试子段不相加。systemd打印的256KiB不代表Python实际峰值；进程峰采用`getrusage`口径，任务swap0。这是接线证据，不是p6整场通过。
+
+## h10正式迭代入口最终检查（2026-11-15）
+
+最终生产候选的定向回归首次21项通过、1项小型夹具失败：3维矩阵在restart=2、max5时残差0.0011182950398320472，没有满足新增的1e-8断言。仅将该夹具restart改为3后，连同新增DAT/失败状态/基线hash/Stage4参数传递检查共7项通过；正式FGMRES30/max100和1e-8门没有改变。首次测试加配置试运行父段0.5888344263657928秒、RSS139059200 B；修正后父段0.26558486092835665秒、RSS131264512 B。既有21项未变检查未机械重跑；两次服务分别1.790秒、1.459秒，父子不重复计费。PDE/factor调用均0，dry-run均退出0。
+
+原始收据分别在`preparation/p6_final_entry_candidate/test_receipt.json`和`preparation/p6_final_entry_candidate2/test_receipt.json`，首次夹具失败保留。最终native接线SHA256 `c2650c487ecebda5f4194814d4ec7693e56340f2e75b346ac840d6486e28928b`，runner `0993964b65c5fb6985207462d2c7181b55726619cc4df88c50bdd13e4377d8ae`，DAT `4f6049fdeb6689f5b11074d00e30faf546876a9d6f6a1cd29491f860dcb3ac83`，新增入口测试 `1de1c827eaadbbbb0a798624b671785f54dad4ff3fcb21f9f10cb5b5b73a222b`。正式运行仍须冻结源码和动态资源准入。当前新入口没有合格JIT donor接线，按实际新编译成本计费，不假称复用旧FE/因子。
+
 ## p6 retry1 CSV修复与保存残差补审（2026-11-14）
 
 本次只执行两个直接相关回归：真实保存JSON中“首行无Fourier字段、后续行有12个字段”的导出；旧`passed=true`但残差`3e-7`必须按本任务`1e-10`判FAIL，并拒绝被修改的向量archive。原资格化complex128/int32、MPI1/math1环境中2项通过。真实全部306行JSON经同一生产helper重导出，逐字段读回一致，原三个输入文件hash前后不变。

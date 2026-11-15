@@ -134,3 +134,31 @@ def should_run_diagnostic_postprocess(*, pstddm_diagnostic: bool, field_finite: 
     """Keep finite PSTDDM iterate observables available when official status is false."""
 
     return bool(pstddm_diagnostic and field_finite)
+
+
+def make_p6_h10_source_transfer_port(
+    *,
+    output_directory: str,
+    admit: Any,
+    observe: Any,
+    available_floor_bytes: int,
+    task_limit_bytes: int,
+    compiler_command: tuple[str, ...],
+) -> Any:
+    """Create the explicit p6 Stage-4 port backed by the existing full-FE PSTDDM core."""
+
+    from .dtn_port_3d import Stage4PstddmP6DiagnosticPort
+    from .pstddm_native import build_stage4_p6_source_transfer
+
+    def callback(request: Any) -> Any:
+        return build_stage4_p6_source_transfer(
+            request,
+            output_directory=output_directory,
+            admit=admit,
+            observe=observe,
+            available_floor_bytes=available_floor_bytes,
+            task_limit_bytes=task_limit_bytes,
+            compiler_command=compiler_command,
+        )
+
+    return Stage4PstddmP6DiagnosticPort(callback)
