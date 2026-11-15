@@ -416,6 +416,20 @@ def _admission_callback(output: Path, scope_root: Path, preparation_cgroup: str,
     return admit
 
 
+def _run_p6_stage4_solver(cfg, output: Path, observer):
+    """Call Stage 4 with the p6 incident-RHS quadrature used by its residual gate."""
+    from src.solvers.solve_maxwell_3d_stage_4b_block_grating import (
+        run_stage4b_block_grating_3d_case,
+    )
+
+    return run_stage4b_block_grating_3d_case(
+        cfg,
+        output,
+        solution_observer=observer,
+        diagnostic_reference_incident_quadrature=True,
+    )
+
+
 def run_p6_convergence_case(input_path: str | Path, dry_run: bool = False) -> dict[str, Any]:
     try:
         return _run_p6_convergence_case(input_path, dry_run)
@@ -481,7 +495,6 @@ def _run_p6_convergence_case(input_path: str | Path, dry_run: bool = False) -> d
     from src.common.strict_json import atomic_json, snapshot
     from src.common.runtime_resource_policy import resource_policy
     from src.geometry.mesh_builder_3d import stage4_axis_plan
-    from src.solvers.solve_maxwell_3d_stage_4b_block_grating import run_stage4b_block_grating_3d_case
 
     axes_by_h = {}
     for h in CASE_IDS:
@@ -523,6 +536,23 @@ def _run_p6_convergence_case(input_path: str | Path, dry_run: bool = False) -> d
         "condensed_matrix_checkpoint_enabled": False,
         "visualization_files_enabled": False,
         "solution_observer": "common p6 physical quadrature samples; no VTU interpolation",
+    }
+    quadrature_receipt_path = output / "incident_traction_quadrature_receipt.json"
+    quadrature_receipt = {
+        "schema": "pstddm.p6.incident_traction_quadrature_request.v1",
+        "status": "request_frozen_before_solver_invocation",
+        "diagnostic_reference_incident_quadrature": True,
+        "quadrature_degree": int(cfg.stage4_dtn_quadrature_degree),
+        "quadrature_rule": "explicit_degree",
+        "reason": "match the incident RHS quadrature used by the full augmented residual check",
+        "old_default_preserved_for_other_callers": True,
+    }
+    atomic_json(quadrature_receipt_path, quadrature_receipt)
+    manifest["incident_traction_quadrature_receipt"] = {
+        "relative_path": quadrature_receipt_path.name,
+        "sha256": hashlib.sha256(quadrature_receipt_path.read_bytes()).hexdigest(),
+        "diagnostic_reference_incident_quadrature": True,
+        "quadrature_degree": int(cfg.stage4_dtn_quadrature_degree),
     }
     atomic_json(output / "run_manifest.json", manifest)
     started = time.monotonic()
@@ -569,9 +599,7 @@ def _run_p6_convergence_case(input_path: str | Path, dry_run: bool = False) -> d
             record = save_common_field_samples(field, config, output, axis_pair)
             atomic_json(output / "common_field_sampling_receipt.json", record)
 
-        result = run_stage4b_block_grating_3d_case(
-            cfg, output, solution_observer=observer,
-        )
+        result = _run_p6_stage4_solver(cfg, output, observer)
     summary = snapshot(result)
     atomic_json(output / "solver_summary.json", summary)
     gates = _direct_gates(summary)

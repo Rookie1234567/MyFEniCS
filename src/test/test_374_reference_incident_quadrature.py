@@ -32,6 +32,33 @@ def test_public_wrapper_forwards_default_off_flag(monkeypatch,enabled):
     assert seen[flag] is enabled
 
 
+def test_p6_runner_calls_public_stage4_wrapper_with_reference_quadrature(monkeypatch, tmp_path):
+    from src.runners import pstddm_p6_convergence as p6
+    from src.solvers import solve_maxwell_3d_stage_4b_block_grating as stage
+
+    cfg = SimpleNamespace(stage4_dtn_quadrature_degree=28)
+    observer = object()
+    sentinel = object()
+    calls = []
+
+    def stage4_call(received_cfg, received_output, **kwargs):
+        calls.append((received_cfg, received_output, kwargs))
+        return sentinel
+
+    monkeypatch.setattr(stage, "run_stage4b_block_grating_3d_case", stage4_call)
+    result = p6._run_p6_stage4_solver(cfg, tmp_path, observer)
+
+    assert result is sentinel
+    assert calls == [(
+        cfg,
+        tmp_path,
+        {
+            "solution_observer": observer,
+            "diagnostic_reference_incident_quadrature": True,
+        },
+    )]
+
+
 def example():
     mapping=dict(slaves=np.array([1,3]),masters=np.array([0,2]),offsets=np.array([0,0,1,1,2]),
                  coefficients=np.array([1j,np.exp(.3j)]),independent_indices=np.array([0,2]))
