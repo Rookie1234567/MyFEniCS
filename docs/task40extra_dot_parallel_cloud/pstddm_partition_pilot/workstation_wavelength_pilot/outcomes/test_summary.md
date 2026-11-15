@@ -1,5 +1,13 @@
 # 定向测试与只读审核
 
+## p6 h10 迭代接线组件（2026-11-15，尚非PDE）
+
+为把凝聚后的界面残差正确送入原源转移方法，新增显式对偶提升/限制组件；复相位MPC与多个master不能使用原场展开代替对偶提升。工作站原complex128/int32、MPI1/math1下10项通过，测试父段0.09427119605243206s、RSS105254912B。源文件SHA256 `bfc29fb6e82506ba8d69ec3df40be775050da7a469eb6ef4179dcf47923b6afb`；未建立FE或factor。
+
+显式辅助MUMPS owner按实际CSR nnz在转换前准入，symbolic后冻结并读回有限工作区，记录所有常驻辅助因子而不称无全局因子。4项接口/资源fixture通过；同服务中的真实3×3非Hermitian复矩阵完成symbolic、numeric、probe、第二RHS与销毁。probe残差2.651423303137108e-16，第二RHS完整残差1.1933693396624067e-16；真实因子子段0.4813260920345783s，测试总父段0.596191375516355s，进程RSS峰126951424B。源码SHA256 `78dbe354a0b13555a8e4bb8664a0a3c570bc37ba9e315e130d3e40f7d13e4f12`；两类费用不重复相加。
+
+两个独立测试服务均限2GiB/单CPU/零swap、低优先级。远端证据位于任务专属`preparation/p6_iterative_candidate/test_receipt.json`和`preparation/p6_aux_factor_candidate/test_receipt.json`，相对根为`/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation`。这些是准备资格，不是完整迭代结果；真实入口、端口与完整残差仍须后续核验。旧直接法FAIL及全部费用保留，不重跑旧PDE或全仓测试。
+
 ## p6 retry1 CSV修复与保存残差补审（2026-11-14）
 
 本次只执行两个直接相关回归：真实保存JSON中“首行无Fourier字段、后续行有12个字段”的导出；旧`passed=true`但残差`3e-7`必须按本任务`1e-10`判FAIL，并拒绝被修改的向量archive。原资格化complex128/int32、MPI1/math1环境中2项通过。真实全部306行JSON经同一生产helper重导出，逐字段读回一致，原三个输入文件hash前后不变。
