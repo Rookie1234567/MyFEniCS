@@ -303,10 +303,31 @@ def _seed_p6_retry_jit_cache(output, document, runtime, source_hashes, disk_floo
         'src/common/runtime_resource_policy.py', 'src/solvers/bounded_mumps.py',
         'src/runners/pstddm_p6_convergence.py',
     }
+    reviewed_nonform_source_pairs = {
+        'src/postprocessing/diffraction_3d.py': {
+            'old_sha256': '587efc81a90c8a65b1e3ff1ec2efe53084893f3d6545556d24a2f1636d9a419d',
+            'new_sha256': '322856dbb2e43aeabfccd0bb136025a98568dd593f78648dedbc48bb2adef39e',
+            'reason': 'CSV-only-review/source6a28',
+        },
+    }
+    reviewed_source_changes = []
     for path, digest in identity['source_hashes'].items():
         if (path.startswith('src/') and not path.startswith('src/test/')
-                and path not in allowed_nonform_changes and source_hashes.get(path) != digest):
-            raise RuntimeError('JIT donor form dependency changed: '+path)
+                and path not in allowed_nonform_changes):
+            current_digest = source_hashes.get(path)
+            if current_digest != digest:
+                reviewed = reviewed_nonform_source_pairs.get(path)
+                if (reviewed is not None
+                        and digest == reviewed['old_sha256']
+                        and current_digest == reviewed['new_sha256']):
+                    reviewed_source_changes.append({
+                        'path': path,
+                        'old_sha256': digest,
+                        'new_sha256': current_digest,
+                        'reason': reviewed['reason'],
+                    })
+                else:
+                    raise RuntimeError('JIT donor form dependency changed: '+path)
     inventory = json.loads((donor/'artifact_hashes.json').read_text())
     products = {p:r for p,r in inventory.items() if p.startswith('cache/fenics/')}
     total = sum(row['bytes'] for row in products.values())
@@ -328,6 +349,7 @@ def _seed_p6_retry_jit_cache(output, document, runtime, source_hashes, disk_floo
             'files':len(products), 'copied_bytes':total,
             'elapsed_seconds':time.monotonic()-started,
             'artifact_inventory_sha256':_workstation_file_hash(donor/'artifact_hashes.json'),
+            'reviewed_nonform_source_changes': reviewed_source_changes,
             'old_files_changed':False, 'FEM_or_factor_reuse_claimed':False}
 
 

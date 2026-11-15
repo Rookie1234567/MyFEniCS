@@ -35,7 +35,10 @@ class WorkstationProfileFixtures(unittest.TestCase):
             runtime={key: {} for key in ('activation_and_abi_dependencies','PETSc_scalar_type',
                      'PETSc_integer_type','PETSc_version','MPI_library','modules','python_executable')}
             runtime_path=donor/'runtime_receipt.json';runtime_path.write_text(json.dumps(runtime))
-            source={'src/solvers/volume.py':'frozen'}
+            reviewed_path='src/postprocessing/diffraction_3d.py'
+            reviewed_old='587efc81a90c8a65b1e3ff1ec2efe53084893f3d6545556d24a2f1636d9a419d'
+            reviewed_new='322856dbb2e43aeabfccd0bb136025a98568dd593f78648dedbc48bb2adef39e'
+            source={'src/solvers/volume.py':'frozen',reviewed_path:reviewed_old}
             identity=dict(input_path=str(input_path),input_sha256=_sha256(input_path),source_sha='old',
                           source_hashes=source,runtime_receipt_sha256=_sha256(runtime_path))
             (donor/'supervisor_identity.json').write_text(json.dumps(identity))
@@ -43,16 +46,35 @@ class WorkstationProfileFixtures(unittest.TestCase):
             inventory={'cache/fenics/kernel.so':dict(bytes=cache.stat().st_size,sha256=_sha256(cache))}
             (donor/'artifact_hashes.json').write_text(json.dumps(inventory))
             document=dict(case_id=output.name,h_nm=10.0)
-            result=supervise._seed_p6_retry_jit_cache(output,document,runtime,source,0)
+            current_source={**source,reviewed_path:reviewed_new}
+            result=supervise._seed_p6_retry_jit_cache(output,document,runtime,current_source,0)
             self.assertEqual(result['files'],1)
+            self.assertEqual(result['reviewed_nonform_source_changes'],[{
+                'path':reviewed_path,'old_sha256':reviewed_old,'new_sha256':reviewed_new,
+                'reason':'CSV-only-review/source6a28',
+            }])
             self.assertEqual((output/'cache/fenics/kernel.so').read_bytes(),cache.read_bytes())
             with self.assertRaisesRegex(RuntimeError,'mathematical'):
-                supervise._seed_p6_retry_jit_cache(output,{**document,'h_nm':7.5},runtime,source,0)
+                supervise._seed_p6_retry_jit_cache(output,{**document,'h_nm':7.5},runtime,current_source,0)
             with self.assertRaisesRegex(RuntimeError,'dependency'):
-                supervise._seed_p6_retry_jit_cache(output,document,runtime,{'src/solvers/volume.py':'changed'},0)
+                supervise._seed_p6_retry_jit_cache(output,document,runtime,
+                    {**current_source,'src/solvers/volume.py':'changed'},0)
+            with self.assertRaisesRegex(RuntimeError,'dependency'):
+                supervise._seed_p6_retry_jit_cache(output,document,runtime,
+                    {**current_source,reviewed_path:'wrong-new'},0)
+            wrong_path_source={key:value for key,value in current_source.items() if key != reviewed_path}
+            wrong_path_source['src/postprocessing/diffraction_csv_only.py']=reviewed_new
+            with self.assertRaisesRegex(RuntimeError,'dependency'):
+                supervise._seed_p6_retry_jit_cache(output,document,runtime,wrong_path_source,0)
+            identity['source_hashes']={**source,reviewed_path:'wrong-old'}
+            (donor/'supervisor_identity.json').write_text(json.dumps(identity))
+            with self.assertRaisesRegex(RuntimeError,'dependency'):
+                supervise._seed_p6_retry_jit_cache(output,document,runtime,current_source,0)
+            identity['source_hashes']=source
+            (donor/'supervisor_identity.json').write_text(json.dumps(identity))
             cache.write_bytes(b'corrupted')
             with self.assertRaisesRegex(RuntimeError,'identity'):
-                supervise._seed_p6_retry_jit_cache(output,document,runtime,source,0)
+                supervise._seed_p6_retry_jit_cache(output,document,runtime,current_source,0)
 
     def test_p6_budget_is_explicit_and_historical_profile_stays_unchanged(self):
         self.assertEqual(supervise._workstation_limits(
