@@ -1,0 +1,171 @@
+{
+  "schema": "pstddm.p6.retry5.independent_receipt_audit.v1",
+  "run_id": "p6_h10_direct_13p5_retry5",
+  "source_sha": "2d28a7e4bcde4e4aadd621f0e02deceaa6c50ed7",
+  "input_sha256": "5ce0d20a2f79093859e45d25176b9b4671216f01cbefd2faeb87e768f9d08de3",
+  "remote_root": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/runs/p6_h10_direct_13p5_retry5",
+  "classification": "DIRECT_NUMERICAL_FAIL",
+  "threshold": 1e-10,
+  "full_residual": 1.4614048547126588e-10,
+  "recomputed_threshold_pass": false,
+  "condensed_diagnostic": 1.4429483853105405e-10,
+  "legacy_official_flag_not_accepted": true,
+  "legacy_residual_pass_flag_not_accepted": true,
+  "diagnostic_physical": {
+    "R_total": 0.2553272818623724,
+    "R00_s": 0.2552945961053482,
+    "R00_p": 3.20449093616431e-24,
+    "T_total": 0.05651947751198205,
+    "A_volume_total": 0.6881532406160803,
+    "energy_closure_error_port_volume": -9.565237490960499e-12
+  },
+  "supervision": {
+    "case_id": "p6_h10_direct_13p5_retry5",
+    "status": "FAILED",
+    "reserved_seconds": 7200,
+    "wall_seconds": 1764.8926622029394,
+    "profile": "workstation-p6",
+    "ledger_path": "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/budget_ledger_p6.json",
+    "source_sha": "2d28a7e4bcde4e4aadd621f0e02deceaa6c50ed7",
+    "input_sha256": "5ce0d20a2f79093859e45d25176b9b4671216f01cbefd2faeb87e768f9d08de3",
+    "started_utc": "2026-11-15T02:03:06.806270+00:00",
+    "supervisor_pid": 3508016,
+    "branch": "task40extra_dot_parallel_cloud",
+    "child_pgid": 3508074,
+    "ended_utc": "2026-11-15T02:32:26.591491+00:00",
+    "returncode": 4,
+    "stop_reason": "child_returncode_4",
+    "peak_sampled_process_tree_rss_bytes": 16043081728,
+    "resource_sample_count": 1471,
+    "final_MemAvailable_bytes": 460397535232,
+    "final_disk_free_bytes": 386381209600,
+    "final_cgroup": {
+      "memory_current_bytes": 1167347712,
+      "memory_max_bytes": 68719476736,
+      "swap_current_bytes": 0,
+      "swap_max_bytes": 0,
+      "ancestors": [
+        {
+          "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice",
+          "memory_max_bytes": null,
+          "memory_current_bytes": 2049785958400
+        },
+        {
+          "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service",
+          "memory_max_bytes": null,
+          "memory_current_bytes": 2050318438400
+        },
+        {
+          "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+          "memory_max_bytes": null,
+          "memory_current_bytes": 2113002885120
+        },
+        {
+          "path": "/sys/fs/cgroup/user.slice",
+          "memory_max_bytes": null,
+          "memory_current_bytes": 2113007304704
+        }
+      ]
+    },
+    "remaining_descendants": [],
+    "final_cgroup_swap_current_bytes": 0,
+    "budget_limits": {
+      "attempt_count": 10,
+      "cumulative_seconds": 21600,
+      "case_seconds": 7200,
+      "tree_bytes": 68719476736,
+      "staging_reserve_bytes": 536870912,
+      "host_reserve_bytes": 408021893120,
+      "disk_floor_bytes": 380000000000
+    },
+    "command": [
+      "/home/fenics/Projects/laptop_share/benchmarks/artifacts/task40extra_0p7nm_engineering/local_w0_wsl/runtime_prefix/bin/python",
+      "-I",
+      "-B",
+      "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/source/scripts/run_case.py",
+      "/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/source/input/pstddm_p6_convergence_workstation/13p5_h10_direct_retry5.dat"
+    ],
+    "wall_scope": "supervisor entry through cleanup and required artifact hashing"
+  },
+  "resource_recomputed": {
+    "sample_count": 1471,
+    "tree_peak_B": 16043081728,
+    "cgroup_sample_peak_B": 16118657024,
+    "host_available_min_B": 444419551232,
+    "disk_free_min_B": 386381991936,
+    "task_swap_zero_all_samples": true
+  },
+  "timing": {
+    "stage4_dtn_ksp_setup_seconds": 258.6218981202692,
+    "stage4_dtn_ksp_solve_seconds": 7.307916193269193,
+    "floquet_phase_update_seconds": 0.3843974731862545,
+    "elapsed_seconds": 1455.7884742645547,
+    "stage4_dtn_assembly_time_raw_tensor_checkpoint_native_compute_seconds": 0.0,
+    "stage4_dtn_assembly_time_final_assembly_seconds": 0.0,
+    "stage4_dtn_assembly_time_trace_preallocation_seconds": 14.266929951496422,
+    "stage4_dtn_assembly_time_total_build_seconds": 788.8599747205153,
+    "stage4_dtn_base_matrix_assembly_seconds": 788.8693456742913,
+    "stage4_dtn_base_rhs_assembly_seconds": 0.18168021459132433,
+    "stage4_dtn_augmented_block_copy_seconds": 0.0,
+    "stage4_dtn_incident_source_vector_seconds": 13.40037661511451,
+    "stage4_dtn_modal_loop_seconds": 174.40601778868586,
+    "stage4_dtn_modal_vector_assembly_seconds": 172.922006636858,
+    "stage4_dtn_modal_block_insert_seconds": 1.055796136148274,
+    "stage4_dtn_augmented_matrix_finalize_seconds": 2.2279803566634655,
+    "stage4_dtn_linear_solve_seconds": 270.03462603036314,
+    "stage4_dtn_cell_static_condensation_recovery_seconds": 2.755200986750424,
+    "stage4_dtn_matrix_free_full_residual_seconds": 1.4801324745640159,
+    "stage4_dtn_solution_backsubstitution_seconds": 1.2228265404701233e-06
+  },
+  "vector_file": "original_full_augmented_vectors.npz",
+  "vector_sha256": "b21d16c845c7bf6bace20af30827439c7ac9ad59f537d82c3c1620ea8bbdf768",
+  "receipt_hashes": {
+    "supervisor_identity.json": {
+      "sha256": "6719f9b72c46baffd55a3ef6d64dafc5a407f7dbf7b80d028032d570fa83376a",
+      "bytes": 102857,
+      "matches_supervisor_inventory": true
+    },
+    "run_summary.json": {
+      "sha256": "e5576c153f66ee9d2abb7e15302df43b3f681a52866378218caf1f5a3763b4d8",
+      "bytes": 751303,
+      "matches_supervisor_inventory": true
+    },
+    "resource_samples.json": {
+      "sha256": "8693658642e584ae2e667e79d1aa03d6f92c2ec9918bb9030a710c210109c041",
+      "bytes": 2012619,
+      "matches_supervisor_inventory": true
+    },
+    "volume_absorption.json": {
+      "sha256": "78058acf4b0c27cdbe39bc96735b29217094b4cccd46f7c3786163403d91d6d7",
+      "bytes": 2347,
+      "matches_supervisor_inventory": true
+    },
+    "original_full_augmented_residual.json": {
+      "sha256": "bced396cf7608d74370dd84001ce05830403b422546f36bfaf954c0eece51c09",
+      "bytes": 198768,
+      "matches_supervisor_inventory": true
+    },
+    "artifact_hashes.json": {
+      "sha256": "240f87c822e407bc686f349d1ac19c4bc0bc0f294953da7653e6c3ecda0697bd",
+      "bytes": 24371,
+      "matches_supervisor_inventory": false
+    },
+    "flux_power.json": {
+      "sha256": "24f854d5b8229103c372f4e78421e8fa496cee0a7e8224c1c67a3feb6fba8469",
+      "bytes": 947,
+      "matches_supervisor_inventory": true
+    },
+    "supervision.json": {
+      "sha256": "e897cd9d273888b4ad3049438f5427ea9d24134aebffd5c12aff4f6d32cacd84",
+      "bytes": 2550,
+      "matches_supervisor_inventory": true
+    },
+    "incident_traction_quadrature_receipt.json": {
+      "sha256": "8b5c10cfa968a12847f501e6b2f8cd9787a21da8cc3f458f57756d61cbc371c4",
+      "bytes": 384,
+      "matches_supervisor_inventory": true
+    }
+  },
+  "audit_scope": "saved JSON hashes, fields and recorded resource samples only; no FE/factor/PDE; full vector independent norm audit pending",
+  "total_six_attempt_supervisor_seconds": 4927.850074466318
+}

@@ -51,3 +51,10 @@
 retry4源afd415d3f5eae03e30d223d1d794008812891cd5，输入3da34ca66b6c96309b0d565b67d2ae355892bbccc83836d43c6b07d72d55fe3c。run=`runs/p6_h10_direct_13p5_retry4`，2026-11-15 08:56:52至09:09:33（Asia/Singapore），supervisor总763.1766434162855s。symbolic原始INFOG16/17=22457MB，numeric_ICNTL23候选13534MB，numeric_calls=0。原FAILED/child_returncode_1不改写，审核原因分类RESOURCE_CONTROLLED_STOP_BEFORE_NUMERIC。末态MainPID0、后代空、task swap0；无新解/新场/物理输出。
 
 原artifact_hashes.json逐文件验证取回收据，包括原生ABI、source/input、symbolic预算及595资源样本。主控只读重算预算缺口8,922,358,816B；原stage同对象条件式MemAvailable最低459,148,846,112B不是新run放行。未保存完整CSR，未宣称factor可复用。旧向量仅用于诊断和独立审核，不冒充新求解结果。
+
+## p6 h10 retry5（2026-11-15）
+
+- run_id：`p6_h10_direct_13p5_retry5`；source `2d28a7e4bcde4e4aadd621f0e02deceaa6c50ed7`。
+- 原始目录：`/home/fenics/Projects/laptop_share/benchmarks/artifacts/pstddm_workstation/runs/p6_h10_direct_13p5_retry5`。
+- 完成numeric/solve/恢复，full residual 1.4614048547126588e-10，`DIRECT_NUMERICAL_FAIL`；物理闭合通过但不转授official。
+- [完整字段/hash与清场](records/p6_h10_retry5.json)、[回应](../response_v4.md)。同h10诊断迭代仅新授权，NOT_RUN。
