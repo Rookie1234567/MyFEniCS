@@ -85,6 +85,7 @@ from .dtn_port_3d import (
     Stage4VariablePLiveView,
     solve_stage4_dtn_port_total_field,
 )
+from .pstddm_stage4_hook import should_run_diagnostic_postprocess
 from .solve_vector_maxwell import _json_default
 
 
@@ -1457,6 +1458,12 @@ def run_prepared_3d_case_flow(
         assemble_only_result or factorization_only_result or dtn_component_only
     )
     dtn_solver_info = None if dtn_result is None else dtn_result.get("solver_info", {})
+    pstddm_p6_diagnostic_result = bool(
+        dtn_solver_info
+        and dtn_solver_info.get("diagnostic_only") is True
+        and dtn_solver_info.get("solver_profile")
+        == "pstddm_p6_h10_source_transfer_diagnostic_v1"
+    )
     external_solver_snapshot = bool(
         dtn_solver_info and dtn_solver_info.get("external_linear_solver_port")
     )
@@ -1789,6 +1796,10 @@ def run_prepared_3d_case_flow(
         if assemble_only_result
         else "diagnostic_factorization_only"
         if factorization_only_result
+        else "p6_pstddm_diagnostic_completed"
+        if pstddm_p6_diagnostic_result and solver_converged
+        else "p6_pstddm_diagnostic_not_converged"
+        if pstddm_p6_diagnostic_result
         else "completed"
         if converged
         else "external_solver_not_converged"
@@ -1798,9 +1809,13 @@ def run_prepared_3d_case_flow(
         else "failed_not_converged",
         "official_result": official_result,
         "diagnostic_only": not official_result,
-        "postprocess_skipped": not official_result,
+        "postprocess_skipped": bool(
+            not official_result and not pstddm_p6_diagnostic_result
+        ),
         "postprocess_skip_reason": None
         if official_result
+        else "PSTDDM diagnostic port powers and volume closure are computed; official_result remains false by profile."
+        if pstddm_p6_diagnostic_result
         else "Matrix diagnostics assemble-only mode skipped LU factorization/solve."
         if assemble_only_result
         else "Matrix diagnostics factorization-only mode stopped after KSPSetUp/LU; KSPSolve and postprocess were skipped."
@@ -2223,7 +2238,15 @@ def run_prepared_3d_case_flow(
             }
         )
 
-    if not converged:
+    keep_pstddm_diagnostic_postprocess = should_run_diagnostic_postprocess(
+        pstddm_diagnostic=pstddm_p6_diagnostic_result,
+        field_finite=(
+            bool(np.isfinite(E_total.x.array).all())
+            if pstddm_p6_diagnostic_result and E_total is not None
+            else False
+        ),
+    )
+    if not converged and not keep_pstddm_diagnostic_postprocess:
         summary["mumps_ooc_runtime"] = {
             **ooc_info,
             **_retain_mumps_ooc_directory_on_failure(ooc_info, log),

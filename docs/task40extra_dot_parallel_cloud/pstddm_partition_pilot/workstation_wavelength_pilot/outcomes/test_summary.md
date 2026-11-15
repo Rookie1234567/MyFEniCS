@@ -53,3 +53,9 @@ ABI进口收据SHA256为`280dbdf428d1e85d2ddf792f2f76afbfec7a88e73e21d2d616d4f2c
 测试没有FE装配、factor或PDE；实际启动仍须新run的动态资源准入。候选文件hash与费用见[准备收据](records/p6_reserve380_preparation.json)。旧400GiB停止记录不改写，不把新授权清零旧账。
 
 最终测试文件仅去除EOF多余空白后，同三项再次通过：pytest0.10s，测试父段0.20055988058447838s，RSS106561536 B，服务父段1.269s；两次收据均保留，不计成6个不同测试。最终生产文件hash与首次一致。
+
+## p6 显式端口接线和诊断输出（迭代准备）
+
+工作站资格化 ABI 中，新类型入口与原 Stage4 外部求解接口的定向回归通过（exit 0），测试父段2.5747447507455945秒、进程RSS峰214220800 B，PDE和factor调用均0。新路径保留同一次装配中所有非零原C/D和原H，以及实际凝聚C/D/H；诊断结果即使不具备官方资格也保存各模式功率、体吸收和必要场对照，显式标注official=false。完整残差仍须正式运行后的独立原生核验，不以夹具通过代替。
+
+对应文件SHA256：`pstddm_stage4_hook.py=99f1f7291ad2f04c1d404b5ba4857886c88f656c7603eb6e5021e96770ef1b7a`；`dtn_port_3d.py=a6c8621f4a40259d11a549a4e459ba335d646b43fe181ba73b8f24e6b8b1bacd`；`common_3d_case_flow.py=d8cc48a7395cee8fe76c7975e428d2bb6ea474c829d677d945c5300da70743d7`；测试文件`b4cb1d476d4ba20b526a605f5d26a45918d3ae2c76aef5a3823a3092fec49f74`。原始收据位于任务专属`preparation/p6_stage4_hook_candidate/test_receipt.json`，独立服务`pstddm-p6-stage4-hook-test-20261115.service`，2GiB/单CPU/零swap。完整迭代PDE尚未启动。

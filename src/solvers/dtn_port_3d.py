@@ -4,7 +4,7 @@ from .condensed_reference_preflight import CondensedPreflightExit
 
 import copy
 import csv
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import hashlib
 import json
 import time
@@ -70,6 +70,12 @@ from .hcurl_variable_p_reduction import (
     build_variable_p_assembly_time_reduction,
 )
 from .mpc_form_action import MpcFormActionContext
+from .pstddm_stage4_hook import (
+    PstddmRawPortColumn,
+    combine_exact_components,
+    diagnostic_port_metrics,
+    official_rta_allowed,
+)
 from .solve_vector_maxwell import _json_default
 from .static_local_schur_action import create_static_local_schur_action
 
@@ -136,6 +142,7 @@ class Stage4ExternalLinearSolverRequest:
     mesh_data: Any = None
     full_rhs: PETSc.Vec | None = None
     incident_traction_quadrature_degree: int | None = None
+    pstddm_raw_port_columns: tuple[PstddmRawPortColumn, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -155,6 +162,25 @@ class Stage4ExternalLinearSolverSnapshot:
     solver_profile: str = "assembled"
     assembled_matrix_released_before_solve: bool = False
     reduced_residual_norm: float | None = None
+    no_global_target_maxwell_factor: bool = False
+    global_mass_factor_count: int = 0
+    local_auxiliary_factor_count: int = 0
+    diagnostic_only: bool = False
+
+
+@dataclass(frozen=True)
+class Stage4PstddmP6DiagnosticPort:
+    """Explicit opt-in for the p6 source-transfer diagnostic solver route."""
+
+    callback: Callable[
+        [Stage4ExternalLinearSolverRequest], Stage4ExternalLinearSolverSnapshot
+    ]
+    profile: str = "pstddm_p6_h10_source_transfer_diagnostic_v1"
+
+    def __call__(
+        self, request: Stage4ExternalLinearSolverRequest
+    ) -> Stage4ExternalLinearSolverSnapshot:
+        return self.callback(request)
 
 
 @dataclass(frozen=True)
@@ -202,6 +228,7 @@ def _external_snapshot_allows_official_rta(
     return (
         snapshot.converged_reason > 0
         and snapshot.no_global_factor
+        and not snapshot.diagnostic_only
         and all(
             value is not None
             and np.isfinite(float(value))
@@ -225,6 +252,7 @@ def _dispatch_external_linear_solver(
     mesh_data: Any = None,
     full_rhs: PETSc.Vec | None = None,
     incident_traction_quadrature_degree: int | None = None,
+    pstddm_raw_port_columns: tuple[PstddmRawPortColumn, ...] | None = None,
     port: Callable[
         [Stage4ExternalLinearSolverRequest], Stage4ExternalLinearSolverSnapshot
     ],
@@ -245,11 +273,36 @@ def _dispatch_external_linear_solver(
             mesh_data=mesh_data,
             full_rhs=full_rhs,
             incident_traction_quadrature_degree=incident_traction_quadrature_degree,
+            pstddm_raw_port_columns=pstddm_raw_port_columns,
         )
     )
     if not isinstance(snapshot, Stage4ExternalLinearSolverSnapshot):
         raise TypeError("external linear-solver port must return its snapshot type")
-    if not snapshot.no_global_factor:
+    pstddm_profile = isinstance(port, Stage4PstddmP6DiagnosticPort)
+    if pstddm_profile:
+        if port.profile != "pstddm_p6_h10_source_transfer_diagnostic_v1":
+            raise ValueError("unknown explicit PSTDDM diagnostic profile")
+        if (
+            snapshot.no_global_factor
+            or not snapshot.no_global_target_maxwell_factor
+            or snapshot.global_mass_factor_count != 1
+            or snapshot.local_auxiliary_factor_count != 3
+            or not snapshot.diagnostic_only
+        ):
+            raise ValueError(
+                "PSTDDM diagnostic snapshot must report zero global Maxwell, "
+                "one global mass, three local factors, and diagnostic_only"
+            )
+        if pstddm_raw_port_columns is None or len(pstddm_raw_port_columns) != n_aux:
+            raise ValueError("PSTDDM diagnostic request requires every raw port column")
+        if any(
+            not isinstance(column, PstddmRawPortColumn)
+            for column in pstddm_raw_port_columns
+        ) or tuple(column.index for column in pstddm_raw_port_columns) != tuple(
+            range(n_aux)
+        ):
+            raise ValueError("PSTDDM raw port columns must be typed and mode ordered")
+    elif not snapshot.no_global_factor:
         raise ValueError(
             "external linear-solver snapshot must certify no_global_factor"
         )
@@ -861,6 +914,20 @@ def _vec_nonzero_owned_entries(
     cutoff = max(1.0e-30, relative_tol * global_maximum)
     nz = np.flatnonzero(np.abs(values) > cutoff)
     return (_idx(np.arange(start, end, dtype=np.int64)[nz]), values[nz].copy())
+
+
+def _exact_raw_owned_entries(vec: PETSc.Vec) -> tuple[np.ndarray, np.ndarray]:
+    """Return all exactly nonzero raw entries; unlike reduced rows, do not threshold."""
+
+    start, end = vec.getOwnershipRange()
+    values = np.asarray(vec.getArray(readonly=True), dtype=np.complex128)
+    if values.shape != (end - start,) or not np.isfinite(values).all():
+        raise ValueError("raw Stage-4 surface vector has invalid owned values")
+    nonzero = np.flatnonzero(values != 0.0)
+    return (
+        np.arange(start, end, dtype=np.int64)[nonzero],
+        values[nonzero].copy(),
+    )
 
 
 def _combine_owned_entries(
@@ -2599,6 +2666,8 @@ def _write_port_outputs(
     incident_projections: list[complex],
     metrics: dict[str, Any],
     comm: MPI.Intracomm,
+    *,
+    diagnostic_only: bool = False,
 ) -> None:
     rows: list[dict[str, Any]] = []
     for idx, (mode, aux_value, inc_proj) in enumerate(
@@ -2643,6 +2712,8 @@ def _write_port_outputs(
                 "modal_power_code_units": float(modal_power),
                 "power_ratio": float(power),
                 "power_source": DTN_PORT_MODAL_POWER_SOURCE,
+                "diagnostic_only": bool(diagnostic_only),
+                "official_result": not diagnostic_only,
                 "R": float(power) if mode.side == "top" and power_carrying else 0.0,
                 "T": float(power) if mode.side == "bottom" and power_carrying else 0.0,
             }
@@ -2652,8 +2723,10 @@ def _write_port_outputs(
     payload = {"metrics": metrics, "orders": rows}
     port_payload = {
         "method": "port",
-        "role": "primary",
-        "status": "ok",
+        "role": "diagnostic" if diagnostic_only else "primary",
+        "status": "diagnostic_only" if diagnostic_only else "ok",
+        "diagnostic_only": bool(diagnostic_only),
+        "official_result": not diagnostic_only,
         "power_source": DTN_PORT_MODAL_POWER_SOURCE,
         "reference": DTN_PORT_MODAL_REFERENCE,
         "reference_planes": {
@@ -2730,6 +2803,8 @@ def _write_port_outputs(
             "order_m": mode.m,
             "order_n": mode.n,
             "polarization": mode.polarization,
+            "diagnostic_only": bool(diagnostic_only),
+            "official_result": not diagnostic_only,
             "beta": mode.beta,
             "kz": mode.vertical_sign * mode.beta,
             "propagating": mode.propagating,
@@ -2941,6 +3016,10 @@ def _solve_stage4_dtn_port_total_field_impl(
         linear_solver_port,
         Stage4NeverMaterializedLinearSolverPort,
     )
+    pstddm_p6_diagnostic_port = isinstance(
+        linear_solver_port,
+        Stage4PstddmP6DiagnosticPort,
+    )
     if diagnostic_reference_incident_quadrature and (
         not assembly_time_cell_static_condensation
         or variable_p_backend
@@ -3024,6 +3103,19 @@ def _solve_stage4_dtn_port_total_field_impl(
             "independent trace system and requires both Task035b flags"
         )
     comm = mesh_data.mesh.comm
+    if pstddm_p6_diagnostic_port and (
+        linear_solver_port.profile != "pstddm_p6_h10_source_transfer_diagnostic_v1"
+        or comm.size != 1
+        or not assembly_time_cell_static_condensation
+        or variable_p_backend
+        or never_materialized_port
+        or cfg.matrix_diagnostics_assemble_only
+        or cfg.matrix_diagnostics_factorization_only
+    ):
+        raise ValueError(
+            "p6 PSTDDM diagnostic requires MPI1, complete fixed-p materialized "
+            "assembly-time condensation, and the explicit solver profile"
+        )
     _write_progress_event(
         out_dir,
         comm,
@@ -3669,6 +3761,9 @@ def _solve_stage4_dtn_port_total_field_impl(
     component_full_vectors: tuple[PETSc.Vec, PETSc.Vec] | None = None
     component_active_vectors: tuple[PETSc.Vec, PETSc.Vec] | None = None
     component_interior_bilinear: np.ndarray | None = None
+    pstddm_raw_port_columns: list[PstddmRawPortColumn] | None = (
+        [] if pstddm_p6_diagnostic_port else None
+    )
     unique_surface_orders = 0
     component_vector_assemblies = 0
     component_vector_cache_hits = 0
@@ -3903,6 +3998,51 @@ def _solve_stage4_dtn_port_total_field_impl(
                     component_interior_bilinear @ traction,
                 )
                 / denominator
+            )
+        if pstddm_raw_port_columns is not None:
+            if component_full_vectors is None:
+                raise RuntimeError("PSTDDM raw port capture lost the original surface vectors")
+            raw_components = tuple(
+                _exact_raw_owned_entries(vector)
+                for vector in component_full_vectors
+            )
+            raw_C_rows, raw_C_values = combine_exact_components(
+                raw_components,
+                (-complex(traction_vector[0]), -complex(traction_vector[1])),
+            )
+            conjugated_components = tuple(
+                (rows, np.conjugate(values))
+                for rows, values in raw_components
+            )
+            raw_D_rows, raw_D_values = combine_exact_components(
+                conjugated_components,
+                (
+                    -np.conjugate(complex(mode.e_vector[0])) / denominator,
+                    -np.conjugate(complex(mode.e_vector[1])) / denominator,
+                ),
+            )
+            pstddm_raw_port_columns.append(
+                PstddmRawPortColumn(
+                    index=int(aux_index),
+                    side=str(mode.side),
+                    m=int(mode.m),
+                    n=int(mode.n),
+                    polarization=str(mode.polarization),
+                    normalization=float(denominator),
+                    raw_C_rows=raw_C_rows,
+                    raw_C_values=raw_C_values,
+                    raw_D_rows=raw_D_rows,
+                    raw_D_values=raw_D_values,
+                    reduced_C_rows=traction_rows,
+                    reduced_C_values=-np.asarray(traction_values, dtype=np.complex128),
+                    reduced_D_rows=ell_cols,
+                    reduced_D_values=-np.conjugate(
+                        np.asarray(ell_values, dtype=np.complex128)
+                    )
+                    / denominator,
+                    raw_H=1.0 + 0.0j,
+                    reduced_H=complex(auxiliary_diagonal),
+                )
             )
         if external_operator_digest is not None:
             external_operator_digest.update(
@@ -4449,6 +4589,11 @@ def _solve_stage4_dtn_port_total_field_impl(
                     full_rhs=assembly_time_full_rhs,
                     incident_traction_quadrature_degree=(dtn_quadrature_degree
                         if diagnostic_reference_incident_quadrature else None),
+                    pstddm_raw_port_columns=(
+                        None
+                        if pstddm_raw_port_columns is None
+                        else tuple(pstddm_raw_port_columns)
+                    ),
                 )
             solve_x = external_snapshot.x
             ksp = None
@@ -4692,6 +4837,8 @@ def _solve_stage4_dtn_port_total_field_impl(
     external_rta_gate_pass = (
         None
         if external_snapshot is None
+        else False
+        if pstddm_p6_diagnostic_port
         else _external_snapshot_allows_official_rta(
             external_snapshot,
             linear_residual.get("linear_system_relative_residual"),
@@ -4769,19 +4916,48 @@ def _solve_stage4_dtn_port_total_field_impl(
             "linear_system_residual_norm":original_residual["residual_norm"],
             "linear_system_rhs_norm":original_residual["rhs_norm"],
             "full_operator_residual_method":"fresh native UFL full MPC action + raw streamed original C/D/J and full RHS"}
-        if not original_residual["passed"]:
+        if not original_residual["passed"] and not pstddm_p6_diagnostic_port:
             raise RuntimeError("original full augmented residual failed before official R/T")
+        if pstddm_p6_diagnostic_port:
+            if external_snapshot is None:
+                raise RuntimeError("PSTDDM diagnostic lost its external solver snapshot")
+            measured_full_residual = float(original_residual["relative_residual"])
+            external_snapshot = replace(
+                external_snapshot,
+                full_augmented_true_residual=measured_full_residual,
+            )
+            linear_residual["p6_diagnostic_full_augmented_residual_bound_after_native_check"] = (
+                measured_full_residual
+            )
+            linear_residual["p6_diagnostic_full_augmented_residual_passed_record"] = bool(
+                original_residual["passed"]
+            )
+            if official_rta_allowed(
+                diagnostic_only=external_snapshot.diagnostic_only,
+                full_residual_passed=bool(original_residual["passed"]),
+            ):
+                raise RuntimeError("diagnostic-only PSTDDM route cannot publish official R/T")
+            external_rta_gate_pass = False
         _write_progress_event(out_dir,comm,stage="after_original_full_augmented_residual",status="end",
             started=started,dofs=full_rows,constraints=floquet_data.num_constraints,
             extra={"full_original_FE_plus_aux":True,"relative_residual":original_residual["relative_residual"]})
     port_metrics = (
-        {}
-        if external_rta_gate_pass is False
-        else _port_power_metrics(cfg, modes, aux_values, incident_projections)
+        _port_power_metrics(cfg, modes, aux_values, incident_projections)
+        if external_rta_gate_pass is not False or pstddm_p6_diagnostic_port
+        else {}
     )
+    if pstddm_p6_diagnostic_port:
+        if external_snapshot is None or external_snapshot.full_augmented_true_residual is None:
+            raise RuntimeError("PSTDDM diagnostic port output requires the native full residual")
+        port_metrics = diagnostic_port_metrics(
+            port_metrics,
+            full_residual=float(external_snapshot.full_augmented_true_residual),
+            residual_limit=float(external_snapshot.residual_limit),
+        )
+        port_metrics["external_full_residual_gate_deferred_until_native_check"] = True
     if (
         cfg.dtn_auxiliary_direct_projection_audit
-        and external_rta_gate_pass is not False
+        and (external_rta_gate_pass is not False or pstddm_p6_diagnostic_port)
     ):
         _write_progress_event(
             out_dir,
@@ -4834,7 +5010,7 @@ def _solve_stage4_dtn_port_total_field_impl(
             "ordinary_default_changed": False,
         }
     port_metrics.update(timing_details)
-    if external_rta_gate_pass is not False:
+    if external_rta_gate_pass is not False or pstddm_p6_diagnostic_port:
         _write_port_outputs(
             out_dir,
             cfg,
@@ -4843,12 +5019,15 @@ def _solve_stage4_dtn_port_total_field_impl(
             incident_projections,
             port_metrics,
             comm,
+            diagnostic_only=pstddm_p6_diagnostic_port,
         )
     _write_progress_event(
         out_dir,
         comm,
         stage=(
-            "after_official_rta"
+            "after_diagnostic_rta"
+            if pstddm_p6_diagnostic_port
+            else "after_official_rta"
             if external_rta_gate_pass is not False
             else "external_rta_not_run"
         ),
@@ -4920,6 +5099,42 @@ def _solve_stage4_dtn_port_total_field_impl(
             "global_F_materialized": not never_materialized_port,
             "dtn_action_preallocation_audit": dtn_action_preallocation_audit,
             "ordinary_default_changed": False,
+        }
+    pstddm_capture_audit = None
+    if pstddm_raw_port_columns is not None:
+        raw_port_digest = hashlib.sha256()
+        nnz_totals = {
+            "raw_C": 0,
+            "raw_D": 0,
+            "reduced_C": 0,
+            "reduced_D": 0,
+        }
+        for column in pstddm_raw_port_columns:
+            raw_port_digest.update(
+                f"{column.index}:{column.side}:{column.m}:{column.n}:"
+                f"{column.polarization}:{column.normalization:.17g}\n".encode("utf-8")
+            )
+            for name in nnz_totals:
+                rows = np.asarray(getattr(column, f"{name}_rows"), dtype="<i8")
+                values = np.asarray(getattr(column, f"{name}_values"), dtype="<c16")
+                raw_port_digest.update(name.encode("ascii") + b"\0")
+                raw_port_digest.update(rows.tobytes())
+                raw_port_digest.update(values.tobytes())
+                nnz_totals[name] += int(rows.size)
+            raw_port_digest.update(
+                np.asarray([column.raw_H, column.reduced_H], dtype="<c16").tobytes()
+            )
+        pstddm_capture_audit = {
+            "profile": "pstddm_p6_h10_source_transfer_diagnostic_v1",
+            "column_count": len(pstddm_raw_port_columns),
+            "raw_H_semantics": "original augmented H=I before cell-interior elimination",
+            "reduced_H_semantics": "actual Stage-4 inserted H after cell-interior Schur correction",
+            "nnz_by_block": nnz_totals,
+            "raw_D_nonzero_mode_count": sum(
+                bool(column.raw_D_values.size)
+                for column in pstddm_raw_port_columns
+            ),
+            "content_sha256": raw_port_digest.hexdigest(),
         }
     if external_snapshot is None:
         solver_converged_reason = int(ksp.getConvergedReason())
@@ -5024,9 +5239,12 @@ def _solve_stage4_dtn_port_total_field_impl(
         "action_only_setup": bool(never_materialized_port),
         "matrix_free_dtn_profile": bool(matrix_free_dtn),
         "global_A_materialized": not never_materialized_port,
-        "global_F_materialized": not never_materialized_port,
+        "global_F_materialized": bool(
+            not never_materialized_port and not pstddm_p6_diagnostic_port
+        ),
         "dtn_action_preallocation_audit": dtn_action_preallocation_audit,
         "dtn_trace_alias_preflight": trace_alias_preflight,
+        "pstddm_p6_diagnostic_port_capture": pstddm_capture_audit,
         "explicit_chac_constructed": False,
         "dtn_auxiliary_dense_block_constructed": False,
         **ksp_telemetry,
@@ -5052,6 +5270,12 @@ def _solve_stage4_dtn_port_total_field_impl(
                     external_snapshot.assembled_matrix_released_before_solve
                 ),
                 "reduced_residual_norm": external_snapshot.reduced_residual_norm,
+                "no_global_target_maxwell_factor": (
+                    external_snapshot.no_global_target_maxwell_factor
+                ),
+                "global_mass_factor_count": external_snapshot.global_mass_factor_count,
+                "local_auxiliary_factor_count": external_snapshot.local_auxiliary_factor_count,
+                "diagnostic_only": external_snapshot.diagnostic_only,
             }
         )
     if external_snapshot is None:
@@ -5269,6 +5493,10 @@ def solve_stage4_dtn_port_total_field(
     )
     observer_flags = comm.allgather(
         (
+            isinstance(linear_solver_port, Stage4PstddmP6DiagnosticPort),
+            None
+            if not isinstance(linear_solver_port, Stage4PstddmP6DiagnosticPort)
+            else linear_solver_port.profile,
             variable_p_live_observer is not None,
             bool(variable_p_retain_local_schur_for_research),
             bool(static_retain_local_schur_for_matrix_free),
