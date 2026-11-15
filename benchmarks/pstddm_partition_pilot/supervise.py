@@ -274,6 +274,16 @@ def _workstation_file_hash(path):
     return digest.hexdigest()
 
 
+def _workstation_host_reserve(profile):
+    """Return the profile's host-available floor; p6 shares its runner constant."""
+    if profile == 'workstation-p6':
+        from src.runners.pstddm_p6_convergence import HOST_RESERVE_BYTES
+        return HOST_RESERVE_BYTES
+    if profile == 'workstation':
+        return 400*G
+    raise ValueError('unknown workstation profile')
+
+
 def _workstation_disk_floor(profile):
     return 380_000_000_000 if profile == 'workstation-p6' else 400_000_000_000
 
@@ -379,6 +389,7 @@ def _workstation_profile_main(argv=None):
     with input_path.open('rb') as stream:document=tomllib.load(stream)
     tree_limit,case_seconds,ledger_name=_workstation_limits(args.profile,document.get('model'))
     disk_floor=_workstation_disk_floor(args.profile)
+    host_reserve=_workstation_host_reserve(args.profile)
     case_id=str(document.get('case_id',''))
     if not case_id or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-' for c in case_id):
         raise ValueError('unsafe or missing case_id')
@@ -408,7 +419,7 @@ def _workstation_profile_main(argv=None):
         validate_workstation_cgroup(str(cgroup_path),cg,str(runtime['preparation_cgroup']['path']),
                                     tree_limit_bytes=tree_limit)
         memory=_workstation_meminfo();disk=shutil.disk_usage(scope).free
-        if memory['MemAvailable']<400*G or disk<disk_floor:
+        if memory['MemAvailable']<host_reserve or disk<disk_floor:
             raise RuntimeError('initial host reserve or profile disk floor failed')
         if any(os.environ.get(name)!='1' for name in THREADS):raise RuntimeError('thread contract failed')
         sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
@@ -428,7 +439,7 @@ def _workstation_profile_main(argv=None):
             'source_sha':sha,'source_hashes':hashes,'input_path':str(input_path),'input_sha256':input_sha,
             'scope_root':str(scope),'runs_root':str(runs),'cgroup_path':str(cgroup_path),
             'initial_cgroup':cg,'initial_MemAvailable_bytes':memory['MemAvailable'],
-            'initial_disk_free_bytes':disk,'host_reserve_bytes':400*G,
+            'initial_disk_free_bytes':disk,'host_reserve_bytes':host_reserve,
             'tree_limit_bytes':tree_limit,'case_seconds':case_seconds,'profile':args.profile,
             'ledger_path':str(ledger_path),'staging_reserve_bytes':512<<20})
         env=os.environ.copy();env.update({
@@ -462,7 +473,7 @@ def _workstation_profile_main(argv=None):
                     validate_workstation_cgroup(str(cgroup_path),facts,
                                                 str(runtime['preparation_cgroup']['path']),
                                                 tree_limit_bytes=tree_limit)
-                    if mem['MemAvailable']<400*G:raise RuntimeError('host MemAvailable crossed 400 GiB reserve')
+                    if mem['MemAvailable']<host_reserve:raise RuntimeError(f'host MemAvailable crossed {host_reserve//G} GiB reserve')
                     if free<disk_floor:raise RuntimeError('task disk free space crossed profile floor')
                     if elapsed>=case_seconds or previous+elapsed>=21600:raise RuntimeError('case/shared wall budget reached')
                     if int(elapsed)%15==0 and (len(samples)==1 or int(samples[-2]['elapsed_seconds'])!=int(elapsed)):
@@ -512,7 +523,7 @@ def _workstation_profile_main(argv=None):
                 'final_cgroup_swap_current_bytes':final_cg['swap_current_bytes'],
                 'budget_limits':{'attempt_count':10,'cumulative_seconds':21600,'case_seconds':case_seconds,
                     'tree_bytes':tree_limit,'staging_reserve_bytes':512<<20,
-                    'host_reserve_bytes':400*G,'disk_floor_bytes':disk_floor},'command':command}
+                    'host_reserve_bytes':host_reserve,'disk_floor_bytes':disk_floor},'command':command}
         _workstation_json(output/'resource_samples.json',samples)
         _workstation_json(output/'supervision.json',record)
         artifacts={}

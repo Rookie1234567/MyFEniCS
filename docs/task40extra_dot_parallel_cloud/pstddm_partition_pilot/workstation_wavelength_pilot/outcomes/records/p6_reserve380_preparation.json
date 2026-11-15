@@ -1,0 +1,33 @@
+{
+  "initial_validation": {
+    "exit_code": 0,
+    "test_seconds": 0.1452377438545227,
+    "process_peak_rss_bytes": 108085248,
+    "candidate_sha256": {
+      "p6_reserve_candidate_test.py": "48bbe563fd84cd6024acf2176de9fbb48bf9b0496aaa5dcc7c0d2df1eed2bb7a",
+      "supervise.py": "b2d4bd0c8dfba1b1260a44c3d975a47a2458c10ad8278d4fb07598bb1e500fe6",
+      "pstddm_p6_convergence.py": "d784d70884ade978b811cc4dc8ba12d257d137618d29047b634ed208e2bf5ef6",
+      "test_pstddm_p6_convergence_profile.py": "4aeb94a7d0ad8f026dc31b6e7dbaaca348218764a28eae97d9fe987ac8aa7009"
+    },
+    "PDE_calls": 0,
+    "factor_builds": 0
+  },
+  "final_validation_after_test_eof_trim": {
+    "exit_code": 0,
+    "test_seconds": 0.20055988058447838,
+    "process_peak_rss_bytes": 106561536,
+    "candidate_sha256": {
+      "p6_reserve_candidate_test.py": "48bbe563fd84cd6024acf2176de9fbb48bf9b0496aaa5dcc7c0d2df1eed2bb7a",
+      "supervise.py": "b2d4bd0c8dfba1b1260a44c3d975a47a2458c10ad8278d4fb07598bb1e500fe6",
+      "pstddm_p6_convergence.py": "d784d70884ade978b811cc4dc8ba12d257d137618d29047b634ed208e2bf5ef6",
+      "test_pstddm_p6_convergence_profile.py": "ce0c712018f89490333ede148b257930466d150b0eca058168a0264c6df87c1b"
+    },
+    "PDE_calls": 0,
+    "factor_builds": 0
+  },
+  "service_wall_seconds": [
+    1.173,
+    1.269
+  ],
+  "reason_for_repeat": "Final test file differs only by removal of extra EOF blank line; no production or science changes."
+}

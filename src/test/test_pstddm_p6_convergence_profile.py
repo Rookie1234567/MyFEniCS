@@ -15,6 +15,7 @@ from src.runners.pstddm_p6_convergence import (
     DISK_RESERVE_BYTES,
     EXPECTED_MODE_COUNT,
     HOST_RESERVE_BYTES,
+    STAGING_RESERVE_BYTES,
     TASK_CAP_BYTES,
     _assembly_future_bytes,
     _direct_gates,
@@ -163,8 +164,18 @@ def test_resource_profile_overrides_mumps_and_checkpoint_floors_without_changing
     assert factor_checkpoint_enabled() is True
     assert disk_reserve_bytes(2**31) == 2**31
     assert TASK_CAP_BYTES == 64 << 30
-    assert HOST_RESERVE_BYTES == 400 << 30
-    from benchmarks.pstddm_partition_pilot.supervise import _workstation_disk_floor
+    assert HOST_RESERVE_BYTES == 380 << 30
+    from benchmarks.pstddm_partition_pilot.supervise import (
+        _workstation_disk_floor, _workstation_host_reserve,
+    )
+    assert _workstation_host_reserve('workstation-p6') == HOST_RESERVE_BYTES
+    assert _workstation_host_reserve('workstation') == 400 << 30
+    try:
+        _workstation_host_reserve('unknown')
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('unknown workstation profile received a host reserve')
     assert DISK_RESERVE_BYTES == _workstation_disk_floor('workstation-p6') == 380_000_000_000
     assert _workstation_disk_floor('workstation') == 400_000_000_000
 
@@ -190,3 +201,103 @@ def test_resource_profile_overrides_mumps_and_checkpoint_floors_without_changing
     assert p6["mumps_task_limit_bytes"] == TASK_CAP_BYTES
     assert p6["future_co_resident_reserve_bytes"] == 4 << 30
     assert p6["external_future_bytes"] == 24 + (256 << 20) + (4 << 30)
+
+def test_retry4_budget_replay_at_380_gib_is_prediction_only():
+    from src.solvers.bounded_mumps import incore_memory_budget
+
+    # Exact saved retry4 observations from p6_h10_diagnosis_retry4.json. This
+    # replay predicts the workspace gate only; it is not a new live admission,
+    # numeric factorization, or solver result.
+    info = {"16": 22457, "26": 4991}
+    observation = {
+        "effective_cap_bytes": 68719476736,
+        "live_tree_and_supervisor_bytes": 3018309632,
+        "system": {"available": 450226487296},
+        "margin_bytes": 536870912,
+        "task_swap_current_bytes": 0,
+        "task_swap_max_bytes": 0,
+    }
+    nnz = 86586068
+    old = incore_memory_budget(
+        info, nnz, observation,
+        available_floor_bytes=400 << 30,
+        mumps_task_limit_bytes=64 << 30,
+        future_co_resident_reserve_bytes=4 << 30,
+    )
+    p6 = incore_memory_budget(
+        info, nnz, observation,
+        available_floor_bytes=HOST_RESERVE_BYTES,
+        mumps_task_limit_bytes=TASK_CAP_BYTES,
+        future_co_resident_reserve_bytes=4 << 30,
+    )
+
+    assert old["workspace_budget_bytes"] == 13534641184
+    assert old["numeric_ICNTL23_MB"] == 13534 and old["passed"] is False
+    assert p6["available_floor_bytes"] == 408021893120
+    assert p6["workspace_budget_bytes"] == 35009477664
+    assert p6["numeric_ICNTL23_MB"] == 35009 and p6["passed"] is True
+    assert p6["required_INFOG16_MB"] == 22457
+    assert p6["mumps_task_limit_bytes"] == TASK_CAP_BYTES == 64 << 30
+    assert observation["task_swap_current_bytes"] == observation["task_swap_max_bytes"] == 0
+    assert DISK_RESERVE_BYTES == 380_000_000_000
+
+
+def test_live_admission_callback_propagates_p6_floor_and_enforces_future_margin():
+    from types import SimpleNamespace
+    from src.runners import pstddm_p6_convergence as p6
+    from src.solvers.bounded_mumps import incore_memory_budget
+    from benchmarks.pstddm_partition_pilot import supervise
+
+    facts = {
+        "memory_current_bytes": 1 << 30,
+        "memory_max_bytes": TASK_CAP_BYTES,
+        "swap_current_bytes": 0,
+        "swap_max_bytes": 0,
+        "ancestors": [],
+    }
+    floor = HOST_RESERVE_BYTES
+    future = 2 << 30
+    disk = SimpleNamespace(free=DISK_RESERVE_BYTES + 1)
+
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        accepted_output = root / "accepted"
+        rejected_output = root / "rejected"
+        accepted_output.mkdir()
+        rejected_output.mkdir()
+        with (
+            patch.object(supervise, "_workstation_cgroup", return_value=(Path("/p6"), facts)),
+            patch.object(p6, "_mem_available_bytes", return_value=floor + TASK_CAP_BYTES + STAGING_RESERVE_BYTES),
+            patch.object(p6.shutil, "disk_usage", return_value=disk),
+        ):
+            callback = p6._admission_callback(accepted_output, root, "/abi", p6.time.monotonic())
+            observation = callback(
+                "mumps_numeric_budget_observation", 0,
+                estimate_basis="fixture only",
+            )
+
+        assert observation["available_floor_bytes"] == floor == 380 << 30
+        assert observation["mumps_task_limit_bytes"] == TASK_CAP_BYTES == 64 << 30
+        budget = incore_memory_budget(
+            {"16": 1, "26": 0}, 1, observation,
+            available_floor_bytes=observation["available_floor_bytes"],
+            mumps_task_limit_bytes=observation["mumps_task_limit_bytes"],
+            future_co_resident_reserve_bytes=observation["future_co_resident_reserve_bytes"],
+        )
+        assert budget["available_floor_bytes"] == floor
+
+        with (
+            patch.object(supervise, "_workstation_cgroup", return_value=(Path("/p6"), facts)),
+            patch.object(p6, "_mem_available_bytes", return_value=floor + future + STAGING_RESERVE_BYTES - 1),
+            patch.object(p6.shutil, "disk_usage", return_value=disk),
+        ):
+            callback = p6._admission_callback(rejected_output, root, "/abi", p6.time.monotonic())
+            try:
+                callback("future_probe", future, estimate_basis="fixture only")
+            except MemoryError as exc:
+                assert "380 GiB" in str(exc)
+            else:
+                raise AssertionError("admission allowed less than host floor + future + staging reserve")
+
+        assert facts["swap_current_bytes"] == facts["swap_max_bytes"] == 0
+        assert DISK_RESERVE_BYTES == 380_000_000_000

@@ -13,7 +13,7 @@ from typing import Any, Mapping
 
 MODEL_NAME = "pstddm_p6_convergence_workstation"
 TASK_CAP_BYTES = 64 << 30
-HOST_RESERVE_BYTES = 400 << 30
+HOST_RESERVE_BYTES = 380 << 30
 DISK_RESERVE_BYTES = 380_000_000_000
 STAGING_RESERVE_BYTES = 512 << 20
 CASE_SECONDS = 7200
@@ -409,7 +409,7 @@ def _admission_callback(output: Path, scope_root: Path, preparation_cgroup: str,
             tree_limit_bytes=TASK_CAP_BYTES,
         )
         if available - int(future_bytes) - STAGING_RESERVE_BYTES < HOST_RESERVE_BYTES:
-            raise MemoryError("future allocation would cross the 400 GiB host reserve")
+            raise MemoryError("future allocation would cross the 380 GiB host reserve")
         if disk_free < DISK_RESERVE_BYTES:
             raise OSError("p6 direct case would cross the 380 GB disk reserve")
         return observation

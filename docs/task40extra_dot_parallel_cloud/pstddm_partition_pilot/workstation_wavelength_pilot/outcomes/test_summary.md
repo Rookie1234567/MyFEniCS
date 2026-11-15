@@ -37,3 +37,11 @@ ABI进口收据SHA256为`280dbdf428d1e85d2ddf792f2f76afbfec7a88e73e21d2d616d4f2c
 首轮2失败/21通过保留：variable-p夹具先触发degree-plan门而非待测guard；临时候选目录名意外命中-k筛选，使旧p2路径测试在临时位置找不到输入。修正夹具和明确选择后仅运行相关测试，不为包装错误启动PDE。更早5项wrapper及1项CSV-cache回归的source/hash/费用亦在compact中分列，不把这些当新PDE资格。
 
 主控对retry2/3/4原始artifact清单逐项核验小收据hash；独立重算retry4 workspace公式、原始INFOG与候选ICNTL23关系，确认numeric_calls=0、595样本任务swap0和后代清空。审核完成不转授数值PASS。测试及原负回执见[compact](records/p6_h10_diagnosis_retry4.json)。未运行全仓测试、MPI2/4或CI。
+
+## 用户授权的380GiB宿主保留线（retry5准备）
+
+仅`workstation-p6`从400GiB改为380GiB（408021893120 B），supervisor初始门、运行采样、收据和worker/MUMPS观察共用p6常量；旧p2仍400GiB，64GiB任务cap、零swap、380GB磁盘线及原费用/精度门均不变。原生ABI下3项定向测试通过，pytest0.08s、测试父段0.1452377438545227s、RSS峰108085248 B；整个受限服务1.173s，task swap0。测试包括真实admission callback字段传递及future+margin不足拒绝、profile隔离，以及用原retry4观测值重算预算。后者在新保留线下预测工作区35009MB可满足22457MB，但不代表新现场或数值通过。
+
+测试没有FE装配、factor或PDE；实际启动仍须新run的动态资源准入。候选文件hash与费用见[准备收据](records/p6_reserve380_preparation.json)。旧400GiB停止记录不改写，不把新授权清零旧账。
+
+最终测试文件仅去除EOF多余空白后，同三项再次通过：pytest0.10s，测试父段0.20055988058447838s，RSS106561536 B，服务父段1.269s；两次收据均保留，不计成6个不同测试。最终生产文件hash与首次一致。
